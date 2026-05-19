@@ -1,0 +1,7 @@
+Tray 1.0 tray/Tray.qml
+Notifications 1.0 notifications/Notifications.qml
+Volume 1.0 audio/Volume.qml
+Mic 1.0 audio/Mic.qml
+Stats 1.0 stats/Stats.qml
+CpuTooltip 1.0 stats/CpuTooltip.qml
+MemoryTooltip 1.0 stats/MemoryTooltip.qml

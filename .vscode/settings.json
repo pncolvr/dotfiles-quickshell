@@ -1,0 +1,5 @@
+{
+    "qt-qml.qmlls.additionalImportPaths": [
+        "/usr/lib/qt6/qml",
+    ]
+}

@@ -1,0 +1,15 @@
+Text 1.0 components/Text.qml
+ColumnText 1.0 components/ColumnText.qml
+PanelWindow 1.0 components/PanelWindow.qml
+WrapperMouseArea 1.0 components/WrapperMouseArea.qml
+Row 1.0 components/Row.qml
+Icon 1.0 components/Icon.qml
+IconButton 1.0 components/IconButton.qml
+HoverTooltip 1.0 components/HoverTooltip.qml
+TooltipCorner 1.0 components/TooltipCorner.qml
+
+PulseText 1.0 PulseText.qml
+IconText 1.0 IconText.qml
+PulseIconText 1.0 PulseIconText.qml
+TooltipArea 1.0 TooltipArea.qml
+StatusBadge 1.0 StatusBadge.qml

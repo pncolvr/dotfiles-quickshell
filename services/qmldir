@@ -1,0 +1,20 @@
+singleton AudioService 1.0 audio/AudioService.qml
+
+singleton HyprlandEventsService 1.0 hyprland/HyprlandEventsService.qml
+singleton WindowService 1.0 hyprland/WindowService.qml
+singleton SubmapService 1.0 hyprland/SubmapService.qml
+
+singleton TimeService 1.0 time/TimeService.qml
+singleton CalendarService 1.0 time/CalendarService.qml
+
+singleton StatsService 1.0 system/StatsService.qml
+singleton PowerProfileService 1.0 system/PowerProfileService.qml
+singleton NetworkService 1.0 system/NetworkService.qml
+singleton UpdatesService 1.0 system/UpdatesService.qml
+singleton ConfigService 1.0 system/ConfigService.qml
+
+singleton NotificationService 1.0 notifications/NotificationService.qml
+singleton StatusService 1.0 status/StatusService.qml
+singleton TwitchService 1.0 twitch/TwitchService.qml
+singleton TooltipService 1.0 ui/TooltipService.qml
+singleton AlertService 1.0 ui/AlertService.qml

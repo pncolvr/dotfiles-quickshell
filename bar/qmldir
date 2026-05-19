@@ -1,0 +1,7 @@
+CenterModules 1.0 CenterModules.qml
+LeftModules 1.0 LeftModules.qml
+RightModules 1.0 RightModules.qml
+TopPanelTooltip 1.0 TopPanelTooltip.qml
+TooltipWindow 1.0 TooltipWindow.qml
+SubmapWindow 1.0 SubmapWindow.qml
+AlertWindow 1.0 AlertWindow.qml

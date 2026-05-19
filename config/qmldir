@@ -1,0 +1,2 @@
+singleton Config 1.0 Config.qml
+singleton Timespan 1.0 Timespan.qml
