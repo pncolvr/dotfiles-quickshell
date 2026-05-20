@@ -5,3 +5,4 @@ Mic 1.0 audio/Mic.qml
 Stats 1.0 stats/Stats.qml
 CpuTooltip 1.0 stats/CpuTooltip.qml
 MemoryTooltip 1.0 stats/MemoryTooltip.qml
+NetworkTooltip 1.0 stats/NetworkTooltip.qml

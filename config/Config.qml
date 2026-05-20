@@ -78,6 +78,12 @@ Item {
     readonly property string screencastStopSound: "device-removed"
 
     readonly property var networkCheckCommand: ["bash", "-c", "ping -c1 -W1 1.1.1.1 &>/dev/null && echo 1 || echo 0"]
+    readonly property var networkStatsCommand: ["bash", "-c", "awk 'NR>2{gsub(\":\",\"\"); print $1, $2, $10}' /proc/net/dev"]
+    readonly property var networkConnectionsCommand: ["bash", "-c", "nmcli -t -f DEVICE,CONNECTION,TYPE,STATE device status 2>/dev/null"]
+    readonly property var networkProcessesCommand: ["bash", "-c", "timeout 2 bandwhich --raw --processes --no-resolve 2>/dev/null | grep '^process:' | awk '{name=$3; gsub(/\"/,\"\",name); split($6,s,\"/\"); up=int(s[1]); down=int(s[2]); print (up+down)\"|\"name\"|\"up\"|\"down}' | sort -rn | head -10 | cut -d'|' -f2-"]
+    readonly property var networkVpnCommand: ["bash", "-c", "nmcli -t -f NAME,TYPE,STATE connection show 2>/dev/null | grep -E ':vpn:|:wireguard:'"]
+    readonly property int networkConnectionsInterval: Timespan.fromSeconds(3)
+    readonly property int networkProcessesInterval: Timespan.fromSeconds(3)
 
     readonly property int statsInterval: Timespan.fromSeconds(1)
     readonly property int networkRetryInterval: Timespan.fromSeconds(5)

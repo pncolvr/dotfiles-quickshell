@@ -2,7 +2,9 @@
 
 - Clock with month and year view tooltips
 - Hyprland window list with focus, next/prev navigation
-- System stats: CPU and memory with tooltips, and temperature
+- System stats: CPU and memory with tooltips, temperature, and network speeds with graph tooltip
+    - Network tooltip shows connected networks with per-interface speeds and top 10 processes by bandwidth
+    - Process bandwidth requires `bandwhich`
 - Volume and audio device info via PipeWire
 - Screencast/screenshare status with sound notifications
 - Package update indicator

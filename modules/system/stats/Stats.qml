@@ -8,13 +8,15 @@ import "../../../config"
 import "../"
 UI.Row {
     id: root
-    property bool expanded: hoverHandler.hovered
-    onExpandedChanged: StatsService.active = expanded
+    property bool expanded: hoverHandler.hovered || TooltipService.source === root
+    onExpandedChanged: {
+        StatsService.active = expanded
+        NetworkService.active = expanded
+    }
     
     HoverHandler {
         id: hoverHandler
         target: root
-        onHoveredChanged: root.expanded = hovered
     }
 
     UI.IconText {
@@ -27,6 +29,7 @@ UI.Row {
         visible: root.expanded
         
         UI.TooltipArea {
+            tooltipSource: root
             tooltip: Component {
                 UI.Text {
                     text: PowerProfileService.profile
@@ -39,6 +42,7 @@ UI.Row {
         }
         
         UI.TooltipArea {
+            tooltipSource: root
             tooltip: Component { MemoryTooltip {} }
             UI.Text {
                 text: `${(StatsService.memoryUsed / 1024).toFixed(1)}G`
@@ -46,14 +50,23 @@ UI.Row {
         }
 
         UI.TooltipArea {
+            tooltipSource: root
             tooltip: Component { CpuTooltip {} }
             UI.Text {
-                text: `${StatsService.cpu}%`    
+                text: `${String(StatsService.cpu).padStart(3)}%`
             }
         }
 
         UI.Text {
-            text: `${Math.round(StatsService.temperature)}°C`
+            text: `${String(Math.round(StatsService.temperature)).padStart(3)}°C`
+        }
+
+        UI.TooltipArea {
+            tooltipSource: root
+            tooltip: Component { NetworkTooltip {} }
+            UI.IconText {
+                text: Theme.networkIcon
+            }
         }
     }
 

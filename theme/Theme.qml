@@ -118,6 +118,14 @@ Item {
   // stats
   readonly property string statsToggleIcon: ""
   readonly property var powerProfileIcons: ["", "", ""]
+
+  // network tooltip
+  readonly property string networkIcon: ""
+  readonly property int networkTooltipWidth: 220
+  readonly property int networkGraphHeight: 40
+  readonly property int networkTooltipLabelWidth: 120
+  readonly property color networkDownColor: active
+  readonly property color networkUpColor: warning
   
   // status
   readonly property string statusWorkingIcon:""
