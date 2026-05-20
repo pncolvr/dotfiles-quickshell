@@ -99,7 +99,7 @@ Item {
   readonly property string workspaceUnknownIcon: "#"
   
   // submap
-  readonly property int submapWindowWidth: 450
+  readonly property int submapWindowMaxWidth: 250
   readonly property int statusBadgeRadius: 5
   readonly property int statusBadgePaddingWidth: 24
   readonly property int statusBadgePaddingHeight: 4

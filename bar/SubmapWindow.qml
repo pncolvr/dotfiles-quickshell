@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Layouts
 import "../theme"
 import "../theme/ui" as UI
 import "../services"
@@ -10,10 +11,10 @@ TopPanelTooltip {
     visible: SubmapService.submapActive
 
     contentX: width - contentWidth - Theme.tooltipRadius + 1
-    contentWidth: Theme.submapWindowWidth
+    contentWidth: Math.min(Theme.submapWindowMaxWidth, keybindsColumn.implicitWidth + Theme.tooltipPaddingWidth * 2)
     contentHeight: keybindsColumn.implicitHeight + Theme.tooltipPaddingHeight * 2
 
-    Column {
+    ColumnLayout {
         id: keybindsColumn
         anchors.centerIn: parent
         width: root.contentWidth - Theme.tooltipPaddingWidth * 2
@@ -21,22 +22,21 @@ TopPanelTooltip {
 
         Repeater {
             model: SubmapService.keybinds
-            delegate: Row {
+            delegate: RowLayout {
                 id: row
                 required property var modelData
                 spacing: 16
-                width: keybindsColumn.width
+                Layout.fillWidth: true
 
                 UI.Text {
-                    id: keyText
                     text: row.modelData.key
                     color: Theme.accent
                 }
 
                 UI.Text {
-                    width: row.width - keyText.width - row.spacing
                     text: row.modelData.action
                     elide: Text.ElideMiddle
+                    Layout.fillWidth: true
                     UI.HoverTooltip {
                         text: parent.text
                     }

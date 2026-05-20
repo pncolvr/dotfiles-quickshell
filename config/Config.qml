@@ -48,7 +48,7 @@ Item {
     readonly property var updatesCheckCommand: ["bash", "-c", "yay -Qu 2>/dev/null | sort"]
     readonly property var updatesInstallCommand: ["bash", "-c", "ghostty -e yay &"]
 
-    readonly property string submapParserCommand: _internal.home +  "/.config/hypr/scripts/keybinds/submaps.sh"
+    readonly property string submapParserCommand: _internal.home +  "/.config/hypr/scripts/keybinds/parser.sh"
 
     readonly property string calendarUrl: "https://calendar.google.com/calendar/r/day" 
 
