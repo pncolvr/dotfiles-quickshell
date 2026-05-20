@@ -11,6 +11,21 @@ Column {
     spacing: 4
 
     UI.ColumnText {
+        visible: UpdatesService.hasUpdates
+        text: `${UpdatesService.count} updates available`
+        width: parent.width
+        horizontalAlignment: Text.AlignHCenter
+        color: Theme.text
+    }
+
+    Rectangle {
+        visible: UpdatesService.hasUpdates
+        width: parent.width
+        height: 1
+        color: Theme.empty
+    }
+
+    UI.ColumnText {
         visible: !UpdatesService.hasUpdates
         text: "no updates available"
         width: parent.width
