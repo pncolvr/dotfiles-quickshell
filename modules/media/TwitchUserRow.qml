@@ -20,7 +20,7 @@ Row {
     // Avatar
     Item {
         width: Theme.twitchAvatarSize
-        height: Theme.twitchAvatarSize
+        height: width
         // anchors.horizontalCenter: parent.horizontalCenter
 
         Image {
@@ -125,6 +125,16 @@ Row {
                     centerVertical: false
                     UI.HoverTooltip { text: parent.text }
                 }
+            }
+
+            UI.ColumnText {
+                visible: !root.user.online && !!root.user.nextStream
+                text: root.user.nextStream ?? ""
+                color: Theme.inactive
+                elide: Text.ElideRight
+                width: parent.width
+                centerVertical: false
+                UI.HoverTooltip { text: parent.text }
             }
         }
         MouseArea {

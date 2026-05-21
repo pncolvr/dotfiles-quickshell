@@ -9,7 +9,7 @@ Shape {
 
     required property int side
     width: Theme.tooltipRadius
-    height: Theme.tooltipRadius
+    height: width
 
     rotation: side === TooltipCorner.Side.Left ? 0 : -90
 

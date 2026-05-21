@@ -58,7 +58,7 @@ Singleton {
 
     onScreencastActiveChanged: {
         const sound = screencastActive ? Config.screencastStartSound : Config.screencastStopSound
-        screencastSound.command = [...Config.screencastSoundCommand, sound]
+        screencastSound.command = Config.screencastSoundCommand(sound)
         screencastSound.running = true
     }
 

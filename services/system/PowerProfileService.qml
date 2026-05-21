@@ -18,7 +18,7 @@ Singleton {
     function cycleProfile() {
         const profiles = Config.powerProfiles
         const next = profiles[(profiles.indexOf(root.profile) + 1) % profiles.length]
-        setProcess.command = Config.powerProfilesSetCommand.concat([next])
+        setProcess.command = Config.powerProfilesSetCommand(next)
         setProcess.running = true
     }
 

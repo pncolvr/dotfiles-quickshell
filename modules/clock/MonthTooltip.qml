@@ -111,7 +111,7 @@ Item {
 
                 UI.ColumnText {
                     width: Theme.calendarCellWidth
-                    height: Theme.calendarCellHeight
+                    height: width
                     text: weekRow.weekVisible ? root.weekNumber(weekRow.weekDate) : ""
                     color: Theme.calendarWeekNumberText
                     horizontalAlignment: Text.AlignHCenter

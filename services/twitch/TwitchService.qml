@@ -26,6 +26,12 @@ Singleton {
         property var offlineUsers: []
         property bool hasOnline: onlineUsers.length > 0
         property bool available: false
+        property var userIds: ({})
+        property var scheduleQueue: []
+        property var scheduleTimestamps: ({})
+        property var scheduleCache: ({})
+        readonly property int scheduleCacheDuration: 60 * 60 * 1000
+        readonly property string scheduleCacheFilePath: `${cacheDir}/schedule.json`
 
         property var combinedUsers: {
             var combined = [...onlineUsers, ...offlineUsers]
@@ -47,12 +53,12 @@ Singleton {
     }
 
     function openStream(login) {
-        helperProcess.command = ["bash", "-c", `${Config.twitchStreamCommand.join(" ")} "${login}" "${Config.twitchBaseUrl}${login}" &`]
+        helperProcess.command = Config.twitchStreamCommand(login, `${Config.twitchBaseUrl}${login}`)
         helperProcess.running = true
     }
 
     function openPicker() {
-        helperProcess.command = ["bash", "-c", `${Config.twitchStreamCommand.join(" ")} &`]
+        helperProcess.command = Config.twitchStreamCommand()
         helperProcess.running = true
     }
 
@@ -89,6 +95,45 @@ Singleton {
             `[ -f "${next.path}" ] || curl -s -o "${next.path}" "${next.url}"`
         ]
         downloadProcess.running = true
+    }
+
+    function fetchSchedules(logins) {
+        const now = Date.now()
+        _internal.scheduleQueue = logins.filter(l => {
+            const key = l.toLowerCase()
+            if (!_internal.userIds[key]) return false
+            const last = _internal.scheduleTimestamps[key] || 0
+            return (now - last) > _internal.scheduleCacheDuration
+        })
+        _processScheduleQueue()
+    }
+
+    function _saveScheduleCache() {
+        const data = {}
+        _internal.offlineUsers.forEach(u => {
+            const key = u.login.toLowerCase()
+            data[key] = {
+                nextStream: u.nextStream || "",
+                timestamp: _internal.scheduleTimestamps[key] || 0
+            }
+        })
+        scheduleCacheWriteProcess.command = ["bash", "-c",
+            `echo '${JSON.stringify(data)}' > ${_internal.scheduleCacheFilePath}`
+        ]
+        scheduleCacheWriteProcess.running = true
+    }
+
+    function _processScheduleQueue() {
+        if (_internal.scheduleQueue.length === 0) return
+        const login = _internal.scheduleQueue[0]
+        _internal.scheduleQueue = _internal.scheduleQueue.slice(1)
+        const id = _internal.userIds[login.toLowerCase()]
+        scheduleProcess._login = login
+        scheduleProcess._buffer = ""
+        scheduleProcess.command = ["bash", "-c",
+            `${Config.twitchCli} api get "schedule?broadcaster_id=${id}&first=5"`
+        ]
+        scheduleProcess.running = true
     }
 
     FileView {
@@ -143,10 +188,17 @@ Singleton {
                     _internal.offlineUsers = _internal.allUsers
                         .filter(u => !onlineNames.includes(u))
                         .sort()
-                        .map(u => ({ login: u, online: false, avatar: root.avatarPath(u) }))
+                        .map(u => {
+                            const prev = _internal.offlineUsers.find(o => o.login === u)
+                            const cached = _internal.scheduleCache[u.toLowerCase()]
+                            return { login: u, online: false, avatar: root.avatarPath(u),
+                                nextStream: (prev && prev.nextStream) || (cached && cached.nextStream) || "" }
+                        })
 
                     if (newOnline.length > 0) {
-                        notifyProcess.command = ["notify-send", "--transient", "Twitch", newOnline.join(", ") + " went live"]
+                        notifyProcess.command = ["notify-send", "--transient",
+                            "--icon", Qt.resolvedUrl("../../assets/twitch.png").toString().replace("file://", ""),
+                            newOnline.join("\n")]
                         notifyProcess.running = true
                     }
 
@@ -200,12 +252,14 @@ Singleton {
                 try {
                     const json = JSON.parse(_buffer)
                     json.data.forEach(user => {
+                        _internal.userIds[user.login.toLowerCase()] = user.id
                         _internal.downloadQueue.push({
                             path: root.avatarPath(user.login),
                             url: user.profile_image_url
                         })
                     })
                     root._processQueue()
+                    root.fetchSchedules(_internal.offlineUsers.map(u => u.login))
                 } catch(e) {
                     console.warn("TwitchService avatar parse error:", e)
                 }
@@ -220,6 +274,79 @@ Singleton {
             onRead: data => console.warn("TwitchService download error:", data)
         }
         onRunningChanged: if (!running) root._processQueue()
+    }
+
+    Process {
+        id: scheduleProcess
+        property string _buffer: ""
+        property string _login: ""
+
+        stdout: SplitParser {
+            onRead: data => scheduleProcess._buffer += data
+        }
+        stderr: SplitParser {
+            onRead: data => console.warn("TwitchService schedule error:", data)
+        }
+        onRunningChanged: {
+            if (!running) {
+                if (_buffer.length > 0) {
+                    try {
+                        const json = JSON.parse(_buffer)
+                        const segments = json.data?.segments
+                        const now = new Date()
+                        const next = segments?.find(s => !s.canceled_until && new Date(s.start_time) > now)
+
+                        let nextStream = ""
+                        if (next) {
+                            const d = new Date(next.start_time)
+                            const tomorrow = new Date()
+                            tomorrow.setDate(tomorrow.getDate() + 1)
+                            let dateStr
+                            if (d.toDateString() === now.toDateString())
+                                dateStr = "today"
+                            else if (d.toDateString() === tomorrow.toDateString())
+                                dateStr = "tomorrow"
+                            else
+                                dateStr = d.toLocaleDateString([], {weekday: 'short', month: 'short', day: 'numeric'})
+                            const timeStr = d.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})
+                            nextStream = `${dateStr} at ${timeStr}`
+                        }
+
+                        const login = scheduleProcess._login
+                        const key = login.toLowerCase()
+                        _internal.scheduleTimestamps[key] = Date.now()
+                        _internal.scheduleCache[key] = { nextStream, timestamp: _internal.scheduleTimestamps[key] }
+                        _internal.offlineUsers = _internal.offlineUsers.map(u =>
+                            u.login === login ? Object.assign({}, u, {nextStream: nextStream}) : u
+                        )
+                        root._saveScheduleCache()
+                    } catch(e) {
+                        console.warn("TwitchService schedule parse error:", e)
+                    }
+                    _buffer = ""
+                }
+                root._processScheduleQueue()
+            }
+        }
+    }
+
+    Process {
+        id: scheduleCacheWriteProcess
+    }
+
+    FileView {
+        id: scheduleCacheFile
+        path: _internal.scheduleCacheFilePath
+        onLoaded: {
+            try {
+                const data = JSON.parse(scheduleCacheFile.text())
+                _internal.scheduleCache = data
+                Object.keys(data).forEach(key => {
+                    if (data[key].timestamp)
+                        _internal.scheduleTimestamps[key] = data[key].timestamp
+                })
+            } catch(e) {}
+        }
     }
 
     Connections {
@@ -238,6 +365,7 @@ Singleton {
     }
 
     Component.onCompleted: {
+        scheduleCacheFile.reload()
         if (NetworkService.online) refresh()
     }
 }

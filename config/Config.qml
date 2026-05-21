@@ -46,7 +46,7 @@ Item {
     readonly property int updatesMax: 30
     readonly property int updatesInterval: Timespan.fromHours(1)
     readonly property var updatesCheckCommand: ["bash", "-c", "yay -Qu 2>/dev/null | sort"]
-    readonly property var updatesInstallCommand: ["bash", "-c", "ghostty -e yay &"]
+    readonly property var updatesInstallCommand: ["setsid", "ghostty", "-e", "yay"]
 
     readonly property string submapParserCommand: _internal.home +  "/.config/hypr/scripts/keybinds/parser.sh"
 
@@ -54,7 +54,9 @@ Item {
 
     readonly property string twitchUsersFile: Qt.resolvedUrl("./twitch-users").toString().replace("file://", "")
     readonly property int twitchInterval: Timespan.fromMinutes(5)
-    readonly property var twitchStreamCommand: [`${_internal.home}/.config/hypr/scripts/tolocalplayer.sh`]
+    readonly property var twitchStreamCommand: (login, url) => login
+        ? ["setsid", `${_internal.home}/.config/hypr/scripts/tolocalplayer.sh`, login, url]
+        : ["setsid", `${_internal.home}/.config/hypr/scripts/tolocalplayer.sh`]
     readonly property string twitchBaseUrl: "https://www.twitch.tv/"
 
     readonly property string twitchCacheDir: `${Quickshell.env("XDG_CACHE_HOME") ?? _internal.home + "/.cache"}/quickshell/twitch`
@@ -73,7 +75,7 @@ Item {
     readonly property string preferredMicName: "PRO X 2 LIGHTSPEED"
     readonly property var mixerCommand: ["pavucontrol"]
 
-    readonly property var screencastSoundCommand: ["canberra-gtk-play", "-i"]
+    readonly property var screencastSoundCommand: sound => ["canberra-gtk-play", "-i", sound]
     readonly property string screencastStartSound: "device-added"
     readonly property string screencastStopSound: "device-removed"
 
@@ -95,9 +97,10 @@ Item {
 
     readonly property var hyprlandGetNoWarpsCommand: ["bash", "-c", "hyprctl getoption cursor:no_warps -j | jq -r '.bool'"]
     readonly property var hyprlandGetActiveWindowHiddenCommand: ["bash", "-c", "hyprctl getprop activewindow no_screen_share"]
+    readonly property var hyprlandHideApplicationsCommand: active => ["hyprctl", "eval", `HideApplications(${active})`]
 
     readonly property var powerProfiles: ["power-saver", "balanced", "performance"]
     readonly property string powerProfilesDefaultProfile: "balanced"
-    readonly property var powerProfilesSetCommand: [_internal.powerProfilesManager, "set"]
+    readonly property var powerProfilesSetCommand: profile => [_internal.powerProfilesManager, "set", profile]
     readonly property var powerProfilesGetCommand: [_internal.powerProfilesManager, "get"]
 }
