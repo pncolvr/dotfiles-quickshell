@@ -95,7 +95,7 @@ Row {
                     elide: Text.ElideMiddle
                     Layout.fillWidth: true
                     centerVertical: false
-                    UI.HoverTooltip { text: root.user.game }
+                    UI.HoverTooltip { text: parent.text }
                 }
             }
 
