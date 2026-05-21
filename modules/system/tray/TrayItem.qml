@@ -16,6 +16,13 @@ UI.WrapperMouseArea {
 
     Image {
         anchors.centerIn: parent
+        width: Theme.trayItemWidth
+        height: Theme.trayItemHeight
+        sourceSize.width: Theme.trayItemWidth
+        sourceSize.height: Theme.trayItemHeight
+        fillMode: Image.PreserveAspectFit
+        smooth: true
+        mipmap: true
         source: root.item.icon
     }
 

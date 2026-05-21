@@ -73,6 +73,9 @@ Row {
                 width: parent.width
                 horizontalAlignment: Text.AlignLeft
                 elide: Text.ElideRight
+                UI.HoverTooltip {
+                    text: parent.text
+                }
             }
 
             UI.ColumnText {
@@ -82,6 +85,9 @@ Row {
                 width: parent.width
                 horizontalAlignment: Text.AlignLeft
                 elide: Text.ElideRight
+                UI.HoverTooltip {
+                    text: parent.text
+                }
             }
 
         }

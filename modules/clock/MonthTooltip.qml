@@ -134,14 +134,6 @@ Item {
                         radius: Theme.calendarCellRadius
                         color: isToday ? Theme.calendarTodayBackground : "transparent"
 
-                        UI.HoverTooltip {
-                            enabled: day.valid
-                            cursorShape: Qt.PointingHandCursor
-                            text: CalendarService.dateUrl(new Date(root.displayYear, root.displayMonth, day.dayNum))
-                            delay: Theme.calendarDayTooltipDelay
-                            onClicked: CalendarService.openDate(new Date(root.displayYear, root.displayMonth, day.dayNum))
-                        }
-
                         UI.ColumnText {
                             anchors.centerIn: parent
                             text: day.valid ? day.dayNum : ""
@@ -151,6 +143,14 @@ Item {
                                 : Theme.calendarDayText
                             horizontalAlignment: Text.AlignHCenter
                             verticalAlignment: Text.AlignVCenter
+
+                            UI.HoverTooltip {
+                                enabled: day.valid
+                                cursorShape: Qt.PointingHandCursor
+                                text: CalendarService.dateUrl(new Date(root.displayYear, root.displayMonth, day.dayNum))
+                                delay: Theme.calendarDayTooltipDelay
+                                onClicked: CalendarService.openDate(new Date(root.displayYear, root.displayMonth, day.dayNum))
+                            }
                         }
                     }
                 }

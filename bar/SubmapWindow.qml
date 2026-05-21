@@ -31,11 +31,13 @@ TopPanelTooltip {
                 UI.Text {
                     text: row.modelData.key
                     color: Theme.accent
+                    centerVertical: false
                 }
 
                 UI.Text {
                     text: row.modelData.action
                     elide: Text.ElideMiddle
+                    centerVertical: false
                     Layout.fillWidth: true
                     UI.HoverTooltip {
                         text: parent.text
