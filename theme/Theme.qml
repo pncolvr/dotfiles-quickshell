@@ -132,10 +132,14 @@ Item {
   readonly property string statusPersonalIcon:""
   readonly property string statusUnknownIcon:""
   // tray
-  readonly property string trayOpenIcon: ""
+  readonly property string trayOpenIcon: ""
   readonly property string trayClosedIcon: ""
   readonly property int trayItemWidth: 16
   readonly property int trayItemHeight: 16
+  readonly property color trayBackground: empty
+  readonly property int trayBackgroundRadius: 4
+  readonly property int trayBackgroundPaddingH: 6
+  readonly property int trayBackgroundPaddingV: 3
 
   // notifications
   readonly property string notificationsDndEnabledIcon: ""

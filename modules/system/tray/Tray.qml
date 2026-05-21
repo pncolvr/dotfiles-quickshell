@@ -11,24 +11,36 @@ UI.Row {
     HoverHandler {
         id: hoverHandler
         target: root
-        onHoveredChanged: tray.visible = hovered
+        onHoveredChanged: {
+            tray.visible = hovered
+            trayBackground.visible = hovered
+        }
     }
 
     UI.IconText {
         text: tray.visible ? Theme.trayOpenIcon : Theme.trayClosedIcon
     }
 
-    Row {
-        id: tray
+    Rectangle {
+        id: trayBackground
         visible: false
+        color: Theme.trayBackground
+        radius: Theme.trayBackgroundRadius
+        implicitWidth: tray.implicitWidth + Theme.trayBackgroundPaddingH * 2
+        implicitHeight: tray.implicitHeight + Theme.trayBackgroundPaddingV * 2
 
-        Repeater {
-            id: itemsRepeater
-            model: SystemTray.items
-            delegate: TrayItem {
-                required property var modelData
-                item: modelData
-                window: root.window
+        Row {
+            id: tray
+            anchors.centerIn: parent
+
+            Repeater {
+                id: itemsRepeater
+                model: SystemTray.items
+                delegate: TrayItem {
+                    required property var modelData
+                    item: modelData
+                    window: root.window
+                }
             }
         }
     }
