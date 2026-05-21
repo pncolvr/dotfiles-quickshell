@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Layouts
 import Qt5Compat.GraphicalEffects
 
 import "../../theme/ui" as UI
@@ -67,29 +68,64 @@ Row {
             id: info
             width: parent.width
             anchors.verticalCenter: parent.verticalCenter
-            UI.ColumnText {
-                text: (root.user.online ? `${root.user.login} · ${root.user.game}` : root.user.login)
-                color: root.user.online ? Theme.text : Theme.inactive
+
+            RowLayout {
                 width: parent.width
-                horizontalAlignment: Text.AlignLeft
-                elide: Text.ElideRight
-                UI.HoverTooltip {
-                    text: parent.text
+                spacing: 4
+
+                UI.ColumnText {
+                    text: root.user.login
+                    color: root.user.online ? Theme.text : Theme.inactive
+                    elide: Text.ElideRight
+                    Layout.maximumWidth: parent.width / 2
+                    centerVertical: false
+                }
+
+                UI.ColumnText {
+                    visible: root.user.online
+                    text: "·"
+                    color: root.user.online ? Theme.text : Theme.inactive
+                    centerVertical: false
+                }
+
+                UI.ColumnText {
+                    visible: root.user.online
+                    text: root.user.online ? root.user.game : ""
+                    color: root.user.online ? Theme.text : Theme.inactive
+                    elide: Text.ElideMiddle
+                    Layout.fillWidth: true
+                    centerVertical: false
+                    UI.HoverTooltip { text: root.user.game }
                 }
             }
 
-            UI.ColumnText {
+            RowLayout {
                 visible: root.user.online
-                text: (root.user.online ? `${root.user.viewers} · ${root.user.title}` : "")
-                color: Theme.inactive
                 width: parent.width
-                horizontalAlignment: Text.AlignLeft
-                elide: Text.ElideRight
-                UI.HoverTooltip {
-                    text: parent.text
+                spacing: 4
+
+                UI.ColumnText {
+                    text: root.user.online ? root.user.viewers : ""
+                    color: root.user.online ? Theme.text : Theme.inactive
+                    Layout.preferredWidth: implicitWidth
+                    centerVertical: false
+                }
+
+                UI.ColumnText {
+                    text: "·"
+                    color: root.user.online ? Theme.text : Theme.inactive
+                    centerVertical: false
+                }
+
+                UI.ColumnText {
+                    text: root.user.online ? root.user.title : ""
+                    color: root.user.online ? Theme.text : Theme.inactive
+                    elide: Text.ElideMiddle
+                    Layout.fillWidth: true
+                    centerVertical: false
+                    UI.HoverTooltip { text: parent.text }
                 }
             }
-
         }
         MouseArea {
             anchors.fill: parent
