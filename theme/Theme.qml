@@ -12,6 +12,7 @@ Item {
   // readonly property color background:Qt.rgba(0,0,0,0.9)
   // readonly property color background:"#000000"
   readonly property color tooltipBackground: background
+  readonly property color alternateBackground: "#be1b1a1a"
   readonly property color accent: "#6272a4"
   readonly property color urgent: "#B80F0A"
   readonly property color ok: "#3E8E5A"
@@ -116,7 +117,8 @@ Item {
   readonly property string volumeMutedIcon: ""
   
   // stats
-  readonly property string statsToggleIcon: ""
+  readonly property string statsClosedIcon: ""
+  readonly property string statsOpenIcon: ""
   readonly property var powerProfileIcons: ["", "", ""]
 
   // network tooltip
@@ -136,10 +138,10 @@ Item {
   readonly property string trayClosedIcon: ""
   readonly property int trayItemWidth: 16
   readonly property int trayItemHeight: 16
-  readonly property color trayBackground: empty
-  readonly property int trayBackgroundRadius: 4
-  readonly property int trayBackgroundPaddingH: 6
-  readonly property int trayBackgroundPaddingV: 3
+  readonly property color expandedBackground: alternateBackground
+  readonly property int expandedBackgroundRadius: 4
+  readonly property int expandedBackgroundPaddingWidth: 6
+  readonly property int expandedBackgroundPaddingHeight: 3
 
   // notifications
   readonly property string notificationsDndEnabledIcon: ""

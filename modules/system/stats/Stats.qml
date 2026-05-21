@@ -12,6 +12,7 @@ UI.Row {
     onExpandedChanged: {
         StatsService.active = expanded
         NetworkService.active = expanded
+        statsBackground.visible = expanded
     }
     
     HoverHandler {
@@ -20,52 +21,61 @@ UI.Row {
     }
 
     UI.IconText {
-        text: Theme.statsToggleIcon
+        text: expanded ? Theme.statsOpenIcon : Theme.statsClosedIcon
     }
 
-    UI.Row {
-        id: items
-        spacing: Theme.moduleSpacing
-        visible: root.expanded
-        
-        UI.TooltipArea {
-            tooltipSource: root
-            tooltip: Component {
+    Rectangle {
+        id: statsBackground
+        visible: false
+        color: Theme.expandedBackground
+        radius: Theme.expandedBackgroundRadius
+        implicitWidth: items.implicitWidth + Theme.expandedBackgroundPaddingWidth * 2
+        implicitHeight: items.implicitHeight + Theme.expandedBackgroundPaddingHeight
+
+        UI.Row {
+            id: items
+            spacing: Theme.moduleSpacing
+            anchors.centerIn: parent
+
+            UI.TooltipArea {
+                tooltipSource: root
+                tooltip: Component {
+                    UI.Text {
+                        text: PowerProfileService.profile
+                    }
+                }
+                UI.IconButton {
+                    onClicked: PowerProfileService.cycleProfile()
+                    text: Theme.powerProfileIcons[Config.powerProfiles.indexOf(PowerProfileService.profile)]
+                }
+            }
+
+            UI.TooltipArea {
+                tooltipSource: root
+                tooltip: Component { MemoryTooltip {} }
                 UI.Text {
-                    text: PowerProfileService.profile
-                } 
+                    text: `${(StatsService.memoryUsed / 1024).toFixed(1)}G`
+                }
             }
-            UI.IconButton {
-                onClicked: PowerProfileService.cycleProfile()
-                text: Theme.powerProfileIcons[Config.powerProfiles.indexOf(PowerProfileService.profile)]
+
+            UI.TooltipArea {
+                tooltipSource: root
+                tooltip: Component { CpuTooltip {} }
+                UI.Text {
+                    text: `${String(StatsService.cpu).padStart(3)}%`
+                }
             }
-        }
-        
-        UI.TooltipArea {
-            tooltipSource: root
-            tooltip: Component { MemoryTooltip {} }
+
             UI.Text {
-                text: `${(StatsService.memoryUsed / 1024).toFixed(1)}G`
+                text: `${String(Math.round(StatsService.temperature)).padStart(3)}°C`
             }
-        }
 
-        UI.TooltipArea {
-            tooltipSource: root
-            tooltip: Component { CpuTooltip {} }
-            UI.Text {
-                text: `${String(StatsService.cpu).padStart(3)}%`
-            }
-        }
-
-        UI.Text {
-            text: `${String(Math.round(StatsService.temperature)).padStart(3)}°C`
-        }
-
-        UI.TooltipArea {
-            tooltipSource: root
-            tooltip: Component { NetworkTooltip {} }
-            UI.IconText {
-                text: Theme.networkIcon
+            UI.TooltipArea {
+                tooltipSource: root
+                tooltip: Component { NetworkTooltip {} }
+                UI.IconText {
+                    text: Theme.networkIcon
+                }
             }
         }
     }

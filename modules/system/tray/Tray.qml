@@ -24,10 +24,10 @@ UI.Row {
     Rectangle {
         id: trayBackground
         visible: false
-        color: Theme.trayBackground
-        radius: Theme.trayBackgroundRadius
-        implicitWidth: tray.implicitWidth + Theme.trayBackgroundPaddingH * 2
-        implicitHeight: tray.implicitHeight + Theme.trayBackgroundPaddingV * 2
+        color: Theme.expandedBackground
+        radius: Theme.expandedBackgroundRadius
+        implicitWidth: tray.implicitWidth + Theme.expandedBackgroundPaddingWidth * 2
+        implicitHeight: tray.implicitHeight + Theme.expandedBackgroundPaddingHeight * 2
 
         Row {
             id: tray
