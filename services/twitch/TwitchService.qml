@@ -193,7 +193,7 @@ Singleton {
                         })
 
                     if (newOnline.length > 0) {
-                        notifyProcess.command = ["notify-send", "--transient",
+                        notifyProcess.command = ["notify-send", "--urgency=low", "--transient",
                             "--icon", Qt.resolvedUrl("../../assets/twitch.png").toString().replace("file://", ""),
                             newOnline.join("\n")]
                         notifyProcess.running = true
