@@ -37,7 +37,7 @@ Row {
             UI.Text {
                 id: tabText
                 anchors.centerIn: parent
-                text: parent.modelData.title
+                text: parent.modelData.title.toLowerCase()
                 color: parent.modelData.active ? Theme.accent : Theme.inactive
             }
             MouseArea {
