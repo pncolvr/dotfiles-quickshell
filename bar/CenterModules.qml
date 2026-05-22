@@ -6,7 +6,7 @@ import "../modules/updates"
 Row {
     // spacing: Theme.moduleSpacing
     spacing: 8
-    Updates {}
-    Clock {}
-    Twitch {}
+    Updates { centerTooltip: true }
+    Clock { centerTooltip: true }
+    Twitch { centerTooltip: true }
 }

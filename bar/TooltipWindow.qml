@@ -9,7 +9,9 @@ TopPanelTooltip {
     contentWidth: loader.implicitWidth + Theme.tooltipPaddingWidth * 2
     contentHeight: loader.implicitHeight + Theme.tooltipPaddingHeight * 2
     contentX: {
-        const ideal = TooltipService.x - contentWidth / 2
+        const ideal = TooltipService.centered
+            ? (width - contentWidth) / 2
+            : TooltipService.x - contentWidth / 2
         return Math.max(0, Math.min(width - contentWidth, ideal))
     }
 
