@@ -23,7 +23,7 @@ UI.WrapperMouseArea {
         fillMode: Image.PreserveAspectFit
         smooth: true
         mipmap: true
-        source: root.item.icon
+        source: root.item?.icon ?? Quickshell.iconPath("application-x-executable", false)
     }
 
     QsMenuAnchor {
@@ -33,7 +33,7 @@ UI.WrapperMouseArea {
             var pos = root.window.contentItem.mapFromItem(root, 0, 0)
             return Qt.rect(pos.x, root.window.height, root.width, 0)
         }
-        menu: root.item.menu
+        menu: root.item?.menu ?? null
     }
     onClicked: (mouse) => {
         switch (mouse.button) {
