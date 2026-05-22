@@ -23,7 +23,7 @@ Row {
             required property var modelData
             required property int index
 
-            implicitWidth: tabText.implicitWidth + (WindowService.isSpecialWorkspace ? 16 : Theme.moduleSpacing)
+            implicitWidth: tabText.implicitWidth + (WindowService.isSpecialWorkspace ? Theme.groupedModuleSpacing : Theme.moduleSpacing)
             height: parent.height
 
             Rectangle {
@@ -36,7 +36,8 @@ Row {
 
             UI.Text {
                 id: tabText
-                anchors.centerIn: parent
+                anchors.left: parent.left
+                anchors.leftMargin: (WindowService.isSpecialWorkspace ? Theme.groupedModuleSpacing : Theme.moduleSpacing) / 2
                 text: parent.modelData.title.toLowerCase()
                 color: parent.modelData.active ? Theme.accent : Theme.inactive
             }

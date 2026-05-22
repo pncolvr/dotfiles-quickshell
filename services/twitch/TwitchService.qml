@@ -53,17 +53,11 @@ Singleton {
     }
 
     function openStream(login) {
-        helperProcess.command = Config.twitchStreamCommand(login, `${Config.twitchBaseUrl}${login}`)
-        helperProcess.running = true
+        Quickshell.execDetached(Config.twitchStreamCommand(login, `${Config.twitchBaseUrl}${login}`))
     }
 
     function openPicker() {
-        helperProcess.command = Config.twitchStreamCommand()
-        helperProcess.running = true
-    }
-
-    Process {
-        id: helperProcess
+        Quickshell.execDetached(Config.twitchStreamCommand())
     }
 
     function refresh() {
@@ -340,5 +334,10 @@ Singleton {
     Component.onCompleted: {
         scheduleCacheFile.reload()
         if (NetworkService.online) refresh()
+    }
+
+    IpcHandler {
+        target: "twitch"
+        function reload(): void { root.refresh() }
     }
 }

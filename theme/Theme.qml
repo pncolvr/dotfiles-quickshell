@@ -91,6 +91,7 @@ Item {
   readonly property color memoryTooltipSwapFreeColor: empty
   // modules
   readonly property int moduleSpacing: 5
+  readonly property int groupedModuleSpacing: 16
   readonly property int iconButtonWidth: 18
   readonly property int iconButtonHeight: 22
   readonly property int iconButtonRadius: 3

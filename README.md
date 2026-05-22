@@ -26,4 +26,5 @@ qs ipc call windows next # go to next window
 qs ipc call windows prev # go to previous windodw
 qs ipc call windows reload # manually reload window list
 qs ipc call windows focus [0-9] #index of the grouped window to move to
+qs ipc call twitch reload # reload twitch
 ```

@@ -80,9 +80,9 @@ Singleton {
                 case 3:
                     return Config.workspaceClassOverrides[className] ?? className
                 case 4:
-                    return className === "code"
-                        ? title.split("-")[0].trim()
-                        : title
+                    // return className === "code"
+                    //     ? title.split("$")[0].trim()
+                    //     : title
                 case 10:
                     return title
                 default:
