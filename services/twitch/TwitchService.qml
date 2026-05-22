@@ -164,9 +164,6 @@ Singleton {
         stdout: SplitParser {
             onRead: data => streamsProcess._buffer += data
         }
-        stderr: SplitParser {
-            onRead: data => console.warn("TwitchService streams error:", data)
-        }
         onRunningChanged: {
             if (!running && _buffer.length > 0) {
                 try {
@@ -244,9 +241,6 @@ Singleton {
         stdout: SplitParser {
             onRead: data => avatarQueryProcess._buffer += data
         }
-        stderr: SplitParser {
-            onRead: data => console.warn("TwitchService avatar error:", data)
-        }
         onRunningChanged: {
             if (!running && _buffer.length > 0) {
                 try {
@@ -270,9 +264,6 @@ Singleton {
 
     Process {
         id: downloadProcess
-        stderr: SplitParser {
-            onRead: data => console.warn("TwitchService download error:", data)
-        }
         onRunningChanged: if (!running) root._processQueue()
     }
 
@@ -284,33 +275,15 @@ Singleton {
         stdout: SplitParser {
             onRead: data => scheduleProcess._buffer += data
         }
-        stderr: SplitParser {
-            onRead: data => console.warn("TwitchService schedule error:", data)
-        }
         onRunningChanged: {
             if (!running) {
                 if (_buffer.length > 0) {
                     try {
                         const json = JSON.parse(_buffer)
                         const segments = json.data?.segments
-                        const now = new Date()
-                        const next = segments?.find(s => !s.canceled_until && new Date(s.start_time) > now)
+                        const next = segments?.find(s => s && !s.canceled_until && new Date(s.start_time) > new Date())
 
-                        let nextStream = ""
-                        if (next) {
-                            const d = new Date(next.start_time)
-                            const tomorrow = new Date()
-                            tomorrow.setDate(tomorrow.getDate() + 1)
-                            let dateStr
-                            if (d.toDateString() === now.toDateString())
-                                dateStr = "today"
-                            else if (d.toDateString() === tomorrow.toDateString())
-                                dateStr = "tomorrow"
-                            else
-                                dateStr = d.toLocaleDateString([], {weekday: 'short', month: 'short', day: 'numeric'})
-                            const timeStr = d.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})
-                            nextStream = `${dateStr} at ${timeStr}`
-                        }
+                        const nextStream = CalendarService.formatDate(next?.start_time)
 
                         const login = scheduleProcess._login
                         const key = login.toLowerCase()
