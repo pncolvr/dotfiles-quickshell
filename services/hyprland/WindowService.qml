@@ -37,7 +37,7 @@ Singleton {
     }
 
     function _setNoWarps(value) {
-        warpsHelperProcess.command = ["hyprctl", "eval", `hl.config({ cursor = { no_warps = ${value} } })`]
+        warpsHelperProcess.command = Config.hyprlandSetNoWarpsCommand(value)
         warpsHelperProcess.running = true
     }
 
@@ -148,14 +148,14 @@ Singleton {
     }
 
     function buildWindows() {
-        clientsProcess.command = ["hyprctl", "clients", "-j"]
+        clientsProcess.command = Config.hyprlandGetWindowsCommand
         clientsProcess._buffer = ""
         clientsProcess.running = true
         activeWindowHiddenProcess.running = true
     }
 
     function focusWindow(address) {
-        Hyprland.dispatch(`hl.dsp.focus({ window = "address:${address}" })`)
+        Hyprland.dispatch(Config.hyprlandFocusWindowByAddress(address))
     }
 
     function cycleNext() {
@@ -166,7 +166,7 @@ Singleton {
             const next = _internal.windows[(idx + 1) % _internal.windows.length]
             if (next) focusWindow(next.address)
         } else {
-            Hyprland.dispatch("hl.dsp.window.cycle_next({ tiled = true })")
+            Hyprland.dispatch(Config.hyprlandCycleNextTiled)
         }
     }
 
@@ -188,7 +188,7 @@ Singleton {
             const prev = _internal.windows[(idx - 1 + _internal.windows.length) % _internal.windows.length]
             if (prev) focusWindow(prev.address)
         } else {
-            Hyprland.dispatch("hl.dsp.window.cycle_prev({ tiled = true })")
+            Hyprland.dispatch(Config.hyprlandCyclePreviousTiled)
         }
     }
 

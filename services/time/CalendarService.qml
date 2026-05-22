@@ -19,16 +19,16 @@ Singleton {
 
     function formatDate(date) {
         if (!date) return ""
-        let format = "yyyy-MM-dd 'at' hh:mm"
+        const time = " 'at' hh:mm"
+        let format = "yyyy-MM-dd"
         const d = new Date(date)
         const d2 = new Date()
         if (d.isSameDay(d2)) {
-            format = "'today at' hh:mm"
+            format = "'today'"
         } else if (d.isSameDay(d2.addDays(1))) {
-            format = "'tomorrow at' hh:mm"
+            format = "'tomorrow'"
         }
-        
-        return Qt.formatDateTime(d, format)
+        return Qt.formatDateTime(d, format + time)
     }
 
     Component.onCompleted: {

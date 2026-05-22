@@ -54,9 +54,12 @@ Item {
 
     readonly property string twitchUsersFile: Qt.resolvedUrl("./twitch-users").toString().replace("file://", "")
     readonly property int twitchInterval: Timespan.fromMinutes(5)
-    readonly property var twitchStreamCommand: (login, url) => login
-        ? ["setsid", `${_internal.home}/.config/hypr/scripts/tolocalplayer.sh`, login, url]
-        : ["setsid", `${_internal.home}/.config/hypr/scripts/tolocalplayer.sh`]
+    readonly property var twitchStreamCommand: function (login, url) {
+        return login
+            ? ["setsid", `${_internal.home}/.config/hypr/scripts/tolocalplayer.sh`, login, url]
+            : ["setsid", `${_internal.home}/.config/hypr/scripts/tolocalplayer.sh`]
+    }
+
     readonly property string twitchBaseUrl: "https://www.twitch.tv/"
 
     readonly property string twitchCacheDir: `${Quickshell.env("XDG_CACHE_HOME") ?? _internal.home + "/.cache"}/quickshell/twitch`
@@ -95,9 +98,14 @@ Item {
     readonly property var memoryDetailCommand: ["bash", "-c", "free -m | awk '/Mem/{print $2,$3,$4,$6,$7} /Swap/{print $2,$3,$4}'"]
     readonly property var tempCommand: ["bash", "-c", "cat /sys/class/thermal/thermal_zone1/temp"]
 
+    readonly property var hyprlandGetWindowsCommand: ["hyprctl", "clients", "-j"]
     readonly property var hyprlandGetNoWarpsCommand: ["bash", "-c", "hyprctl getoption cursor:no_warps -j | jq -r '.bool'"]
+    readonly property var hyprlandSetNoWarpsCommand: (value) => ["hyprctl", "eval", `hl.config({ cursor = { no_warps = ${value} } })`]
     readonly property var hyprlandGetActiveWindowHiddenCommand: ["bash", "-c", "hyprctl getprop activewindow no_screen_share"]
-    readonly property var hyprlandHideApplicationsCommand: active => ["hyprctl", "eval", `HideApplications(${active})`]
+    readonly property var hyprlandHideApplicationsCommand: (active) => ["hyprctl", "eval", `HideApplications(${active})`]
+    readonly property var hyprlandFocusWindowByAddress: (address) => `hl.dsp.focus({ window = "address:${address}" })`
+    readonly property string hyprlandCycleNextTiled: "hl.dsp.window.cycle_next({ tiled = true })"
+    readonly property string hyprlandCyclePreviousTiled: "hyprctl", "dispatch", "hl.dsp.window.cycle_prev({ tiled = true })"
 
     readonly property var powerProfiles: ["power-saver", "balanced", "performance"]
     readonly property string powerProfilesDefaultProfile: "balanced"
