@@ -117,7 +117,7 @@ Item {
   readonly property string volumeMutedIcon: ""
   
   // stats
-  readonly property string statsClosedIcon: ""
+  readonly property string statsClosedIcon: ""
   readonly property string statsOpenIcon: ""
   readonly property var powerProfileIcons: ["", "", ""]
 
