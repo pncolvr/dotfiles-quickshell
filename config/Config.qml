@@ -94,6 +94,7 @@ Item {
     readonly property int networkRetryInterval: Timespan.fromSeconds(5)
     readonly property int networkAlertInterval: Timespan.fromMinutes(1)
     readonly property int tooltipHideDelay: Timespan.fromMilliseconds(150)
+    readonly property int debounceInterval: Timespan.fromMilliseconds(50)
     readonly property var cpuCommand: ["cat", "/proc/stat"]
     readonly property var memoryDetailCommand: ["bash", "-c", "free -m | awk '/Mem/{print $2,$3,$4,$6,$7} /Swap/{print $2,$3,$4}'"]
     readonly property var tempCommand: ["bash", "-c", "cat /sys/class/thermal/thermal_zone1/temp"]

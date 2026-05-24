@@ -2,6 +2,7 @@ pragma Singleton
 
 import QtQuick
 import "../config"
+import "../services"
 
 Item {
   // colors
@@ -30,7 +31,7 @@ Item {
 
   SequentialAnimation on pulsePhase {
     loops: Animation.Infinite
-    running: true
+    running: AudioService.muted || AudioService.micMuted || AudioService.screencastActive
     NumberAnimation { from: 0; to: 1; duration: Theme.pulsingTextDuration / 2; easing.type: Easing.InOutSine }
     NumberAnimation { from: 1; to: 0; duration: Theme.pulsingTextDuration / 2; easing.type: Easing.InOutSine }
   }

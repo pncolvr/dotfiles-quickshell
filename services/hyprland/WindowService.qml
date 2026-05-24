@@ -148,10 +148,19 @@ Singleton {
     }
 
     function buildWindows() {
-        clientsProcess.command = Config.hyprlandGetWindowsCommand
-        clientsProcess._buffer = ""
-        clientsProcess.running = true
-        activeWindowHiddenProcess.running = true
+        buildWindowsTimer.restart()
+    }
+
+    Timer {
+        id: buildWindowsTimer
+        interval: Config.debounceInterval
+        repeat: false
+        onTriggered: {
+            clientsProcess.command = Config.hyprlandGetWindowsCommand
+            clientsProcess._buffer = ""
+            clientsProcess.running = true
+            activeWindowHiddenProcess.running = true
+        }
     }
 
     function focusWindow(address) {

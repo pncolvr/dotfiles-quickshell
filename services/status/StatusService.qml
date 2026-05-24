@@ -19,8 +19,17 @@ Singleton {
         property string source: ""
     }
     function reload() {
-        checkProcess.running = true
-        sourceProcess.running = true
+        reloadTimer.restart()
+    }
+
+    Timer {
+        id: reloadTimer
+        interval: Config.debounceInterval
+        repeat: false
+        onTriggered: {
+            checkProcess.running = true
+            sourceProcess.running = true
+        }
     }
 
     function toggle() {
