@@ -26,38 +26,35 @@ Row {
         return v.slice(shared.length)
     }
 
+    function escapeHtml(s) {
+        return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    }
+
     property string _shared: sharedPrefix(update.oldVersion, update.newVersion)
 
     UI.ColumnText {
+        id: name
         text: root.update.name
         color: root.nameColor
         elide: Text.ElideMiddle
-        width: parent.width - versionShared.implicitWidth - versionOld.implicitWidth - versionNew.implicitWidth - root.spacing
+        width: root.width - versions.width - root.spacing
 
         UI.HoverTooltip {
             text: parent.text
         }
     }
 
-    Row {
-        spacing: 0
-
-        UI.ColumnText {
-            id: versionShared
-            text: root._shared
-            color: Theme.inactive
-        }
-
-        UI.ColumnText {
-            id: versionOld
-            text: root.diffSuffix(root.update.oldVersion, root._shared)
-            color: Theme.urgent
-        }
-    }
-
     UI.ColumnText {
-        id: versionNew
-        text: root.diffSuffix(root.update.newVersion, root._shared)
-        color: Theme.active
+        id: versions
+        textFormat: Text.StyledText
+        elide: Text.ElideMiddle
+        width: Math.min(implicitWidth, root.width - Math.min(name.implicitWidth, root.width * 0.4))
+        text: `<font color="${Theme.inactive}">${root.escapeHtml(root._shared)}</font>`
+            + `<font color="${Theme.urgent}">${root.escapeHtml(root.diffSuffix(root.update.oldVersion, root._shared))}</font>`
+            + `<font color="${Theme.active}">${root.escapeHtml(root.diffSuffix(root.update.newVersion, root._shared))}</font>`
+
+        UI.HoverTooltip {
+            text: `${root.update.oldVersion} ➡ ${root.update.newVersion}`
+        }
     }
 }

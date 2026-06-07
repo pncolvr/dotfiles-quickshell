@@ -18,18 +18,19 @@ Item {
     }
     readonly property var updatesPriorityPatterns: [
         "^discord",
-        "^linux",
-        "nvidia",
-        "^vivaldi",
-        "^steam",
         "^firewall",
-        "^visual-studio-code-bin",
         "^grub",
         "^hypr",
-        "^streamcontroller",
+        "keyring",
+        "^linux",
+        "nvidia",
+        "^quickshell",
         "^signal",
+        "^steam",
+        "^streamcontroller",
         "systemd",
-        "^quickshell"
+        "^visual-studio-code-bin",
+        "^vivaldi"
     ]
 
     readonly property var windowTitleCleanPatterns: [
