@@ -16,6 +16,12 @@ Column {
         width: parent.width
         horizontalAlignment: Text.AlignHCenter
         color: Theme.text
+
+        UI.HoverTooltip {
+            cursorShape: Qt.PointingHandCursor
+            text: "open all updates"
+            onClicked: UpdatesService.openMarkdown()
+        }
     }
 
     Rectangle {

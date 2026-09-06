@@ -4,8 +4,14 @@ import "../../theme"
 import "../../services"
 
 UI.TooltipArea {
+    cursorShape: Qt.PointingHandCursor
     tooltip: Component { UpdatesTooltip {} }
     onClicked: UpdatesService.install()
+
+    HoverHandler {
+        cursorShape: Qt.PointingHandCursor
+    }
+
     Row {
         spacing: 4
 

@@ -46,7 +46,8 @@ Item {
 
     readonly property int updatesMax: 30
     readonly property int updatesInterval: Timespan.fromHours(1)
-    readonly property var updatesCheckCommand: ["bash", "-c", "yay -Qu 2>/dev/null | sort"]
+    readonly property string updatesMarkdownFile: `${_internal.runtimeDirectory}/quickshell-updates.md`
+    readonly property var updatesCheckCommand: ["bash", "-c", "updates=$(yay -Qu 2>/dev/null); names=$(printf '%s\\n' \"$updates\" | awk '{print $1}'); metadata=$(yay -Si $names 2>/dev/null); printf '%s\\n' \"$updates\" | while read -r name old arrow new; do source=$(printf '%s\\n' \"$metadata\" | awk -v name=\"$name\" -v version=\"$new\" '$1==\"Repository\" {repo=$3} $1==\"Name\" {candidate=$3} $1==\"Version\" {matches=(candidate==name && $3==version)} matches && $1==\"Architecture\" {print repo, $3; exit}'); read -r repo architecture <<< \"$source\"; printf '%s %s %s %s %s\\n' \"${repo:-unknown}\" \"${architecture:-x86_64}\" \"$name\" \"$old\" \"$new\"; done | sort"]
     readonly property var updatesInstallCommand: ["setsid", "ghostty", "-e", "yay"]
 
     readonly property string submapParserCommand: _internal.home +  "/.config/hypr/scripts/keybinds/parser.sh"

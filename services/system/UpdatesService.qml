@@ -31,8 +31,42 @@ Singleton {
         installProcess.running = true
     }
 
+    function packageUrl(update) {
+        if (update.repository === "aur") {
+            return `https://aur.archlinux.org/packages/${update.name}`
+        }
+        if (update.repository.startsWith("endeavouros")) {
+            return `https://packages.endeavouros.com/package/${update.repository}/${update.architecture}/${update.name}`
+        }
+        if (update.repository.startsWith("cachyos")) {
+            return `https://packages.cachyos.org/package/${update.repository}/${update.architecture}/${update.name}`
+        }
+        return `https://archlinux.org/packages/${update.repository}/${update.architecture}/${update.name}`
+    }
+
+    function openPackage(update) {
+        if (update.repository === "unknown") return
+        Qt.openUrlExternally(packageUrl(update))
+    }
+
+    function markdownRow(update) {
+        return `- [${update.name}](${packageUrl(update)}): ${update.oldVersion} -> ${update.newVersion}`
+    }
+
+    function openMarkdown() {
+        const priority = root.priorityUpdates.map(root.markdownRow).join("\n")
+        const normal = root.normalUpdates.map(root.markdownRow).join("\n")
+        const markdown = `# Available Updates\n\n## Priority Updates\n\n${priority || "No priority updates."}\n\n## Other Updates\n\n${normal || "No other updates."}\n`
+        markdownProcess.command = ["bash", "-c", "printf '%s' \"$1\" | base64 -d > \"$2\" && xdg-open \"$2\"", "updates-markdown", Qt.btoa(markdown), Config.updatesMarkdownFile]
+        markdownProcess.running = true
+    }
+
     Process {
         id: installProcess
+    }
+
+    Process {
+        id: markdownProcess
     }
 
     function refresh() {
@@ -55,11 +89,13 @@ Singleton {
                 if (!line) return
                 const parts = line.split(/\s+/)
                 const update = {
-                    name: parts[0],
-                    oldVersion: parts[1],
-                    newVersion: parts[3]
+                    repository: parts[0],
+                    architecture: parts[1],
+                    name: parts[2],
+                    oldVersion: parts[3],
+                    newVersion: parts[4]
                 }
-                if (root.isPriority(line)) {
+                if (root.isPriority(update.name)) {
                     _internal.priorityUpdates = [..._internal.priorityUpdates, update]
                 } else {
                     _internal.normalUpdates = [..._internal.normalUpdates, update]
