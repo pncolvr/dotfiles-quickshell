@@ -6,8 +6,8 @@ import "../services"
 
 Item {
   // colors
-  // readonly property color background:Qt.rgba(0,0,0,0.9)
-  readonly property color background:'#222225'
+  readonly property color background:Qt.rgba(0,0,0,1)
+  // readonly property color background:'#222225'
   readonly property color text:"#d8dadc"
 
   // readonly property color background:Qt.rgba(0,0,0,0.9)

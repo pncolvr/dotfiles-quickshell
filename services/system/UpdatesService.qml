@@ -15,6 +15,7 @@ Singleton {
     readonly property int count: _internal.count
     readonly property bool hasUpdates: _internal.hasUpdates
     readonly property bool hasPriority: _internal.hasPriority
+    readonly property date lastChecked: _internal.lastChecked
 
     QtObject {
         id: _internal
@@ -24,6 +25,7 @@ Singleton {
         property int count: updates.length
         property bool hasUpdates: count > 0
         property bool hasPriority: priorityUpdates.length > 0
+        property date lastChecked: new Date(0)
     }
 
     function install() {
@@ -70,6 +72,8 @@ Singleton {
     }
 
     function refresh() {
+        if (updatesProcess.running) return;
+        
         _internal.updates = []
         _internal.priorityUpdates = []
         _internal.normalUpdates = []
@@ -80,9 +84,16 @@ Singleton {
         return Config.updatesPriorityPatterns.some(p => new RegExp(p).test(line))
     }
 
+    function sortUpdates(updates) {
+        return [...updates].sort((left, right) => left.name.localeCompare(right.name))
+    }
+
     Process {
         id: updatesProcess
         command: Config.updatesCheckCommand
+        onExited: exitCode => {
+            if (exitCode === 0) _internal.lastChecked = new Date()
+        }
         stdout: SplitParser {
             onRead: data => {
                 const line = data.trim()
@@ -96,9 +107,9 @@ Singleton {
                     newVersion: parts[4]
                 }
                 if (root.isPriority(update.name)) {
-                    _internal.priorityUpdates = [..._internal.priorityUpdates, update]
+                    _internal.priorityUpdates = root.sortUpdates([..._internal.priorityUpdates, update])
                 } else {
-                    _internal.normalUpdates = [..._internal.normalUpdates, update]
+                    _internal.normalUpdates = root.sortUpdates([..._internal.normalUpdates, update])
                 }
                 _internal.updates = [..._internal.priorityUpdates, ...root.normalUpdates]
             }
@@ -113,13 +124,13 @@ Singleton {
 
     Timer {
         interval: Config.updatesInterval
-        running: true && NetworkService.online
+        running: true
         repeat: true
         triggeredOnStart: false
         onTriggered: root.refresh()
     }
 
     Component.onCompleted: {
-        if (NetworkService.online) refresh()
+        refresh()
     }
 }

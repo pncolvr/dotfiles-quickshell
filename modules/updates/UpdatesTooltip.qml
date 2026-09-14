@@ -24,6 +24,14 @@ Column {
         }
     }
 
+    UI.ColumnText {
+        visible: UpdatesService.hasUpdates
+        text: `last checked ${Qt.formatTime(UpdatesService.lastChecked, "HH:mm")}`
+        width: parent.width
+        horizontalAlignment: Text.AlignHCenter
+        color: Theme.inactive
+    }
+
     Rectangle {
         visible: UpdatesService.hasUpdates
         width: parent.width
