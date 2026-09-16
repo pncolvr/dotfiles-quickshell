@@ -47,6 +47,14 @@ Column {
         color: Theme.inactive
     }
 
+    UI.ColumnText {
+        visible: !UpdatesService.hasUpdates
+        text: `last checked ${Qt.formatTime(UpdatesService.lastChecked, "HH:mm")}`
+        width: parent.width
+        horizontalAlignment: Text.AlignHCenter
+        color: Theme.inactive
+    }
+
     Repeater {
         model: UpdatesService.priorityUpdates.slice(0, Config.updatesMax)
         delegate: UpdateRow {
