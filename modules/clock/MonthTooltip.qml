@@ -18,6 +18,7 @@ Item {
 
     QtObject {
         id: _internal
+        property int todayWeekDay: (new Date(TimeService.time).getDay() + 6) % 7
         property int todayDay: new Date(TimeService.time).getDate()
         property int todayMonth: new Date(TimeService.time).getMonth()
         property int todayYear: new Date(TimeService.time).getFullYear()
@@ -39,6 +40,10 @@ Item {
         d.setDate(d.getDate() + 3 - (d.getDay() + 6) % 7)
         const week1 = new Date(d.getFullYear(), 0, 4)
         return 1 + Math.round(((d - week1) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7)
+    }
+
+    function isTodayWeekday(weekDayName) {
+        return Theme.calendarDayNames[_internal.todayWeekDay] == weekDayName
     }
 
     WheelHandler {
@@ -86,7 +91,7 @@ Item {
                     required property string modelData
                     width: Theme.calendarCellWidth
                     text: modelData
-                    color: Theme.calendarHeaderText
+                    color: root.isTodayWeekday(modelData) ? Theme.accent : Theme.calendarHeaderText
                     horizontalAlignment: Text.AlignHCenter
                 }
             }
