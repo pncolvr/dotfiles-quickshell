@@ -23,7 +23,6 @@ Item {
         property int todayMonth: new Date(TimeService.time).getMonth()
         property int todayYear: new Date(TimeService.time).getFullYear()
     }
-    
 
     function daysInMonth(month, year) {
         return new Date(year, month + 1, 0).getDate()
@@ -133,11 +132,16 @@ Item {
                             root.displayMonth === _internal.todayMonth &&
                             root.displayYear === _internal.todayYear
                         property bool valid: dayNum >= 1 && dayNum <= root.daysInMonth(root.displayMonth, root.displayYear)
+                        property var holidayName: valid
+                            ? CalendarService.holidayFor(new Date(root.displayYear, root.displayMonth, dayNum))
+                            : null
 
                         width: Theme.calendarCellWidth
                         height: Theme.calendarCellHeight
                         radius: Theme.calendarCellRadius
-                        color: isToday ? Theme.calendarTodayBackground : "transparent"
+                        color: 
+                            isToday ? Theme.calendarTodayBackground
+                            : holidayName ? Theme.active : "transparent"
 
                         UI.ColumnText {
                             anchors.centerIn: parent
@@ -149,13 +153,14 @@ Item {
                             horizontalAlignment: Text.AlignHCenter
                             verticalAlignment: Text.AlignVCenter
 
-                            UI.HoverTooltip {
-                                enabled: day.valid
-                                cursorShape: Qt.PointingHandCursor
-                                text: CalendarService.dateUrl(new Date(root.displayYear, root.displayMonth, day.dayNum))
-                                delay: Theme.calendarDayTooltipDelay
-                                onClicked: CalendarService.openDate(new Date(root.displayYear, root.displayMonth, day.dayNum))
-                            }
+                        }
+
+                        UI.HoverTooltip {
+                            enabled: day.valid
+                            cursorShape: Qt.PointingHandCursor
+                            text: day.holidayName || CalendarService.dateUrl(new Date(root.displayYear, root.displayMonth, day.dayNum))
+                            delay: Theme.calendarDayTooltipDelay
+                            onClicked: CalendarService.openDate(new Date(root.displayYear, root.displayMonth, day.dayNum))
                         }
                     }
                 }

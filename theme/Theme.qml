@@ -26,7 +26,7 @@ Item {
   readonly property color pulsingTextPulseColor: urgent
   readonly property color screencastPulseColor: active
   readonly property int pulsingTextDuration: Timespan.fromSeconds(2)
-  readonly property int calendarDayTooltipDelay: Timespan.fromSeconds(2)
+  readonly property int calendarDayTooltipDelay: Timespan.fromSeconds(1)
   property real pulsePhase: 0
 
   SequentialAnimation on pulsePhase {
