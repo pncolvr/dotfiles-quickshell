@@ -6,6 +6,8 @@ import Quickshell.Io
 import "../../config"
 import "../"
 
+// reload with: qs ipc call updates reload
+
 Singleton {
     id: root
 
@@ -115,22 +117,29 @@ Singleton {
             }
         }
     }
+    Process {
+        id: refreshScriptProcess
+        command: Config.updatesRefreshCommand
+    }
+
+    function refreshIfOnline() {
+        if (NetworkService.online) refreshScriptProcess.running = true
+    }
+
     Connections {
         target: NetworkService
         function onOnlineChanged() {
-            if (NetworkService.online) root.refresh()
+            root.refreshIfOnline()
         }
     }
 
-    Timer {
-        interval: Config.updatesInterval
-        running: true
-        repeat: true
-        triggeredOnStart: false
-        onTriggered: root.refresh()
+    IpcHandler {
+        target: "updates"
+        function reload(): void { root.refresh() }
     }
 
     Component.onCompleted: {
         refresh()
+        refreshIfOnline()
     }
 }
