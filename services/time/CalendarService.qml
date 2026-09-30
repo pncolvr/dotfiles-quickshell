@@ -41,7 +41,8 @@ Singleton {
     function _key(date) {
         return `${date.getFullYear()}-${_pad(date.getMonth() + 1)}-${_pad(date.getDate())}`;
     }
-
+    
+    // https://en.wikipedia.org/wiki/Date_of_Easter#Anonymous_Gregorian_algorithm
     function _computeEaster(year) {
         const a = year % 19;
         const b = Math.floor(year / 100);
@@ -65,11 +66,28 @@ Singleton {
             return;
 
         const easter = _computeEaster(year);
+        // https://en.wikipedia.org/wiki/Public_holidays_in_Portugal
         const goodFriday = easter.addDays(-2);
         const carnival = easter.addDays(-47);
         const corpusChristi = easter.addDays(60);
 
-        const entries = [[new Date(year, 0, 1), "Ano Novo"], [carnival, "Carnaval (facultativo)"], [goodFriday, "Sexta-Feira Santa"], [easter, "Páscoa"], [new Date(year, 3, 25), "Dia da Liberdade"], [new Date(year, 4, 1), "Dia do Trabalhador"], [new Date(year, 4, 22), "Dia de Leiria"], [new Date(year, 5, 10), "Dia de Portugal"], [corpusChristi, "Corpo de Deus"], [new Date(year, 7, 15), "Assunção de Nossa Senhora"], [new Date(year, 9, 5), "Implantação da República"], [new Date(year, 10, 1), "Todos os Santos"], [new Date(year, 11, 1), "Restauração da Independência"], [new Date(year, 11, 8), "Imaculada Conceição"], [new Date(year, 11, 25), "Natal"],];
+        const entries = [
+            [new Date(year, 0, 1), "Ano Novo"],
+            [carnival, "Carnaval (facultativo)"],
+            [goodFriday, "Sexta-Feira Santa"],
+            [easter, "Páscoa"],
+            [new Date(year, 3, 25), "Dia da Liberdade"],
+            [new Date(year, 4, 1), "Dia do Trabalhador"],
+            [new Date(year, 4, 22), "Dia de Leiria"],
+            [new Date(year, 5, 10), "Dia de Portugal"],
+            [corpusChristi, "Corpo de Deus"],
+            [new Date(year, 7, 15), "Assunção de Nossa Senhora"],
+            [new Date(year, 9, 5), "Implantação da República"],
+            [new Date(year, 10, 1), "Todos os Santos"],
+            [new Date(year, 11, 1), "Restauração da Independência"],
+            [new Date(year, 11, 8), "Imaculada Conceição"],
+            [new Date(year, 11, 25), "Natal"]
+        ];
 
         const map = {};
         for (const [date, name] of entries) {

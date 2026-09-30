@@ -14,6 +14,7 @@ Item {
 
     MouseArea {
         id: mouseArea
+        enabled: root.enabled
         anchors.fill: parent
         hoverEnabled: true
         cursorShape: root.cursorShape
@@ -21,6 +22,7 @@ Item {
     }
 
     QC.ToolTip {
+        enabled: root.enabled
         visible: mouseArea.containsMouse && root.text.length > 0
         text: root.text
         delay: root.delay
