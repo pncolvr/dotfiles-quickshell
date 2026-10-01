@@ -107,6 +107,7 @@ Item {
     readonly property var hyprlandSetNoWarpsCommand: (value) => ["hyprctl", "eval", `hl.config({ cursor = { no_warps = ${value} } })`]
     readonly property var hyprlandGetActiveWindowHiddenCommand: ["bash", "-c", "hyprctl getprop activewindow no_screen_share"]
     readonly property var hyprlandHideApplicationsCommand: (active) => ["hyprctl", "eval", `HideApplications(${active})`]
+    readonly property var hyprlandToggleAnimationsCommand: (active) => ["hyprctl", "eval", `ToggleAnimations(${active})`]
     readonly property var hyprlandFocusWindowByAddress: (address) => `hl.dsp.focus({ window = "address:${address}" })`
     readonly property string hyprlandCycleNextTiled: "hl.dsp.window.cycle_next({ tiled = true })"
     readonly property string hyprlandCyclePreviousTiled: "hyprctl", "dispatch", "hl.dsp.window.cycle_prev({ tiled = true })"

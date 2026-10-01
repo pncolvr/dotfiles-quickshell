@@ -22,6 +22,7 @@ Singleton {
         target: AudioService
         function onScreencastActiveChanged() {
             hideApplicationsProcess.command = Config.hyprlandHideApplicationsCommand(AudioService.screencastActive)
+            hideApplicationsProcess.command = Config.hyprlandToggleAnimationsCommand(AudioService.screencastActive)
             hideApplicationsProcess.running = true
             WindowService.buildWindows()
         }
