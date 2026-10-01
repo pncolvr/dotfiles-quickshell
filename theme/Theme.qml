@@ -62,7 +62,7 @@ Item {
   readonly property int calendarWidth: 225
   readonly property int calendarCellWidth: 26
   readonly property int calendarCellHeight: 26
-  readonly property int calendarCellRadius: 13
+  readonly property int calendarCellRadius: 3
   readonly property int calendarSpacing: 2
 
   readonly property color calendarTodayBackground: accent
