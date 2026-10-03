@@ -84,7 +84,7 @@ Item {
   readonly property string totpCancelIcon: ""
   readonly property string totpSaveIcon: ""
   readonly property string totpRetryIcon: ""
-  readonly property int totpTooltipWidth: 520
+  readonly property int totpTooltipWidth: 380
   readonly property int totpRowHeight: 34
   readonly property int totpSpacing: 6
   readonly property int totpFooterMargin: 8
