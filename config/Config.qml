@@ -45,6 +45,7 @@ Item {
     })
 
     readonly property int updatesMax: 30
+    readonly property int updatesScheduleDelay: Timespan.fromSeconds(30)
     readonly property string updatesMarkdownFile: `${_internal.runtimeDirectory}/quickshell-updates.md`
     readonly property string updatesCacheFile: `${_internal.home}/.cache/quickshell/updates.cache`
     readonly property var updatesCheckCommand: ["bash", "-c", `cat "${_internal.home}/.cache/quickshell/updates.cache" 2>/dev/null`]
@@ -107,10 +108,9 @@ Item {
     readonly property var hyprlandSetNoWarpsCommand: (value) => ["hyprctl", "eval", `hl.config({ cursor = { no_warps = ${value} } })`]
     readonly property var hyprlandGetActiveWindowHiddenCommand: ["bash", "-c", "hyprctl getprop activewindow no_screen_share"]
     readonly property var hyprlandHideApplicationsCommand: (active) => ["hyprctl", "eval", `HideApplications(${active})`]
-    readonly property var hyprlandToggleAnimationsCommand: (active) => ["hyprctl", "eval", `ToggleAnimations(${active})`]
     readonly property var hyprlandFocusWindowByAddress: (address) => `hl.dsp.focus({ window = "address:${address}" })`
     readonly property string hyprlandCycleNextTiled: "hl.dsp.window.cycle_next({ tiled = true })"
-    readonly property string hyprlandCyclePreviousTiled: "hyprctl", "dispatch", "hl.dsp.window.cycle_prev({ tiled = true })"
+    readonly property string hyprlandCyclePreviousTiled: "hl.dsp.window.cycle_prev({ tiled = true })"
 
     readonly property var powerProfiles: ["power-saver", "balanced", "performance"]
     readonly property string powerProfilesDefaultProfile: "balanced"

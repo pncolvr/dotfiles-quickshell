@@ -31,12 +31,20 @@ cache_file="$cache_dir/updates.cache"
 
 mkdir -p "$cache_dir" || exit 0
 tmp_file="$(mktemp "$cache_dir/updates.cache.XXXXXX" 2>/dev/null)" || exit 0
-trap 'rm -f "$tmp_file"' EXIT
+err_file="$(mktemp "$cache_dir/updates.err.XXXXXX" 2>/dev/null)" || exit 0
+trap 'rm -f "$tmp_file" "$err_file"' EXIT
 
-raw_updates="$(yay -Qu 2>/dev/null || true)"
+raw_updates="$(yay -Qu 2>"$err_file")"
+yay_status=$?
+
+# yay -Qu exits 1 with no stderr when there are simply no updates
+if (( yay_status != 0 )) && [[ -s "$err_file" ]]; then
+    qs ipc call updates schedule 2>/dev/null || true
+    exit 0
+fi
 
 if [[ -z "$raw_updates" ]]; then
-    : > "$tmp_file"
+    : > "$cache_file"
 else
     mapfile -t names < <(awk '{print $1}' <<< "$raw_updates")
 
@@ -60,8 +68,7 @@ else
         arch="${arch_of[$pkg]:-x86_64}"
         printf "%s %s %s %s %s\n" "$repo" "$arch" "$pkg" "$old" "$new"
     done <<< "$raw_updates" | sort > "$tmp_file"
+    cat "$tmp_file" > "$cache_file" 2>/dev/null || cp "$tmp_file" "$cache_file" 2>/dev/null || true
 fi
-
-cat "$tmp_file" > "$cache_file" 2>/dev/null || cp "$tmp_file" "$cache_file" 2>/dev/null || true
 qs ipc call updates reload 2>/dev/null || true
 exit 0

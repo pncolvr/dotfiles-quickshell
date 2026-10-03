@@ -7,6 +7,7 @@ import "../../config"
 import "../"
 
 // reload with: qs ipc call updates reload
+// schedule: qs ipc call updates schedule
 
 Singleton {
     id: root
@@ -133,9 +134,17 @@ Singleton {
         }
     }
 
+    Timer {
+        id: scheduleTimer
+        interval: Config.updatesScheduleDelay
+        repeat: false
+        onTriggered: root.refreshIfOnline()
+    }
+
     IpcHandler {
         target: "updates"
         function reload(): void { root.refresh() }
+        function schedule(): void { scheduleTimer.restart() }
     }
 
     Component.onCompleted: {
