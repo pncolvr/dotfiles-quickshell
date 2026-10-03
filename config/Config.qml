@@ -80,6 +80,8 @@ Item {
     readonly property var notificationsManagerOpenPanelCommand:[_internal.notificationsManager, "--open-panel"]
 
     readonly property string preferredMicName: "PRO X 2 LIGHTSPEED"
+    readonly property real micActivityThreshold: 0.02
+    readonly property int micActivityHold: 200
     readonly property var mixerCommand: ["pavucontrol"]
 
     readonly property var screencastSoundCommand: sound => ["canberra-gtk-play", "-i", sound]

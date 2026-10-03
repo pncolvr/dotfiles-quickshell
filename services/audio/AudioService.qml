@@ -35,6 +35,29 @@ Singleton {
     }
 
     property bool micMuted: source?.audio?.muted ?? false
+    readonly property bool micActivityEnabled: micMonitor.enabled
+    readonly property bool micActive: micActivityEnabled && micActivityRelease.running
+
+    PwNodePeakMonitor {
+        id: micMonitor
+        node: root.source
+        enabled: root.micCaptureNodes.length > 0 && root.source !== null && !root.micMuted
+        onEnabledChanged: {
+            if (!enabled) micActivityRelease.stop()
+        }
+        onPeakChanged: {
+            if (enabled && peak >= Config.micActivityThreshold)
+                micActivityRelease.restart()
+        }
+    }
+
+    Timer {
+        id: micActivityRelease
+        interval: Config.micActivityHold
+    }
+
+    onSourceChanged: micActivityRelease.stop()
+    onMicMutedChanged: micActivityRelease.stop()
 
     function toggleMicMute() {
         if (source?.audio) source.audio.muted = !source.audio.muted
@@ -70,15 +93,14 @@ Singleton {
             ?? node.properties?.["application.name"]
     }
 
-    readonly property var micUsers: {
-        const apps = []
-        for (const node of Pipewire.nodes.values) {
-            if (node.properties?.["media.class"] !== "Stream/Input/Audio") continue
-            const name = nodeName(node)
-            if (name) apps.push(name)
-        }
-        return apps
-    }
+    // Ignore our peak monitor so it cannot keep itself enabled after apps stop capturing.
+    readonly property var micCaptureNodes: Pipewire.nodes.values.filter(node =>
+        node.properties?.["media.class"] === "Stream/Input/Audio"
+        && node.properties?.["application.name"] !== "Quickshell Peak Detect"
+        && node.name !== "quickshell-peak-monitor"
+    )
+
+    readonly property var micUsers: micCaptureNodes.map(node => nodeName(node)).filter(name => !!name)
 
     readonly property var audioUsers: {
         const apps = []
