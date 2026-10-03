@@ -75,6 +75,32 @@ Item {
   readonly property string updatesIcon: ""
   readonly property int updatesTooltipWidth: 250
 
+  // TOTP (Font Awesome icons)
+  readonly property string totpIcon: ""
+  readonly property string totpCopyIcon: ""
+  readonly property string totpEditIcon: ""
+  readonly property string totpDeleteIcon: ""
+  readonly property string totpAddIcon: ""
+  readonly property string totpCancelIcon: ""
+  readonly property string totpSaveIcon: ""
+  readonly property string totpRetryIcon: ""
+  readonly property int totpTooltipWidth: 520
+  readonly property int totpRowHeight: 34
+  readonly property int totpSpacing: 6
+  readonly property int totpFooterMargin: 8
+  readonly property int totpButtonWidth: 30
+  readonly property int totpCodeWidth: 126
+  readonly property int totpCountdownHeight: 20
+  readonly property int totpCountdownTextWidth: 20
+  readonly property int totpCountdownStrokeWidth: 4
+  readonly property int totpCountdownListMargin: 12
+  readonly property int totpFieldPadding: 8
+  readonly property int totpScrollbarWidth: 6
+  readonly property int totpScrollbarMargin: 12
+  readonly property int totpExpiryWarning: 5
+  readonly property color totpDeleteBackground: urgent
+  readonly property color totpRowHoverBackground: alternateBackground
+
   readonly property string twitchIcon: ""
   readonly property color twitchColor: "#A970FF"
 

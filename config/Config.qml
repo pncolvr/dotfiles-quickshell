@@ -100,6 +100,26 @@ Item {
     readonly property int networkRetryInterval: Timespan.fromSeconds(5)
     readonly property int networkAlertInterval: Timespan.fromMinutes(1)
     readonly property int tooltipHideDelay: Timespan.fromMilliseconds(150)
+    // TOTP secrets live in the desktop Secret Service, never in this config.
+    readonly property string totpVault: "default"
+    readonly property string totpVaultLabel: "Quickshell TOTP"
+    readonly property string totpSecretTool: "secret-tool"
+    readonly property string totpOathTool: "oathtool"
+    readonly property int totpSecretTimeout: 30
+    readonly property int totpDefaultPeriod: 30
+    readonly property int totpDefaultDigits: 6
+    readonly property string totpDefaultAlgorithm: "SHA1"
+    readonly property int totpListMinRows: 9
+    readonly property real totpListMaxScreenHeight: 0.45
+    readonly property int totpTickInterval: Timespan.fromMilliseconds(250)
+    readonly property int totpCopiedDuration: Timespan.fromSeconds(2)
+    readonly property var totpCommand: [
+        "bash", Qt.resolvedUrl("../services/security/totp.sh").toString().replace("file://", ""),
+        "--vault", totpVault, "--label", totpVaultLabel, "--secret-tool", totpSecretTool,
+        "--oath-tool", totpOathTool,
+        "--timeout", String(totpSecretTimeout), "--period", String(totpDefaultPeriod),
+        "--digits", String(totpDefaultDigits), "--algorithm", totpDefaultAlgorithm
+    ]
     readonly property int debounceInterval: Timespan.fromMilliseconds(50)
     readonly property var cpuCommand: ["cat", "/proc/stat"]
     readonly property var memoryDetailCommand: ["bash", "-c", "free -m | awk '/Mem/{print $2,$3,$4,$6,$7} /Swap/{print $2,$3,$4}'"]

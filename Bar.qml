@@ -32,7 +32,7 @@ Scope {
         window: panelWindow
       }
 
-      TooltipWindow {}
+      TooltipWindow { screen: panelWindow.screen }
 
       SubmapWindow {}
       AlertWindow {}

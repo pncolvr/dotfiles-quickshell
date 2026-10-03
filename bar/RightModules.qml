@@ -18,6 +18,7 @@ Row {
     Stats {}
     Notifications {}
     Status {}
+    Totp { window: root.window }
     Tray {
         window: root.window
     }

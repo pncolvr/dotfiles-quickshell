@@ -18,3 +18,4 @@ singleton StatusService 1.0 status/StatusService.qml
 singleton TwitchService 1.0 twitch/TwitchService.qml
 singleton TooltipService 1.0 ui/TooltipService.qml
 singleton AlertService 1.0 ui/AlertService.qml
+singleton TotpService 1.0 security/TotpService.qml
