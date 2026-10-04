@@ -104,25 +104,16 @@ Item {
   // Batteries (Font Awesome: glyphs kept visible, with their icon names)
   readonly property string batteryIcon: "" // battery-full: horizontal battery
   readonly property string batteryPlugIcon: "" // plug: connected to external power
-  readonly property var batteryStatusIcons: ({
-    "charging": "",          // bolt: charging
-    "discharging": "",       // arrow-down: battery draining
-    "empty": "",             // battery-empty
-    "charged": "",           // check: fully charged
-    "pending-charge": "",    // pause: charging paused
-    "pending-discharge": "", // pause: waiting to discharge
-    "unknown": ""            // circle-question: status unavailable
-  })
   readonly property int batteryTooltipWidth: 340
   readonly property real batteryTooltipMaxHeightRatio: 0.6 // Fraction of the current screen height.
-  readonly property int batteryRowHeight: 132
-  readonly property int batterySpacing: 10
+  readonly property int batteryRowHeight: 66
+  readonly property int batterySpacing: 8
   readonly property int batteryTextSpacing: 4
-  readonly property int batteryPadding: 12
-  readonly property int batteryRadius: 8
+  readonly property int batteryPadding: 8
+  readonly property int batteryRadius: 6
   readonly property int batteryTerminalWidth: 6
-  readonly property int batteryTerminalHeight: 28
-  readonly property int batteryPercentageFontSize: 20
+  readonly property int batteryTerminalHeight: 14
+  readonly property int batteryPercentageFontSize: 16
   readonly property int batteryScrollbarWidth: 6
   readonly property int batteryScrollbarMargin: 8
   readonly property var batteryLevelColors: ({ "normal": ok, "low": warning, "critical": urgent })
@@ -165,13 +156,31 @@ Item {
   // screencast
   readonly property string screencastIcon: ""
 
-  // audio
-  readonly property string micIcon: ""
-  readonly property string micMutedIcon: ""
-  // readonly property var volumeIcons: ["", "", "", ""]
-  readonly property var volumeIcons: ["", "", ""]
-  // readonly property string volumeMutedIcon: ""
-  readonly property string volumeMutedIcon: ""
+  // Audio (Font Awesome: visible glyphs with readable icon names)
+  readonly property string micIcon: "" // microphone
+  readonly property string micMutedIcon: "" // microphone-slash
+  readonly property var volumeIcons: ["", "", ""] // volume-low, volume, volume-high
+  readonly property string volumeMutedIcon: "" // volume-off
+  readonly property string audioDefaultIcon: "" // star: default device
+  readonly property string audioUseNowIcon: "" // play: switch current apps
+  readonly property string audioProfileArrowIcon: "" // chevron-down: profile choices
+  readonly property string audioProfileSelectedIcon: "" // check: active profile
+  readonly property int audioTooltipWidth: 520
+  readonly property real audioTooltipMaxHeightRatio: 0.6 // Fraction of the current screen height.
+  readonly property int audioSpacing: 8
+  readonly property int audioDevicePadding: 12
+  readonly property int audioDeviceRadius: 8
+  readonly property int audioButtonHeight: 30
+  readonly property int audioButtonPadding: 10
+  readonly property int audioSliderTrackHeight: 4
+  readonly property int audioSliderHandleSize: 14
+  readonly property int audioPercentageWidth: 46
+  readonly property int audioScrollbarWidth: 6
+  readonly property int audioScrollbarMargin: 8
+  readonly property int audioProfileRowHeight: 44
+  readonly property int audioProfileMaxVisibleRows: 5
+  readonly property int audioAppSelectorWidth: 320
+  readonly property int audioAppOptionRowHeight: 36
   
   // stats
   readonly property string statsClosedIcon: ""

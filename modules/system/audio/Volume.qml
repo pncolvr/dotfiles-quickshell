@@ -4,36 +4,36 @@ import QtQuick
 import "../../../services"
 import "../../../theme"
 import "../../../theme/ui"
+import "../../../config"
 
 TooltipArea {
     id: root
-    acceptedButtons: Qt.LeftButton | Qt.RightButton
+    acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
+    readonly property bool tooltipKeyboardFocus: true
+    tooltipSource: root
     hoverEnabled: true
-    tooltip: AudioService.audioUsers.length > 0 ? audioTooltip : null
+    tooltip: audioTooltip
 
     Component {
         id: audioTooltip
-        Column {
-            Repeater {
-                model: AudioService.audioUsers
-                ColumnText {
-                    required property string modelData
-                    text: modelData
-                }
-            }
-        }
+        AudioTooltip {}
     }
 
     onClicked: (mouse) => {
         switch (mouse.button) {
             case Qt.LeftButton: AudioService.toggleMute(); break
-            case Qt.RightButton: AudioService.openMixer(); break
+            case Qt.RightButton: {
+                const pos = root.mapToGlobal(root.width / 2, 0)
+                TooltipService.togglePin(pos.x, tooltip, root, centerTooltip, tooltipScreen)
+                break
+            }
+            case Qt.MiddleButton: AudioService.openMixer(); break
         }
     }
     onWheel: (event) => {
         if (!AudioService.sink?.audio) return
-        const delta = event.angleDelta.y > 0 ? 0.01 : -0.01
-        AudioService.setVolume(Math.max(0, Math.min(1, AudioService.volume + delta)))
+        const delta = event.angleDelta.y > 0 ? Config.audioVolumeStep : -Config.audioVolumeStep
+        AudioService.setVolume(AudioService.volume + delta)
     }
 
     Row {

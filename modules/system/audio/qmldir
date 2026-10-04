@@ -1,0 +1,8 @@
+Mic 1.0 Mic.qml
+Volume 1.0 Volume.qml
+AudioTooltip 1.0 AudioTooltip.qml
+AudioDeviceRow 1.0 AudioDeviceRow.qml
+AudioButton 1.0 AudioButton.qml
+AudioProfileSelector 1.0 AudioProfileSelector.qml
+AudioSelector 1.0 AudioSelector.qml
+AudioAppRow 1.0 AudioAppRow.qml

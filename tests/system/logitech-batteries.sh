@@ -7,6 +7,9 @@ test_dir=$(mktemp -d /tmp/quickshell-battery-reader-test.XXXXXX)
 trap 'rm -rf -- "$test_dir"' EXIT
 export BATTERY_SYSFS_ROOT=$test_dir/sys
 mkdir -p "$BATTERY_SYSFS_ROOT/class/hidraw/hidraw11/device/power_supply/hidpp_battery_0"
+printf 'Logitech\n' > "$BATTERY_SYSFS_ROOT/class/hidraw/hidraw11/device/manufacturer"
+mkdir -p "$BATTERY_SYSFS_ROOT/class/hidraw/hidraw15/device"
+printf 'Other brand\n' > "$BATTERY_SYSFS_ROOT/class/hidraw/hidraw15/device/manufacturer"
 
 devices=$(parse_devices <<'REPORT'
 solaar version 1.1.20
@@ -48,12 +51,12 @@ REPORT
 jq -e '
     length == 7
     and any(.[]; .name == "PRO X Wireless" and .percentage == 91 and .nativePath == "hidpp_battery_0")
-    and any(.[]; .name == "ERGO M575S Trackball" and .percentage == 20)
+    and any(.[]; .name == "ERGO M575S Trackball" and .brand == "Logitech" and .percentage == 20)
     and any(.[]; .name == "PRO X 2 LIGHTSPEED" and .percentage == 95)
     and any(.[]; .name == "Charging headset" and .state == "charging" and .pluggedIn and .percentage == 25)
     and any(.[]; .name == "Full headset" and .state == "charged" and .pluggedIn)
     and any(.[]; .name == "Battery without level" and .percentage == null)
-    and any(.[]; .name == "Direct USB mouse" and .state == "discharging")
+    and any(.[]; .name == "Direct USB mouse" and .brand == "Other brand" and .state == "discharging")
 ' <<< "$devices" >/dev/null
 [[ $(parse_devices <<< '') == '[]' ]]
 printf 'PASS: Bash Solaar reader includes mice/headsets, charging, unknown levels, excludes offline devices, and resolves kernel identity\n'

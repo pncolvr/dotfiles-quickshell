@@ -82,6 +82,7 @@ Scope {
             case 4:
             case 6:
             case 8:
+            case 10:
                 if (BatteryService.active) return
                 TooltipService.show(200, content, origin, false)
                 root.refreshTicks = 0
@@ -91,6 +92,7 @@ Scope {
             case 5:
             case 7:
             case 9:
+            case 11:
                 if (BatteryService.scanningReceivers) {
                     root.refreshTicks++
                     root.check(root.reading()?.percentage === root.expectedPercentage, "previous reading changed during refresh")
@@ -109,6 +111,10 @@ Scope {
                         "next successful refresh replaces data and clears error")
                     root.check(BatteryService.lowestLevelStatus === "critical", "fresh critical level updates bar color")
                     root.expectedPercentage = 5
+                } else if (root.step === 9) {
+                    root.check(root.reading()?.percentage === 5 && !BatteryService.receiverError,
+                        "unavailable fresh percentage retains last known warning level")
+                    root.check(root.iconColor() === root.previousColor, "unavailable percentage retains bar color")
                     root.retainDevice = false
                 } else {
                     root.check(!root.reading() && !BatteryService.receiverError,

@@ -4,33 +4,34 @@ import QtQuick
 import "../../../theme/ui"
 import "../../../theme"
 import "../../../services"
+import "../../../config"
 
 TooltipArea {
     id: root
-    acceptedButtons: Qt.LeftButton | Qt.RightButton
+    acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
+    readonly property bool tooltipKeyboardFocus: true
+    tooltipSource: root
     tooltip: micTooltip
 
     Component {
         id: micTooltip
-        Column {
-            ColumnText {
-                text: AudioService.micActivityEnabled ? "mic activity enabled" : "mic activity disabled"
-            }
-            Repeater {
-                model: AudioService.micUsers
-                ColumnText {
-                    required property string modelData
-                    text: modelData
-                }
-            }
-        }
+        AudioTooltip { input: true }
     }
 
     onClicked: (mouse) => {
         switch (mouse.button) {
             case Qt.LeftButton: AudioService.toggleMicMute(); break
-            case Qt.RightButton: AudioService.openMixer(); break
+            case Qt.RightButton: {
+                const pos = root.mapToGlobal(root.width / 2, 0)
+                TooltipService.togglePin(pos.x, tooltip, root, centerTooltip, tooltipScreen)
+                break
+            }
+            case Qt.MiddleButton: AudioService.openMixer(); break
         }
+    }
+    onWheel: event => {
+        const delta = event.angleDelta.y > 0 ? Config.audioVolumeStep : -Config.audioVolumeStep
+        AudioService.setMicVolume(AudioService.micVolume + delta)
     }
 
     Row {

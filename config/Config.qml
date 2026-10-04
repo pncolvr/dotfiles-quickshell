@@ -79,10 +79,19 @@ Item {
     readonly property var notificationsManagerToggleDndCommand:[_internal.notificationsManager, "--toggle-dnd"]
     readonly property var notificationsManagerOpenPanelCommand:[_internal.notificationsManager, "--open-panel"]
 
-    readonly property string preferredMicName: "PRO X 2 LIGHTSPEED"
     readonly property real micActivityThreshold: 0.02
     readonly property int micActivityHold: 200
     readonly property var mixerCommand: ["pavucontrol"]
+    readonly property real audioVolumeStep: 0.01
+    readonly property real audioMaxVolume: 1.5 // 150%, including microphone gain.
+    readonly property int audioDevicesInterval: Timespan.fromSeconds(3)
+    readonly property var audioDevicesCommand: [
+        "bash", Qt.resolvedUrl("../services/audio/audio-devices.sh").toString().replace("file://", "")
+    ]
+    readonly property var audioRouteCommand: (input, name) => [
+        "bash", Qt.resolvedUrl("../services/audio/audio-route.sh").toString().replace("file://", ""),
+        input ? "input" : "output", name
+    ]
 
     readonly property var screencastSoundCommand: sound => ["canberra-gtk-play", "-i", sound]
     readonly property string screencastStartSound: "device-added"

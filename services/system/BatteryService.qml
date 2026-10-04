@@ -14,7 +14,8 @@ Singleton {
 
     // Reading device properties inside this binding also tracks their live changes.
     readonly property var batteries: mergeReceiverBatteries(
-        collectBatteries(UPower.devices.values, Bluetooth.devices.values, UPower.onBattery), _internal.receiverBatteries)
+        collectBatteries(UPower.devices.values, Bluetooth.devices.values, UPower.onBattery), receiverBatteries)
+    readonly property var receiverBatteries: JSON.parse(_internal.receiverSnapshotJson)
     readonly property bool scanningReceivers: receiverProcess.running
     readonly property string receiverError: _internal.receiverError
     readonly property real lowestPercentage: {
@@ -23,9 +24,11 @@ Singleton {
     }
     readonly property string lowestLevelStatus: levelStatus(lowestPercentage)
 
-    QtObject {
+    PersistentProperties {
         id: _internal
-        property var receiverBatteries: []
+        reloadableId: "battery-receiver-cache"
+        // Strings survive reloads across QML engines; JavaScript arrays do not.
+        property string receiverSnapshotJson: "[]"
         property string receiverError: ""
     }
 
@@ -66,12 +69,21 @@ Singleton {
                 }
                 // Keep the previous readings throughout the scan; replace them in one update.
                 // An empty successful snapshot confirms that receiver devices disconnected.
-                _internal.receiverBatteries = snapshot.devices
+                _internal.receiverSnapshotJson = JSON.stringify(receiverSnapshot(root.receiverBatteries, snapshot.devices))
                 _internal.receiverError = ""
             } catch (error) {
                 _internal.receiverError = "Some device batteries could not be read"
             }
         }
+    }
+
+    function receiverSnapshot(previous, incoming) {
+        return incoming.map(device => {
+            const last = previous.find(battery => battery.id === device.id)
+            // A listed, connected device can temporarily report N/A instead of a level.
+            return device.percentage === null && last?.percentage !== null && last?.percentage !== undefined
+                ? Object.assign({}, device, {percentage: last.percentage}) : device
+        })
     }
 
     function mergeReceiverBatteries(nativeBatteries, receiverBatteries) {
@@ -84,6 +96,7 @@ Singleton {
             const match = pathMatch ?? (nameMatches.length === 1 && receiverMatches.length === 1
                 ? result.find(battery => battery.id === nameMatches[0].id) : null)
             if (match) {
+                if (!match.brand) match.brand = receiver.brand
                 if (match.percentage === null) match.percentage = receiver.percentage
                 if (match.state === "unknown") {
                     match.state = receiver.state
@@ -182,6 +195,12 @@ Singleton {
         case "pending-discharge": return "Waiting to discharge"
         default: return "Status unavailable"
         }
+    }
+
+    function displayName(battery) {
+        const brand = String(battery.brand ?? "").trim()
+        const name = String(battery.name ?? "Battery-powered device")
+        return brand && !name.toLowerCase().includes(brand.toLowerCase()) ? brand + " " + name : name
     }
 
     function durationText(seconds) {

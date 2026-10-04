@@ -48,14 +48,16 @@ case $request in
     2) level=50 ;;
     3) printf 'Receiver read failed\n' >&2; exit 1 ;;
     4) level=5 ;;
+    5) level=N/A ;;
     *) printf 'No supported device found\n' >&2; exit 1 ;;
 esac
+if [[ $level != N/A ]]; then level+=%; fi
 cat <<REPORT
 Bolt Receiver
   2: ERGO M575S Trackball
      Device path  : None
      Serial number: refresh-trackball
-     Battery: $level%, BatteryStatus.DISCHARGING.
+     Battery: $level, BatteryStatus.DISCHARGING.
 REPORT
 MOCK
 cat > "$entry" <<'QML'
@@ -74,6 +76,27 @@ printf '%s\n' "$refresh_output"
 [[ $refresh_output == *'PASS: receiver refresh'* && $refresh_output != *'BATTERIES REFRESH FAIL:'* \
     && $refresh_output != *'Failed to load configuration'* && $refresh_output != *'Binding loop detected'* \
     && $refresh_output != *'TypeError:'* && $refresh_output != *'ReferenceError:'* ]]
+
+cat > "$test_dir/bin/solaar" <<'MOCK'
+#!/usr/bin/env bash
+cat <<'REPORT'
+Bolt Receiver
+  2: ERGO M575S Trackball
+     Device path  : None
+     Serial number: reload-trackball
+     Battery: 20%, BatteryStatus.DISCHARGING.
+REPORT
+MOCK
+# PersistentProperties participates in the root reload tree, not an asynchronous Loader.
+sed 's|import "../../|import "./|g' "$project_root/tests/system/batteries-reload-smoke.qml" > "$entry"
+reload_output=$(PATH="$test_dir/bin:$PATH" QT_QPA_PLATFORM=offscreen XDG_RUNTIME_DIR="$test_dir/runtime" timeout 15 qs -p "$entry" 2>&1) || {
+    printf '%s\n' "$reload_output" >&2
+    exit 1
+}
+printf '%s\n' "$reload_output"
+[[ $reload_output == *'PASS: configuration reload'* && $reload_output != *'BATTERIES RELOAD FAIL:'* \
+    && $reload_output != *'Failed to load configuration'* && $reload_output != *'Binding loop detected'* \
+    && $reload_output != *'TypeError:'* && $reload_output != *'ReferenceError:'* ]]
 
 if [[ ${1:-} == --native-imports ]]; then
     cat > "$entry" <<'QML'

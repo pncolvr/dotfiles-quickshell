@@ -11,10 +11,12 @@ Item {
     property string text: ""
     property int delay: 500
     property int cursorShape: Qt.ArrowCursor
+    // Controls already handle pointer input; use their hover state without covering clicks.
+    property var hoverTarget: null
 
     MouseArea {
         id: mouseArea
-        enabled: root.enabled
+        enabled: root.enabled && !root.hoverTarget
         anchors.fill: parent
         hoverEnabled: true
         cursorShape: root.cursorShape
@@ -23,7 +25,7 @@ Item {
 
     QC.ToolTip {
         enabled: root.enabled
-        visible: mouseArea.containsMouse && root.text.length > 0
+        visible: root.enabled && (root.hoverTarget ? root.hoverTarget.hovered : mouseArea.containsMouse) && root.text.length > 0
         text: root.text
         delay: root.delay
         leftPadding: 6

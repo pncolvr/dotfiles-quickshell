@@ -38,56 +38,68 @@ Item {
             opacity: Theme.batteryFillOpacity
         }
 
-        Column {
-            anchors.centerIn: parent
-            width: parent.width - Theme.batteryPadding * 2
-            spacing: Theme.batteryTextSpacing
+        Item {
+            anchors.fill: parent
+            anchors.margins: Theme.batteryPadding
 
-            UI.ColumnText {
-                objectName: "batteryName"
+            Item {
+                id: topLine
+                anchors.top: parent.top
                 width: parent.width
-                horizontalAlignment: Text.AlignHCenter
-                textFormat: Text.PlainText
-                text: root.battery.name
-                wrapMode: Text.Wrap
-                maximumLineCount: 2
-                elide: Text.ElideRight
-            }
+                height: Math.max(name.implicitHeight, percentage.implicitHeight)
 
-            UI.ColumnText {
-                objectName: "batteryPercentage"
-                width: parent.width
-                horizontalAlignment: Text.AlignHCenter
-                text: root.battery.percentage === null ? "Level unavailable" : Math.round(root.battery.percentage) + "%"
-                font.pixelSize: root.battery.percentage === null ? Theme.fontSize : Theme.batteryPercentageFontSize
-            }
-
-            Row {
-                anchors.horizontalCenter: parent.horizontalCenter
-                spacing: Theme.batteryTextSpacing
-
-                UI.IconText {
-                    text: Theme.batteryStatusIcons[root.battery.state] ?? Theme.batteryStatusIcons.unknown
-                }
                 UI.Text {
-                    objectName: "batteryStatus"
-                    text: BatteryService.statusText(root.battery.state)
+                    id: name
+                    objectName: "batteryName"
+                    anchors.left: parent.left
+                    anchors.right: percentage.left
+                    anchors.rightMargin: Theme.batteryTextSpacing
+                    textFormat: Text.PlainText
+                    text: BatteryService.displayName(root.battery)
+                    elide: Text.ElideRight
                 }
-                UI.IconText {
-                    objectName: "batteryPowerIcon"
-                    visible: root.battery.pluggedIn
-                    text: Theme.batteryPlugIcon
+
+                UI.Text {
+                    id: percentage
+                    objectName: "batteryPercentage"
+                    anchors.right: parent.right
+                    text: root.battery.percentage === null ? "Level unavailable" : Math.round(root.battery.percentage) + "%"
+                    font.pixelSize: root.battery.percentage === null ? Theme.fontSize : Theme.batteryPercentageFontSize
                 }
             }
 
-            UI.ColumnText {
-                objectName: "batteryTime"
+            Item {
+                anchors.bottom: parent.bottom
                 width: parent.width
-                visible: text.length > 0
-                horizontalAlignment: Text.AlignHCenter
-                text: BatteryService.timeText(root.battery)
-                textFormat: Text.PlainText
-                wrapMode: Text.Wrap
+                height: status.implicitHeight
+
+                UI.Text {
+                    objectName: "batteryTime"
+                    anchors.left: parent.left
+                    anchors.right: status.left
+                    anchors.rightMargin: Theme.batteryTextSpacing
+                    visible: text.length > 0
+                    text: BatteryService.timeText(root.battery)
+                    textFormat: Text.PlainText
+                    elide: Text.ElideRight
+                }
+
+                Row {
+                    id: status
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: Theme.batteryTextSpacing
+
+                    UI.Text {
+                        objectName: "batteryStatus"
+                        text: BatteryService.statusText(root.battery.state)
+                    }
+                    UI.IconText {
+                        objectName: "batteryPowerIcon"
+                        visible: root.battery.pluggedIn
+                        text: Theme.batteryPlugIcon
+                    }
+                }
             }
         }
     }

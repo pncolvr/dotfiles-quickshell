@@ -114,14 +114,20 @@ Scope {
                 root.check(BatteryService.levelStatus(21) === "normal" && BatteryService.levelStatus(20) === "low"
                     && BatteryService.levelStatus(10) === "critical" && BatteryService.levelStatus(null) === "normal", "shared low and critical thresholds")
                 const receivers = [
-                    {id: "solaar:mouse", nativePath: "hidpp_battery_0", name: "PRO X Wireless", percentage: 91, state: "discharging", pluggedIn: false, internal: false},
+                    {id: "solaar:mouse", nativePath: "hidpp_battery_0", name: "PRO X Wireless", brand: "Logitech", percentage: 91, state: "discharging", pluggedIn: false, internal: false},
                     {id: "solaar:trackball", nativePath: "", name: "ERGO M575S Trackball", percentage: 20, state: "discharging", pluggedIn: false, internal: false},
                     {id: "solaar:headset", nativePath: "", name: "PRO X 2 LIGHTSPEED", percentage: 95, state: "discharging", pluggedIn: false, internal: false}
                 ]
                 const merged = BatteryService.mergeReceiverBatteries(BatteryService.collectBatteries([peripheral], [], true), receivers)
                 root.check(merged.length === 3 && merged[0].name === "ERGO M575S Trackball", "both mice and headset included without duplicate UPower mouse")
                 root.check(merged.find(battery => battery.name === "PRO X Wireless").state === "discharging", "receiver supplies missing native status")
+                root.check(BatteryService.displayName(merged.find(battery => battery.name === "PRO X Wireless")) === "Logitech PRO X Wireless", "brand added to native merged model")
+                root.check(BatteryService.displayName({name: "Logitech Mouse", brand: "Logitech"}) === "Logitech Mouse", "existing brand is not repeated")
                 root.check(BatteryService.mergeReceiverBatteries([], []).length === 0, "receiver disconnect removes fallback devices")
+                const incomplete = Object.assign({}, receivers[1], {percentage: null})
+                root.check(BatteryService.receiverSnapshot(receivers, [incomplete])[0].percentage === 20,
+                    "connected receiver device retains last known percentage when new level is unavailable")
+                root.check(BatteryService.receiverSnapshot(receivers, []).length === 0, "confirmed disconnection clears cached device")
                 laptop.percentage = 0.8
                 laptop.state = UPowerDeviceState.Charging
                 laptop.timeToFull = 3600
@@ -144,8 +150,8 @@ Scope {
                     && root.find(barIcon, "batteryBarIcon").color.toString() === Theme.warning.toString(), "full battery icon uses lowest device warning color")
                 const states = [UPowerDeviceState.Charging, UPowerDeviceState.Discharging, UPowerDeviceState.FullyCharged,
                     UPowerDeviceState.PendingCharge, UPowerDeviceState.PendingDischarge, UPowerDeviceState.Empty, UPowerDeviceState.Unknown]
-                root.fixtures = BatteryService.collectBatteries(states.map((state, index) => root.powerDevice({
-                    nativePath: "BAT" + index, percentage: [0.25, 0.5, 1, 0.8, 0.4, 0, 0.91][index],
+                root.fixtures = BatteryService.collectBatteries(states.concat(states).map((state, index) => root.powerDevice({
+                    nativePath: "BAT" + index, percentage: [0.25, 0.5, 1, 0.8, 0.4, 0, 0.91][index % states.length],
                     state: state, timeToFull: 4800, timeToEmpty: 10800
                 })), [], false)
                 break
