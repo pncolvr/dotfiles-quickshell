@@ -6,11 +6,9 @@ import Quickshell.Io
 import Quickshell.Bluetooth
 import Quickshell.Services.UPower
 import "../../config"
-import "../"
 
 Singleton {
     id: root
-    readonly property bool active: TooltipService.visible && TooltipService.source?.batteryModule === true
 
     // Reading device properties inside this binding also tracks their live changes.
     readonly property var batteries: mergeReceiverBatteries(
@@ -33,8 +31,10 @@ Singleton {
     }
 
     Timer {
+        objectName: "batteryReceiverTimer"
         interval: Config.batteryReceiverInterval
-        running: root.active
+        // The bar needs current levels even when the tooltip has never been opened.
+        running: true
         repeat: true
         triggeredOnStart: true
         onTriggered: if (!receiverProcess.running) receiverProcess.running = true

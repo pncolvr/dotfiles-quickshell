@@ -78,10 +78,13 @@ Scope {
         running: true
         repeat: true
         onTriggered: {
-            if (root.step === 1 && BatteryService.scanningReceivers) return
+            if (root.step === 0 && BatteryService.scanningReceivers) return
             switch (root.step++) {
             case 0: {
-                root.check(!BatteryService.active && !BatteryService.scanningReceivers, "receiver scans do not start before hover")
+                root.check(!TooltipService.visible && BatteryService.batteries.some(battery => battery.name === "ERGO M575S Trackball"),
+                    "startup scan reads receiver batteries before hover")
+                root.check(root.find(barIcon, "batteryBarIcon").color.toString() === Theme.warning.toString(),
+                    "startup warning color appears before hover")
                 const peripheral = root.powerDevice({
                     type: UPowerDeviceType.Keyboard, nativePath: "hidpp_battery_0", model: "PRO X Wireless",
                     isLaptopBattery: false, isPresent: false, percentage: 0.91,
@@ -145,7 +148,8 @@ Scope {
                 root.check(root.find(row, "batteryName").text.includes("BAT0") && root.find(row, "batteryPercentage").text === "50%", "card name and percentage")
                 root.check(root.find(row, "batteryPowerIcon").visible, "plug icon on external power")
                 root.check(root.find(row, "batteryTime").text === "Empty in 2 h", "card time label")
-                root.check(BatteryService.active && BatteryService.batteries.some(battery => battery.name === "ERGO M575S Trackball"), "hover scans receiver batteries")
+                root.check(TooltipService.visible && BatteryService.batteries.some(battery => battery.name === "ERGO M575S Trackball"),
+                    "hover uses the existing receiver readings")
                 root.check(root.find(barIcon, "batteryBarIcon").text === Theme.batteryIcon
                     && root.find(barIcon, "batteryBarIcon").color.toString() === Theme.warning.toString(), "full battery icon uses lowest device warning color")
                 const states = [UPowerDeviceState.Charging, UPowerDeviceState.Discharging, UPowerDeviceState.FullyCharged,
@@ -169,8 +173,8 @@ Scope {
                 break
             case 4:
                 root.check(root.find(popup, "batteryList").height === 0, "empty list collapses")
-                if (BatteryService.active) { root.step--; return }
-                root.check(!BatteryService.scanningReceivers && BatteryService.lowestLevelStatus === "low", "hover exit stops scans and retains bar color")
+                if (TooltipService.visible) { root.step--; return }
+                root.check(BatteryService.lowestLevelStatus === "low", "closing tooltip retains bar warning color")
                 if (!root.failed) console.log("PASS: battery discovery, duplicates, disconnects, percentages, power, estimates, live updates, cards, scrolling and empty state")
                 ticker.stop()
                 Qt.quit()

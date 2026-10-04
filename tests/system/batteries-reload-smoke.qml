@@ -6,15 +6,13 @@ import "../../theme"
 
 Scope {
     id: root
-    property int step: 0
     property int ticks: 0
+    property bool sawReloadScan: false
     PersistentProperties {
         id: testState
         reloadableId: "battery-reload-smoke"
         property bool reloaded: false
     }
-    QtObject { id: origin; readonly property bool batteryModule: true }
-    Component { id: content; Item {} }
     FloatingWindow {
         id: window
         visible: false
@@ -37,32 +35,22 @@ Scope {
         onTriggered: {
             if (++root.ticks > 200) { root.fail("timed out"); return }
             if (testState.reloaded) {
-                if (BatteryService.active || BatteryService.scanningReceivers) root.fail("scan started before hover")
+                if (TooltipService.visible) root.fail("background scan opened the tooltip")
                 else if (!BatteryService.batteries.some(battery => battery.id === "solaar:reload-trackball" && battery.percentage === 20))
                     root.fail("receiver reading lost across configuration reload")
                 else if (root.find(icon, "batteryBarIcon").color.toString() !== Theme.warning.toString())
                     root.fail("warning color lost across configuration reload")
-                else { console.log("PASS: configuration reload retains receiver readings and warning color without rescanning before hover"); Qt.quit() }
+                else if (BatteryService.scanningReceivers) root.sawReloadScan = true
+                else if (!root.sawReloadScan) root.fail("background polling did not restart after reload")
+                else { console.log("PASS: configuration reload retains receiver readings and warning color during background rescanning without hover"); Qt.quit() }
                 return
             }
-            switch (root.step) {
-            case 0:
-                TooltipService.show(200, content, origin, false)
-                root.step++
-                break
-            case 1:
-                if (BatteryService.scanningReceivers) return
-                if (BatteryService.lowestLevelStatus !== "low") { root.fail("initial warning reading"); return }
-                TooltipService.hide()
-                root.step++
-                break
-            case 2:
-                if (BatteryService.active) return
-                testState.reloaded = true
-                ticker.stop()
-                Quickshell.reload(false)
-                break
-            }
+            if (BatteryService.scanningReceivers) return
+            if (BatteryService.lowestLevelStatus !== "low") { root.fail("initial warning reading"); return }
+            if (TooltipService.visible) { root.fail("startup scan required hovering"); return }
+            testState.reloaded = true
+            ticker.stop()
+            Quickshell.reload(false)
         }
     }
 }

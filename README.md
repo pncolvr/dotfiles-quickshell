@@ -5,11 +5,13 @@
 - System stats: CPU and memory with tooltips, temperature, and network speeds with graph tooltip
     - Network tooltip shows connected networks with per-interface speeds and top 10 processes by bandwidth
     - Process bandwidth requires `bandwhich`
-- Volume and audio device info via PipeWire
+- Microphone and output controls with device lists, system defaults, and audio profiles
 - Screencast/screenshare status with sound notifications
 - Package update indicator
 - Easily follow Twitch streamers
     - edit config/twitch-users with your prefered streamers
+- TOTP codes beside the tray, with a hover panel, click to pin, copying, and inline add/edit/delete
+- Batteries beside TOTP, with live levels for laptop batteries and attached devices
 - Submap window for Hyprland keybind hints
 - Alert window
 - IPC commands for reloading and toggling modules
@@ -28,3 +30,109 @@ qs ipc call windows reload # manually reload window list
 qs ipc call windows focus [0-9] #index of the grouped window to move to
 qs ipc call twitch reload # reload twitch
 ```
+
+The TOTP module stores each name and seed together in the desktop Secret Service. Its
+UI is native QML; a Bash helper uses `secret-tool`, `jq`, and `oathtool`. On Arch:
+
+```sh
+sudo pacman -S --needed libsecret jq oath-toolkit
+```
+
+Run a Secret Service provider such as GNOME Keyring, or enable Secret Service support
+in KeePassXC. Hover the key icon, click **+**, enter a name and a Base32 seed or an
+`otpauth://totp/…` URI, then click **+** again. Copy a seed from Bitwarden manually;
+this module uses its own keyring entries and does not synchronize with Bitwarden.
+The pencil edits both fields, **✓** saves, and **×** cancels. Enter submits the token
+field; Escape cancels. The trash button deletes the entry immediately.
+Click the key icon to pin the panel open; click again to return to hover behavior.
+The icon uses the accent color while pinned.
+
+Tokens support SHA1, SHA256, SHA512, 6–8 digits, and custom periods from TOTP URIs.
+Bare seeds use the defaults in `config/Config.qml` (SHA1, six digits, 30 seconds).
+The countdown sits between the list and bottom controls, with seconds on the left
+and a line that empties from right to left. It is hidden when the list is empty.
+The list reserves at least ten
+rows and grows up to 45% of the current monitor height, with a scrollbar when needed.
+Adding a token uses a reserved footer row so the popup height stays stable.
+
+Commands, keyring namespace, timing, and the height fraction are in `Config.qml`;
+glyphs, sizes, spacing, and colors are in `theme/Theme.qml`. Keyring attributes are
+`application=quickshell`, `type=totp`, `vault=<totpVault>`, and `id=<entry UUID>`.
+Names and seeds are inside each item's secret payload. Secrets travel through
+pipes, never command arguments or plaintext config files. Closing the tooltip
+stops updates, clears its model, and exits the helper after any pending write.
+The copied code remains on the clipboard until it is replaced.
+
+Verification uses public test seeds and a fake keyring, without accessing desktop
+secrets:
+
+```sh
+bash tests/security/totp.sh
+bash tests/security/totp.sh --qml-smoke # headless Quickshell interaction check
+```
+
+Hover the mic or volume icon to see the available devices, with a level slider,
+mute control, **Use now**, and **Set default** on each device. **Use now** moves
+current PulseAudio-compatible recording or playback apps without changing the
+system default. **Set default** changes the system default input or output; both
+bar modules always control that default. Mic activity status and both process
+lists remain visible and update live. Each app has its own mute button and a
+compact device selector. These affect just that app's current streams, keeping
+other apps and the system default unchanged. Apps with several streams are
+grouped by their process. Selectors show their current device or **Multiple devices**
+when their streams use different devices. Devices are sorted by their displayed
+name.
+Left-click a bar icon to mute; scroll it to adjust its default device. Right-click
+pins its panel; middle-click opens `pavucontrol`.
+
+Sliders support dragging, keyboard adjustment, and the mouse wheel, with up to
+150% volume or microphone gain. `audioMaxVolume` and `audioVolumeStep` are in
+`config/Config.qml`; panel width and maximum height are in `theme/Theme.qml`.
+Long lists scroll within the current monitor. Device cards include their own
+profile selector when profiles are available. Profiles affect the whole device,
+including playback and recording; devices with an **Off** profile can be enabled
+from the same selector. Bash helpers use `pactl`, `jq`, and `timeout` for current-app
+routing and profiles; level, mute, default selection, activity, and process lists
+use the native PipeWire service. Profile data refreshes only while a panel is open.
+
+Run `bash tests/audio/audio.sh` for routing, profile, and QML interaction checks.
+Add `--native-imports` to check the complete bar, real device/profile mapping,
+sorted lists, and system default bindings without changing your audio settings.
+
+Hover the battery icon immediately to the right of TOTP to see all detected
+batteries. Each battery card fills from left to right and shows the device
+name, percentage, charging status, and an estimate such as **Full in 1 h 20 min**
+or **Empty in 3 h**. A plug icon identifies external power when reported, including
+laptop batteries connected to AC while charging is paused or complete. Card fills
+use green for normal levels, orange at 20% or below, and red at 10% or below. The
+bar always uses a full battery glyph; any low or critical device changes its color
+to orange or red. Otherwise it keeps the normal text color. Thresholds are in
+`config/Config.qml`, and the shared colors are in `theme/Theme.qml`.
+
+The module uses Quickshell's native UPower and Bluetooth services, updates as
+devices change, and merges devices reported by multiple sources. Install and run
+`upower`; Bluetooth battery reporting also needs BlueZ. When `solaar` is installed,
+a Bash helper uses `jq` to read its public `solaar show` output at startup and every
+minute, including while the tooltip is closed, to include Logitech receiver devices
+missing from UPower, including the ERGO M575S Trackball
+and supported headsets. The installed Solaar version must support the device.
+`batteryReceiverInterval` and `batteryReceiverCommand` are in `config/Config.qml`.
+Devices must expose their battery information to one of these services. Missing
+charging status is labeled **Status unavailable**. The time line is shown only
+when the device reports a charge or discharge estimate.
+The tooltip content is created only while hovering. Battery readings and the bar's
+warning color update from startup without needing to open the tooltip. Refreshes
+keep the previous readings and bar color until a successful scan replaces them;
+failed reads retain the cached data. A successful empty scan removes disconnected
+receiver devices. Cached receiver readings and warning colors survive configuration
+reloads, and a connected device temporarily reporting no percentage keeps its last
+known level. Brand information is shown alongside the model when available.
+Native UPower
+and Bluetooth levels continue to follow system updates without polling.
+Disconnected Bluetooth devices and absent laptop batteries are excluded. Long
+lists scroll within the current monitor. Font Awesome glyphs, their readable
+icon names, battery card dimensions, and colors are in `theme/Theme.qml`.
+
+Run `bash tests/system/batteries.sh` for the headless battery discovery and QML
+card checks, including live updates, duplicates, disconnection, and scrolling.
+Add `--native-imports` to verify the complete bar and live tooltip on Wayland.

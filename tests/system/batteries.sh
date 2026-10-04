@@ -34,7 +34,7 @@ printf '%s\n' "$output"
     && $output != *'Failed to load configuration'* && $output != *'Binding loop detected'* \
     && $output != *'TypeError:'* && $output != *'ReferenceError:'* ]]
 
-# Reopen the tooltip to repeat the timer's refresh path with slow scans and a failure.
+# Keep the tooltip closed while the production timer polls slow scans and a failure.
 cat > "$test_dir/bin/solaar" <<'MOCK'
 #!/usr/bin/env bash
 set -euo pipefail
@@ -79,6 +79,7 @@ printf '%s\n' "$refresh_output"
 
 cat > "$test_dir/bin/solaar" <<'MOCK'
 #!/usr/bin/env bash
+sleep 0.5
 cat <<'REPORT'
 Bolt Receiver
   2: ERGO M575S Trackball
@@ -122,6 +123,13 @@ Scope {
         repeat: true
         onTriggered: {
             if (root.step === 0) {
+                if (BatteryService.scanningReceivers) return
+                if (TooltipService.visible || popup.visible) {
+                    console.error("BATTERIES NATIVE FAIL: tooltip opened during startup scan")
+                    Qt.quit()
+                    return
+                }
+                console.log("LIVE BATTERIES BEFORE HOVER: " + JSON.stringify(BatteryService.batteries))
                 // Pin this test panel so real pointer movement cannot close it during the scan.
                 TooltipService.togglePin(320, icon.tooltip, icon, false, probe.screen)
             } else if (root.step === 3) {
