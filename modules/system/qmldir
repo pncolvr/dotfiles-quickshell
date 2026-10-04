@@ -1,5 +1,6 @@
 Tray 1.0 tray/Tray.qml
 Totp 1.0 totp/Totp.qml
+Batteries 1.0 batteries/Batteries.qml
 Notifications 1.0 notifications/Notifications.qml
 Volume 1.0 audio/Volume.qml
 Mic 1.0 audio/Mic.qml

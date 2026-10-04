@@ -97,6 +97,12 @@ Item {
     readonly property int networkProcessesInterval: Timespan.fromSeconds(3)
 
     readonly property int statsInterval: Timespan.fromSeconds(1)
+    readonly property int batteryReceiverInterval: Timespan.fromMinutes(1)
+    readonly property int batteryLowThreshold: 20
+    readonly property int batteryCriticalThreshold: 10
+    readonly property var batteryReceiverCommand: [
+        "bash", Qt.resolvedUrl("../services/system/logitech-batteries.sh").toString().replace("file://", "")
+    ]
     readonly property int networkRetryInterval: Timespan.fromSeconds(5)
     readonly property int networkAlertInterval: Timespan.fromMinutes(1)
     readonly property int tooltipHideDelay: Timespan.fromMilliseconds(150)

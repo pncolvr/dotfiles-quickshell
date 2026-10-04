@@ -101,6 +101,35 @@ Item {
   readonly property color totpDeleteBackground: urgent
   readonly property color totpRowHoverBackground: alternateBackground
 
+  // Batteries (Font Awesome: glyphs kept visible, with their icon names)
+  readonly property string batteryIcon: "" // battery-full: horizontal battery
+  readonly property string batteryPlugIcon: "" // plug: connected to external power
+  readonly property var batteryStatusIcons: ({
+    "charging": "",          // bolt: charging
+    "discharging": "",       // arrow-down: battery draining
+    "empty": "",             // battery-empty
+    "charged": "",           // check: fully charged
+    "pending-charge": "",    // pause: charging paused
+    "pending-discharge": "", // pause: waiting to discharge
+    "unknown": ""            // circle-question: status unavailable
+  })
+  readonly property int batteryTooltipWidth: 340
+  readonly property real batteryTooltipMaxHeightRatio: 0.6 // Fraction of the current screen height.
+  readonly property int batteryRowHeight: 132
+  readonly property int batterySpacing: 10
+  readonly property int batteryTextSpacing: 4
+  readonly property int batteryPadding: 12
+  readonly property int batteryRadius: 8
+  readonly property int batteryTerminalWidth: 6
+  readonly property int batteryTerminalHeight: 28
+  readonly property int batteryPercentageFontSize: 20
+  readonly property int batteryScrollbarWidth: 6
+  readonly property int batteryScrollbarMargin: 8
+  readonly property var batteryLevelColors: ({ "normal": ok, "low": warning, "critical": urgent })
+  readonly property real batteryFillOpacity: 0.5
+  readonly property color batteryEmptyColor: "#232323"
+  readonly property color batteryBorderColor: inactive
+
   readonly property string twitchIcon: ""
   readonly property color twitchColor: "#A970FF"
 

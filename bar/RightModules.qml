@@ -19,6 +19,7 @@ Row {
     Notifications {}
     Status {}
     Totp { window: root.window }
+    Batteries { window: root.window }
     Tray {
         window: root.window
     }
