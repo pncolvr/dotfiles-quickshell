@@ -10,7 +10,7 @@ Singleton {
 
     readonly property string name: Config.databaseName
     readonly property string path: Config.databasePath
-    readonly property int schemaVersion: 1
+    readonly property int schemaVersion: 3
     readonly property bool ready: state.ready
     readonly property string error: state.error
 
@@ -42,13 +42,28 @@ Singleton {
                 }
                 if (!attached) tx.executeSql("ATTACH DATABASE ? AS store", [path])
                 const version = tx.executeSql("PRAGMA store.user_version").rows.item(0).user_version
-                if (version !== 0 && version !== schemaVersion)
+                if (version < 0 || version > schemaVersion)
                     throw new Error("Unsupported schema version " + version)
                 tx.executeSql("CREATE TABLE IF NOT EXISTS store.twitch_users (login TEXT PRIMARY KEY COLLATE NOCASE, added_at INTEGER NOT NULL)")
                 tx.executeSql("CREATE TABLE IF NOT EXISTS store.twitch_schedules (login TEXT PRIMARY KEY COLLATE NOCASE, starts_at INTEGER, fetched_at INTEGER NOT NULL)")
                 tx.executeSql("CREATE TABLE IF NOT EXISTS store.twitch_avatars (login TEXT PRIMARY KEY COLLATE NOCASE, source_url TEXT NOT NULL, image_data_url TEXT NOT NULL, fetched_at INTEGER NOT NULL)")
                 tx.executeSql("CREATE TABLE IF NOT EXISTS store.battery_receivers (device_id TEXT PRIMARY KEY, payload_json TEXT NOT NULL, updated_at INTEGER NOT NULL)")
                 tx.executeSql("CREATE TABLE IF NOT EXISTS store.preferences (key TEXT PRIMARY KEY, value_json TEXT NOT NULL)")
+                tx.executeSql("CREATE TABLE IF NOT EXISTS store.notification_emitters (emitter_key TEXT PRIMARY KEY, display_name TEXT NOT NULL, icon TEXT NOT NULL DEFAULT '', desktop_entry TEXT NOT NULL DEFAULT '', muted INTEGER NOT NULL DEFAULT 0, allow_dnd INTEGER NOT NULL DEFAULT 0, exclude_history INTEGER NOT NULL DEFAULT 0)")
+                tx.executeSql("CREATE TABLE IF NOT EXISTS store.notifications (archive_id TEXT PRIMARY KEY, emitter_key TEXT NOT NULL, summary TEXT NOT NULL, body TEXT NOT NULL, urgency INTEGER NOT NULL, received_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, image TEXT NOT NULL DEFAULT '', actions_json TEXT NOT NULL DEFAULT '[]', action_handler TEXT NOT NULL DEFAULT '')")
+                if (version < 3) {
+                    const columns = tx.executeSql("PRAGMA store.table_info(notifications)").rows
+                    const names = []
+                    for (let index = 0; index < columns.length; index++) names.push(columns.item(index).name)
+                    if (!names.includes("actions_json")) tx.executeSql("ALTER TABLE store.notifications ADD COLUMN actions_json TEXT NOT NULL DEFAULT '[]'")
+                    if (!names.includes("action_handler")) tx.executeSql("ALTER TABLE store.notifications ADD COLUMN action_handler TEXT NOT NULL DEFAULT ''")
+                    // Our Twitch URL action is known locally; older app callbacks cannot be recovered.
+                    tx.executeSql("UPDATE store.notifications SET actions_json = ?, action_handler = 'twitch' WHERE emitter_key = 'app:twitch' AND actions_json = '[]'",
+                        [JSON.stringify([{identifier: "default", text: "Open Twitch"}, {identifier: "open-twitch", text: "Open Twitch"}])])
+                }
+                tx.executeSql("CREATE INDEX IF NOT EXISTS store.notifications_emitter_time ON notifications (emitter_key, updated_at DESC, archive_id DESC)")
+                // Only lifecycle metadata is retained here, including for excluded sources.
+                tx.executeSql("CREATE TABLE IF NOT EXISTS store.notification_live (live_token TEXT PRIMARY KEY, archive_id TEXT NOT NULL DEFAULT '', deadline INTEGER NOT NULL, duration INTEGER NOT NULL, popup_visible INTEGER NOT NULL DEFAULT 0)")
                 tx.executeSql("PRAGMA store.user_version = " + schemaVersion)
             })
             state.database = database

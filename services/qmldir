@@ -18,8 +18,11 @@ singleton DbService 1.0 storage/DbService.qml
 singleton TwitchRepository 1.0 storage/TwitchRepository.qml
 singleton BatteryRepository 1.0 storage/BatteryRepository.qml
 singleton PreferencesRepository 1.0 storage/PreferencesRepository.qml
+singleton NotificationRepository 1.0 storage/NotificationRepository.qml
+singleton NotificationEmitterRepository 1.0 storage/NotificationEmitterRepository.qml
 
 singleton NotificationService 1.0 notifications/NotificationService.qml
+NativeNotificationServer 1.0 notifications/NativeNotificationServer.qml
 singleton StatusService 1.0 status/StatusService.qml
 singleton TwitchService 1.0 twitch/TwitchService.qml
 singleton TooltipService 1.0 ui/TooltipService.qml

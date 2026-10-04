@@ -10,11 +10,13 @@ Singleton {
     id: root
 
     readonly property var windows: _internal.windows
+    readonly property var allWindows: _internal.allWindows
     readonly property bool isSpecialWorkspace: _internal.isSpecialWorkspace
     property bool activeWindowHidden: _internal.activeWindowHidden
     QtObject {
         id: _internal
         property var windows: []
+        property var allWindows: []
         property bool isSpecialWorkspace: Config.specialWorkspaces.includes(
             Hyprland.focusedWorkspace?.id ?? -1
         )
@@ -104,6 +106,7 @@ Singleton {
             if (!running && _buffer.length > 0) {
                 try {
                     const clients = JSON.parse(_buffer)
+                    _internal.allWindows = clients
                     const wsId = Hyprland.focusedWorkspace?.id ?? -1
                     const isSpecial = Config.specialWorkspaces.includes(wsId)
                     const filtered = clients
@@ -165,6 +168,20 @@ Singleton {
 
     function focusWindow(address) {
         Hyprland.dispatch(Config.hyprlandFocusWindowByAddress(address))
+    }
+
+    function focusEmitter(desktopEntry, appName) {
+        const normalize = value => String(value || "").replace(/\.desktop$/, "").toLowerCase()
+        const identity = normalize(desktopEntry || appName)
+        if (!identity) return false
+        const startupClass = desktopEntry ? normalize(DesktopEntries.byId(String(desktopEntry).replace(/\.desktop$/, ""))?.startupClass) : ""
+        const identities = [identity, startupClass].filter(value => value.length > 0)
+        const matches = allWindows.filter(client => client.mapped !== false &&
+            (identities.includes(normalize(client.class)) || identities.includes(normalize(client.initialClass))))
+            .sort((a, b) => (a.focusHistoryID < 0 ? Infinity : a.focusHistoryID) - (b.focusHistoryID < 0 ? Infinity : b.focusHistoryID))
+        if (!matches.length) return false
+        focusWindow(matches[0].address)
+        return true
     }
 
     function cycleNext() {

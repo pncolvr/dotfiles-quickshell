@@ -12,6 +12,7 @@
     - manage streamers in the dropdown or through IPC
 - TOTP codes beside the tray, with a hover panel, click to pin, copying, and inline add/edit/delete
 - Batteries beside TOTP, with live levels for laptop batteries and attached devices
+- Native notifications with durable history, emitter settings, and a pinned manager
 - Submap window for Hyprland keybind hints
 - Alert window
 - IPC commands for reloading and toggling modules
@@ -26,6 +27,153 @@ The QML files contain scoped lint exceptions for incomplete Quickshell type
 metadata: runtime-selected `PanelWindow` backends, the missing
 `QProcess::ExitStatus` enum, and the tray menu handle's outdated C++ type name.
 Other warnings remain enabled, including signal checks outside those handlers.
+
+## Notifications
+
+Quickshell handles notifications directly whenever the shell starts. No
+environment variable or separate notification-center package is required.
+
+Hover the bell to open the manager and left-click to pin/unpin
+it. The manager provides **History** and **Emitters** tabs. Emitter groups start
+collapsed with their latest notification visible. Both groups and their entries
+are ordered newest first; **Load older** controls keep older records accessible.
+**Clear emitter** and **Clear all** delete history and dismiss current notifications
+while preserving source settings and DND. The manager uses the shared tooltip
+panel with underlined tabs on the left and DND/Clear all controls on the right.
+Pinning is controlled through the bell.
+Buttons, tabs, scrollbars and clickable cards use the pointing-hand cursor;
+passive text and panel space use the normal pointer.
+
+Low, normal, and critical notifications are saved in SQLite until manually deleted;
+transient notifications are popup-only. Each emitter header shows
+a plain **+/-** marker, its count, and its name, followed by **Show/Hide**,
+**DND blocked/allowed**, **History on/off**, and a trash button to clear history.
+These buttons show the current state; clicking toggles it. New emitters start
+with notifications shown, DND blocked, and history on. The visibility filter is **Hidden**.
+Groups with one notification hide the expand marker and leave their heading passive.
+The same source settings are available in the Emitters tab. These
+settings are independent and persist after clearing history. DND blocks every
+source by default, including critical notifications; allowing a source does not
+override mute. Excluding history affects future notifications and replacements,
+and retains existing records. Turning off DND or unmuting never replays a backlog.
+
+Popups follow Hypr's focused monitor, falling back to the last connected screen
+or another available screen. Moving the stack keeps notification identities and
+deadlines. Popups use the SwayNC reference's dark background at 95% opacity, rounded
+corners and bold monospace text. App icons occupy a left-hand column beside the
+content, with the timestamp after the app name. File icons supplied through
+`notify-send`, including the custom Twitch logo, use this same left icon slot.
+Twitch sends low-urgency, nontransient notifications under its own emitter name,
+so its notifications and icons are retained in history. Clicking a Twitch
+notification or its **Open Twitch** button opens the configured Twitch URL,
+including from saved history after expiry or restart.
+Discord user/group images overlap the app icon with an offset down and
+right, leaving the Discord icon visible above and to the left. Timed popup
+outlines drain symmetrically from the bottom center up both sides to the top
+center, synchronized with rendered frames as in TOTP. The close
+button is circular and turns red on hover. History cards use a complete outline
+in their urgency color. Application timeouts take
+priority over the configured low/normal/critical defaults. Left-click runs a usable
+default action, then falls back to focusing a matched existing app only when no
+default action is usable. Explicit action buttons invoke their own
+actions. Right-click dismisses a popup without deleting its history; right-click
+in history deletes that entry. Action identifiers and labels are saved with
+history. Default actions are displayed in history unless their label duplicates
+a named action. Generic app actions remain visible but disabled after their live notification closes; their callbacks
+cannot be restored, as the notification protocol invalidates their IDs on
+closure. See the [notification protocol](https://specifications.freedesktop.org/notification/latest/protocol.html).
+The locally implemented Twitch action stays available. Focus lookup includes
+other workspaces and desktop `StartupWMClass`.
+
+Outline trimming uses Qt 6.10 or newer's
+[ShapePath trim](https://doc.qt.io/qt-6/qml-qtquick-shapes-shapepath.html#trim-prop).
+
+Quickshell 0.3.1 exposes notification replacements through property changes.
+An identical-content replacement produces no QML change event, so it cannot
+restart the timeout through this API. See the upstream
+[notification receipt implementation](https://github.com/quickshell-mirror/quickshell/blob/v0.3.1/src/services/notifications/server.cpp).
+
+Schema version 3 adds saved action metadata to the history, emitter preferences
+and reload metadata introduced in version 2, without replacing existing Twitch/battery/preferences tables. Image snapshots are stored
+as PNG data URLs in SQLite. QML renders provider images outside the bar viewport;
+the Bash helper uses `stat`, `od` and `base64` to validate, encode and remove the
+temporary PNG. No extra notification-center package is needed. History and emitter
+settings are local to `data/quickshell.db`.
+
+Qt's platform services register with the portal after `qt6ct` has already used
+that D-Bus connection. A scoped `QT_NO_XDG_DESKTOP_PORTAL=1` default in `shell.qml`
+skips that late registration and the unused native color-picker probe. This
+startup setting takes effect after restarting Quickshell. See Qt's
+[platform service initialization](https://github.com/qt/qtbase/blob/v6.11.2/src/gui/platform/unix/qdesktopunixservices.cpp).
+
+Discord's tray item omits `IconName` and rejects Quickshell's refresh requests,
+so the repeated warning comes from Quickshell's native tray implementation.
+It requires an upstream fix; this QML configuration cannot change its polling.
+
+### Handover from SwayNC (manual)
+
+The service and Hypr configuration have not been changed by this implementation.
+Both the popup and manager use the layer namespace `quickshell-notifications`.
+The existing capture rule still targets SwayNC until you make this one-value edit
+in `~/.config/hypr/config/windowrules.lua`:
+
+```lua
+match = { namespace = "quickshell-notifications" },
+```
+
+Keep `NotificationsHidden`, `no_screen_share`, and `HideApplications(active)`.
+The shell synchronizes capture state on native startup, screen-sharing changes
+and Hypr configuration reloads. After the namespace edit, verify that both
+notification surfaces remain visible locally but disappear from a shared stream,
+and become screenshot-visible again when sharing ends.
+
+For a deliberate switch, stop the existing Quickshell instance, stop/mask SwayNC,
+make the namespace edit, reload Hypr, then start the shell:
+
+```sh
+systemctl --user mask --now swaync.service
+qs -p "$HOME/.config/quickshell"
+```
+
+Verify ownership with `busctl --user status org.freedesktop.Notifications` and send
+a sample with `notify-send`. SwayNC's installed D-Bus activation files can start
+its systemd unit on demand, so disabling it alone does not block activation.
+
+To restore SwayNC, stop Quickshell, restore `swaync-notification-window` in the
+Hypr rule, reload Hypr, and unmask/start SwayNC:
+
+```sh
+systemctl --user unmask swaync.service
+systemctl --user start swaync.service
+```
+
+Use a Quickshell configuration without the native notification server before
+starting Quickshell alongside SwayNC. The new history database can be retained.
+Only one handler should own the notification interface. Live screen-sharing
+checks remain part of this manual handover.
+
+### Notification verification
+
+```sh
+bash tests/notifications/notifications.sh
+bash tests/notifications/notifications.sh --wayland
+bash tests/notifications/startup.sh
+bash tests/storage/storage.sh
+bash tests/qml/lint.sh
+```
+
+The notification tests use a private D-Bus session and temporary databases, with
+Hypr commands mocked. They check protocol receipt, replacement, expiry and close
+reasons; source policies; action/click behavior; durable images; pagination; schema
+migration; and reload/restart persistence. `--wayland` also briefly displays the
+test popup/manager on the current desktop, checks bounded layer surfaces and saves
+a sample manager image to `/tmp/quickshell-notifications-preview.png`. The tests
+also send a title-only notification with `notify-send` and verify its history
+survives expiry and restart. Tests need `notify-send`, `python-dbus`, PyGObject and
+QtTest; these are test dependencies only.
+The startup test briefly launches a temporary copy of the complete shell on the
+current Wayland desktop with notifications enabled by default. It checks
+the real module loader, with a private D-Bus session and mocked startup commands.
 
 ## IPC
 

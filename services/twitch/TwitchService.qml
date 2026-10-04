@@ -40,6 +40,13 @@ Singleton {
         Quickshell.execDetached(Config.twitchStreamCommand(login, `${Config.twitchBaseUrl}${login}`))
     }
     function openPicker() { Quickshell.execDetached(Config.twitchStreamCommand()) }
+    function notifyOnline(logins) {
+        if (!logins.length || notifyProcess.running) return
+        notifyProcess.command = ["notify-send", "--app-name=Twitch", "--urgency=low",
+            "--action=default=Open Twitch", "--action=open-twitch=Open Twitch", "--icon",
+            Qt.resolvedUrl("../../assets/twitch.png").toString().replace("file://", ""), logins.join("\n")]
+        notifyProcess.running = true
+    }
     function avatarSource(login) { return TwitchRepository.avatars[login]?.dataUrl ?? "" }
     function addUser(login) { return usersReady && TwitchRepository.addUser(login) }
     function removeUser(login) { return usersReady && TwitchRepository.removeUser(login) }
@@ -178,11 +185,7 @@ Singleton {
                 })).sort((a, b) => a.login.localeCompare(b.login))
                 root.syncUsers()
                 const newlyOnline = state.onlineUsers.map(user => user.login).filter(login => !previousOnline.includes(login))
-                if (newlyOnline.length && !notifyProcess.running) {
-                    notifyProcess.command = ["notify-send", "--urgency=low", "--transient", "--icon",
-                        Qt.resolvedUrl("../../assets/twitch.png").toString().replace("file://", ""), newlyOnline.join("\n")]
-                    notifyProcess.running = true
-                }
+                root.notifyOnline(newlyOnline)
                 root.writeOnlineExport()
                 root.fetchAvatars()
             } catch (error) {
@@ -193,7 +196,18 @@ Singleton {
         // qmllint enable signal-handler-parameters
     }
 
-    Process { id: notifyProcess }
+    Process {
+        id: notifyProcess
+        stdout: StdioCollector { id: notifyOutput; waitForEnd: true }
+        // Quickshell.Io omits QProcess::ExitStatus from its qmltypes.
+        // qmllint disable signal-handler-parameters
+        onExited: (exitCode, exitStatus) => {
+            if (exitCode !== 0 || exitStatus !== 0) return
+            const action = notifyOutput.text.trim()
+            if (action === "default" || action === "open-twitch") Qt.openUrlExternally(Config.twitchBaseUrl)
+        }
+        // qmllint enable signal-handler-parameters
+    }
 
     Process {
         id: avatarQueryProcess

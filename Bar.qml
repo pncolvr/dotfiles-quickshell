@@ -3,6 +3,7 @@ import Quickshell
 import "theme"
 import "theme/ui" as UI
 import "bar"
+import "modules/system/notifications"
 
 Scope {
   Variants {
@@ -33,6 +34,9 @@ Scope {
       }
 
       TooltipWindow { screen: panelWindow.screen }
+      NotificationImageCache {
+        enabled: panelWindow.screen === Quickshell.screens[0]
+      }
 
       SubmapWindow {}
       AlertWindow {}

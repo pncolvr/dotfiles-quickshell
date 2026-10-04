@@ -18,11 +18,22 @@ Singleton {
         if (value != root.submapName) root.submapName = value
     }
 
+    function synchronizeCapture() { captureSyncTimer.restart() }
+
+    Timer {
+        id: captureSyncTimer
+        interval: 50
+        onTriggered: {
+            if (hideApplicationsProcess.running) { restart(); return }
+            hideApplicationsProcess.command = Config.hyprlandHideApplicationsCommand(AudioService.screencastActive)
+            hideApplicationsProcess.running = true
+        }
+    }
+
     Connections {
         target: AudioService
         function onScreencastActiveChanged() {
-            hideApplicationsProcess.command = Config.hyprlandHideApplicationsCommand(AudioService.screencastActive)
-            hideApplicationsProcess.running = true
+            root.synchronizeCapture()
             WindowService.buildWindows()
         }
     }
@@ -35,6 +46,9 @@ Singleton {
             switch (event.name) {
                 case "submap":
                     root.setSubmapName(event.data.trim())
+                    break
+                case "configreloaded":
+                    root.synchronizeCapture()
                     break
                 case "activewindow":
                 case "activewindowv2":
@@ -75,8 +89,9 @@ Singleton {
                 // screencast: screencopy client state
                 // urgent: window urgency hint, not tracked
                 // ignoregrouplock/lockgroups: group lock state only
-                // configreloaded: no window/status impact
             }
         }
     }
+
+    Component.onCompleted: synchronizeCapture()
 }

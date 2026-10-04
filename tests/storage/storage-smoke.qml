@@ -36,7 +36,7 @@ Scope {
 
     function seed() {
         check(DbService.ready, "database created on first use")
-        check(DbService.read("SELECT name FROM store.sqlite_master WHERE type = 'table'").length === 5, "central schema")
+        check(DbService.read("SELECT name FROM store.sqlite_master WHERE type = 'table'").length === 8, "central schema")
         check(!TimeService.showSeconds, "default clock preference")
         check(TwitchRepository.exportUsers() === "", "fresh Twitch list is empty")
         const field = objects.findChild(panel, "twitchLoginField") as UI.InputField

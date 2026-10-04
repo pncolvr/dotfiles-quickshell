@@ -12,7 +12,6 @@ Item {
         readonly property string runtimeDirectory:Quickshell.env("XDG_RUNTIME_DIR")
         readonly property string userId:ConfigService.userId
         readonly property string statusManager: `${home}/.config/zsh/scripts/status/manager.sh`
-        readonly property string notificationsManager: "swaync-client"
         readonly property string powerProfilesManager: "powerprofilesctl"
 
     }
@@ -76,9 +75,11 @@ Item {
     readonly property var statusManagerToggleCommand: [_internal.statusManager, "--toggle"]
     readonly property var statusManagerClearCommand:  [_internal.statusManager, "--clear"]
 
-    readonly property var notificationsManagerGetDndCommand:[_internal.notificationsManager, "--get-dnd"]
-    readonly property var notificationsManagerToggleDndCommand:[_internal.notificationsManager, "--toggle-dnd"]
-    readonly property var notificationsManagerOpenPanelCommand:[_internal.notificationsManager, "--open-panel"]
+    readonly property string notificationNamespace: "quickshell-notifications"
+    readonly property int notificationLowTimeout: 2000
+    readonly property int notificationNormalTimeout: 5000
+    readonly property int notificationCriticalTimeout: 0
+    readonly property int notificationPageSize: 25
 
     readonly property real micActivityThreshold: 0.02
     readonly property int micActivityHold: 200

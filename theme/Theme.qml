@@ -227,4 +227,12 @@ Item {
   // notifications
   readonly property string notificationsDndEnabledIcon: ""
   readonly property string notificationsDndDisabledIcon: ""
+  readonly property int notificationWidth: 500
+  readonly property int notificationManagerWidth: 560
+  readonly property int notificationRadius: 16
+  readonly property int notificationSpacing: 12
+  readonly property color notificationBackground: Qt.rgba(33 / 255, 34 / 255, 44 / 255, 0.95)
+  readonly property color notificationBorder: "#2a2d38"
+  readonly property color notificationCritical: "#d32f2f"
+  readonly property string notificationFont: "JetBrains Mono"
 }

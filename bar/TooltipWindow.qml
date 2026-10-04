@@ -7,7 +7,7 @@ import "../services"
 TopPanelTooltip {
     id: root
     readonly property bool onTooltipScreen: !TooltipService.screen || TooltipService.screen === screen
-    readonly property bool shouldShow: TooltipService.visible && onTooltipScreen
+    readonly property bool shouldShow: TooltipService.visible && onTooltipScreen && !TooltipService.notificationPanel
     visible: shouldShow
     WlrLayershell.keyboardFocus: TooltipService.source?.tooltipKeyboardFocus
         ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
