@@ -77,6 +77,7 @@ Column {
             width: choices.width - (scrollbar.visible ? Theme.audioScrollbarWidth + Theme.audioScrollbarMargin : 0)
             height: choices.rowHeight
             padding: Theme.audioButtonPadding
+            hoverEnabled: true
             enabled: modelData.available
             opacity: enabled ? 1 : 0.4
             Accessible.name: modelData.description
@@ -106,6 +107,10 @@ Column {
                     visible: option.modelData.name === root.selectedName
                     color: Theme.accent
                 }
+            }
+            HoverHandler {
+                enabled: option.enabled
+                cursorShape: Qt.PointingHandCursor
             }
         }
         QC.ScrollBar.vertical: QC.ScrollBar {

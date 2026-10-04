@@ -19,7 +19,8 @@ Item {
         enabled: root.enabled && !root.hoverTarget
         anchors.fill: parent
         hoverEnabled: true
-        cursorShape: root.cursorShape
+        // A disabled MouseArea can still override the control's cursor.
+        cursorShape: root.hoverTarget ? undefined : root.cursorShape
         onClicked: root.clicked()
     }
 

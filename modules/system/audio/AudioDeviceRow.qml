@@ -65,6 +65,10 @@ Rectangle {
                 enabled: root.deviceReady
                 Accessible.name: (root.input ? "Microphone gain: " : "Volume: ") + root.audioService.deviceName(root.node)
                 onMoved: root.audioService.setNodeVolume(root.node, value)
+                HoverHandler {
+                    enabled: slider.enabled
+                    cursorShape: Qt.PointingHandCursor
+                }
                 Binding {
                     target: slider
                     property: "value"
