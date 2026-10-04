@@ -39,7 +39,7 @@ Column {
             UI.ColumnText {
                 objectName: "micActivity"
                 visible: root.input
-                text: root.audioService.micActivityEnabled ? "mic activity enabled" : "mic activity disabled"
+                text: root.audioService.micActivityEnabled ? "Mic activity enabled" : "Mic activity disabled"
                 color: root.audioService.micActivityEnabled ? Theme.ok : Theme.inactive
             }
             UI.ColumnText {
