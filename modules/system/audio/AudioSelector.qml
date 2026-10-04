@@ -52,7 +52,7 @@ Column {
             UI.IconText {
                 id: arrow
                 anchors.right: parent.right
-                text: Theme.audioProfileArrowIcon
+                text: Theme.chevronDownIcon
                 rotation: root.expanded ? 180 : 0
                 color: Theme.inactive
             }
@@ -103,7 +103,7 @@ Column {
                 UI.IconText {
                     id: mark
                     anchors.right: parent.right
-                    text: Theme.audioProfileSelectedIcon
+                    text: Theme.checkIcon
                     visible: option.modelData.name === root.selectedName
                     color: Theme.accent
                 }

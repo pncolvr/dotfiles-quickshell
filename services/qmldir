@@ -14,6 +14,11 @@ singleton NetworkService 1.0 system/NetworkService.qml
 singleton UpdatesService 1.0 system/UpdatesService.qml
 singleton ConfigService 1.0 system/ConfigService.qml
 
+singleton DbService 1.0 storage/DbService.qml
+singleton TwitchRepository 1.0 storage/TwitchRepository.qml
+singleton BatteryRepository 1.0 storage/BatteryRepository.qml
+singleton PreferencesRepository 1.0 storage/PreferencesRepository.qml
+
 singleton NotificationService 1.0 notifications/NotificationService.qml
 singleton StatusService 1.0 status/StatusService.qml
 singleton TwitchService 1.0 twitch/TwitchService.qml

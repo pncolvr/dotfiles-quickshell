@@ -2,9 +2,11 @@
 set -euo pipefail
 project_root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)
 test_dir=$(mktemp -d /tmp/quickshell-batteries-test.XXXXXX)
-entry=$(mktemp "$project_root/.batteries-smoke.XXXXXX.qml")
+mkdir -p "$test_dir/config/data"
+entry="$test_dir/config/shell.qml"
 trap 'rm -rf -- "$test_dir"; rm -f -- "$entry"' EXIT
 mkdir -m 700 "$test_dir/runtime"
+export XDG_DATA_HOME="$test_dir/data"
 bash "$project_root/tests/system/logitech-batteries.sh"
 mkdir "$test_dir/bin"
 cat > "$test_dir/bin/solaar" <<'MOCK'
@@ -18,11 +20,11 @@ Bolt Receiver
 REPORT
 MOCK
 chmod +x "$test_dir/bin/solaar"
-cat > "$entry" <<'QML'
+cat > "$entry" <<QML
 import QtQuick
 import Quickshell
 Scope {
-    Loader { source: "tests/system/batteries-smoke.qml" }
+    Loader { source: "file://$project_root/tests/system/batteries-smoke.qml" }
 }
 QML
 output=$(PATH="$test_dir/bin:$PATH" QT_QPA_PLATFORM=offscreen XDG_RUNTIME_DIR="$test_dir/runtime" timeout 15 qs -p "$entry" 2>&1) || {
@@ -60,11 +62,11 @@ Bolt Receiver
      Battery: $level, BatteryStatus.DISCHARGING.
 REPORT
 MOCK
-cat > "$entry" <<'QML'
+cat > "$entry" <<QML
 import QtQuick
 import Quickshell
 Scope {
-    Loader { source: "tests/system/batteries-refresh-smoke.qml" }
+    Loader { source: "file://$project_root/tests/system/batteries-refresh-smoke.qml" }
 }
 QML
 refresh_output=$(PATH="$test_dir/bin:$PATH" BATTERY_TEST_RECEIVER_COUNTER="$test_dir/receiver-counter" \
@@ -89,7 +91,7 @@ Bolt Receiver
 REPORT
 MOCK
 # PersistentProperties participates in the root reload tree, not an asynchronous Loader.
-sed 's|import "../../|import "./|g' "$project_root/tests/system/batteries-reload-smoke.qml" > "$entry"
+sed "s|import \"../../|import \"file://$project_root/|g" "$project_root/tests/system/batteries-reload-smoke.qml" > "$entry"
 reload_output=$(PATH="$test_dir/bin:$PATH" QT_QPA_PLATFORM=offscreen XDG_RUNTIME_DIR="$test_dir/runtime" timeout 15 qs -p "$entry" 2>&1) || {
     printf '%s\n' "$reload_output" >&2
     exit 1
@@ -100,16 +102,17 @@ printf '%s\n' "$reload_output"
     && $reload_output != *'TypeError:'* && $reload_output != *'ReferenceError:'* ]]
 
 if [[ ${1:-} == --native-imports ]]; then
-    cat > "$entry" <<'QML'
+    cat > "$entry" <<QML
 import QtQuick
 import Quickshell
-import "modules/system/batteries"
-import "bar"
-import "services"
+import "file://$project_root/modules/system/batteries"
+import "file://$project_root/bar"
+import "file://$project_root/services"
+import "file://$project_root" as Project
 Scope {
     id: root
     property int step: 0
-    Component { Bar {} }
+    Component { Project.Bar {} }
     PanelWindow {
         id: probe
         visible: false

@@ -9,9 +9,8 @@ import "../../theme"
 import "../../services"
 
 Row {
-// Column {
     id: root
-    spacing: 8
+    spacing: Theme.twitchUserSpacing
 
     required property var user
 
@@ -21,12 +20,12 @@ Row {
     Item {
         width: Theme.twitchAvatarSize
         height: width
-        // anchors.horizontalCenter: parent.horizontalCenter
 
         Image {
             id: avatarImage
+            objectName: "twitchAvatar_" + root.user.login
             anchors.fill: parent
-            source: `file://${root.user.avatar}`
+            source: root.user.avatar || ""
             fillMode: Image.PreserveAspectCrop
             smooth: true
             visible: false
@@ -142,5 +141,17 @@ Row {
             cursorShape: Qt.PointingHandCursor
             onClicked: root.user.online ? TwitchService.openStream(root.user.login) : TwitchService.openUrl(root.user.login)
         }
+    }
+
+    UI.ActionButton {
+        objectName: "removeTwitchUser_" + root.user.login
+        glyph: Theme.deleteIcon
+        hint: "Remove " + root.user.login
+        width: Theme.twitchRemoveButtonSize
+        height: Theme.twitchRemoveButtonSize
+        padding: 0
+        anchors.verticalCenter: parent.verticalCenter
+        enabled: TwitchService.usersReady
+        onClicked: TwitchService.removeUser(root.user.login)
     }
 }

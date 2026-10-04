@@ -19,13 +19,15 @@ Singleton {
         Qt.openUrlExternally(dateUrl(date));
     }
 
-    function formatDate(date) {
+    function formatDate(date, referenceTime) {
         if (!date)
             return "";
         const time = " 'at' hh:mm";
         let format = "yyyy-MM-dd";
         const d = new Date(date);
-        const d2 = new Date();
+        const d2 = new Date(referenceTime ?? Date.now());
+        if (!Number.isFinite(d.getTime()) || !Number.isFinite(d2.getTime()))
+            return "";
         if (d.isSameDay(d2)) {
             format = "'today'";
         } else if (d.isSameDay(d2.addDays(1))) {

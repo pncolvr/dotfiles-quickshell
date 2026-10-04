@@ -117,7 +117,7 @@ Rectangle {
             spacing: Theme.audioSpacing
             AudioButton {
                 objectName: "deviceUseNow"
-                glyph: Theme.audioUseNowIcon
+                glyph: Theme.playIcon
                 label: "Use now"
                 hint: root.input ? "Move current recording apps here" : "Move current playback apps here"
                 enabled: root.deviceReady && !root.audioService.routingBusy

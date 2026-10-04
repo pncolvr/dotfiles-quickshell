@@ -6,6 +6,7 @@ import Quickshell.Io
 import Quickshell.Bluetooth
 import Quickshell.Services.UPower
 import "../../config"
+import "../"
 
 Singleton {
     id: root
@@ -27,6 +28,7 @@ Singleton {
         reloadableId: "battery-receiver-cache"
         // Strings survive reloads across QML engines; JavaScript arrays do not.
         property string receiverSnapshotJson: "[]"
+        property bool receiverCacheRestored: false
         property string receiverError: ""
     }
 
@@ -34,11 +36,24 @@ Singleton {
         objectName: "batteryReceiverTimer"
         interval: Config.batteryReceiverInterval
         // The bar needs current levels even when the tooltip has never been opened.
-        running: true
+        running: DbService.ready
         repeat: true
         triggeredOnStart: true
         onTriggered: if (!receiverProcess.running) receiverProcess.running = true
     }
+
+    Connections {
+        target: DbService
+        function onReadyChanged() { root.restoreReceiverSnapshot() }
+    }
+
+    function restoreReceiverSnapshot() {
+        if (!DbService.ready || _internal.receiverCacheRestored) return
+        _internal.receiverSnapshotJson = JSON.stringify(BatteryRepository.receiverSnapshot())
+        _internal.receiverCacheRestored = true
+    }
+
+    Component.onCompleted: restoreReceiverSnapshot()
 
     function levelStatus(level) {
         if (typeof level !== "number" || !Number.isFinite(level) || level < 0) return "normal"
@@ -69,7 +84,9 @@ Singleton {
                 }
                 // Keep the previous readings throughout the scan; replace them in one update.
                 // An empty successful snapshot confirms that receiver devices disconnected.
-                _internal.receiverSnapshotJson = JSON.stringify(receiverSnapshot(root.receiverBatteries, snapshot.devices))
+                const devices = receiverSnapshot(root.receiverBatteries, snapshot.devices)
+                _internal.receiverSnapshotJson = JSON.stringify(devices)
+                BatteryRepository.saveReceiverSnapshot(devices)
                 _internal.receiverError = ""
             } catch (error) {
                 _internal.receiverError = "Some device batteries could not be read"

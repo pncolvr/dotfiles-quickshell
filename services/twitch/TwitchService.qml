@@ -9,335 +9,278 @@ import "../"
 Singleton {
     id: root
 
-    readonly property var onlineUsers: _internal.onlineUsers
-    readonly property var offlineUsers: _internal.offlineUsers
-    readonly property var allUsers: _internal.combinedUsers
-    readonly property bool hasOnline: _internal.hasOnline
-    
-    readonly property bool available: _internal.available
-    
-    QtObject {
-        id: _internal 
-        property string cacheDir: Config.twitchCacheDir
-        property var allUsers: []
-        property var downloadQueue: []
+    readonly property var onlineUsers: state.onlineUsers
+    readonly property var offlineUsers: {
+        TimeService.time // Reformat relative dates when the clock changes, including midnight.
+        return formatOfflineUsers(state.offlineUsers, Date.now())
+    }
+    readonly property var allUsers: [...onlineUsers, ...offlineUsers].sort((a, b) => a.login.localeCompare(b.login))
+    readonly property bool hasOnline: onlineUsers.length > 0
+    readonly property bool available: state.available
+    readonly property bool usersReady: DbService.ready
+    readonly property string error: TwitchRepository.error
 
+    onUsersReadyChanged: if (usersReady) Qt.callLater(root.refresh)
+
+    QtObject {
+        id: state
         property var onlineUsers: []
         property var offlineUsers: []
-        property bool hasOnline: onlineUsers.length > 0
-        property bool available: false
+        property var downloadQueue: []
         property var userIds: ({})
         property var scheduleQueue: []
-        property var scheduleTimestamps: ({})
-        property var scheduleCache: ({})
+        property bool available: false
+        property bool refreshing: false
+        property bool refreshAgain: false
         readonly property int scheduleCacheDuration: 60 * 60 * 1000
-        readonly property string scheduleCacheFilePath: `${cacheDir}/schedule.json`
-
-        property var combinedUsers: {
-            var combined = [...onlineUsers, ...offlineUsers]
-            return combined.sort((a, b) => a.login.localeCompare(b.login))
-        }
     }
 
-    Process {
-        id: checkProcess
-        command: ["bash", "-c", `which ${Config.twitchCli} > /dev/null 2>&1 && echo "1" || echo "0"`]
-        running: true
-        stdout: SplitParser {
-            onRead: data => _internal.available = data.trim() === "1"
-        }
-    }
-
-    function openUrl(login) {
-        Qt.openUrlExternally(`${Config.twitchBaseUrl}${login}`)
-    }
-
+    function openUrl(login) { Qt.openUrlExternally(`${Config.twitchBaseUrl}${login}`) }
     function openStream(login) {
         Quickshell.execDetached(Config.twitchStreamCommand(login, `${Config.twitchBaseUrl}${login}`))
     }
+    function openPicker() { Quickshell.execDetached(Config.twitchStreamCommand()) }
+    function avatarSource(login) { return TwitchRepository.avatars[login]?.dataUrl ?? "" }
+    function addUser(login) { return usersReady && TwitchRepository.addUser(login) }
+    function removeUser(login) { return usersReady && TwitchRepository.removeUser(login) }
 
-    function openPicker() {
-        Quickshell.execDetached(Config.twitchStreamCommand())
+    function syncUsers() {
+        const logins = TwitchRepository.logins()
+        state.onlineUsers = state.onlineUsers.filter(user => logins.includes(user.login))
+        const online = state.onlineUsers.map(user => user.login)
+        state.offlineUsers = logins.filter(login => !online.includes(login)).map(login => ({
+            login, online: false, avatar: avatarSource(login),
+            nextStreamAt: TwitchRepository.schedules[login]?.startsAt ?? null
+        }))
+    }
+
+    function formatOfflineUsers(users, now) {
+        return users.map(user => Object.assign({}, user, {
+            nextStream: user.nextStreamAt > now ? CalendarService.formatDate(user.nextStreamAt, now) : ""
+        }))
+    }
+
+    function reload() {
+        if (TwitchRepository.reload()) refresh()
     }
 
     function refresh() {
-        if (!available) return
-        usersFile.reload()
+        if (!available || !usersReady || !NetworkService.online) return
+        if (state.refreshing) {
+            state.refreshAgain = true
+            return
+        }
+        state.refreshAgain = false
+        const logins = TwitchRepository.logins()
+        if (!logins.length) {
+            syncUsers()
+            writeOnlineExport()
+            return
+        }
+        state.refreshing = true
+        const query = logins.map(login => `user_login=${encodeURIComponent(login)}`).join("&")
+        streamsProcess.command = [Config.twitchCli, "api", "get", `streams?${query}`]
+        streamsProcess.running = true
     }
 
-    function avatarPath(login) {
-        return `${_internal.cacheDir}/${login}.jpg`
+    function finishRefresh() {
+        state.refreshing = false
+        if (state.refreshAgain) Qt.callLater(root.refresh)
     }
 
-    function fetchAvatars(users) {
-        const query = users.map(u => `login=${u}`).join("&")
-        avatarQueryProcess.command = ["bash", "-c",
-            `${Config.twitchCli} api get "users?${query}"`
-        ]
-        avatarQueryProcess._buffer = ""
+    function writeOnlineExport() {
+        onlineFile.setText(JSON.stringify({
+            prompt: "", action: "output", allowTyped: false, allowMultipleSelection: false, sort: false,
+            items: state.onlineUsers.map(user => ({title: ` ${user.login}`, result: `${Config.twitchBaseUrl}${user.login}`}))
+        }))
+    }
+
+    function fetchAvatars() {
+        const logins = TwitchRepository.logins()
+        if (!logins.length) { finishRefresh(); return }
+        const query = logins.map(login => `login=${encodeURIComponent(login)}`).join("&")
+        avatarQueryProcess.command = [Config.twitchCli, "api", "get", `users?${query}`]
         avatarQueryProcess.running = true
     }
 
-    function ensureCacheDir() {
-        cacheDirProcess.running = true
-    }
-
-    function _processQueue() {
-        if (_internal.downloadQueue.length === 0) return
-        const next = _internal.downloadQueue.shift()
-        downloadProcess.command = ["bash", "-c",
-            `[ -f "${next.path}" ] || curl -s -o "${next.path}" "${next.url}"`
-        ]
+    function processDownloadQueue() {
+        if (downloadProcess.running || !state.downloadQueue.length) return
+        state.downloadQueue = state.downloadQueue.filter(item => TwitchRepository.logins().includes(item.login))
+        if (!state.downloadQueue.length) return
+        const next = state.downloadQueue.shift()
+        downloadProcess.login = next.login
+        downloadProcess.sourceUrl = next.url
+        downloadProcess.command = ["bash", "-o", "pipefail", "-c",
+            'curl -fsSL --max-time 15 --max-filesize 1048576 "$1" | base64 -w0', "twitch-avatar", next.url]
         downloadProcess.running = true
     }
 
-    function fetchSchedules(logins) {
+    function scheduleIsFresh(cache, now) {
+        return !!cache && now >= cache.fetchedAt && now - cache.fetchedAt < state.scheduleCacheDuration
+            && (cache.startsAt === null || cache.startsAt > now)
+    }
+
+    function fetchSchedules() {
         const now = Date.now()
-        _internal.scheduleQueue = logins.filter(l => {
-            const key = l.toLowerCase()
-            if (!_internal.userIds[key]) return false
-            const last = _internal.scheduleTimestamps[key] || 0
-            return (now - last) > _internal.scheduleCacheDuration
-        })
-        _processScheduleQueue()
+        state.scheduleQueue = state.offlineUsers.map(user => user.login).filter(login =>
+            state.userIds[login] && !scheduleIsFresh(TwitchRepository.schedules[login], now))
+        processScheduleQueue()
     }
 
-    function _saveScheduleCache() {
-        const data = {}
-        _internal.offlineUsers.forEach(u => {
-            const key = u.login.toLowerCase()
-            data[key] = {
-                nextStream: u.nextStream || "",
-                timestamp: _internal.scheduleTimestamps[key] || 0
-            }
-        })
-        scheduleCacheWriteProcess.command = ["bash", "-c",
-            `echo '${JSON.stringify(data)}' > ${_internal.scheduleCacheFilePath}`
-        ]
-        scheduleCacheWriteProcess.running = true
+    function nextScheduledStream(segments, now) {
+        const dates = segments.filter(segment => segment && !segment.canceled_until)
+            .map(segment => Date.parse(segment.start_time)).filter(date => Number.isFinite(date) && date > now)
+        return dates.length ? Math.min(...dates) : null
     }
 
-    function _processScheduleQueue() {
-        if (_internal.scheduleQueue.length === 0) return
-        const login = _internal.scheduleQueue[0]
-        _internal.scheduleQueue = _internal.scheduleQueue.slice(1)
-        const id = _internal.userIds[login.toLowerCase()]
-        scheduleProcess._login = login
-        scheduleProcess._buffer = ""
-        scheduleProcess.command = ["bash", "-c",
-            `${Config.twitchCli} api get "schedule?broadcaster_id=${id}&first=5"`
-        ]
+    function processScheduleQueue() {
+        if (scheduleProcess.running) return
+        const logins = TwitchRepository.logins()
+        state.scheduleQueue = state.scheduleQueue.filter(login => logins.includes(login))
+        if (!state.scheduleQueue.length) { finishRefresh(); return }
+        const login = state.scheduleQueue.shift()
+        scheduleProcess.login = login
+        scheduleProcess.command = [Config.twitchCli, "api", "get", `schedule?broadcaster_id=${encodeURIComponent(state.userIds[login])}&first=5`]
         scheduleProcess.running = true
     }
 
     FileView {
-        id: usersFile
-        path: Config.twitchUsersFile
-        onLoaded: {
-            const users = usersFile.text().trim().split("\n").filter(u => u.length > 0)
-            _internal.allUsers = users
-            _internal.offlineUsers = users.map(u => ({ login: u, online: false, avatar: root.avatarPath(u) }))
-            const query = users.map(u => `user_login=${u}`).join("&")
-            streamsProcess.command = ["bash", "-c",
-                `${Config.twitchCli} api get "streams?${query}"`
-            ]
-            streamsProcess._buffer = ""
-            streamsProcess.running = NetworkService.online
-        }
+        id: onlineFile
+        path: Config.twitchOnlineFile
+        preload: false
+        printErrors: false
     }
 
     Process {
-        id: cacheDirProcess
-        command: ["mkdir", "-p", _internal.cacheDir]
+        command: ["which", Config.twitchCli]
+        running: true
+        onExited: (exitCode, exitStatus) => { state.available = exitCode === 0 && exitStatus === 0 }
     }
 
     Process {
         id: streamsProcess
-        property string _buffer: ""
-
-        stdout: SplitParser {
-            onRead: data => streamsProcess._buffer += data
-        }
-        onRunningChanged: {
-            if (!running && _buffer.length > 0) {
-                try {
-                    const json = JSON.parse(_buffer)
-                    const previousOnline = _internal.onlineUsers.map(u => u.login)
-                    
-                    const onlineLogins = json.data.map(s => ({
-                        login: s.user_login,
-                        online: true,
-                        viewers: s.viewer_count,
-                        title: s.title,
-                        game: s.game_name,
-                        avatar: root.avatarPath(s.user_login)
-                    }))
-                    const onlineNames = onlineLogins.map(u => u.login)
-                    const newOnline = onlineNames.filter(u => !previousOnline.includes(u))
-
-                    _internal.onlineUsers = onlineLogins.sort((a, b) => a.login.localeCompare(b.login))
-                    _internal.offlineUsers = _internal.allUsers
-                        .filter(u => !onlineNames.includes(u))
-                        .sort()
-                        .map(u => {
-                            const prev = _internal.offlineUsers.find(o => o.login === u)
-                            const cached = _internal.scheduleCache[u.toLowerCase()]
-                            return { login: u, online: false, avatar: root.avatarPath(u),
-                                nextStream: (prev && prev.nextStream) || (cached && cached.nextStream) || "" }
-                        })
-
-                    if (newOnline.length > 0) {
-                        notifyProcess.command = ["notify-send", "--urgency=low", "--transient",
-                            "--icon", Qt.resolvedUrl("../../assets/twitch.png").toString().replace("file://", ""),
-                            newOnline.join("\n")]
-                        notifyProcess.running = true
-                    }
-
-                    const items = onlineNames.map(login => ({
-                        title: ` ${login}`,
-                        result: `https://www.twitch.tv/${login}`
-                    }))
-
-                    const outJson = JSON.stringify({
-                        prompt: "",
-                        action: "output",
-                        allowTyped: false,
-                        allowMultipleSelection: false,
-                        sort: false,
-                        items: items
-                    })
-
-                    writeProcess.command = ["bash", "-c", `echo '${outJson}' > ${Config.twitchOnlineFile}`]
-                    writeProcess.running = true
-
-                    root.ensureCacheDir()
-                    root.fetchAvatars(_internal.allUsers)
-                } catch(e) {
-                    console.warn("TwitchService parse error:", e)
+        stdout: StdioCollector { id: streamsOutput; waitForEnd: true }
+        onExited: (exitCode, exitStatus) => {
+            if (exitCode !== 0 || exitStatus !== 0) { root.finishRefresh(); return }
+            try {
+                const json = JSON.parse(streamsOutput.text)
+                if (!Array.isArray(json.data)) throw new Error("Missing streams data")
+                const previousOnline = state.onlineUsers.map(user => user.login)
+                const logins = TwitchRepository.logins()
+                state.onlineUsers = json.data.filter(stream => logins.includes(stream.user_login.toLowerCase())).map(stream => ({
+                    login: stream.user_login.toLowerCase(), online: true, viewers: stream.viewer_count,
+                    title: stream.title, game: stream.game_name, avatar: root.avatarSource(stream.user_login.toLowerCase())
+                })).sort((a, b) => a.login.localeCompare(b.login))
+                root.syncUsers()
+                const newlyOnline = state.onlineUsers.map(user => user.login).filter(login => !previousOnline.includes(login))
+                if (newlyOnline.length && !notifyProcess.running) {
+                    notifyProcess.command = ["notify-send", "--urgency=low", "--transient", "--icon",
+                        Qt.resolvedUrl("../../assets/twitch.png").toString().replace("file://", ""), newlyOnline.join("\n")]
+                    notifyProcess.running = true
                 }
-                _buffer = ""
+                root.writeOnlineExport()
+                root.fetchAvatars()
+            } catch (error) {
+                console.warn("TwitchService streams response:", error)
+                root.finishRefresh()
             }
         }
     }
 
-    Process {
-        id: notifyProcess
-    }
-
-    Process {
-        id: writeProcess
-    }
+    Process { id: notifyProcess }
 
     Process {
         id: avatarQueryProcess
-        property string _buffer: ""
-
-        stdout: SplitParser {
-            onRead: data => avatarQueryProcess._buffer += data
-        }
-        onRunningChanged: {
-            if (!running && _buffer.length > 0) {
+        stdout: StdioCollector { id: avatarOutput; waitForEnd: true }
+        onExited: (exitCode, exitStatus) => {
+            if (exitCode === 0 && exitStatus === 0) {
                 try {
-                    const json = JSON.parse(_buffer)
-                    json.data.forEach(user => {
-                        _internal.userIds[user.login.toLowerCase()] = user.id
-                        _internal.downloadQueue.push({
-                            path: root.avatarPath(user.login),
-                            url: user.profile_image_url
-                        })
-                    })
-                    root._processQueue()
-                    root.fetchSchedules(_internal.offlineUsers.map(u => u.login))
-                } catch(e) {
-                    console.warn("TwitchService avatar parse error:", e)
-                }
-                _buffer = ""
+                    const json = JSON.parse(avatarOutput.text)
+                    if (!Array.isArray(json.data)) throw new Error("Missing users data")
+                    const logins = TwitchRepository.logins()
+                    for (const user of json.data) {
+                        const login = user.login.toLowerCase()
+                        if (!logins.includes(login)) continue
+                        state.userIds[login] = user.id
+                        const url = user.profile_image_url
+                        const cached = TwitchRepository.avatars[login]
+                        if (url && cached?.sourceUrl !== url && !state.downloadQueue.some(item => item.login === login)
+                            && !(downloadProcess.running && downloadProcess.login === login && downloadProcess.sourceUrl === url))
+                            state.downloadQueue.push({login, url})
+                    }
+                    root.processDownloadQueue()
+                } catch (error) { console.warn("TwitchService users response:", error) }
             }
+            root.fetchSchedules()
         }
     }
 
     Process {
         id: downloadProcess
-        onRunningChanged: if (!running) root._processQueue()
+        objectName: "twitchAvatarDownload"
+        property string login: ""
+        property string sourceUrl: ""
+        stdout: StdioCollector { id: downloadOutput; waitForEnd: true }
+        onExited: (exitCode, exitStatus) => {
+            if (exitCode === 0 && exitStatus === 0)
+                TwitchRepository.saveAvatar(login, sourceUrl, downloadOutput.text.trim(), Date.now())
+            root.processDownloadQueue()
+        }
     }
 
     Process {
         id: scheduleProcess
-        property string _buffer: ""
-        property string _login: ""
-
-        stdout: SplitParser {
-            onRead: data => scheduleProcess._buffer += data
-        }
-        onRunningChanged: {
-            if (!running) {
-                if (_buffer.length > 0) {
-                    try {
-                        const json = JSON.parse(_buffer)
-                        const segments = json.data?.segments
-                        const next = segments?.find(s => s && !s.canceled_until && new Date(s.start_time) > new Date())
-
-                        const nextStream = CalendarService.formatDate(next?.start_time)
-
-                        const login = scheduleProcess._login
-                        const key = login.toLowerCase()
-                        _internal.scheduleTimestamps[key] = Date.now()
-                        _internal.scheduleCache[key] = { nextStream, timestamp: _internal.scheduleTimestamps[key] }
-                        _internal.offlineUsers = _internal.offlineUsers.map(u =>
-                            u.login === login ? Object.assign({}, u, {nextStream: nextStream}) : u
-                        )
-                        root._saveScheduleCache()
-                    } catch(e) {
-                        console.warn("TwitchService schedule parse error:", e)
-                    }
-                    _buffer = ""
-                }
-                root._processScheduleQueue()
+        property string login: ""
+        stdout: StdioCollector { id: scheduleOutput; waitForEnd: true }
+        onExited: (exitCode, exitStatus) => {
+            if (exitStatus === 0 && scheduleOutput.text) {
+                try {
+                    const json = JSON.parse(scheduleOutput.text)
+                    const now = Date.now()
+                    if (exitCode === 0 && Array.isArray(json.data?.segments))
+                        TwitchRepository.saveSchedule(login, root.nextScheduledStream(json.data.segments, now), now)
+                    else if (json.status === 404)
+                        TwitchRepository.saveSchedule(login, null, now)
+                } catch (error) { console.warn("TwitchService schedule response:", error) }
             }
+            root.processScheduleQueue()
         }
     }
 
-    Process {
-        id: scheduleCacheWriteProcess
-    }
-
-    FileView {
-        id: scheduleCacheFile
-        path: _internal.scheduleCacheFilePath
-        onLoaded: {
-            try {
-                const data = JSON.parse(scheduleCacheFile.text())
-                _internal.scheduleCache = data
-                Object.keys(data).forEach(key => {
-                    if (data[key].timestamp)
-                        _internal.scheduleTimestamps[key] = data[key].timestamp
-                })
-            } catch(e) {}
+    Connections {
+        target: TwitchRepository
+        function onUsersChanged() {
+            root.syncUsers()
+            root.writeOnlineExport()
+            root.refresh()
+        }
+        function onSchedulesChanged() { root.syncUsers() }
+        function onAvatarsChanged() {
+            state.onlineUsers = state.onlineUsers.map(user => Object.assign({}, user, {avatar: root.avatarSource(user.login)}))
+            root.syncUsers()
         }
     }
 
     Connections {
         target: NetworkService
-        function onOnlineChanged() {
-            if (NetworkService.online) root.refresh()
-        }
+        function onOnlineChanged() { if (NetworkService.online) root.refresh() }
     }
 
     Timer {
         interval: Config.twitchInterval
-        running: _internal.available
+        running: root.available
         repeat: true
         triggeredOnStart: true
         onTriggered: root.refresh()
     }
 
-    Component.onCompleted: {
-        scheduleCacheFile.reload()
-        if (NetworkService.online) refresh()
-    }
+    Component.onCompleted: syncUsers()
 
     IpcHandler {
         target: "twitch"
-        function reload(): void { root.refresh() }
+        function reload(): void { root.reload() }
+        function addUser(login: string): bool { return root.addUser(login) }
+        function removeUser(login: string): bool { return root.removeUser(login) }
+        function exportUsers(): string { return TwitchRepository.exportUsers() }
     }
 }

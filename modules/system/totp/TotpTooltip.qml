@@ -127,11 +127,11 @@ Column {
         width: parent.width
         height: Theme.totpRowHeight + Theme.totpFooterMargin
 
-        TotpButton {
+        UI.ActionButton {
             anchors.right: parent.right
             anchors.bottom: parent.bottom
             visible: !root.adding
-            glyph: TotpService.error.length > 0 ? Theme.totpRetryIcon : Theme.totpAddIcon
+            glyph: TotpService.error.length > 0 ? Theme.retryIcon : Theme.addIcon
             hint: TotpService.error.length > 0 ? "reload keyring" : "add token"
             enabled: !TotpService.busy
             onClicked: {

@@ -59,6 +59,22 @@ Item {
   readonly property int tooltipPaddingHeight: 10
   readonly property int tooltipMinWidth: 80
 
+  // Shared actions (Font Awesome).
+  readonly property string addIcon: "" // plus
+  readonly property string cancelIcon: "" // xmark
+  readonly property string checkIcon: "" // check: saved or selected
+  readonly property string deleteIcon: "" // trash-can
+  readonly property string copyIcon: "" // copy
+  readonly property string editIcon: "" // pen
+  readonly property string retryIcon: "" // arrows-rotate
+  readonly property string chevronDownIcon: "" // chevron-down: choices
+  readonly property string playIcon: "" // play
+
+  readonly property int controlHeight: 34
+  readonly property int actionButtonWidth: 30
+  readonly property int controlSpacing: 6
+  readonly property int controlFieldPadding: 8
+
   readonly property var calendarMonthNames: ["january","february","march","april","may","june","july","august","september","october","november","december"]
   readonly property var calendarDayNames: ["mo","tu","we","th","fr","sa","su"]
   readonly property int calendarWidth: 225
@@ -79,24 +95,17 @@ Item {
 
   // TOTP (Font Awesome icons)
   readonly property string totpIcon: ""
-  readonly property string totpCopyIcon: ""
-  readonly property string totpEditIcon: ""
-  readonly property string totpDeleteIcon: ""
-  readonly property string totpAddIcon: ""
-  readonly property string totpCancelIcon: ""
-  readonly property string totpSaveIcon: ""
-  readonly property string totpRetryIcon: ""
   readonly property int totpTooltipWidth: 380
-  readonly property int totpRowHeight: 34
-  readonly property int totpSpacing: 6
+  readonly property int totpRowHeight: controlHeight
+  readonly property int totpSpacing: controlSpacing
   readonly property int totpFooterMargin: 8
-  readonly property int totpButtonWidth: 30
+  readonly property int totpButtonWidth: actionButtonWidth
   readonly property int totpCodeWidth: 126
   readonly property int totpCountdownHeight: 20
   readonly property int totpCountdownTextWidth: 20
   readonly property int totpCountdownStrokeWidth: 4
   readonly property int totpCountdownListMargin: 12
-  readonly property int totpFieldPadding: 8
+  readonly property int totpFieldPadding: controlFieldPadding
   readonly property int totpScrollbarWidth: 6
   readonly property int totpScrollbarMargin: 12
   readonly property int totpExpiryWarning: 5
@@ -128,7 +137,14 @@ Item {
 
   readonly property int twitchInfoWidth: 200
   readonly property int twitchAvatarSize: 40
-  readonly property int twitchTooltipSpacing: 6
+  readonly property int twitchTooltipSpacing: controlSpacing
+  readonly property int twitchUserSpacing: 8
+  readonly property int twitchRemoveButtonSize: 24
+  readonly property int twitchScrollbarWidth: 6
+  readonly property int twitchScrollbarMargin: 12
+  readonly property int twitchEditorHeight: controlHeight
+  readonly property int twitchEditorButtonWidth: actionButtonWidth
+  readonly property real twitchTooltipMaxHeightRatio: 0.5
 
   readonly property int cpuTooltipLabelWidth: 60
   readonly property int cpuTooltipValueWidth: 40
@@ -146,7 +162,7 @@ Item {
   readonly property int iconButtonRadius: 3
   // workspaces
   readonly property int workspaceSpacing: 3
-  readonly property var workspaceIcons: ["", "", "", "", "", "", "", "#", "", ""]
+  readonly property var workspaceIcons: ["", playIcon, "", "", "", "", "", "#", "", ""]
   readonly property string workspaceUnknownIcon: "#"
   
   // submap
@@ -164,9 +180,6 @@ Item {
   readonly property var volumeIcons: ["", "", ""] // volume-low, volume, volume-high
   readonly property string volumeMutedIcon: "" // volume-off
   readonly property string audioDefaultIcon: "" // star: default device
-  readonly property string audioUseNowIcon: "" // play: switch current apps
-  readonly property string audioProfileArrowIcon: "" // chevron-down: profile choices
-  readonly property string audioProfileSelectedIcon: "" // check: active profile
   readonly property int audioTooltipWidth: 520
   readonly property real audioTooltipMaxHeightRatio: 0.6 // Fraction of the current screen height.
   readonly property int audioSpacing: 8

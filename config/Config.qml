@@ -56,7 +56,9 @@ Item {
 
     readonly property string calendarUrl: "https://calendar.google.com/calendar/r/day" 
 
-    readonly property string twitchUsersFile: Qt.resolvedUrl("./twitch-users").toString().replace("file://", "")
+    // The database is local to this config and ignored by Git.
+    readonly property string databasePath: Quickshell.shellPath("data/quickshell.db")
+    readonly property string databaseName: "quickshell"
     readonly property int twitchInterval: Timespan.fromMinutes(5)
     readonly property var twitchStreamCommand: function (login, url) {
         return login
@@ -66,7 +68,6 @@ Item {
 
     readonly property string twitchBaseUrl: "https://www.twitch.tv/"
 
-    readonly property string twitchCacheDir: `${Quickshell.env("XDG_CACHE_HOME") ?? _internal.home + "/.cache"}/quickshell/twitch`
     readonly property string twitchOnlineFile: `${Quickshell.env("XDG_RUNTIME_DIR")}/twitch_online_${_internal.userId}`
     readonly property string twitchCli: "twitch"
 

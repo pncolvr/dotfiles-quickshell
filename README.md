@@ -9,7 +9,7 @@
 - Screencast/screenshare status with sound notifications
 - Package update indicator
 - Easily follow Twitch streamers
-    - edit config/twitch-users with your prefered streamers
+    - manage streamers in the dropdown or through IPC
 - TOTP codes beside the tray, with a hover panel, click to pin, copying, and inline add/edit/delete
 - Batteries beside TOTP, with live levels for laptop batteries and attached devices
 - Submap window for Hyprland keybind hints
@@ -28,8 +28,48 @@ qs ipc call windows next # go to next window
 qs ipc call windows prev # go to previous windodw
 qs ipc call windows reload # manually reload window list
 qs ipc call windows focus [0-9] #index of the grouped window to move to
-qs ipc call twitch reload # reload twitch
+qs ipc call twitch reload # refresh Twitch
+qs ipc call twitch addUser streamer_login
+qs ipc call twitch removeUser streamer_login
+qs ipc call twitch exportUsers > twitch-users.txt # one login per line
 ```
+
+Hover the Twitch icon to see followed streamers and their next scheduled streams.
+Click **+** to reveal the login field, then **+** or Enter to save; **×** or Escape
+cancels. The trash button removes a streamer. Right-click the
+icon to pin the dropdown while editing. Left-click opens the stream picker.
+Logins are stored in lowercase and duplicates are rejected. A new database starts
+with an empty list; there is no users-file import. Exported lists are ordinary text
+files that you can save or share.
+
+`DbService` owns a versioned SQLite database, with separate repositories for Twitch
+users, schedules and avatar images, Logitech receiver battery snapshots, and user preferences.
+The clock's seconds toggle is saved across restarts. Quickshell creates
+`data/quickshell.db` inside this config on first run. The data folder is ignored
+by Git apart from its empty-directory marker; no database is shipped in the
+repository. `DbService` uses native SQLite `ATTACH` to open that path through
+Qt Quick LocalStorage. Qt keeps an empty connection database in its default
+storage directory; all application tables and schema versioning live in
+`data/quickshell.db`. No preparation script is needed. `Config.databasePath`
+uses `Quickshell.shellPath("data/quickshell.db")` and `Config.databaseName` is
+the fixed name `quickshell`. Tests run their entrypoint in a temporary config
+folder so their databases stay isolated.
+
+Twitch schedules store absolute start times and refresh at most hourly while
+cached, or sooner once the cached start has passed. Relative labels update with
+the clock, including across midnight. Failed requests preserve the previous
+cache. Avatar image payloads are stored as base64 data URLs in SQLite and displayed
+directly by QML. A changed profile-image URL refreshes the cached image; failed
+downloads retain the previous one. Removing a streamer deletes its schedule and
+avatar too. The picker JSON remains a runtime export.
+
+Twitch and TOTP use shared `UI.ActionButton` and `UI.InputField` controls. Shared
+action glyphs such as add, cancel, delete, and check are defined once in `Theme.qml`.
+
+Run `bash tests/storage/storage.sh` to check first-run creation, dropdown actions,
+restart persistence, transaction rollback, avatar downloads, schedule caching, and midnight labels
+using an isolated database and mock Twitch/receiver commands.
+Add `--ipc` to check the real IPC commands and redirected export too.
 
 The TOTP module stores each name and seed together in the desktop Secret Service. Its
 UI is native QML; a Bash helper uses `secret-tool`, `jq`, and `oathtool`. On Arch:
@@ -125,7 +165,7 @@ warning color update from startup without needing to open the tooltip. Refreshes
 keep the previous readings and bar color until a successful scan replaces them;
 failed reads retain the cached data. A successful empty scan removes disconnected
 receiver devices. Cached receiver readings and warning colors survive configuration
-reloads, and a connected device temporarily reporting no percentage keeps its last
+reloads and Quickshell restarts, and a connected device temporarily reporting no percentage keeps its last
 known level. Brand information is shown alongside the model when available.
 Native UPower
 and Bluetooth levels continue to follow system updates without polling.

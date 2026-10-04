@@ -1,7 +1,8 @@
 import QtQuick
+import QtQuick as Q
 import QtQuick.Controls as QC
-import "../../../theme"
-import "../../../theme/ui" as UI
+import "../../"
+import "../" as UI
 
 QC.Button {
     id: root
@@ -11,8 +12,8 @@ QC.Button {
     property color fillColor: Theme.alternateBackground
     property color foreground: Theme.text
 
-    implicitWidth: Theme.totpButtonWidth
-    implicitHeight: Theme.totpRowHeight
+    implicitWidth: Theme.actionButtonWidth
+    implicitHeight: Theme.controlHeight
     padding: 0
     hoverEnabled: true
     opacity: enabled ? 1 : 0.45
@@ -27,11 +28,11 @@ QC.Button {
 
     contentItem: Item {
         implicitWidth: codeLabel.visible
-            ? codeLabel.implicitWidth + (icon.implicitWidth + Theme.totpSpacing + Theme.totpFieldPadding) * 2
-            : icon.implicitWidth + Theme.totpFieldPadding * 2
+            ? codeLabel.implicitWidth + (icon.implicitWidth + Theme.controlSpacing + Theme.controlFieldPadding) * 2
+            : icon.implicitWidth + Theme.controlFieldPadding * 2
         implicitHeight: Math.max(icon.implicitHeight, codeLabel.visible ? codeLabel.implicitHeight : 0)
 
-        Text {
+        Q.Text {
             id: codeLabel
             anchors.centerIn: parent
             visible: root.label.length > 0
@@ -42,12 +43,12 @@ QC.Button {
             font.bold: Theme.fontBold
         }
 
-        Text {
+        Q.Text {
             id: icon
             anchors.verticalCenter: parent.verticalCenter
             anchors.horizontalCenter: codeLabel.visible ? undefined : parent.horizontalCenter
             anchors.right: codeLabel.visible ? parent.right : undefined
-            anchors.rightMargin: Theme.totpFieldPadding
+            anchors.rightMargin: Theme.controlFieldPadding
             text: root.glyph
             color: root.foreground
             font.family: Theme.fontFamilyIcons

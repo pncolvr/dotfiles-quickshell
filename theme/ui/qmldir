@@ -6,6 +6,8 @@ Row 1.0 components/Row.qml
 Icon 1.0 components/Icon.qml
 IconButton 1.0 components/IconButton.qml
 HoverTooltip 1.0 components/HoverTooltip.qml
+ActionButton 1.0 components/ActionButton.qml
+InputField 1.0 components/InputField.qml
 TooltipCorner 1.0 components/TooltipCorner.qml
 
 PulseText 1.0 PulseText.qml

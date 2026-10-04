@@ -46,9 +46,9 @@ Item {
             UI.HoverTooltip { text: root.name }
         }
 
-        TotpButton {
+        UI.ActionButton {
             Layout.preferredWidth: Theme.totpCodeWidth
-            glyph: TotpService.copiedId === root.entryId ? Theme.totpSaveIcon : Theme.totpCopyIcon
+            glyph: TotpService.copiedId === root.entryId ? Theme.checkIcon : Theme.copyIcon
             label: root.code.replace(/(.{3})(?=.)/g, "$1 ")
             hint: TotpService.copiedId === root.entryId ? "copied" : "copy code"
             foreground: TotpService.copiedId === root.entryId ? Theme.active : Theme.text
@@ -56,15 +56,15 @@ Item {
             onClicked: TotpService.copy(root.entryId)
         }
 
-        TotpButton {
-            glyph: Theme.totpEditIcon
+        UI.ActionButton {
+            glyph: Theme.editIcon
             hint: "edit token"
             enabled: !TotpService.busy
             onClicked: root.editRequested(root.entryId)
         }
 
-        TotpButton {
-            glyph: Theme.totpDeleteIcon
+        UI.ActionButton {
+            glyph: Theme.deleteIcon
             hint: "delete token"
             fillColor: Theme.totpDeleteBackground
             enabled: !TotpService.busy

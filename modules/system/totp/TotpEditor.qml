@@ -4,6 +4,7 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls as QC
 import "../../../theme"
+import "../../../theme/ui" as UI
 
 RowLayout {
     id: root
@@ -32,7 +33,7 @@ RowLayout {
     function clear() { nameField.clear(); tokenField.clear() }
     Component.onDestruction: { destroying = true; clear() }
 
-    TotpField {
+    UI.InputField {
         id: nameField
         objectName: "totpNameField"
         Layout.preferredWidth: root.nameWidth
@@ -46,7 +47,7 @@ RowLayout {
         Keys.onEscapePressed: root.cancelled()
     }
 
-    TotpField {
+    UI.InputField {
         id: tokenField
         objectName: "totpTokenField"
         Layout.fillWidth: true
@@ -61,15 +62,15 @@ RowLayout {
         Keys.onEscapePressed: root.cancelled()
     }
 
-    TotpButton {
-        glyph: Theme.totpCancelIcon
+    UI.ActionButton {
+        glyph: Theme.cancelIcon
         hint: "cancel"
         enabled: !root.busy
         onClicked: root.cancelled()
     }
 
-    TotpButton {
-        glyph: root.adding ? Theme.totpAddIcon : Theme.totpSaveIcon
+    UI.ActionButton {
+        glyph: root.adding ? Theme.addIcon : Theme.checkIcon
         hint: root.adding ? "add token" : "save changes"
         enabled: !root.busy && nameField.text.trim().length > 0 && tokenField.text.trim().length > 0
         fillColor: Theme.accent

@@ -1,12 +1,12 @@
 import QtQuick
 import QtQuick.Controls as QC
-import "../../../theme"
+import "../../"
 
 QC.TextField {
     id: root
-    implicitHeight: Theme.totpRowHeight
-    leftPadding: Theme.totpFieldPadding
-    rightPadding: Theme.totpFieldPadding
+    implicitHeight: Theme.controlHeight
+    leftPadding: Theme.controlFieldPadding
+    rightPadding: Theme.controlFieldPadding
     color: Theme.text
     placeholderTextColor: Theme.inactive
     selectionColor: Theme.accent
