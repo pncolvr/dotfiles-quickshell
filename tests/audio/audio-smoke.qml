@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtQuick.Controls as QC
 import QtTest as Test
 import Quickshell
 import "../../modules/system/audio"
@@ -35,13 +34,17 @@ Scope {
         }
         return null
     }
+    component AudioState: QtObject {
+        property real volume: 0
+        property bool muted: false
+    }
     component AppStream: QtObject {
         required property string appName
         required property string processId
         required property string serial
         property bool ready: true
         property var properties: ({"application.name": appName, "application.process.id": processId, "object.serial": serial})
-        property QtObject audio: QtObject { property bool muted: false }
+        property AudioState audio: AudioState {}
     }
     AppStream { id: browser; appName: "Browser"; processId: "10"; serial: "101" }
     AppStream { id: secondBrowser; appName: "Browser"; processId: "10"; serial: "102" }
@@ -53,28 +56,28 @@ Scope {
         property string name: "output"
         property string description: "Headphones"
         property bool ready: true
-        property QtObject audio: QtObject { property real volume: 0.4; property bool muted: false }
+        property AudioState audio: AudioState { volume: 0.4 }
     }
     QtObject {
         id: input
         property string name: "input"
         property string description: "Headset microphone"
         property bool ready: true
-        property QtObject audio: QtObject { property real volume: 0.65; property bool muted: false }
+        property AudioState audio: AudioState { volume: 0.65 }
     }
     QtObject {
         id: secondOutput
         property string name: "second-output"
         property string description: "Speakers"
         property bool ready: true
-        property QtObject audio: QtObject { property real volume: 0.2; property bool muted: false }
+        property AudioState audio: AudioState { volume: 0.2 }
     }
     QtObject {
         id: secondInput
         property string name: "second-input"
         property string description: "Webcam microphone"
         property bool ready: true
-        property QtObject audio: QtObject { property real volume: 0.5; property bool muted: false }
+        property AudioState audio: AudioState { volume: 0.5 }
     }
     QtObject {
         id: backend

@@ -1,6 +1,6 @@
 pragma Singleton
 
-import QtQuick
+import QtQml
 import Quickshell
 import Quickshell.Io
 import "../../config"
@@ -94,9 +94,12 @@ Singleton {
     Process {
         id: updatesProcess
         command: Config.updatesCheckCommand
+        // Quickshell.Io omits QProcess::ExitStatus from its qmltypes.
+        // qmllint disable signal-handler-parameters
         onExited: exitCode => {
             if (exitCode === 0) _internal.lastChecked = new Date()
         }
+        // qmllint enable signal-handler-parameters
         stdout: SplitParser {
             onRead: data => {
                 const line = data.trim()

@@ -1,8 +1,10 @@
 import QtQuick
 import QtTest as Test
 import Quickshell
+import Quickshell.Io
 import "../../services"
 import "../../modules/media"
+import "../../theme/ui" as UI
 
 Scope {
     id: root
@@ -37,10 +39,10 @@ Scope {
         check(DbService.read("SELECT name FROM store.sqlite_master WHERE type = 'table'").length === 5, "central schema")
         check(!TimeService.showSeconds, "default clock preference")
         check(TwitchRepository.exportUsers() === "", "fresh Twitch list is empty")
-        const field = objects.findChild(panel, "twitchLoginField")
-        const add = objects.findChild(panel, "addTwitchUser")
-        const begin = objects.findChild(panel, "beginAddTwitchUser")
-        const cancel = objects.findChild(panel, "cancelAddTwitchUser")
+        const field = objects.findChild(panel, "twitchLoginField") as UI.InputField
+        const add = objects.findChild(panel, "addTwitchUser") as UI.ActionButton
+        const begin = objects.findChild(panel, "beginAddTwitchUser") as UI.ActionButton
+        const cancel = objects.findChild(panel, "cancelAddTwitchUser") as UI.ActionButton
         check(!!field && !!add, "dropdown editor exists")
         check(!panel.adding, "editor starts closed")
         const height = panel.implicitHeight
@@ -150,7 +152,7 @@ Scope {
                 if (BatteryService.scanningReceivers) return
                 root.check(!!BatteryService.receiverError && BatteryService.receiverBatteries[0]?.percentage === 17, "failed restart scan retains cached reading")
             } else if (root.phase === "avatar-failure" || root.phase === "avatar-update") {
-                const process = objects.findChild(TwitchService, "twitchAvatarDownload")
+                const process = objects.findChild(TwitchService, "twitchAvatarDownload") as Process
                 if (process.running) { root.sawAvatarDownload = true; return }
                 if (!root.sawAvatarDownload) return
                 const expectedUrl = root.phase === "avatar-failure" ? "https://avatars.test/alice.png" : "https://avatars.test/alice-v2.png"

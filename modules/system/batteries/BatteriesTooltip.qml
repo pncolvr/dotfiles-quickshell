@@ -10,7 +10,7 @@ import "../../../services"
 Column {
     id: root
     property var batteries: BatteryService.batteries
-    readonly property var monitor: TooltipService.screen ?? root.QsWindow.window?.screen
+    readonly property var monitor: TooltipService.screen ?? (root.QsWindow.window as QsWindow)?.screen
     readonly property real maxListHeight: (monitor?.height ?? 1080) * Theme.batteryTooltipMaxHeightRatio
     width: Math.min(Theme.batteryTooltipWidth, (monitor?.width ?? Theme.batteryTooltipWidth + Theme.tooltipPaddingWidth * 2) - Theme.tooltipPaddingWidth * 2)
     spacing: Theme.batterySpacing

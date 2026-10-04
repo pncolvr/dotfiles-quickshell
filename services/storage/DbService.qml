@@ -1,6 +1,6 @@
 pragma Singleton
 
-import QtQuick
+import QtQml
 import QtQuick.LocalStorage as SQL
 import Quickshell
 import "../../config"

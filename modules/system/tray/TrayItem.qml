@@ -23,7 +23,7 @@ UI.WrapperMouseArea {
         fillMode: Image.PreserveAspectFit
         smooth: true
         mipmap: true
-        source: root.item?.icon ?? Quickshell.iconPath("application-x-executable", false)
+        source: root.item ? root.item.icon : Quickshell.iconPath("application-x-executable", false)
     }
 
     QsMenuAnchor {
@@ -33,7 +33,10 @@ UI.WrapperMouseArea {
             var pos = root.window.contentItem.mapFromItem(root, 0, 0)
             return Qt.rect(pos.x, root.window.height, root.width, 0)
         }
+        // Quickshell's installed qmltypes use an outdated C++ name for this handle.
+        // qmllint disable unresolved-type
         menu: root.item?.menu ?? null
+        // qmllint enable unresolved-type
     }
     onClicked: (mouse) => {
         switch (mouse.button) {

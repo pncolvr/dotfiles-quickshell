@@ -1,7 +1,7 @@
 pragma Singleton
 
 import Quickshell
-import QtQuick
+import QtQml
 import "../"
 
 Singleton {

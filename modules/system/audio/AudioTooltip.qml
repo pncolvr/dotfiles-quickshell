@@ -13,7 +13,7 @@ Column {
     property var audioService: AudioService
     readonly property var devices: input ? audioService.inputDevices : audioService.outputDevices
     readonly property var apps: input ? audioService.micApps : audioService.playbackApps
-    readonly property var monitor: TooltipService.screen ?? root.QsWindow.window?.screen
+    readonly property var monitor: TooltipService.screen ?? (root.QsWindow.window as QsWindow)?.screen
     readonly property real maxPanelHeight: (monitor?.height ?? 1080) * Theme.audioTooltipMaxHeightRatio
     width: Math.min(Theme.audioTooltipWidth, (monitor?.width ?? Theme.audioTooltipWidth + Theme.tooltipPaddingWidth * 2) - Theme.tooltipPaddingWidth * 2)
     spacing: Theme.audioSpacing

@@ -16,6 +16,17 @@
 - Alert window
 - IPC commands for reloading and toggling modules
  
+Run `bash tests/qml/lint.sh` to check every QML file with Qt 6, including unused
+imports. The script rejects Qt 5 tools and accepts `QMLLINT` for a custom Qt 6
+executable. VS Code uses the system Qt 6 language server and QML import directory
+through `.vscode/settings.json`; reload the editor window after changing these
+settings.
+
+The QML files contain scoped lint exceptions for incomplete Quickshell type
+metadata: runtime-selected `PanelWindow` backends, the missing
+`QProcess::ExitStatus` enum, and the tray menu handle's outdated C++ type name.
+Other warnings remain enabled, including signal checks outside those handlers.
+
 ## IPC
 
 Quickshell supports calling functions through IPC, I used this to integrate hypr on some edge cases.

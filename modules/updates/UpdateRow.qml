@@ -40,9 +40,9 @@ Item {
             textFormat: Text.StyledText
             elide: Text.ElideMiddle
             width: Math.min(implicitWidth, root.width - Math.min(name.implicitWidth, root.width * 0.4))
-            text: `<font color="${Theme.inactive}">${root.escapeHtml(root._shared)}</font>`
-                + `<font color="${Theme.urgent}">${root.escapeHtml(root.diffSuffix(root.update.oldVersion, root._shared))}</font>`
-                + `<font color="${Theme.active}">${root.escapeHtml(root.diffSuffix(root.update.newVersion, root._shared))}</font>`
+            text: '<font color="' + Theme.inactive + '">' + root.escapeHtml(root._shared) + '</font>'
+                + '<font color="' + Theme.urgent + '">' + root.escapeHtml(root.diffSuffix(root.update.oldVersion, root._shared)) + '</font>'
+                + '<font color="' + Theme.active + '">' + root.escapeHtml(root.diffSuffix(root.update.newVersion, root._shared)) + '</font>'
 
             UI.HoverTooltip {
                 text: `${root.update.oldVersion} ➡ ${root.update.newVersion}`

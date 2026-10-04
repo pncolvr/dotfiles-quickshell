@@ -1,9 +1,8 @@
 pragma Singleton
 
-import QtQuick
+import QtQml
 import Quickshell
 import Quickshell.Io
-import "../../config"
 
 Singleton {
     id: root

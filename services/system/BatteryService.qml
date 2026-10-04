@@ -1,6 +1,6 @@
 pragma Singleton
 
-import QtQuick
+import QtQml
 import Quickshell
 import Quickshell.Io
 import Quickshell.Bluetooth
@@ -69,6 +69,8 @@ Singleton {
             id: receiverOutput
             waitForEnd: true
         }
+        // Quickshell.Io omits QProcess::ExitStatus from its qmltypes.
+        // qmllint disable signal-handler-parameters
         onExited: (exitCode, exitStatus) => {
             if (exitCode !== 0 || exitStatus !== 0) {
                 _internal.receiverError = "Some device batteries could not be read"
@@ -92,6 +94,7 @@ Singleton {
                 _internal.receiverError = "Some device batteries could not be read"
             }
         }
+        // qmllint enable signal-handler-parameters
     }
 
     function receiverSnapshot(previous, incoming) {

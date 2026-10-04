@@ -21,7 +21,7 @@ UI.Row {
     }
 
     UI.IconText {
-        text: expanded ? Theme.statsOpenIcon : Theme.statsClosedIcon
+        text: root.expanded ? Theme.statsOpenIcon : Theme.statsClosedIcon
     }
 
     Rectangle {

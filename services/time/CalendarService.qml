@@ -1,6 +1,6 @@
 pragma Singleton
 
-import QtQuick
+import QtQml
 import Quickshell
 import "../../config"
 
@@ -12,7 +12,7 @@ Singleton {
         const y = date.getFullYear();
         const m = date.getMonth() + 1;
         const d = date.getDate();
-        return `${Config.calendarUrl}/${y}/${m}/${d}`;
+        return Config.calendarUrl + "/" + y + "/" + m + "/" + d;
     }
 
     function openDate(date) {
@@ -28,12 +28,24 @@ Singleton {
         const d2 = new Date(referenceTime ?? Date.now());
         if (!Number.isFinite(d.getTime()) || !Number.isFinite(d2.getTime()))
             return "";
-        if (d.isSameDay(d2)) {
+        if (isSameDay(d, d2)) {
             format = "'today'";
-        } else if (d.isSameDay(d2.addDays(1))) {
+        } else if (isSameDay(d, addDays(d2, 1))) {
             format = "'tomorrow'";
         }
         return Qt.formatDateTime(d, format + time);
+    }
+
+    function addDays(value, days) {
+        const date = new Date(value);
+        date.setDate(date.getDate() + days);
+        return date;
+    }
+
+    function isSameDay(first, second) {
+        return first.getDate() === second.getDate()
+            && first.getMonth() === second.getMonth()
+            && first.getFullYear() === second.getFullYear();
     }
 
     function _pad(n) {
@@ -69,9 +81,9 @@ Singleton {
 
         const easter = _computeEaster(year);
         // https://en.wikipedia.org/wiki/Public_holidays_in_Portugal
-        const goodFriday = easter.addDays(-2);
-        const carnival = easter.addDays(-47);
-        const corpusChristi = easter.addDays(60);
+        const goodFriday = addDays(easter, -2);
+        const carnival = addDays(easter, -47);
+        const corpusChristi = addDays(easter, 60);
 
         const entries = [
             [new Date(year, 0, 1), "Ano Novo"],
@@ -108,18 +120,5 @@ Singleton {
 
         const yearMap = _holidaysByYear[year]
         return yearMap[_key(d)] || null
-    }
-
-    Component.onCompleted: {
-        Date.prototype.addDays = function (days) {
-            var date = new Date(this.valueOf());
-            date.setDate(date.getDate() + days);
-            return date;
-        };
-
-        Date.prototype.isSameDay = function (date) {
-            const now = new Date(this.valueOf());
-            return now.getDate() === date.getDate() && now.getMonth() === date.getMonth() && now.getFullYear() === date.getFullYear();
-        };
     }
 }

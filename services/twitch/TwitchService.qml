@@ -1,6 +1,6 @@
 pragma Singleton
 
-import QtQuick
+import QtQml
 import Quickshell
 import Quickshell.Io
 import "../../config"
@@ -154,12 +154,17 @@ Singleton {
     Process {
         command: ["which", Config.twitchCli]
         running: true
+        // Quickshell.Io omits QProcess::ExitStatus from its qmltypes.
+        // qmllint disable signal-handler-parameters
         onExited: (exitCode, exitStatus) => { state.available = exitCode === 0 && exitStatus === 0 }
+        // qmllint enable signal-handler-parameters
     }
 
     Process {
         id: streamsProcess
         stdout: StdioCollector { id: streamsOutput; waitForEnd: true }
+        // Quickshell.Io omits QProcess::ExitStatus from its qmltypes.
+        // qmllint disable signal-handler-parameters
         onExited: (exitCode, exitStatus) => {
             if (exitCode !== 0 || exitStatus !== 0) { root.finishRefresh(); return }
             try {
@@ -185,6 +190,7 @@ Singleton {
                 root.finishRefresh()
             }
         }
+        // qmllint enable signal-handler-parameters
     }
 
     Process { id: notifyProcess }
@@ -192,6 +198,8 @@ Singleton {
     Process {
         id: avatarQueryProcess
         stdout: StdioCollector { id: avatarOutput; waitForEnd: true }
+        // Quickshell.Io omits QProcess::ExitStatus from its qmltypes.
+        // qmllint disable signal-handler-parameters
         onExited: (exitCode, exitStatus) => {
             if (exitCode === 0 && exitStatus === 0) {
                 try {
@@ -213,6 +221,7 @@ Singleton {
             }
             root.fetchSchedules()
         }
+        // qmllint enable signal-handler-parameters
     }
 
     Process {
@@ -221,17 +230,22 @@ Singleton {
         property string login: ""
         property string sourceUrl: ""
         stdout: StdioCollector { id: downloadOutput; waitForEnd: true }
+        // Quickshell.Io omits QProcess::ExitStatus from its qmltypes.
+        // qmllint disable signal-handler-parameters
         onExited: (exitCode, exitStatus) => {
             if (exitCode === 0 && exitStatus === 0)
                 TwitchRepository.saveAvatar(login, sourceUrl, downloadOutput.text.trim(), Date.now())
             root.processDownloadQueue()
         }
+        // qmllint enable signal-handler-parameters
     }
 
     Process {
         id: scheduleProcess
         property string login: ""
         stdout: StdioCollector { id: scheduleOutput; waitForEnd: true }
+        // Quickshell.Io omits QProcess::ExitStatus from its qmltypes.
+        // qmllint disable signal-handler-parameters
         onExited: (exitCode, exitStatus) => {
             if (exitStatus === 0 && scheduleOutput.text) {
                 try {
@@ -245,6 +259,7 @@ Singleton {
             }
             root.processScheduleQueue()
         }
+        // qmllint enable signal-handler-parameters
     }
 
     Connections {

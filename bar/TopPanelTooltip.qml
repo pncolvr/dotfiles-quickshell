@@ -3,7 +3,10 @@ import Quickshell
 import "../theme"
 import "../theme/ui" as UI
 
+// Quickshell selects a creatable PanelWindow backend at runtime.
+// qmllint disable uncreatable-type
 PanelWindow {
+    // qmllint enable uncreatable-type
     id: root
 
     default property alias contentData: panel.data

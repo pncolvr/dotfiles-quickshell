@@ -1,6 +1,6 @@
 pragma Singleton
 
-import QtQuick
+import QtQml
 
 QtObject {
     function fromMilliseconds(n) { return n }

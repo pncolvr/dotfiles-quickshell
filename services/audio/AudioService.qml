@@ -1,6 +1,6 @@
 pragma Singleton
 
-import QtQuick
+import QtQml
 import Quickshell
 import Quickshell.Io
 import Quickshell.Services.Pipewire
@@ -51,6 +51,8 @@ Singleton {
         command: [...Config.audioDevicesCommand, "list"]
         stdout: StdioCollector { id: deviceOutput; waitForEnd: true }
         stderr: StdioCollector { id: deviceError; waitForEnd: true }
+        // Quickshell.Io omits QProcess::ExitStatus from its qmltypes.
+        // qmllint disable signal-handler-parameters
         onExited: (exitCode, exitStatus) => {
             if (exitCode !== 0 || exitStatus !== 0) {
                 devicesState.error = deviceError.text.trim() || "Could not read audio device profiles."
@@ -63,6 +65,7 @@ Singleton {
                 devicesState.error = ""
             } catch (error) { devicesState.error = "Could not read audio device profiles." }
         }
+        // qmllint enable signal-handler-parameters
     }
 
     function cardForNode(node) {
@@ -88,11 +91,14 @@ Singleton {
     Process {
         id: profileProcess
         stderr: StdioCollector { id: profileError; waitForEnd: true }
+        // Quickshell.Io omits QProcess::ExitStatus from its qmltypes.
+        // qmllint disable signal-handler-parameters
         onExited: (exitCode, exitStatus) => {
             if (exitCode !== 0 || exitStatus !== 0)
                 devicesState.error = profileError.text.trim() || "Could not change the audio device profile."
             else root.refreshDevices()
         }
+        // qmllint enable signal-handler-parameters
     }
 
     function deviceName(node) {
@@ -211,11 +217,14 @@ Singleton {
         id: routeProcess
         stdout: StdioCollector { id: routeOutput; waitForEnd: true }
         stderr: StdioCollector { id: routeError; waitForEnd: true }
+        // Quickshell.Io omits QProcess::ExitStatus from its qmltypes.
+        // qmllint disable signal-handler-parameters
         onExited: (exitCode, exitStatus) => {
             if (exitStatus !== 0 || exitCode !== 0)
                 root.routingError = routeError.text.trim() || "Could not switch the current apps."
             else root.routingMessage = routeOutput.text.trim()
         }
+        // qmllint enable signal-handler-parameters
     }
 
     function openMixer() {
