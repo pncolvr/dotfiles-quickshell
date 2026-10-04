@@ -114,7 +114,7 @@ Item {
     ]
     readonly property int networkRetryInterval: Timespan.fromSeconds(5)
     readonly property int networkAlertInterval: Timespan.fromMinutes(1)
-    readonly property int tooltipHideDelay: Timespan.fromMilliseconds(150)
+    readonly property int tooltipHideDelay: Timespan.fromMilliseconds(300)
     // TOTP secrets live in the desktop Secret Service, never in this config.
     readonly property string totpVault: "default"
     readonly property string totpVaultLabel: "Quickshell TOTP"

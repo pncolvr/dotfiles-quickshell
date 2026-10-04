@@ -51,6 +51,8 @@ Item {
   // readonly property int barHeight: 25
   readonly property int barHeight: 30
 
+  readonly property int tooltipHoverPaddingWidth: 1
+  readonly property int tooltipHoverTolerance: 2
   readonly property int tooltipBridgeHeight: 10
   readonly property int tooltipRadius: 12
   readonly property int tooltipPaddingWidth: 20
