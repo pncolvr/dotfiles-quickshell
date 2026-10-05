@@ -63,7 +63,7 @@ Popups follow Hypr's focused monitor, falling back to the last connected screen
 or another available screen. Moving the stack keeps notification identities and
 deadlines. Popups use the SwayNC reference's dark background at 95% opacity, rounded
 corners and bold monospace text. App icons occupy a left-hand column beside the
-content, with the timestamp after the app name. File icons supplied through
+content. File icons supplied through
 `notify-send`, including the custom Twitch logo, use this same left icon slot.
 Twitch sends low-urgency, nontransient notifications under its own emitter name,
 so its notifications and icons are retained in history. Clicking a Twitch
@@ -75,8 +75,9 @@ visible above and to the left. If no app icon is available, the supplied image
 occupies the left icon slot on its own. This applies to both popups and history.
 Overlapping images with opaque near-black padding at all four corners receive a
 small, one-time alpha mask that removes edge-connected padding and preserves
-enclosed dark details. The title sits directly below the app name and timestamp,
-with a small gap before the body.
+enclosed dark details. The title sits directly below the app name,
+with a small gap before the body. Timestamps appear only in history and use
+`yyyy-MM-dd hh:mm:ss`, always including seconds.
 Timed popup outlines drain symmetrically from the bottom center up both sides to the top
 center, synchronized with rendered frames as in TOTP. The close
 button is circular and turns red on hover. History cards use a complete outline

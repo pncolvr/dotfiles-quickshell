@@ -175,7 +175,7 @@ Rectangle {
                         spacing: 8
                         UI.Text {
                             centerVertical: false
-                            width: Math.min(implicitWidth, Math.max(0, parent.width - timestamp.implicitWidth - parent.spacing))
+                            width: Math.min(implicitWidth, Math.max(0, parent.width - (timestamp.visible ? timestamp.implicitWidth + parent.spacing : 0)))
                             anchors.verticalCenter: parent.verticalCenter
                             text: root.emitter?.name || "Unknown application"
                             elide: Text.ElideRight
@@ -185,9 +185,10 @@ Rectangle {
                         }
                         UI.Text {
                             id: timestamp
+                            visible: !root.popup
                             centerVertical: false
                             anchors.verticalCenter: parent.verticalCenter
-                            text: new Date(root.entry.updatedAt).toLocaleString(Qt.locale(), "ddd hh:mm")
+                            text: Qt.formatDateTime(new Date(root.entry.updatedAt), "yyyy-MM-dd hh:mm:ss")
                             color: Theme.inactive
                             font.pixelSize: 10
                         }
