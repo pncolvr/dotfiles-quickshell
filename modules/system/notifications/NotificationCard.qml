@@ -237,6 +237,7 @@ Rectangle {
             Flow {
                 id: actionFlow
                 width: parent.width
+                layoutDirection: Qt.RightToLeft
                 spacing: Theme.controlSpacing
                 visible: root.displayActions.length > 0
                 Repeater {
