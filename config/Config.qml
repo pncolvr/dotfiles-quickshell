@@ -59,6 +59,7 @@ Item {
     readonly property string databasePath: Quickshell.shellPath("data/quickshell.db")
     readonly property string databaseName: "quickshell"
     readonly property int twitchInterval: Timespan.fromMinutes(5)
+    readonly property int twitchUndoDuration: Timespan.fromSeconds(6)
     readonly property string twitchBaseUrl: "https://www.twitch.tv/"
 
     readonly property string twitchOnlineFile: `${Quickshell.env("XDG_RUNTIME_DIR")}/twitch_online_${_internal.userId}`

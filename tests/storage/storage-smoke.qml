@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Controls as QC
 import QtTest as Test
 import Quickshell
 import Quickshell.Io
@@ -14,10 +15,13 @@ Scope {
     property bool failed: false
     property bool sawAvatarDownload: false
     property bool browserScanRequested: false
+    property int layoutTicks: 0
     Test.TestResult { id: objects }
     FloatingWindow {
-        visible: false
-        TwitchTooltip { id: panel }
+        visible: root.phase === "layout" || root.phase === "live-add"
+        implicitWidth: panel.implicitWidth
+        implicitHeight: panel.implicitHeight
+        TwitchTooltip { id: panel; width: implicitWidth; height: implicitHeight }
         Twitch { id: twitchModule }
     }
 
@@ -54,9 +58,10 @@ Scope {
         const cancel = objects.findChild(panel, "cancelAddTwitchUser") as UI.ActionButton
         check(!!field && !!add, "dropdown editor exists")
         check(!panel.adding, "editor starts closed")
-        const height = panel.implicitHeight
+        const footer = objects.findChild(panel, "twitchEditorFooter") as Item
+        const height = footer.height
         begin.clicked()
-        check(panel.adding && panel.implicitHeight === height, "plus opens editor without resizing footer")
+        check(panel.adding && footer.height === height, "plus opens editor without resizing footer")
         check(cancel.x < add.x, "cancel is left of submit, as in TOTP")
         field.text = "https://www.twitch.tv/AL"
         check(panel.browserSuggestions.join() === "alice", "browser suggestions filter by typed Twitch URL")
@@ -71,11 +76,7 @@ Scope {
         check(!TwitchService.addUser("bad'; DROP TABLE twitch_users;--"), "invalid login rejected")
         check(TwitchService.browserSuggestions.join() === "bob", "followed streamers excluded from browser suggestions")
         begin.clicked()
-        const suggestions = objects.findChild(panel, "twitchBrowserSuggestions") as ListView
-        suggestions.forceLayout()
-        const suggestedBob = suggestions.itemAtIndex(0) as UI.ActionButton
-        check(!!suggestedBob && suggestedBob.label === "bob", "browser suggestion renders as an add button")
-        if (suggestedBob) suggestedBob.clicked()
+        panel.addSuggestion("bob")
         check(!panel.adding && TwitchRepository.logins().includes("bob"), "clicking browser suggestion follows streamer and closes editor")
         check(TwitchService.browserSuggestions.length === 0, "all followed suggestions disappear")
         check(TwitchRepository.exportUsers() === "alice\nbob", "plain sorted export")
@@ -96,6 +97,78 @@ Scope {
         check(BatteryRepository.receiverSnapshot()[0]?.percentage === 17, "SQL error rolls back snapshot replacement")
         check(TwitchRepository.imageDataUrl("not an image") === "", "invalid image payload rejected")
         testDates()
+    }
+
+    function setupLayout() {
+        TooltipService.show(0, null, null, false, {width: 1024, height: 600})
+        const users = []
+        for (let index = 0; index < 36; index++) {
+            users.push({login: "streamer_" + index, online: index < 12, avatar: "",
+                game: "Game", viewers: 123, title: "Stream title", nextStream: "tomorrow at 10:00"})
+        }
+        panel.users = users
+        panel.adding = true
+    }
+
+    function testLayout() {
+        const live = objects.findChild(panel, "twitchLiveUsersSection") as TwitchUserSection
+        const offline = objects.findChild(panel, "twitchOfflineUsersSection") as TwitchUserSection
+        const grid = objects.findChild(panel, "twitchSuggestionsGrid") as Grid
+        const editor = objects.findChild(panel, "twitchEditorControls") as Item
+        const footer = objects.findChild(panel, "twitchEditorFooter") as Item
+        const usersView = objects.findChild(panel, "twitchUsersScrollView") as QC.ScrollView
+        const field = objects.findChild(panel, "twitchLoginField") as UI.InputField
+        const bulk = objects.findChild(panel, "addAllBrowserTwitchUsers") as UI.ActionButton
+        check(live.users.length === 12 && live.users.every(user => user.online), "Live grid contains only live users")
+        check(offline.users.length === 24 && offline.users.every(user => !user.online), "Offline grid contains only offline users")
+        check(live.expanded && !offline.expanded, "Live starts expanded and Offline starts collapsed")
+        check(live.columns === 3 && offline.columns === 3, "sections share three aligned columns")
+        check(grid.columns === 2, "suggestions form a compact grid on wide tooltips")
+        check(panel.implicitHeight <= panel.maximumHeight + 1, "entire tooltip respects screen height cap")
+        check(editor.width <= 420 && footer.y + footer.height <= panel.height, "editor remains bounded and on screen")
+        check(usersView.contentHeight > usersView.height, "large followed list scrolls within its budget")
+        check(field.placeholderText === "Login or Twitch URL", "short placeholder fits narrow editor")
+        check(bulk.label === "Add all (2)", "bulk count matches displayed suggestions")
+        field.text = "bo"
+        check(bulk.label === "Add all (1)", "bulk count follows the search filter")
+        const bob = root.find(panel, "addBrowserTwitchUser_bob") as UI.ActionButton
+        check(!!bob, "browser suggestion renders as an add button")
+        if (!bob) return
+        bob.clicked()
+        check(panel.adding && field.text === "bo", "individual suggestion preserves editor and search while other suggestions remain")
+        field.clear()
+        bulk.clicked()
+        check(!panel.adding && TwitchRepository.exportUsers() === "alice\nbob", "bulk action snapshots and adds remaining suggestions")
+        check(TwitchService.removeUser("alice") && TwitchService.removeUser("bob"), "layout fixture users removed")
+        check(TwitchService.removedUsers.map(entry => entry.login).join() === "alice,bob", "all removals remain available in the undo array")
+        const allUndo = objects.findChild(panel, "undoAllTwitchUsers") as UI.ActionButton
+        check(allUndo.label === "Undo all (2)", "undo count matches pending removals")
+        check(TwitchService.undoRemoveUser("alice") && TwitchService.removedUsers.map(entry => entry.login).join() === "bob", "individual Undo retains other pending removals")
+        check(TwitchService.removeUser("alice") && TwitchService.removedUsers.length === 2, "a repeated removal gets a new undo entry")
+        allUndo.clicked()
+        check(!TwitchService.removedUsers.length && TwitchRepository.exportUsers() === "alice\nbob", "Undo all snapshots and restores every removal")
+        check(TwitchService.removeUser("alice") && TwitchService.removeUser("bob"), "restored layout users cleaned up")
+        const expiry = objects.findChild(TwitchRepository, "twitchUndoExpiry") as Timer
+        check(expiry.interval > 5900 && expiry.interval <= 6000, "earliest removal expires after six seconds")
+        TwitchRepository.removedUsers[0].expiresAt = Date.now() + 50
+        TwitchRepository.removedUsers[1].expiresAt = Date.now() + 200
+        TwitchRepository.pruneUndo()
+    }
+
+    function testUndo() {
+        const user = TwitchRepository.users.find(user => user.login === "alice")
+        const schedule = TwitchRepository.schedules.alice
+        const avatar = TwitchRepository.avatars.alice
+        check(TwitchService.removeUser("alice"), "streamer removed with Undo available")
+        check(TwitchService.removedUsers.length === 1 && TwitchService.removedUsers[0].login === "alice" && !TwitchRepository.avatars.alice && !TwitchRepository.schedules.alice,
+            "removal clears caches while retaining an undo snapshot")
+        check(TwitchService.undoRemoveUser("alice"), "individual undo restores requested streamer")
+        check(TwitchRepository.users.find(entry => entry.login === "alice")?.addedAt === user.addedAt, "Undo restores original user metadata")
+        check(TwitchRepository.schedules.alice?.startsAt === schedule.startsAt && TwitchRepository.schedules.alice?.fetchedAt === schedule.fetchedAt,
+            "Undo restores schedule cache")
+        check(TwitchRepository.avatars.alice?.dataUrl === avatar.dataUrl && TwitchRepository.avatars.alice?.sourceUrl === avatar.sourceUrl,
+            "Undo restores avatar payload")
+        check(!TwitchService.removedUsers.length && !TwitchService.undoRemoveUser("alice"), "Undo is consumed after restore")
     }
 
     function testDates() {
@@ -130,8 +203,8 @@ Scope {
                 return
             }
             if (root.step === 0) {
-                if (!DbService.ready || !TwitchService.available || !NetworkService.online) return
-                if (root.phase === "seed") {
+                if (!DbService.ready || !TwitchService.available || (root.phase !== "layout" && !NetworkService.online)) return
+                if (root.phase === "seed" || root.phase === "layout" || root.phase === "live-add") {
                     if (!root.browserScanRequested) {
                         root.browserScanRequested = true
                         TwitchService.refreshBrowserSuggestions()
@@ -140,6 +213,13 @@ Scope {
                     if (TwitchService.browserSuggestions.length !== 2) return
                 }
                 if (root.phase === "seed") root.seed()
+                else if (root.phase === "layout") root.setupLayout()
+                else if (root.phase === "live-add") {
+                    root.check(!TwitchService.hasOnline && !panel.liveUsers.length, "bulk add starts with no live streamers")
+                    panel.adding = true
+                    panel.addAllSuggestions()
+                    root.check(TwitchRepository.exportUsers() === "alice\nbob", "bulk add stores every suggested streamer")
+                }
                 else if (root.phase === "restart") {
                     root.check(TimeService.showSeconds, "clock preference restored after process restart")
                     root.check(TwitchRepository.exportUsers() === "alice\nbob", "Twitch users restored after process restart")
@@ -175,6 +255,32 @@ Scope {
                 const image = root.find(panel, "twitchAvatar_alice")
                 if (image?.status === Image.Loading) return
                 root.check(image?.status === Image.Ready, "QML displays image directly from SQLite payload")
+                root.testUndo()
+            } else if (root.phase === "live-add") {
+                if (TwitchService.onlineUsers.length !== 2 || !TwitchRepository.avatars.alice || !TwitchRepository.avatars.bob || ++root.layoutTicks < 4) return
+                const live = objects.findChild(panel, "twitchLiveUsersSection") as TwitchUserSection
+                const grid = objects.findChild(live, "twitchUserSectionGrid") as Grid
+                const usersView = objects.findChild(panel, "twitchUsersScrollView") as QC.ScrollView
+                root.check(live.visible && live.expanded && grid.visible && grid.implicitHeight > 0 && usersView.height > 0,
+                    "Live section appears after bulk adding streamers to an empty live list")
+                root.check(live.height > 0 && panel.implicitHeight > 50, "Live section participates in the tooltip layout")
+                TwitchService.removeUser("alice")
+                TwitchService.removeUser("bob")
+            } else if (root.phase === "layout") {
+                if (root.step === 1) {
+                    if (++root.layoutTicks < 4) return
+                    root.testLayout()
+                    root.step++
+                    return
+                }
+                if (root.step === 2) {
+                    if (TwitchService.removedUsers.length === 2) return
+                    root.check(TwitchService.removedUsers.length === 1 && TwitchService.removedUsers[0].login === "bob", "each removal expires independently")
+                    root.check(!TwitchService.undoRemoveUser("alice"), "expired individual Undo cannot restore a user")
+                    root.step++
+                }
+                if (TwitchService.removedUsers.length) return
+                root.check(!TwitchService.undoRemoveUser("bob") && TwitchRepository.logins().length === 0, "expired Undo cannot restore removed users")
             } else if (root.phase === "restart") {
                 if (BatteryService.scanningReceivers) return
                 root.check(!!BatteryService.receiverError && BatteryService.receiverBatteries[0]?.percentage === 17, "failed restart scan retains cached reading")

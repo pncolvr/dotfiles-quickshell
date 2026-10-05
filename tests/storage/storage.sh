@@ -34,7 +34,7 @@ windows:
 YAML
 cat > "$test_dir/bin/ping" <<'MOCK'
 #!/usr/bin/env bash
-exit 0
+[[ ${STORAGE_TEST_PHASE:-} != layout ]]
 MOCK
 cat > "$test_dir/bin/solaar" <<'MOCK'
 #!/usr/bin/env bash
@@ -53,7 +53,8 @@ query = sys.argv[-1]
 path, _, params = query.partition('?')
 params = urllib.parse.parse_qs(params)
 if path == 'streams':
-    result = {'data': []}
+    result = {'data': [{'user_login': login, 'viewer_count': 123, 'title': 'Live test stream', 'game_name': 'Game'}
+                       for login in params.get('user_login', [])] if os.environ.get('STORAGE_TEST_PHASE') == 'live-add' else []}
 elif path == 'users':
     suffix = '-v2' if os.environ.get('STORAGE_TEST_PHASE') in ('avatar-failure', 'avatar-update') else ''
     result = {'data': [{'login': login, 'id': login, 'profile_image_url': f'https://avatars.test/{login}{suffix}.png'} for login in params['login']]}
@@ -66,6 +67,10 @@ elif path == 'schedule':
 else:
     sys.exit(1)
 print(json.dumps(result))
+if os.environ.get('STORAGE_TEST_PHASE') in ('seed', 'live-add'):
+    # The CLI can fail in its update check after returning a successful API response.
+    print('panic: runtime error in CLI update check', file=sys.stderr)
+    sys.exit(2)
 MOCK
 cat > "$test_dir/bin/curl" <<'MOCK'
 #!/usr/bin/env python3
@@ -86,12 +91,17 @@ png += chunk(b'IDAT', zlib.compress(b'\x00\xff\x00\x00\xff')) + chunk(b'IEND', b
 sys.stdout.buffer.write(png)
 MOCK
 chmod +x "$test_dir/bin/"*
+cat > "$test_dir/bin/notify-send" <<'MOCK'
+#!/usr/bin/env bash
+exit 0
+MOCK
+chmod +x "$test_dir/bin/notify-send"
 cat > "$entry" <<QML
 import QtQuick
 import Quickshell
 Scope { Loader { source: "file://$project_root/tests/storage/storage-smoke.qml" } }
 QML
-for phase in seed restart avatar-failure avatar-update empty empty-restart; do
+for phase in seed restart avatar-failure avatar-update empty empty-restart live-add layout; do
     output=$(STORAGE_TEST_PHASE="$phase" timeout 12 qs -p "$entry" 2>&1) || {
         printf '%s\n' "$output" >&2
         exit 1
@@ -103,9 +113,11 @@ for phase in seed restart avatar-failure avatar-update empty empty-restart; do
     if [[ $phase == restart ]]; then
         [[ $(wc -l < "$test_dir/avatar-calls") -eq 2 ]]
     fi
+    if [[ $phase == empty-restart ]]; then
+        # Alice's fresh cache is reused; only Bob needs a schedule request across restarts.
+        [[ $(cat "$test_dir/schedule-calls") == bob ]]
+    fi
 done
-# Alice has a fresh repository cache; only Bob should require an API request across restarts.
-[[ $(cat "$test_dir/schedule-calls") == bob ]]
 python3 - "$test_dir/config/data/quickshell.db" "$test_dir/data" <<'PY'
 import pathlib
 import sqlite3

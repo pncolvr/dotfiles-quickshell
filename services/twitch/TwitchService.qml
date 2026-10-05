@@ -19,6 +19,7 @@ Singleton {
     readonly property bool available: state.available
     readonly property bool usersReady: DbService.ready
     readonly property string error: TwitchRepository.error
+    readonly property var removedUsers: TwitchRepository.removedUsers.map(entry => ({login: entry.user.login, expiresAt: entry.expiresAt}))
     readonly property var browserSuggestions: {
         const followed = TwitchRepository.logins()
         return state.browserLogins.filter(login => !followed.includes(login))
@@ -51,6 +52,15 @@ Singleton {
     function avatarSource(login) { return TwitchRepository.avatars[login]?.dataUrl ?? "" }
     function addUser(login) { return usersReady && TwitchRepository.addUser(login) }
     function removeUser(login) { return usersReady && TwitchRepository.removeUser(login) }
+    function undoRemoveUser(login) { return usersReady && TwitchRepository.undoRemoveUser(login) }
+    function undoAllRemovals() {
+        const logins = removedUsers.map(entry => entry.login)
+        if (!logins.length) return false
+        for (const login of logins) {
+            if (!undoRemoveUser(login)) return false
+        }
+        return true
+    }
 
     function refreshBrowserSuggestions() {
         if (!browserSessionProcess.running) browserSessionProcess.running = true
@@ -196,8 +206,9 @@ Singleton {
         // Quickshell.Io omits QProcess::ExitStatus from its qmltypes.
         // qmllint disable signal-handler-parameters
         onExited: (exitCode, exitStatus) => {
-            if (exitCode !== 0 || exitStatus !== 0) { root.finishRefresh(); return }
+            if (exitStatus !== 0) { root.finishRefresh(); return }
             try {
+                // The CLI update check can fail after a successful API response; validate the JSON itself.
                 const json = JSON.parse(streamsOutput.text)
                 if (!Array.isArray(json.data)) throw new Error("Missing streams data")
                 const previousOnline = state.onlineUsers.map(user => user.login)
@@ -238,7 +249,7 @@ Singleton {
         // Quickshell.Io omits QProcess::ExitStatus from its qmltypes.
         // qmllint disable signal-handler-parameters
         onExited: (exitCode, exitStatus) => {
-            if (exitCode === 0 && exitStatus === 0) {
+            if (exitStatus === 0) {
                 try {
                     const json = JSON.parse(avatarOutput.text)
                     if (!Array.isArray(json.data)) throw new Error("Missing users data")
@@ -288,7 +299,7 @@ Singleton {
                 try {
                     const json = JSON.parse(scheduleOutput.text)
                     const now = Date.now()
-                    if (exitCode === 0 && Array.isArray(json.data?.segments))
+                    if (Array.isArray(json.data?.segments))
                         TwitchRepository.saveSchedule(login, root.nextScheduledStream(json.data.segments, now), now)
                     else if (json.status === 404)
                         TwitchRepository.saveSchedule(login, null, now)

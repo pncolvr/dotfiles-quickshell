@@ -1,7 +1,9 @@
 pragma Singleton
 
 import QtQml
+import QtQuick
 import Quickshell
+import "../../config"
 import "../"
 
 Singleton {
@@ -11,6 +13,7 @@ Singleton {
     readonly property var schedules: state.schedules
     readonly property var avatars: state.avatars
     readonly property string error: state.error || DbService.error
+    readonly property var removedUsers: state.removedUsers
 
     QtObject {
         id: state
@@ -18,6 +21,7 @@ Singleton {
         property var schedules: ({})
         property var avatars: ({})
         property string error: ""
+        property var removedUsers: []
     }
 
     function normalizeLogin(login) { return String(login ?? "").trim().toLowerCase() }
@@ -58,11 +62,15 @@ Singleton {
             return false
         }
         state.error = ""
+        clearUndo(login)
         return reload()
     }
 
     function removeUser(value) {
         const login = normalizeLogin(value)
+        const user = users.find(entry => entry.login === login)
+        if (!user) return false
+        const snapshot = {user, schedule: schedules[login], avatar: avatars[login]}
         let removed = false
         if (!DbService.write(tx => {
             tx.executeSql("DELETE FROM twitch_schedules WHERE login = ?", [login])
@@ -70,8 +78,57 @@ Singleton {
             removed = tx.executeSql("DELETE FROM twitch_users WHERE login = ?", [login]).rowsAffected > 0
         })) return false
         state.error = ""
-        if (removed) reload()
+        if (removed) {
+            snapshot.expiresAt = Date.now() + Config.twitchUndoDuration
+            state.removedUsers = [...state.removedUsers, snapshot]
+            updateUndoTimer()
+            reload()
+        }
         return removed
+    }
+
+    function updateUndoTimer() {
+        undoTimer.stop()
+        if (!state.removedUsers.length) return
+        undoTimer.interval = Math.max(1, Math.min(...state.removedUsers.map(entry => entry.expiresAt)) - Date.now())
+        undoTimer.start()
+    }
+
+    function pruneUndo() {
+        const now = Date.now()
+        state.removedUsers = state.removedUsers.filter(entry => entry.expiresAt > now)
+        updateUndoTimer()
+    }
+
+    function clearUndo(login) {
+        state.removedUsers = state.removedUsers.filter(entry => entry.user.login !== login)
+        updateUndoTimer()
+    }
+
+    function undoRemoveUser(value) {
+        pruneUndo()
+        const login = normalizeLogin(value)
+        const snapshot = state.removedUsers.find(entry => entry.user.login === login)
+        if (!snapshot) return false
+        if (!DbService.write(tx => {
+            tx.executeSql("INSERT INTO twitch_users (login, added_at) VALUES (?, ?)", [login, snapshot.user.addedAt])
+            if (snapshot.schedule)
+                tx.executeSql("INSERT INTO twitch_schedules (login, starts_at, fetched_at) VALUES (?, ?, ?)",
+                    [login, snapshot.schedule.startsAt, snapshot.schedule.fetchedAt])
+            if (snapshot.avatar)
+                tx.executeSql("INSERT INTO twitch_avatars (login, source_url, image_data_url, fetched_at) VALUES (?, ?, ?, ?)",
+                    [login, snapshot.avatar.sourceUrl, snapshot.avatar.dataUrl, snapshot.avatar.fetchedAt])
+        })) return false
+        clearUndo(login)
+        state.error = ""
+        return reload()
+    }
+
+    Timer {
+        id: undoTimer
+        objectName: "twitchUndoExpiry"
+        interval: Config.twitchUndoDuration
+        onTriggered: root.pruneUndo()
     }
 
     function saveSchedule(value, startsAt, fetchedAt) {

@@ -1,0 +1,67 @@
+pragma ComponentBehavior: Bound
+
+import QtQuick
+import QtQuick.Controls as QC
+import "../../theme"
+import "../../theme/ui" as UI
+
+Column {
+    id: root
+    required property string title
+    required property var users
+    required property int columns
+    property bool expanded: true
+    spacing: Theme.twitchTooltipSpacing
+    visible: users.length > 0
+
+    QC.Button {
+        id: heading
+        objectName: "toggleTwitchUserSection"
+        width: parent.width
+        implicitHeight: Math.max(label.implicitHeight, arrow.implicitHeight)
+        padding: 0
+        hoverEnabled: true
+        checkable: true
+        checked: root.expanded
+        Accessible.name: root.title + " (" + root.users.length + "), " + (root.expanded ? "collapse" : "expand")
+        onClicked: root.expanded = !root.expanded
+
+        background: Rectangle {
+            radius: Theme.iconButtonRadius
+            color: heading.hovered || heading.activeFocus ? Theme.alternateBackground : "transparent"
+        }
+        contentItem: Item {
+            UI.IconText {
+                id: arrow
+                anchors.left: parent.left
+                text: Theme.chevronDownIcon
+                rotation: root.expanded ? 0 : -90
+                color: Theme.inactive
+            }
+            UI.ColumnText {
+                id: label
+                anchors.left: arrow.right
+                anchors.leftMargin: Theme.controlSpacing
+                text: root.title + " (" + root.users.length + ")"
+                color: Theme.inactive
+                centerVertical: true
+            }
+        }
+        HoverHandler { cursorShape: Qt.PointingHandCursor }
+    }
+
+    Grid {
+        objectName: "twitchUserSectionGrid"
+        visible: root.expanded
+        columns: root.columns
+        spacing: Theme.twitchTooltipSpacing
+        verticalItemAlignment: Grid.AlignVCenter
+        Repeater {
+            model: root.users
+            delegate: TwitchUserRow {
+                required property var modelData
+                user: modelData
+            }
+        }
+    }
+}

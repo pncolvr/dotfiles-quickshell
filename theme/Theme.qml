@@ -144,6 +144,9 @@ Item {
   readonly property int twitchScrollbarMargin: 12
   readonly property int twitchEditorHeight: controlHeight
   readonly property int twitchEditorButtonWidth: actionButtonWidth
+  readonly property int twitchEditorMaxWidth: 420
+  readonly property int twitchSuggestionMinWidth: 200
+  readonly property int twitchSuggestionMaxRows: 3
   readonly property real twitchTooltipMaxHeightRatio: 0.5
 
   readonly property int cpuTooltipLabelWidth: 60

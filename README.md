@@ -193,11 +193,19 @@ qs ipc call twitch removeUser streamer_login
 qs ipc call twitch exportUsers > twitch-users.txt # one login per line
 ```
 
-Hover the Twitch icon to see followed streamers and their next scheduled streams.
+Hover the Twitch icon to see followed streamers and their next scheduled streams
+in separate Live and Offline grids, each with a count. Click either heading to
+collapse or expand its grid; Offline starts collapsed and Live starts expanded.
+The tooltip's total height
+is capped to fit the screen; streamer and suggestion grids scroll while add
+controls stay visible. A divider separates the add section, and the editor stays
+at a consistent maximum width even when the streamer grid gains columns.
 Click **+** to enter a streamer login or Twitch URL, then **+** or Enter to save;
 **×** or Escape cancels. While adding, channels open in qutebrowser appear below
-the field as buttons you can click to follow. **Add all** follows every currently
-displayed suggestion at once. Already followed channels are hidden.
+the field in a compact grid of buttons you can click to follow. Adding one keeps
+the editor and search text open while other suggestions remain. **Add all (N)**
+shows how many currently displayed suggestions it will follow. Already followed
+channels are hidden.
 Suggestions read current tab entries from whichever of `_autosave.yml` or
 `default.yml` was saved most recently in `$XDG_DATA_HOME/qutebrowser/sessions`
 (defaulting to `~/.local/share/qutebrowser/sessions`). They refresh every three
@@ -205,7 +213,11 @@ seconds while the editor is open, so manually saving the default session updates
 suggestions even before the next autosave. They use Bash and `yq` (the jq-compatible
 YAML reader); missing or unreadable sessions simply show no suggestions.
 Only the newest snapshot is read; previous browsing history is excluded.
-The trash button removes a streamer. Left-click the Twitch icon to pin/unpin the
+The trash button removes a streamer. A Recently removed grid offers individual
+Undo buttons and **Undo all (N)**, using the same layout as suggestions. Each
+removal stays available for six seconds independently and restores the streamer
+with their cached avatar and schedule.
+Left-click the Twitch icon to pin/unpin the
 dropdown, with an accent color while pinned, as in TOTP and notifications.
 Clicking a streamer's avatar or details opens their Twitch page in the default browser.
 Logins are stored in lowercase and duplicates are rejected. A new database starts
