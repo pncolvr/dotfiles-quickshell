@@ -10,6 +10,7 @@ WrapperMouseArea {
     property Component tooltip: null
     property var tooltipSource: null
     property bool centerTooltip: false
+    property bool ownsTooltipWindow: false
     readonly property var tooltipWindow: root.QsWindow.window
     property var tooltipScreen: tooltipWindow?.screen
 

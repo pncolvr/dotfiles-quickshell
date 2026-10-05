@@ -7,6 +7,7 @@ UI.TooltipArea {
     id: root
     required property var window
     readonly property bool notificationsModule: true
+    ownsTooltipWindow: true
     tooltipSource: root
     tooltipScreen: window.screen
     acceptedButtons: Qt.LeftButton

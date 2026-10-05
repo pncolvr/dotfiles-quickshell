@@ -3,9 +3,11 @@
 //@ pragma DefaultEnv QT_NO_XDG_DESKTOP_PORTAL = 1
 import Quickshell
 import "modules/system/notifications"
+import "modules/system/totp"
 
 Scope {
   Bar {}
   NotificationPopupWindow {}
   NotificationManagerWindow {}
+  TotpWindow {}
 }

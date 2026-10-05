@@ -75,7 +75,7 @@ Item {
     readonly property var statusManagerToggleCommand: [_internal.statusManager, "--toggle"]
     readonly property var statusManagerClearCommand:  [_internal.statusManager, "--clear"]
 
-    readonly property string notificationNamespace: "quickshell-notifications"
+    readonly property string screenShareHiddenNamespace: "quickshell-private"
     readonly property int notificationLowTimeout: 2000
     readonly property int notificationNormalTimeout: 5000
     readonly property int notificationCriticalTimeout: 0

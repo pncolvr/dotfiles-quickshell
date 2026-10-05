@@ -1,4 +1,5 @@
 Totp 1.0 Totp.qml
 TotpTooltip 1.0 TotpTooltip.qml
+TotpWindow 1.0 TotpWindow.qml
 TotpRow 1.0 TotpRow.qml
 TotpEditor 1.0 TotpEditor.qml

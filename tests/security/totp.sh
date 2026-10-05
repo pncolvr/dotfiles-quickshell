@@ -131,6 +131,7 @@ QML
         cat > "$smoke_entry" <<'QML'
 import QtQuick
 import Quickshell
+import Quickshell.Wayland
 import "modules/system/totp"
 import "bar"
 import "services"
@@ -145,7 +146,9 @@ Scope {
         screen: Quickshell.screens[0]
         Totp { id: probeIcon; window: probeWindow }
     }
-    TooltipWindow { id: tooltipWindow; screen: probeWindow.screen }
+    TooltipWindow { id: regularTooltipWindow; screen: probeWindow.screen }
+    TotpWindow { id: tooltipWindow }
+    Item { id: regularIcon }
     Timer {
         interval: 100
         running: true
@@ -155,18 +158,27 @@ Scope {
                 TooltipService.togglePin(320, content, probeIcon, false, probeWindow.screen)
                 TooltipService.hide()
             } else if (root.step === 3) {
-                if (probeIcon.tooltipScreen !== probeWindow.screen || !tooltipWindow.visible || !TooltipService.pinned) {
+                if (probeIcon.tooltipScreen !== probeWindow.screen || !tooltipWindow.visible || regularTooltipWindow.visible
+                    || !TooltipService.pinned || tooltipWindow.WlrLayershell.namespace !== "quickshell-private") {
                     console.error("FAIL: native pinned tooltip or monitor")
                     Qt.quit()
                     return
                 }
                 console.log("PASS: tooltip source resolves the current monitor")
+                console.log("PASS: TOTP uses the shared private capture namespace")
                 TooltipService.togglePin(320, content, probeIcon, false, probeWindow.screen)
                 TooltipService.hide()
-            } else if (root.step === 6) {
-                if (!tooltipWindow.visible && !TooltipService.pinned)
+            } else if (root.step === 7) {
+                if (tooltipWindow.visible || TooltipService.pinned) {
+                    console.error("FAIL: native tooltip did not close")
+                    Qt.quit()
+                    return
+                }
+                TooltipService.show(320, content, regularIcon, false, probeWindow.screen)
+            } else if (root.step === 9) {
+                if (regularTooltipWindow.visible && !tooltipWindow.visible)
                     console.log("PASS: native tooltip opens, pins, and closes")
-                else console.error("FAIL: native tooltip did not close")
+                else console.error("FAIL: regular tooltip used the TOTP surface")
                 Qt.quit()
             }
             root.step++
@@ -180,6 +192,7 @@ QML
         }
         printf '%s\n' "$native_output"
         [[ $native_output == *'Configuration Loaded'* && $native_output == *'PASS: tooltip source resolves the current monitor'* \
+            && $native_output == *'PASS: TOTP uses the shared private capture namespace'* \
             && $native_output == *'PASS: native tooltip opens, pins, and closes'* \
             && $native_output != *'Failed to load configuration'* && $native_output != *'FAIL:'* \
             && $native_output != *'Binding loop detected'* ]]

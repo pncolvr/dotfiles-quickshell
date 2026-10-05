@@ -8,6 +8,7 @@ UI.TooltipArea {
     required property var window
     readonly property bool totpModule: true
     readonly property bool tooltipKeyboardFocus: true
+    ownsTooltipWindow: true
     tooltipSource: root
     tooltipScreen: window.screen
     tooltip: Component { TotpTooltip {} }

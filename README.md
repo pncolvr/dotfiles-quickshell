@@ -112,19 +112,18 @@ It requires an upstream fix; this QML configuration cannot change its polling.
 
 ### Handover from SwayNC (manual)
 
-The service and Hypr configuration have not been changed by this implementation.
-Both the popup and manager use the layer namespace `quickshell-notifications`.
-The existing capture rule still targets SwayNC until you make this one-value edit
-in `~/.config/hypr/config/windowrules.lua`:
+Notification popups, the notification manager, and the TOTP tooltip share the
+layer namespace `quickshell-private` (`Config.screenShareHiddenNamespace`).
+One capture rule in `~/.config/hypr/config/windowrules.lua` covers them all:
 
 ```lua
-match = { namespace = "quickshell-notifications" },
+match = { namespace = "quickshell-private" },
 ```
 
 Keep `NotificationsHidden`, `no_screen_share`, and `HideApplications(active)`.
 The shell synchronizes capture state on native startup, screen-sharing changes
 and Hypr configuration reloads. After the namespace edit, verify that both
-notification surfaces remain visible locally but disappear from a shared stream,
+notifications and TOTP remain visible locally but disappear from a shared stream,
 and become screenshot-visible again when sharing ends.
 
 For a deliberate switch, stop the existing Quickshell instance, stop/mask SwayNC,
@@ -268,6 +267,12 @@ The pencil edits both fields, **✓** saves, and **×** cancels. Enter submits t
 field; Escape cancels. The trash button deletes the entry immediately.
 Click the key icon to pin the panel open; click again to return to hover behavior.
 The icon uses the accent color while pinned.
+The TOTP panel uses the same `quickshell-private` capture rule as notifications,
+so it remains visible locally while excluded from screen sharing.
+TOTP and the notification manager reuse `bar/PrivateTooltipWindow.qml` for
+their monitor selection, positioning, keyboard focus, and private layer namespace.
+Both modules declare `ownsTooltipWindow`, so the shared tooltip window leaves
+their content to the dedicated window without checking module names.
 
 Tokens support SHA1, SHA256, SHA512, 6–8 digits, and custom periods from TOTP URIs.
 Bare seeds use the defaults in `config/Config.qml` (SHA1, six digits, 30 seconds).

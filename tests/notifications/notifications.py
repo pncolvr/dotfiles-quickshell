@@ -108,7 +108,8 @@ try:
         wait(lambda: json.loads(ipc("nativeUi")).get("managerVisible"), "native manager opens")
         native = json.loads(ipc("nativeUi"))
         assert native["popupVisible"]
-        assert native["popupNamespace"] == native["managerNamespace"] == "quickshell-notifications"
+        assert not native["regularTooltipVisible"], "notification manager does not also open the shared tooltip"
+        assert native["popupNamespace"] == native["managerNamespace"] == "quickshell-private"
         assert 0 < native["popupWidth"] <= native["screenWidth"]
         assert 0 < native["managerHeight"] <= native["screenHeight"]
         assert ipc("preview", "/tmp/quickshell-notifications-preview.png") == "true"

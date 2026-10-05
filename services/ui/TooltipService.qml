@@ -14,7 +14,7 @@ Singleton {
     readonly property Component content: _internal.content
     readonly property var source: _internal.source
     readonly property var screen: _internal.screen
-    readonly property bool notificationPanel: _internal.notificationPanel
+    readonly property bool ownsTooltipWindow: source?.ownsTooltipWindow === true
 
     QtObject {
         id: _internal
@@ -25,7 +25,6 @@ Singleton {
         property Component content: null
         property var source: null
         property var screen: null
-        property bool notificationPanel: false
     }
 
     function show(xPos: real, tooltipContent: Component, tooltipSource, screenCentered, tooltipScreen) {
@@ -34,7 +33,6 @@ Singleton {
         _internal.centered = screenCentered ?? false
         _internal.content = tooltipContent
         _internal.source = tooltipSource ?? null
-        _internal.notificationPanel = !!tooltipSource?.notificationsModule
         _internal.screen = tooltipScreen ?? null
         _internal.visible = true
         hideTimer.stop()
@@ -69,7 +67,6 @@ Singleton {
             _internal.content = null
             _internal.source = null
             _internal.screen = null
-            _internal.notificationPanel = false
         }
     }
 }

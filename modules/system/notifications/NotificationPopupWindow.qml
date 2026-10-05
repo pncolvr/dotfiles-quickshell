@@ -36,7 +36,7 @@ PanelWindow {
     color: "transparent"
     implicitWidth: Math.max(1, Math.min(Theme.notificationWidth, (targetScreen?.width || 500) - 24))
     implicitHeight: Math.min(stack.height + 24, Math.max(1, (targetScreen?.height || 1080) - Theme.barHeight - 40))
-    WlrLayershell.namespace: Config.notificationNamespace
+    WlrLayershell.namespace: Config.screenShareHiddenNamespace
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
     mask: Region { x: 12; y: 12; width: root.width - 24; height: root.height - 24 }

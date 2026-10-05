@@ -2,51 +2,32 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Controls as QC
-import Quickshell
-import Quickshell.Wayland
 import "../../../bar"
 import "../../../theme"
 import "../../../theme/ui" as UI
 import "../../../config"
 import "../../../services"
 
-TopPanelTooltip {
+PrivateTooltipWindow {
     id: root
     readonly property string tab: tabs.currentIndex === 0 ? "History" : "Emitters"
     property int groupLimit: Config.notificationPageSize
     property var expandedEmitters: ({})
     property var entryLimits: ({})
     readonly property Item previewItem: content.parent
-    readonly property var targetScreen: Quickshell.screens.includes(TooltipService.screen) ? TooltipService.screen : Quickshell.screens[0] ?? null
     readonly property var groups: {
         const revision = NotificationRepository.revision
         return NotificationRepository.groups(groupLimit + 1, 0)
     }
-    screen: targetScreen
-    visible: TooltipService.visible && TooltipService.notificationPanel && !!targetScreen
+    visible: TooltipService.visible && TooltipService.source?.notificationsModule === true && !!targetScreen
     contentWidth: Math.max(1, Math.min(Theme.notificationManagerWidth, targetScreen?.width || 560))
     contentHeight: Math.min(720, Math.max(1, (targetScreen?.height || 1080) - Theme.barHeight - 20),
         header.height + (tab === "History" ? history.implicitHeight : settings.implicitHeight)
             + Theme.tooltipPaddingHeight * 2 + 12)
-    contentX: {
-        const ideal = TooltipService.centered ? (width - contentWidth) / 2
-            : TooltipService.x - (screen?.x ?? 0) - contentWidth / 2
-        return Math.max(0, Math.min(width - contentWidth, ideal))
-    }
-    mask: Region { x: root.contentX; width: root.contentWidth; height: root.contentHeight }
-    WlrLayershell.namespace: Config.notificationNamespace
-    WlrLayershell.layer: WlrLayer.Top
-    WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
 
     Item {
         id: content
         anchors.fill: parent
-        HoverHandler {
-            onHoveredChanged: {
-                if (hovered) TooltipService.cancelHide()
-                else TooltipService.hide()
-            }
-        }
         Column {
             id: header
             x: Theme.tooltipPaddingWidth; y: Theme.tooltipPaddingHeight

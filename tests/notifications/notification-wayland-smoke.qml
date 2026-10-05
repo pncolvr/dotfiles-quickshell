@@ -2,17 +2,19 @@ import QtQuick
 import Quickshell
 import Quickshell.Wayland
 import "../../"
+import "../../bar"
 import "../../modules/system/notifications"
 import "../../services"
 
 Item {
     id: root
-    Item { id: bell; readonly property bool notificationsModule: true }
+    Notifications { id: bell; window: manager }
     Component { Bar {} }
     NotificationPopupWindow { id: popup }
     NotificationManagerWindow { id: manager }
+    TooltipWindow { id: regularTooltip; screen: manager.screen }
     function snapshot() {
-        return {popupVisible: popup.visible, managerVisible: manager.visible,
+        return {popupVisible: popup.visible, managerVisible: manager.visible, regularTooltipVisible: regularTooltip.visible,
             groups: manager.groups,
             popupNamespace: popup.WlrLayershell.namespace, managerNamespace: manager.WlrLayershell.namespace,
             popupWidth: popup.width, popupHeight: popup.height,
