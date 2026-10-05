@@ -108,6 +108,26 @@ try:
     ipc("clearEmitter", "desktop:other")
     assert len(rows()) == 3 and "desktop:other" in state()["emitters"]
     assert all(p["id"] != other for p in state()["live"])
+    deleted_key = "desktop:delete-test"
+    delete_saved = notify("Delete saved", app="Delete test", desktop="delete-test")
+    delete_transient = notify("Delete transient", app="Delete test", desktop="delete-test", transient=True)
+    assert len(rows(deleted_key)) == 1
+    for field in ("muted", "allowDuringDnd", "excludeFromHistory"):
+        preference(field, True, key=deleted_key)
+    untouched_emitters = {key: value for key, value in state()["emitters"].items() if key != deleted_key}
+    untouched_live = {entry["id"] for entry in state()["live"] if entry["id"] not in (delete_saved, delete_transient)}
+    ipc("prepareSettings", "History off")
+    wait(lambda: ipc("settingsButton", "notificationDeleteEmitter_" + deleted_key) == "true", "emitter delete button created and clicked")
+    wait(lambda: deleted_key not in state()["emitters"], "emitter and preferences deleted")
+    wait(lambda: all(entry["id"] not in (delete_saved, delete_transient) for entry in state()["live"]), "saved and transient notifications dismissed")
+    wait(lambda: all(any(event[0] == "closed" and event[1] == identifier and event[2] == 2 for event in events)
+        for identifier in (delete_saved, delete_transient)), "emitter deletion emits dismissal signals")
+    assert not rows(deleted_key) and all(group["emitterKey"] != deleted_key for group in state()["groups"])
+    assert state()["emitters"] == untouched_emitters and not state()["dnd"], "deletion preserves other emitters and DND"
+    assert {entry["id"] for entry in state()["live"]} == untouched_live and len(rows()) == 3
+    with sqlite3.connect(database) as db:
+        assert not db.execute("SELECT 1 FROM notification_live WHERE live_token LIKE ? OR live_token LIKE ?",
+            (f"%/{delete_saved}", f"%/{delete_transient}")).fetchone(), "deleted emitter leaves no saved live state"
     if os.environ.get("NOTIFICATION_TEST_WAYLAND") == "1":
         wait(lambda: json.loads(ipc("nativeUi")).get("managerVisible"), "native manager opens")
         native = json.loads(ipc("nativeUi"))
@@ -258,6 +278,12 @@ try:
     stop()
     start()
     assert len(rows()) == saved_count and state()["dnd"] and not state()["popups"] and not state()["live"]
+    assert deleted_key not in state()["emitters"] and not rows(deleted_key), "emitter deletion survives restart"
+    returned = notify("Returned emitter", app="Delete test", desktop="delete-test")
+    assert not any(state()["emitters"][deleted_key][field] for field in ("muted", "allowDuringDnd", "excludeFromHistory")), "new notification recreates emitter with defaults"
+    assert rows(deleted_key)[0]["summary"] == "Returned emitter"
+    assert all(entry["id"] != returned for entry in state()["popups"]), "recreated emitter is blocked during DND by default"
+    ipc("dismiss", returned)
     assert rows("app:notify-send")[0]["summary"] == "Title only" and rows("app:notify-send")[0]["body"] == "", "CLI history survives restart"
     assert any(r["summary"] == "Low" and r["urgency"] == 0 for r in rows()), "low urgency history survives restart"
     assert any(r["summary"] == "Streamer online" and r["image"].startswith("data:image/png;base64,") for r in rows("app:twitch")), "Twitch history and icon survive restart"

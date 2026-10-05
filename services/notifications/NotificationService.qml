@@ -186,6 +186,13 @@ Singleton {
         if (!NotificationRepository.clearEmitter(key)) return
         for (const entry of Object.values(state.liveEntries)) if (entry.emitterKey === key) entry.notification.dismiss()
     }
+    function deleteEmitter(key) {
+        const entries = Object.values(state.liveEntries).filter(entry => entry.emitterKey === key)
+        if (!NotificationEmitterRepository.remove(key, entries.map(entry => token(entry.liveId)))) return false
+        NotificationRepository.revision++
+        for (const entry of entries) entry.notification.dismiss()
+        return true
+    }
     function clearAll() {
         if (!NotificationRepository.clearAll()) return
         for (const entry of Object.values(state.liveEntries)) entry.notification.dismiss()

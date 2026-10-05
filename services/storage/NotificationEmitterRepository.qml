@@ -49,5 +49,17 @@ Singleton {
         return reload()
     }
 
+    function remove(key, liveTokens) {
+        if (!emitters[key]) return false
+        if (!DbService.write(tx => {
+            tx.executeSql("DELETE FROM notification_live WHERE archive_id IN (SELECT archive_id FROM notifications WHERE emitter_key = ?)", [key])
+            // Transient and excluded notifications have no archive to join against.
+            for (const token of liveTokens ?? []) tx.executeSql("DELETE FROM notification_live WHERE live_token = ?", [token])
+            tx.executeSql("DELETE FROM notifications WHERE emitter_key = ?", [key])
+            tx.executeSql("DELETE FROM notification_emitters WHERE emitter_key = ?", [key])
+        })) return false
+        return reload()
+    }
+
     Component.onCompleted: reload()
 }

@@ -77,6 +77,8 @@ Scope {
         function prepareCard(id: int, history: bool): void {
             root.cardEntry = NotificationService.liveEntries[id] || root.cardEntry
             card.popup = !history
+            card.visible = true
+            settings.visible = false
         }
         function prepareHistory(id: string): bool {
             const entry = NotificationRepository.entry(id)
@@ -85,6 +87,7 @@ Scope {
             card.popup = false
             card.visible = true
             emitterGroup.visible = false
+            settings.visible = false
             return true
         }
         function historyAction(id: string, identifier: string): bool {
@@ -106,9 +109,20 @@ Scope {
             root.cardEntry = NotificationService.liveEntries[id] || root.cardEntry
             card.visible = false
             emitterGroup.visible = true
+            settings.visible = false
         }
         function emitterButton(name: string): bool {
             const button = root.find(emitterGroup, name) as Item
+            return !!button && mouse.mouseClick(button, button.width / 2, button.height / 2, Qt.LeftButton, Qt.NoModifier, 0)
+        }
+        function prepareSettings(filter: string): void {
+            settings.filter = filter
+            settings.visible = true
+            card.visible = false
+            emitterGroup.visible = false
+        }
+        function settingsButton(name: string): bool {
+            const button = root.find(settings, name) as Item
             return !!button && mouse.mouseClick(button, button.width / 2, button.height / 2, Qt.LeftButton, Qt.NoModifier, 0)
         }
         function nativeUi(): string { return JSON.stringify(root.nativeView?.snapshot() || {}) }

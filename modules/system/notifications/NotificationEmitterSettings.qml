@@ -50,7 +50,25 @@ Column {
                 width: parent.width - 20
                 spacing: 8
                 UI.Text { centerVertical: false; width: parent.width; text: row.modelData.name; wrapMode: Text.Wrap; textFormat: Text.PlainText }
-                NotificationSourceControls { width: parent.width; emitterKey: row.modelData.key }
+                Item {
+                    width: parent.width
+                    height: Math.max(sourceControls.height, deleteButton.height)
+                    NotificationSourceControls {
+                        id: sourceControls
+                        width: parent.width - deleteButton.width - Theme.controlSpacing
+                        emitterKey: row.modelData.key
+                    }
+                    NotificationButton {
+                        id: deleteButton
+                        objectName: "notificationDeleteEmitter_" + row.modelData.key
+                        anchors.right: parent.right
+                        implicitWidth: Theme.controlHeight
+                        glyph: Theme.deleteIcon
+                        fillColor: Theme.notificationCritical
+                        hint: "Delete emitter, its history and settings, and dismiss its notifications. New notifications recreate it with defaults."
+                        onClicked: NotificationService.deleteEmitter(row.modelData.key)
+                    }
+                }
             }
         }
     }

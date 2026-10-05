@@ -51,8 +51,10 @@ a plain **+/-** marker, its count, and its name, followed by **Show/Hide**,
 These buttons show the current state; clicking toggles it. New emitters start
 with notifications shown, DND blocked, and history on. The visibility filter is **Hidden**.
 Groups with one notification hide the expand marker and leave their heading passive.
-The same source settings are available in the Emitters tab. These
-settings are independent and persist after clearing history. DND blocks every
+The same source settings are available in the Emitters tab. Its trash button
+deletes the emitter, its history and settings, and dismisses current notifications.
+If the app sends another notification, the emitter returns with default settings.
+These settings are independent and persist after clearing history. DND blocks every
 source by default, including critical notifications; allowing a source does not
 override mute. Excluding history affects future notifications and replacements,
 and retains existing records. Turning off DND or unmuting never replays a backlog.
