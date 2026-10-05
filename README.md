@@ -67,9 +67,15 @@ Twitch sends low-urgency, nontransient notifications under its own emitter name,
 so its notifications and icons are retained in history. Clicking a Twitch
 notification or its **Open Twitch** button opens the configured Twitch URL,
 including from saved history after expiry or restart.
-Discord user/group images overlap the app icon with an offset down and
-right, leaving the Discord icon visible above and to the left. Timed popup
-outlines drain symmetrically from the bottom center up both sides to the top
+Extra images supplied by any app, including Discord and Signal user/group
+images, overlap the app icon with an offset down and right, leaving the app icon
+visible above and to the left. If no app icon is available, the supplied image
+occupies the left icon slot on its own. This applies to both popups and history.
+Overlapping images with opaque near-black padding at all four corners receive a
+small, one-time alpha mask that removes edge-connected padding and preserves
+enclosed dark details. The title sits directly below the app name and timestamp,
+with a small gap before the body.
+Timed popup outlines drain symmetrically from the bottom center up both sides to the top
 center, synchronized with rendered frames as in TOTP. The close
 button is circular and turns red on hover. History cards use a complete outline
 in their urgency color. Application timeouts take

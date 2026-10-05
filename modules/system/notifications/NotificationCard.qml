@@ -16,14 +16,15 @@ Rectangle {
     readonly property real countdownProgress: root.popup && root.entry.duration > 0 ? Math.max(0, Math.min(1, (root.entry.deadline - root.clockNow) / root.entry.duration)) : 1
     readonly property var emitter: NotificationEmitterRepository.emitters[entry.emitterKey]
     readonly property string notificationImage: root.entry.image || NotificationService.liveFor(root.entry)?.image || ""
-    readonly property bool hasDiscordAvatar: /discord/i.test(root.emitter?.desktopEntry || root.emitter?.name || "") && notificationImage.length > 0
+    readonly property string appIcon: root.emitter?.icon || DesktopEntries.byId(root.emitter?.desktopEntry || "")?.icon || ""
+    readonly property bool hasExtraImage: root.appIcon.length > 0 && root.notificationImage.length > 0
     // notify-send sends file icons as notification images rather than appIcon.
-    readonly property bool usesImageAsIcon: !root.hasDiscordAvatar && !root.emitter?.icon && notificationImage.length > 0
+    readonly property bool usesImageAsIcon: !root.appIcon && root.notificationImage.length > 0
     readonly property color urgencyColor: root.entry.urgency === 2 ? Theme.notificationCritical : root.entry.urgency === 0 ? Theme.inactive : Theme.accent
     readonly property real urgencyLineWidth: root.entry.urgency === 2 ? 5 : 2
     readonly property string iconSource: {
         if (root.usesImageAsIcon) return root.notificationImage
-        const icon = root.emitter?.icon || DesktopEntries.byId(root.emitter?.desktopEntry || "")?.icon || "dialog-information"
+        const icon = root.appIcon || "dialog-information"
         return /^(file:|image:|data:)/.test(icon) ? icon : icon.startsWith("/") ? "file://" + icon : Quickshell.iconPath(icon, true)
     }
     readonly property var displayActions: {
@@ -137,7 +138,7 @@ Rectangle {
         spacing: 12
         Item {
             id: iconColumn
-            width: root.hasDiscordAvatar ? 48 : 40
+            width: root.hasExtraImage ? 48 : 40
             height: width
             Image {
                 width: 40
@@ -149,50 +150,64 @@ Rectangle {
                 smooth: true
                 mipmap: true
             }
-            Image {
-                x: root.hasDiscordAvatar ? 8 : 0
+            NotificationAvatar {
+                x: root.hasExtraImage ? 8 : 0
                 y: x
                 width: 40
                 height: 40
-                source: root.hasDiscordAvatar ? root.notificationImage : ""
-                visible: root.hasDiscordAvatar && status !== Image.Error
-                fillMode: Image.PreserveAspectFit
-                smooth: true
-                mipmap: true
+                source: root.hasExtraImage ? root.notificationImage : ""
+                visible: root.hasExtraImage && status !== Image.Error
             }
         }
         Column {
             id: contents
             width: parent.width - iconColumn.width - parent.spacing
             spacing: 8
-            Row {
+            Item {
                 width: parent.width
-                spacing: 8
-                Row {
+                height: Math.max(headingText.height, dismissButton.height - contents.spacing)
+                Column {
+                    id: headingText
                     width: parent.width - dismissButton.width - 8
-                    spacing: 8
-                    UI.Text {
-                        centerVertical: false
-                        width: Math.min(implicitWidth, Math.max(0, parent.width - timestamp.implicitWidth - parent.spacing))
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: root.emitter?.name || "Unknown application"
-                        elide: Text.ElideRight
-                        color: Theme.inactive
-                        font.family: root.popup ? Theme.notificationFont : Theme.fontFamily
-                        textFormat: Text.PlainText
+                    spacing: 0
+                    Row {
+                        width: parent.width
+                        spacing: 8
+                        UI.Text {
+                            centerVertical: false
+                            width: Math.min(implicitWidth, Math.max(0, parent.width - timestamp.implicitWidth - parent.spacing))
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: root.emitter?.name || "Unknown application"
+                            elide: Text.ElideRight
+                            color: Theme.inactive
+                            font.family: root.popup ? Theme.notificationFont : Theme.fontFamily
+                            textFormat: Text.PlainText
+                        }
+                        UI.Text {
+                            id: timestamp
+                            centerVertical: false
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: new Date(root.entry.updatedAt).toLocaleString(Qt.locale(), "ddd hh:mm")
+                            color: Theme.inactive
+                            font.pixelSize: 10
+                        }
                     }
                     UI.Text {
-                        id: timestamp
                         centerVertical: false
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: new Date(root.entry.updatedAt).toLocaleString(Qt.locale(), "ddd hh:mm")
-                        color: Theme.inactive
-                        font.pixelSize: 10
+                        width: parent.width
+                        visible: text.length > 0
+                        text: root.entry.summary
+                        textFormat: Text.PlainText
+                        wrapMode: Text.Wrap
+                        maximumLineCount: root.popup ? 4 : 2147483647
+                        elide: Text.ElideRight
+                        font.family: root.popup ? Theme.notificationFont : Theme.fontFamily
                     }
                 }
                 NotificationButton {
                     id: dismissButton
                     objectName: "notificationDismiss"
+                    anchors.right: parent.right
                     width: Theme.controlHeight
                     height: width
                     glyph: Theme.cancelIcon
@@ -211,16 +226,6 @@ Rectangle {
             UI.Text {
                 centerVertical: false
                 width: parent.width
-                text: root.entry.summary
-                textFormat: Text.PlainText
-                wrapMode: Text.Wrap
-                maximumLineCount: root.popup ? 4 : 2147483647
-                elide: Text.ElideRight
-                font.family: root.popup ? Theme.notificationFont : Theme.fontFamily
-            }
-            UI.Text {
-                centerVertical: false
-                width: parent.width
                 visible: text.length > 0
                 text: root.entry.body
                 textFormat: Text.PlainText
@@ -228,16 +233,6 @@ Rectangle {
                 maximumLineCount: root.popup ? 8 : 2147483647
                 elide: Text.ElideRight
                 font.family: root.popup ? Theme.notificationFont : Theme.fontFamily
-            }
-            Image {
-                width: parent.width
-                height: visible ? Math.min(120, sourceSize.height || 120) : 0
-                source: root.notificationImage
-                visible: !root.hasDiscordAvatar && !root.usesImageAsIcon && source.toString().length > 0 && status !== Image.Error
-                fillMode: Image.PreserveAspectFit
-                smooth: true
-                mipmap: true
-                asynchronous: true
             }
             Flow {
                 id: actionFlow

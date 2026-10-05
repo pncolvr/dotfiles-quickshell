@@ -84,6 +84,10 @@ def notify(summary, *, body="Body", app="Test", desktop="test", urgency=1, timeo
 
 
 try:
+    mask_check = subprocess.run(["/usr/lib/qt6/bin/qmltestrunner", "-input", str(pathlib.Path(__file__).with_name("tst_image-mask.qml"))],
+        env={**os.environ, "QT_QPA_PLATFORM": "offscreen", "QT_QUICK_BACKEND": "software"}, capture_output=True, text=True, timeout=15)
+    assert mask_check.returncode == 0, mask_check.stdout + mask_check.stderr
+    print("PASS: avatar padding detection, enclosed dark details, transparent and nonsquare images")
     # Exercise a real v1 migration, preserving unrelated data.
     with sqlite3.connect(database) as db:
         db.executescript("CREATE TABLE preferences (key TEXT PRIMARY KEY, value_json TEXT NOT NULL); INSERT INTO preferences VALUES ('preserve', '42'); PRAGMA user_version=1;")

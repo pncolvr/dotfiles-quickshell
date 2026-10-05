@@ -66,7 +66,7 @@ Scope {
             if (!entry) return
             root.cardEntry = entry
             card.popup = true
-            mouse.mouseClick(card, 100, 80, right ? Qt.RightButton : Qt.LeftButton, Qt.NoModifier, 0)
+            mouse.mouseClick(card, card.width - 4, card.height / 2, right ? Qt.RightButton : Qt.LeftButton, Qt.NoModifier, 0)
         }
         function cardButton(id: int, name: string, history: bool): bool {
             const entry = NotificationService.liveEntries[id]
@@ -100,7 +100,7 @@ Scope {
             const item = button?.parent
             return !!item && mouse.mouseClick(item, item.width / 2, item.height / 2, Qt.LeftButton, Qt.NoModifier, 0)
         }
-        function historyClick(): void { mouse.mouseClick(card, 100, 80, Qt.LeftButton, Qt.NoModifier, 0) }
+        function historyClick(): void { mouse.mouseClick(card, card.width - 4, card.height / 2, Qt.LeftButton, Qt.NoModifier, 0) }
         function twitchNotify(summary: string): void { TwitchService.notifyOnline([summary]) }
         function prepareEmitter(id: int): void {
             root.cardEntry = NotificationService.liveEntries[id] || root.cardEntry
