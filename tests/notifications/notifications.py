@@ -114,6 +114,13 @@ try:
     assert len(rows(deleted_key)) == 1
     for field in ("muted", "allowDuringDnd", "excludeFromHistory"):
         preference(field, True, key=deleted_key)
+    ipc("filter", "All")
+    assert json.loads(ipc("searchEmitters", " DELETE TEST ")) == [deleted_key], "search matches emitter name without case or surrounding spaces"
+    assert json.loads(ipc("searchEmitters", "delete-test")) == [deleted_key], "search matches application ID"
+    assert json.loads(ipc("searchEmitters", "missing-emitter")) == [], "unmatched emitter search is empty"
+    ipc("searchEmitters", "test")
+    assert json.loads(ipc("filter", "Hidden")) == [deleted_key], "search composes with the existing emitter filter"
+    assert ipc("clearEmitterSearch") == "true", "emitter search clears without persistence"
     untouched_emitters = {key: value for key, value in state()["emitters"].items() if key != deleted_key}
     untouched_live = {entry["id"] for entry in state()["live"] if entry["id"] not in (delete_saved, delete_transient)}
     ipc("prepareSettings", "History off")

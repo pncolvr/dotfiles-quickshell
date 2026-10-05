@@ -62,6 +62,14 @@ Scope {
             case 0:
                 if (!TotpService.ready) return
                 if (!root.check(TotpService.entries.count === 1, "initial list")) return
+                popup.searchText = " bEtA "
+                root.find(popup, "totpList").forceLayout()
+                if (!root.check(root.find(popup, "totpList").count === 1, "case-insensitive token search")) return
+                popup.searchText = "no matching name"
+                root.find(popup, "totpList").forceLayout()
+                if (!root.check(root.find(popup, "totpList").count === 0
+                    && root.find(popup, "totpSearchEmpty").visible, "empty search results")) return
+                popup.searchText = ""
                 if (root.pinCheckTicks === 0) {
                     TooltipService.togglePin(240, content, origin, false)
                     TooltipService.hide()
@@ -84,6 +92,9 @@ Scope {
                 root.draftField = root.find(popup, "totpNameField")
                 if (!root.check(root.draftField && root.draftField.text === "Beta", "edit prefill")) return
                 root.draftField.text = "Draft preserved"
+                popup.searchText = "no matching name"
+                root.find(popup, "totpList").forceLayout()
+                if (!root.check(root.find(popup, "totpList").count === 1, "search hid the active editor")) return
                 TotpService.request({action: "refresh"})
                 root.step++
                 break
@@ -91,6 +102,7 @@ Scope {
                 if (TotpService.busy) return
                 if (root.scrollCheck === 0) {
                     if (!root.check(root.draftField.text === "Draft preserved", "rollover replaced edit draft")) return
+                    popup.searchText = ""
                     const original = TotpService.entries.get(0)
                     const rows = [{id: original.entryId, name: original.name, code: original.code, expiresAt: original.expiresAt}]
                     for (let i = 0; i < 80; ++i)
@@ -119,6 +131,7 @@ Scope {
                     return
                 }
                 popup.cancelEditor()
+                popup.searchText = ""
                 root.previousHeight = popup.height
                 popup.adding = true
                 root.step++
@@ -138,6 +151,16 @@ Scope {
                 if (!root.check(TotpService.entries.count === 2 && !popup.adding, "inline add")) return
                 if (!root.check(TotpService.entries.get(0).name === "Alpha test", "alphabetical model")) return
                 root.addedId = TotpService.entries.get(0).entryId
+                popup.searchText = " ALPHA "
+                root.find(popup, "totpList").forceLayout()
+                if (!root.check(root.find(popup, "totpList").count === 1, "filter after adding")) return
+                popup.adding = true
+                root.find(popup, "totpList").forceLayout()
+                if (!root.check(root.find(popup, "totpList").count === 2
+                    && !root.find(popup, "totpSearchField").visible, "adding did not suspend search")) return
+                popup.cancelEditor()
+                if (!root.check(popup.searchText === " ALPHA " && root.find(popup, "totpList").count === 1,
+                    "search was not restored after adding")) return
                 TotpService.copy(root.addedId)
                 root.step++
                 break
@@ -150,12 +173,16 @@ Scope {
             case 6:
                 if (TotpService.busy) return
                 if (!root.check(TotpService.entries.count === 1, "delete")) return
+                // Moving the mouse restores hover dismissal after editing/typing.
+                TooltipService.observePointer(0, 0, true)
+                TooltipService.observePointer(1, 0, true)
                 TooltipService.hide()
                 root.step++
                 break
             case 7:
                 if (TotpService.active) return
                 if (!root.check(!TotpService.ready && TotpService.entries.count === 0, "hidden state not cleared")) return
+                if (!root.check(popup.searchText === "", "search persisted after closing")) return
                 TooltipService.show(240, content, origin, false)
                 root.step++
                 break

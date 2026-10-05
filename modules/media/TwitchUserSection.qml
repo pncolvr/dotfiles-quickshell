@@ -11,6 +11,8 @@ Column {
     required property var users
     required property int columns
     property bool expanded: true
+    property bool forceExpanded: false
+    readonly property bool showingUsers: expanded || forceExpanded
     spacing: Theme.twitchTooltipSpacing
     visible: users.length > 0
 
@@ -21,10 +23,11 @@ Column {
         implicitHeight: Math.max(label.implicitHeight, arrow.implicitHeight)
         padding: 0
         hoverEnabled: true
-        checkable: true
-        checked: root.expanded
-        Accessible.name: root.title + " (" + root.users.length + "), " + (root.expanded ? "collapse" : "expand")
-        onClicked: root.expanded = !root.expanded
+        checkable: !root.forceExpanded
+        checked: root.showingUsers
+        Accessible.name: root.title + " (" + root.users.length + "), "
+            + (root.forceExpanded ? "search results" : root.expanded ? "collapse" : "expand")
+        onClicked: if (!root.forceExpanded) root.expanded = !root.expanded
 
         background: Rectangle {
             radius: Theme.iconButtonRadius
@@ -35,7 +38,7 @@ Column {
                 id: arrow
                 anchors.left: parent.left
                 text: Theme.chevronDownIcon
-                rotation: root.expanded ? 0 : -90
+                rotation: root.showingUsers ? 0 : -90
                 color: Theme.inactive
             }
             UI.ColumnText {
@@ -52,7 +55,7 @@ Column {
 
     Grid {
         objectName: "twitchUserSectionGrid"
-        visible: root.expanded
+        visible: root.showingUsers
         columns: root.columns
         spacing: Theme.twitchTooltipSpacing
         verticalItemAlignment: Grid.AlignVCenter

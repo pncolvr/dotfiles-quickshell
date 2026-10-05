@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls as QC
 import "../../"
+import "../../../services"
 
 QC.TextField {
     id: root
@@ -15,6 +16,8 @@ QC.TextField {
     font.pixelSize: Theme.fontSize
     font.bold: Theme.fontBold
     selectByMouse: true
+    onActiveFocusChanged: if (activeFocus) TooltipService.pauseDismissal()
+    onTextEdited: TooltipService.pauseDismissal()
     background: Rectangle {
         color: Theme.alternateBackground
         radius: Theme.iconButtonRadius

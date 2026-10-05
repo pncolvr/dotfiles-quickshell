@@ -20,6 +20,7 @@ PrivateTooltipWindow {
         return NotificationRepository.groups(groupLimit + 1, 0)
     }
     visible: TooltipService.visible && TooltipService.source?.notificationsModule === true && !!targetScreen
+    onVisibleChanged: if (!visible && settings) settings.clearSearch()
     contentWidth: Math.max(1, Math.min(Theme.notificationManagerWidth, targetScreen?.width || 560))
     contentHeight: Math.min(720, Math.max(1, (targetScreen?.height || 1080) - Theme.barHeight - 20),
         header.height + (tab === "History" ? history.implicitHeight : settings.implicitHeight)
@@ -139,17 +140,11 @@ PrivateTooltipWindow {
                 NotificationButton { visible: root.groups.length > root.groupLimit; label: "Load older emitters"; onClicked: root.groupLimit += Config.notificationPageSize }
             }
         }
-        Flickable {
-            id: emitterView
+        NotificationEmitterSettings {
+            id: settings
             x: historyView.x; y: historyView.y
             width: historyView.width; height: historyView.height
             visible: root.tab === "Emitters"
-            clip: true
-            contentWidth: width
-            contentHeight: settings.height
-            boundsBehavior: Flickable.StopAtBounds
-            QC.ScrollBar.vertical: QC.ScrollBar { HoverHandler { cursorShape: Qt.PointingHandCursor } }
-            NotificationEmitterSettings { id: settings; width: emitterView.width - 10 }
         }
     }
 }

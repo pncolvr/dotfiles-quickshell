@@ -10,8 +10,12 @@ Item {
     id: root
     property bool adding: false
     property var users: TwitchService.allUsers
-    readonly property var liveUsers: users.filter(user => user.online).sort((a, b) => a.login.localeCompare(b.login))
-    readonly property var offlineUsers: users.filter(user => !user.online).sort((a, b) => a.login.localeCompare(b.login))
+    property alias searchText: searchField.text
+    readonly property string searchQuery: adding ? "" : searchField.query
+    readonly property var filteredUsers: users.filter(user => !searchQuery
+        || [user.login, user.game, user.title].some(value => String(value ?? "").toLowerCase().includes(searchQuery)))
+    readonly property var liveUsers: filteredUsers.filter(user => user.online).sort((a, b) => a.login.localeCompare(b.login))
+    readonly property var offlineUsers: filteredUsers.filter(user => !user.online).sort((a, b) => a.login.localeCompare(b.login))
     readonly property var browserSuggestions: TwitchService.browserSuggestions.filter(login =>
         login.includes(loginField.text.trim().toLowerCase().replace(/^(?:https?:\/\/)?(?:www\.|m\.)?twitch\.tv\//, "").split(/[/?#]/)[0]))
     readonly property bool hasSuggestions: adding && browserSuggestions.length > 0
@@ -19,7 +23,8 @@ Item {
     readonly property int spacing: Theme.twitchTooltipSpacing
     readonly property int scrollbarSpace: Theme.twitchScrollbarWidth + Theme.twitchScrollbarMargin
     readonly property int rowWidth: Theme.twitchAvatarSize + Theme.twitchInfoWidth + Theme.twitchRemoveButtonSize + 2 * Theme.twitchUserSpacing
-    readonly property int columns: Math.min(2, Math.max(1, liveUsers.length, offlineUsers.length), Math.max(1,
+    readonly property int columns: Math.min(2, Math.max(1, users.filter(user => user.online).length,
+        users.filter(user => !user.online).length), Math.max(1,
         Math.floor(((TooltipService.screen?.width ?? 1920) - 2 * Theme.tooltipPaddingWidth
             - scrollbarSpace + spacing) / (rowWidth + spacing))))
     readonly property real maximumHeight: Math.max(0, Math.min(
@@ -40,6 +45,10 @@ Item {
             scrollBudget * 0.3) : 0
     implicitWidth: columns * rowWidth + (columns - 1) * spacing + scrollbarSpace
     implicitHeight: content.implicitHeight
+    onSearchQueryChanged: {
+        const view = usersView.contentItem as Flickable
+        if (view) view.contentY = 0
+    }
 
     function cancelEditor() { adding = false; loginField.clear() }
     function addUser() {
@@ -100,6 +109,7 @@ Item {
                     title: "Live"
                     users: root.liveUsers
                     columns: root.columns
+                    forceExpanded: root.searchQuery.length > 0
                 }
                 TwitchUserSection {
                     objectName: "twitchOfflineUsersSection"
@@ -108,10 +118,17 @@ Item {
                     expanded: false
                     users: root.offlineUsers
                     columns: root.columns
+                    forceExpanded: root.searchQuery.length > 0
                 }
                 UI.ColumnText {
                     visible: !root.users.length
                     text: "No streamers yet — add one below"
+                    color: Theme.inactive
+                }
+                UI.ColumnText {
+                    objectName: "twitchSearchEmpty"
+                    visible: root.users.length > 0 && !root.filteredUsers.length
+                    text: "No matching streamers."
                     color: Theme.inactive
                 }
             }
@@ -130,7 +147,19 @@ Item {
             width: root.width
             height: Theme.twitchEditorHeight
 
+            UI.SearchField {
+                id: searchField
+                objectName: "twitchSearchField"
+                anchors.left: parent.left
+                anchors.right: addButton.left
+                anchors.rightMargin: root.spacing
+                height: parent.height
+                visible: !root.adding
+                placeholderText: "Search streamers…"
+            }
+
             UI.ActionButton {
+                id: addButton
                 objectName: "beginAddTwitchUser"
                 anchors.right: parent.right
                 width: Theme.twitchEditorButtonWidth
@@ -148,7 +177,7 @@ Item {
             Row {
                 objectName: "twitchEditorControls"
                 anchors.right: parent.right
-                width: Math.min(parent.width, Theme.twitchEditorMaxWidth)
+                width: parent.width
                 spacing: root.spacing
                 visible: root.adding
 

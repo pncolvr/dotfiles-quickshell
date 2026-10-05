@@ -25,15 +25,21 @@ WrapperMouseArea {
     }
 
     HoverHandler {
+        id: triggerHover
         enabled: root.enabled && root.hoverEnabled && !!root.tooltip
         // Enter within the target; tolerate small edge movements after entry.
         margin: hovered ? Theme.tooltipHoverTolerance : 0
+        onPointChanged: if (hovered) {
+            const pos = root.mapToGlobal(point.position.x, point.position.y)
+            TooltipService.observePointer(pos.x, pos.y, true)
+        }
         onHoveredChanged: {
             if (hovered) {
                 const pos = root.mapToGlobal(root.width / 2, 0)
                 TooltipService.show(pos.x, root.tooltip, root.tooltipSource, root.centerTooltip, root.tooltipScreen)
+                TooltipService.setTriggerHovered(root.tooltipSource, true)
             } else {
-                TooltipService.hide()
+                TooltipService.setTriggerHovered(root.tooltipSource, false)
             }
         }
     }

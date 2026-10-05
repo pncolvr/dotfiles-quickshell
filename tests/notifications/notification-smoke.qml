@@ -128,6 +128,11 @@ Scope {
         function nativeUi(): string { return JSON.stringify(root.nativeView?.snapshot() || {}) }
         function preview(path: string): bool { return root.nativeView?.preview(path) || false }
         function filter(filter: string): string { settings.filter = filter; return JSON.stringify(settings.emitters.map(emitter => emitter.key)) }
+        function searchEmitters(query: string): string {
+            settings.searchText = query
+            return JSON.stringify(settings.emitters.map(emitter => emitter.key))
+        }
+        function clearEmitterSearch(): bool { settings.clearSearch(); return settings.searchText === "" }
         function focusFallback(): bool {
             return !WindowService.focusEmitter("unmatched.desktop", "unmatched")
         }

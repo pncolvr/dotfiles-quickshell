@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Controls as QC
+import QtQml.Models
 import Quickshell
 import "../../../config"
 import "../../../theme"
@@ -20,9 +21,52 @@ Column {
     property bool adding: false
     property string draftName: ""
     property string draftToken: ""
+    property alias searchText: searchField.text
+    readonly property string searchQuery: adding ? "" : searchField.query
     readonly property real nameWidth: (width - Theme.totpButtonWidth * 2 - Theme.totpSpacing * 3) * 0.42
 
     function cancelEditor() { editingId = ""; adding = false; draftName = ""; draftToken = "" }
+    onSearchQueryChanged: {
+        filteredEntries.updateFilter()
+        list.positionViewAtBeginning()
+    }
+    onEditingIdChanged: filteredEntries.updateFilter()
+
+    DelegateModel {
+        id: filteredEntries
+        model: TotpService.entries
+        filterOnGroup: "matches"
+        groups: DelegateModelGroup { name: "matches"; includeByDefault: true }
+        items.onChanged: updateFilter()
+
+        function updateFilter() {
+            for (let i = 0; i < items.count; ++i) {
+                const item = items.get(i)
+                item.inMatches = !root.searchQuery || item.model.entryId === root.editingId
+                    || item.model.name.toLowerCase().includes(root.searchQuery)
+            }
+        }
+
+        delegate: TotpRow {
+            width: list.width - (scrollbar.visible ? Theme.totpScrollbarWidth + Theme.totpScrollbarMargin : 0)
+            editing: root.editingId === entryId
+            nameWidth: root.nameWidth
+            draftName: root.draftName
+            draftToken: root.draftToken
+            onEditRequested: entryId => {
+                root.cancelEditor()
+                root.editingId = entryId
+                if (!TotpService.edit(entryId)) root.editingId = ""
+            }
+            onEditCancelled: root.cancelEditor()
+            onDraftChanged: (name, token) => { root.draftName = name; root.draftToken = token }
+        }
+    }
+
+    Connections {
+        target: TotpService.entries
+        function onDataChanged() { filteredEntries.updateFilter() }
+    }
 
     UI.ColumnText {
         width: parent.width
@@ -57,21 +101,7 @@ Column {
         spacing: Theme.totpSpacing
         clip: true
         boundsBehavior: Flickable.StopAtBounds
-        model: TotpService.entries
-        delegate: TotpRow {
-            width: list.width - (scrollbar.visible ? Theme.totpScrollbarWidth + Theme.totpScrollbarMargin : 0)
-            editing: root.editingId === entryId
-            nameWidth: root.nameWidth
-            draftName: root.draftName
-            draftToken: root.draftToken
-            onEditRequested: entryId => {
-                root.cancelEditor()
-                root.editingId = entryId
-                if (!TotpService.edit(entryId)) root.editingId = ""
-            }
-            onEditCancelled: root.cancelEditor()
-            onDraftChanged: (name, token) => { root.draftName = name; root.draftToken = token }
-        }
+        model: filteredEntries
         QC.ScrollBar.vertical: QC.ScrollBar {
             id: scrollbar
             implicitWidth: Theme.totpScrollbarWidth
@@ -79,6 +109,14 @@ Column {
             policy: QC.ScrollBar.AsNeeded
             contentItem: Rectangle { radius: width / 2; color: Theme.accent; opacity: scrollbar.active ? 1 : 0.5 }
             background: Rectangle { color: Theme.empty; radius: width / 2 }
+        }
+        UI.ColumnText {
+            objectName: "totpSearchEmpty"
+            parent: list
+            width: list.width
+            visible: TotpService.ready && TotpService.entries.count > 0 && list.count === 0
+            text: "No matching tokens."
+            color: Theme.inactive
         }
     }
 
@@ -127,7 +165,21 @@ Column {
         width: parent.width
         height: Theme.totpRowHeight + Theme.totpFooterMargin
 
+        UI.SearchField {
+            id: searchField
+            objectName: "totpSearchField"
+            anchors.left: parent.left
+            anchors.right: addButton.left
+            anchors.rightMargin: Theme.totpSpacing
+            anchors.bottom: parent.bottom
+            height: Theme.totpRowHeight
+            visible: !root.adding
+            placeholderText: "Search tokens…"
+        }
+
         UI.ActionButton {
+            id: addButton
+            objectName: "beginAddTotpToken"
             anchors.right: parent.right
             anchors.bottom: parent.bottom
             visible: !root.adding

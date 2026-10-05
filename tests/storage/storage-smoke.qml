@@ -119,13 +119,35 @@ Scope {
         const usersView = objects.findChild(panel, "twitchUsersScrollView") as QC.ScrollView
         const field = objects.findChild(panel, "twitchLoginField") as UI.InputField
         const bulk = objects.findChild(panel, "addAllBrowserTwitchUsers") as UI.ActionButton
+        const search = objects.findChild(panel, "twitchSearchField") as UI.SearchField
+        const initialWidth = panel.implicitWidth
+        panel.adding = false
+        search.text = " STREAMER_1 "
+        check(panel.liveUsers.length === 3 && panel.offlineUsers.length === 8, "search matches login without case or surrounding spaces")
+        check(offline.showingUsers && !offline.expanded, "search reveals Offline matches without changing its collapse state")
+        check(panel.implicitWidth === initialWidth, "search does not resize the tooltip width")
+        search.text = "game"
+        check(panel.filteredUsers.length === 36, "search matches cached categories")
+        search.text = "stream title"
+        check(panel.filteredUsers.length === 36, "search matches cached stream titles")
+        search.text = "no matching streamer"
+        check(!panel.filteredUsers.length && root.find(panel, "twitchSearchEmpty").visible, "unmatched search has an empty state")
+        search.text = "streamer_1"
+        panel.adding = true
+        check(!search.visible && panel.filteredUsers.length === 36, "add form hides and suspends search")
+        panel.cancelEditor()
+        check(search.visible && search.text === "streamer_1" && panel.filteredUsers.length === 11, "returning from add preserves search")
+        const clear = root.find(search, "clearSearch") as UI.ActionButton
+        clear.clicked()
+        check(search.text === "" && search.activeFocus && !offline.showingUsers, "clear button restores all users and keeps input focus")
+        panel.adding = true
         check(live.users.length === 12 && live.users.every(user => user.online), "Live grid contains only live users")
         check(offline.users.length === 24 && offline.users.every(user => !user.online), "Offline grid contains only offline users")
         check(live.expanded && !offline.expanded, "Live starts expanded and Offline starts collapsed")
         check(live.columns === 2 && offline.columns === 2, "sections share two aligned columns")
         check(grid.columns === 2, "suggestions form a compact grid on wide tooltips")
         check(panel.implicitHeight <= panel.maximumHeight + 1, "entire tooltip respects screen height cap")
-        check(editor.width <= 420 && footer.y + footer.height <= panel.height, "editor remains bounded and on screen")
+        check(editor.width === footer.width && footer.y + footer.height <= panel.height, "add controls fill the footer and remain on screen")
         check(usersView.contentHeight > usersView.height, "large followed list scrolls within its budget")
         check(field.placeholderText === "Login or Twitch URL", "short placeholder fits narrow editor")
         check(bulk.label === "Add all (2)", "bulk count matches displayed suggestions")

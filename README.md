@@ -206,14 +206,21 @@ in separate Live and Offline grids, each with a count. Click either heading to
 collapse or expand its grid; Offline starts collapsed and Live starts expanded.
 The tooltip's total height
 is capped to fit the screen; streamer and suggestion grids scroll while add
-controls stay visible. A divider separates the add section, and the editor stays
-at a consistent maximum width even when the streamer grid gains columns.
+controls stay visible. A divider separates the footer, where the search and add
+inputs use the available width.
 Click **+** to enter a streamer login or Twitch URL, then **+** or Enter to save;
 **×** or Escape cancels. While adding, channels open in qutebrowser appear below
 the field in a compact grid of buttons you can click to follow. Adding one keeps
 the editor and search text open while other suggestions remain. **Add all (N)**
 shows how many currently displayed suggestions it will follow. Already followed
 channels are hidden.
+Search matches streamer logins, categories and stream titles as you type, and
+temporarily expands Offline to show matching results. TOTP searches token names;
+notification Emitters searches names and desktop IDs above the policy filters.
+Each search has a clear button and resets when its panel closes. Adding a streamer
+or token temporarily hides search and suspends filtering, then restores the query.
+Focusing or typing in an input pauses hover dismissal until the mouse moves.
+Manual pinning remains independent; Escape clears search and releases focus.
 Suggestions read current tab entries from whichever of `_autosave.yml` or
 `default.yml` was saved most recently in `$XDG_DATA_HOME/qutebrowser/sessions`
 (defaulting to `~/.local/share/qutebrowser/sessions`). They refresh every three

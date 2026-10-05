@@ -20,9 +20,10 @@ TopPanelTooltip {
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
 
     HoverHandler {
-        onHoveredChanged: {
-            if (hovered) TooltipService.cancelHide()
-            else TooltipService.hide()
+        onPointChanged: if (hovered) {
+            const pos = parent.mapToGlobal(point.position.x, point.position.y)
+            TooltipService.observePointer(pos.x, pos.y, true)
         }
+        onHoveredChanged: if (root.visible) TooltipService.setPanelHovered(hovered)
     }
 }
