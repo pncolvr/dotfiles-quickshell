@@ -15,7 +15,7 @@ QC.ScrollView {
     readonly property real gridHeight: grid.implicitHeight
     signal selected(string login)
     clip: true
-    contentWidth: width - Theme.twitchScrollbarWidth - Theme.twitchScrollbarMargin
+    contentWidth: width - (scrollbar.visible ? Theme.twitchScrollbarWidth + Theme.twitchScrollbarMargin : 0)
     contentHeight: grid.implicitHeight
     QC.ScrollBar.horizontal.policy: QC.ScrollBar.AlwaysOff
     QC.ScrollBar.vertical: QC.ScrollBar {
