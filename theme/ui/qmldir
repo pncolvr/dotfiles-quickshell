@@ -8,7 +8,7 @@ IconButton 1.0 components/IconButton.qml
 HoverTooltip 1.0 components/HoverTooltip.qml
 ActionButton 1.0 components/ActionButton.qml
 InputField 1.0 components/InputField.qml
-TooltipCorner 1.0 components/TooltipCorner.qml
+TooltipBackground 1.0 components/TooltipBackground.qml
 
 PulseText 1.0 PulseText.qml
 IconText 1.0 IconText.qml

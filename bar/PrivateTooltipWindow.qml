@@ -15,7 +15,6 @@ TopPanelTooltip {
             : TooltipService.x - (screen?.x ?? 0) - contentWidth / 2
         return Math.max(0, Math.min(width - contentWidth, ideal))
     }
-    mask: Region { x: root.contentX; width: root.contentWidth; height: root.contentHeight }
     WlrLayershell.namespace: Config.screenShareHiddenNamespace
     WlrLayershell.layer: WlrLayer.Top
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand

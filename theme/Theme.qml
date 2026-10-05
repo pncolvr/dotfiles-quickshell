@@ -55,6 +55,12 @@ Item {
   readonly property int tooltipHoverTolerance: 2
   readonly property int tooltipBridgeHeight: 10
   readonly property int tooltipRadius: 12
+  readonly property bool tooltipShadowEnabled: true
+  readonly property color tooltipShadowColor: "black"
+  readonly property real tooltipShadowOpacity: 0.5 // 0–1
+  readonly property int tooltipShadowBlurRadius: 18 // Pixels, clamped to 2–64.
+  readonly property real tooltipShadowHorizontalOffset: 0
+  readonly property real tooltipShadowVerticalOffset: 6
   readonly property int tooltipPaddingWidth: 20
   readonly property int tooltipPaddingHeight: 10
   readonly property int tooltipMinWidth: 80

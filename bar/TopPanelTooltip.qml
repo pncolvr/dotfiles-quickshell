@@ -1,4 +1,7 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
+import QtQuick.Effects
 import Quickshell
 import "../theme"
 import "../theme/ui" as UI
@@ -13,30 +16,45 @@ PanelWindow {
     property alias contentX: panel.x
     property alias contentWidth: panel.width
     property alias contentHeight: panel.height
+    readonly property int shadowBlurRadius: Math.max(2, Math.min(64, Theme.tooltipShadowBlurRadius))
+    readonly property real shadowBottomPadding: Theme.tooltipShadowEnabled
+        ? shadowBlurRadius + Math.max(0, Theme.tooltipShadowVerticalOffset) : 0
 
     anchors.top: true
     exclusiveZone: 0
     implicitWidth: screen.width
-    implicitHeight: panel.height
+    implicitHeight: Math.ceil(panel.height + shadowBottomPadding)
     color: "transparent"
 
-    Rectangle {
+    // Only the panel receives input; transparent joins and shadow pass it through.
+    mask: Region { x: root.contentX; width: root.contentWidth; height: root.contentHeight }
+
+    UI.TooltipBackground {
+        id: background
+        x: panel.x - curveRadius
+        y: panel.y
+        panelWidth: panel.width
+        height: panel.height
+        layer.enabled: Theme.tooltipShadowEnabled
+        layer.effect: MultiEffect {
+            shadowEnabled: true
+            shadowColor: Theme.tooltipShadowColor
+            shadowOpacity: Theme.tooltipShadowOpacity
+            blurMax: root.shadowBlurRadius
+            shadowBlur: 1
+            shadowHorizontalOffset: Theme.tooltipShadowHorizontalOffset
+            shadowVerticalOffset: Theme.tooltipShadowVerticalOffset
+            // MultiEffect pads for blur automatically; offsets need extra room.
+            paddingRect: Qt.rect(Math.max(0, -Theme.tooltipShadowHorizontalOffset),
+                Math.max(0, -Theme.tooltipShadowVerticalOffset),
+                Math.max(0, Theme.tooltipShadowHorizontalOffset),
+                Math.max(0, Theme.tooltipShadowVerticalOffset))
+        }
+    }
+
+    // Keep content outside the effect so text and controls render directly.
+    Item {
         id: panel
         y: 0
-        color: Theme.tooltipBackground
-        bottomLeftRadius: Theme.tooltipRadius
-        bottomRightRadius: Theme.tooltipRadius
-    }
-
-    UI.TooltipCorner {
-        x: panel.x - width + 1
-        y: panel.y
-        side: UI.TooltipCorner.Side.Left
-    }
-
-    UI.TooltipCorner {
-        x: panel.x + panel.width - 1
-        y: panel.y
-        side: UI.TooltipCorner.Side.Right
     }
 }

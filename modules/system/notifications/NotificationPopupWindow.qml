@@ -16,6 +16,13 @@ PanelWindow {
     id: root
     property var lastScreen: null
     property var targetScreen: null
+    readonly property int shadowBlurRadius: 32
+    readonly property int shadowVerticalOffset: 8
+    // Keep cards 24 px from the bar and screen edge; reserve space for shadows.
+    readonly property int contentPaddingLeft: shadowBlurRadius
+    readonly property int contentPaddingRight: 24
+    readonly property int contentPaddingTop: 24
+    readonly property int contentPaddingBottom: shadowBlurRadius + shadowVerticalOffset
     function selectScreen() {
         const screens = Quickshell.screens
         const focused = screens.find(output => output.name === Hyprland.focusedMonitor?.name)
@@ -31,36 +38,56 @@ PanelWindow {
     anchors.right: true
     exclusionMode: ExclusionMode.Ignore
     exclusiveZone: 0
-    WlrLayershell.margins.top: Theme.barHeight + 12
-    WlrLayershell.margins.right: 12
+    WlrLayershell.margins.top: Theme.barHeight
+    WlrLayershell.margins.right: 0
     color: "transparent"
-    implicitWidth: Math.max(1, Math.min(Theme.notificationWidth, (targetScreen?.width || 500) - 24))
-    implicitHeight: Math.min(stack.height + 24, Math.max(1, (targetScreen?.height || 1080) - Theme.barHeight - 40))
+    implicitWidth: Math.max(1, Math.min(Theme.notificationWidth + contentPaddingLeft + contentPaddingRight - 24,
+        targetScreen?.width || 500))
+    implicitHeight: Math.min(stack.height + contentPaddingTop + contentPaddingBottom,
+        Math.max(1, (targetScreen?.height || 1080) - Theme.barHeight))
     WlrLayershell.namespace: Config.screenShareHiddenNamespace
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
-    mask: Region { x: 12; y: 12; width: root.width - 24; height: root.height - 24 }
-    Flickable {
-        anchors.fill: parent
-        anchors.margins: 12
-        clip: true
-        contentWidth: width
-        contentHeight: stack.height
-        boundsBehavior: Flickable.StopAtBounds
-        QC.ScrollBar.vertical: QC.ScrollBar { HoverHandler { cursorShape: Qt.PointingHandCursor } }
-        Column {
-            id: stack
-            width: parent.width
-            spacing: Theme.notificationSpacing
-            Repeater {
-                model: NotificationService.popups
-                NotificationCard {
-                    required property var modelData
-                    entry: modelData
-                    popup: true
-                    width: stack.width
-                    layer.enabled: true
-                    layer.effect: MultiEffect { shadowEnabled: true; shadowColor: "black"; shadowOpacity: 0.35; shadowBlur: 0.8; shadowVerticalOffset: 8 }
+    mask: Region {
+        x: root.contentPaddingLeft; y: root.contentPaddingTop
+        width: stack.width
+        height: Math.max(0, root.height - root.contentPaddingTop - root.contentPaddingBottom)
+    }
+    Item {
+        x: root.contentPaddingLeft
+        y: root.contentPaddingTop
+        width: Math.max(1, parent.width - root.contentPaddingLeft - root.contentPaddingRight)
+        height: Math.max(0, parent.height - root.contentPaddingTop - root.contentPaddingBottom)
+        // Clip scrolling content first, then let its shadow fade outside the viewport.
+        layer.enabled: true
+        layer.effect: MultiEffect {
+            shadowEnabled: true
+            shadowColor: "black"
+            shadowOpacity: 0.35
+            blurMax: root.shadowBlurRadius
+            shadowBlur: 0.8
+            shadowVerticalOffset: root.shadowVerticalOffset
+            paddingRect: Qt.rect(0, 0, 0, root.shadowVerticalOffset)
+        }
+        Flickable {
+            anchors.fill: parent
+            clip: true
+            contentWidth: width
+            contentHeight: stack.height
+            boundsBehavior: Flickable.StopAtBounds
+            QC.ScrollBar.vertical: QC.ScrollBar { HoverHandler { cursorShape: Qt.PointingHandCursor } }
+            Column {
+                id: stack
+                width: parent.width
+                spacing: Theme.notificationSpacing
+                Repeater {
+                    model: NotificationService.popups
+                    NotificationCard {
+                        required property var modelData
+                        entry: modelData
+                        popup: true
+                        width: stack.width
+                    }
                 }
             }
         }

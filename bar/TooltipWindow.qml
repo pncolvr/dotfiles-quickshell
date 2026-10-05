@@ -1,5 +1,4 @@
 import QtQuick
-import Quickshell
 import Quickshell.Wayland
 import "../theme"
 import "../services"
@@ -11,9 +10,6 @@ TopPanelTooltip {
     visible: shouldShow
     WlrLayershell.keyboardFocus: TooltipService.source?.tooltipKeyboardFocus
         ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
-
-    // Transparent space beside a tooltip should pass pointer events through.
-    mask: Region { x: root.contentX; width: root.contentWidth; height: root.contentHeight }
 
     contentWidth: loader.implicitWidth + Theme.tooltipPaddingWidth * 2
     contentHeight: loader.implicitHeight + Theme.tooltipPaddingHeight * 2
