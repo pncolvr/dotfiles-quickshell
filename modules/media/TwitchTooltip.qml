@@ -19,7 +19,7 @@ Item {
     readonly property int spacing: Theme.twitchTooltipSpacing
     readonly property int scrollbarSpace: Theme.twitchScrollbarWidth + Theme.twitchScrollbarMargin
     readonly property int rowWidth: Theme.twitchAvatarSize + Theme.twitchInfoWidth + Theme.twitchRemoveButtonSize + 2 * Theme.twitchUserSpacing
-    readonly property int columns: Math.min(3, Math.max(1, liveUsers.length, offlineUsers.length), Math.max(1,
+    readonly property int columns: Math.min(2, Math.max(1, liveUsers.length, offlineUsers.length), Math.max(1,
         Math.floor(((TooltipService.screen?.width ?? 1920) - 2 * Theme.tooltipPaddingWidth
             - scrollbarSpace + spacing) / (rowWidth + spacing))))
     readonly property real maximumHeight: Math.max(0, Math.min(

@@ -31,7 +31,7 @@ QC.ScrollView {
         objectName: root.gridObjectName
         width: root.contentWidth
         columns: Math.min(3, Math.max(1, root.logins.length), Math.max(1,
-            Math.floor((width + Theme.twitchTooltipSpacing) / (Theme.twitchSuggestionMinWidth + Theme.twitchTooltipSpacing))))
+            Math.floor((root.width - Theme.twitchScrollbarWidth - Theme.twitchScrollbarMargin + Theme.twitchTooltipSpacing) / (Theme.twitchSuggestionMinWidth + Theme.twitchTooltipSpacing))))
         spacing: Theme.twitchTooltipSpacing
         Repeater {
             model: root.logins
