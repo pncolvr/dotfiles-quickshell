@@ -139,7 +139,7 @@ Row {
         MouseArea {
             anchors.fill: parent
             cursorShape: Qt.PointingHandCursor
-            onClicked: root.user.online ? TwitchService.openStream(root.user.login) : TwitchService.openUrl(root.user.login)
+            onClicked: TwitchService.openUrl(root.user.login)
         }
     }
 

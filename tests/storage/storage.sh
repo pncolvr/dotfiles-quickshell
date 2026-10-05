@@ -16,6 +16,22 @@ mkdir "$test_dir/bin"
 export XDG_RUNTIME_DIR="$test_dir/runtime" XDG_DATA_HOME="$test_dir/data" XDG_CACHE_HOME="$test_dir/cache"
 export QT_QPA_PLATFORM=offscreen
 export STORAGE_TEST_STATE="$test_dir" PATH="$test_dir/bin:$PATH"
+mkdir -p "$XDG_DATA_HOME/qutebrowser/sessions"
+cat > "$XDG_DATA_HOME/qutebrowser/sessions/_autosave.yml" <<'YAML'
+windows:
+  - tabs:
+      - active: true
+        history:
+          - url: https://www.twitch.tv/historical
+          - active: true
+            url: https://www.twitch.tv/Alice
+      - history:
+          - active: true
+            url: https://www.twitch.tv/bob/schedule
+      - history:
+          - active: true
+            url: https://www.twitch.tv/directory
+YAML
 cat > "$test_dir/bin/ping" <<'MOCK'
 #!/usr/bin/env bash
 exit 0

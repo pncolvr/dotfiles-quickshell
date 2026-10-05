@@ -59,16 +59,15 @@ Item {
     readonly property string databasePath: Quickshell.shellPath("data/quickshell.db")
     readonly property string databaseName: "quickshell"
     readonly property int twitchInterval: Timespan.fromMinutes(5)
-    readonly property var twitchStreamCommand: function (login, url) {
-        return login
-            ? ["setsid", `${_internal.home}/.config/hypr/scripts/tolocalplayer.sh`, login, url]
-            : ["setsid", `${_internal.home}/.config/hypr/scripts/tolocalplayer.sh`]
-    }
-
     readonly property string twitchBaseUrl: "https://www.twitch.tv/"
 
     readonly property string twitchOnlineFile: `${Quickshell.env("XDG_RUNTIME_DIR")}/twitch_online_${_internal.userId}`
     readonly property string twitchCli: "twitch"
+    readonly property string qutebrowserSessionsDirectory: `${Quickshell.env("XDG_DATA_HOME") || `${_internal.home}/.local/share`}/qutebrowser/sessions`
+    readonly property var qutebrowserSessionFiles: [
+        `${qutebrowserSessionsDirectory}/_autosave.yml`,
+        `${qutebrowserSessionsDirectory}/default.yml`
+    ]
 
     readonly property var statusManagerCheckCommand:  [_internal.statusManager, "--check"]
     readonly property var statusManagerSourceCommand: [_internal.statusManager, "--source"]

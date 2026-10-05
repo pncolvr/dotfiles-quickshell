@@ -45,14 +45,22 @@ QC.Button {
 
         Q.Text {
             id: icon
-            anchors.verticalCenter: parent.verticalCenter
-            anchors.horizontalCenter: codeLabel.visible ? undefined : parent.horizontalCenter
-            anchors.right: codeLabel.visible ? parent.right : undefined
-            anchors.rightMargin: Theme.controlFieldPadding
+            // Center the visible glyph rather than the font's advance and line box.
+            x: (codeLabel.visible
+                ? parent.width - Theme.controlFieldPadding - iconMetrics.tightBoundingRect.width
+                : (parent.width - iconMetrics.tightBoundingRect.width) / 2) - iconMetrics.tightBoundingRect.x
+            y: (parent.height - iconMetrics.tightBoundingRect.height) / 2
+                - baselineOffset - iconMetrics.tightBoundingRect.y
             text: root.glyph
             color: root.foreground
             font.family: Theme.fontFamilyIcons
             font.pixelSize: Theme.fontSize
+        }
+
+        TextMetrics {
+            id: iconMetrics
+            font: icon.font
+            text: icon.text
         }
     }
 

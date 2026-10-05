@@ -9,17 +9,14 @@ UI.TooltipArea {
     tooltipSource: root
     visible: TwitchService.available
     tooltip: Component { TwitchTooltip {} }
-    acceptedButtons: Qt.LeftButton | Qt.RightButton
-    onClicked: mouse => {
-        if (mouse.button === Qt.RightButton) {
-            const pos = root.mapToGlobal(root.width / 2, 0)
-            TooltipService.togglePin(pos.x, tooltip, root, centerTooltip, tooltipScreen)
-        } else {
-            TwitchService.openPicker()
-        }
+    acceptedButtons: Qt.LeftButton
+    onClicked: {
+        const pos = root.mapToGlobal(root.width / 2, 0)
+        TooltipService.togglePin(pos.x, tooltip, root, centerTooltip, tooltipScreen)
     }
     UI.IconText {
         text: Theme.twitchIcon
-        color: TwitchService.hasOnline ? Theme.twitchColor : Theme.inactive
+        color: TooltipService.pinned && TooltipService.source === root ? Theme.accent
+            : TwitchService.hasOnline ? Theme.twitchColor : Theme.inactive
     }
 }

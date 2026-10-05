@@ -42,9 +42,11 @@ Singleton {
     }
 
     function addUser(value) {
-        const login = normalizeLogin(value)
+        const input = normalizeLogin(value)
+        const twitchUrl = input.match(/^(?:https?:\/\/)?(?:www\.)?twitch\.tv\/([a-z0-9_]+)\/?(?:[?#].*)?$/)
+        const login = twitchUrl ? twitchUrl[1] : input
         if (!validLogin(login)) {
-            state.error = "Enter a Twitch login using letters, numbers or underscores (up to 25 characters)"
+            state.error = "Enter a Twitch login (letters, numbers or underscores, up to 25 characters) or a streamer Twitch URL"
             return false
         }
         let added = false

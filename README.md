@@ -194,9 +194,20 @@ qs ipc call twitch exportUsers > twitch-users.txt # one login per line
 ```
 
 Hover the Twitch icon to see followed streamers and their next scheduled streams.
-Click **+** to reveal the login field, then **+** or Enter to save; **×** or Escape
-cancels. The trash button removes a streamer. Right-click the
-icon to pin the dropdown while editing. Left-click opens the stream picker.
+Click **+** to enter a streamer login or Twitch URL, then **+** or Enter to save;
+**×** or Escape cancels. While adding, channels open in qutebrowser appear below
+the field as buttons you can click to follow. **Add all** follows every currently
+displayed suggestion at once. Already followed channels are hidden.
+Suggestions read current tab entries from whichever of `_autosave.yml` or
+`default.yml` was saved most recently in `$XDG_DATA_HOME/qutebrowser/sessions`
+(defaulting to `~/.local/share/qutebrowser/sessions`). They refresh every three
+seconds while the editor is open, so manually saving the default session updates
+suggestions even before the next autosave. They use Bash and `yq` (the jq-compatible
+YAML reader); missing or unreadable sessions simply show no suggestions.
+Only the newest snapshot is read; previous browsing history is excluded.
+The trash button removes a streamer. Left-click the Twitch icon to pin/unpin the
+dropdown, with an accent color while pinned, as in TOTP and notifications.
+Clicking a streamer's avatar or details opens their Twitch page in the default browser.
 Logins are stored in lowercase and duplicates are rejected. A new database starts
 with an empty list; there is no users-file import. Exported lists are ordinary text
 files that you can save or share.

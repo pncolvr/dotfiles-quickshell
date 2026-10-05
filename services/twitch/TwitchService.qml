@@ -19,6 +19,10 @@ Singleton {
     readonly property bool available: state.available
     readonly property bool usersReady: DbService.ready
     readonly property string error: TwitchRepository.error
+    readonly property var browserSuggestions: {
+        const followed = TwitchRepository.logins()
+        return state.browserLogins.filter(login => !followed.includes(login))
+    }
 
     onUsersReadyChanged: if (usersReady) Qt.callLater(root.refresh)
 
@@ -29,6 +33,7 @@ Singleton {
         property var downloadQueue: []
         property var userIds: ({})
         property var scheduleQueue: []
+        property var browserLogins: []
         property bool available: false
         property bool refreshing: false
         property bool refreshAgain: false
@@ -36,10 +41,6 @@ Singleton {
     }
 
     function openUrl(login) { Qt.openUrlExternally(`${Config.twitchBaseUrl}${login}`) }
-    function openStream(login) {
-        Quickshell.execDetached(Config.twitchStreamCommand(login, `${Config.twitchBaseUrl}${login}`))
-    }
-    function openPicker() { Quickshell.execDetached(Config.twitchStreamCommand()) }
     function notifyOnline(logins) {
         if (!logins.length || notifyProcess.running) return
         notifyProcess.command = ["notify-send", "--app-name=Twitch", "--urgency=low",
@@ -50,6 +51,10 @@ Singleton {
     function avatarSource(login) { return TwitchRepository.avatars[login]?.dataUrl ?? "" }
     function addUser(login) { return usersReady && TwitchRepository.addUser(login) }
     function removeUser(login) { return usersReady && TwitchRepository.removeUser(login) }
+
+    function refreshBrowserSuggestions() {
+        if (!browserSessionProcess.running) browserSessionProcess.running = true
+    }
 
     function syncUsers() {
         const logins = TwitchRepository.logins()
@@ -156,6 +161,24 @@ Singleton {
         path: Config.twitchOnlineFile
         preload: false
         printErrors: false
+    }
+
+    Process {
+        id: browserSessionProcess
+        command: ["bash", Qt.resolvedUrl("qutebrowser-channels.sh").toString().replace("file://", ""), ...Config.qutebrowserSessionFiles]
+        stdout: StdioCollector { id: browserSessionOutput; waitForEnd: true }
+        // Quickshell.Io omits QProcess::ExitStatus from its qmltypes.
+        // qmllint disable signal-handler-parameters
+        onExited: (exitCode, exitStatus) => {
+            state.browserLogins = []
+            if (exitCode !== 0 || exitStatus !== 0) return
+            try {
+                const logins = JSON.parse(browserSessionOutput.text)
+                if (Array.isArray(logins))
+                    state.browserLogins = [...new Set(logins.filter(login => typeof login === "string" && TwitchRepository.validLogin(login)))].sort()
+            } catch (error) { console.warn("TwitchService browser session response:", error) }
+        }
+        // qmllint enable signal-handler-parameters
     }
 
     Process {

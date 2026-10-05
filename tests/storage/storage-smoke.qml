@@ -13,10 +13,12 @@ Scope {
     property int ticks: 0
     property bool failed: false
     property bool sawAvatarDownload: false
+    property bool browserScanRequested: false
     Test.TestResult { id: objects }
     FloatingWindow {
         visible: false
         TwitchTooltip { id: panel }
+        Twitch { id: twitchModule }
     }
 
     function check(condition, message) {
@@ -39,6 +41,13 @@ Scope {
         check(DbService.read("SELECT name FROM store.sqlite_master WHERE type = 'table'").length === 8, "central schema")
         check(!TimeService.showSeconds, "default clock preference")
         check(TwitchRepository.exportUsers() === "", "fresh Twitch list is empty")
+        check(TwitchService.browserSuggestions.join() === "alice,bob", "current qutebrowser tabs suggested without history or directory pages")
+        twitchModule.clicked(null)
+        check(TooltipService.pinned && TooltipService.source === twitchModule, "module click pins Twitch like TOTP and notifications")
+        TooltipService.hide()
+        check(TooltipService.pinned, "pinned Twitch panel ignores hover exit")
+        twitchModule.clicked(null)
+        check(!TooltipService.pinned, "module click unpins Twitch")
         const field = objects.findChild(panel, "twitchLoginField") as UI.InputField
         const add = objects.findChild(panel, "addTwitchUser") as UI.ActionButton
         const begin = objects.findChild(panel, "beginAddTwitchUser") as UI.ActionButton
@@ -49,6 +58,8 @@ Scope {
         begin.clicked()
         check(panel.adding && panel.implicitHeight === height, "plus opens editor without resizing footer")
         check(cancel.x < add.x, "cancel is left of submit, as in TOTP")
+        field.text = "https://www.twitch.tv/AL"
+        check(panel.browserSuggestions.join() === "alice", "browser suggestions filter by typed Twitch URL")
         field.text = "discarded"
         cancel.clicked()
         check(!panel.adding && field.text === "" && TwitchRepository.logins().length === 0, "cancel clears draft without saving")
@@ -58,7 +69,15 @@ Scope {
         check(!panel.adding && field.text === "" && TwitchRepository.logins().join() === "alice", "dropdown adds normalized login and closes editor")
         check(!TwitchService.addUser("ALICE"), "case insensitive duplicate rejected")
         check(!TwitchService.addUser("bad'; DROP TABLE twitch_users;--"), "invalid login rejected")
-        check(TwitchService.addUser("bob"), "service adds a login")
+        check(TwitchService.browserSuggestions.join() === "bob", "followed streamers excluded from browser suggestions")
+        begin.clicked()
+        const suggestions = objects.findChild(panel, "twitchBrowserSuggestions") as ListView
+        suggestions.forceLayout()
+        const suggestedBob = suggestions.itemAtIndex(0) as UI.ActionButton
+        check(!!suggestedBob && suggestedBob.label === "bob", "browser suggestion renders as an add button")
+        if (suggestedBob) suggestedBob.clicked()
+        check(!panel.adding && TwitchRepository.logins().includes("bob"), "clicking browser suggestion follows streamer and closes editor")
+        check(TwitchService.browserSuggestions.length === 0, "all followed suggestions disappear")
         check(TwitchRepository.exportUsers() === "alice\nbob", "plain sorted export")
         const now = Date.now()
         check(TwitchRepository.saveSchedule("alice", now + 86400000, now), "raw schedule timestamp saved")
@@ -112,6 +131,14 @@ Scope {
             }
             if (root.step === 0) {
                 if (!DbService.ready || !TwitchService.available || !NetworkService.online) return
+                if (root.phase === "seed") {
+                    if (!root.browserScanRequested) {
+                        root.browserScanRequested = true
+                        TwitchService.refreshBrowserSuggestions()
+                        return
+                    }
+                    if (TwitchService.browserSuggestions.length !== 2) return
+                }
                 if (root.phase === "seed") root.seed()
                 else if (root.phase === "restart") {
                     root.check(TimeService.showSeconds, "clock preference restored after process restart")

@@ -9,6 +9,8 @@ import "../../services"
 Item {
     id: root
     property bool adding: false
+    readonly property var browserSuggestions: TwitchService.browserSuggestions.filter(login =>
+        login.includes(loginField.text.trim().toLowerCase().replace(/^(?:https?:\/\/)?(?:www\.|m\.)?twitch\.tv\//, "").split(/[/?#]/)[0]))
     readonly property int spacing: Theme.twitchTooltipSpacing
     readonly property var users: [...TwitchService.allUsers].sort((a, b) => {
         if (a.online === b.online) return a.login.localeCompare(b.login)
@@ -25,6 +27,23 @@ Item {
     function cancelEditor() { adding = false; loginField.clear() }
     function addUser() {
         if (TwitchService.addUser(loginField.text)) cancelEditor()
+    }
+
+    function addAllSuggestions() {
+        const logins = [...browserSuggestions]
+        if (!logins.length) return
+        for (const login of logins) {
+            if (!TwitchService.addUser(login)) return
+        }
+        cancelEditor()
+    }
+
+    Timer {
+        interval: 3000
+        running: root.adding
+        repeat: true
+        triggeredOnStart: true
+        onTriggered: TwitchService.refreshBrowserSuggestions()
     }
 
     Column {
@@ -101,10 +120,9 @@ Item {
                     objectName: "twitchLoginField"
                     width: parent.width - 2 * (Theme.twitchEditorButtonWidth + parent.spacing)
                     height: Theme.twitchEditorHeight
-                    placeholderText: "Streamer login"
-                    maximumLength: 25
+                    placeholderText: "Streamer login or Twitch URL"
                     enabled: TwitchService.usersReady
-                    Accessible.name: "Streamer login"
+                    Accessible.name: "Streamer login or Twitch URL"
                     onAccepted: root.addUser()
                     Keys.onEscapePressed: root.cancelEditor()
                 }
@@ -126,6 +144,72 @@ Item {
                     enabled: TwitchService.usersReady && loginField.text.trim().length > 0
                     onClicked: root.addUser()
                 }
+            }
+        }
+
+        Column {
+            width: root.width
+            spacing: root.spacing
+            visible: root.adding && root.browserSuggestions.length > 0
+
+            Item {
+                width: parent.width
+                height: Theme.twitchEditorHeight
+
+                UI.ColumnText {
+                    id: browserHeading
+                    anchors.left: parent.left
+                    anchors.verticalCenterOffset: (height - headingMetrics.tightBoundingRect.height) / 2
+                        - baselineOffset - headingMetrics.tightBoundingRect.y
+                    width: parent.width - addAllButton.width - root.spacing
+                    text: "Open in qutebrowser"
+                    color: Theme.inactive
+                    elide: Text.ElideRight
+                    centerVertical: true
+                }
+
+                TextMetrics {
+                    id: headingMetrics
+                    font: browserHeading.font
+                    text: browserHeading.text
+                }
+
+                UI.ActionButton {
+                    id: addAllButton
+                    objectName: "addAllBrowserTwitchUsers"
+                    anchors.right: parent.right
+                    width: implicitContentWidth
+                    height: Theme.twitchEditorHeight
+                    label: "Add all"
+                    hint: "Add all suggested streamers"
+                    fillColor: Theme.accent
+                    enabled: TwitchService.usersReady && root.browserSuggestions.length > 0
+                    onClicked: root.addAllSuggestions()
+                }
+            }
+
+            ListView {
+                id: suggestions
+                objectName: "twitchBrowserSuggestions"
+                width: parent.width
+                height: Math.min(contentHeight, Theme.twitchEditorHeight * 4)
+                model: root.browserSuggestions
+                clip: true
+                boundsBehavior: Flickable.StopAtBounds
+                delegate: UI.ActionButton {
+                    required property string modelData
+                    objectName: "addBrowserTwitchUser_" + modelData
+                    width: suggestions.width
+                    height: Theme.twitchEditorHeight
+                    label: modelData
+                    glyph: Theme.addIcon
+                    hint: "Add " + modelData
+                    enabled: TwitchService.usersReady
+                    onClicked: {
+                        if (TwitchService.addUser(modelData)) root.cancelEditor()
+                    }
+                }
+                QC.ScrollBar.vertical: QC.ScrollBar { policy: QC.ScrollBar.AsNeeded }
             }
         }
 
