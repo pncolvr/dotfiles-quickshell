@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Controls as QC
 import "../../theme/ui" as UI
 import "../../theme"
 import "../../services"
@@ -16,28 +17,42 @@ Row {
             else WindowService.restoreNoWarps()
         }
     }
-    Repeater {
-        model: WindowService.windows
-        delegate: Item {
-            
-            required property var modelData
-            required property int index
 
-            implicitWidth: tabText.implicitWidth + (WindowService.isSpecialWorkspace ? Theme.groupedModuleSpacing : Theme.moduleSpacing)
-            height: parent.height
-
-            Rectangle {
-                visible: WindowService.isSpecialWorkspace
-                anchors.bottom: parent.bottom
-                width: parent.width
-                height: 2
-                color: parent.modelData.active ? Theme.accent : "transparent"
+    UI.TabBar {
+        id: windowTabs
+        visible: WindowService.isSpecialWorkspace
+        labels: WindowService.isSpecialWorkspace
+            ? WindowService.windows.map(window => window.title.toLowerCase()) : []
+        width: implicitWidth
+        implicitHeight: root.height
+        height: root.height
+        tabPadding: Theme.groupedModuleSpacing / 2
+        baselineRightInset: tabPadding
+        function syncFocusedWindow() {
+            const focusedIndex = visible ? WindowService.windows.findIndex(window => window.active) : -1
+            setCurrentIndex(focusedIndex)
+            for (let index = 0; index < count; index++) {
+                const tab = itemAt(index) as QC.TabButton
+                tab.checked = index === focusedIndex
             }
+        }
+        onLabelsChanged: Qt.callLater(windowTabs.syncFocusedWindow)
+        onCountChanged: Qt.callLater(windowTabs.syncFocusedWindow)
+        onTabClicked: index => WindowService.focusWindow(WindowService.windows[index].address)
+    }
+
+    Repeater {
+        model: WindowService.isSpecialWorkspace ? [] : WindowService.windows
+        delegate: Item {
+            required property var modelData
+
+            implicitWidth: tabText.implicitWidth + Theme.moduleSpacing
+            height: parent.height
 
             UI.Text {
                 id: tabText
                 anchors.left: parent.left
-                anchors.leftMargin: (WindowService.isSpecialWorkspace ? Theme.groupedModuleSpacing : Theme.moduleSpacing) / 2
+                anchors.leftMargin: Theme.moduleSpacing / 2
                 text: parent.modelData.title.toLowerCase()
                 color: parent.modelData.active ? Theme.accent : Theme.inactive
             }

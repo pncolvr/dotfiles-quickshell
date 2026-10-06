@@ -8,20 +8,31 @@ import "../" as UI
 QC.TabBar {
     id: root
     property var labels: []
+    property real tabPadding: Theme.controlFieldPadding * 2
+    property real baselineRightInset: 0
+    property real underlineBottomMargin: 3
+    signal tabClicked(int index)
     implicitHeight: Theme.controlHeight
     background: Rectangle {
         color: "transparent"
-        Rectangle { anchors.bottom: parent.bottom; width: parent.width; height: 1; color: Theme.empty }
+        Rectangle {
+            anchors.bottom: parent.bottom
+            anchors.bottomMargin: root.underlineBottomMargin
+            width: Math.max(0, parent.width - root.baselineRightInset)
+            height: 1
+            color: Theme.empty
+        }
     }
     Repeater {
         model: root.labels
         QC.TabButton {
             id: tabButton
             required property string modelData
+            required property int index
             text: modelData
             width: implicitWidth
-            implicitWidth: tabLabel.implicitWidth + Theme.controlFieldPadding * 4
-            implicitHeight: Theme.controlHeight
+            implicitWidth: tabLabel.implicitWidth + root.tabPadding * 2
+            implicitHeight: root.implicitHeight
             padding: 0
             hoverEnabled: true
             contentItem: UI.Text {
@@ -37,12 +48,14 @@ QC.TabBar {
                     : tabButton.hovered ? Theme.alternateBackground : "transparent"
                 Rectangle {
                     anchors.bottom: parent.bottom
+                    anchors.bottomMargin: root.underlineBottomMargin
                     width: parent.width
                     height: 2
                     visible: tabButton.checked
                     color: Theme.accent
                 }
             }
+            onClicked: root.tabClicked(index)
             HoverHandler { cursorShape: Qt.PointingHandCursor }
         }
     }

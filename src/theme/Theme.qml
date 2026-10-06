@@ -19,7 +19,7 @@ Item {
   readonly property color ok: "#3E8E5A"
   readonly property color active: "#5C9E7E"
   readonly property color warning: "#fd6d37"
-  readonly property color inactive: "#999999"
+  readonly property color inactive: "#b0b3b8"
   readonly property color empty: "#8080804d"
   // pulsing text
   readonly property color pulsingTextBaseColor: text
