@@ -7,7 +7,9 @@ environment variable or separate notification-center package is required.
 
 Hover the bell to open the manager and left-click to pin/unpin
 it. The manager provides **History** and **Emitters** tabs. Emitter groups start
-collapsed with their latest notification visible. Both groups and their entries
+collapsed with their latest notification visible and the bottom edges of up to
+two older cards stacked underneath. Click the header or a stacked edge to expand
+the group. Both groups and their entries
 are ordered newest first; **Load older** controls keep older records accessible.
 **Clear emitter** and **Clear all** delete history and dismiss current notifications
 while preserving source settings and DND. The manager uses the shared tooltip

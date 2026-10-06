@@ -16,7 +16,8 @@ Column {
     readonly property var emitter: NotificationEmitterRepository.emitters[group.emitterKey]
     readonly property var entries: {
         const revision = NotificationRepository.revision
-        return NotificationRepository.entries(group.emitterKey, expanded ? entryLimit : 1, 0)
+        return NotificationRepository.entries(group.emitterKey,
+            expanded ? entryLimit : Theme.notificationStackMaxCards, 0)
     }
     spacing: 8
     RowLayout {
@@ -68,9 +69,38 @@ Column {
             onClicked: NotificationService.clearEmitter(root.group.emitterKey)
         }
     }
-    Repeater {
-        model: root.entries
-        NotificationCard { required property var modelData; width: root.width; entry: modelData }
+    Column {
+        id: cards
+        width: root.width
+        spacing: root.expanded ? root.spacing : 0
+        Repeater {
+            model: root.entries
+            Item {
+                id: historyEntry
+                required property var modelData
+                required property int index
+                readonly property bool stacked: !root.expanded && index > 0
+                readonly property real cardInset: stacked ? index * Theme.notificationStackInset : 0
+                width: cards.width
+                implicitHeight: stacked ? Theme.notificationStackPeekHeight : historyCard.implicitHeight
+                clip: stacked
+
+                NotificationCard {
+                    id: historyCard
+                    entry: historyEntry.modelData
+                    x: historyEntry.cardInset
+                    y: historyEntry.stacked ? historyEntry.height - height : 0
+                    width: Math.max(0, historyEntry.width - historyEntry.cardInset * 2)
+                    enabled: !historyEntry.stacked
+                }
+                MouseArea {
+                    anchors.fill: parent
+                    visible: historyEntry.stacked
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: root.toggleExpanded()
+                }
+            }
+        }
     }
     NotificationButton {
         visible: root.expanded && root.entries.length < root.group.count

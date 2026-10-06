@@ -243,6 +243,9 @@ Item {
   readonly property int notificationWidth: 500
   readonly property int notificationManagerWidth: 560
   readonly property int notificationRadius: 16
+  readonly property int notificationStackMaxCards: 3
+  readonly property int notificationStackPeekHeight: 6
+  readonly property int notificationStackInset: 4
   readonly property int notificationSpacing: 12
   readonly property color notificationBackground: Qt.rgba(33 / 255, 34 / 255, 44 / 255, 0.95)
   readonly property color notificationBorder: "#2a2d38"
