@@ -59,10 +59,14 @@ Singleton {
     }
 
     function openMarkdown() {
+        openMarkdownProcess.running = true
+    }
+
+    function writeMarkdown() {
         const priority = root.priorityUpdates.map(root.markdownRow).join("\n")
         const normal = root.normalUpdates.map(root.markdownRow).join("\n")
         const markdown = `# Available Updates\n\n## Priority Updates\n\n${priority || "No priority updates."}\n\n## Other Updates\n\n${normal || "No other updates."}\n`
-        markdownProcess.command = ["bash", "-c", "printf '%s' \"$1\" | base64 -d > \"$2\" && xdg-open \"$2\"", "updates-markdown", Qt.btoa(markdown), Config.updatesMarkdownFile]
+        markdownProcess.command = ["bash", "-c", "printf '%s' \"$1\" > \"$2\"", "updates-markdown", markdown, Config.updatesMarkdownFile]
         markdownProcess.running = true
     }
 
@@ -72,6 +76,11 @@ Singleton {
 
     Process {
         id: markdownProcess
+    }
+
+    Process {
+        id: openMarkdownProcess
+        command: ["xdg-open", Config.updatesMarkdownFile]
     }
 
     function refresh() {
@@ -98,6 +107,7 @@ Singleton {
         // qmllint disable signal-handler-parameters
         onExited: exitCode => {
             if (exitCode === 0) _internal.lastChecked = new Date()
+            root.writeMarkdown()
         }
         // qmllint enable signal-handler-parameters
         stdout: SplitParser {

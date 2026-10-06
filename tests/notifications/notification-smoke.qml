@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Controls as QC
 import QtTest as Test
 import Quickshell
 import Quickshell.Io
@@ -135,6 +136,12 @@ Scope {
             return !!button && mouse.mouseClick(button, button.width / 2, button.height / 2, Qt.LeftButton, Qt.NoModifier, 0)
         }
         function nativeUi(): string { return JSON.stringify(root.nativeView?.snapshot() || {}) }
+        function managerTab(index: int): bool {
+            if (!root.nativeView) return false
+            const tabs = root.find(root.nativeView.managerContent, "notificationTabs") as QC.TabBar
+            const button = tabs?.itemAt(index)
+            return !!button && mouse.mouseClick(button, button.width / 2, button.height / 2, Qt.LeftButton, Qt.NoModifier, 0)
+        }
         function preview(path: string): bool { return root.nativeView?.preview(path) || false }
         function filter(filter: string): string { settings.filter = filter; return JSON.stringify(settings.emitters.map(emitter => emitter.key)) }
         function searchEmitters(query: string): string {

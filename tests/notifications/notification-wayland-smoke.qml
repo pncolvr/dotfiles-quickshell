@@ -12,10 +12,11 @@ Item {
     Component { Bar {} }
     NotificationPopupWindow { id: popup }
     NotificationManagerWindow { id: manager }
+    readonly property Item managerContent: manager.previewItem
     TooltipWindow { id: regularTooltip; screen: manager.screen }
     function snapshot() {
         return {popupVisible: popup.visible, managerVisible: manager.visible, regularTooltipVisible: regularTooltip.visible,
-            groups: manager.groups,
+            groups: manager.groups, managerTab: manager.tab,
             popupNamespace: popup.WlrLayershell.namespace, managerNamespace: manager.WlrLayershell.namespace,
             popupWidth: popup.width, popupHeight: popup.height,
             managerWidth: manager.width, managerHeight: manager.height,

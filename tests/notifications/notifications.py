@@ -143,6 +143,11 @@ try:
         assert native["popupNamespace"] == native["managerNamespace"] == "quickshell-private"
         assert 0 < native["popupWidth"] <= native["screenWidth"]
         assert 0 < native["managerHeight"] <= native["screenHeight"]
+        assert native["managerTab"] == "History"
+        assert ipc("managerTab", 1) == "true"
+        wait(lambda: json.loads(ipc("nativeUi"))["managerTab"] == "Emitters", "shared tabs open emitter settings")
+        assert ipc("managerTab", 0) == "true"
+        wait(lambda: json.loads(ipc("nativeUi"))["managerTab"] == "History", "shared tabs return to notification history")
         assert ipc("preview", "/tmp/quickshell-notifications-preview.png") == "true"
     ipc("toggle", target="notifications")
     assert state()["dnd"] and not state()["popups"], "DND hides current popups"

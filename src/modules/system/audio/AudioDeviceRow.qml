@@ -1,11 +1,9 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtQuick.Controls as QC
 import "../../../theme"
 import "../../../theme/ui" as UI
 import "../../../services"
-import "../../../config"
 
 Rectangle {
     id: root
@@ -53,53 +51,14 @@ Rectangle {
                 onClicked: root.audioService.toggleNodeMute(root.node)
             }
 
-            QC.Slider {
-                id: slider
+            AudioVolumeSlider {
                 objectName: "deviceVolume"
                 width: parent.width - muteButton.width - Theme.audioPercentageWidth - Theme.audioSpacing * 2
-                height: Theme.audioButtonHeight
-                from: 0
-                to: Config.audioMaxVolume
-                stepSize: Config.audioVolumeStep
-                wheelEnabled: true
+                volume: root.node?.audio?.volume ?? 0
+                muted: root.muted
                 enabled: root.deviceReady
                 Accessible.name: (root.input ? "Microphone gain: " : "Volume: ") + root.audioService.deviceName(root.node)
-                onMoved: root.audioService.setNodeVolume(root.node, value)
-                HoverHandler {
-                    enabled: slider.enabled
-                    cursorShape: Qt.PointingHandCursor
-                }
-                Binding {
-                    target: slider
-                    property: "value"
-                    value: root.node?.audio?.volume ?? 0
-                    when: !slider.pressed
-                    restoreMode: Binding.RestoreBindingOrValue
-                }
-                background: Rectangle {
-                    x: slider.leftPadding
-                    y: (slider.height - height) / 2
-                    width: slider.availableWidth
-                    height: Theme.audioSliderTrackHeight
-                    radius: height / 2
-                    color: Theme.empty
-                    Rectangle {
-                        width: slider.visualPosition * parent.width
-                        height: parent.height
-                        radius: parent.radius
-                        color: root.muted ? Theme.inactive : Theme.accent
-                    }
-                }
-                handle: Rectangle {
-                    x: slider.leftPadding + slider.visualPosition * (slider.availableWidth - width)
-                    y: (slider.height - height) / 2
-                    width: Theme.audioSliderHandleSize
-                    height: width
-                    radius: width / 2
-                    color: slider.pressed || slider.activeFocus ? Theme.accent : Theme.text
-                    border.color: Theme.accent
-                    border.width: slider.activeFocus ? 2 : 0
-                }
+                onVolumeMoved: value => root.audioService.setNodeVolume(root.node, value)
             }
 
             UI.Text {

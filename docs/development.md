@@ -94,6 +94,9 @@ bash tests/security/totp.sh --qml-smoke --native-imports
 
 ## Audio
 
+Audio and notification panels share `UI.TabBar`, including the active underline,
+hover styling, and keyboard navigation.
+
 ```sh
 bash tests/audio/audio.sh
 bash tests/audio/audio.sh --native-imports

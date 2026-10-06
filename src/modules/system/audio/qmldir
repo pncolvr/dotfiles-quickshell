@@ -6,3 +6,4 @@ AudioButton 1.0 AudioButton.qml
 AudioProfileSelector 1.0 AudioProfileSelector.qml
 AudioSelector 1.0 AudioSelector.qml
 AudioAppRow 1.0 AudioAppRow.qml
+AudioVolumeSlider 1.0 AudioVolumeSlider.qml

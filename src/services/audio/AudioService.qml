@@ -207,6 +207,14 @@ Singleton {
         return !!app?.nodes?.length && app.nodes.every(node => node.audio?.muted === true)
     }
 
+    function appVolume(app) {
+        return Math.max(0, ...(app?.nodes ?? []).map(node => node.audio?.volume ?? 0))
+    }
+
+    function setAppVolume(app, value) {
+        for (const node of app?.nodes ?? []) setNodeVolume(node, value)
+    }
+
     function setAppMute(app, muted) {
         for (const node of app?.nodes ?? []) {
             if (node?.ready && node.audio) node.audio.muted = muted
