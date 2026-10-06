@@ -23,7 +23,7 @@ Item {
     readonly property int spacing: Theme.twitchTooltipSpacing
     readonly property int scrollbarSpace: Theme.twitchScrollbarWidth + Theme.twitchScrollbarMargin
     readonly property int rowWidth: Theme.twitchAvatarSize + Theme.twitchInfoWidth + Theme.twitchRemoveButtonSize + 2 * Theme.twitchUserSpacing
-    readonly property int columns: Math.min(2, Math.max(1, users.filter(user => user.online).length,
+    readonly property int widthColumns: Math.min(2, Math.max(1, users.filter(user => user.online).length,
         users.filter(user => !user.online).length), Math.max(1,
         Math.floor(((TooltipService.screen?.width ?? 1920) - 2 * Theme.tooltipPaddingWidth
             - scrollbarSpace + spacing) / (rowWidth + spacing))))
@@ -43,7 +43,7 @@ Item {
         ? Math.min(undoView.gridHeight,
             Theme.twitchSuggestionMaxRows * (Theme.twitchEditorHeight + spacing) - spacing,
             scrollBudget * 0.3) : 0
-    implicitWidth: columns * rowWidth + (columns - 1) * spacing + scrollbarSpace
+    implicitWidth: widthColumns * rowWidth + (widthColumns - 1) * spacing + scrollbarSpace
     implicitHeight: content.implicitHeight
     onSearchQueryChanged: {
         const view = usersView.contentItem as Flickable
@@ -84,14 +84,17 @@ Item {
         QC.ScrollView {
             id: usersView
             objectName: "twitchUsersScrollView"
-            width: root.width
+            // Keep the rows aligned with the footer; the scrollbar uses the tooltip's right padding.
+            width: root.width + root.scrollbarSpace
             height: Math.min(usersContent.implicitHeight, Math.max(0, root.scrollBudget - root.suggestionsHeight - root.undoHeight))
             clip: true
-            contentWidth: root.width - root.scrollbarSpace
+            contentWidth: root.width
             contentHeight: usersContent.implicitHeight
             QC.ScrollBar.horizontal.policy: QC.ScrollBar.AlwaysOff
             QC.ScrollBar.vertical: QC.ScrollBar {
                 id: usersScrollbar
+                x: usersView.width - width
+                height: usersView.height
                 implicitWidth: Theme.twitchScrollbarWidth
                 visible: usersContent.implicitHeight > usersView.height
                 policy: QC.ScrollBar.AsNeeded
@@ -108,7 +111,7 @@ Item {
                     width: parent.width
                     title: "Live"
                     users: root.liveUsers
-                    columns: root.columns
+                    columns: 1
                     forceExpanded: root.searchQuery.length > 0
                 }
                 TwitchUserSection {
@@ -117,7 +120,7 @@ Item {
                     title: "Offline"
                     expanded: false
                     users: root.offlineUsers
-                    columns: root.columns
+                    columns: 1
                     forceExpanded: root.searchQuery.length > 0
                 }
                 UI.ColumnText {

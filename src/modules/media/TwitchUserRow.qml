@@ -11,6 +11,7 @@ import "../../services"
 Row {
     id: root
     spacing: Theme.twitchUserSpacing
+    width: Theme.twitchAvatarSize + Theme.twitchInfoWidth + Theme.twitchRemoveButtonSize + 2 * spacing
 
     required property var user
 
@@ -61,7 +62,7 @@ Row {
 
     // Info
     Item {
-        width: Theme.twitchInfoWidth
+        width: Math.max(0, root.width - Theme.twitchAvatarSize - Theme.twitchRemoveButtonSize - 2 * root.spacing)
         height: Theme.twitchAvatarSize
         Column {
             id: info
@@ -147,6 +148,7 @@ Row {
         objectName: "removeTwitchUser_" + root.user.login
         glyph: Theme.deleteIcon
         hint: "Remove " + root.user.login
+        fillColor: hovered ? Theme.urgent : Theme.alternateBackground
         width: Theme.twitchRemoveButtonSize
         height: Theme.twitchRemoveButtonSize
         padding: 0

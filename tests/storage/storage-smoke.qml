@@ -144,7 +144,7 @@ Scope {
         check(live.users.length === 12 && live.users.every(user => user.online), "Live grid contains only live users")
         check(offline.users.length === 24 && offline.users.every(user => !user.online), "Offline grid contains only offline users")
         check(live.expanded && !offline.expanded, "Live starts expanded and Offline starts collapsed")
-        check(live.columns === 2 && offline.columns === 2, "sections share two aligned columns")
+        check(live.columns === 1 && offline.columns === 1, "sections show one streamer per row")
         check(grid.columns === 2, "suggestions form a compact grid on wide tooltips")
         check(panel.implicitHeight <= panel.maximumHeight + 1, "entire tooltip respects screen height cap")
         check(editor.width === footer.width && footer.y + footer.height <= panel.height, "add controls fill the footer and remain on screen")

@@ -55,6 +55,7 @@ Column {
 
     Grid {
         objectName: "twitchUserSectionGrid"
+        width: root.width
         visible: root.showingUsers
         columns: root.columns
         spacing: Theme.twitchTooltipSpacing
@@ -63,6 +64,7 @@ Column {
             model: root.users
             delegate: TwitchUserRow {
                 required property var modelData
+                width: root.width
                 user: modelData
             }
         }
