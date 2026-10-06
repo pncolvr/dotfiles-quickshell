@@ -7,8 +7,8 @@ notification_test_runtime="${XDG_RUNTIME_DIR:-}"
 test_dir=$(mktemp -d /tmp/quickshell-notifications-test.XXXXXX)
 trap 'rm -rf -- "$test_dir"' EXIT
 mkdir -p "$test_dir/config/data" "$test_dir/bin" "$test_dir/data" "$test_dir/cache"
-mkdir -p "$test_dir/config/services/notifications"
-cp -- "$project_root/services/notifications/encode-image.sh" "$test_dir/config/services/notifications/encode-image.sh"
+mkdir -p "$test_dir/config/src/services/notifications"
+cp -- "$project_root/src/services/notifications/encode-image.sh" "$test_dir/config/src/services/notifications/encode-image.sh"
 mkdir -m 700 "$test_dir/runtime"
 cat > "$test_dir/bin/hyprctl" <<'MOCK'
 #!/usr/bin/env bash
@@ -30,7 +30,7 @@ project, target = map(pathlib.Path, sys.argv[1:])
 text = (project / 'tests/notifications/notification-smoke.qml').read_text()
 text = text.replace('@NATIVE_WINDOWS@', (project / 'tests/notifications/notification-wayland-smoke.qml').as_uri())
 for relative in ('services', 'modules/system/notifications'):
-    text = text.replace(f'import "../../{relative}"', f'import "{(project / relative).as_uri()}"')
+    text = text.replace(f'import "../../src/{relative}"', f'import "{(project / "src" / relative).as_uri()}"')
 (target / 'config/shell.qml').write_text(text)
 PY
 cat > "$test_dir/bus.conf" <<'BUS'

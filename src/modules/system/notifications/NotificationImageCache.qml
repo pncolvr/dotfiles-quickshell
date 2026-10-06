@@ -18,7 +18,7 @@ Image {
     mipmap: true
     source: job?.source || ""
     readonly property string temporaryPath: job ? Quickshell.shellPath("data/notification-image-" + job.id + ".png") : ""
-    readonly property string encoderPath: Quickshell.shellPath("services/notifications/encode-image.sh")
+    readonly property string encoderPath: Quickshell.shellPath("src/services/notifications/encode-image.sh")
 
     function next() {
         if (!enabled || busy) return

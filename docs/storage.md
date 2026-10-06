@@ -1,0 +1,45 @@
+# Storage
+
+## Database location
+
+`DbService` owns a versioned SQLite database, with separate repositories for Twitch
+users, schedules and avatar images, Logitech receiver battery snapshots, and user preferences.
+The clock's seconds toggle is saved across restarts. Quickshell creates
+`data/quickshell.db` inside this config on first run. The data folder is ignored
+by Git apart from its empty-directory marker; no database is shipped in the
+repository. `DbService` uses native SQLite `ATTACH` to open that path through
+Qt Quick LocalStorage. Qt keeps an empty connection database in its default
+storage directory; all application tables and schema versioning live in
+`data/quickshell.db`. No preparation script is needed. `Config.databasePath`
+uses `Quickshell.shellPath("data/quickshell.db")` and `Config.databaseName` is
+the fixed name `quickshell`. Tests run their entrypoint in a temporary config
+folder so their databases stay isolated.
+
+## Twitch cache
+
+Twitch schedules store absolute start times and refresh at most hourly while
+cached, or sooner once the cached start has passed. Relative labels update with
+the clock, including across midnight. Failed requests preserve the previous
+cache. Avatar image payloads are stored as base64 data URLs in SQLite and displayed
+directly by QML. A changed profile-image URL refreshes the cached image; failed
+downloads retain the previous one. Removing a streamer deletes its schedule and
+avatar too. The picker JSON remains a runtime export.
+
+## Notification history
+
+Schema version 3 adds saved action metadata to the history, emitter preferences
+and reload metadata introduced in version 2, without replacing existing Twitch/battery/preferences tables. Image snapshots are stored
+as PNG data URLs in SQLite. QML renders provider images outside the bar viewport;
+the Bash helper uses `stat`, `od` and `base64` to validate, encode and remove the
+temporary PNG. No extra notification-center package is needed. History and emitter
+settings are local to `data/quickshell.db`.
+
+TOTP names and seeds live in the desktop Secret Service; see [TOTP](features/totp.md).
+
+## Backups
+
+Stop the shell before copying `data/quickshell.db` so pending writes have finished.
+Keep `data/` at the configuration root when moving or updating the source tree.
+The `src/` layout does not change the database path or require a data migration.
+
+[Documentation](README.md)

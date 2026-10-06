@@ -1,7 +1,7 @@
 import QtQuick
 import Quickshell
-import "../../modules/system/totp"
-import "../../services"
+import "../../src/modules/system/totp"
+import "../../src/services"
 
 Scope {
     id: root

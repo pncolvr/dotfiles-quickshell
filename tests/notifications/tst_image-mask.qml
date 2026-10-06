@@ -1,6 +1,6 @@
 import QtQuick
 import QtTest
-import "../../modules/system/notifications" as Notifications
+import "../../src/modules/system/notifications" as Notifications
 
 TestCase {
     name: "NotificationImageMask"

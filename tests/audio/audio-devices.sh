@@ -33,7 +33,7 @@ cat > "$test_dir/cards.json" <<'JSON'
 JSON
 printf '%s\n' '[{"name":"headphones","properties":{"device.name":"headset (card)"}},{"name":"virtual","properties":{}}]' > "$test_dir/sinks.json"
 printf '%s\n' '[{"name":"microphone","card":7,"properties":{}}]' > "$test_dir/sources.json"
-helper="$project_root/services/audio/audio-devices.sh"
+helper="$project_root/src/services/audio/audio-devices.sh"
 result=$(bash "$helper" list)
 jq -e '
     (.cards | length) == 2 and (.nodes | length) == 2

@@ -3,10 +3,10 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtTest as Test
 import Quickshell
-import "../../modules/system/audio"
-import "../../services"
-import "../../theme"
-import "../../config"
+import "../../src/modules/system/audio"
+import "../../src/services"
+import "../../src/theme"
+import "../../src/config"
 
 Scope {
     id: root

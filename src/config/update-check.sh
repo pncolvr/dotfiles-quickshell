@@ -5,7 +5,7 @@
 # 59 * * * * /usr/bin/yay -Sy --noconfirm >/dev/null 2>&1
 
 # cron
-# 0 * * * * /home/pncolvr/.config/quickshell/config/update-check.sh
+# 0 * * * * /home/pncolvr/.config/quickshell/src/config/update-check.sh
 
 # pacman hook
 # /etc/pacman.d/hooks/95-quickshell-updates.hook
@@ -19,7 +19,7 @@
 # [Action]
 # Description = Updating Quickshell package update cache...
 # When = PostTransaction
-# Exec = /usr/bin/sudo -u pncolvr -i /home/pncolvr/.config/quickshell/config/update-check.sh
+# Exec = /usr/bin/sudo -u pncolvr -i /home/pncolvr/.config/quickshell/src/config/update-check.sh
 # Depends = sudo
 
 export PATH="/usr/local/bin:/usr/bin:/bin:$PATH"

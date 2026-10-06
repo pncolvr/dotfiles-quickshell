@@ -3,9 +3,9 @@ import QtQuick.Controls as QC
 import QtTest as Test
 import Quickshell
 import Quickshell.Io
-import "../../services"
-import "../../modules/media"
-import "../../theme/ui" as UI
+import "../../src/services"
+import "../../src/modules/media"
+import "../../src/theme/ui" as UI
 
 Scope {
     id: root

@@ -142,7 +142,7 @@ PY
 if [[ ${1:-} == --ipc ]]; then
     cat > "$entry" <<QML
 import Quickshell
-import "file://$project_root/services"
+import "file://$project_root/src/services"
 Scope { readonly property bool loadTwitch: TwitchService.available }
 QML
     qs -p "$entry" > "$test_dir/ipc.log" 2>&1 &

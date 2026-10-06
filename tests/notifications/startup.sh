@@ -27,9 +27,7 @@ startup_test_dir=$(mktemp -d /tmp/quickshell-startup-test.XXXXXX)
 trap 'rm -rf -- "$startup_test_dir"' EXIT
 mkdir -p "$startup_test_dir/config/data" "$startup_test_dir/bin"
 mkdir -m 700 "$startup_test_dir/runtime"
-cp -R -- "$project_root/shell.qml" "$project_root/Bar.qml" "$project_root/bar" \
-    "$project_root/config" "$project_root/modules" "$project_root/services" \
-    "$project_root/theme" "$startup_test_dir/config/"
+cp -R -- "$project_root/shell.qml" "$project_root/src" "$startup_test_dir/config/"
 
 # Only startup commands are stubbed; all module registrations and QML are copied unchanged.
 python3 - "$startup_test_dir/config" <<'PY'
@@ -50,7 +48,7 @@ text = text[:end] + '''
   }
 ''' + text[end:]
 entry.write_text(text)
-settings = config / 'config/Config.qml'
+settings = config / 'src/config/Config.qml'
 settings.write_text(settings.read_text().replace('`${home}/.config/zsh/scripts/status/manager.sh`', '"/usr/bin/false"'))
 PY
 

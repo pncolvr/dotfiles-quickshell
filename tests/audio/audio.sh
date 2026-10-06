@@ -27,10 +27,11 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Services.Pipewire
-import "modules/system/audio"
-import "bar"
-import "services"
-import "theme"
+import "src/modules/system/audio"
+import "src"
+import "src/bar"
+import "src/services"
+import "src/theme"
 Scope {
     id: root
     property int step: 0

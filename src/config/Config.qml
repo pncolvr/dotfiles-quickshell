@@ -48,7 +48,7 @@ Item {
     readonly property string updatesMarkdownFile: `${_internal.runtimeDirectory}/quickshell-updates.md`
     readonly property string updatesCacheFile: `${_internal.home}/.cache/quickshell/updates.cache`
     readonly property var updatesCheckCommand: ["bash", "-c", `cat "${_internal.home}/.cache/quickshell/updates.cache" 2>/dev/null`]
-    readonly property var updatesRefreshCommand: ["bash", `${_internal.home}/.config/quickshell/config/update-check.sh`]
+    readonly property var updatesRefreshCommand: ["bash", Qt.resolvedUrl("update-check.sh").toString().replace("file://", "")]
     readonly property var updatesInstallCommand: ["setsid", "ghostty", "-e", "yay"]
 
     readonly property string submapParserCommand: _internal.home +  "/.config/hypr/scripts/keybinds/parser.sh"

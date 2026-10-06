@@ -1,9 +1,9 @@
 import QtQuick
 import QtTest as Test
 import Quickshell
-import "../../modules/system/batteries"
-import "../../services"
-import "../../theme"
+import "../../src/modules/system/batteries"
+import "../../src/services"
+import "../../src/theme"
 
 Scope {
     id: root

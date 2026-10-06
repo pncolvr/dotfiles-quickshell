@@ -2,7 +2,7 @@
 # Public Solaar report fixtures; no hardware access.
 set -euo pipefail
 project_root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)
-source "$project_root/services/system/logitech-batteries.sh"
+source "$project_root/src/services/system/logitech-batteries.sh"
 test_dir=$(mktemp -d /tmp/quickshell-battery-reader-test.XXXXXX)
 trap 'rm -rf -- "$test_dir"' EXIT
 export BATTERY_SYSFS_ROOT=$test_dir/sys

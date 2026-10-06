@@ -1,10 +1,11 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import "../" as UI
 import "../../"
 import "../../../services"
 
-InputField {
+UI.InputField {
     id: root
     readonly property string query: text.trim().toLowerCase()
     rightPadding: Theme.controlFieldPadding + (clearButton.visible ? clearButton.width : 0)
@@ -22,7 +23,7 @@ InputField {
         TooltipService.resumeDismissal()
     }
 
-    ActionButton {
+    UI.ActionButton {
         id: clearButton
         objectName: "clearSearch"
         anchors.right: parent.right

@@ -44,7 +44,7 @@ JSON
 cat > "$test_dir/source-outputs.json" <<'JSON'
 [{"index":31,"properties":{"application.name":"Recorder","object.serial":"201"}},{"index":32,"properties":{"application.name":"Quickshell Peak Detect","object.serial":"202"}}]
 JSON
-helper="$project_root/services/audio/audio-route.sh"
+helper="$project_root/src/services/audio/audio-route.sh"
 result=$(bash "$helper" output 'speaker (desk) $literal')
 [[ $result == 'Switched 2 apps.'* ]]
 mapfile -t moves < <(rg '^move-' "$test_dir/calls")

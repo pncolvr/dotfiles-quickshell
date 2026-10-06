@@ -91,7 +91,7 @@ Bolt Receiver
 REPORT
 MOCK
 # PersistentProperties participates in the root reload tree, not an asynchronous Loader.
-sed "s|import \"../../|import \"file://$project_root/|g" "$project_root/tests/system/batteries-reload-smoke.qml" > "$entry"
+sed "s|import \"../../src/|import \"file://$project_root/src/|g" "$project_root/tests/system/batteries-reload-smoke.qml" > "$entry"
 reload_output=$(PATH="$test_dir/bin:$PATH" QT_QPA_PLATFORM=offscreen XDG_RUNTIME_DIR="$test_dir/runtime" timeout 15 qs -p "$entry" 2>&1) || {
     printf '%s\n' "$reload_output" >&2
     exit 1
@@ -105,10 +105,10 @@ if [[ ${1:-} == --native-imports ]]; then
     cat > "$entry" <<QML
 import QtQuick
 import Quickshell
-import "file://$project_root/modules/system/batteries"
-import "file://$project_root/bar"
-import "file://$project_root/services"
-import "file://$project_root" as Project
+import "file://$project_root/src/modules/system/batteries"
+import "file://$project_root/src/bar"
+import "file://$project_root/src/services"
+import "file://$project_root/src" as Project
 Scope {
     id: root
     property int step: 0

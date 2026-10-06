@@ -3,7 +3,7 @@ set -euo pipefail
 project_root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)
 test_dir=$(mktemp -d /tmp/quickshell-browser-channels.XXXXXX)
 trap 'rm -rf -- "$test_dir"' EXIT
-helper="$project_root/services/twitch/qutebrowser-channels.sh"
+helper="$project_root/src/services/twitch/qutebrowser-channels.sh"
 session_file="$test_dir/session.yml"
 
 check() {

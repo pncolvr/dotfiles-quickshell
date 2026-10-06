@@ -4,8 +4,8 @@ import QtQuick
 import QtTest as Test
 import Quickshell
 import Quickshell.Io
-import "../../services"
-import "../../modules/system/notifications"
+import "../../src/services"
+import "../../src/modules/system/notifications"
 
 Scope {
     id: root

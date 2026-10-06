@@ -1,10 +1,10 @@
 import QtQuick
 import Quickshell
 import Quickshell.Wayland
-import "../../"
-import "../../bar"
-import "../../modules/system/notifications"
-import "../../services"
+import "../../src"
+import "../../src/bar"
+import "../../src/modules/system/notifications"
+import "../../src/services"
 
 Item {
     id: root

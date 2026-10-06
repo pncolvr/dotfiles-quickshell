@@ -2,7 +2,7 @@
 # Uses only RFC/public test seeds and a fake keyring; never touches desktop secrets.
 set -euo pipefail
 project_root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)
-source "$project_root/services/security/totp.sh"
+source "$project_root/src/services/security/totp.sh"
 set -e
 
 assert() { [[ $1 == "$2" ]] || { printf 'FAIL: %s\n' "$3" >&2; exit 1; }; }
@@ -104,7 +104,7 @@ rm "$TOTP_TEST_STORE/corrupt.json"
 
 # Exercise the actual newline protocol and graceful shutdown.
 protocol=$(printf '%s\n' '{"action":"load"}' '{"action":"refresh"}' '{"action":"quit"}' | \
-    bash "$project_root/services/security/totp.sh" --secret-tool "$secret_tool")
+    bash "$project_root/src/services/security/totp.sh" --secret-tool "$secret_tool")
 assert "$(printf '%s' "$protocol" | jq -s length)" 2 'worker protocol and quit'
 printf 'PASS: 18 RFC vectors, URI validation, CRUD, errors, and worker protocol\n'
 
@@ -132,9 +132,10 @@ QML
 import QtQuick
 import Quickshell
 import Quickshell.Wayland
-import "modules/system/totp"
-import "bar"
-import "services"
+import "src/modules/system/totp"
+import "src"
+import "src/bar"
+import "src/services"
 Scope {
     id: root
     property int step: 0

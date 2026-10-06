@@ -4,8 +4,8 @@ import QtQuick
 import QtTest as Test
 import Quickshell
 import Quickshell.Io
-import "../../theme/ui" as UI
-import "../../services"
+import "../../src/theme/ui" as UI
+import "../../src/services"
 
 Scope {
     QtObject { id: origin }
