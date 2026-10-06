@@ -110,6 +110,7 @@ Item {
   readonly property int totpFooterMargin: 8
   readonly property int totpButtonWidth: actionButtonWidth
   readonly property int totpCodeWidth: 126
+  readonly property int totpCodeSpinDuration: 1000
   readonly property int totpCountdownHeight: 20
   readonly property int totpCountdownTextWidth: 20
   readonly property int totpCountdownStrokeWidth: 4

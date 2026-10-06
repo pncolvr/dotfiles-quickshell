@@ -17,6 +17,11 @@ Item {
     required property string draftName
     required property string draftToken
     readonly property TotpEditor editor: editorLoader.item as TotpEditor
+    readonly property bool codeAnimationEnabled: {
+        const view = root.ListView.view
+        return TotpService.active && root.visible && !root.editing
+            && (!view || (root.y + root.height > view.contentY && root.y < view.contentY + view.height))
+    }
     signal editRequested(string entryId)
     signal editCancelled()
     signal draftChanged(string name, string token)
@@ -47,6 +52,8 @@ Item {
         }
 
         UI.ActionButton {
+            id: copyButton
+            objectName: "totpCopyCode"
             Layout.preferredWidth: Theme.totpCodeWidth
             glyph: TotpService.copiedId === root.entryId ? Theme.checkIcon : Theme.copyIcon
             label: root.code.replace(/(.{3})(?=.)/g, "$1 ")
@@ -54,6 +61,28 @@ Item {
             foreground: TotpService.copiedId === root.entryId ? Theme.active : Theme.text
             enabled: !TotpService.busy
             onClicked: TotpService.copy(root.entryId)
+
+            contentItem: Item {
+                TotpCode {
+                    objectName: "totpCode"
+                    anchors.centerIn: parent
+                    code: root.code
+                    color: copyButton.foreground
+                    animationsEnabled: root.codeAnimationEnabled
+                }
+                Text {
+                    id: copyIcon
+                    x: parent.width - Theme.controlFieldPadding - iconMetrics.tightBoundingRect.width
+                        - iconMetrics.tightBoundingRect.x
+                    y: (parent.height - iconMetrics.tightBoundingRect.height) / 2
+                        - baselineOffset - iconMetrics.tightBoundingRect.y
+                    text: copyButton.glyph
+                    color: copyButton.foreground
+                    font.family: Theme.fontFamilyIcons
+                    font.pixelSize: Theme.fontSize
+                }
+                TextMetrics { id: iconMetrics; font: copyIcon.font; text: copyIcon.text }
+            }
         }
 
         UI.ActionButton {

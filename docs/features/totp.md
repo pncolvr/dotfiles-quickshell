@@ -26,6 +26,9 @@ so it remains visible locally while excluded from screen sharing.
 
 Tokens support SHA1, SHA256, SHA512, 6–8 digits, and custom periods from TOTP URIs.
 Bare seeds use the defaults in `src/config/Config.qml` (SHA1, six digits, 30 seconds).
+When a visible code changes, its digits briefly roll into the new value. The
+animation runs only during the transition and skips hidden rows and editing.
+Copying always uses the current code, including while the digits are rolling.
 The countdown sits between the list and bottom controls, with seconds on the left
 and a line that empties from right to left. It is hidden when the list is empty.
 The list reserves `totpListMinRows` rows (nine by default) and grows up to 45%

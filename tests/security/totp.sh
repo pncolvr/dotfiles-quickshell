@@ -115,6 +115,20 @@ if [[ ${1:-} == --qml-smoke ]]; then
     cat > "$smoke_entry" <<'QML'
 import QtQuick
 import Quickshell
+Scope { Loader { source: "tests/security/totp-animation-smoke.qml" } }
+QML
+    animation_output=$(QT_QPA_PLATFORM=offscreen XDG_RUNTIME_DIR="$sandbox_dir/runtime" \
+        timeout 10 qs -p "$smoke_entry" 2>&1) || {
+        printf '%s\n' "$animation_output" >&2
+        exit 1
+    }
+    printf '%s\n' "$animation_output"
+    [[ $animation_output == *'PASS: TOTP rolling digits'* && $animation_output != *'TOTP ANIMATION FAIL:'* \
+        && $animation_output != *'Failed to load configuration'* && $animation_output != *'Binding loop detected'* \
+        && $animation_output != *'TypeError:'* && $animation_output != *'ReferenceError:'* ]]
+    cat > "$smoke_entry" <<'QML'
+import QtQuick
+import Quickshell
 Scope {
     Loader { source: "tests/security/totp-smoke.qml" }
 }

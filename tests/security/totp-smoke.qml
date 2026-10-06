@@ -83,7 +83,14 @@ Scope {
                 TooltipService.togglePin(240, content, origin, false)
                 if (!root.check(!TooltipService.pinned && TooltipService.visible, "second click did not unpin")) return
                 root.firstId = TotpService.entries.get(0).entryId
+                const list = root.find(popup, "totpList")
+                list.forceLayout()
+                const codeDisplay = root.find(list.itemAtIndex(0), "totpCode") as TotpCode
+                const currentCode = TotpService.entries.get(0).code
+                TotpService.entries.setProperty(0, "code", currentCode === "123456" ? "654321" : "123456")
+                if (!root.check(codeDisplay.spinning, "visible code rollover does not animate")) return
                 popup.editingId = root.firstId
+                if (!root.check(!codeDisplay.spinning, "editing did not stop code animation")) return
                 TotpService.edit(root.firstId)
                 root.step++
                 break
