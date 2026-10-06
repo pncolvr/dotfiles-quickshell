@@ -5,6 +5,7 @@ import "./components" as UI
 Rectangle {
     property alias text: label.text
     property color badgeColor: Theme.urgent
+    anchors.verticalCenter: parent ? parent.verticalCenter : undefined
 
     radius: Theme.statusBadgeRadius
     color: badgeColor
