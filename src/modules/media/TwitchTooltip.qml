@@ -91,16 +91,7 @@ Item {
             contentWidth: root.width
             contentHeight: usersContent.implicitHeight
             QC.ScrollBar.horizontal.policy: QC.ScrollBar.AlwaysOff
-            QC.ScrollBar.vertical: QC.ScrollBar {
-                id: usersScrollbar
-                x: usersView.width - width
-                height: usersView.height
-                implicitWidth: Theme.twitchScrollbarWidth
-                visible: usersContent.implicitHeight > usersView.height
-                policy: QC.ScrollBar.AsNeeded
-                contentItem: Rectangle { radius: width / 2; color: Theme.accent; opacity: usersScrollbar.active ? 1 : 0.5 }
-                background: Rectangle { color: Theme.empty; radius: width / 2 }
-            }
+            QC.ScrollBar.vertical: UI.ScrollBar {}
             Column {
                 id: usersContent
                 width: usersView.contentWidth

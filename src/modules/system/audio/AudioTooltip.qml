@@ -36,15 +36,34 @@ Column {
             width: list.width - (scrollbar.visible ? Theme.audioScrollbarWidth + Theme.audioScrollbarMargin : 0)
             spacing: Theme.audioSpacing
 
-            UI.ColumnText {
-                objectName: "micActivity"
-                visible: root.input
-                text: root.audioService.micActivityEnabled ? "Mic activity enabled" : "Mic activity disabled"
-                color: root.audioService.micActivityEnabled ? Theme.ok : Theme.inactive
-            }
-            UI.ColumnText {
-                text: root.input ? "Apps using the microphone" : "Apps playing audio"
-                color: Theme.inactive
+            Item {
+                width: parent.width
+                height: Math.max(appsTitle.implicitHeight, micActivity.implicitHeight)
+                UI.Text {
+                    id: appsTitle
+                    objectName: "audioAppsTitle"
+                    anchors.left: parent.left
+                    anchors.right: root.input ? micActivity.left : parent.right
+                    anchors.rightMargin: root.input ? Theme.audioSpacing : 0
+                    text: root.apps.length > 0
+                        ? (root.input ? "Apps using the microphone" : "Apps playing audio")
+                        : (root.input ? "No apps recording" : "No apps playing audio")
+                    color: Theme.inactive
+                    elide: Text.ElideRight
+                }
+                UI.IconText {
+                    id: micActivity
+                    objectName: "micActivity"
+                    anchors.right: parent.right
+                    visible: root.input
+                    text: Theme.audioRecordingIcon
+                    font.pixelSize: Theme.fontSize
+                    color: root.audioService.micActivityEnabled ? Theme.ok : Theme.inactive
+                    UI.HoverTooltip {
+                        objectName: "micActivityHint"
+                        text: root.audioService.micActivityEnabled ? "Mic activity enabled" : "Mic activity disabled"
+                    }
+                }
             }
             Repeater {
                 objectName: "audioProcesses"
@@ -56,11 +75,6 @@ Column {
                     input: root.input
                     audioService: root.audioService
                 }
-            }
-            UI.ColumnText {
-                visible: root.apps.length === 0
-                text: root.input ? "No apps recording" : "No apps playing audio"
-                color: Theme.inactive
             }
             Rectangle { width: parent.width; height: 1; color: Theme.empty }
 
@@ -96,17 +110,8 @@ Column {
                 color: Theme.inactive
             }
         }
-        QC.ScrollBar.vertical: QC.ScrollBar {
+        QC.ScrollBar.vertical: UI.ScrollBar {
             id: scrollbar
-            implicitWidth: Theme.audioScrollbarWidth
-            visible: list.contentHeight > list.height
-            policy: QC.ScrollBar.AsNeeded
-            contentItem: Rectangle {
-                radius: width / 2
-                color: Theme.accent
-                opacity: scrollbar.active ? 1 : 0.5
-            }
-            background: Rectangle { color: Theme.empty; radius: width / 2 }
         }
     }
 }

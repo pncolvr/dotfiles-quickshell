@@ -2,6 +2,11 @@
 
 ## Following streamers
 
+Twitch checks on startup, then at clock-aligned intervals configured by
+`Config.twitchInterval` in whole minutes. Five minutes checks at :00, :05, :10,
+and so on each hour. Reconnecting or changing followed streamers also checks
+immediately without shifting those regular checks.
+
 Hover the Twitch icon to see followed streamers and their next scheduled streams
 in separate Live and Offline grids, each with a count. Click either heading to
 collapse or expand its grid; Offline starts collapsed and Live starts expanded.
@@ -40,6 +45,12 @@ with their cached avatar and schedule.
 Left-click the Twitch icon to pin/unpin the
 dropdown, with an accent color while pinned, as in TOTP and notifications.
 Clicking a streamer's avatar or details opens their Twitch page in the default browser.
+Live alerts remember the last notified stream for each followed streamer across
+restarts. A new stream replaces that record, so the same stream is not announced
+again after restarting the shell.
+Successful refreshes also announce when a previously live streamer goes offline.
+Notifications contain only login names under Live and Offline headings, with no
+view button. Both types are retained in notification history.
 Logins are stored in lowercase and duplicates are rejected. A new database starts
 with an empty list; there is no users-file import. Exported lists are ordinary text
 files that you can save or share.

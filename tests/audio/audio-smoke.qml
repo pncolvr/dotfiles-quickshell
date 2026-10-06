@@ -268,7 +268,9 @@ Scope {
                 root.check(input.audio.volume === 0, "volume caps at zero")
                 AudioService.toggleNodeMute(null)
                 AudioService.setNodeVolume(null, 0.5)
-                root.check(root.find(inputPanel, "micActivity").text === "mic activity enabled", "activity status preserved")
+                root.check(root.find(inputPanel, "micActivityHint").text === "Mic activity enabled", "activity status preserved")
+                root.check(root.find(inputPanel, "audioAppsTitle").text === "Apps using the microphone"
+                    && root.find(outputPanel, "audioAppsTitle").text === "Apps playing audio", "active app titles")
                 root.check(root.find(inputPanel, "audioProcesses").count === 2 && root.find(outputPanel, "audioProcesses").count === 2, "both process lists preserved")
                 backend.micActivityEnabled = false
                 recorder.appName = "New recorder"
@@ -277,7 +279,7 @@ Scope {
                 backend.playbackNodes = [browser]
                 backend.outputs = Array(12).fill(output)
             } else if (root.step === 1) {
-                root.check(root.find(inputPanel, "micActivity").text === "mic activity disabled", "activity status updates")
+                root.check(root.find(inputPanel, "micActivityHint").text === "Mic activity disabled", "activity status updates")
                 root.check(root.find(root.find(inputPanel, "audioProcesses").itemAt(0), "audioAppName").text === "New recorder"
                     && root.find(root.find(outputPanel, "audioProcesses").itemAt(0), "audioAppName").text === "New player", "process lists update")
                 const list = root.find(outputPanel, "audioDeviceList")
@@ -293,6 +295,8 @@ Scope {
             } else if (root.step === 3) {
                 root.check(root.find(outputPanel, "audioProcesses").count === 0 && root.find(inputPanel, "audioProcesses").count === 0,
                     "stopped apps removed")
+                root.check(root.find(inputPanel, "audioAppsTitle").text === "No apps recording"
+                    && root.find(outputPanel, "audioAppsTitle").text === "No apps playing audio", "empty app titles")
                 if (!root.failed) console.log("PASS: audio panels, individual app routing and mute, device controls, preserved activity and processes, live updates, scrolling")
                 Qt.quit()
             }

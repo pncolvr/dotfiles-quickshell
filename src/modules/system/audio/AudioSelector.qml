@@ -113,17 +113,8 @@ Column {
                 cursorShape: Qt.PointingHandCursor
             }
         }
-        QC.ScrollBar.vertical: QC.ScrollBar {
+        QC.ScrollBar.vertical: UI.ScrollBar {
             id: scrollbar
-            implicitWidth: Theme.audioScrollbarWidth
-            visible: choices.contentHeight > choices.height
-            policy: QC.ScrollBar.AsNeeded
-            contentItem: Rectangle {
-                radius: width / 2
-                color: Theme.accent
-                opacity: scrollbar.active ? 1 : 0.5
-            }
-            background: Rectangle { color: Theme.empty; radius: width / 2 }
         }
     }
 }

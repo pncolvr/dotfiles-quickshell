@@ -50,6 +50,7 @@ Scope {
                 imageJobs: NotificationService.imageJobs,
                 imageCache: {job: imageCache.job, busy: imageCache.busy, status: imageCache.status, source: imageCache.source.toString(), size: imageCache.sourceSize},
                 card: {summary: card.entry.summary, icon: card.iconSource, imageIsIcon: card.usesImageAsIcon,
+                    paused: card.timerPaused, progress: card.countdownProgress,
                     actions: card.displayActions.map(action => action.identifier), actionStates: card.displayActions,
                     buttonFound: !!root.find(card, "notificationAction_custom")},
                 live: Object.values(NotificationService.liveEntries).map(entry => ({id: entry.liveId, archiveId: entry.archiveId, summary: entry.summary, deadline: entry.deadline, image: entry.image}))})
@@ -80,6 +81,14 @@ Scope {
             card.visible = true
             settings.visible = false
         }
+        function cardHover(hovered: bool): void {
+            mouse.mouseMove(card, hovered ? card.width / 2 : card.width + 20, hovered ? card.height / 2 : card.height + 20,
+                0, Qt.NoButton, Qt.NoModifier)
+        }
+        function cardHoverClose(): void {
+            const button = root.find(card, "notificationDismiss") as Item
+            mouse.mouseMove(button, button.width / 2, button.height / 2, 0, Qt.NoButton, Qt.NoModifier)
+        }
         function prepareHistory(id: string): bool {
             const entry = NotificationRepository.entry(id)
             if (!entry) return false
@@ -104,7 +113,7 @@ Scope {
             return !!item && mouse.mouseClick(item, item.width / 2, item.height / 2, Qt.LeftButton, Qt.NoModifier, 0)
         }
         function historyClick(): void { mouse.mouseClick(card, card.width - 4, card.height / 2, Qt.LeftButton, Qt.NoModifier, 0) }
-        function twitchNotify(summary: string): void { TwitchService.notifyOnline([summary]) }
+        function twitchNotify(login: string): void { TwitchService.notifyChanges({online: [{login}], offline: []}) }
         function prepareEmitter(id: int): void {
             root.cardEntry = NotificationService.liveEntries[id] || root.cardEntry
             card.visible = false

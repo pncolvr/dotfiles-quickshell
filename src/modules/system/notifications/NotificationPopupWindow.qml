@@ -7,6 +7,7 @@ import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Wayland
 import "../../../theme"
+import "../../../theme/ui" as UI
 import "../../../config"
 import "../../../services"
 
@@ -75,7 +76,7 @@ PanelWindow {
             contentWidth: width
             contentHeight: stack.height
             boundsBehavior: Flickable.StopAtBounds
-            QC.ScrollBar.vertical: QC.ScrollBar { HoverHandler { cursorShape: Qt.PointingHandCursor } }
+            QC.ScrollBar.vertical: UI.ScrollBar {}
             Column {
                 id: stack
                 width: parent.width

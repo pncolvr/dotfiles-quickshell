@@ -18,13 +18,8 @@ QC.ScrollView {
     contentWidth: width - (scrollbar.visible ? Theme.twitchScrollbarWidth + Theme.twitchScrollbarMargin : 0)
     contentHeight: grid.implicitHeight
     QC.ScrollBar.horizontal.policy: QC.ScrollBar.AlwaysOff
-    QC.ScrollBar.vertical: QC.ScrollBar {
+    QC.ScrollBar.vertical: UI.ScrollBar {
         id: scrollbar
-        implicitWidth: Theme.twitchScrollbarWidth
-        visible: grid.implicitHeight > root.height
-        policy: QC.ScrollBar.AsNeeded
-        contentItem: Rectangle { radius: width / 2; color: Theme.accent; opacity: scrollbar.active ? 1 : 0.5 }
-        background: Rectangle { color: Theme.empty; radius: width / 2 }
     }
     Grid {
         id: grid

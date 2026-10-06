@@ -26,6 +26,7 @@ Singleton {
     }
 
     onUsersReadyChanged: if (usersReady) Qt.callLater(root.refresh)
+    onAvailableChanged: if (available) Qt.callLater(root.refresh)
 
     QtObject {
         id: state
@@ -35,6 +36,7 @@ Singleton {
         property var userIds: ({})
         property var scheduleQueue: []
         property var browserLogins: []
+        property var notificationQueue: []
         property bool available: false
         property bool refreshing: false
         property bool refreshAgain: false
@@ -42,11 +44,30 @@ Singleton {
     }
 
     function openUrl(login) { Qt.openUrlExternally(`${Config.twitchBaseUrl}${login}`) }
-    function notifyOnline(logins) {
-        if (!logins.length || notifyProcess.running) return
-        notifyProcess.command = ["notify-send", "--app-name=Twitch", "--urgency=low",
-            "--action=default=Open Twitch", "--action=open-twitch=Open Twitch", "--icon",
-            Qt.resolvedUrl("../../assets/twitch.png").toString().replace("file://", ""), logins.join("\n")]
+    function streamNotification(changes) {
+        const sections = []
+        let summary = ""
+        for (const [heading, streams] of [["Live", changes.online], ["Offline", changes.offline]]) {
+            if (!streams.length) continue
+            const title = summary ? `**${heading}**\n\n` : ""
+            if (!summary) summary = heading
+            sections.push(title + streams.map(stream => `\`${stream.login}\``).join("  \n"))
+        }
+        return {summary, body: sections.join("\n\n")}
+    }
+
+    function notifyChanges(changes) {
+        if (!changes.online.length && !changes.offline.length) return
+        state.notificationQueue.push(streamNotification(changes))
+        processNotificationQueue()
+    }
+
+    function processNotificationQueue() {
+        if (notifyProcess.running || !state.notificationQueue.length) return
+        const notification = state.notificationQueue.shift()
+        notifyProcess.command = ["notify-send", "--app-name=Twitch", "--urgency=normal",
+            "--icon",
+            Qt.resolvedUrl("../../assets/twitch.png").toString().replace("file://", ""), "--", notification.summary, notification.body]
         notifyProcess.running = true
     }
     function avatarSource(login) { return TwitchRepository.avatars[login]?.dataUrl ?? "" }
@@ -84,6 +105,11 @@ Singleton {
 
     function reload() {
         if (TwitchRepository.reload()) refresh()
+    }
+
+    function isRefreshMinute(now, interval = Config.twitchInterval) {
+        const minutes = Math.max(1, interval / Timespan.fromMinutes(1))
+        return new Date(now).getMinutes() % minutes === 0
     }
 
     function refresh() {
@@ -202,6 +228,7 @@ Singleton {
 
     Process {
         id: streamsProcess
+        objectName: "twitchStreamsQuery"
         stdout: StdioCollector { id: streamsOutput; waitForEnd: true }
         // Quickshell.Io omits QProcess::ExitStatus from its qmltypes.
         // qmllint disable signal-handler-parameters
@@ -211,15 +238,15 @@ Singleton {
                 // The CLI update check can fail after a successful API response; validate the JSON itself.
                 const json = JSON.parse(streamsOutput.text)
                 if (!Array.isArray(json.data)) throw new Error("Missing streams data")
-                const previousOnline = state.onlineUsers.map(user => user.login)
                 const logins = TwitchRepository.logins()
                 state.onlineUsers = json.data.filter(stream => logins.includes(stream.user_login.toLowerCase())).map(stream => ({
-                    login: stream.user_login.toLowerCase(), online: true, viewers: stream.viewer_count,
+                    login: stream.user_login.toLowerCase(), streamId: String(stream.id ?? stream.started_at ?? ""),
+                    online: true, viewers: stream.viewer_count,
                     title: stream.title, game: stream.game_name, avatar: root.avatarSource(stream.user_login.toLowerCase())
                 })).sort((a, b) => a.login.localeCompare(b.login))
                 root.syncUsers()
-                const newlyOnline = state.onlineUsers.map(user => user.login).filter(login => !previousOnline.includes(login))
-                root.notifyOnline(newlyOnline)
+                const changes = TwitchRepository.updateStreamSnapshot(state.onlineUsers)
+                if (changes) root.notifyChanges(changes)
                 root.writeOnlineExport()
                 root.fetchAvatars()
             } catch (error) {
@@ -232,14 +259,9 @@ Singleton {
 
     Process {
         id: notifyProcess
-        stdout: StdioCollector { id: notifyOutput; waitForEnd: true }
         // Quickshell.Io omits QProcess::ExitStatus from its qmltypes.
         // qmllint disable signal-handler-parameters
-        onExited: (exitCode, exitStatus) => {
-            if (exitCode !== 0 || exitStatus !== 0) return
-            const action = notifyOutput.text.trim()
-            if (action === "default" || action === "open-twitch") Qt.openUrlExternally(Config.twitchBaseUrl)
-        }
+        onExited: Qt.callLater(root.processNotificationQueue)
         // qmllint enable signal-handler-parameters
     }
 
@@ -329,12 +351,9 @@ Singleton {
         function onOnlineChanged() { if (NetworkService.online) root.refresh() }
     }
 
-    Timer {
-        interval: Config.twitchInterval
-        running: root.available
-        repeat: true
-        triggeredOnStart: true
-        onTriggered: root.refresh()
+    SystemClock {
+        precision: SystemClock.Enum.Minutes
+        onDateChanged: if (root.isRefreshMinute(date.getTime())) root.refresh()
     }
 
     Component.onCompleted: syncUsers()

@@ -53,8 +53,13 @@ query = sys.argv[-1]
 path, _, params = query.partition('?')
 params = urllib.parse.parse_qs(params)
 if path == 'streams':
-    result = {'data': [{'user_login': login, 'viewer_count': 123, 'title': 'Live test stream', 'game_name': 'Game'}
-                       for login in params.get('user_login', [])] if os.environ.get('STORAGE_TEST_PHASE') == 'live-add' else []}
+    phase = os.environ.get('STORAGE_TEST_PHASE')
+    if phase == 'live-error':
+        print(json.dumps({'error': 'API unavailable'}))
+        sys.exit(1)
+    result = {'data': [{'id': f'{login}-stream-{2 if login == "alice" and phase == "live-new-stream" else 1}',
+                       'user_login': login, 'viewer_count': 123, 'title': 'Live test stream', 'game_name': 'Game'}
+                       for login in params.get('user_login', [])] if phase in ('live-add', 'live-restart', 'live-new-stream') else []}
 elif path == 'users':
     suffix = '-v2' if os.environ.get('STORAGE_TEST_PHASE') in ('avatar-failure', 'avatar-update') else ''
     result = {'data': [{'login': login, 'id': login, 'profile_image_url': f'https://avatars.test/{login}{suffix}.png'} for login in params['login']]}
@@ -92,8 +97,12 @@ sys.stdout.buffer.write(png)
 MOCK
 chmod +x "$test_dir/bin/"*
 cat > "$test_dir/bin/notify-send" <<'MOCK'
-#!/usr/bin/env bash
-exit 0
+#!/usr/bin/env python3
+import json
+import os
+import sys
+with open(os.path.join(os.environ['STORAGE_TEST_STATE'], 'notify-calls'), 'a') as log:
+    log.write(json.dumps(sys.argv[1:]) + '\n')
 MOCK
 chmod +x "$test_dir/bin/notify-send"
 cat > "$entry" <<QML
@@ -101,7 +110,7 @@ import QtQuick
 import Quickshell
 Scope { Loader { source: "file://$project_root/tests/storage/storage-smoke.qml" } }
 QML
-for phase in seed restart avatar-failure avatar-update empty empty-restart live-add layout; do
+for phase in seed restart avatar-failure avatar-update empty empty-restart live-add live-restart live-new-stream live-error live-offline live-offline-restart layout; do
     output=$(STORAGE_TEST_PHASE="$phase" timeout 12 qs -p "$entry" 2>&1) || {
         printf '%s\n' "$output" >&2
         exit 1
@@ -110,12 +119,53 @@ for phase in seed restart avatar-failure avatar-update empty empty-restart live-
     [[ $output == *"PASS: storage $phase"* && $output != *'STORAGE FAIL:'* \
         && $output != *'Failed to load configuration'* && $output != *'Binding loop detected'* \
         && $output != *'TypeError:'* && $output != *'ReferenceError:'* ]]
+    if [[ $phase == seed ]]; then
+        # Exercise an upgrade from the previous schema with existing users and caches.
+        python3 - "$test_dir/config/data/quickshell.db" <<'PY'
+import sqlite3
+import sys
+with sqlite3.connect(sys.argv[1]) as db:
+    db.executescript('DROP TABLE twitch_notified_streams; PRAGMA user_version=3;')
+PY
+    fi
     if [[ $phase == restart ]]; then
         [[ $(wc -l < "$test_dir/avatar-calls") -eq 2 ]]
     fi
     if [[ $phase == empty-restart ]]; then
         # Alice's fresh cache is reused; only Bob needs a schedule request across restarts.
         [[ $(cat "$test_dir/schedule-calls") == bob ]]
+    fi
+    if [[ $phase == live-add ]]; then
+        initial_live_alerts=$(wc -l < "$test_dir/notify-calls")
+    fi
+    if [[ $phase == live-restart ]]; then
+        [[ $(wc -l < "$test_dir/notify-calls") -eq $initial_live_alerts ]]
+    fi
+    if [[ $phase == live-new-stream ]]; then
+        python3 - "$test_dir/notify-calls" "$initial_live_alerts" <<'PY'
+import json
+import pathlib
+import sys
+calls = [json.loads(line) for line in pathlib.Path(sys.argv[1]).read_text().splitlines()]
+assert len(calls) == int(sys.argv[2]) + 1, calls
+assert calls[-1][-2:] == ['Live', '`alice`'], calls
+assert not any(arg.startswith('--action') for call in calls for arg in call), calls
+print('PASS: live alerts persist across restarts and only a new stream triggers another alert')
+PY
+    fi
+    if [[ $phase == live-error ]]; then
+        [[ $(wc -l < "$test_dir/notify-calls") -eq $((initial_live_alerts + 1)) ]]
+    fi
+    if [[ $phase == live-offline || $phase == live-offline-restart ]]; then
+        python3 - "$test_dir/notify-calls" "$initial_live_alerts" <<'PY'
+import json
+import pathlib
+import sys
+calls = [json.loads(line) for line in pathlib.Path(sys.argv[1]).read_text().splitlines()]
+assert len(calls) == int(sys.argv[2]) + 2, calls
+assert calls[-1][-2:] == ['Offline', '`alice`  \n`bob`'], calls
+print('PASS: offline alert emitted once and preserved across restarts')
+PY
     fi
 done
 python3 - "$test_dir/config/data/quickshell.db" "$test_dir/data" <<'PY'
@@ -134,6 +184,7 @@ with sqlite3.connect(database) as db:
     assert db.execute('SELECT COUNT(*) FROM twitch_users').fetchone()[0] == 0
     assert db.execute('SELECT COUNT(*) FROM twitch_schedules').fetchone()[0] == 0
     assert db.execute('SELECT COUNT(*) FROM twitch_avatars').fetchone()[0] == 0
+    assert db.execute('SELECT COUNT(*) FROM twitch_notified_streams').fetchone()[0] == 0
     assert db.execute('SELECT COUNT(*) FROM battery_receivers').fetchone()[0] == 0
     assert db.execute('SELECT value_json FROM preferences WHERE key = ?', ('clock.showSeconds',)).fetchone()[0] == 'false'
 print('PASS: config-local database, native connection, integrity, and persisted removals')

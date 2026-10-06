@@ -6,8 +6,10 @@ Hover the mic or volume icon to see the available devices, with a level slider,
 mute control, **Use now**, and **Set default** on each device. **Use now** moves
 current PulseAudio-compatible recording or playback apps without changing the
 system default. **Set default** changes the system default input or output; both
-bar modules always control that default. Mic activity status and both process
-lists remain visible and update live. Each app has its own mute button and a
+bar modules always control that default. App lists update live, and their titles
+show when no apps are active. The microphone panel shows a recording icon beside
+its title; hover it to see whether mic activity is enabled or disabled.
+Each app has its own mute button and a
 compact device selector. These affect just that app's current streams, keeping
 other apps and the system default unchanged. Apps with several streams are
 grouped by their process. Selectors show their current device or **Multiple devices**

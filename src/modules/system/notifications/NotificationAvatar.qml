@@ -51,10 +51,10 @@ Item {
         id: avatar
         anchors.fill: parent
         source: root.source
-        fillMode: Image.PreserveAspectFit
+        fillMode: Image.PreserveAspectCrop
         smooth: true
         mipmap: true
-        visible: !paddingMask.ready || !paddingMask.hasPadding
+        visible: false
         onStatusChanged: if (status === Image.Ready) paddingMask.requestPaint()
     }
     Canvas {
@@ -63,7 +63,6 @@ Item {
         width: 128
         height: 128
         property bool ready: false
-        property bool hasPadding: false
         property url loadedSource: ""
         function loadSource() {
             ready = false
@@ -71,7 +70,7 @@ Item {
             if (loadedSource.toString()) unloadImage(loadedSource)
             loadedSource = root.source
             if (!loadedSource.toString()) return
-            loadImage(loadedSource, Qt.size(width, height))
+            loadImage(loadedSource)
             if (isImageLoaded(loadedSource)) requestPaint()
         }
         onAvailableChanged: if (available) loadSource()
@@ -81,17 +80,24 @@ Item {
             if (avatar.status !== Image.Ready || !isImageLoaded(root.source)) return
             const ctx = getContext("2d")
             ctx.reset()
-            ctx.drawImage(root.source, 0, 0, width, height)
+            const imageWidth = avatar.sourceSize.width
+            const imageHeight = avatar.sourceSize.height
+            const cropSize = Math.min(imageWidth, imageHeight)
+            if (cropSize <= 0) return
+            ctx.drawImage(root.source, (imageWidth - cropSize) / 2, (imageHeight - cropSize) / 2,
+                cropSize, cropSize, 0, 0, width, height)
             const image = ctx.getImageData(0, 0, width, height)
             const pixels = image.data
             const alpha = root.alphaMask(pixels, width, height)
-            hasPadding = alpha.some(value => value === 0)
-            if (!hasPadding) { ready = true; return }
+            const radius = width / 2
             for (let i = 0; i < alpha.length; i++) {
+                const dx = i % width + 0.5 - radius
+                const dy = Math.floor(i / width) + 0.5 - radius
+                const coverage = Math.max(0, Math.min(1, radius + 0.5 - Math.sqrt(dx * dx + dy * dy)))
                 pixels[i * 4] = 255
                 pixels[i * 4 + 1] = 255
                 pixels[i * 4 + 2] = 255
-                pixels[i * 4 + 3] = alpha[i]
+                pixels[i * 4 + 3] = Math.round(alpha[i] * coverage)
             }
             ctx.clearRect(0, 0, width, height)
             ctx.putImageData(image, 0, 0, 0, 0, width, height)
@@ -106,12 +112,9 @@ Item {
         textureSize: Qt.size(paddingMask.width, paddingMask.height)
     }
     MultiEffect {
-        x: (root.width - width) / 2
-        y: (root.height - height) / 2
-        width: avatar.paintedWidth
-        height: avatar.paintedHeight
+        anchors.fill: parent
         source: avatar
-        visible: paddingMask.ready && paddingMask.hasPadding
+        visible: paddingMask.ready && avatar.status === Image.Ready
         autoPaddingEnabled: false
         maskEnabled: true
         maskSource: maskTexture

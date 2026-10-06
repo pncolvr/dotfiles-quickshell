@@ -51,17 +51,8 @@ Column {
             battery: modelData
             width: list.width - (scrollbar.visible ? Theme.batteryScrollbarWidth + Theme.batteryScrollbarMargin : 0)
         }
-        QC.ScrollBar.vertical: QC.ScrollBar {
+        QC.ScrollBar.vertical: UI.ScrollBar {
             id: scrollbar
-            implicitWidth: Theme.batteryScrollbarWidth
-            visible: list.contentHeight > list.height
-            policy: QC.ScrollBar.AsNeeded
-            contentItem: Rectangle {
-                radius: width / 2
-                color: Theme.accent
-                opacity: scrollbar.active ? 1 : 0.5
-            }
-            background: Rectangle { color: Theme.empty; radius: width / 2 }
         }
     }
 }

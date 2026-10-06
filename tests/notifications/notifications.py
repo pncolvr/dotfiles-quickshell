@@ -177,6 +177,23 @@ try:
     wait(lambda: all(p["id"] != timed for p in state()["live"]), "expiry closes live notification")
     assert any(r["summary"] == "Timed" for r in rows())
     wait(lambda: any(e[0] == "closed" and e[1] == timed and e[2] == 1 for e in events), "expiry close reason")
+    hovered = notify("Hover timer", timeout=1200)
+    ipc("prepareCard", hovered, "false")
+    ipc("cardHover", "true")
+    wait(lambda: state()["card"]["paused"], "hover pauses the popup timer")
+    paused_progress = state()["card"]["progress"]
+    time.sleep(1.4)
+    assert any(p["id"] == hovered for p in state()["live"]), "hovered notification outlives its original timeout"
+    assert abs(state()["card"]["progress"] - paused_progress) < 0.001, "hover freezes the visible countdown"
+    ipc("cardHoverClose")
+    assert state()["card"]["paused"], "hovering the close button keeps expiry paused"
+    notify("Hover replacement", replacement=hovered, timeout=1000)
+    wait(lambda: -1000 <= next(p["deadline"] for p in state()["live"] if p["id"] == hovered) < 0,
+         "replacement resets its timeout while remaining paused")
+    ipc("cardHover", "false")
+    wait(lambda: next(p["deadline"] for p in state()["live"] if p["id"] == hovered) > 0, "leaving resumes the timer")
+    wait(lambda: all(p["id"] != hovered for p in state()["live"]), "resumed notification expires")
+    assert any(r["summary"] == "Hover replacement" for r in rows()), "hover expiry retains history"
     # Use the real CLI: an omitted body can reach Qt's SQL binding as NULL.
     sent = subprocess.run(["notify-send", "--print-id", "--expire-time=150", "Title only"], capture_output=True, text=True, timeout=5)
     assert sent.returncode == 0, sent.stderr
@@ -188,34 +205,24 @@ try:
     if os.environ.get("NOTIFICATION_TEST_WAYLAND") == "1":
         wait(lambda: any(g["emitterKey"] == "app:notify-send" for g in json.loads(ipc("nativeUi"))["groups"]), "notify-send group appears in open manager")
     # libnotify exposes file icons as image-data; they belong in the icon slot.
-    ipc("twitchNotify", "Streamer online")
-    wait(lambda: any(p["summary"] == "Streamer online" for p in state()["live"]), "TwitchService notification received")
-    twitch_id = next(p["id"] for p in state()["live"] if p["summary"] == "Streamer online")
+    ipc("twitchNotify", "streamer_online")
+    wait(lambda: any(p["summary"] == "Live" for p in state()["live"]), "TwitchService notification received")
+    twitch_id = next(p["id"] for p in state()["live"] if p["summary"] == "Live")
     ipc("prepareCard", twitch_id, "false")
     wait(lambda: state()["card"]["imageIsIcon"] and state()["card"]["icon"], "Twitch image appears in app icon slot")
     assert state()["emitters"]["app:twitch"]["name"] == "Twitch"
-    wait(lambda: any(r["summary"] == "Streamer online" and r["image"].startswith("data:image/png;base64,") for r in rows("app:twitch")), "Twitch notification and icon saved in history")
+    wait(lambda: any(r["summary"] == "Live" and r["image"].startswith("data:image/png;base64,") for r in rows("app:twitch")), "Twitch notification and icon saved in history")
     if os.environ.get("NOTIFICATION_TEST_WAYLAND") == "1":
         assert ipc("preview", "/tmp/quickshell-notifications-twitch-preview.png") == "true"
-    opened_urls = directory / "opened-urls"
-    ipc("cardClick", twitch_id, "false")
-    wait(lambda: opened_urls.exists() and opened_urls.read_text().splitlines() == ["https://www.twitch.tv/"], "Twitch default action opens configured URL")
-    ipc("twitchNotify", "Second streamer online")
-    wait(lambda: any(p["summary"] == "Second streamer online" for p in state()["live"]), "second Twitch notification received")
-    twitch_button_id = next(p["id"] for p in state()["live"] if p["summary"] == "Second streamer online")
-    ipc("prepareCard", twitch_button_id, "false")
-    time.sleep(0.1)
-    wait(lambda: ipc("cardButton", twitch_button_id, "notificationAction_open-twitch", "false") == "true", "Twitch action button created")
-    wait(lambda: opened_urls.read_text().splitlines() == ["https://www.twitch.tv/"] * 2, "Twitch action button opens configured URL")
-    twitch_archive = next(r for r in rows("app:twitch") if r["summary"] == "Streamer online")
-    assert twitch_archive["actions"] == [{"identifier": "default", "text": "Open Twitch"}, {"identifier": "open-twitch", "text": "Open Twitch"}]
+    twitch_archive = next(r for r in rows("app:twitch") if r["summary"] == "Live")
+    assert twitch_archive["urgency"] == 1, "Twitch notifications use normal urgency"
+    assert twitch_archive["body"] == "`streamer_online`", twitch_archive["body"]
+    assert twitch_archive["actions"] == [], "new Twitch notifications have no view action"
+    assert state()["card"]["actionStates"] == [], "Twitch popup has no view button"
     assert ipc("prepareHistory", twitch_archive["archiveId"]) == "true"
     time.sleep(0.1)
-    assert state()["card"]["actionStates"] == [{"identifier": "open-twitch", "text": "Open Twitch", "available": True}]
-    assert ipc("historyButton", "notificationAction_open-twitch") == "true"
-    wait(lambda: len(opened_urls.read_text().splitlines()) == 3, "saved Twitch button works after live action closes")
-    ipc("historyClick")
-    wait(lambda: len(opened_urls.read_text().splitlines()) == 4, "saved Twitch default action works on card click")
+    assert state()["card"]["actionStates"] == [], "Twitch history has no view button"
+    ipc("dismiss", twitch_id)
     body_only = notify("", body="Body without title", timeout=150)
     wait(lambda: any(r["summary"] == "" and r["body"] == "Body without title" for r in rows()), "empty summary saved")
     wait(lambda: all(p["id"] != body_only for p in state()["live"]), "body-only notification expired")
@@ -228,18 +235,18 @@ try:
     assert archived_action["actions"] == [{"identifier": "default", "text": "Open"}, {"identifier": "custom", "text": "Custom"}]
     assert ipc("prepareHistory", archived_action["archiveId"]) == "true"
     time.sleep(0.1)
-    unavailable_actions = [{"identifier": "default", "text": "Open", "available": False}, {"identifier": "custom", "text": "Custom", "available": False}]
-    assert state()["card"]["actionStates"] == unavailable_actions
-    assert state()["card"]["buttonFound"], "expired action label remains displayed in history"
+    assert state()["card"]["actionStates"] == []
+    assert not state()["card"]["buttonFound"], "expired actions are hidden in history"
     assert ipc("historyAction", archived_action["archiveId"], "custom") == "false", "expired callback cannot invoke reused protocol IDs"
-    assert ipc("historyActionSlot", "notificationAction_custom") == "true"
-    assert not state()["focusMessage"], "disabled history action does not fall through to card focus"
+    assert ipc("historyButton", "notificationAction_custom") == "false", "history contains no action button"
     action_update = notify("Action replacement", actions=("first", "First"))
     action_archive = next(r for r in rows() if r["summary"] == "Action replacement")["archiveId"]
     notify("Action replacement updated", replacement=action_update, actions=("second", "Second"))
     wait(lambda: any(r["archiveId"] == action_archive and r["actions"] == [{"identifier": "second", "text": "Second"}] for r in rows()), "replacement updates saved action metadata")
     ipc("dismiss", action_update)
     resident = notify("Resident", actions=("default", "Open", "custom", "Custom"), extra={"resident": dbus.Boolean(True)})
+    ipc("prepareCard", resident, "true")
+    assert state()["card"]["actionStates"] == [], "history hides actions even while the notification is live"
     ipc("prepareCard", resident, "false")
     time.sleep(0.1)  # Let positioners polish the newly created action delegate.
     wait(lambda: ipc("cardButton", resident, "notificationAction_custom", "false") == "true", "action button created")
@@ -257,6 +264,18 @@ try:
     assert not any(e[0] == "action" and e[1] == source for e in events), "emitter controls do not activate a notification"
     preference("muted", False)
     assert ipc("focusFallback") == "true"
+    unmatched = notify("Unmatched window", app="Unmatched", desktop="unmatched")
+    ipc("activate", unmatched)
+    assert state()["focusMessage"] == "No matching application window is available."
+    time.sleep(1.7)
+    ipc("activate", unmatched)
+    time.sleep(1.7)
+    assert state()["focusMessage"], "another failed click restarts the feedback timer"
+    wait(lambda: not state()["focusMessage"], "focus feedback clears three seconds after the last click")
+    ipc("activate", unmatched)
+    ipc("activate", source)
+    assert not state()["focusMessage"], "a usable default action clears previous focus feedback"
+    ipc("dismiss", unmatched)
     closed = notify("Client close")
     server = dbus.Interface(bus.get_object("org.freedesktop.Notifications", "/org/freedesktop/Notifications"), "org.freedesktop.Notifications")
     server.CloseNotification(closed)
@@ -293,13 +312,12 @@ try:
     ipc("dismiss", returned)
     assert rows("app:notify-send")[0]["summary"] == "Title only" and rows("app:notify-send")[0]["body"] == "", "CLI history survives restart"
     assert any(r["summary"] == "Low" and r["urgency"] == 0 for r in rows()), "low urgency history survives restart"
-    assert any(r["summary"] == "Streamer online" and r["image"].startswith("data:image/png;base64,") for r in rows("app:twitch")), "Twitch history and icon survive restart"
+    assert any(r["summary"] == "Live" and r["image"].startswith("data:image/png;base64,") for r in rows("app:twitch")), "Twitch history and icon survive restart"
     assert ipc("prepareHistory", archived_action["archiveId"]) == "true"
-    assert state()["card"]["actionStates"] == unavailable_actions, "archived app actions survive restart without restoring callbacks"
+    assert state()["card"]["actionStates"] == [], "archived app actions remain hidden after restart"
     assert ipc("prepareHistory", twitch_archive["archiveId"]) == "true"
     time.sleep(0.1)
-    assert ipc("historyButton", "notificationAction_open-twitch") == "true"
-    wait(lambda: len(opened_urls.read_text().splitlines()) == 5, "saved Twitch action works after restart")
+    assert state()["card"]["actionStates"] == [], "Twitch history remains free of view buttons after restart"
     assert state()["emitters"]["desktop:test"]["muted"]
     assert state()["emitters"]["desktop:test"]["excludeFromHistory"]
     assert any(r["summary"] == "Image" and r["image"].startswith("data:image/png;base64,") for r in rows())
@@ -309,7 +327,7 @@ try:
     start()
     assert not rows() and state()["emitters"]["desktop:test"]["excludeFromHistory"]
     with sqlite3.connect(database) as db:
-        assert db.execute("PRAGMA user_version").fetchone()[0] == 3
+        assert db.execute("PRAGMA user_version").fetchone()[0] == 4
         assert db.execute("PRAGMA integrity_check").fetchone()[0] == "ok"
         assert db.execute("SELECT value_json FROM preferences WHERE key='preserve'").fetchone()[0] == "42"
     stop()
@@ -324,8 +342,10 @@ try:
     assert state()["emitters"]["desktop:test"]["excludeFromHistory"] and state()["dnd"], "v2 migration keeps preferences"
     assert ipc("prepareHistory", "legacy-twitch") == "true"
     time.sleep(0.1)
-    assert ipc("historyButton", "notificationAction_open-twitch") == "true"
-    wait(lambda: len(opened_urls.read_text().splitlines()) == 6, "existing Twitch history gains its known local action")
+    assert state()["card"]["actionStates"] == [], "legacy Twitch action buttons are also hidden in history"
+    ipc("historyClick")
+    opened_urls = directory / "opened-urls"
+    wait(lambda: opened_urls.exists() and opened_urls.read_text().splitlines() == ["https://www.twitch.tv/"], "legacy Twitch history retains its known local action")
     stop()
     text = log.read_text()
     for problem in ("Failed to load configuration", "Binding loop detected", "TypeError:", "ReferenceError:", "NOTIFICATION FAIL:", "Local database:"):

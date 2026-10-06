@@ -16,9 +16,14 @@ Scope {
     property bool sawAvatarDownload: false
     property bool browserScanRequested: false
     property int layoutTicks: 0
+    property int streamResponses: 0
     Test.TestResult { id: objects }
+    Connections {
+        target: objects.findChild(TwitchService, "twitchStreamsQuery") as Process
+        function onExited() { root.streamResponses++ }
+    }
     FloatingWindow {
-        visible: root.phase === "layout" || root.phase === "live-add"
+        visible: root.phase === "layout" || root.phase.startsWith("live-")
         implicitWidth: panel.implicitWidth
         implicitHeight: panel.implicitHeight
         TwitchTooltip { id: panel; width: implicitWidth; height: implicitHeight }
@@ -42,7 +47,7 @@ Scope {
 
     function seed() {
         check(DbService.ready, "database created on first use")
-        check(DbService.read("SELECT name FROM store.sqlite_master WHERE type = 'table'").length === 8, "central schema")
+        check(DbService.read("SELECT name FROM store.sqlite_master WHERE type = 'table'").length === 9, "central schema")
         check(!TimeService.showSeconds, "default clock preference")
         check(TwitchRepository.exportUsers() === "", "fresh Twitch list is empty")
         check(TwitchService.browserSuggestions.join() === "alice,bob", "current qutebrowser tabs suggested without history or directory pages")
@@ -96,6 +101,9 @@ Scope {
         check(!BatteryRepository.saveReceiverSnapshot([duplicate, duplicate]), "failed SQL write reported")
         check(BatteryRepository.receiverSnapshot()[0]?.percentage === 17, "SQL error rolls back snapshot replacement")
         check(TwitchRepository.imageDataUrl("not an image") === "", "invalid image payload rejected")
+        const notification = TwitchService.streamNotification({online: [{login: "a_b", game: "Game", title: "Title"}], offline: [{login: "charlie"}]})
+        check(notification.summary === "Live" && notification.body === "`a_b`\n\n**Offline**\n\n`charlie`",
+            "mixed status notification contains only headings and literal login names")
         testDates()
     }
 
@@ -194,6 +202,16 @@ Scope {
     }
 
     function testDates() {
+        const fiveMinutes = 5 * 60 * 1000
+        const sevenMinutes = 7 * 60 * 1000
+        check(TwitchService.isRefreshMinute(new Date(2026, 9, 6, 10, 0).getTime(), fiveMinutes)
+            && TwitchService.isRefreshMinute(new Date(2026, 9, 6, 10, 5).getTime(), fiveMinutes)
+            && TwitchService.isRefreshMinute(new Date(2026, 9, 6, 10, 55).getTime(), fiveMinutes), "five-minute polls align with clock minutes")
+        check(!TwitchService.isRefreshMinute(new Date(2026, 9, 6, 10, 3).getTime(), fiveMinutes), "startup minute does not shift regular polls")
+        check(TwitchService.isRefreshMinute(new Date(2026, 9, 6, 10, 7).getTime(), sevenMinutes)
+            && TwitchService.isRefreshMinute(new Date(2026, 9, 6, 10, 56).getTime(), sevenMinutes)
+            && TwitchService.isRefreshMinute(new Date(2026, 9, 6, 11, 0).getTime(), sevenMinutes)
+            && !TwitchService.isRefreshMinute(new Date(2026, 9, 6, 11, 3).getTime(), sevenMinutes), "configured poll minutes restart each hour")
         const midnightBefore = new Date(2026, 9, 4, 23, 59).getTime()
         const midnightAfter = new Date(2026, 9, 5, 0, 1).getTime()
         const starts = new Date(2026, 9, 5, 10, 0).getTime()
@@ -242,7 +260,17 @@ Scope {
                     panel.addAllSuggestions()
                     root.check(TwitchRepository.exportUsers() === "alice\nbob", "bulk add stores every suggested streamer")
                 }
+                else if (root.phase === "live-restart" || root.phase === "live-new-stream") {
+                    if (root.phase === "live-restart") root.check(TwitchRepository.notifiedStreams.alice?.streamId === "alice-stream-1"
+                        && TwitchRepository.notifiedStreams.bob?.streamId === "bob-stream-1", "last notified streams restored after restart")
+                }
+                else if (["live-error", "live-offline", "live-offline-restart"].includes(root.phase)) {
+                    root.check(TwitchRepository.notifiedStreams.alice?.streamId === "alice-stream-2"
+                        && TwitchRepository.notifiedStreams.bob?.streamId === "bob-stream-1", "latest streams restored before offline check")
+                }
                 else if (root.phase === "restart") {
+                    root.check(DbService.schemaVersion === 4
+                        && DbService.read("SELECT login FROM twitch_notified_streams").length === 0, "v3 schema upgraded without losing existing data")
                     root.check(TimeService.showSeconds, "clock preference restored after process restart")
                     root.check(TwitchRepository.exportUsers() === "alice\nbob", "Twitch users restored after process restart")
                     root.check(BatteryService.receiverBatteries[0]?.percentage === 17, "battery restored before new scan")
@@ -278,7 +306,7 @@ Scope {
                 if (image?.status === Image.Loading) return
                 root.check(image?.status === Image.Ready, "QML displays image directly from SQLite payload")
                 root.testUndo()
-            } else if (root.phase === "live-add") {
+            } else if (["live-add", "live-restart", "live-new-stream"].includes(root.phase)) {
                 if (TwitchService.onlineUsers.length !== 2 || !TwitchRepository.avatars.alice || !TwitchRepository.avatars.bob || ++root.layoutTicks < 4) return
                 const live = objects.findChild(panel, "twitchLiveUsersSection") as TwitchUserSection
                 const grid = objects.findChild(live, "twitchUserSectionGrid") as Grid
@@ -286,8 +314,25 @@ Scope {
                 root.check(live.visible && live.expanded && grid.visible && grid.implicitHeight > 0 && usersView.height > 0,
                     "Live section appears after bulk adding streamers to an empty live list")
                 root.check(live.height > 0 && panel.implicitHeight > 50, "Live section participates in the tooltip layout")
-                TwitchService.removeUser("alice")
-                TwitchService.removeUser("bob")
+                root.check(TwitchRepository.notifiedStreams.alice?.streamId === (root.phase === "live-new-stream" ? "alice-stream-2" : "alice-stream-1")
+                    && TwitchRepository.notifiedStreams.bob?.streamId === "bob-stream-1", "notified stream identities saved")
+                root.check(DbService.read("SELECT login FROM twitch_notified_streams").length === 2,
+                    "only one notified stream per followed user, including after a new stream")
+            } else if (["live-error", "live-offline", "live-offline-restart"].includes(root.phase)) {
+                if (root.streamResponses < 1 || ++root.layoutTicks < 4) return
+                const expectedOnline = root.phase === "live-error"
+                root.check(TwitchRepository.notifiedStreams.alice?.online === expectedOnline
+                    && TwitchRepository.notifiedStreams.bob?.online === expectedOnline,
+                    "failed requests preserve online state; successful offline checks persist it")
+                root.check(DbService.read("SELECT login FROM twitch_notified_streams").length === 2, "offline records remain bounded")
+                if (root.phase === "live-offline-restart") {
+                    root.check(TwitchService.removeUser("alice") && !TwitchRepository.notifiedStreams.alice, "removal clears notified stream")
+                    root.check(TwitchService.undoRemoveUser("alice") && TwitchRepository.notifiedStreams.alice?.streamId === "alice-stream-2"
+                        && !TwitchRepository.notifiedStreams.alice?.online,
+                        "undo restores notified stream without repeating its alert")
+                    TwitchService.removeUser("alice")
+                    TwitchService.removeUser("bob")
+                }
             } else if (root.phase === "layout") {
                 if (root.step === 1) {
                     if (++root.layoutTicks < 4) return

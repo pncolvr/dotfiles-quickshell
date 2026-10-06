@@ -39,34 +39,38 @@ deadlines. Popups use the SwayNC reference's dark background at 95% opacity, rou
 corners and bold monospace text. App icons occupy a left-hand column beside the
 content. File icons supplied through
 `notify-send`, including the custom Twitch logo, use this same left icon slot.
-Twitch sends low-urgency, nontransient notifications under its own emitter name,
-so its notifications and icons are retained in history. Clicking a Twitch
-notification or its **Open Twitch** button opens the configured Twitch URL,
-including from saved history after expiry or restart.
+Twitch sends normal-urgency, nontransient notifications under its own emitter name,
+so its notifications and icons are retained in history. New Twitch notifications
+list streamer login names under Live and Offline headings, without a view button.
 Extra images supplied by any app, including Discord and Signal user/group
 images, overlap the app icon with an offset down and right, leaving the app icon
 visible above and to the left. If no app icon is available, the supplied image
 occupies the left icon slot on its own. This applies to both popups and history.
-Overlapping images with opaque near-black padding at all four corners receive a
+Extra images are center-cropped and masked into circles. Overlapping images with
+opaque near-black padding at all four corners receive a
 small, one-time alpha mask that removes edge-connected padding and preserves
 enclosed dark details. The title sits directly below the app name,
 with a small gap before the body. Timestamps appear only in history and use
-`yyyy-MM-dd hh:mm:ss`, always including seconds.
+`yyyy-MM-dd hh:mm:ss`, always including seconds. Markdown bodies render code
+blocks, emphasis, links, and lists; plain-text bodies keep their line breaks.
+Long formatted bodies are clipped in popups and shown in full in history.
 Timed popup outlines drain symmetrically from the bottom center up both sides to the top
-center, synchronized with rendered frames as in TOTP. The close
+center, synchronized with rendered frames as in TOTP. Hovering a popup pauses its
+expiry and outline; leaving resumes the remaining time. The close
 button is circular and turns red on hover. History cards use a complete outline
 in their urgency color. Application timeouts take
 priority over the configured low/normal/critical defaults. Left-click runs a usable
 default action, then falls back to focusing a matched existing app only when no
-default action is usable. Explicit action buttons invoke their own
-actions. Right-click dismisses a popup without deleting its history; right-click
-in history deletes that entry. Action identifiers and labels are saved with
-history. Default actions are displayed in history unless their label duplicates
-a named action. Generic app actions remain visible but disabled after their live notification closes; their callbacks
-cannot be restored, as the notification protocol invalidates their IDs on
-closure. See the [notification protocol](https://specifications.freedesktop.org/notification/latest/protocol.html).
-The locally implemented Twitch action stays available. Focus lookup includes
-other workspaces and desktop `StartupWMClass`.
+default action is usable. Explicit action buttons appear only on popups and invoke
+their own actions. History hides action buttons, including for notifications that
+are still live. Right-click dismisses a popup without deleting its history;
+right-click in history deletes that entry. Action identifiers and labels are
+saved with history. Generic app callbacks cannot be restored, as the notification
+protocol invalidates their IDs on closure. See the
+[notification protocol](https://specifications.freedesktop.org/notification/latest/protocol.html).
+The locally implemented legacy Twitch default action still works on card clicks.
+Focus lookup includes other workspaces and desktop `StartupWMClass`. If no window
+matches, the feedback message clears three seconds after the click.
 
 See [setup](../setup.md) for notification ownership and screen-sharing rules,
 [storage](../storage.md) for history persistence, and

@@ -80,6 +80,9 @@ Item {
   readonly property int actionButtonWidth: 30
   readonly property int controlSpacing: 6
   readonly property int controlFieldPadding: 8
+  readonly property int scrollbarWidth: 6
+  readonly property int scrollbarHideDelay: 450
+  readonly property int scrollbarFadeDuration: 200
 
   readonly property var calendarMonthNames: ["january","february","march","april","may","june","july","august","september","october","november","december"]
   readonly property var calendarDayNames: ["mo","tu","we","th","fr","sa","su"]
@@ -112,7 +115,7 @@ Item {
   readonly property int totpCountdownStrokeWidth: 4
   readonly property int totpCountdownListMargin: 12
   readonly property int totpFieldPadding: controlFieldPadding
-  readonly property int totpScrollbarWidth: 6
+  readonly property int totpScrollbarWidth: scrollbarWidth
   readonly property int totpScrollbarMargin: 12
   readonly property int totpExpiryWarning: 5
   readonly property color totpDeleteBackground: urgent
@@ -131,7 +134,7 @@ Item {
   readonly property int batteryTerminalWidth: 6
   readonly property int batteryTerminalHeight: 14
   readonly property int batteryPercentageFontSize: 16
-  readonly property int batteryScrollbarWidth: 6
+  readonly property int batteryScrollbarWidth: scrollbarWidth
   readonly property int batteryScrollbarMargin: 8
   readonly property var batteryLevelColors: ({ "normal": ok, "low": warning, "critical": urgent })
   readonly property real batteryFillOpacity: 0.5
@@ -146,7 +149,7 @@ Item {
   readonly property int twitchTooltipSpacing: controlSpacing
   readonly property int twitchUserSpacing: 8
   readonly property int twitchRemoveButtonSize: 24
-  readonly property int twitchScrollbarWidth: 6
+  readonly property int twitchScrollbarWidth: scrollbarWidth
   readonly property int twitchScrollbarMargin: 12
   readonly property int twitchEditorHeight: controlHeight
   readonly property int twitchEditorButtonWidth: actionButtonWidth
@@ -188,6 +191,7 @@ Item {
   readonly property var volumeIcons: ["", "", ""] // volume-low, volume, volume-high
   readonly property string volumeMutedIcon: "" // volume-off
   readonly property string audioDefaultIcon: "" // star: default device
+  readonly property string audioRecordingIcon: "" // circle-dot: mic activity status
   readonly property int audioTooltipWidth: 520
   readonly property real audioTooltipMaxHeightRatio: 0.6 // Fraction of the current screen height.
   readonly property int audioSpacing: 8
@@ -198,7 +202,7 @@ Item {
   readonly property int audioSliderTrackHeight: 4
   readonly property int audioSliderHandleSize: 14
   readonly property int audioPercentageWidth: 46
-  readonly property int audioScrollbarWidth: 6
+  readonly property int audioScrollbarWidth: scrollbarWidth
   readonly property int audioScrollbarMargin: 8
   readonly property int audioProfileRowHeight: 44
   readonly property int audioProfileMaxVisibleRows: 5

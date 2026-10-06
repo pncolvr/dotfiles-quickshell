@@ -37,6 +37,10 @@ metadata: runtime-selected `PanelWindow` backends, the missing
 `QProcess::ExitStatus` enum, and the tray menu handle's outdated C++ type name.
 Other warnings remain enabled, including signal checks outside those handlers.
 
+Scrollable modules use `UI.ScrollBar` from `src/theme/ui/components/ScrollBar.qml`.
+It shows an accent-colored thumb during scrolling or hover, then fades away.
+Overflow controls layout space independently of the thumb's opacity.
+
 ## Notifications
 
 ```sh

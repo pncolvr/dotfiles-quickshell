@@ -119,7 +119,7 @@ PrivateTooltipWindow {
             contentWidth: width
             contentHeight: history.height
             boundsBehavior: Flickable.StopAtBounds
-            QC.ScrollBar.vertical: QC.ScrollBar { HoverHandler { cursorShape: Qt.PointingHandCursor } }
+            QC.ScrollBar.vertical: UI.ScrollBar {}
             Column {
                 id: history
                 width: historyView.width - 10

@@ -13,7 +13,26 @@ Rectangle {
     required property var entry
     property bool popup: false
     property real clockNow: Date.now()
-    readonly property real countdownProgress: root.popup && root.entry.duration > 0 ? Math.max(0, Math.min(1, (root.entry.deadline - root.clockNow) / root.entry.duration)) : 1
+    property var hoveredEntry: null
+    readonly property var timerEntry: {
+        const live = NotificationService.liveEntries
+        return NotificationService.liveFor(root.entry) ?? root.entry
+    }
+    readonly property bool timerPaused: timerEntry.deadline < 0
+    readonly property real countdownProgress: root.popup && timerEntry.duration > 0
+        ? Math.max(0, Math.min(1, (timerPaused ? -timerEntry.deadline : timerEntry.deadline - clockNow) / timerEntry.duration)) : 1
+    function updateHover() {
+        clockNow = Date.now()
+        const next = popup && popupHover?.hovered ? entry : null
+        if (hoveredEntry?.liveId !== next?.liveId) {
+            if (hoveredEntry) NotificationService.setPopupHovered(hoveredEntry, false)
+            hoveredEntry = next
+        }
+        if (next) NotificationService.setPopupHovered(next, true)
+    }
+    onEntryChanged: updateHover()
+    onPopupChanged: updateHover()
+    Component.onDestruction: if (hoveredEntry) NotificationService.setPopupHovered(hoveredEntry, false)
     readonly property var emitter: NotificationEmitterRepository.emitters[entry.emitterKey]
     readonly property string notificationImage: root.entry.image || NotificationService.liveFor(root.entry)?.image || ""
     readonly property string appIcon: root.emitter?.icon || DesktopEntries.byId(root.emitter?.desktopEntry || "")?.icon || ""
@@ -28,8 +47,9 @@ Rectangle {
         return /^(file:|image:|data:)/.test(icon) ? icon : icon.startsWith("/") ? "file://" + icon : Quickshell.iconPath(icon, true)
     }
     readonly property var displayActions: {
+        if (!root.popup) return []
         const live = NotificationService.liveEntries
-        return NotificationService.actions(root.entry, !root.popup)
+        return NotificationService.actions(root.entry, false)
     }
     implicitHeight: layout.height + 28
     radius: Theme.notificationRadius
@@ -37,6 +57,11 @@ Rectangle {
     border.color: popup ? Theme.notificationBorder : urgencyColor
     border.width: popup ? 1 : urgencyLineWidth
 
+    HoverHandler {
+        id: popupHover
+        enabled: root.popup
+        onHoveredChanged: root.updateHover()
+    }
     MouseArea {
         anchors.fill: parent
         cursorShape: Qt.PointingHandCursor
@@ -51,7 +76,7 @@ Rectangle {
     Shape {
         id: countdownOutline
         anchors.fill: parent
-        visible: root.popup && root.entry.duration > 0 && root.countdownProgress > 0
+        visible: root.popup && root.timerEntry.duration > 0 && root.countdownProgress > 0
         preferredRendererType: Shape.CurveRenderer
         readonly property real lineWidth: root.urgencyLineWidth
         readonly property real inset: lineWidth / 2
@@ -127,7 +152,7 @@ Rectangle {
         radius: height / 2
     }
     FrameAnimation {
-        running: root.popup && root.visible && root.entry.duration > 0 && root.countdownProgress > 0
+        running: root.popup && root.visible && !root.timerPaused && root.timerEntry.duration > 0 && root.countdownProgress > 0
         onTriggered: root.clockNow = Date.now()
     }
     Row {
@@ -224,16 +249,11 @@ Rectangle {
                     onClicked: NotificationService.dismiss(root.entry, !root.popup)
                 }
             }
-            UI.Text {
-                centerVertical: false
+            NotificationBody {
+                objectName: "notificationBody"
                 width: parent.width
-                visible: text.length > 0
-                text: root.entry.body
-                textFormat: Text.PlainText
-                wrapMode: Text.Wrap
-                maximumLineCount: root.popup ? 8 : 2147483647
-                elide: Text.ElideRight
-                font.family: root.popup ? Theme.notificationFont : Theme.fontFamily
+                body: root.entry.body || ""
+                popup: root.popup
             }
             Flow {
                 id: actionFlow

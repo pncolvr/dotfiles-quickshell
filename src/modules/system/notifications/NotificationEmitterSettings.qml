@@ -67,7 +67,7 @@ Item {
         contentWidth: width
         contentHeight: rows.implicitHeight
         boundsBehavior: Flickable.StopAtBounds
-        QC.ScrollBar.vertical: QC.ScrollBar { HoverHandler { cursorShape: Qt.PointingHandCursor } }
+        QC.ScrollBar.vertical: UI.ScrollBar {}
         Column {
             id: rows
             width: rowsView.width - 10

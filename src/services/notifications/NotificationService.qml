@@ -69,7 +69,10 @@ Singleton {
         const saved = savedLive?.archive_id ? NotificationRepository.entry(savedLive.archive_id) : null
         const entry = snapshot(notification, emitter, saved ? Object.assign({recordId: saved.archiveId}, saved) : null)
         const duration = savedLive ? savedLive.duration : timeout(notification)
-        const deadline = savedLive ? savedLive.deadline : duration > 0 ? Date.now() + duration : 0
+        // A negative deadline stores remaining milliseconds while a popup is hovered.
+        // Resume that remaining time after reload until the new card detects hover.
+        const deadline = savedLive ? (savedLive.deadline < 0 ? Date.now() - savedLive.deadline : savedLive.deadline)
+            : duration > 0 ? Date.now() + duration : 0
         entry.duration = duration
         entry.deadline = deadline
         entry.notification = notification
@@ -104,8 +107,9 @@ Singleton {
         const entry = snapshot(notification, emitter, previous)
         entry.notification = notification
         entry.duration = timeout(notification)
-        entry.deadline = entry.duration > 0 ? Date.now() + entry.duration : 0
         entry.popupVisible = popupAllowed(emitter)
+        entry.deadline = entry.duration > 0
+            ? previous.deadline < 0 && entry.popupVisible ? -entry.duration : Date.now() + entry.duration : 0
         if (historyAllowed(notification, emitter)) {
             entry.archiveId = previous.archiveId || uuid()
             saveHistory(entry)
@@ -146,6 +150,16 @@ Singleton {
         return entry.liveId !== undefined ? state.liveEntries[entry.liveId] ?? null
             : Object.values(state.liveEntries).find(item => item.archiveId === entry.archiveId) ?? null
     }
+    function setPopupHovered(entry, hovered) {
+        const live = liveFor(entry)
+        if (!live?.notification || live.duration <= 0) return
+        const now = Date.now()
+        if (hovered ? !live.popupVisible || live.deadline <= now : live.deadline >= 0) return
+        const updated = Object.assign({}, live, {deadline: hovered ? -(live.deadline - now) : now - live.deadline})
+        state.liveEntries = Object.assign({}, state.liveEntries, {[live.liveId]: updated})
+        NotificationRepository.saveLive(token(live.liveId), updated)
+        // Keep the popup model stable so pausing does not recreate hovered cards.
+    }
     function hasSavedAction(entry, identifier) {
         return entry.emitterKey === "app:twitch" && entry.actionHandler === "twitch"
             && (identifier === "default" || identifier === "open-twitch")
@@ -172,11 +186,14 @@ Singleton {
         return false
     }
     function activate(entry) {
+        focusMessageTimer.stop()
+        focusMessage = ""
         if (invoke(entry, "default")) return
         const emitter = NotificationEmitterRepository.emitters[entry.emitterKey]
-        focusMessage = ""
-        if (!WindowService.focusEmitter(emitter?.desktopEntry || "", emitter?.name || ""))
+        if (!WindowService.focusEmitter(emitter?.desktopEntry || "", emitter?.name || "")) {
             focusMessage = "No matching application window is available."
+            focusMessageTimer.restart()
+        }
     }
     function dismiss(entry, fromHistory) {
         if (fromHistory && entry.archiveId && !NotificationRepository.remove(entry.archiveId)) return
@@ -203,6 +220,11 @@ Singleton {
         job?.lock?.destroy()
     }
     NativeNotificationServer { service: root }
+    Timer {
+        id: focusMessageTimer
+        interval: 3000
+        onTriggered: root.focusMessage = ""
+    }
     Timer {
         interval: 100
         repeat: true

@@ -63,6 +63,7 @@ Column {
         NotificationButton {
             implicitWidth: Theme.controlHeight
             glyph: Theme.deleteIcon
+            fillColor: Theme.notificationCritical
             hint: "Delete this emitter's history and dismiss its current notifications; keep its settings"
             onClicked: NotificationService.clearEmitter(root.group.emitterKey)
         }

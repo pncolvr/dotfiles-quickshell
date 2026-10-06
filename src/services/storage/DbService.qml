@@ -10,7 +10,7 @@ Singleton {
 
     readonly property string name: Config.databaseName
     readonly property string path: Config.databasePath
-    readonly property int schemaVersion: 3
+    readonly property int schemaVersion: 4
     readonly property bool ready: state.ready
     readonly property string error: state.error
 
@@ -47,6 +47,11 @@ Singleton {
                 tx.executeSql("CREATE TABLE IF NOT EXISTS store.twitch_users (login TEXT PRIMARY KEY COLLATE NOCASE, added_at INTEGER NOT NULL)")
                 tx.executeSql("CREATE TABLE IF NOT EXISTS store.twitch_schedules (login TEXT PRIMARY KEY COLLATE NOCASE, starts_at INTEGER, fetched_at INTEGER NOT NULL)")
                 tx.executeSql("CREATE TABLE IF NOT EXISTS store.twitch_avatars (login TEXT PRIMARY KEY COLLATE NOCASE, source_url TEXT NOT NULL, image_data_url TEXT NOT NULL, fetched_at INTEGER NOT NULL)")
+                tx.executeSql("CREATE TABLE IF NOT EXISTS store.twitch_notified_streams (login TEXT PRIMARY KEY COLLATE NOCASE, stream_id TEXT NOT NULL, online INTEGER NOT NULL DEFAULT 1)")
+                const streamColumns = tx.executeSql("PRAGMA store.table_info(twitch_notified_streams)").rows
+                const streamNames = []
+                for (let index = 0; index < streamColumns.length; index++) streamNames.push(streamColumns.item(index).name)
+                if (!streamNames.includes("online")) tx.executeSql("ALTER TABLE store.twitch_notified_streams ADD COLUMN online INTEGER NOT NULL DEFAULT 1")
                 tx.executeSql("CREATE TABLE IF NOT EXISTS store.battery_receivers (device_id TEXT PRIMARY KEY, payload_json TEXT NOT NULL, updated_at INTEGER NOT NULL)")
                 tx.executeSql("CREATE TABLE IF NOT EXISTS store.preferences (key TEXT PRIMARY KEY, value_json TEXT NOT NULL)")
                 tx.executeSql("CREATE TABLE IF NOT EXISTS store.notification_emitters (emitter_key TEXT PRIMARY KEY, display_name TEXT NOT NULL, icon TEXT NOT NULL DEFAULT '', desktop_entry TEXT NOT NULL DEFAULT '', muted INTEGER NOT NULL DEFAULT 0, allow_dnd INTEGER NOT NULL DEFAULT 0, exclude_history INTEGER NOT NULL DEFAULT 0)")

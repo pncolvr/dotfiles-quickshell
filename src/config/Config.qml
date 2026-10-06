@@ -58,6 +58,7 @@ Item {
     // The database is local to this config and ignored by Git.
     readonly property string databasePath: Quickshell.shellPath("data/quickshell.db")
     readonly property string databaseName: "quickshell"
+    // Whole minutes, aligned to the minute of the hour (:00, :05, :10, ...).
     readonly property int twitchInterval: Timespan.fromMinutes(5)
     readonly property int twitchUndoDuration: Timespan.fromSeconds(6)
     readonly property string twitchBaseUrl: "https://www.twitch.tv/"

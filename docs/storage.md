@@ -23,7 +23,10 @@ the clock, including across midnight. Failed requests preserve the previous
 cache. Avatar image payloads are stored as base64 data URLs in SQLite and displayed
 directly by QML. A changed profile-image URL refreshes the cached image; failed
 downloads retain the previous one. Removing a streamer deletes its schedule and
-avatar too. The picker JSON remains a runtime export.
+avatar too. Schema version 4 adds `twitch_notified_streams`, with only one stream ID
+per followed streamer, plus its latest online/offline flag. New live alerts replace
+that ID; removing a streamer deletes it, and Undo restores it. The picker JSON
+remains a runtime export.
 
 ## Notification history
 
