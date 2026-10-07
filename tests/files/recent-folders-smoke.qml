@@ -110,7 +110,8 @@ Scope {
                             ? files[index - 1].usedAt >= file.usedAt : files[index - 1].isDirectory)),
                         "folders are first, with descending recency within each group")
                     const row = list.itemAtIndex(1) as RecentFileRow
-                    root.check(row.Drag.mimeData["text/uri-list"] === RecentFilesService.files[1].uri + "\r\n",
+                    root.panel.dragSource.prepare(root.panel.dragFilesFor(row.file.uri), RecentFilesService.activeTab)
+                    root.check(root.panel.dragSource.Drag.mimeData["text/uri-list"] === RecentFilesService.files[1].uri + "\r\n",
                         "folder files use the existing native file drag payload")
                     const screenshot = Quickshell.env("RECENT_FOLDERS_TEST_SCREENSHOT")
                     if (screenshot) root.panel.grabToImage(result => result.saveToFile(screenshot))

@@ -145,7 +145,8 @@ Scope {
                     const row = root.rowFor(root.pinnedPath)
                     panel.selectFile(row.file.uri, Qt.NoModifier)
                     mouse.keyClick(Qt.Key_A, Qt.ControlModifier)
-                    root.check(panel.selectedUris.length === 2 && row.Drag.mimeData["text/uri-list"]
+                    panel.dragSource.prepare(panel.dragFilesFor(row.file.uri), RecentFilesService.activeTab)
+                    root.check(panel.selectedUris.length === 2 && panel.dragSource.Drag.mimeData["text/uri-list"]
                         === panel.selectedFiles.map(file => file.uri + "\r\n").join(""),
                         "Pinned reuses multiple selection and grouped file drag payloads")
                     root.clickPin(root.recentPath)

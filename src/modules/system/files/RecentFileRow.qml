@@ -14,36 +14,13 @@ Rectangle {
     readonly property bool selected: selection?.selectedUris.includes(file.uri) ?? false
     readonly property bool pinned: fileService.isPinned(file.uri)
     readonly property string iconSource: Quickshell.iconPath(file.icon || "text-x-generic", true)
-    property bool dragging: false
-    property bool dragReady: false
+    readonly property bool dragging: selection?.dragSource.dragging === true
+        && selection.dragSource.files.some(entry => entry.uri === file.uri)
     implicitHeight: Theme.recentFilesRowHeight
     radius: Theme.iconButtonRadius
     color: hover.hovered || dragging ? Theme.alternateBackground : "transparent"
     border.width: selected ? 1 : 0
     border.color: Theme.accent
-
-    Drag.dragType: Drag.Automatic
-    Drag.active: fileDrag.active && root.dragReady
-    Drag.mimeData: ({"text/uri-list": (root.selected ? root.selection.selectedFiles : [root.file])
-        .map(file => file.uri + "\r\n").join("")})
-    Drag.supportedActions: Qt.CopyAction
-    Drag.proposedAction: Qt.CopyAction
-    Drag.imageSource: root.iconSource
-    Drag.imageSourceSize: Qt.size(32, 32)
-    Drag.hotSpot: Qt.point(16, 16)
-    Drag.onDragStarted: {
-        root.dragging = true
-        root.fileService.beginDrag()
-        TooltipService.beginDrag()
-    }
-    Drag.onDragFinished: root.finishDrag()
-    function finishDrag() {
-        if (!dragging) return
-        dragging = false
-        fileService.endDrag()
-        TooltipService.endDrag()
-    }
-    Component.onDestruction: finishDrag()
 
     HoverHandler { id: hover; cursorShape: Qt.PointingHandCursor }
     MouseArea {
@@ -60,8 +37,7 @@ Rectangle {
         target: null
         acceptedButtons: Qt.LeftButton
         onActiveChanged: {
-            if (active) root.selection?.prepareDrag(root.file.uri, centroid.modifiers)
-            root.dragReady = active
+            if (active) root.selection?.startFileDrag(root.file.uri, centroid.modifiers)
         }
     }
 

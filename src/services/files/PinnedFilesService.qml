@@ -16,7 +16,7 @@ Singleton {
     }
     property string error: ""
     readonly property bool checking: check.running
-    readonly property bool importing: importFiles.running || state.pendingPaths.length > 0
+    readonly property bool importing: importFiles.running || state.pendingImports.length > 0
 
     QtObject {
         id: state
@@ -25,8 +25,10 @@ Singleton {
         property var missingUris: []
         property var checkedFiles: []
         property string input: ""
-        property var pendingPaths: []
-        property var pendingFiles: []
+        property var pendingImports: []
+        property var pendingPlacements: []
+        property var pendingReorder: null
+        property string importBeforeUri: ""
         property string importInput: ""
     }
 
@@ -45,27 +47,46 @@ Singleton {
         return paths
     }
     function acceptsUrls(urls) { return pathsFromUrls(urls).length > 0 }
-    function pinUrls(urls) {
+    function pinUrls(urls, beforeUri = "") {
         const paths = pathsFromUrls(urls)
         if (paths.length === 0) return false
-        state.pendingPaths = Array.from(new Set(state.pendingPaths.concat(paths)))
+        state.pendingImports = state.pendingImports.concat([{paths: paths, beforeUri: beforeUri}])
         importNext()
         return true
     }
     function importNext() {
-        if (importFiles.running || state.pendingPaths.length === 0) return
-        state.importInput = JSON.stringify(state.pendingPaths)
-        state.pendingPaths = []
+        if (importFiles.running || state.pendingImports.length === 0) return
+        const request = state.pendingImports[0]
+        state.pendingImports = state.pendingImports.slice(1)
+        state.importInput = JSON.stringify(request.paths)
+        state.importBeforeUri = request.beforeUri
         importFiles.stdinEnabled = true
         importFiles.running = true
     }
     function addPendingFiles() {
-        if (state.dragging || state.pendingFiles.length === 0) return
+        if (state.dragging || state.pendingPlacements.length === 0) return
         const entries = files.slice()
-        for (const file of state.pendingFiles) {
-            if (!entries.some(entry => entry.uri === file.uri)) entries.push(file)
+        for (const placement of state.pendingPlacements) {
+            const added = placement.files.filter(file => !entries.some(entry => entry.uri === file.uri))
+            const index = entries.findIndex(file => file.uri === placement.beforeUri)
+            entries.splice(index < 0 ? entries.length : index, 0, ...added)
         }
-        if (save(entries)) { state.pendingFiles = []; refresh() }
+        if (save(entries)) { state.pendingPlacements = []; refresh() }
+    }
+    function reorder(uris, beforeUri = "") {
+        const moving = files.filter(file => uris.includes(file.uri))
+        if (moving.length === 0) return false
+        // Dropping a group onto itself keeps its current order.
+        if (moving.some(file => file.uri === beforeUri)) return true
+        if (state.dragging) {
+            state.pendingReorder = {uris: moving.map(file => file.uri), beforeUri: beforeUri}
+            return true
+        }
+        const remaining = files.filter(file => !uris.includes(file.uri))
+        const index = remaining.findIndex(file => file.uri === beforeUri)
+        remaining.splice(index < 0 ? remaining.length : index, 0, ...moving)
+        if (remaining.every((file, i) => file.uri === files[i].uri)) return true
+        return save(remaining)
     }
     function save(entries) {
         if (!PreferencesRepository.setValue("files.pinned", entries)) {
@@ -87,6 +108,11 @@ Singleton {
     function beginDrag() { state.dragging = true }
     function endDrag() {
         state.dragging = false
+        if (state.pendingReorder) {
+            const move = state.pendingReorder
+            state.pendingReorder = null
+            reorder(move.uris, move.beforeUri)
+        }
         addPendingFiles()
         removeMissing()
         if (state.refreshPending) refresh()
@@ -125,11 +151,11 @@ Singleton {
             try { result = JSON.parse(imported.text) } catch (_) { result = null }
             if (exitCode === 0 && exitStatus === 0 && result && Array.isArray(result.files)) {
                 if (result.files.length > 0) {
-                    state.pendingFiles = state.pendingFiles.concat(result.files)
+                    state.pendingPlacements = state.pendingPlacements.concat([{files: result.files, beforeUri: state.importBeforeUri}])
                     root.addPendingFiles()
                 } else root.error = "Only existing, readable files can be pinned."
             } else root.error = "Could not pin dropped files."
-            if (state.pendingPaths.length > 0) Qt.callLater(root.importNext)
+            if (state.pendingImports.length > 0) Qt.callLater(root.importNext)
         }
         // qmllint enable signal-handler-parameters
     }

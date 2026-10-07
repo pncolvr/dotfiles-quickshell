@@ -27,11 +27,21 @@ tab to unpin that file. Directories do not have pin buttons.
 
 Drop files onto the **Pinned** tab header, or anywhere in its file list, to pin
 them. Multiple files can be dropped together, including from Recent or folder
-tabs. The target highlights in the accent color. Drops keep the current tab in
-place and skip existing pins, directories, and missing or unreadable files.
+tabs. Hold the drag over the Pinned header briefly to open the tab; leaving the
+header cancels the pending switch. The drag source and its file selection survive
+the switch. The target highlights in the accent color. Drops skip existing pins,
+directories, and missing or unreadable files.
 Only local files are accepted; pinning does not move or copy their contents.
 When no pins exist, use a row's pin button to create the first one and reveal
 the Pinned tab.
+
+Drag a pinned file to another position in the list to reorder it. The accent
+insertion line marks where it will go; the upper half of a row inserts before it,
+and the lower half inserts after it. A selected group moves together in its
+existing order. New files dropped into the list are also inserted at that
+position. Hold the drag near the top or bottom edge to scroll through longer
+lists. The saved order survives refresh and shell restarts. Reordering changes
+only the pin list and leaves the documents in place.
 
 The Pinned tab appears only when pinned documents exist. Pins survive shell
 restarts, removal of their original folder tab, and the Recent age/count limits.

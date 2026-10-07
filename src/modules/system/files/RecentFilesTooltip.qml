@@ -24,6 +24,12 @@ Column {
     property string renameFolder: ""
     readonly property var selectedFiles: fileService.files.filter(file => selectedUris.includes(file.uri))
     property alias folderPicker: picker
+    property alias dragSource: fileDragSource
+    property int pinDropIndex: -1
+    property real pinDropPointerY: 0
+    property real dragPanelHeight: 0
+    readonly property string pinDropBeforeUri: fileService.files[pinDropIndex]?.uri || ""
+    height: fileDragSource.dragging ? dragPanelHeight : implicitHeight
     width: Math.min(Theme.recentFilesTooltipWidth, (monitor?.width ?? Theme.recentFilesTooltipWidth + Theme.tooltipPaddingWidth * 2) - Theme.tooltipPaddingWidth * 2)
     spacing: Theme.controlSpacing
     Component.onCompleted: { fileService.beginPanel(); syncTabs() }
@@ -37,10 +43,26 @@ Column {
         drag.accepted = drag.hasUrls && (drag.supportedActions & Qt.CopyAction) !== 0
             && fileService.acceptsPinUrls(drag.urls)
     }
-    function pinDrop(drop) {
+    function hoverPinned(drag) {
+        pinnedHover.stop()
+        acceptPinDrag(drag)
+        if (drag.accepted && !pinnedTab) pinnedHover.restart()
+    }
+    function pinDrop(drop, beforeUri = "") {
+        pinnedHover.stop()
         drop.accepted = false
-        if (drop.hasUrls && (drop.supportedActions & Qt.CopyAction) !== 0 && fileService.pinUrls(drop.urls))
-            drop.accept(Qt.CopyAction)
+        if (!drop.hasUrls || (drop.supportedActions & Qt.CopyAction) === 0 || !fileService.acceptsPinUrls(drop.urls)) return
+        const accepted = fileDragSource.dragging && fileDragSource.originTab === "pinned"
+            ? fileService.reorderPins(fileDragSource.files.map(file => file.uri), beforeUri)
+            : fileService.pinUrls(drop.urls, beforeUri)
+        if (accepted) drop.accept(Qt.CopyAction)
+    }
+    function updatePinDropPosition(y) {
+        pinDropPointerY = y
+        const index = list.indexAt(1, y + list.contentY)
+        const row = list.itemAtIndex(index)
+        pinDropIndex = row ? index + (y + list.contentY >= row.y + row.height / 2 ? 1 : 0)
+            : y + list.contentY <= 0 ? 0 : list.count
     }
     function reconcileSelection() {
         const available = fileService.files.map(file => file.uri)
@@ -67,6 +89,20 @@ Column {
     function prepareDrag(uri, modifiers) {
         // Pressing a selected row must preserve the group until dragging begins.
         if (!selectedUris.includes(uri)) selectFile(uri, modifiers)
+    }
+    function dragFilesFor(uri) {
+        return selectedUris.includes(uri) ? selectedFiles : fileService.files.filter(file => file.uri === uri)
+    }
+    function startFileDrag(uri, modifiers) {
+        prepareDrag(uri, modifiers)
+        dragPanelHeight = root.height
+        fileDragSource.start(dragFilesFor(uri), fileService.activeTab)
+    }
+    FileDragSource { id: fileDragSource; fileService: root.fileService }
+    Timer {
+        id: pinnedHover
+        interval: 350
+        onTriggered: root.fileService.selectPinnedForDrag()
     }
     function editFolderName(path) {
         renameFolder = path
@@ -122,7 +158,8 @@ Column {
             labels: root.tabEntries.map(tab => tab.label)
             interactionEnabled: !root.fileService.dragging
             dropEnabledTabs: root.tabEntries.map(tab => tab.kind === "pinned")
-            onTabDragEntered: (index, drag) => root.acceptPinDrag(drag)
+            onTabDragEntered: (index, drag) => root.hoverPinned(drag)
+            onTabDragExited: index => pinnedHover.stop()
             onTabDropped: (index, drop) => root.pinDrop(drop)
             onTabClicked: index => {
                 const tab = root.tabEntries[index]
@@ -269,7 +306,7 @@ Column {
         id: list
         objectName: "recentFilesList"
         width: parent.width
-        height: Math.min(contentHeight, Math.max(0, root.maxPanelHeight - header.height - limits.height
+        height: Math.min(contentHeight, Math.max(0, (fileDragSource.dragging ? root.dragPanelHeight : root.maxPanelHeight) - header.height - limits.height
             - (renameEditor.visible ? renameEditor.height + root.spacing : 0)
             - (feedback.visible ? feedback.height + root.spacing : 0)
             - (hint.visible ? hint.height + root.spacing : 0) - root.spacing * 2))
@@ -277,6 +314,7 @@ Column {
         clip: true
         boundsBehavior: Flickable.StopAtBounds
         interactive: !root.fileService.dragging
+        onContentYChanged: if (pinnedDrop.containsDrag) root.updatePinDropPosition(root.pinDropPointerY)
         Keys.onPressed: event => {
             if (root.fileService.dragging) return
             if (event.key === Qt.Key_A && (event.modifiers & Qt.ControlModifier)) {
@@ -302,8 +340,15 @@ Column {
             parent: list
             anchors.fill: parent
             enabled: root.pinnedTab
-            onEntered: drag => root.acceptPinDrag(drag)
-            onDropped: drop => root.pinDrop(drop)
+            onEntered: drag => {
+                root.acceptPinDrag(drag)
+                if (drag.accepted) root.updatePinDropPosition(drag.y)
+            }
+            onPositionChanged: drag => root.updatePinDropPosition(drag.y)
+            onDropped: drop => {
+                root.updatePinDropPosition(drop.y)
+                root.pinDrop(drop, root.pinDropBeforeUri)
+            }
             Rectangle {
                 anchors.fill: parent
                 visible: pinnedDrop.containsDrag
@@ -312,6 +357,28 @@ Column {
                 border.color: Theme.accent
                 radius: Theme.iconButtonRadius
             }
+            Rectangle {
+                anchors.left: parent.left
+                anchors.right: parent.right
+                visible: pinnedDrop.containsDrag && root.pinDropIndex >= 0
+                height: 2
+                color: Theme.accent
+                y: Math.max(0, Math.min(pinnedDrop.height - height,
+                    (root.pinDropIndex === list.count ? list.contentHeight
+                        : list.itemAtIndex(root.pinDropIndex)?.y ?? 0) - list.contentY))
+            }
+            Timer {
+                interval: 50
+                repeat: true
+                running: pinnedDrop.containsDrag
+                onTriggered: {
+                    const edge = Theme.recentFilesRowHeight / 2
+                    const direction = root.pinDropPointerY < edge ? -1
+                        : root.pinDropPointerY > list.height - edge ? 1 : 0
+                    if (direction) list.contentY = Math.max(list.originY,
+                        Math.min(list.originY + Math.max(0, list.contentHeight - list.height), list.contentY + direction * 12))
+                }
+            }
         }
     }
     UI.ColumnText {
@@ -319,7 +386,7 @@ Column {
         width: parent.width
         visible: root.fileService.files.length > 0
         text: (root.selectedUris.length > 0 ? root.selectedUris.length + " selected · Drag into an app.\n" : "")
-            + (pinnedDrop.containsDrag ? "Drop files to pin"
+            + (pinnedDrop.containsDrag ? "Drop here to pin or reorder files"
                 : "Click to select · Ctrl/Shift for multiple · Double-click to open")
         color: Theme.inactive
         font.pixelSize: 10

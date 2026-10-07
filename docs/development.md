@@ -56,6 +56,9 @@ drag dismissal protection, filename tooltip interaction, document pin/unpin butt
 conditional Pinned tabs, independent pin persistence, Recent/Pinned default selection,
 default-star accent colors, pin-drop URL validation, multiple-file and queued imports,
 duplicate pins, deleted-file cleanup, and model-update deferral during drag.
+The pin-order fixture also checks delayed tab activation and cancellation,
+source survival across tab changes, insertion positions, grouped moves,
+self-drops, and ordering after a shell restart.
 The tests use temporary history, folders, and a
 private database; they do not alter desktop history or saved folder preferences.
 Set `RECENT_FILES_TEST_SCREENSHOT=/tmp/recent-files.png` to save a panel preview.
@@ -63,7 +66,9 @@ Set `RECENT_FOLDERS_TEST_SCREENSHOT=/tmp/folder-tabs.png` for a folder tab previ
 On the Wayland desktop, drag a row into another app that accepts files and verify
 the destination receives the file. Also drop files from a file manager onto the
 Pinned header and list. The offscreen tests exercise the pin-drop adapter and
-storage; the platform cannot transfer a native drag between applications.
+storage, and keep an internal drag source alive across a tab change. Check native
+cross-tab hover, reordering, and edge scrolling on Wayland; the offscreen platform
+cannot transfer a native drag between applications.
 
 ## Status and timecard
 

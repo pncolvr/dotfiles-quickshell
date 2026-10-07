@@ -40,13 +40,16 @@ xmlns:mime="http://www.freedesktop.org/standards/shared-mime-info">
 <bookmark:applications><bookmark:application name="Test" exec="test %u" modified="$now" count="1"/></bookmark:applications>
 </metadata></info></bookmark></xbel>
 XML
-for test in recent-files-module-smoke recent-files-smoke recent-selection-smoke recent-folders-seed recent-navigation-smoke recent-folders-restart recent-folders-empty recent-pins-drop-smoke recent-pins-seed recent-pins-recent-default recent-pins-restart recent-pins-empty; do
+for test in recent-files-module-smoke recent-files-smoke recent-selection-smoke recent-folders-seed recent-navigation-smoke recent-folders-restart recent-folders-empty recent-pins-drop-smoke recent-pins-order-seed recent-pins-order-restart recent-pins-seed recent-pins-recent-default recent-pins-restart recent-pins-empty; do
     fixture=$test
     if [[ $test == recent-folders-* ]]; then
         fixture=recent-folders-smoke
         export RECENT_FOLDERS_TEST_PHASE=${test#recent-folders-}
     fi
-    if [[ $test == recent-pins-* && $test != recent-pins-drop-smoke ]]; then
+    if [[ $test == recent-pins-order-* ]]; then
+        fixture=recent-pins-order-smoke
+        export RECENT_PINS_ORDER_TEST_PHASE=${test#recent-pins-order-}
+    elif [[ $test == recent-pins-* && $test != recent-pins-drop-smoke ]]; then
         fixture=recent-pins-smoke
         export RECENT_PINS_TEST_PHASE=${test#recent-pins-}
         if [[ $RECENT_PINS_TEST_PHASE == restart ]]; then

@@ -117,7 +117,11 @@ Singleton {
         refresh()
     }
     function selectPinned() {
-        if (state.dragging || pinnedFiles.length === 0 || showingPinned) return
+        if (state.dragging) return
+        selectPinnedForDrag()
+    }
+    function selectPinnedForDrag() {
+        if (pinnedFiles.length === 0 || showingPinned) return
         state.activeFolder = ""
         state.navigationFolders = []
         state.showingPinned = true
@@ -127,7 +131,8 @@ Singleton {
     }
     function isPinned(uri) { return PinnedFilesService.contains(uri) }
     function acceptsPinUrls(urls) { return PinnedFilesService.acceptsUrls(urls) }
-    function pinUrls(urls) { return PinnedFilesService.pinUrls(urls) }
+    function pinUrls(urls, beforeUri = "") { return PinnedFilesService.pinUrls(urls, beforeUri) }
+    function reorderPins(uris, beforeUri = "") { return PinnedFilesService.reorder(uris, beforeUri) }
     function togglePin(file) {
         if (state.dragging) return false
         return PinnedFilesService.toggle(file)

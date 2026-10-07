@@ -73,7 +73,8 @@ Scope {
                 root.click(2, Qt.ControlModifier)
                 root.check(panel.selectedUris.length === 2 && root.row(0).selected && root.row(2).selected
                     && backend.opened === "", "Ctrl-click adds a file without opening it")
-                root.check(root.row(2).Drag.mimeData["text/uri-list"] === [backend.files[0], backend.files[2]]
+                panel.dragSource.prepare(panel.dragFilesFor(backend.files[2].uri), backend.activeTab)
+                root.check(panel.dragSource.Drag.mimeData["text/uri-list"] === [backend.files[0], backend.files[2]]
                     .map(file => file.uri + "\r\n").join(""), "drag supplies every selected URI in displayed order")
                 mouse.mouseDoubleClickSequence(root.row(2), undefined, undefined, Qt.LeftButton, Qt.ControlModifier)
                 root.check(panel.selectedUris.length === 1 && !root.row(2).selected, "repeated Ctrl-click toggles without opening on a double-click event")
@@ -92,7 +93,7 @@ Scope {
                 root.check(panel.selectedUris.length === 4 && root.row(3).selected, "refresh preserves selection by URI")
                 const source = root.row(1)
                 root.expectedPayload = panel.selectedFiles.map(file => file.uri + "\r\n").join("")
-                source.Drag.dragStarted.connect(() => { root.nativePayload = source.Drag.mimeData["text/uri-list"] })
+                panel.dragSource.Drag.dragStarted.connect(() => { root.nativePayload = panel.dragSource.Drag.mimeData["text/uri-list"] })
                 mouse.mouseDrag(source, source.width / 2, source.height / 2, 30, 0)
                 panel.prepareDrag(backend.files[1].uri, Qt.NoModifier)
                 root.check(panel.selectedUris.length === 4, "dragging a selected row preserves the group")

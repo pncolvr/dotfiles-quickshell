@@ -84,9 +84,10 @@ Scope {
                 root.check(panel.height <= panel.maxPanelHeight, "list stays within screen height")
                 root.check(list.contentHeight > list.height, "long list scrolls")
                 const row = list.itemAtIndex(0) as RecentFileRow
-                root.check(row.Drag.dragType === Drag.Automatic && row.Drag.supportedActions === Qt.CopyAction,
+                panel.dragSource.prepare(panel.dragFilesFor(row.file.uri), backend.activeTab)
+                root.check(panel.dragSource.Drag.dragType === Drag.Automatic && panel.dragSource.Drag.supportedActions === Qt.CopyAction,
                     "file drag uses the native copy action")
-                root.check(row.Drag.mimeData["text/uri-list"] === backend.files[0].uri + "\r\n", "drag payload is a file URI")
+                root.check(panel.dragSource.Drag.mimeData["text/uri-list"] === backend.files[0].uri + "\r\n", "drag payload is a file URI")
                 mouse.mouseDoubleClickSequence(row, row.width / 2, row.height / 2)
                 root.check(backend.opened === backend.files[0].uri, "double-click opens the file")
                 const screenshot = Quickshell.env("RECENT_FILES_TEST_SCREENSHOT")

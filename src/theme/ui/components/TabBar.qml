@@ -17,6 +17,7 @@ QC.TabBar {
     signal tabClicked(int index)
     signal tabCloseRequested(int index)
     signal tabDragEntered(int index, DragEvent drag)
+    signal tabDragExited(int index)
     signal tabDropped(int index, DragEvent drop)
     implicitHeight: Theme.controlHeight
     clip: true
@@ -110,6 +111,7 @@ QC.TabBar {
                 anchors.fill: parent
                 enabled: root.dropEnabledTabs[tabButton.index] === true
                 onEntered: drag => { drag.accepted = false; root.tabDragEntered(tabButton.index, drag) }
+                onExited: root.tabDragExited(tabButton.index)
                 onDropped: drop => { drop.accepted = false; root.tabDropped(tabButton.index, drop) }
             }
             HoverHandler { cursorShape: Qt.PointingHandCursor }
