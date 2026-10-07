@@ -110,7 +110,7 @@ wait_client 0
 printf '%s\n' '{"action":"default","allowMultipleSelection":true,"items":[{"title":"Alpha","result":"a"},{"title":"Beta","result":"b"},{"title":"Gamma","result":"g"}]}' > "$test_dir/links.json"
 bash "$picker" --json "$test_dir/links.json" > "$test_dir/result" 2> "$test_dir/client-error" & client_pid=$!
 wait_open
-ipc call pickertest snapshot | jq -e '.acceptLabel == "Open links" and (.canAccept | not)' >/dev/null
+ipc call pickertest snapshot | jq -e '.acceptLabel == "Open links" and .canAccept and .selected == []' >/dev/null
 ipc call pickertest query Alpha
 ipc call pickertest clickControl pickerSelectVisible | jq -e '.' >/dev/null
 ipc call pickertest snapshot | jq -e '.selected == ["0"]' >/dev/null
@@ -123,12 +123,14 @@ ipc call pickertest query Beta
 ipc call pickertest toggleVisible
 ipc call pickertest snapshot | jq -e '.selected == ["0","1"]' >/dev/null
 ipc call pickertest toggleVisible
+ipc call pickertest snapshot | jq -e '.selected == [] and .canAccept' >/dev/null
+ipc call pickertest query 'no matching link'
 ipc call pickertest enter
 ipc call pickertest snapshot | jq -e '.visible and .selected == [] and (.canAccept | not)' >/dev/null
 ipc call pickertest query ''
 ipc call pickertest down
 ipc call pickertest toggleEntry
-ipc call pickertest snapshot | jq -e '.selected == ["1"]' >/dev/null
+ipc call pickertest snapshot | jq -e '.selected == ["1"] and .currentIndex == 2' >/dev/null
 ipc call pickertest clearSelection
 ipc call pickertest snapshot | jq -e '.selected == [] and .query == ""' >/dev/null
 ipc call pickertest query Beta
@@ -136,7 +138,16 @@ ipc call pickertest clickControl pickerSelectVisible | jq -e '.' >/dev/null
 ipc call pickertest clickControl pickerAccept | jq -e '.' >/dev/null
 wait_client 0
 [[ $(<"$test_dir/result") == b ]]
-printf 'PASS: mouse/keyboard selection, search typing, filtered selection toggle, clear all, explicit browser submission and no empty-selection fallback\n'
+for activation in keyboard button; do
+    bash "$picker" --json "$test_dir/links.json" > "$test_dir/result" 2> "$test_dir/client-error" & client_pid=$!
+    wait_open
+    if [[ $activation == keyboard ]]; then ipc call pickertest down; else ipc call pickertest query Beta; fi
+    ipc call pickertest snapshot | jq -e '.selected == [] and .canAccept and .filtered[.currentIndex].result == "b"' >/dev/null
+    if [[ $activation == keyboard ]]; then ipc call pickertest enter; else ipc call pickertest clickControl pickerAccept | jq -e '.' >/dev/null; fi
+    wait_client 0
+    [[ $(<"$test_dir/result") == b ]]
+done
+printf 'PASS: mouse/keyboard selection, search typing, filtered selection toggle, clear all, selected-entry submission and highlighted-row fallback with Enter/button\n'
 
 ipc call pickertest clipboardFixture
 ipc call pickertest query 'delete me'

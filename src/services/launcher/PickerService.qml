@@ -36,9 +36,8 @@ Singleton {
     readonly property var selectedItems: items.filter(item => selectedIds.includes(item.id))
     readonly property bool selectionToggleClears: filteredItems.length > 0
         ? filteredItems.every(item => selectedIds.includes(item.id)) : selectedIds.length > 0
-    readonly property bool canAccept: multiple ? selectedItems.length > 0
-        || (allowTyped && query.trim().length > 0 && filteredItems.length === 0)
-        : !!currentItem || (allowTyped && query.trim().length > 0)
+    readonly property bool canAccept: !!currentItem || (multiple && selectedItems.length > 0)
+        || (allowTyped && query.trim().length > 0)
     signal opened()
 
     function score(text, search, caseSmart, useFuzzy) {
@@ -185,7 +184,7 @@ Singleton {
     function accept(custom, copyOnly) {
         if (!canAccept) return
         const picked = multiple && selectedItems.length ? selectedItems
-            : !multiple && currentItem ? [currentItem] : [{id: "typed", title: query, result: query}]
+            : currentItem ? [currentItem] : [{id: "typed", title: query, result: query}]
         if (!picked.length) return
         const item = picked[0]
         if (mode === "menu") {

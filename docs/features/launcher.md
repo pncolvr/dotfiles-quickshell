@@ -51,14 +51,15 @@ returns the entire response object. The client never executes returned content.
 
 Escape/outside click exits 1, errors/timeouts exit 2, acceptance exits 0, and
 Ctrl+Enter exits 10 when `customAccept` is enabled. Multi-selection rows toggle
-with a click or Ctrl+Space, including while typing in search. Arrow keys move
+with a click or Shift+Space, including while typing in search. Shift+Space also
+moves the highlight to the next result, stopping at the last row. Arrow keys move
 the highlighted entry; plain Space still types a space in search. Checkboxes
 show the selection. Ctrl+A and the Select visible button add the current filtered
 results, preserving earlier selections. When all visible results are selected,
 the action toggles to Deselect all and clears selections across every search.
-Ctrl+Shift+A always clears every selection. Enter submits the selection,
-and is inactive when none is selected. A typed value with no matches can still
-be submitted when the provider allows it. Browser menus label submission
+Ctrl+Shift+A always clears every selection. Enter and the submit button use the
+selected entries, or the highlighted row when none are selected. A typed value
+with no matches can still be submitted when the provider allows it. Browser menus label submission
 Open links, which opens each selected URL through the existing browser helper.
 Smart-case matching becomes case sensitive when the query contains uppercase.
 Fuzzy matching uses stable subsequence ranking; its scores are not identical to fzf.

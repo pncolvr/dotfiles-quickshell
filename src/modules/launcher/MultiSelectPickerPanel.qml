@@ -6,14 +6,16 @@ import "../../theme/ui" as UI
 
 PickerPanelBase {
     id: root
-    footerHint: picker.selectedIds.length + " selected · Arrows to move · Ctrl+Space toggle\n"
-        + "Ctrl+A select visible / clear all · Enter to " + picker.acceptLabel.toLowerCase()
+    footerHint: picker.selectedIds.length + " selected · Arrows to move · Shift+Space toggle + next\n"
+        + "Ctrl+A select visible / clear all · "
+        + (picker.selectedIds.length ? "Enter to " + picker.acceptLabel.toLowerCase() : "Enter uses highlighted row")
 
     Keys.onPressed: event => {
         switch (event.key) {
             case Qt.Key_Space:
-                if (root.searchHasFocus && !(event.modifiers & Qt.ControlModifier)) { event.accepted = false; return }
+                if (root.searchHasFocus && !(event.modifiers & Qt.ShiftModifier)) { event.accepted = false; return }
                 root.picker.select(root.picker.currentIndex, true)
+                root.picker.move(1)
                 break
             case Qt.Key_A:
                 if (!(event.modifiers & Qt.ControlModifier)) { event.accepted = false; return }

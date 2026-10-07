@@ -65,7 +65,7 @@ Scope {
     IpcHandler {
         target: "pickertest"
         function snapshot(): string { return JSON.stringify({visible:PickerService.visible,mode:PickerService.mode,
-            query:PickerService.query,items:PickerService.items,filtered:PickerService.filteredItems,
+            query:PickerService.query,items:PickerService.items,filtered:PickerService.filteredItems,currentIndex:PickerService.currentIndex,
             selected:PickerService.selectedIds,canAccept:PickerService.canAccept,acceptLabel:PickerService.acceptLabel,
             layout:PickerService.layout,
             directory:PickerService.requestDirectory}) }
@@ -81,7 +81,7 @@ Scope {
         function pressEscape(): void { panel.focusSearch(); events.keyClick(Qt.Key_Escape, Qt.NoModifier, 0) }
         function enter(): void { panel.focusSearch(); events.keyClick(Qt.Key_Return, Qt.NoModifier, 0) }
         function down(): void { panel.focusSearch(); events.keyClick(Qt.Key_Down, Qt.NoModifier, 0) }
-        function toggleEntry(): void { panel.focusSearch(); events.keyClick(Qt.Key_Space, Qt.ControlModifier, 0) }
+        function toggleEntry(): void { panel.focusSearch(); events.keyClick(Qt.Key_Space, Qt.ShiftModifier, 0) }
         function toggleVisible(): void { panel.focusSearch(); events.keyClick(Qt.Key_A, Qt.ControlModifier, 0) }
         function clearSelection(): void { panel.focusSearch(); events.keyClick(Qt.Key_A, Qt.ControlModifier | Qt.ShiftModifier, 0) }
         function typeSpace(): void { panel.focusSearch(); events.keyClick(Qt.Key_Space, Qt.NoModifier, 0) }
