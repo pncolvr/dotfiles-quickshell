@@ -2,10 +2,12 @@
 
 The launcher uses the same theme, search field, buttons and scrollbar as the bar.
 Clickable rows, buttons and scrollbars show a pointing-hand cursor. It opens on
-the focused monitor, keeps keyboard focus while the pointer moves, and closes
+the focused monitor, centered horizontally and attached below the bar with the
+same curved joins and shadow as tooltips. The search field stays at the same
+height across picker modes. It keeps keyboard focus while the pointer moves, and closes
 with Escape or an outside click.
 Picker headers contain search. Prompt titles are hidden by
-default; set `Config.pickerShowPrompt` to `true` to display them.
+default; set `Config.pickerShowPrompt` to `true` to display them below search.
 `Theme.pickerBackgroundOpacity` controls background transparency (0–1), keeping
 text and controls opaque. Escape dismisses the picker.
 The list keeps its opening size while filtering or deleting entries, so the

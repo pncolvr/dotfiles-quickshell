@@ -8,6 +8,7 @@ import "../../config"
 Item {
     id: root
     property var picker: PickerService
+    property bool backgroundVisible: true
     readonly property real radius: Theme.tooltipRadius
     readonly property PickerPanelBase panel: content.item as PickerPanelBase
     implicitWidth: panel?.implicitWidth ?? Theme.pickerWidth
@@ -26,15 +27,16 @@ Item {
         id: standardPanel
         PickerPanelBase {
             picker: root.picker
+            backgroundVisible: root.backgroundVisible
             minimumListRows: root.picker.mode === "apps" ? Config.pickerMaxRows : 1
         }
     }
     Component {
         id: clipboardPanel
-        ClipboardPickerPanel { picker: root.picker }
+        ClipboardPickerPanel { picker: root.picker; backgroundVisible: root.backgroundVisible }
     }
     Component {
         id: multiSelectPanel
-        MultiSelectPickerPanel { picker: root.picker }
+        MultiSelectPickerPanel { picker: root.picker; backgroundVisible: root.backgroundVisible }
     }
 }

@@ -9,6 +9,7 @@ import "../../config"
 Rectangle {
     id: root
     property var picker: PickerService
+    property bool backgroundVisible: true
     readonly property bool gridMode: picker.layout === "grid"
     readonly property bool searchHasFocus: search.activeFocus
     property string searchPlaceholder: "Search"
@@ -59,8 +60,8 @@ Rectangle {
     }
 
     radius: Theme.tooltipRadius
-    color: Qt.rgba(Theme.tooltipBackground.r, Theme.tooltipBackground.g, Theme.tooltipBackground.b,
-        Theme.tooltipBackground.a * Math.max(0, Math.min(1, Theme.pickerBackgroundOpacity)))
+    color: backgroundVisible ? Qt.rgba(Theme.tooltipBackground.r, Theme.tooltipBackground.g, Theme.tooltipBackground.b,
+        Theme.tooltipBackground.a * Math.max(0, Math.min(1, Theme.pickerBackgroundOpacity))) : "transparent"
     FocusScope {
         anchors.fill: parent
         anchors.margins: Theme.tooltipPaddingHeight
@@ -88,15 +89,6 @@ Rectangle {
             id: header
             width: parent.width
             spacing: Theme.controlSpacing
-            UI.Text {
-                centerVertical: false
-                width: parent.width
-                height: visible ? Theme.controlHeight : 0
-                visible: Config.pickerShowPrompt && root.picker.prompt.length > 0
-                verticalAlignment: Text.AlignVCenter
-                text: root.picker.prompt
-                textFormat: Text.PlainText
-            }
             UI.SearchField {
                 id: search
                 objectName: "pickerSearch"
@@ -116,6 +108,15 @@ Rectangle {
             UI.Text {
                 centerVertical: false
                 width: parent.width
+                height: visible ? Theme.controlHeight : 0
+                visible: Config.pickerShowPrompt && root.picker.prompt.length > 0
+                verticalAlignment: Text.AlignVCenter
+                text: root.picker.prompt
+                textFormat: Text.PlainText
+            }
+            UI.Text {
+                centerVertical: false
+                width: parent.width
                 text: root.panelError
                 visible: text.length > 0
                 textFormat: Text.PlainText
@@ -131,7 +132,7 @@ Rectangle {
             y: header.height + Theme.controlSpacing
             height: Math.max(0, footer.y - y - Theme.controlSpacing)
             // Keep the opening size while filtering or deleting entries so the
-            // centered dialog and its footer do not move under keyboard focus.
+            // panel and its footer do not move under keyboard focus.
             implicitHeight: root.gridMode ? Theme.pickerGridHeight : root.openedListHeight
         }
         UI.Text {

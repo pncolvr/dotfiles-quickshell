@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 project_root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)
+placement_display=${WAYLAND_DISPLAY:-}
+if [[ -n $placement_display && $placement_display != /* ]]; then placement_display="${XDG_RUNTIME_DIR:?}/$placement_display"; fi
 test_dir=$(mktemp -d /tmp/quickshell-picker-test.XXXXXXXX)
 shell_pid=""; client_pid=""
 cleanup() {
@@ -24,6 +26,7 @@ tar -C "$project_root" --exclude='*.env' --exclude='hosts.json' -cf - src | tar 
 sed -Ei 's/readonly property int clipboardMaxItems: [0-9]+/readonly property int clipboardMaxItems: 3/' "$test_dir/src/config/Config.qml"
 sed -Ei 's/readonly property int clipboardMaxTotalBytes: [0-9]+/readonly property int clipboardMaxTotalBytes: 24/' "$test_dir/src/config/Config.qml"
 sed -i 's/readonly property bool clipboardMonitorEnabled: true/readonly property bool clipboardMonitorEnabled: false/' "$test_dir/src/config/Config.qml"
+sed -i 's/readonly property bool pickerShowPrompt: false/readonly property bool pickerShowPrompt: true/' "$test_dir/src/config/Config.qml"
 mkdir -p "$test_dir/data/clipboard"
 sqlite3 "$test_dir/data/quickshell.db" <<'SQL'
 CREATE TABLE clipboard (id TEXT PRIMARY KEY, mime TEXT NOT NULL, kind TEXT NOT NULL, bytes INTEGER NOT NULL, text TEXT NOT NULL DEFAULT '', updated_at INTEGER NOT NULL);
@@ -291,4 +294,15 @@ sed -Ei 's/readonly property int clipboardMaxTotalBytes: 24/readonly property in
 start
 ipc call pickertest quit
 wait "$shell_pid"; shell_pid=""
+if [[ -n $placement_display ]]; then
+    sed 's@"../../src@"src@g' "$project_root/tests/launcher/placement-smoke.qml" > "$test_dir/placement.qml"
+    # Load the native PanelWindow backend but keep every surface hidden. No
+    # keyboard grab, desktop clipboard monitoring or compositor dispatch occurs.
+    QT_QPA_PLATFORM=wayland WAYLAND_DISPLAY="$placement_display" timeout 10 qs -p "$test_dir/placement.qml" > "$test_dir/placement-log" 2>&1 \
+        || { cat "$test_dir/placement-log"; exit 1; }
+    rg -q 'PASS: picker placement' "$test_dir/placement-log" || { cat "$test_dir/placement-log"; exit 1; }
+    ! rg -q 'PICKER FAIL|TypeError:|ReferenceError:|Binding loop detected|Failed to load configuration' "$test_dir/placement-log" \
+        || { cat "$test_dir/placement-log"; exit 1; }
+    printf 'PASS: hidden native picker placement keeps search height fixed across picker modes, filtering and visible prompts\n'
+fi
 printf 'PASS: real Bash/QML IPC, object results, multi-selection, keyboard navigation, typed input, Escape, custom exit and cleanup\n'

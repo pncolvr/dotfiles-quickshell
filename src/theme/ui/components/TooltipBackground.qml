@@ -7,12 +7,14 @@ Shape {
     id: root
 
     required property real panelWidth
+    property real backgroundOpacity: 1
     readonly property real curveRadius: Math.max(0, Math.min(Theme.tooltipRadius, panelWidth / 2, height / 2))
     width: panelWidth + curveRadius * 2
     preferredRendererType: Shape.CurveRenderer
 
     ShapePath {
-        fillColor: Theme.tooltipBackground
+        fillColor: Qt.rgba(Theme.tooltipBackground.r, Theme.tooltipBackground.g, Theme.tooltipBackground.b,
+            Theme.tooltipBackground.a * Math.max(0, Math.min(1, root.backgroundOpacity)))
         strokeColor: "transparent"
         strokeWidth: -1
         startX: 0

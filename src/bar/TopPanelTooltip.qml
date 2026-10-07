@@ -16,6 +16,7 @@ PanelWindow {
     property alias contentX: panel.x
     property alias contentWidth: panel.width
     property alias contentHeight: panel.height
+    property real backgroundOpacity: 1
     readonly property int shadowBlurRadius: Math.max(2, Math.min(64, Theme.tooltipShadowBlurRadius))
     readonly property real shadowBottomPadding: Theme.tooltipShadowEnabled
         ? shadowBlurRadius + Math.max(0, Theme.tooltipShadowVerticalOffset) : 0
@@ -70,6 +71,7 @@ PanelWindow {
 
     UI.TooltipBackground {
         id: background
+        backgroundOpacity: root.backgroundOpacity
         x: panel.x - curveRadius
         y: panel.y
         panelWidth: panel.width
