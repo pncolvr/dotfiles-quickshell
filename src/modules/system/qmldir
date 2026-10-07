@@ -2,6 +2,7 @@ Tray 1.0 tray/Tray.qml
 Totp 1.0 totp/Totp.qml
 Batteries 1.0 batteries/Batteries.qml
 RecentFiles 1.0 files/RecentFiles.qml
+Timers 1.0 timers/Timers.qml
 Notifications 1.0 notifications/Notifications.qml
 Volume 1.0 audio/Volume.qml
 Mic 1.0 audio/Mic.qml

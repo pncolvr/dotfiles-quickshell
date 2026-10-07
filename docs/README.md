@@ -13,6 +13,7 @@
 - [Twitch](features/twitch.md): following, search, browser suggestions and removal undo.
 - [TOTP](features/totp.md): keyring setup, token editing, countdown and secret handling.
 - [Audio](features/audio.md): devices, application routing, levels and profiles.
+- [Countdowns and timers](features/timers.md): durations, pause/resume, bar priority and alarms.
 - [Batteries](features/batteries.md): discovery, warning levels and cached readings.
 - [Recent files](features/recent-files.md): desktop history, folder tabs, limits and file drag.
 - [Status and timecard](features/status.md): work/personal mode, daily totals and detailed reports.

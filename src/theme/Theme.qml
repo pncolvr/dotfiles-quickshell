@@ -77,6 +77,12 @@ Item {
   readonly property string retryIcon: "" // arrows-rotate
   readonly property string chevronDownIcon: "" // chevron-down: choices
   readonly property string playIcon: "" // play
+  readonly property string pauseIcon: "\uf04c" // pause
+
+  // Countdowns and elapsed timers (Font Awesome stopwatch).
+  readonly property string timersIcon: "\uf2f2"
+  readonly property int timersTooltipWidth: 420
+  readonly property real timersMaxHeightRatio: 0.5
 
   readonly property int controlHeight: 34
   readonly property int actionButtonWidth: 30

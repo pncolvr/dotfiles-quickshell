@@ -6,6 +6,7 @@ A desktop bar for Hyprland, built with QML and Quickshell.
 
 - Workspaces and windows with focus and next/previous navigation
 - Clock with month and year calendars
+- Countdowns and elapsed timers with pause/resume, alarms and bar time remaining
 - CPU, memory, temperature and network stats
 - Microphone and volume controls with device selection and audio profiles
 - Screen-sharing status and sound notifications

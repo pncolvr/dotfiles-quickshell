@@ -1,0 +1,10 @@
+Timers 1.0 Timers.qml
+TimersTooltip 1.0 TimersTooltip.qml
+TimeEntryRow 1.0 TimeEntryRow.qml
+CountdownRow 1.0 CountdownRow.qml
+StopwatchRow 1.0 StopwatchRow.qml
+DurationField 1.0 DurationField.qml
+DurationFields 1.0 DurationFields.qml
+TimeEntryTab 1.0 TimeEntryTab.qml
+CountdownTab 1.0 CountdownTab.qml
+StopwatchTab 1.0 StopwatchTab.qml

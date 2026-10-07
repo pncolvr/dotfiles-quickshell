@@ -46,6 +46,15 @@ component draws above the content and handles both vertical and horizontal bars.
 Inline editors use `UI.EditorActions` for a neutral Cancel button followed by an
 accent Apply button. Recent files, TOTP, and Twitch share this component.
 
+## Countdowns and timers
+
+Run `bash tests/time/timers.sh` for timestamp-based countdown and elapsed timer
+behavior, pause/resume, resets, reuse of completed countdowns, bar priority,
+warning colors, UI controls, scrolling and restoration across shell restarts.
+The offscreen test uses isolated runtime data and mocks `canberra-gtk-play`;
+it checks that each completed countdown sounds exactly once.
+Set `TIMERS_TEST_SCREENSHOT=/tmp/timers.png` to save a panel preview.
+
 ## Recent files
 
 Run `bash tests/files/recent-files.sh` for startup module and tooltip resolution,

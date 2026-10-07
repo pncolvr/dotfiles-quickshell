@@ -55,6 +55,11 @@ Item {
 
     readonly property string calendarUrl: "https://calendar.google.com/calendar/r/day" 
 
+    readonly property int timerTickInterval: Timespan.fromMilliseconds(250)
+    readonly property int countdownWarningThreshold: Timespan.fromSeconds(30)
+    readonly property int countdownUrgentThreshold: Timespan.fromSeconds(10)
+    readonly property var countdownSoundCommand: ["canberra-gtk-play", "-i", "alarm-clock-elapsed"]
+
     // The database is local to this config and ignored by Git.
     readonly property string databasePath: Quickshell.shellPath("data/quickshell.db")
     readonly property string databaseName: "quickshell"

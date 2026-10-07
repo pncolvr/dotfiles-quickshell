@@ -139,6 +139,8 @@ Singleton {
         parser: SplitParser {
             splitMarker: "}"
             onRead: data => {
+                // Hyprland replies once per request; close before the peer does.
+                cursorSocket.connected = false
                 try {
                     const position = JSON.parse(data + "}")
                     root.observePointer(position.x, position.y)

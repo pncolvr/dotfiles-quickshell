@@ -1,0 +1,3 @@
+TimeEntry {
+    defaultLabel: "Timer"
+}

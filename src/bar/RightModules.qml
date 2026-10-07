@@ -14,6 +14,7 @@ Row {
     ActiveWindowNoScreenShare {}
     Submap {}
     Screencast {}
+    Timers { window: root.window }
     Mic {}
     Volume {}
     Stats {}

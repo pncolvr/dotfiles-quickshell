@@ -6,6 +6,7 @@ singleton SubmapService 1.0 hyprland/SubmapService.qml
 
 singleton TimeService 1.0 time/TimeService.qml
 singleton CalendarService 1.0 time/CalendarService.qml
+singleton TimersService 1.0 time/timers/TimersService.qml
 
 singleton StatsService 1.0 system/StatsService.qml
 singleton PowerProfileService 1.0 system/PowerProfileService.qml

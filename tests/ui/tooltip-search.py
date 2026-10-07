@@ -134,7 +134,8 @@ with tempfile.TemporaryDirectory(prefix="quickshell-tooltip-search-") as tempora
         assert ipc("pressEscape") == "true"
         wait(lambda: not snapshot()["visible"], "Escape clears search, releases focus and restores dismissal")
         assert snapshot()["text"] == "" and not snapshot()["focused"]
-        print("PASS: typing cancels pending hide, global mouse movement restores hover dismissal, renewed typing, pinning, clear focus, Escape and query reset")
+        assert "PeerClosedError" not in log.read_text(), "cursor replies should close without socket warnings"
+        print("PASS: typing cancels pending hide, global mouse movement restores hover dismissal, renewed typing, pinning, clear focus, Escape, query reset and no peer-close warnings")
     except BaseException:
         print(log.read_text())
         raise
