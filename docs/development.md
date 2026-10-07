@@ -41,12 +41,17 @@ Scrollable modules use `UI.ScrollBar` from `src/theme/ui/components/ScrollBar.qm
 It shows an accent-colored thumb during scrolling or hover, then fades away.
 Overflow controls layout space independently of the thumb's opacity.
 
+Inline editors use `UI.EditorActions` for a neutral Cancel button followed by an
+accent Apply button. Recent files, TOTP, and Twitch share this component.
+
 ## Recent files
 
 Run `bash tests/files/recent-files.sh` for startup module and tooltip resolution,
 XBEL source filtering, age/count limits, missing files, URI escaping, dependency
-errors, real service refresh, folder selection/removal, persistence across restarts,
-newest-first and natural filename ordering, bounded lists, tab overflow, scrolling, click-to-open,
+errors, active-tab refresh, folder selection/removal, panel actions, default-tab persistence and deletion fallback,
+alias persistence, Apply/Cancel styling, Cancel and Escape dismissal,
+unlimited folder contents, directory double-click navigation, Go up, navigation refresh and tab resets,
+newest-first and natural filename ordering, bounded lists, tab overflow, scrolling, multiple selection, double-click-to-open,
 and drag dismissal protection. The tests use temporary history, folders, and a
 private database; they do not alter desktop history or saved folder preferences.
 Set `RECENT_FILES_TEST_SCREENSHOT=/tmp/recent-files.png` to save a panel preview.

@@ -186,23 +186,17 @@ Item {
                     onAccepted: root.addUser()
                     Keys.onEscapePressed: root.cancelEditor()
                 }
-                UI.ActionButton {
-                    objectName: "cancelAddTwitchUser"
-                    glyph: Theme.cancelIcon
-                    hint: "Cancel"
-                    width: Theme.twitchEditorButtonWidth
-                    height: Theme.twitchEditorHeight
-                    onClicked: root.cancelEditor()
-                }
-                UI.ActionButton {
-                    objectName: "addTwitchUser"
-                    glyph: Theme.addIcon
-                    hint: "Add streamer"
-                    width: Theme.twitchEditorButtonWidth
-                    height: Theme.twitchEditorHeight
-                    fillColor: Theme.accent
-                    enabled: TwitchService.usersReady && loginField.text.trim().length > 0
-                    onClicked: root.addUser()
+                UI.EditorActions {
+                    spacing: root.spacing
+                    buttonWidth: Theme.twitchEditorButtonWidth
+                    buttonHeight: Theme.twitchEditorHeight
+                    cancelObjectName: "cancelAddTwitchUser"
+                    submitObjectName: "addTwitchUser"
+                    submitGlyph: Theme.addIcon
+                    submitHint: "Add streamer"
+                    submitEnabled: TwitchService.usersReady && loginField.text.trim().length > 0
+                    onCancelled: root.cancelEditor()
+                    onSubmitted: root.addUser()
                 }
             }
         }

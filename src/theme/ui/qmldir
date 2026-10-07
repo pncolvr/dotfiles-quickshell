@@ -7,6 +7,7 @@ Icon 1.0 components/Icon.qml
 IconButton 1.0 components/IconButton.qml
 HoverTooltip 1.0 components/HoverTooltip.qml
 ActionButton 1.0 components/ActionButton.qml
+EditorActions 1.0 components/EditorActions.qml
 InputField 1.0 components/InputField.qml
 SearchField 1.0 components/SearchField.qml
 ScrollBar 1.0 components/ScrollBar.qml

@@ -70,6 +70,7 @@ Item {
   readonly property string cancelIcon: "" // xmark
   readonly property string checkIcon: "" // check: saved or selected
   readonly property string deleteIcon: "" // trash-can
+  readonly property string upIcon: "" // arrow-up
   readonly property string copyIcon: "" // copy
   readonly property string editIcon: "" // pen
   readonly property string refreshIcon: "" // refresh
@@ -192,7 +193,8 @@ Item {
   readonly property string micMutedIcon: "" // microphone-slash
   readonly property var volumeIcons: ["", "", ""] // volume-low, volume, volume-high
   readonly property string volumeMutedIcon: "" // volume-off
-  readonly property string audioDefaultIcon: "" // star: default device
+  readonly property string defaultIcon: "" // star
+  readonly property string audioDefaultIcon: defaultIcon
   readonly property string audioRecordingIcon: "" // circle-dot: mic activity status
   readonly property int audioTooltipWidth: 520
   readonly property real audioTooltipMaxHeightRatio: 0.6 // Fraction of the current screen height.

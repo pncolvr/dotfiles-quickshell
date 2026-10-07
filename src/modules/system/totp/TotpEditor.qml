@@ -62,18 +62,14 @@ RowLayout {
         Keys.onEscapePressed: root.cancelled()
     }
 
-    UI.ActionButton {
-        glyph: Theme.cancelIcon
-        hint: "cancel"
-        enabled: !root.busy
-        onClicked: root.cancelled()
-    }
-
-    UI.ActionButton {
-        glyph: root.adding ? Theme.addIcon : Theme.checkIcon
-        hint: root.adding ? "add token" : "save changes"
-        enabled: !root.busy && nameField.text.trim().length > 0 && tokenField.text.trim().length > 0
-        fillColor: Theme.accent
-        onClicked: root.submit()
+    UI.EditorActions {
+        spacing: Theme.totpSpacing
+        cancelHint: "cancel"
+        cancelEnabled: !root.busy
+        submitGlyph: root.adding ? Theme.addIcon : Theme.checkIcon
+        submitHint: root.adding ? "add token" : "save changes"
+        submitEnabled: !root.busy && nameField.text.trim().length > 0 && tokenField.text.trim().length > 0
+        onCancelled: root.cancelled()
+        onSubmitted: root.submit()
     }
 }

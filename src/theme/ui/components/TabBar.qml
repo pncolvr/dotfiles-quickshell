@@ -58,8 +58,9 @@ QC.TabBar {
                     id: tabLabel
                     centerVertical: false
                     anchors.fill: parent
-                    anchors.rightMargin: closeButton.visible ? root.closeButtonWidth + Theme.controlSpacing : 0
+                    anchors.rightMargin: (closeButton.visible ? root.closeButtonWidth + Theme.controlSpacing : 0)
                     text: tabButton.text
+                    textFormat: Text.PlainText
                     color: tabButton.checked ? Theme.accent : Theme.inactive
                     horizontalAlignment: Text.AlignHCenter
                     verticalAlignment: Text.AlignVCenter

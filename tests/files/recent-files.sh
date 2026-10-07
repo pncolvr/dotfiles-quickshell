@@ -13,6 +13,9 @@ bash "$project_root/tests/files/folder-files-helper.sh"
 export RECENT_FILES_TEST_FOLDER="$test_dir/folder one"
 export RECENT_FILES_TEST_SECOND_FOLDER="$test_dir/folder two"
 mkdir "$RECENT_FILES_TEST_FOLDER" "$RECENT_FILES_TEST_SECOND_FOLDER"
+mkdir -p "$RECENT_FILES_TEST_FOLDER/subfolder/nested"
+printf 'nested file' > "$RECENT_FILES_TEST_FOLDER/subfolder/nested/leaf.txt"
+printf 'folder file' > "$RECENT_FILES_TEST_FOLDER/subfolder/inside.txt"
 folder_stamp=$(($(date +%s) + 100))
 for ((index=0; index<25; index++)); do
     printf -v name 'item%02d.txt' "$index"
@@ -35,7 +38,7 @@ xmlns:mime="http://www.freedesktop.org/standards/shared-mime-info">
 <bookmark:applications><bookmark:application name="Test" exec="test %u" modified="$now" count="1"/></bookmark:applications>
 </metadata></info></bookmark></xbel>
 XML
-for test in recent-files-module-smoke recent-files-smoke recent-folders-seed recent-folders-restart recent-folders-empty; do
+for test in recent-files-module-smoke recent-files-smoke recent-selection-smoke recent-folders-seed recent-navigation-smoke recent-folders-restart recent-folders-empty; do
     fixture=$test
     if [[ $test == recent-folders-* ]]; then
         fixture=recent-folders-smoke

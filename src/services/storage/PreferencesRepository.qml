@@ -29,12 +29,18 @@ Singleton {
     function value(key, fallback) { return state.values[key] ?? fallback }
 
     function setValue(key, value) {
-        const json = JSON.stringify(value)
-        if (!key || json === undefined) return false
+        if (!key) return false
+        return setValues({[key]: value})
+    }
+
+    function setValues(values) {
+        const entries = Object.entries(values).map(([key, value]) => [key, JSON.stringify(value)])
+        if (entries.some(([key, json]) => !key || json === undefined)) return false
         if (!DbService.write(tx => {
-            tx.executeSql("INSERT OR REPLACE INTO preferences (key, value_json) VALUES (?, ?)", [key, json])
+            for (const entry of entries)
+                tx.executeSql("INSERT OR REPLACE INTO preferences (key, value_json) VALUES (?, ?)", entry)
         })) return false
-        state.values = Object.assign({}, state.values, {[key]: value})
+        state.values = Object.assign({}, state.values, values)
         return true
     }
 

@@ -32,6 +32,10 @@ Scope {
         property string opened: ""
         property var folders: []
         property string activeFolder: ""
+        readonly property string currentFolder: activeFolder
+        property bool canNavigateUp: false
+        property string defaultFolder: ""
+        property var folderAliases: ({})
         property int panels: 0
         property int refreshes: 0
         function beginPanel() { panels++ }
@@ -41,6 +45,9 @@ Scope {
         function refresh() { refreshes++ }
         function openFile(file) { opened = file.uri }
         function selectFolder(path) { activeFolder = path }
+        function setDefaultFolder(path) { defaultFolder = path }
+        function folderLabel(path) { return folderAliases[path] || path.split("/").pop() }
+        function setFolderAlias(path, name) { folderAliases = Object.assign({}, folderAliases, {[path]: name}); return true }
         function addFolder(path) { folders = folders.concat([path]); activeFolder = path }
         function removeFolder(path) { folders = folders.filter(folder => folder !== path); activeFolder = "" }
     }
@@ -72,8 +79,8 @@ Scope {
                 root.check(row.Drag.dragType === Drag.Automatic && row.Drag.supportedActions === Qt.CopyAction,
                     "file drag uses the native copy action")
                 root.check(row.Drag.mimeData["text/uri-list"] === backend.files[0].uri + "\r\n", "drag payload is a file URI")
-                mouse.mouseClick(row, row.width / 2, row.height / 2)
-                root.check(backend.opened === backend.files[0].uri, "click opens the file")
+                mouse.mouseDoubleClickSequence(row, row.width / 2, row.height / 2)
+                root.check(backend.opened === backend.files[0].uri, "double-click opens the file")
                 const screenshot = Quickshell.env("RECENT_FILES_TEST_SCREENSHOT")
                 if (screenshot) panel.grabToImage(result => result.saveToFile(screenshot))
                 TooltipService.show(0, null, null, false, null)
@@ -117,7 +124,7 @@ Scope {
                 const tabs = mouse.findChild(panel, "recentFilesTabs") as UI.TabBar
                 const view = tabs.contentItem as ListView
                 root.check(view.contentX > 0, "vertical mouse wheel also scrolls horizontal tabs")
-                console.log(root.failed ? "FAIL: recent-file panel" : "PASS: recent-file panel, limits, tab overflow, scrolling, URI drag payload, click and drag dismissal")
+                console.log(root.failed ? "FAIL: recent-file panel" : "PASS: recent-file panel, limits, tab overflow, scrolling, URI drag payload, double-click and drag dismissal")
                 Qt.quit()
             }
             root.step++

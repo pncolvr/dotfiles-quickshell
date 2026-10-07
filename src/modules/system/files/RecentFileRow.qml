@@ -10,15 +10,21 @@ Rectangle {
     id: root
     required property var file
     property var fileService: RecentFilesService
+    property var selection: null
+    readonly property bool selected: selection?.selectedUris.includes(file.uri) ?? false
     readonly property string iconSource: Quickshell.iconPath(file.icon || "text-x-generic", true)
     property bool dragging: false
+    property bool dragReady: false
     implicitHeight: Theme.recentFilesRowHeight
     radius: Theme.iconButtonRadius
     color: hover.hovered || dragging ? Theme.alternateBackground : "transparent"
+    border.width: selected ? 1 : 0
+    border.color: Theme.accent
 
     Drag.dragType: Drag.Automatic
-    Drag.active: fileDrag.active
-    Drag.mimeData: ({"text/uri-list": root.file.uri + "\r\n"})
+    Drag.active: fileDrag.active && root.dragReady
+    Drag.mimeData: ({"text/uri-list": (root.selected ? root.selection.selectedFiles : [root.file])
+        .map(file => file.uri + "\r\n").join("")})
     Drag.supportedActions: Qt.CopyAction
     Drag.proposedAction: Qt.CopyAction
     Drag.imageSource: root.iconSource
@@ -39,8 +45,24 @@ Rectangle {
     Component.onDestruction: finishDrag()
 
     HoverHandler { id: hover; cursorShape: Qt.PointingHandCursor }
-    TapHandler { acceptedButtons: Qt.LeftButton; onTapped: root.fileService.openFile(root.file) }
-    DragHandler { id: fileDrag; target: null; acceptedButtons: Qt.LeftButton }
+    MouseArea {
+        anchors.fill: parent
+        acceptedButtons: Qt.LeftButton
+        onClicked: mouse => root.selection?.selectFile(root.file.uri, mouse.modifiers)
+        onDoubleClicked: mouse => {
+            if (mouse.modifiers & (Qt.ControlModifier | Qt.ShiftModifier)) mouse.accepted = false
+            else root.fileService.openFile(root.file)
+        }
+    }
+    DragHandler {
+        id: fileDrag
+        target: null
+        acceptedButtons: Qt.LeftButton
+        onActiveChanged: {
+            if (active) root.selection?.prepareDrag(root.file.uri, centroid.modifiers)
+            root.dragReady = active
+        }
+    }
 
     Image {
         id: icon
@@ -59,6 +81,7 @@ Rectangle {
             centerVertical: false
             width: parent.width
             text: root.file.name
+            color: root.selected ? Theme.accent : Theme.text
             textFormat: Text.PlainText
             elide: Text.ElideMiddle
         }

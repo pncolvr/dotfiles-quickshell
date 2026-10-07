@@ -15,9 +15,15 @@ done
 printf 'nested' > "$folder/subfolder/hidden-from-list.txt"
 ln -s "$test_dir/missing.txt" "$folder/broken-link.txt"
 result=$(bash "$helper" --folder "$folder")
-jq -e --arg folder "$folder" --argjson newest "$(((now + 124) * 1000))" '.error == "" and .folder == $folder and (.files | length == 20)
-    and .files[0].name == "item24.txt" and .files[19].name == "item05.txt"
-    and .files[0].timeKind == "modified" and .files[0].usedAt == $newest' <<< "$result" >/dev/null
+jq -e --arg folder "$folder" --argjson newest "$(((now + 124) * 1000))" '.error == "" and .folder == $folder and (.files | length == 26)
+    and .files[0].name == "subfolder" and .files[0].isDirectory
+    and .files[1].name == "item24.txt" and .files[25].name == "item00.txt"
+    and .files[1].timeKind == "modified" and .files[1].usedAt == $newest
+    and .files[1].isDirectory == false
+    and (.files | any(.name == "subfolder" and .isDirectory and .icon == "inode-directory"))
+    and (.files | all(.name != "hidden-from-list.txt" and .name != "broken-link.txt"))' <<< "$result" >/dev/null
+result=$(bash "$helper" --folder "$folder/subfolder")
+jq -e '(.files | length == 1) and .files[0].name == "hidden-from-list.txt"' <<< "$result" >/dev/null
 
 special_folder="$test_dir/special"
 mkdir "$special_folder"
@@ -36,11 +42,14 @@ jq -e --arg folder "$special_folder" '.folder == $folder' <<< "$result" >/dev/nu
 # Reproducible creation times, including a filesystem with no birth timestamp.
 sort_folder="$test_dir/sorting"
 mkdir "$sort_folder" "$test_dir/bin"
+mkdir "$sort_folder/Folder1" "$sort_folder/Folder2" "$sort_folder/Folder10" "$sort_folder/FolderNew"
 for name in created-old.txt created-new.txt unknown.txt; do printf 'file' > "$sort_folder/$name"; done
 real_stat=$(command -v stat)
 cat > "$test_dir/bin/stat" <<SCRIPT
 #!/bin/bash
 case "\${!#}" in
+    */FolderNew) printf '200 0' ;;
+    */Folder1|*/Folder2|*/Folder10) printf '100 0' ;;
     */created-old.txt) printf '500 100' ;;
     */created-new.txt) printf '400 600' ;;
     */unknown.txt) printf '300 0' ;;
@@ -49,11 +58,12 @@ esac
 SCRIPT
 chmod +x "$test_dir/bin/stat"
 result=$(PATH="$test_dir/bin:$PATH" bash "$helper" --folder "$sort_folder")
-jq -e '[.files[].name] == ["created-new.txt", "created-old.txt", "unknown.txt"]
-    and .files[0].timeKind == "created" and .files[2].timeKind == "modified"
-    and .files[0].usedAt == 600000' <<< "$result" >/dev/null
+jq -e '[.files[].name] == ["FolderNew", "Folder1", "Folder2", "Folder10", "created-new.txt", "created-old.txt", "unknown.txt"]
+    and (.files[:4] | all(.isDirectory)) and (.files[4:] | all(.isDirectory == false))
+    and .files[4].timeKind == "created" and .files[6].timeKind == "modified"
+    and .files[4].usedAt == 600000' <<< "$result" >/dev/null
 
-# Natural filename ties must be resolved before applying the 20-file cap.
+# Natural filename ties apply across the full folder list.
 tracks="$test_dir/tracks"
 mkdir "$tracks"
 for ((track=23; track>=1; track--)); do
@@ -61,9 +71,9 @@ for ((track=23; track>=1; track--)); do
     touch -m -d "@$((now + 200))" "$tracks/Track $track.wav"
 done
 result=$(bash "$helper" --folder "$tracks")
-jq -e '(.files | length) == 20 and .files[0].name == "Track 1.wav"
+jq -e '(.files | length) == 23 and .files[0].name == "Track 1.wav"
     and .files[1].name == "Track 2.wav" and .files[9].name == "Track 10.wav"
-    and .files[19].name == "Track 20.wav"' <<< "$result" >/dev/null
+    and .files[22].name == "Track 23.wav"' <<< "$result" >/dev/null
 touch -m -d "@$((now + 201))" "$tracks/Track 23.wav"
 result=$(bash "$helper" --folder "$tracks")
 jq -e '.files[0].name == "Track 23.wav" and .files[1].name == "Track 1.wav"' <<< "$result" >/dev/null
@@ -78,4 +88,4 @@ for bad in missing-file invalid-option missing-value; do
     [[ $status == "$expected" ]]
     jq -e '.files == [] and (.error | length > 0)' <<< "$result" >/dev/null
 done
-printf 'PASS: folder files, cap, recency and natural order, missing creation time, aliases, escaping and invalid folders\n'
+printf 'PASS: unlimited folder files, directories, recency and natural order, missing creation time, aliases, escaping and invalid folders\n'
