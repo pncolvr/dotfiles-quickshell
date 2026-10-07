@@ -39,6 +39,20 @@ jq -e --arg folder "$special_folder" '.folder == $folder' <<< "$result" >/dev/nu
 result=$(HOME="$test_dir" bash "$helper" --folder '~/special')
 jq -e --arg folder "$special_folder" '.folder == $folder' <<< "$result" >/dev/null
 
+# Drops reuse the same metadata, preserve unusual names, resolve folder aliases,
+# and ignore duplicates, directories and unavailable files without opening them.
+result=$(jq -n --arg path "$path" --arg alias "$test_dir/alias/$name" --arg folder "$folder" \
+    '[$path, $alias, ($folder + "/item01.txt"), $folder, ($folder + "/missing.txt")]' | bash "$helper" --files)
+jq -e --arg path "$path" --arg uri "$uri" --arg folder "$special_folder" \
+    '(.files | length) == 2 and (.files | all(.isDirectory == false))
+    and (.files | any(.path == $path and .uri == $uri and .directory == $folder))' <<< "$result" >/dev/null
+result=$(printf '[]' | bash "$helper" --files)
+jq -e '.files == [] and .error == ""' <<< "$result" >/dev/null
+for input in '{}' '["relative.txt"]' '["/tmp/a\u0000b"]' '[false]' 'not json'; do
+    result=$(printf '%s' "$input" | bash "$helper" --files) && exit 1
+    jq -e '.files == [] and (.error | length > 0)' <<< "$result" >/dev/null
+done
+
 # Reproducible creation times, including a filesystem with no birth timestamp.
 sort_folder="$test_dir/sorting"
 mkdir "$sort_folder" "$test_dir/bin"

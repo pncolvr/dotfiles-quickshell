@@ -126,6 +126,8 @@ Singleton {
         PinnedFilesService.refresh()
     }
     function isPinned(uri) { return PinnedFilesService.contains(uri) }
+    function acceptsPinUrls(urls) { return PinnedFilesService.acceptsUrls(urls) }
+    function pinUrls(urls) { return PinnedFilesService.pinUrls(urls) }
     function togglePin(file) {
         if (state.dragging) return false
         return PinnedFilesService.toggle(file)

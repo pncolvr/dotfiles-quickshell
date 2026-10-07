@@ -33,6 +33,15 @@ Column {
             : folderTab ? tab.kind === "folder" && tab.path === fileService.activeFolder : tab.kind === "recent"))
     }
     function clearSelection() { selectedUris = []; selectionAnchor = "" }
+    function acceptPinDrag(drag) {
+        drag.accepted = drag.hasUrls && (drag.supportedActions & Qt.CopyAction) !== 0
+            && fileService.acceptsPinUrls(drag.urls)
+    }
+    function pinDrop(drop) {
+        drop.accepted = false
+        if (drop.hasUrls && (drop.supportedActions & Qt.CopyAction) !== 0 && fileService.pinUrls(drop.urls))
+            drop.accept(Qt.CopyAction)
+    }
     function reconcileSelection() {
         const available = fileService.files.map(file => file.uri)
         selectedUris = selectedUris.filter(uri => available.includes(uri))
@@ -111,7 +120,10 @@ Column {
             anchors.rightMargin: Theme.controlSpacing
             height: parent.height
             labels: root.tabEntries.map(tab => tab.label)
-            enabled: !root.fileService.dragging
+            interactionEnabled: !root.fileService.dragging
+            dropEnabledTabs: root.tabEntries.map(tab => tab.kind === "pinned")
+            onTabDragEntered: (index, drag) => root.acceptPinDrag(drag)
+            onTabDropped: (index, drop) => root.pinDrop(drop)
             onTabClicked: index => {
                 const tab = root.tabEntries[index]
                 if (tab.kind === "pinned") root.fileService.selectPinned()
@@ -284,13 +296,31 @@ Column {
             width: list.width - (scrollbar.visible ? Theme.scrollbarWidth + Theme.controlSpacing : 0)
         }
         QC.ScrollBar.vertical: UI.ScrollBar { id: scrollbar }
+        DropArea {
+            id: pinnedDrop
+            objectName: "pinnedFilesDrop"
+            parent: list
+            anchors.fill: parent
+            enabled: root.pinnedTab
+            onEntered: drag => root.acceptPinDrag(drag)
+            onDropped: drop => root.pinDrop(drop)
+            Rectangle {
+                anchors.fill: parent
+                visible: pinnedDrop.containsDrag
+                color: "transparent"
+                border.width: 1
+                border.color: Theme.accent
+                radius: Theme.iconButtonRadius
+            }
+        }
     }
     UI.ColumnText {
         id: hint
         width: parent.width
         visible: root.fileService.files.length > 0
         text: (root.selectedUris.length > 0 ? root.selectedUris.length + " selected · Drag into an app.\n" : "")
-            + "Click to select · Ctrl/Shift for multiple · Double-click to open"
+            + (pinnedDrop.containsDrag ? "Drop files to pin"
+                : "Click to select · Ctrl/Shift for multiple · Double-click to open")
         color: Theme.inactive
         font.pixelSize: 10
         wrapMode: Text.Wrap

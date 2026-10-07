@@ -9,11 +9,15 @@ QC.TabBar {
     id: root
     property var labels: []
     property var closeableTabs: []
+    property var dropEnabledTabs: []
+    property bool interactionEnabled: true
     property real tabPadding: Theme.controlFieldPadding * 2
     property real closeButtonWidth: 16
     property real underlineBottomMargin: 3
     signal tabClicked(int index)
     signal tabCloseRequested(int index)
+    signal tabDragEntered(int index, DragEvent drag)
+    signal tabDropped(int index, DragEvent drop)
     implicitHeight: Theme.controlHeight
     clip: true
     WheelHandler {
@@ -53,6 +57,7 @@ QC.TabBar {
             implicitHeight: root.implicitHeight
             padding: 0
             hoverEnabled: true
+            focusPolicy: root.interactionEnabled ? Qt.StrongFocus : Qt.NoFocus
             contentItem: Item {
                 UI.Text {
                     id: tabLabel
@@ -74,6 +79,7 @@ QC.TabBar {
                     width: root.closeButtonWidth
                     height: parent.height - root.underlineBottomMargin - 4
                     visible: root.closeableTabs[tabButton.index] === true
+                    enabled: root.interactionEnabled
                     glyph: Theme.cancelIcon
                     foreground: hovered ? Theme.text : Theme.inactive
                     fillColor: "transparent"
@@ -83,7 +89,9 @@ QC.TabBar {
             }
             background: Rectangle {
                 color: tabButton.down ? Qt.darker(Theme.alternateBackground, 1.2)
-                    : tabButton.hovered ? Theme.alternateBackground : "transparent"
+                    : tabButton.hovered || tabDrop.containsDrag ? Theme.alternateBackground : "transparent"
+                border.width: tabDrop.containsDrag ? 1 : 0
+                border.color: Theme.accent
                 Rectangle {
                     anchors.bottom: parent.bottom
                     anchors.bottomMargin: root.underlineBottomMargin
@@ -94,7 +102,16 @@ QC.TabBar {
                     color: Theme.accent
                 }
             }
-            onClicked: root.tabClicked(index)
+            onClicked: { if (root.interactionEnabled) root.tabClicked(index) }
+            // Block activation during source drags while keeping drop targets alive.
+            MouseArea { anchors.fill: parent; enabled: !root.interactionEnabled }
+            DropArea {
+                id: tabDrop
+                anchors.fill: parent
+                enabled: root.dropEnabledTabs[tabButton.index] === true
+                onEntered: drag => { drag.accepted = false; root.tabDragEntered(tabButton.index, drag) }
+                onDropped: drop => { drop.accepted = false; root.tabDropped(tabButton.index, drop) }
+            }
             HoverHandler { cursorShape: Qt.PointingHandCursor }
         }
     }

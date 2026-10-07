@@ -40,13 +40,13 @@ xmlns:mime="http://www.freedesktop.org/standards/shared-mime-info">
 <bookmark:applications><bookmark:application name="Test" exec="test %u" modified="$now" count="1"/></bookmark:applications>
 </metadata></info></bookmark></xbel>
 XML
-for test in recent-files-module-smoke recent-files-smoke recent-selection-smoke recent-folders-seed recent-navigation-smoke recent-folders-restart recent-folders-empty recent-pins-seed recent-pins-recent-default recent-pins-restart recent-pins-empty; do
+for test in recent-files-module-smoke recent-files-smoke recent-selection-smoke recent-folders-seed recent-navigation-smoke recent-folders-restart recent-folders-empty recent-pins-drop-smoke recent-pins-seed recent-pins-recent-default recent-pins-restart recent-pins-empty; do
     fixture=$test
     if [[ $test == recent-folders-* ]]; then
         fixture=recent-folders-smoke
         export RECENT_FOLDERS_TEST_PHASE=${test#recent-folders-}
     fi
-    if [[ $test == recent-pins-* ]]; then
+    if [[ $test == recent-pins-* && $test != recent-pins-drop-smoke ]]; then
         fixture=recent-pins-smoke
         export RECENT_PINS_TEST_PHASE=${test#recent-pins-}
         if [[ $RECENT_PINS_TEST_PHASE == restart ]]; then
@@ -58,7 +58,7 @@ for test in recent-files-module-smoke recent-files-smoke recent-selection-smoke 
     sed 's@"../../src@"src@g' "$project_root/tests/files/$fixture.qml" > "$test_entry"
     output=$(QT_QPA_PLATFORM=offscreen QT_QUICK_BACKEND=software XDG_RUNTIME_DIR="$test_dir/runtime" \
         XDG_DATA_HOME="$test_dir/data" XDG_CACHE_HOME="$test_dir/cache" \
-        timeout 10 qs -p "$test_entry" 2>&1) || {
+        timeout -k 2 10 qs -p "$test_entry" 2>&1) || {
         printf '%s\n' "$output" >&2
         exit 1
     }

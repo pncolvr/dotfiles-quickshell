@@ -25,6 +25,14 @@ Use the **pin** button at the right of a file row to keep the document in
 **Pinned**. The highlighted pin marks a saved document; click it again in any
 tab to unpin that file. Directories do not have pin buttons.
 
+Drop files onto the **Pinned** tab header, or anywhere in its file list, to pin
+them. Multiple files can be dropped together, including from Recent or folder
+tabs. The target highlights in the accent color. Drops keep the current tab in
+place and skip existing pins, directories, and missing or unreadable files.
+Only local files are accepted; pinning does not move or copy their contents.
+When no pins exist, use a row's pin button to create the first one and reveal
+the Pinned tab.
+
 The Pinned tab appears only when pinned documents exist. Pins survive shell
 restarts, removal of their original folder tab, and the Recent age/count limits.
 They also survive clearing the desktop's recent-file history. Pinned uses the
