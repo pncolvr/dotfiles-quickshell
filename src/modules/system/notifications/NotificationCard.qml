@@ -75,8 +75,9 @@ Rectangle {
     }
     Shape {
         id: countdownOutline
+        objectName: "notificationOutline"
         anchors.fill: parent
-        visible: root.popup && root.timerEntry.duration > 0 && root.countdownProgress > 0
+        visible: root.popup && root.countdownProgress > 0
         preferredRendererType: Shape.CurveRenderer
         readonly property real lineWidth: root.urgencyLineWidth
         readonly property real inset: lineWidth / 2
@@ -141,15 +142,6 @@ Rectangle {
                 y: countdownOutline.height - countdownOutline.inset
             }
         }
-    }
-    Rectangle {
-        visible: root.popup && !(root.entry.duration > 0)
-        anchors.top: parent.top
-        anchors.horizontalCenter: parent.horizontalCenter
-        height: root.urgencyLineWidth
-        width: parent.width - 24
-        color: root.urgencyColor
-        radius: height / 2
     }
     FrameAnimation {
         running: root.popup && root.visible && !root.timerPaused && root.timerEntry.duration > 0 && root.countdownProgress > 0

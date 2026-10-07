@@ -22,6 +22,15 @@ DESKTOP
 # Never copy private provider configuration into the test shell.
 tar -C "$project_root" --exclude='*.env' --exclude='hosts.json' -cf - src | tar -C "$test_dir" -xf -
 sed -Ei 's/readonly property int clipboardMaxItems: [0-9]+/readonly property int clipboardMaxItems: 3/' "$test_dir/src/config/Config.qml"
+sed -Ei 's/readonly property int clipboardMaxTotalBytes: [0-9]+/readonly property int clipboardMaxTotalBytes: 24/' "$test_dir/src/config/Config.qml"
+sed -i 's/readonly property bool clipboardMonitorEnabled: true/readonly property bool clipboardMonitorEnabled: false/' "$test_dir/src/config/Config.qml"
+mkdir -p "$test_dir/data/clipboard"
+sqlite3 "$test_dir/data/quickshell.db" <<'SQL'
+CREATE TABLE clipboard (id TEXT PRIMARY KEY, mime TEXT NOT NULL, kind TEXT NOT NULL, bytes INTEGER NOT NULL, text TEXT NOT NULL DEFAULT '', updated_at INTEGER NOT NULL);
+INSERT INTO clipboard VALUES ('dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd', 'text/plain', 'text', 6, 'legacy', 1);
+PRAGMA user_version=5;
+SQL
+printf 'hello\nworld\n' > "$test_dir/data/clipboard/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 sed 's@"../../src@"src@g' "$project_root/tests/launcher/launcher-smoke.qml" > "$test_dir/shell.qml"
 export QT_QPA_PLATFORM=offscreen QT_QUICK_BACKEND=software
 export XDG_RUNTIME_DIR="$test_dir/runtime" XDG_DATA_HOME="$test_dir/data" XDG_CACHE_HOME="$test_dir/cache"
@@ -153,11 +162,44 @@ printf 'PASS: mouse/keyboard selection, search typing, filtered selection toggle
 ipc call pickertest clipboardFixture
 ipc call pickertest query 'delete me'
 ipc call pickertest snapshot | jq -e '.filtered | length == 1' >/dev/null
+ipc call pickertest togglePin
+ipc call pickertest snapshot | jq -e '.query == "delete me" and .filtered[0].pinned' >/dev/null
 ipc call pickertest deleteEntry
 ipc call pickertest snapshot | jq -e '.query == "delete me" and .filtered == [] and (.items | length) == 1
     and .items[0].result.text == "hello\nworld\n"' >/dev/null
+ipc call pickertest query ''
+ipc call pickertest togglePin
+ipc call pickertest snapshot | jq -e '.query == "" and .items[0].pinned and .currentIndex == 0' >/dev/null
+ipc call pickertest clickControl pinClipboardEntry | jq -e '.' >/dev/null
+ipc call pickertest snapshot | jq -e '(.items[0].pinned | not)' >/dev/null
+ipc call pickertest togglePin
+ipc call pickertest clipboardFixture
+ipc call pickertest togglePinnedOnly
+ipc call pickertest snapshot | jq -e '.itemCriteria.pinned and (.filtered | length) == 1 and .filtered[0].pinned and (.items | length) == 2' >/dev/null
+ipc call pickertest query 'delete me'
+ipc call pickertest snapshot | jq -e '.filtered == [] and (.canAccept | not)' >/dev/null
+ipc call pickertest togglePinnedOnly
+ipc call pickertest snapshot | jq -e '.itemCriteria == {} and .query == "delete me" and (.filtered | length) == 1 and (.filtered[0].pinned | not)' >/dev/null
+ipc call pickertest query hello
+ipc call pickertest togglePinnedOnly
+ipc call pickertest togglePin
+ipc call pickertest snapshot | jq -e '.itemCriteria.pinned and .query == "hello" and .filtered == [] and (.canAccept | not)' >/dev/null
+ipc call pickertest togglePinnedOnly
+ipc call pickertest togglePin
+ipc call pickertest query ''
+ipc call pickertest clickControl clipboardPinnedOnly | jq -e '.' >/dev/null
+ipc call pickertest snapshot | jq -e '.itemCriteria.pinned and (.filtered | length) == 1 and .filtered[0].pinned' >/dev/null
+ipc call pickertest clickControl clipboardPinnedOnly | jq -e '.' >/dev/null
+ipc call pickertest snapshot | jq -e '.itemCriteria == {} and (.filtered | length) == 2' >/dev/null
+ipc call pickertest togglePinnedOnly
+ipc call pickertest clipboardFixture
+ipc call pickertest snapshot | jq -e '.itemCriteria == {} and (.filtered | length) == 2' >/dev/null
+printf 'PASS: pinned-only keyboard/button toggle, combined search, unpinning while filtered, empty results and reset on reopening\n'
+ipc call pickertest clickControl clearClipboardHistory | jq -e '.' >/dev/null
+ipc call pickertest snapshot | jq -e '(.items | length) == 1 and .items[0].pinned and .items[0].result.text == "hello\nworld\n"' >/dev/null
+[[ -f $test_dir/data/clipboard/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa ]]
 ipc call pickertest pressEscape
-printf 'PASS: Delete removes the highlighted clipboard entry while preserving the focused search query and other history\n'
+printf 'PASS: Ctrl+P and pin button toggle pins; Clear history retains pinned payloads; Delete explicitly removes a pinned entry\n'
 
 printf 'first\nsecond\n' | bash "$picker" --dmenu -no-custom > "$test_dir/result" 2> "$test_dir/client-error" & client_pid=$!
 wait_open
@@ -244,6 +286,8 @@ fi
 ipc call pickertest quit
 wait "$shell_pid"; shell_pid=""
 export PICKER_TEST_PHASE=restart
+# Pins remain durable even if limits are reduced below their combined size.
+sed -Ei 's/readonly property int clipboardMaxTotalBytes: 24/readonly property int clipboardMaxTotalBytes: 1/' "$test_dir/src/config/Config.qml"
 start
 ipc call pickertest quit
 wait "$shell_pid"; shell_pid=""

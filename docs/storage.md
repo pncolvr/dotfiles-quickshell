@@ -17,7 +17,7 @@ folder so their databases stay isolated.
 
 Recent-file folder tabs, aliases and default selection use preferences. Pinned
 document metadata is stored separately under `files.pinned`, so removing a folder
-tab leaves its document pins intact. No schema migration is needed for pins.
+tab leaves its document pins intact. No schema migration is needed for document pins.
 
 ## Twitch cache
 
@@ -47,7 +47,9 @@ TOTP names and seeds live in the desktop Secret Service; see [TOTP](features/tot
 
 Schema version 5 adds clipboard metadata and searchable text while preserving the
 existing tables. Original payload bytes live in private, content-addressed files
-under `data/clipboard/`. Include this directory alongside `data/quickshell.db`
+under `data/clipboard/`. Schema version 6 adds durable clipboard pins, defaulting
+existing entries to unpinned without changing their contents. Pinned entries are
+excluded from automatic pruning and Clear history. Include this directory alongside `data/quickshell.db`
 when backing up clipboard history. See [launcher and clipboard](features/launcher.md).
 
 ## Backups

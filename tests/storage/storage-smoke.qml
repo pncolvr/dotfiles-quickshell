@@ -269,7 +269,7 @@ Scope {
                         && TwitchRepository.notifiedStreams.bob?.streamId === "bob-stream-1", "latest streams restored before offline check")
                 }
                 else if (root.phase === "restart") {
-                    root.check(DbService.schemaVersion === 5
+                    root.check(DbService.schemaVersion === 6
                         && DbService.read("SELECT login FROM twitch_notified_streams").length === 0, "v3 schema upgraded without losing existing data")
                     root.check(TimeService.showSeconds, "clock preference restored after process restart")
                     root.check(TwitchRepository.exportUsers() === "alice\nbob", "Twitch users restored after process restart")

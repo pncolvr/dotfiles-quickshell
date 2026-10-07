@@ -50,9 +50,16 @@ Singleton {
         if (!ClipboardRepository.remove(id)) { error = DbService.error; return }
         run(Config.clipboardCommand.concat(["delete", id]))
     }
+    function togglePin(entry) {
+        if (!entry) return
+        const removed = ClipboardRepository.setPinned(entry.id, !entry.pinned)
+        if (removed === null) { error = DbService.error; return }
+        if (removed.length) run(Config.clipboardCommand.concat(["delete"]).concat(removed))
+        error = ""
+    }
     function ignoreTextOnce(text) { ignoredText = text; textIgnoreTimer.restart() }
     function clear() {
-        const ids = ClipboardRepository.entries().map(row => row.id)
+        const ids = ClipboardRepository.entries().filter(row => !row.pinned).map(row => row.id)
         if (!ClipboardRepository.clear()) { error = DbService.error; return }
         if (ids.length) run(Config.clipboardCommand.concat(["delete"]).concat(ids))
     }

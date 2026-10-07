@@ -52,6 +52,7 @@ Scope {
                 imageCache: {job: imageCache.job, busy: imageCache.busy, status: imageCache.status, source: imageCache.source.toString(), size: imageCache.sourceSize},
                 card: {summary: card.entry.summary, icon: card.iconSource, imageIsIcon: card.usesImageAsIcon,
                     paused: card.timerPaused, progress: card.countdownProgress,
+                    outlineVisible: (root.find(card, "notificationOutline") as Item)?.visible === true,
                     actions: card.displayActions.map(action => action.identifier), actionStates: card.displayActions,
                     buttonFound: !!root.find(card, "notificationAction_custom")},
                 live: Object.values(NotificationService.liveEntries).map(entry => ({id: entry.liveId, archiveId: entry.archiveId, summary: entry.summary, deadline: entry.deadline, image: entry.image}))})

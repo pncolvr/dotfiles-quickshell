@@ -58,7 +58,8 @@ blocks, emphasis, links, and lists; plain-text bodies keep their line breaks.
 Long formatted bodies are clipped in popups and shown in full in history.
 Timed popup outlines drain symmetrically from the bottom center up both sides to the top
 center, synchronized with rendered frames as in TOTP. Hovering a popup pauses its
-expiry and outline; leaving resumes the remaining time. The close
+expiry and outline; leaving resumes the remaining time. Persistent popups keep
+their complete outline in the urgency color until dismissed. The close
 button is circular and turns red on hover. History cards use a complete outline
 in their urgency color. Application timeouts take
 priority over the configured low/normal/critical defaults. Left-click runs a usable

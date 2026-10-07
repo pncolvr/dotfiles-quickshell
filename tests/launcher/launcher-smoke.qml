@@ -27,9 +27,18 @@ Scope {
     function seed() {
         if (Quickshell.env("PICKER_TEST_PHASE") === "restart") {
             check(ClipboardRepository.entries()[0]?.text === "hello\nworld\n", "clipboard survives process restart before any writes")
+            const pinned = ClipboardRepository.entries()[0]
+            check(pinned?.pinned === 1, "clipboard pin survives restart")
+            const newId = "f".repeat(64)
+            check(ClipboardRepository.add({id:newId,mime:"text/plain",kind:"text",bytes:1,text:"f"})?.includes(newId), "pins exceeding the byte limit evict new unpinned entries")
+            check(ClipboardRepository.entries().length === 1 && ClipboardRepository.entries()[0].id === pinned.id, "over-limit pin is kept")
+            check(ClipboardRepository.setPinned(pinned.id, false)?.includes(pinned.id) && !ClipboardRepository.entries().length, "unpin reapplies history limits")
             console.log(failed ? "PICKER FAIL: restart" : "PASS: picker clipboard restart")
             return
         }
+        const legacy = ClipboardRepository.entries()[0]
+        check(DbService.schemaVersion === 6 && legacy?.text === "legacy" && legacy.pinned === 0, "v5 migration preserves history and defaults existing entries to unpinned")
+        ClipboardRepository.clear()
         check(PickerService.filter([{title:"Alpha"}, {title:"beta"}], "AL", true, false).length === 0, "smart uppercase matching")
         check(PickerService.filter([{title:"Alpha"}, {title:"beta"}], "al", true, false)[0].title === "Alpha", "case insensitive lowercase matching")
         check(PickerService.filter([{title:"Visual Studio Code"}], "vsc", false, true).length === 1, "subsequence fuzzy matching")
@@ -52,6 +61,7 @@ Scope {
         for (let index = 0; index < 4; index++) ClipboardRepository.add({id:String(index).repeat(64),mime:"text/plain",kind:"text",bytes:1,text:String(index)})
         check(ClipboardRepository.entries().length === 3 && ClipboardRepository.entries()[0].text === "3", "bounded newest-first history")
         ClipboardRepository.clear()
+        testClipboardPins()
         ClipboardRepository.add(entry)
         ClipboardService.togglePaused()
         check(ClipboardService.paused && PreferencesRepository.value("clipboard.paused", false), "pause preference")
@@ -62,12 +72,37 @@ Scope {
         check(ClipboardRepository.entries().length === 1, "TOTP codes excluded")
         console.log(failed ? "PICKER FAIL: smoke checks" : "PASS: picker filtering, shared controls, stable IDs, clipboard persistence and TOTP exclusion")
     }
+    function testClipboardPins() {
+        const image = {id:"e".repeat(64),mime:"image/png",kind:"image",bytes:20,text:""}
+        ClipboardRepository.add(image)
+        check(ClipboardRepository.setPinned(image.id, true) !== null, "image can be pinned")
+        for (let index = 0; index < 4; index++) {
+            ClipboardRepository.add({id:String(index).repeat(64),mime:"text/plain",kind:"text",bytes:4,text:String(index)})
+        }
+        check(ClipboardRepository.entries().length === 2 && ClipboardRepository.entries().some(row => row.id === image.id && row.pinned === 1), "old pinned image survives byte-based pruning")
+        ClipboardRepository.add(image)
+        check(ClipboardRepository.entries()[0].id === image.id && ClipboardRepository.entries()[0].pinned === 1, "recopying a pinned image preserves its pin")
+        ClipboardRepository.clear()
+        check(ClipboardRepository.entries().length === 1 && ClipboardRepository.entries()[0].id === image.id, "clear preserves pinned entries")
+        ClipboardRepository.remove(image.id)
+        const text = {id:"e".repeat(64),mime:"text/plain",kind:"text",bytes:1,text:"pinned"}
+        ClipboardRepository.add(text)
+        ClipboardRepository.setPinned(text.id, true)
+        for (let index = 0; index < 4; index++) {
+            ClipboardRepository.add({id:String(index).repeat(64),mime:"text/plain",kind:"text",bytes:1,text:String(index)})
+        }
+        check(ClipboardRepository.entries().length === 3 && ClipboardRepository.entries().some(row => row.id === text.id && row.pinned === 1), "old pinned text survives entry-count pruning")
+        ClipboardRepository.setPinned(text.id, false)
+        ClipboardRepository.add({id:"f".repeat(64),mime:"text/plain",kind:"text",bytes:1,text:"f"})
+        check(!ClipboardRepository.entries().some(row => row.id === text.id), "unpinned old entry becomes eligible for pruning")
+        ClipboardRepository.clear()
+    }
     IpcHandler {
         target: "pickertest"
         function snapshot(): string { return JSON.stringify({visible:PickerService.visible,mode:PickerService.mode,
             query:PickerService.query,items:PickerService.items,filtered:PickerService.filteredItems,currentIndex:PickerService.currentIndex,
             selected:PickerService.selectedIds,canAccept:PickerService.canAccept,acceptLabel:PickerService.acceptLabel,
-            layout:PickerService.layout,
+            layout:PickerService.layout,itemCriteria:PickerService.itemCriteria,
             directory:PickerService.requestDirectory}) }
         function clickControl(name: string): bool {
             const button = objects.findChild(panel.panel, name) as UI.ActionButton
@@ -92,6 +127,8 @@ Scope {
             PickerService.show()
         }
         function deleteEntry(): void { panel.focusSearch(); events.keyClick(Qt.Key_Delete, Qt.NoModifier, 0) }
+        function togglePin(): void { panel.focusSearch(); events.keyClick(Qt.Key_P, Qt.ControlModifier, 0) }
+        function togglePinnedOnly(): void { panel.focusSearch(); events.keyClick(Qt.Key_P, Qt.ControlModifier | Qt.ShiftModifier, 0) }
         function windowFocusCommand(address: string): string { return Config.hyprlandFocusWindowByAddress(address) }
         function quit(): void { Qt.quit() }
     }

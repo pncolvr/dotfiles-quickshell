@@ -101,6 +101,14 @@ try:
     assert len(rows()) == 3, "all urgencies saved; transient excluded"
     assert any(r["summary"] == "Low" and r["urgency"] == 0 for r in rows()), "low urgency archived"
     assert rows()[0]["summary"] == "Critical"
+    for identifier in (low, normal, critical):
+        ipc("prepareCard", identifier, "false")
+        assert state()["card"]["outlineVisible"] and state()["card"]["progress"] == 1, "persistent popup has a complete outline"
+    time.sleep(0.2)
+    assert state()["card"]["progress"] == 1, "persistent popup outline does not drain"
+    ipc("prepareCard", critical, "true")
+    assert not state()["card"]["outlineVisible"], "history uses its own static border"
+    ipc("prepareCard", critical, "false")
     emitter = state()["emitters"]["desktop:test"]
     assert not any(emitter[key] for key in ("muted", "allowDuringDnd", "excludeFromHistory"))
     other = notify("Other emitter", app="Other", desktop="other")
@@ -187,6 +195,7 @@ try:
     ipc("cardHover", "true")
     wait(lambda: state()["card"]["paused"], "hover pauses the popup timer")
     paused_progress = state()["card"]["progress"]
+    assert state()["card"]["outlineVisible"] and 0 < paused_progress <= 1, "timed popup retains its countdown outline"
     time.sleep(1.4)
     assert any(p["id"] == hovered for p in state()["live"]), "hovered notification outlives its original timeout"
     assert abs(state()["card"]["progress"] - paused_progress) < 0.001, "hover freezes the visible countdown"
@@ -332,7 +341,7 @@ try:
     start()
     assert not rows() and state()["emitters"]["desktop:test"]["excludeFromHistory"]
     with sqlite3.connect(database) as db:
-        assert db.execute("PRAGMA user_version").fetchone()[0] == 5
+        assert db.execute("PRAGMA user_version").fetchone()[0] == 6
         assert db.execute("PRAGMA integrity_check").fetchone()[0] == "ok"
         assert db.execute("SELECT value_json FROM preferences WHERE key='preserve'").fetchone()[0] == "42"
     stop()

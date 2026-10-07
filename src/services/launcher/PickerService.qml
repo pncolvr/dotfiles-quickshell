@@ -16,6 +16,7 @@ Singleton {
     property string query: ""
     property string layout: "list"
     property var items: []
+    property var itemCriteria: ({})
     property var selectedIds: []
     property int currentIndex: 0
     property bool multiple: false
@@ -31,7 +32,12 @@ Singleton {
     property string windowScope: "all"
     property string error: ""
     property var targetScreen: null
-    readonly property var filteredItems: filter(items, query, smartCase, fuzzy)
+    readonly property var filteredItems: {
+        const criteria = itemCriteria
+        const keys = Object.keys(criteria)
+        const matching = items.filter(item => keys.every(key => item[key] === criteria[key]))
+        return filter(matching, query, smartCase, fuzzy)
+    }
     readonly property var currentItem: filteredItems[currentIndex] ?? null
     readonly property var selectedItems: items.filter(item => selectedIds.includes(item.id))
     readonly property bool selectionToggleClears: filteredItems.length > 0
@@ -77,6 +83,7 @@ Singleton {
         }
         close()
         mode = newMode; prompt = title; query = ""; items = []; selectedIds = []; currentIndex = 0
+        itemCriteria = ({})
         acceptLabel = newMode === "apps" ? "Open" : newMode === "windows" ? "Focus" : "Select"
         layout = "list"; multiple = false; allowTyped = false; smartCase = true; fuzzy = true; customAccept = false
         error = ""; destination = ""; destinationClass = ""
@@ -131,8 +138,8 @@ Singleton {
     function syncClipboard() {
         if (mode !== "clipboard") return
         items = ClipboardRepository.entries().map(entry => ({id: entry.id,
-            title: entry.kind === "image" ? entry.mime : entry.text.replace(/\s+/g, " ").slice(0, 240),
-            subtitle: entry.kind === "image" ? Math.ceil(entry.bytes / 1024) + " KiB" : entry.mime,
+            pinned: !!entry.pinned,
+            title: entry.kind === "image" ? "" : entry.text.replace(/\s+/g, " ").slice(0, 240),
             search: entry.kind === "image" ? entry.mime + " image" : entry.text,
             image: entry.kind === "image" ? "file://" + Config.clipboardDirectory + "/" + entry.id : "",
             result: entry}))

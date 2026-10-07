@@ -19,12 +19,12 @@ Rectangle {
     color: current ? Theme.accent : hover.hovered ? Theme.alternateBackground : "transparent"
     radius: Theme.iconButtonRadius
     implicitHeight: grid ? Theme.pickerGridHeight : clipboardImage
-        ? thumbnail.height + Theme.controlSpacing + textBlock.implicitHeight + Theme.pickerRowPadding * 2
+        ? thumbnail.height + (textBlock.implicitHeight > 0 ? Theme.controlSpacing + textBlock.implicitHeight : 0) + Theme.pickerRowPadding * 2
         : Math.max(
         textBlock.implicitHeight + Theme.pickerRowPadding * 2,
         thumbnail.visible ? thumbnail.height + Theme.pickerRowPadding * 2 : 0)
     height: implicitHeight
-    Accessible.name: entry.title
+    Accessible.name: entry.title || (clipboardImage ? "Clipboard image" : "")
     Accessible.role: multiple ? Accessible.CheckBox : Accessible.ListItem
     Accessible.checkable: multiple
     Accessible.checked: selected
@@ -59,6 +59,7 @@ Rectangle {
         anchors.top: root.clipboardImage ? parent.top : undefined
         anchors.topMargin: Theme.pickerRowPadding
         width: root.clipboardImage ? root.width - anchors.leftMargin - Theme.controlFieldPadding
+            - (pinMarker.visible ? pinMarker.width + Theme.controlSpacing : 0)
             : root.clipboard ? 44 : 18
         height: root.clipboardImage ? Theme.clipboardImagePreviewHeight : root.clipboard ? 36 : 18
         source: root.entry.image || (root.entry.icon ? Quickshell.iconPath(root.entry.icon, true) : "")
@@ -73,7 +74,7 @@ Rectangle {
         anchors.leftMargin: Theme.controlFieldPadding + (root.multiple ? selectionBox.width + Theme.controlSpacing : 0)
             + (thumbnail.visible && !root.clipboardImage ? thumbnail.width + Theme.controlSpacing : 0)
         anchors.right: parent.right
-        anchors.rightMargin: Theme.controlFieldPadding
+        anchors.rightMargin: Theme.controlFieldPadding + (pinMarker.visible ? pinMarker.width + Theme.controlSpacing : 0)
         anchors.verticalCenter: root.clipboardImage ? undefined : parent.verticalCenter
         anchors.top: root.clipboardImage ? thumbnail.bottom : undefined
         anchors.topMargin: Theme.controlSpacing
@@ -91,10 +92,11 @@ Rectangle {
             width: parent.width
             // Legacy power labels contain Pango markup; normalize their grid presentation.
             text: root.grid ? root.entry.title.replace(/<[^>]*>/g, "").trim() : root.entry.title
+            visible: text.length > 0
             textFormat: Text.PlainText
             horizontalAlignment: root.grid ? Text.AlignHCenter : Text.AlignLeft
             wrapMode: root.clipboard ? Text.Wrap : Text.NoWrap
-            maximumLineCount: root.clipboard ? 2 : 1
+            maximumLineCount: root.clipboard ? 3 : 1
             elide: Text.ElideRight
         }
         UI.Text {
@@ -107,5 +109,17 @@ Rectangle {
             font.pixelSize: Theme.fontSize - 1
             elide: Text.ElideRight
         }
+    }
+    UI.IconText {
+        id: pinMarker
+        anchors.right: parent.right
+        anchors.rightMargin: Theme.controlFieldPadding
+        anchors.verticalCenter: parent.verticalCenter
+        width: 16
+        height: 16
+        visible: root.entry.pinned === true
+        text: Theme.filePinIcon
+        color: root.current ? Theme.text : Theme.accent
+        horizontalAlignment: Text.AlignHCenter
     }
 }

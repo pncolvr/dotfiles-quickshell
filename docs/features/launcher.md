@@ -121,7 +121,16 @@ text previews and images across the row width, preserving their aspect ratio.
 Click selects, double-click/Enter pastes into
 the window active before opening, and Ctrl+Enter restores without pasting.
 Paste inserts the highlighted entry into the original window. The red trash
-button removes that entry, while Clear history removes all saved entries.
+button removes that entry, while Clear history removes only unpinned entries.
+The thumbtack button or Ctrl+P toggles the highlighted entry's pin. Pinned entries
+show a thumbtack and survive restarts, repeated copies, history clearing, and
+automatic pruning. The Pinned only button or Ctrl+Shift+P toggles a pinned-entry
+filter, highlighted with the accent color when active. Search still applies
+within the filtered entries; opening the picker again starts with all entries.
+Pins count toward the entry and total-size limits, but are
+never removed to satisfy those limits; if pins alone exceed a limit, they are
+kept and new unpinned entries cannot be retained. Explicitly deleting a pinned
+entry still removes it.
 Delete also removes the highlighted entry while search has focus; use Backspace
 to edit the search query. Errors are
 shown when the panel next opens. The IPC pause toggle stops saving new copies
