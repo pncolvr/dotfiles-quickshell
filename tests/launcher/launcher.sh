@@ -20,7 +20,7 @@ Exec=true
 Terminal=false
 DESKTOP
 cp -a "$project_root/src" "$test_dir/src"
-sed -i 's/readonly property int clipboardMaxItems: 200/readonly property int clipboardMaxItems: 3/' "$test_dir/src/config/Config.qml"
+sed -Ei 's/readonly property int clipboardMaxItems: [0-9]+/readonly property int clipboardMaxItems: 3/' "$test_dir/src/config/Config.qml"
 sed 's@"../../src@"src@g' "$project_root/tests/launcher/launcher-smoke.qml" > "$test_dir/shell.qml"
 export QT_QPA_PLATFORM=offscreen QT_QUICK_BACKEND=software
 export XDG_RUNTIME_DIR="$test_dir/runtime" XDG_DATA_HOME="$test_dir/data" XDG_CACHE_HOME="$test_dir/cache"

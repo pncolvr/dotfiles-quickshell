@@ -4,6 +4,7 @@ import QtQuick
 import "../../theme"
 import "../../theme/ui" as UI
 import "../../services"
+import "../../config"
 
 PickerPanelBase {
     id: root
@@ -11,6 +12,13 @@ PickerPanelBase {
     panelError: picker.error || ClipboardService.error
     minimumRowHeight: Theme.clipboardRowHeight
     footerHint: "Enter to paste · Ctrl+Enter to copy · Del to delete"
+
+    function sizeListForOpening() {
+        const entries = picker.items.slice(0, Config.pickerMaxRows)
+        openedListHeight = entries.length ? entries.reduce((height, entry) => height + Theme.clipboardRowHeight
+            + (entry.image ? Theme.clipboardImagePreviewHeight + Theme.controlSpacing : 0), 0)
+            + (entries.length - 1) * Theme.controlSpacing : Theme.clipboardRowHeight
+    }
 
     function deleteCurrentEntry() {
         if (picker.currentItem) ClipboardService.remove(picker.currentItem.id)
@@ -41,7 +49,7 @@ PickerPanelBase {
                     onClicked: ClipboardService.clear()
                 }
                 UI.ActionButton {
-                    glyph: Theme.playIcon; label: "Paste"; implicitWidth: 90; width: implicitWidth
+                    label: "Paste"; implicitWidth: 90; width: implicitWidth
                     enabled: !!root.picker.currentItem && root.picker.destination.length > 0
                     fillColor: Theme.accent
                     hint: "Paste into the original window (Enter)"

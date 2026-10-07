@@ -61,7 +61,8 @@ Item {
     readonly property int pickerMaxRows: 12
     readonly property bool pickerShowPrompt: false
     readonly property string pickerNamespace: "quickshell-picker"
-    readonly property int clipboardMaxItems: 200
+    readonly property int clipboardMaxItems: 1000
+    readonly property int clipboardMaxTotalBytes: 500000000
     readonly property int clipboardMaxBytes: 10000000
     readonly property string clipboardDirectory: Quickshell.shellPath("data/clipboard")
     readonly property bool clipboardMonitorEnabled: true

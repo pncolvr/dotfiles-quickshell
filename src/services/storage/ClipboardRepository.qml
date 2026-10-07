@@ -29,7 +29,7 @@ Singleton {
             for (let index = 0; index < rows.length; index++) {
                 const row = rows.item(index)
                 total += row.bytes
-                if (index >= Config.clipboardMaxItems || total > 50000000) {
+                if (index >= Config.clipboardMaxItems || total > Config.clipboardMaxTotalBytes) {
                     removed.push(row.id)
                     tx.executeSql("DELETE FROM store.clipboard WHERE id = ?", [row.id])
                 }

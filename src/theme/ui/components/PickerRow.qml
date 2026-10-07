@@ -12,12 +12,15 @@ Rectangle {
     property bool selected: false
     property bool multiple: false
     property bool clipboard: false
+    readonly property bool clipboardImage: clipboard && !!entry.image
     property bool grid: false
     signal chosen(bool toggle)
     signal activated()
     color: current ? Theme.accent : hover.hovered ? Theme.alternateBackground : "transparent"
     radius: Theme.iconButtonRadius
-    implicitHeight: grid ? Theme.pickerGridHeight : Math.max(
+    implicitHeight: grid ? Theme.pickerGridHeight : clipboardImage
+        ? thumbnail.height + Theme.controlSpacing + textBlock.implicitHeight + Theme.pickerRowPadding * 2
+        : Math.max(
         textBlock.implicitHeight + Theme.pickerRowPadding * 2,
         thumbnail.visible ? thumbnail.height + Theme.pickerRowPadding * 2 : 0)
     height: implicitHeight
@@ -52,23 +55,28 @@ Rectangle {
         id: thumbnail
         anchors.left: parent.left
         anchors.leftMargin: Theme.controlFieldPadding + (root.multiple ? selectionBox.width + Theme.controlSpacing : 0)
-        anchors.verticalCenter: parent.verticalCenter
-        width: root.clipboard ? 44 : 18
-        height: root.clipboard ? 36 : 18
+        anchors.verticalCenter: root.clipboardImage ? undefined : parent.verticalCenter
+        anchors.top: root.clipboardImage ? parent.top : undefined
+        anchors.topMargin: Theme.pickerRowPadding
+        width: root.clipboardImage ? root.width - anchors.leftMargin - Theme.controlFieldPadding
+            : root.clipboard ? 44 : 18
+        height: root.clipboardImage ? Theme.clipboardImagePreviewHeight : root.clipboard ? 36 : 18
         source: root.entry.image || (root.entry.icon ? Quickshell.iconPath(root.entry.icon, true) : "")
         visible: source.toString().length > 0 && !root.grid
         fillMode: Image.PreserveAspectFit
-        sourceSize: Qt.size(120, 120)
+        sourceSize: Qt.size(Math.ceil(width), Math.ceil(height))
         asynchronous: true
     }
     Column {
         id: textBlock
         anchors.left: parent.left
         anchors.leftMargin: Theme.controlFieldPadding + (root.multiple ? selectionBox.width + Theme.controlSpacing : 0)
-            + (thumbnail.visible ? thumbnail.width + Theme.controlSpacing : 0)
+            + (thumbnail.visible && !root.clipboardImage ? thumbnail.width + Theme.controlSpacing : 0)
         anchors.right: parent.right
         anchors.rightMargin: Theme.controlFieldPadding
-        anchors.verticalCenter: parent.verticalCenter
+        anchors.verticalCenter: root.clipboardImage ? undefined : parent.verticalCenter
+        anchors.top: root.clipboardImage ? thumbnail.bottom : undefined
+        anchors.topMargin: Theme.controlSpacing
         spacing: 2
         UI.IconText {
             centerVertical: false

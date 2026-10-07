@@ -94,7 +94,9 @@ instructions alongside it.
 
 Regular clipboard text and supported images are captured through supervised
 `wl-paste --watch` processes; primary selection is not recorded. The picker shows
-text previews and image thumbnails. Click selects, double-click/Enter pastes into
+text previews and images across the row width, preserving their aspect ratio.
+`Theme.clipboardImagePreviewHeight` sets the image preview height (200px by default).
+Click selects, double-click/Enter pastes into
 the window active before opening, and Ctrl+Enter restores without pasting.
 Paste inserts the highlighted entry into the original window. The red trash
 button removes that entry, while Clear history removes all saved entries.
@@ -106,8 +108,9 @@ and persists across restarts.
 `clipboard.sh` owns byte capture, restoration, cleanup and paste injection. QML
 owns SQLite metadata. Payloads live in private `data/clipboard/` files, indexed
 by MIME type and content hash; metadata lives in `data/quickshell.db` schema 5.
-The defaults retain at most 200 entries and 50 MB total, with a 10 MB image limit
-and 1 MB text limit. Empty, oversized, unsupported and sensitive-marked copies
+The defaults retain at most 1,000 entries and 500 MB total, controlled by
+`Config.clipboardMaxItems` and `Config.clipboardMaxTotalBytes`, with a 10 MB image
+limit and 1 MB text limit. Empty, oversized, unsupported and sensitive-marked copies
 are skipped. TOTP codes copied by this shell are excluded. This does not identify
 unmarked passwords copied by other applications.
 

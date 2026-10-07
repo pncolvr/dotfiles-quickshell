@@ -86,6 +86,7 @@ Item {
   readonly property real pickerBackgroundOpacity: 0.7 // 0–1; text and controls stay opaque.
   readonly property int pickerRowHeight: 36
   readonly property int clipboardRowHeight: 52
+  readonly property int clipboardImagePreviewHeight: 200
   readonly property int pickerRowPadding: 4
   readonly property int pickerGridHeight: 52
   readonly property int scrollbarWidth: 6
