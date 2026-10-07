@@ -16,6 +16,7 @@ qs ipc call twitch addUser streamer_login
 qs ipc call twitch removeUser streamer_login
 qs ipc call twitch exportUsers > twitch-users.txt # one login per line
 qs ipc call updates reload       # reread the package update cache
+qs ipc call recentfiles reload   # reread desktop recent files
 ```
 
 Twitch exports contain lowercase logins as ordinary text. New databases start

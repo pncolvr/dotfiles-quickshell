@@ -23,12 +23,13 @@ those before running on another desktop.
 | --- | --- |
 | Quickshell (developed with 0.3.1), Qt 6.10+ | QML shell, native services, trimmed notification outlines |
 | Hyprland and `hyprctl` | Workspaces, window focus, submaps, screen sharing |
-| Bash, coreutils, `awk`, `grep`, `sed`, `jq` | Command helpers and parsing |
+| Bash, coreutils, findutils, `awk`, `grep`, `sed`, `jq` | Command helpers, folder files, and parsing |
 | Noto Sans Mono, JetBrains Mono, Font Awesome 7 Free Solid | Text and icons configured in `src/theme/Theme.qml` |
 | PipeWire, WirePlumber, `pactl` | Audio devices, defaults, application routing and profiles |
 | `pavucontrol` | Mixer opened by middle-clicking audio icons |
 | `libsecret` (`secret-tool`), `oath-toolkit` (`oathtool`), Secret Service provider | TOTP storage and code generation |
 | UPower | Laptop and peripheral batteries |
+| `libxslt` (`xsltproc`) | Desktop recent-file history (with Bash, coreutils, and `jq`) |
 | BlueZ | Bluetooth battery reporting |
 | Solaar | Optional Logitech receiver battery readings |
 | NetworkManager (`nmcli`), `ping` | Connected networks, VPN status and connectivity |

@@ -52,5 +52,6 @@ their content to the dedicated window without checking module names.
 Feature guides describe the individual controls and settings:
 [notifications](features/notifications.md), [Twitch](features/twitch.md),
 [TOTP](features/totp.md), [audio](features/audio.md), [batteries](features/batteries.md).
+Recent-file source and limits are described in [recent files](features/recent-files.md).
 
 [Documentation](README.md)

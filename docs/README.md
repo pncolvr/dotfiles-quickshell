@@ -13,6 +13,7 @@
 - [TOTP](features/totp.md): keyring setup, token editing, countdown and secret handling.
 - [Audio](features/audio.md): devices, application routing, levels and profiles.
 - [Batteries](features/batteries.md): discovery, warning levels and cached readings.
+- [Recent files](features/recent-files.md): desktop history, folder tabs, limits and file drag.
 
 ## Implementation and maintenance
 

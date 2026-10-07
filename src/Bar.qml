@@ -25,6 +25,7 @@ Scope {
       }
 
       CenterModules {
+        window: panelWindow
         anchors.centerIn: parent
       }
       

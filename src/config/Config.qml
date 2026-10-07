@@ -82,6 +82,20 @@ Item {
     readonly property int notificationCriticalTimeout: 0
     readonly property int notificationPageSize: 25
 
+    // Either recent-file limit can be disabled with 0.
+    readonly property int recentFilesMaxItems: 20
+    readonly property int recentFilesMaxDays: 7
+    readonly property int recentFilesRefreshInterval: Timespan.fromSeconds(30)
+    readonly property string recentFilesPath: `${Quickshell.env("XDG_DATA_HOME") || `${_internal.home}/.local/share`}/recently-used.xbel`
+    readonly property var recentFilesCommand: [
+        "bash", Qt.resolvedUrl("../services/files/recent-files.sh").toString().replace("file://", ""),
+        "--source", recentFilesPath, "--max-items", String(recentFilesMaxItems),
+        "--max-days", String(recentFilesMaxDays)
+    ]
+    readonly property var recentFolderCommand: [
+        "bash", Qt.resolvedUrl("../services/files/folder-files.sh").toString().replace("file://", "")
+    ]
+
     readonly property real micActivityThreshold: 0.02
     readonly property int micActivityHold: 200
     readonly property var mixerCommand: ["pavucontrol"]

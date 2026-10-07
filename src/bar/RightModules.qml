@@ -1,5 +1,6 @@
 import QtQuick
 import "../modules/system"
+import "../modules/media"
 import "../modules/status"
 import "../modules/hyprland"
 import "../theme"
@@ -16,6 +17,7 @@ Row {
     Mic {}
     Volume {}
     Stats {}
+    Twitch {}
     
     Status {}
     Totp { window: root.window }

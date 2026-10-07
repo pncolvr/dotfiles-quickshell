@@ -18,6 +18,7 @@ Singleton {
     readonly property var screen: _internal.screen
     readonly property bool ownsTooltipWindow: source?.ownsTooltipWindow === true
     readonly property bool typingPaused: _internal.typingPaused
+    readonly property bool dragging: _internal.dragging
 
     QtObject {
         id: _internal
@@ -29,6 +30,7 @@ Singleton {
         property var source: null
         property var screen: null
         property bool typingPaused: false
+        property bool dragging: false
         property bool triggerHovered: false
         property bool panelHovered: false
         property var cursorBaseline: null
@@ -36,6 +38,7 @@ Singleton {
     }
 
     function show(xPos: real, tooltipContent: Component, tooltipSource, screenCentered, tooltipScreen) {
+        if (_internal.dragging) return
         if (_internal.pinned) return
         if (_internal.typingPaused && _internal.source !== (tooltipSource ?? null)) return
         if (_internal.source !== (tooltipSource ?? null) || _internal.screen !== (tooltipScreen ?? null)) {
@@ -53,11 +56,12 @@ Singleton {
     }
 
     function hide() {
-        if (_internal.pinned || _internal.typingPaused) return
+        if (_internal.pinned || _internal.typingPaused || _internal.dragging) return
         hideTimer.start()
     }
 
     function togglePin(xPos: real, tooltipContent: Component, tooltipSource, screenCentered, tooltipScreen) {
+        if (_internal.dragging) return
         if (_internal.pinned && _internal.source === tooltipSource) {
             _internal.pinned = false
             // Keep it open while the pointer is still over the clicked icon.
@@ -72,6 +76,16 @@ Singleton {
 
     function cancelHide() {
         hideTimer.stop()
+    }
+
+    function beginDrag() {
+        _internal.dragging = true
+        hideTimer.stop()
+    }
+
+    function endDrag() {
+        _internal.dragging = false
+        if (!_internal.panelHovered && !_internal.triggerHovered) hide()
     }
 
     function pauseDismissal() {

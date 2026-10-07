@@ -72,6 +72,7 @@ Item {
   readonly property string deleteIcon: "" // trash-can
   readonly property string copyIcon: "" // copy
   readonly property string editIcon: "" // pen
+  readonly property string refreshIcon: "" // refresh
   readonly property string retryIcon: "" // arrows-rotate
   readonly property string chevronDownIcon: "" // chevron-down: choices
   readonly property string playIcon: "" // play
@@ -236,6 +237,12 @@ Item {
   readonly property int expandedBackgroundRadius: 4
   readonly property int expandedBackgroundPaddingWidth: 6
   readonly property int expandedBackgroundPaddingHeight: 3
+
+  // recent files
+  readonly property string recentFilesIcon: "" // file-lines
+  readonly property int recentFilesTooltipWidth: 440
+  readonly property int recentFilesRowHeight: 58
+  readonly property real recentFilesMaxHeightRatio: 0.5
 
   // notifications
   readonly property string notificationsDndEnabledIcon: ""

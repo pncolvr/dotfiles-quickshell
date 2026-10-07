@@ -10,6 +10,7 @@ singleton CalendarService 1.0 time/CalendarService.qml
 singleton StatsService 1.0 system/StatsService.qml
 singleton PowerProfileService 1.0 system/PowerProfileService.qml
 singleton BatteryService 1.0 system/BatteryService.qml
+singleton RecentFilesService 1.0 files/RecentFilesService.qml
 singleton NetworkService 1.0 system/NetworkService.qml
 singleton UpdatesService 1.0 system/UpdatesService.qml
 singleton ConfigService 1.0 system/ConfigService.qml

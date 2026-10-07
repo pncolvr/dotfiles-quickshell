@@ -41,6 +41,20 @@ Scrollable modules use `UI.ScrollBar` from `src/theme/ui/components/ScrollBar.qm
 It shows an accent-colored thumb during scrolling or hover, then fades away.
 Overflow controls layout space independently of the thumb's opacity.
 
+## Recent files
+
+Run `bash tests/files/recent-files.sh` for startup module and tooltip resolution,
+XBEL source filtering, age/count limits, missing files, URI escaping, dependency
+errors, real service refresh, folder selection/removal, persistence across restarts,
+newest-first and natural filename ordering, bounded lists, tab overflow, scrolling, click-to-open,
+and drag dismissal protection. The tests use temporary history, folders, and a
+private database; they do not alter desktop history or saved folder preferences.
+Set `RECENT_FILES_TEST_SCREENSHOT=/tmp/recent-files.png` to save a panel preview.
+Set `RECENT_FOLDERS_TEST_SCREENSHOT=/tmp/folder-tabs.png` for a folder tab preview.
+On the Wayland desktop, drag a row into another app that accepts files and verify
+the destination receives the file. The offscreen platform cannot transfer a drag
+between applications.
+
 ## Notifications
 
 ```sh
