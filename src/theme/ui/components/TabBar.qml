@@ -104,7 +104,7 @@ QC.TabBar {
             }
             onClicked: { if (root.interactionEnabled) root.tabClicked(index) }
             // Block activation during source drags while keeping drop targets alive.
-            MouseArea { anchors.fill: parent; enabled: !root.interactionEnabled }
+            MouseArea { anchors.fill: parent; visible: !root.interactionEnabled }
             DropArea {
                 id: tabDrop
                 anchors.fill: parent
