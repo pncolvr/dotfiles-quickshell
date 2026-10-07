@@ -5,10 +5,20 @@ Rectangle {
     id: root
     property alias text: icon.text
     property alias iconColor: icon.color
-    property alias centerVertical: icon.centerVertical
+    property bool centerVertical: true
 
     IconText {
         id: icon
-        anchors.centerIn: parent
+        centerVertical: false
+        // Center the visible glyph rather than its advance width and line box.
+        x: (root.width - iconMetrics.tightBoundingRect.width) / 2 - iconMetrics.tightBoundingRect.x
+        y: root.centerVertical ? (root.height - iconMetrics.tightBoundingRect.height) / 2
+            - baselineOffset - iconMetrics.tightBoundingRect.y : 0
+    }
+
+    TextMetrics {
+        id: iconMetrics
+        font: icon.font
+        text: icon.text
     }
 }
