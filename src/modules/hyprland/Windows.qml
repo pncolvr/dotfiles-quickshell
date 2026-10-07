@@ -27,7 +27,6 @@ Row {
         implicitHeight: root.height
         height: root.height
         tabPadding: Theme.groupedModuleSpacing / 2
-        baselineRightInset: tabPadding
         function syncFocusedWindow() {
             const focusedIndex = visible ? WindowService.windows.findIndex(window => window.active) : -1
             setCurrentIndex(focusedIndex)

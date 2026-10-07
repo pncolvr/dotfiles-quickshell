@@ -11,7 +11,6 @@ QC.TabBar {
     property var closeableTabs: []
     property real tabPadding: Theme.controlFieldPadding * 2
     property real closeButtonWidth: 16
-    property real baselineRightInset: 0
     property real underlineBottomMargin: 3
     signal tabClicked(int index)
     signal tabCloseRequested(int index)
@@ -36,7 +35,7 @@ QC.TabBar {
         Rectangle {
             anchors.bottom: parent.bottom
             anchors.bottomMargin: root.underlineBottomMargin
-            width: Math.max(0, parent.width - root.baselineRightInset)
+            width: parent.width
             height: 1
             color: Theme.empty
         }
@@ -87,7 +86,8 @@ QC.TabBar {
                 Rectangle {
                     anchors.bottom: parent.bottom
                     anchors.bottomMargin: root.underlineBottomMargin
-                    width: parent.width
+                    x: tabButton.contentItem.x + tabLabel.x + (tabLabel.width - width) / 2
+                    width: tabLabel.implicitWidth
                     height: 2
                     visible: tabButton.checked
                     color: Theme.accent
