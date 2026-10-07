@@ -11,6 +11,8 @@ Scope {
     id: root
     property int step: 0
     property bool failed: false
+    property real firstSearchX: -1
+    property real firstSearchWidth: -1
     readonly property var modes: ["menu", "grid", "clipboard", "multiple"]
     PickerWindow { id: popup; visible: false }
 
@@ -37,6 +39,12 @@ Scope {
         check(!!search, "picker search exists")
         if (!search) return
         const position = search.mapToItem(popup.contentItem, 0, 0)
+        if (firstSearchX < 0) {
+            firstSearchX = position.x
+            firstSearchWidth = search.width
+        }
+        check(position.x === firstSearchX && search.width === firstSearchWidth,
+            "search has the same horizontal position and width across all picker modes")
         check(popup.anchors.top && Math.abs(popup.contentX - (popup.width - popup.contentWidth) / 2) < 0.01,
             "picker is top anchored and horizontally centered")
         check(position.y === Theme.tooltipPaddingHeight, "search stays directly below the bar")

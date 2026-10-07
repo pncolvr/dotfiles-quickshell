@@ -20,7 +20,7 @@ Rectangle {
     property string footerHint: gridMode ? "Arrows to select · Enter to choose · Esc to cancel"
         : "Arrows to select · Enter to " + picker.acceptLabel.toLowerCase() + " · Esc to cancel"
     property real openedListHeight: Theme.pickerRowHeight
-    implicitWidth: gridMode ? Theme.pickerWidth * 1.5 : Theme.pickerWidth
+    implicitWidth: Theme.pickerWidth
     implicitHeight: header.height + list.implicitHeight + footer.height + Theme.tooltipPaddingHeight * 2 + 12
     function focusSearch() { search.forceActiveFocus() }
     function sizeListForOpening() {

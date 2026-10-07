@@ -13,10 +13,9 @@ TopPanelTooltip {
     id: root
     property var picker: PickerService
     readonly property Item previewItem: contentItem
-    readonly property bool gridMode: picker.layout === "grid"
     screen: Quickshell.screens.includes(picker.targetScreen) ? picker.targetScreen : Quickshell.screens[0] ?? null
     visible: picker.visible && !!picker.targetScreen
-    contentWidth: Math.min(gridMode ? Theme.pickerWidth * 1.5 : Theme.pickerWidth,
+    contentWidth: Math.min(Theme.pickerWidth,
         Math.max(0, (screen?.width || 800) - Theme.tooltipRadius * 2 - Theme.tooltipPaddingWidth * 2))
     contentHeight: Math.min(panel.implicitHeight,
         Math.max(0, (screen?.height || 1080) * 0.75 - shadowBottomPadding))
