@@ -4,7 +4,8 @@ Hover the file icon beside the clock to see recently used files. Click the
 icon to pin the list. Each row shows the filename, its folder, and when it was
 last used. Click a row to select it, double-click to open it with its default application, or drag it
 into a file manager, editor, chat, or another application that accepts files.
-Hover a filename to read its full name when the row truncates it.
+Hover a filename or its folder text to read the full name or folder path when
+the row truncates it.
 
 Ctrl-click toggles individual files; Shift-click selects a range from the last
 clicked file. Ctrl+Shift-click adds a range to the existing selection. Ctrl+A

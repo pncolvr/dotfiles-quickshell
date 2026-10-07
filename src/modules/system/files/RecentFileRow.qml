@@ -102,6 +102,13 @@ Rectangle {
             color: Theme.inactive
             font.pixelSize: 10
             elide: Text.ElideMiddle
+            HoverHandler { id: directoryHover; cursorShape: Qt.PointingHandCursor }
+            UI.HoverTooltip {
+                objectName: "fileDirectoryTooltip"
+                hoverTarget: directoryHover
+                enabled: !root.dragging
+                text: root.file.directory
+            }
         }
     }
     UI.ActionButton {
