@@ -18,6 +18,7 @@ A desktop bar for Hyprland, built with QML and Quickshell.
 - Work/personal mode with daily totals and detailed timecards
 - System tray, keybind hints and alerts
 - IPC commands for scripts and Hyprland bindings
+- Application/window launcher, reusable Bash pickers and text/image clipboard history
 
 ## Dependencies
 

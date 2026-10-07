@@ -167,6 +167,7 @@ Singleton {
     }
 
     function focusWindow(address) {
+        if (!/^0x[0-9a-f]+$/i.test(address)) return
         Hyprland.dispatch(Config.hyprlandFocusWindowByAddress(address))
     }
 

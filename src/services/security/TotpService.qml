@@ -123,6 +123,7 @@ Singleton {
         } else if (message.type === "edit") {
             root.editorLoaded(message.id, message.name, message.token)
         } else if (message.type === "copy") {
+            ClipboardService.ignoreTextOnce(message.code)
             Quickshell.clipboardText = message.code
             state.copiedId = message.id
             copiedTimer.restart()

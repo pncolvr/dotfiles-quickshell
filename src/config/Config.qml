@@ -58,6 +58,15 @@ Item {
     // The database is local to this config and ignored by Git.
     readonly property string databasePath: Quickshell.shellPath("data/quickshell.db")
     readonly property string databaseName: "quickshell"
+    readonly property int pickerMaxRows: 12
+    readonly property bool pickerShowPrompt: false
+    readonly property string pickerNamespace: "quickshell-picker"
+    readonly property int clipboardMaxItems: 200
+    readonly property int clipboardMaxBytes: 10000000
+    readonly property string clipboardDirectory: Quickshell.shellPath("data/clipboard")
+    readonly property bool clipboardMonitorEnabled: true
+    readonly property var pickerBridgeCommand: ["bash", Quickshell.shellPath("src/services/launcher/launcher.sh"), "--bridge"]
+    readonly property var clipboardCommand: ["bash", Quickshell.shellPath("src/services/clipboard/clipboard.sh")]
     // Whole minutes, aligned to the minute of the hour (:00, :05, :10, ...).
     readonly property int twitchInterval: Timespan.fromMinutes(5)
     readonly property int twitchUndoDuration: Timespan.fromSeconds(6)
@@ -170,7 +179,23 @@ Item {
     readonly property var hyprlandSetNoWarpsCommand: (value) => ["hyprctl", "eval", `hl.config({ cursor = { no_warps = ${value} } })`]
     readonly property var hyprlandGetActiveWindowHiddenCommand: ["bash", "-c", "hyprctl getprop activewindow no_screen_share"]
     readonly property var hyprlandHideApplicationsCommand: (active) => ["hyprctl", "eval", `HideApplications(${active})`]
-    readonly property var hyprlandFocusWindowByAddress: (address) => `hl.dsp.focus({ window = "address:${address}" })`
+    // Resolve live group membership when dispatched; cached group indexes can change.
+    readonly property var hyprlandFocusWindowByAddress: (address) => `function()
+        for _, window in ipairs(hl.get_windows()) do
+            if window.address == "${address}" and window.mapped then
+                if window.group then
+                    for index, member in ipairs(window.group.members) do
+                        if member.address == window.address then
+                            hl.dispatch(hl.dsp.group.active({ index = index, window = window }))
+                            break
+                        end
+                    end
+                end
+                hl.dispatch(hl.dsp.focus({ window = window }))
+                return
+            end
+        end
+    end`
     readonly property string hyprlandCycleNextTiled: "hl.dsp.window.cycle_next({ tiled = true })"
     readonly property string hyprlandCyclePreviousTiled: "hl.dsp.window.cycle_prev({ tiled = true })"
 

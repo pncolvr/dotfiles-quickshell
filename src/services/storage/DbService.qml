@@ -10,7 +10,7 @@ Singleton {
 
     readonly property string name: Config.databaseName
     readonly property string path: Config.databasePath
-    readonly property int schemaVersion: 4
+    readonly property int schemaVersion: 5
     readonly property bool ready: state.ready
     readonly property string error: state.error
 
@@ -54,6 +54,7 @@ Singleton {
                 if (!streamNames.includes("online")) tx.executeSql("ALTER TABLE store.twitch_notified_streams ADD COLUMN online INTEGER NOT NULL DEFAULT 1")
                 tx.executeSql("CREATE TABLE IF NOT EXISTS store.battery_receivers (device_id TEXT PRIMARY KEY, payload_json TEXT NOT NULL, updated_at INTEGER NOT NULL)")
                 tx.executeSql("CREATE TABLE IF NOT EXISTS store.preferences (key TEXT PRIMARY KEY, value_json TEXT NOT NULL)")
+                tx.executeSql("CREATE TABLE IF NOT EXISTS store.clipboard (id TEXT PRIMARY KEY, mime TEXT NOT NULL, kind TEXT NOT NULL, bytes INTEGER NOT NULL, text TEXT NOT NULL DEFAULT '', updated_at INTEGER NOT NULL)")
                 tx.executeSql("CREATE TABLE IF NOT EXISTS store.notification_emitters (emitter_key TEXT PRIMARY KEY, display_name TEXT NOT NULL, icon TEXT NOT NULL DEFAULT '', desktop_entry TEXT NOT NULL DEFAULT '', muted INTEGER NOT NULL DEFAULT 0, allow_dnd INTEGER NOT NULL DEFAULT 0, exclude_history INTEGER NOT NULL DEFAULT 0)")
                 tx.executeSql("CREATE TABLE IF NOT EXISTS store.notifications (archive_id TEXT PRIMARY KEY, emitter_key TEXT NOT NULL, summary TEXT NOT NULL, body TEXT NOT NULL, urgency INTEGER NOT NULL, received_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, image TEXT NOT NULL DEFAULT '', actions_json TEXT NOT NULL DEFAULT '[]', action_handler TEXT NOT NULL DEFAULT '')")
                 if (version < 3) {

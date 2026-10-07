@@ -82,6 +82,12 @@ Item {
   readonly property int actionButtonWidth: 30
   readonly property int controlSpacing: 6
   readonly property int controlFieldPadding: 8
+  readonly property int pickerWidth: 560
+  readonly property real pickerBackgroundOpacity: 0.7 // 0–1; text and controls stay opaque.
+  readonly property int pickerRowHeight: 36
+  readonly property int clipboardRowHeight: 52
+  readonly property int pickerRowPadding: 4
+  readonly property int pickerGridHeight: 52
   readonly property int scrollbarWidth: 6
   readonly property int scrollbarHideDelay: 450
   readonly property int scrollbarFadeDuration: 200

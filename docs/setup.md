@@ -24,6 +24,9 @@ those before running on another desktop.
 | Quickshell (developed with 0.3.1), Qt 6.10+ | QML shell, native services, trimmed notification outlines |
 | Hyprland and `hyprctl` | Workspaces, window focus, submaps, screen sharing |
 | Bash, coreutils, findutils, `awk`, `grep`, `sed`, `jq` | Command helpers, folder files, and parsing |
+| `wl-clipboard`, `file`, util-linux (`flock`) | Background text/image clipboard capture and restoration |
+| `gtk-launch` | Desktop application launching, including terminal entries |
+| `ydotool` and its daemon | Optional paste on clipboard activation |
 | Noto Sans Mono, JetBrains Mono, Font Awesome 7 Free Solid | Text and icons configured in `src/theme/Theme.qml` |
 | PipeWire, WirePlumber, `pactl` | Audio devices, defaults, application routing and profiles |
 | `pavucontrol` | Mixer opened by middle-clicking audio icons |

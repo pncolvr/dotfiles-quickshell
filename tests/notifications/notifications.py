@@ -332,7 +332,7 @@ try:
     start()
     assert not rows() and state()["emitters"]["desktop:test"]["excludeFromHistory"]
     with sqlite3.connect(database) as db:
-        assert db.execute("PRAGMA user_version").fetchone()[0] == 4
+        assert db.execute("PRAGMA user_version").fetchone()[0] == 5
         assert db.execute("PRAGMA integrity_check").fetchone()[0] == "ok"
         assert db.execute("SELECT value_json FROM preferences WHERE key='preserve'").fetchone()[0] == "42"
     stop()

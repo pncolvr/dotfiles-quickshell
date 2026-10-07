@@ -5,10 +5,12 @@ import Quickshell
 import "src"
 import "src/modules/system/notifications"
 import "src/modules/system/totp"
+import "src/modules/launcher"
 
 Scope {
   Bar {}
   NotificationPopupWindow {}
   NotificationManagerWindow {}
   TotpWindow {}
+  PickerWindow {}
 }

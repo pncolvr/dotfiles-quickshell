@@ -279,5 +279,6 @@ Column {
         color: Theme.inactive
         font.pixelSize: 10
         wrapMode: Text.Wrap
+        horizontalAlignment: Text.AlignHCenter
     }
 }

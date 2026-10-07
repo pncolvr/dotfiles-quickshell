@@ -13,6 +13,8 @@ SearchField 1.0 components/SearchField.qml
 ScrollBar 1.0 components/ScrollBar.qml
 TabBar 1.0 components/TabBar.qml
 TooltipBackground 1.0 components/TooltipBackground.qml
+PickerRow 1.0 components/PickerRow.qml
+PickerList 1.0 components/PickerList.qml
 
 PulseText 1.0 PulseText.qml
 IconText 1.0 IconText.qml

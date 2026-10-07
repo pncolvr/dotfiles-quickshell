@@ -8,6 +8,8 @@ import "../../../services"
 UI.InputField {
     id: root
     readonly property string query: text.trim().toLowerCase()
+    property bool resetWithTooltip: true
+    property bool handleEscape: true
     rightPadding: Theme.controlFieldPadding + (clearButton.visible ? clearButton.width : 0)
     Accessible.name: placeholderText
 
@@ -15,12 +17,13 @@ UI.InputField {
 
     Connections {
         target: TooltipService
-        function onVisibleChanged() { if (!TooltipService.visible) root.resetSearch() }
+        function onVisibleChanged() { if (root.resetWithTooltip && !TooltipService.visible) root.resetSearch() }
     }
 
-    Keys.onEscapePressed: {
+    Keys.onEscapePressed: event => {
+        if (!handleEscape) { event.accepted = false; return }
         resetSearch()
-        TooltipService.resumeDismissal()
+        if (pauseTooltipDismissal) TooltipService.resumeDismissal()
     }
 
     UI.ActionButton {

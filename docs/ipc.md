@@ -17,6 +17,12 @@ qs ipc call twitch removeUser streamer_login
 qs ipc call twitch exportUsers > twitch-users.txt # one login per line
 qs ipc call updates reload       # reread the package update cache
 qs ipc call recentfiles reload   # reread desktop recent files
+qs ipc call launcher apps        # application picker
+qs ipc call launcher windows all # searchable window picker
+qs ipc call launcher windows current # tiled windows on the current workspace
+qs ipc call launcher clipboard   # text/image history with copy and paste
+qs ipc call clipboard togglePause # pause/resume history capture
+qs ipc call clipboard importCopyq # import text/image history without changing CopyQ
 ```
 
 Twitch exports contain lowercase logins as ordinary text. New databases start

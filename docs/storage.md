@@ -39,6 +39,13 @@ settings are local to `data/quickshell.db`.
 
 TOTP names and seeds live in the desktop Secret Service; see [TOTP](features/totp.md).
 
+## Clipboard history
+
+Schema version 5 adds clipboard metadata and searchable text while preserving the
+existing tables. Original payload bytes live in private, content-addressed files
+under `data/clipboard/`. Include this directory alongside `data/quickshell.db`
+when backing up clipboard history. See [launcher and clipboard](features/launcher.md).
+
 ## Backups
 
 Stop the shell before copying `data/quickshell.db` so pending writes have finished.

@@ -1,0 +1,146 @@
+# Launcher and clipboard
+
+The launcher uses the same theme, search field, buttons and scrollbar as the bar.
+Clickable rows, buttons and scrollbars show a pointing-hand cursor. It opens on
+the focused monitor, keeps keyboard focus while the pointer moves, and closes
+with Escape or an outside click.
+Picker headers contain search. Prompt titles are hidden by
+default; set `Config.pickerShowPrompt` to `true` to display them.
+`Theme.pickerBackgroundOpacity` controls background transparency (0–1), keeping
+text and controls opaque. Escape dismisses the picker.
+The list keeps its opening size while filtering or deleting entries, so the
+dialog and footer stay in place.
+`PickerPanelBase` shares layout, search and navigation. `ClipboardPickerPanel`
+and `MultiSelectPickerPanel` extend it with their own shortcuts and action buttons;
+`PickerPanel` loads the appropriate panel.
+
+## Commands
+
+```sh
+qs ipc call launcher apps
+qs ipc call launcher windows all
+qs ipc call launcher windows current
+qs ipc call launcher clipboard
+```
+
+Applications use native desktop-entry metadata and `gtk-launch`, including terminal
+applications. Rows show only application names. Recent launches are ordered first. Window modes reuse `WindowService`;
+Enter focuses a window, Ctrl+Enter focuses without dismissing, and two-window lists
+switch immediately to the previous window. Focusing a grouped window activates
+its tab using live group membership. Current-workspace mode considers tiled
+windows and falls back to all windows if fewer than two are available.
+
+## Bash pickers
+
+```sh
+picker="$HOME/.config/quickshell/src/services/launcher/launcher.sh"
+chosen=$(printf 'first\nsecond\n' | bash "$picker" --dmenu -no-custom)
+result=$(bash "$picker" --json options.json)
+bash "$picker" --json-response options.json
+```
+
+JSON requests accept `prompt`, `allowTyped`, `allowMultipleSelection`, `sort`,
+`smartCase`, `fuzzy`, `customAccept`, `query`, `layout` (`list` or `grid`), and
+`items`. Each item has a `title` and a `result` (a string or JSON value), with
+optional `subtitle`, `icon`, `glyph`, and `search` strings. `icon` names a desktop
+icon; `glyph` uses the shared icon font in grid menus. `acceptLabel` optionally
+names the submit action. Source indexes identify items;
+duplicate labels cannot change the selected result. `--json` prints selected
+results, one per line, and serializes objects as compact JSON. `--json-response`
+returns the entire response object. The client never executes returned content.
+
+Escape/outside click exits 1, errors/timeouts exit 2, acceptance exits 0, and
+Ctrl+Enter exits 10 when `customAccept` is enabled. Multi-selection rows toggle
+with a click or Ctrl+Space, including while typing in search. Arrow keys move
+the highlighted entry; plain Space still types a space in search. Checkboxes
+show the selection. Ctrl+A and the Select visible button add the current filtered
+results, preserving earlier selections. When all visible results are selected,
+the action toggles to Deselect all and clears selections across every search.
+Ctrl+Shift+A always clears every selection. Enter submits the selection,
+and is inactive when none is selected. A typed value with no matches can still
+be submitted when the provider allows it. Browser menus label submission
+Open links, which opens each selected URL through the existing browser helper.
+Smart-case matching becomes case sensitive when the query contains uppercase.
+Fuzzy matching uses stable subsequence ranking; its scores are not identical to fzf.
+
+Requests and reply FIFOs live in a private `$XDG_RUNTIME_DIR/quickshell-picker`
+directory and are cleaned up on completion or interruption. The default timeout
+is ten minutes; `QS_PICKER_TIMEOUT` overrides it. `QS_PICKER_CONFIG` selects a
+different shell root. IPC functions open requests asynchronously so the UI never
+blocks while a Bash client waits.
+
+## Existing providers
+
+```sh
+bash "$picker" provider bookmarks
+bash "$picker" provider code
+bash "$picker" provider azure --pick
+```
+
+Providers reuse existing Bash scripts and their caches/configuration. Available
+names are `code`, `webapps`, `github`, `azure`, `n8n`, `remotes`, `bookmarks`,
+`books`, `directories`, `media`, `power`, `screenshot`, and `recording`.
+Their shared JSON handler and direct menu calls invoke `launcher.sh`; no Rofi
+adapter or PATH override is required. Provider actions remain in their original
+Bash scripts, including browser selection, work/personal filtering, and editor profiles.
+
+Hyprland uses Super+D for applications and Super+V for clipboard history.
+Existing provider and window-switching shortcuts keep their original scripts.
+CopyQ is no longer started automatically. The configuration before migration is
+saved under `data/launcher-migration-2026-10-07/before/`, with restoration
+instructions alongside it.
+
+## Clipboard
+
+Regular clipboard text and supported images are captured through supervised
+`wl-paste --watch` processes; primary selection is not recorded. The picker shows
+text previews and image thumbnails. Click selects, double-click/Enter pastes into
+the window active before opening, and Ctrl+Enter restores without pasting.
+Paste inserts the highlighted entry into the original window. The red trash
+button removes that entry, while Clear history removes all saved entries.
+Delete also removes the highlighted entry while search has focus; use Backspace
+to edit the search query. Errors are
+shown when the panel next opens. The IPC pause toggle stops saving new copies
+and persists across restarts.
+
+`clipboard.sh` owns byte capture, restoration, cleanup and paste injection. QML
+owns SQLite metadata. Payloads live in private `data/clipboard/` files, indexed
+by MIME type and content hash; metadata lives in `data/quickshell.db` schema 5.
+The defaults retain at most 200 entries and 50 MB total, with a 10 MB image limit
+and 1 MB text limit. Empty, oversized, unsupported and sensitive-marked copies
+are skipped. TOTP codes copied by this shell are excluded. This does not identify
+unmarked passwords copied by other applications.
+
+Paste uses `ydotool` and an available daemon/socket. The destination must still
+exist and be focused before injection. Common terminal classes receive
+Ctrl+Shift+V; other applications receive Ctrl+V. Applications with different
+shortcuts can use Copy and paste manually. Restoration offers a single MIME type;
+rich text and alternate formats are not retained together.
+
+```sh
+qs ipc call clipboard togglePause
+qs ipc call clipboard importCopyq
+qs ipc call clipboard state
+```
+
+Import reads up to 200 existing text/image entries through CopyQ's CLI without
+modifying CopyQ's source history. CopyQ must be running. No clipboard contents
+are printed to application logs.
+
+The window uses the `quickshell-picker` layer namespace. Its Hyprland layer rule
+excludes launcher and clipboard contents from screen capture independently of
+the bar's screen-sharing toggle.
+
+## Checks
+
+```sh
+bash tests/launcher/launcher.sh
+bash tests/clipboard/clipboard.sh
+bash tests/launcher/wayland.sh
+bash tests/qml/lint.sh
+```
+
+The first two use temporary databases and mocked clipboard/input commands.
+The Wayland check briefly displays an isolated picker without capturing the real
+clipboard, saves `/tmp/quickshell-picker-preview.png`, then restores the original
+window focus.

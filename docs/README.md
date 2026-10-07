@@ -8,6 +8,7 @@
 
 ## Feature guides
 
+- [Launcher and clipboard](features/launcher.md): reusable Bash pickers, applications, windows and clipboard history.
 - [Notifications](features/notifications.md): history, emitters, DND, popups and actions.
 - [Twitch](features/twitch.md): following, search, browser suggestions and removal undo.
 - [TOTP](features/totp.md): keyring setup, token editing, countdown and secret handling.
