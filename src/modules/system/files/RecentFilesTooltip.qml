@@ -331,9 +331,9 @@ Column {
             file: modelData
             fileService: root.fileService
             selection: root
-            width: list.width - (scrollbar.visible ? Theme.scrollbarWidth + Theme.controlSpacing : 0)
+            width: list.width
         }
-        QC.ScrollBar.vertical: UI.ScrollBar { id: scrollbar }
+        QC.ScrollBar.vertical: UI.ScrollBar {}
         DropArea {
             id: pinnedDrop
             objectName: "pinnedFilesDrop"

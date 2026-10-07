@@ -20,7 +20,7 @@ function screenshot() {
     local method=$1
     local filename
     local file
-    file=$(date '+%Y-%m-%d_%H:%M:%S').png
+    file=$(date '+Screenshot %Y-%m-%d at %Hh%Mm%Ss').png
     filename="$SCREENSHOT_FOLDER/$file"
 
     capture_screenshot "$method" | satty --filename - --output-filename "$filename"

@@ -9,6 +9,7 @@ QC.ScrollBar {
     policy: QC.ScrollBar.AsNeeded
     visible: policy !== QC.ScrollBar.AlwaysOff && (policy === QC.ScrollBar.AlwaysOn || needed)
     hoverEnabled: true
+    z: 1
     padding: 0
     implicitWidth: Theme.scrollbarWidth
     implicitHeight: Theme.scrollbarWidth

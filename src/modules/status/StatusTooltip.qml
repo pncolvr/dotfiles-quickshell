@@ -82,8 +82,8 @@ Column {
         height: Math.min(contentHeight, Math.max(0, root.maxPanelHeight - header.height - todayLabel.height - tabs.height
             - (summary.visible ? summary.height + root.spacing : 0)
             - (feedback.visible ? feedback.height + root.spacing : 0) - root.spacing * 3))
-        contentWidth: Math.max(width, report.implicitWidth + Theme.scrollbarWidth + Theme.controlSpacing)
-        contentHeight: report.implicitHeight + (horizontal.visible ? Theme.scrollbarWidth + Theme.controlSpacing : 0)
+        contentWidth: Math.max(width, report.implicitWidth)
+        contentHeight: report.implicitHeight
         clip: true
         boundsBehavior: Flickable.StopAtBounds
         onContentHeightChanged: { contentY = 0; contentX = 0 }
@@ -97,6 +97,6 @@ Column {
             wrapMode: Text.NoWrap
         }
         QC.ScrollBar.vertical: UI.ScrollBar {}
-        QC.ScrollBar.horizontal: UI.ScrollBar { id: horizontal }
+        QC.ScrollBar.horizontal: UI.ScrollBar {}
     }
 }

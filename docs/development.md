@@ -38,8 +38,10 @@ metadata: runtime-selected `PanelWindow` backends, the missing
 Other warnings remain enabled, including signal checks outside those handlers.
 
 Scrollable modules use `UI.ScrollBar` from `src/theme/ui/components/ScrollBar.qml`.
-It shows an accent-colored thumb during scrolling or hover, then fades away.
-Overflow controls layout space independently of the thumb's opacity.
+It overlays the content with an accent-colored thumb during scrolling or hover,
+then fades away. Keep content and row widths equal to the viewport width; do not
+reserve a gutter or change panel dimensions when a scrollbar appears. The shared
+component draws above the content and handles both vertical and horizontal bars.
 
 Inline editors use `UI.EditorActions` for a neutral Cancel button followed by an
 accent Apply button. Recent files, TOTP, and Twitch share this component.

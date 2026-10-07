@@ -78,7 +78,7 @@ function capture () {
     audio=$(handle_audio_choice)
     [ -n "$output" ] && params+=" --output $output"
     [ -n "$region" ] && params+=" --geometry \"$region\""
-    file=$(date '+%Y-%m-%d_%H:%M:%S').mp4
+    file=$(date '+Recording %Y-%m-%d at %Hh%Mm%Ss').mp4
     mkdir -p "$VIDEOS_FOLDER"
     filename="$VIDEOS_FOLDER/$file"
 

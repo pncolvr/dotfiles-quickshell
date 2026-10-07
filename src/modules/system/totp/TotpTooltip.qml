@@ -48,7 +48,7 @@ Column {
         }
 
         delegate: TotpRow {
-            width: list.width - (scrollbar.visible ? Theme.totpScrollbarWidth + Theme.totpScrollbarMargin : 0)
+            width: list.width
             editing: root.editingId === entryId
             nameWidth: root.nameWidth
             draftName: root.draftName
@@ -102,9 +102,7 @@ Column {
         clip: true
         boundsBehavior: Flickable.StopAtBounds
         model: filteredEntries
-        QC.ScrollBar.vertical: UI.ScrollBar {
-            id: scrollbar
-        }
+        QC.ScrollBar.vertical: UI.ScrollBar {}
         UI.ColumnText {
             objectName: "totpSearchEmpty"
             parent: list

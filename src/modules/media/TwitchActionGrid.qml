@@ -15,18 +15,16 @@ QC.ScrollView {
     readonly property real gridHeight: grid.implicitHeight
     signal selected(string login)
     clip: true
-    contentWidth: width - (scrollbar.visible ? Theme.twitchScrollbarWidth + Theme.twitchScrollbarMargin : 0)
+    contentWidth: width
     contentHeight: grid.implicitHeight
     QC.ScrollBar.horizontal.policy: QC.ScrollBar.AlwaysOff
-    QC.ScrollBar.vertical: UI.ScrollBar {
-        id: scrollbar
-    }
+    QC.ScrollBar.vertical: UI.ScrollBar {}
     Grid {
         id: grid
         objectName: root.gridObjectName
         width: root.contentWidth
         columns: Math.min(3, Math.max(1, root.logins.length), Math.max(1,
-            Math.floor((root.width - Theme.twitchScrollbarWidth - Theme.twitchScrollbarMargin + Theme.twitchTooltipSpacing) / (Theme.twitchSuggestionMinWidth + Theme.twitchTooltipSpacing))))
+            Math.floor((root.width + Theme.twitchTooltipSpacing) / (Theme.twitchSuggestionMinWidth + Theme.twitchTooltipSpacing))))
         spacing: Theme.twitchTooltipSpacing
         Repeater {
             model: root.logins

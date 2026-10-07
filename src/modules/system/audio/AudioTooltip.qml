@@ -76,7 +76,7 @@ Column {
 
         Column {
             id: deviceContents
-            width: deviceList.width - (deviceScrollbar.visible ? Theme.audioScrollbarWidth + Theme.audioScrollbarMargin : 0)
+            width: deviceList.width
             spacing: Theme.audioSpacing
 
             UI.ColumnText {
@@ -105,7 +105,7 @@ Column {
                 wrapMode: Text.Wrap
             }
         }
-        QC.ScrollBar.vertical: UI.ScrollBar { id: deviceScrollbar }
+        QC.ScrollBar.vertical: UI.ScrollBar {}
     }
 
     Flickable {
@@ -122,7 +122,7 @@ Column {
 
         Column {
             id: appContents
-            width: appList.width - (appScrollbar.visible ? Theme.audioScrollbarWidth + Theme.audioScrollbarMargin : 0)
+            width: appList.width
             spacing: Theme.audioSpacing
 
             UI.ColumnText {
@@ -145,6 +145,6 @@ Column {
                 }
             }
         }
-        QC.ScrollBar.vertical: UI.ScrollBar { id: appScrollbar }
+        QC.ScrollBar.vertical: UI.ScrollBar {}
     }
 }

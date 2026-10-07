@@ -74,7 +74,7 @@ Column {
         delegate: QC.ItemDelegate {
             id: option
             required property var modelData
-            width: choices.width - (scrollbar.visible ? Theme.audioScrollbarWidth + Theme.audioScrollbarMargin : 0)
+            width: choices.width
             height: choices.rowHeight
             padding: Theme.audioButtonPadding
             hoverEnabled: true
@@ -113,8 +113,6 @@ Column {
                 cursorShape: Qt.PointingHandCursor
             }
         }
-        QC.ScrollBar.vertical: UI.ScrollBar {
-            id: scrollbar
-        }
+        QC.ScrollBar.vertical: UI.ScrollBar {}
     }
 }

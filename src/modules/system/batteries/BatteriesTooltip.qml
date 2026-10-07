@@ -49,10 +49,8 @@ Column {
         delegate: BatteryRow {
             required property var modelData
             battery: modelData
-            width: list.width - (scrollbar.visible ? Theme.batteryScrollbarWidth + Theme.batteryScrollbarMargin : 0)
+            width: list.width
         }
-        QC.ScrollBar.vertical: UI.ScrollBar {
-            id: scrollbar
-        }
+        QC.ScrollBar.vertical: UI.ScrollBar {}
     }
 }

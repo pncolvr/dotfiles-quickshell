@@ -21,12 +21,11 @@ Item {
     readonly property bool hasSuggestions: adding && browserSuggestions.length > 0
     readonly property bool hasUndo: TwitchService.removedUsers.length > 0
     readonly property int spacing: Theme.twitchTooltipSpacing
-    readonly property int scrollbarSpace: Theme.twitchScrollbarWidth + Theme.twitchScrollbarMargin
     readonly property int rowWidth: Theme.twitchAvatarSize + Theme.twitchInfoWidth + Theme.twitchRemoveButtonSize + 2 * Theme.twitchUserSpacing
     readonly property int widthColumns: Math.min(2, Math.max(1, users.filter(user => user.online).length,
         users.filter(user => !user.online).length), Math.max(1,
         Math.floor(((TooltipService.screen?.width ?? 1920) - 2 * Theme.tooltipPaddingWidth
-            - scrollbarSpace + spacing) / (rowWidth + spacing))))
+            + spacing) / (rowWidth + spacing))))
     readonly property real maximumHeight: Math.max(0, Math.min(
         (TooltipService.screen?.height ?? 1080) * Theme.twitchTooltipMaxHeightRatio,
         (TooltipService.screen?.height ?? 1080) - Theme.barHeight - Theme.tooltipPaddingHeight * 2))
@@ -43,7 +42,7 @@ Item {
         ? Math.min(undoView.gridHeight,
             Theme.twitchSuggestionMaxRows * (Theme.twitchEditorHeight + spacing) - spacing,
             scrollBudget * 0.3) : 0
-    implicitWidth: widthColumns * rowWidth + (widthColumns - 1) * spacing + scrollbarSpace
+    implicitWidth: widthColumns * rowWidth + (widthColumns - 1) * spacing
     implicitHeight: content.implicitHeight
     onSearchQueryChanged: {
         const view = usersView.contentItem as Flickable
@@ -84,8 +83,7 @@ Item {
         QC.ScrollView {
             id: usersView
             objectName: "twitchUsersScrollView"
-            // Keep the rows aligned with the footer; the scrollbar uses the tooltip's right padding.
-            width: root.width + root.scrollbarSpace
+            width: root.width
             height: Math.min(usersContent.implicitHeight, Math.max(0, root.scrollBudget - root.suggestionsHeight - root.undoHeight))
             clip: true
             contentWidth: root.width

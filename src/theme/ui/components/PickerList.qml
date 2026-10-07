@@ -22,7 +22,7 @@ ListView {
         required property var modelData
         required property int index
         entry: modelData
-        width: grid ? Math.max(80, (root.width - Theme.controlSpacing * 4) / 5) : root.width - Theme.scrollbarWidth - 4
+        width: grid ? Math.max(80, (root.width - Theme.controlSpacing * 4) / 5) : root.width
         current: root.currentIndex === index
         selected: root.picker.selectedIds.includes(modelData.id)
         multiple: root.picker.multiple

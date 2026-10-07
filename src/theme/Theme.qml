@@ -125,8 +125,6 @@ Item {
   readonly property int totpCountdownStrokeWidth: 4
   readonly property int totpCountdownListMargin: 12
   readonly property int totpFieldPadding: controlFieldPadding
-  readonly property int totpScrollbarWidth: scrollbarWidth
-  readonly property int totpScrollbarMargin: 12
   readonly property int totpExpiryWarning: 5
   readonly property color totpDeleteBackground: urgent
   readonly property color totpRowHoverBackground: alternateBackground
@@ -144,8 +142,6 @@ Item {
   readonly property int batteryTerminalWidth: 6
   readonly property int batteryTerminalHeight: 14
   readonly property int batteryPercentageFontSize: 16
-  readonly property int batteryScrollbarWidth: scrollbarWidth
-  readonly property int batteryScrollbarMargin: 8
   readonly property var batteryLevelColors: ({ "normal": ok, "low": warning, "critical": urgent })
   readonly property real batteryFillOpacity: 0.5
   readonly property color batteryEmptyColor: "#232323"
@@ -159,8 +155,6 @@ Item {
   readonly property int twitchTooltipSpacing: controlSpacing
   readonly property int twitchUserSpacing: 8
   readonly property int twitchRemoveButtonSize: 24
-  readonly property int twitchScrollbarWidth: scrollbarWidth
-  readonly property int twitchScrollbarMargin: 12
   readonly property int twitchEditorHeight: controlHeight
   readonly property int twitchEditorButtonWidth: actionButtonWidth
   readonly property int twitchSuggestionMinWidth: 200
@@ -213,8 +207,6 @@ Item {
   readonly property int audioSliderTrackHeight: 4
   readonly property int audioSliderHandleSize: 14
   readonly property int audioPercentageWidth: 46
-  readonly property int audioScrollbarWidth: scrollbarWidth
-  readonly property int audioScrollbarMargin: 8
   readonly property int audioProfileRowHeight: 44
   readonly property int audioProfileMaxVisibleRows: 5
   readonly property int audioAppSelectorWidth: 320
