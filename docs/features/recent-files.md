@@ -4,6 +4,7 @@ Hover the file icon beside the clock to see recently used files. Click the
 icon to pin the list. Each row shows the filename, its folder, and when it was
 last used. Click a row to select it, double-click to open it with its default application, or drag it
 into a file manager, editor, chat, or another application that accepts files.
+Hover a filename to read its full name when the row truncates it.
 
 Ctrl-click toggles individual files; Shift-click selects a range from the last
 clicked file. Ctrl+Shift-click adds a range to the existing selection. Ctrl+A
@@ -17,14 +18,38 @@ the copy action. The destination decides whether to open, attach, or copy it.
 The source file stays in place. The panel stays open and its list stops refreshing
 until the drag finishes, even when the pointer leaves the panel.
 
-## Folder tabs
+## Pinned files
 
-The panel opens on **Recent** unless you choose a default folder tab. Select a
-folder and use the **star** button beside its path in the panel to set it as the
-default; the highlighted star marks the saved choice. Click that star again to
-return the default to Recent. Removing
-the default folder tab also resets the default to Recent. The choice survives
-closing the panel and restarting the shell.
+Use the **pin** button at the right of a file row to keep the document in
+**Pinned**. The highlighted pin marks a saved document; click it again in any
+tab to unpin that file. Directories do not have pin buttons.
+
+The Pinned tab appears only when pinned documents exist. Pins survive shell
+restarts, removal of their original folder tab, and the Recent age/count limits.
+They also survive clearing the desktop's recent-file history. Pinned uses the
+same file rows, selection, double-click opening, and drag behavior as other tabs.
+Pinning a document keeps the current tab and selection in place.
+
+Pins are stored independently in the existing preferences database. They are
+removed only by manually unpinning a file or when its path no longer exists.
+Existence is checked when the panel opens, on refresh, and every
+`recentFilesRefreshInterval`, including while the panel is closed. An unreadable
+document is retained; a check that cannot access its parent directories does not
+remove it. Deletion cleanup waits for an active drag to finish. Removing the last
+pin hides Pinned and returns to Recent if Pinned was selected.
+
+## Default tab
+
+Select **Recent**, **Pinned**, or a folder tab and use the **star** button beside
+its description or path to make it the default. The current default's star uses
+the accent color; other tabs show a neutral star. The choice survives closing the
+panel and restarting the shell. Existing folder defaults are preserved.
+
+Click the highlighted star on Pinned or a folder to reset the default to Recent,
+or select Recent and use its star directly. Removing the default folder or the
+last pinned document resets its default to Recent.
+
+## Folder tabs
 
 Use the **pen** button beside the selected folder's path to edit its tab name.
 Enter its alias and press Enter or the accent check button to apply; Cancel or

@@ -251,6 +251,7 @@ Item {
 
   // recent files
   readonly property string recentFilesIcon: "" // file-lines
+  readonly property string filePinIcon: "" // thumbtack
   readonly property int recentFilesTooltipWidth: 440
   readonly property int recentFilesRowHeight: 58
   readonly property real recentFilesMaxHeightRatio: 0.5

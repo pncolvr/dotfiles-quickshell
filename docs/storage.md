@@ -15,6 +15,10 @@ uses `Quickshell.shellPath("data/quickshell.db")` and `Config.databaseName` is
 the fixed name `quickshell`. Tests run their entrypoint in a temporary config
 folder so their databases stay isolated.
 
+Recent-file folder tabs, aliases and default selection use preferences. Pinned
+document metadata is stored separately under `files.pinned`, so removing a folder
+tab leaves its document pins intact. No schema migration is needed for pins.
+
 ## Twitch cache
 
 Twitch schedules store absolute start times and refresh at most hourly while

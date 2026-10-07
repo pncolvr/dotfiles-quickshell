@@ -7,9 +7,10 @@ trap 'rm -rf -- "$test_dir"' EXIT
 mkdir -m 700 "$test_dir/runtime"
 mkdir -p "$test_dir/data" "$test_dir/cache"
 # Folder preferences use the real repository against a private shell database.
-cp -a -- "$project_root/src" "$test_dir/src"
+tar -C "$project_root" --exclude='*.env' --exclude='hosts.json' -cf - src | tar -C "$test_dir" -xf -
 bash "$project_root/tests/files/recent-files-helper.sh"
 bash "$project_root/tests/files/folder-files-helper.sh"
+bash "$project_root/tests/files/pinned-files-helper.sh"
 export RECENT_FILES_TEST_FOLDER="$test_dir/folder one"
 export RECENT_FILES_TEST_SECOND_FOLDER="$test_dir/folder two"
 mkdir "$RECENT_FILES_TEST_FOLDER" "$RECENT_FILES_TEST_SECOND_FOLDER"
@@ -26,6 +27,7 @@ printf 'second folder file' > "$RECENT_FILES_TEST_SECOND_FOLDER/second.txt"
 ln -s "$RECENT_FILES_TEST_FOLDER" "$test_dir/folder alias"
 export RECENT_FILES_TEST_FOLDER_ALIAS="$test_dir/folder alias"
 export RECENT_FILES_TEST_FILE="$test_dir/data/a recent file #1.txt"
+export RECENT_FILES_TEST_PINNED_FILE="$RECENT_FILES_TEST_FOLDER/item23.txt"
 printf 'File contents supplied by the drag URI.' > "$RECENT_FILES_TEST_FILE"
 uri=$(jq -nr --arg path "$RECENT_FILES_TEST_FILE" '$path | split("/") | map(@uri) | join("/") | "file://" + .')
 now=$(date -u +%Y-%m-%dT%H:%M:%SZ)
@@ -38,11 +40,18 @@ xmlns:mime="http://www.freedesktop.org/standards/shared-mime-info">
 <bookmark:applications><bookmark:application name="Test" exec="test %u" modified="$now" count="1"/></bookmark:applications>
 </metadata></info></bookmark></xbel>
 XML
-for test in recent-files-module-smoke recent-files-smoke recent-selection-smoke recent-folders-seed recent-navigation-smoke recent-folders-restart recent-folders-empty; do
+for test in recent-files-module-smoke recent-files-smoke recent-selection-smoke recent-folders-seed recent-navigation-smoke recent-folders-restart recent-folders-empty recent-pins-seed recent-pins-recent-default recent-pins-restart recent-pins-empty; do
     fixture=$test
     if [[ $test == recent-folders-* ]]; then
         fixture=recent-folders-smoke
         export RECENT_FOLDERS_TEST_PHASE=${test#recent-folders-}
+    fi
+    if [[ $test == recent-pins-* ]]; then
+        fixture=recent-pins-smoke
+        export RECENT_PINS_TEST_PHASE=${test#recent-pins-}
+        if [[ $RECENT_PINS_TEST_PHASE == restart ]]; then
+            printf '%s\n' '<?xml version="1.0"?><xbel version="1.0"/>' > "$test_dir/data/recently-used.xbel"
+        fi
     fi
     # Load as a root entrypoint so Quickshell scans imports just as it does for
     # shell.qml. Keep imports within that root and isolate runtime/history data.

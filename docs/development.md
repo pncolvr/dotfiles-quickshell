@@ -52,7 +52,10 @@ errors, active-tab refresh, folder selection/removal, panel actions, default-tab
 alias persistence, Apply/Cancel styling, Cancel and Escape dismissal,
 unlimited folder contents, directory double-click navigation, Go up, navigation refresh and tab resets,
 newest-first and natural filename ordering, bounded lists, tab overflow, scrolling, multiple selection, double-click-to-open,
-and drag dismissal protection. The tests use temporary history, folders, and a
+drag dismissal protection, filename tooltip interaction, document pin/unpin buttons,
+conditional Pinned tabs, independent pin persistence, Recent/Pinned default selection,
+default-star accent colors, deleted-file cleanup, and
+cleanup deferral during drag. The tests use temporary history, folders, and a
 private database; they do not alter desktop history or saved folder preferences.
 Set `RECENT_FILES_TEST_SCREENSHOT=/tmp/recent-files.png` to save a panel preview.
 Set `RECENT_FOLDERS_TEST_SCREENSHOT=/tmp/folder-tabs.png` for a folder tab preview.

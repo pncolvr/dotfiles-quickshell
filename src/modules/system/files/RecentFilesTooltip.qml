@@ -15,6 +15,10 @@ Column {
     readonly property var monitor: TooltipService.screen ?? (root.QsWindow.window as QsWindow)?.screen
     readonly property real maxPanelHeight: (monitor?.height ?? 1080) * Theme.recentFilesMaxHeightRatio
     readonly property bool folderTab: fileService.activeFolder.length > 0
+    readonly property bool pinnedTab: fileService.showingPinned
+    readonly property var tabEntries: [{label: "Recent", kind: "recent", path: ""}]
+        .concat(fileService.pinnedFiles.length > 0 ? [{label: "Pinned", kind: "pinned", path: ""}] : [])
+        .concat(fileService.folders.map(path => ({label: fileService.folderLabel(path), kind: "folder", path: path})))
     property var selectedUris: []
     property string selectionAnchor: ""
     property string renameFolder: ""
@@ -25,7 +29,8 @@ Column {
     Component.onCompleted: { fileService.beginPanel(); syncTabs() }
     Component.onDestruction: fileService.endPanel()
     function syncTabs() {
-        tabs.currentIndex = folderTab ? Math.max(0, fileService.folders.indexOf(fileService.activeFolder) + 1) : 0
+        tabs.currentIndex = Math.max(0, tabEntries.findIndex(tab => pinnedTab ? tab.kind === "pinned"
+            : folderTab ? tab.kind === "folder" && tab.path === fileService.activeFolder : tab.kind === "recent"))
     }
     function clearSelection() { selectedUris = []; selectionAnchor = "" }
     function reconcileSelection() {
@@ -79,6 +84,7 @@ Column {
     Connections {
         target: root.fileService
         function onActiveFolderChanged() { root.clearSelection(); root.cancelFolderName(); Qt.callLater(root.syncTabs) }
+        function onShowingPinnedChanged() { root.clearSelection(); root.cancelFolderName(); list.positionViewAtBeginning(); Qt.callLater(root.syncTabs) }
         function onCurrentFolderChanged() { root.clearSelection(); root.cancelFolderName(); list.positionViewAtBeginning() }
         function onFoldersChanged() {
             if (!root.fileService.folders.includes(root.renameFolder)) root.renameFolder = ""
@@ -104,9 +110,13 @@ Column {
             anchors.right: actions.left
             anchors.rightMargin: Theme.controlSpacing
             height: parent.height
-            labels: ["Recent"].concat(root.fileService.folders.map(path => root.fileService.folderLabel(path)))
+            labels: root.tabEntries.map(tab => tab.label)
             enabled: !root.fileService.dragging
-            onTabClicked: index => root.fileService.selectFolder(index === 0 ? "" : root.fileService.folders[index - 1])
+            onTabClicked: index => {
+                const tab = root.tabEntries[index]
+                if (tab.kind === "pinned") root.fileService.selectPinned()
+                else root.fileService.selectFolder(tab.path)
+            }
             onLabelsChanged: Qt.callLater(root.syncTabs)
         }
         Row {
@@ -132,15 +142,16 @@ Column {
     Item {
         id: limits
         width: parent.width
-        height: root.folderTab ? Theme.controlHeight : limitsLabel.implicitHeight
+        height: Theme.controlHeight
         UI.ColumnText {
             id: limitsLabel
             anchors.left: parent.left
-            anchors.right: folderActions.left
-            anchors.rightMargin: root.folderTab ? Theme.controlSpacing : 0
+            anchors.right: tabActions.left
+            anchors.rightMargin: Theme.controlSpacing
             anchors.verticalCenter: parent.verticalCenter
             color: Theme.inactive
-            text: root.folderTab ? root.fileService.currentFolder : [Config.recentFilesMaxDays > 0 ? "Last " + Config.recentFilesMaxDays + " days" : "All time",
+            text: root.pinnedTab ? "Pinned files · " + root.fileService.pinnedFiles.length
+                : root.folderTab ? root.fileService.currentFolder : [Config.recentFilesMaxDays > 0 ? "Last " + Config.recentFilesMaxDays + " days" : "All time",
                 Config.recentFilesMaxItems > 0 ? "max " + Config.recentFilesMaxItems + " files" : "all files"].join(" · ")
             textFormat: Text.PlainText
             elide: Text.ElideMiddle
@@ -151,14 +162,13 @@ Column {
             }
         }
         Row {
-            id: folderActions
+            id: tabActions
             anchors.right: parent.right
-            width: visible ? implicitWidth : 0
-            visible: root.folderTab
             enabled: !root.fileService.dragging
             spacing: Theme.controlSpacing
             UI.ActionButton {
                 objectName: "navigateFolderUp"
+                visible: root.folderTab
                 glyph: Theme.upIcon
                 hint: "Go up"
                 enabled: root.fileService.canNavigateUp
@@ -166,6 +176,7 @@ Column {
             }
             UI.ActionButton {
                 objectName: "editFolderAlias"
+                visible: root.folderTab
                 glyph: Theme.editIcon
                 hint: "Edit tab name"
                 onClicked: {
@@ -174,15 +185,19 @@ Column {
                 }
             }
             UI.ActionButton {
-                objectName: "setDefaultFolder"
-                readonly property bool isDefault: root.fileService.defaultFolder === root.fileService.activeFolder
+                objectName: "setDefaultTab"
+                readonly property bool isDefault: root.fileService.defaultTab === root.fileService.activeTab
+                    && (!root.folderTab || root.fileService.defaultFolder === root.fileService.activeFolder)
                 glyph: Theme.defaultIcon
                 foreground: isDefault ? Theme.accent : Theme.text
-                hint: isDefault ? "Use Recent as default" : "Set as default tab"
-                onClicked: root.fileService.setDefaultFolder(isDefault ? "" : root.fileService.activeFolder)
+                hint: isDefault ? (root.fileService.activeTab === "recent" ? "Default tab" : "Use Recent as default")
+                    : "Set as default tab"
+                onClicked: root.fileService.setDefaultTab(isDefault ? "recent" : root.fileService.activeTab,
+                    root.fileService.activeFolder)
             }
             UI.ActionButton {
                 objectName: "removeFolderTab"
+                visible: root.folderTab
                 glyph: Theme.deleteIcon
                 hint: "Remove folder tab"
                 fillColor: Theme.urgent

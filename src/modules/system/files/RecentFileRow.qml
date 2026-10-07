@@ -12,6 +12,7 @@ Rectangle {
     property var fileService: RecentFilesService
     property var selection: null
     readonly property bool selected: selection?.selectedUris.includes(file.uri) ?? false
+    readonly property bool pinned: fileService.isPinned(file.uri)
     readonly property string iconSource: Quickshell.iconPath(file.icon || "text-x-generic", true)
     property bool dragging: false
     property bool dragReady: false
@@ -75,15 +76,23 @@ Rectangle {
     Column {
         x: icon.x + icon.width + Theme.controlSpacing
         anchors.verticalCenter: parent.verticalCenter
-        width: root.width - x - Theme.controlFieldPadding
+        width: pin.visible ? pin.x - x - Theme.controlSpacing : root.width - x - Theme.controlFieldPadding
         spacing: 3
         UI.Text {
+            objectName: "fileName"
             centerVertical: false
             width: parent.width
             text: root.file.name
             color: root.selected ? Theme.accent : Theme.text
             textFormat: Text.PlainText
             elide: Text.ElideMiddle
+            HoverHandler { id: nameHover; cursorShape: Qt.PointingHandCursor }
+            UI.HoverTooltip {
+                objectName: "fileNameTooltip"
+                hoverTarget: nameHover
+                enabled: !root.dragging
+                text: root.file.name
+            }
         }
         UI.Text {
             centerVertical: false
@@ -94,5 +103,19 @@ Rectangle {
             font.pixelSize: 10
             elide: Text.ElideMiddle
         }
+    }
+    UI.ActionButton {
+        id: pin
+        objectName: "pinFile"
+        anchors.right: parent.right
+        anchors.rightMargin: Theme.controlFieldPadding
+        anchors.verticalCenter: parent.verticalCenter
+        visible: !root.file.isDirectory
+        enabled: !root.fileService.dragging
+        glyph: Theme.filePinIcon
+        foreground: root.pinned ? Theme.accent : Theme.inactive
+        fillColor: "transparent"
+        hint: root.pinned ? "Unpin file" : "Pin file"
+        onClicked: root.fileService.togglePin(root.file)
     }
 }

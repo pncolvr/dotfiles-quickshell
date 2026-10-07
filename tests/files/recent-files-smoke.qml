@@ -31,6 +31,10 @@ Scope {
         property string error: ""
         property string opened: ""
         property var folders: []
+        property var pinnedFiles: []
+        property bool showingPinned: false
+        readonly property string activeTab: showingPinned ? "pinned" : activeFolder ? "folder" : "recent"
+        property string defaultTab: "recent"
         property string activeFolder: ""
         readonly property string currentFolder: activeFolder
         property bool canNavigateUp: false
@@ -44,8 +48,12 @@ Scope {
         function endDrag() { dragging = false }
         function refresh() { refreshes++ }
         function openFile(file) { opened = file.uri }
+        function isPinned(uri) { return pinnedFiles.some(file => file.uri === uri) }
+        function togglePin(file) { pinnedFiles = isPinned(file.uri)
+            ? pinnedFiles.filter(entry => entry.uri !== file.uri) : pinnedFiles.concat([file]) }
+        function selectPinned() { activeFolder = ""; showingPinned = true; files = pinnedFiles }
         function selectFolder(path) { activeFolder = path }
-        function setDefaultFolder(path) { defaultFolder = path }
+        function setDefaultTab(tab, path = "") { defaultTab = tab; defaultFolder = tab === "folder" ? path : "" }
         function folderLabel(path) { return folderAliases[path] || path.split("/").pop() }
         function setFolderAlias(path, name) { folderAliases = Object.assign({}, folderAliases, {[path]: name}); return true }
         function addFolder(path) { folders = folders.concat([path]); activeFolder = path }

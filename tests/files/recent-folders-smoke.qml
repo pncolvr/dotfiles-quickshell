@@ -128,9 +128,14 @@ Scope {
                     RecentFilesService.addFolder(Quickshell.env("RECENT_FILES_TEST_FOLDER_ALIAS"))
                 } else if (root.step === 7) {
                     root.check(RecentFilesService.folders.length === 1, "folder aliases do not duplicate tabs")
-                    const star = root.child("setDefaultFolder") as QC.Button
+                    const star = root.child("setDefaultTab") as UI.ActionButton
+                    PreferencesRepository.setValue("files.defaultFolder", root.folder)
+                    root.check(RecentFilesService.defaultTab === "folder" && star.foreground === Theme.accent,
+                        "legacy folder-only preferences retain their default and accent star")
+                    PreferencesRepository.setValue("files.defaultFolder", "")
                     mouse.mouseClick(star, star.width / 2, star.height / 2)
                     root.check(RecentFilesService.defaultFolder === root.folder, "star sets the folder as default")
+                    root.check(star.foreground === Theme.accent, "default folder star uses the accent color")
                     root.panel.destroy()
                     root.panel = null
                 } else if (root.step === 8) {
@@ -142,16 +147,17 @@ Scope {
                     mouse.mouseClick(recent, recent.width / 2, recent.height / 2)
                 } else if (root.step === 10) {
                     root.check(RecentFilesService.activeFolder === "", "Recent remains selectable with a default folder")
-                    root.check(!root.child("editFolderAlias").visible && !root.child("setDefaultFolder").visible
+                    root.check(!root.child("editFolderAlias").visible && root.child("setDefaultTab").visible
+                        && (root.child("setDefaultTab") as UI.ActionButton).foreground === Theme.text
                         && !root.child("removeFolderTab").visible,
-                        "folder actions are hidden on Recent")
+                        "Recent keeps a neutral default star while folder actions are hidden")
                     const folderTab = tabs.itemAt(1)
                     root.check(mouse.findChild(folderTab, "tabActionButton") === null,
                         "folder tabs have no action buttons")
                     mouse.mouseClick(folderTab, 5, folderTab.height / 2)
                 } else if (root.step === 11) {
                     const edit = root.child("editFolderAlias") as QC.Button
-                    root.check(edit.visible && root.child("setDefaultFolder").visible, "folder actions are on the active folder panel")
+                    root.check(edit.visible && root.child("setDefaultTab").visible, "folder actions are on the active folder panel")
                     mouse.mouseClick(edit, edit.width / 2, edit.height / 2)
                 } else if (root.step === 12) {
                     const input = root.child("folderAliasInput") as QC.TextField
@@ -188,11 +194,11 @@ Scope {
                     root.check((tabs.itemAt(1) as QC.TabButton).text === "Work docs" && RecentFilesService.folderAliases[root.folder] === "Work docs"
                         && RecentFilesService.activeFolder === root.folder && RecentFilesService.defaultFolder === root.folder
                         && root.panel.renameFolder === "", "saving an alias changes only the tab label")
-                    const star = root.child("setDefaultFolder") as QC.Button
+                    const star = root.child("setDefaultTab") as QC.Button
                     mouse.mouseClick(star, star.width / 2, star.height / 2)
                     root.check(RecentFilesService.defaultFolder === "", "clicking the default star resets it to Recent")
                 } else if (root.step === 17) {
-                    const star = root.child("setDefaultFolder") as QC.Button
+                    const star = root.child("setDefaultTab") as QC.Button
                     mouse.mouseClick(star, star.width / 2, star.height / 2)
                     root.finish(); return
                 }
@@ -200,7 +206,7 @@ Scope {
                 if (root.step === 1) {
                     root.check(tabs.count === 3 && tabs.currentIndex === 2 && RecentFilesService.activeFolder === root.secondFolder,
                         "second folder gets its own selected tab")
-                    const star = root.child("setDefaultFolder") as QC.Button
+                    const star = root.child("setDefaultTab") as QC.Button
                     mouse.mouseClick(star, star.width / 2, star.height / 2)
                     root.check(RecentFilesService.defaultFolder === root.secondFolder, "another folder can replace the default")
                     const firstTab = tabs.itemAt(1)
