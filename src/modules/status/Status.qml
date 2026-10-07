@@ -8,11 +8,9 @@ UI.TooltipArea {
     id: root
     acceptedButtons: Qt.LeftButton | Qt.RightButton
     hoverEnabled: true
-    tooltip: Component {
-        UI.Text {
-            text: `${StatusService.status} mode ${StatusService.source === "automatic" ? "detected" : "manually set"}`
-        }
-    }
+    tooltipSource: root
+    readonly property bool tooltipKeyboardFocus: true
+    tooltip: Component { StatusTooltip {} }
     function statusToIcon(status) {
         switch (status) {
             case "personal": return Theme.statusPersonalIcon

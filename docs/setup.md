@@ -39,6 +39,7 @@ those before running on another desktop.
 | qutebrowser and jq-compatible `yq` | Optional suggestions from saved browser sessions |
 | `yay`, Ghostty | Arch package update checking and installation |
 | `canberra-gtk-play` | Screen-sharing start/stop sounds |
+| Existing zsh status manager and native `timecard` executable | Work/personal mode and timecard reports |
 
 A Secret Service provider can be GNOME Keyring or KeePassXC with Secret Service
 support enabled. Test-only dependencies are listed in [development](development.md).

@@ -12,14 +12,52 @@ Singleton {
 
     readonly property string status: _internal.status
     readonly property string source: _internal.source
+    readonly property string summary: _internal.summary
+    readonly property string todayTimecard: _internal.todayTimecard
+    readonly property string currentWeekTimecard: _internal.currentWeekTimecard
+    readonly property string lastWeekTimecard: _internal.lastWeekTimecard
+    readonly property string timecardError: _internal.timecardError
+    readonly property string timecardDate: _internal.timecardDate
+    readonly property bool timecardLoading: reportProcess.running
     
     QtObject {
         id: _internal
         property string status: ""
         property string source: ""
+        property string summary: ""
+        property string todayTimecard: ""
+        property string currentWeekTimecard: ""
+        property string lastWeekTimecard: ""
+        property string timecardError: ""
+        property string timecardDate: ""
+        property int panels: 0
+        property bool includeWeeks: false
+        property bool reportPending: false
     }
     function reload() {
         reloadTimer.restart()
+    }
+    function beginPanel() {
+        if (_internal.panels === 0) _internal.includeWeeks = false
+        _internal.panels++
+        refreshTimecard()
+    }
+    function endPanel() { _internal.panels = Math.max(0, _internal.panels - 1) }
+    function showWeeks(show) {
+        _internal.includeWeeks = show
+        if (show) refreshTimecard()
+    }
+    function refreshTimecard() {
+        if (reportProcess.running) { _internal.reportPending = true; return }
+        _internal.reportPending = false
+        reportProcess.command = Config.statusTimecardCommand(_internal.includeWeeks)
+        reportProcess.running = true
+    }
+    Timer {
+        interval: Config.statusTimecardRefreshInterval
+        running: _internal.panels > 0
+        repeat: true
+        onTriggered: root.refreshTimecard()
     }
 
     Timer {
@@ -44,22 +82,50 @@ Singleton {
         id: checkProcess
         command: Config.statusManagerCheckCommand
         running: true
-        stdout: SplitParser {
-            onRead: data => {
-                _internal.status = data
-            }
+        stdout: StdioCollector { id: modeOutput; waitForEnd: true }
+        // Quickshell.Io omits QProcess::ExitStatus from its qmltypes.
+        // qmllint disable signal-handler-parameters
+        onExited: (exitCode, exitStatus) => {
+            if (exitCode === 0 && exitStatus === 0) _internal.status = modeOutput.text.trim()
+            if (_internal.panels > 0) root.refreshTimecard()
         }
+        // qmllint enable signal-handler-parameters
     }
 
     Process {
         id: sourceProcess
         command: Config.statusManagerSourceCommand
         running: true
-        stdout: SplitParser {
-            onRead: data => {
-                _internal.source = data
-            }
+        stdout: StdioCollector { id: sourceOutput; waitForEnd: true }
+        // qmllint disable signal-handler-parameters
+        onExited: (exitCode, exitStatus) => {
+            if (exitCode === 0 && exitStatus === 0) _internal.source = sourceOutput.text.trim()
         }
+        // qmllint enable signal-handler-parameters
+    }
+
+    Process {
+        id: reportProcess
+        stdout: StdioCollector { id: reportOutput; waitForEnd: true }
+        // qmllint disable signal-handler-parameters
+        onExited: (exitCode, exitStatus) => {
+            let report
+            try { report = JSON.parse(reportOutput.text) } catch (_) { report = null }
+            if (exitCode === 0 && exitStatus === 0 && typeof report?.summary === "string"
+                && typeof report.today === "string" && typeof report.currentWeek === "string"
+                && typeof report.lastWeek === "string" && typeof report.date === "string") {
+                _internal.summary = report.summary.trim()
+                _internal.todayTimecard = report.today.trim()
+                if (report.weeksLoaded) {
+                    _internal.currentWeekTimecard = report.currentWeek.trim()
+                    _internal.lastWeekTimecard = report.lastWeek.trim()
+                }
+                _internal.timecardDate = report.date
+                _internal.timecardError = ""
+            } else _internal.timecardError = report?.error || "Could not read the timecard."
+            if (_internal.reportPending && _internal.panels > 0) Qt.callLater(root.refreshTimecard)
+        }
+        // qmllint enable signal-handler-parameters
     }
 
     Process {

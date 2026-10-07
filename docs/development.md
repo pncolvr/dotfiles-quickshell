@@ -55,6 +55,15 @@ On the Wayland desktop, drag a row into another app that accepts files and verif
 the destination receives the file. The offscreen platform cannot transfer a drag
 between applications.
 
+## Status and timecard
+
+Run `bash tests/status/status.sh` to check the existing timecard executable against
+isolated logs, today's summary and blocks, current/last week boundaries, empty days, malformed
+events, source preservation, module imports, scrolling, refresh, and mode actions.
+The status manager is mocked, so the tests do not change the desktop mode,
+wallpaper, or activity log. `TIMECARD_TEST_EXECUTABLE` can point to another build.
+Set `STATUS_TEST_SCREENSHOT=/tmp/status-timecard.png` to save a tooltip preview.
+
 ## Notifications
 
 ```sh

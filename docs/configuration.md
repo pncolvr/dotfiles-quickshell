@@ -7,8 +7,8 @@
 | [`src/config/Config.qml`](../src/config/Config.qml) | Commands, intervals, defaults, namespaces and feature settings |
 | [`src/theme/Theme.qml`](../src/theme/Theme.qml) | Fonts, glyphs, colors, dimensions and spacing |
 | [`src/bar/LeftModules.qml`](../src/bar/LeftModules.qml) | Workspaces and windows |
-| [`src/bar/CenterModules.qml`](../src/bar/CenterModules.qml) | Clock, package updates and Twitch |
-| [`src/bar/RightModules.qml`](../src/bar/RightModules.qml) | System, status, TOTP, batteries, notifications and tray |
+| [`src/bar/CenterModules.qml`](../src/bar/CenterModules.qml) | Clock, package updates and recent files |
+| [`src/bar/RightModules.qml`](../src/bar/RightModules.qml) | System, Twitch, status, TOTP, batteries, notifications and tray |
 | [`shell.qml`](../shell.qml) | Entry point, startup environment and dedicated windows |
 
 ## Desktop integrations
@@ -53,5 +53,7 @@ Feature guides describe the individual controls and settings:
 [notifications](features/notifications.md), [Twitch](features/twitch.md),
 [TOTP](features/totp.md), [audio](features/audio.md), [batteries](features/batteries.md).
 Recent-file source and limits are described in [recent files](features/recent-files.md).
+Mode detection, timetable commands, and reports are described in
+[status and timecard](features/status.md).
 
 [Documentation](README.md)

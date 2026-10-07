@@ -6,7 +6,7 @@ are running, select this one with `qs ipc -p "$HOME/.config/quickshell" call …
 ```sh
 qs ipc call notifications reload # resynchronize notification/capture status
 qs ipc call notifications toggle # toggle DND
-qs ipc call status reload        # refresh the configured working-mode script
+qs ipc call status reload        # refresh mode and any open timecard tooltip
 qs ipc call windows next
 qs ipc call windows prev
 qs ipc call windows reload

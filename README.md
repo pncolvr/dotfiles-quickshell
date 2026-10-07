@@ -15,6 +15,7 @@ A desktop bar for Hyprland, built with QML and Quickshell.
 - Laptop and peripheral battery levels
 - Notifications with saved history, DND and per-app settings
 - Recent files and saved folder tabs with newest-first lists and file drag into other applications
+- Work/personal mode with daily totals and detailed timecards
 - System tray, keybind hints and alerts
 - IPC commands for scripts and Hyprland bindings
 
