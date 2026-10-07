@@ -37,15 +37,9 @@ case ${1:-apps} in
     provider)
         name=${2:?Provider name required}; shift 2
         case $name in
-            code) provider="$HOME/.config/rofi/scripts/code.sh" ;;
-            webapps|github|azure|n8n) provider="$HOME/.config/rofi/scripts/web/$name.sh" ;;
-            remotes) provider="$HOME/.config/rofi/scripts/remotes/pick.sh" ;;
-            bookmarks) provider="$HOME/.config/hypr/scripts/browser/openbookmarks.sh" ;;
-            books|directories) provider="$HOME/.config/hypr/scripts/directory/$([[ $name == books ]] && printf books-pick || printf pick).sh" ;;
-            media) provider="$HOME/.config/hypr/scripts/tolocalplayer.sh" ;;
-            power) provider="$HOME/.config/hypr/scripts/powermenu.sh" ;;
-            screenshot) provider="$HOME/.config/hypr/scripts/screen/shot.sh" ;;
-            recording) provider="$HOME/.config/hypr/scripts/screen/capture.sh" ;;
+            code|bookmarks|books|directories|media|power|screenshot|recording) provider="$launcher_dir/providers/$name.sh" ;;
+            webapps|github|azure|n8n) provider="$launcher_dir/providers/web/$name.sh" ;;
+            remotes) provider="$launcher_dir/providers/remotes/pick.sh" ;;
             *) fail "Unknown provider: $name" ;;
         esac
         [[ -f $provider ]] || fail "Provider script is missing: $provider"

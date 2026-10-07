@@ -19,7 +19,8 @@ Name=Picker Test
 Exec=true
 Terminal=false
 DESKTOP
-cp -a "$project_root/src" "$test_dir/src"
+# Never copy private provider configuration into the test shell.
+tar -C "$project_root" --exclude='*.env' --exclude='hosts.json' -cf - src | tar -C "$test_dir" -xf -
 sed -Ei 's/readonly property int clipboardMaxItems: [0-9]+/readonly property int clipboardMaxItems: 3/' "$test_dir/src/config/Config.qml"
 sed 's@"../../src@"src@g' "$project_root/tests/launcher/launcher-smoke.qml" > "$test_dir/shell.qml"
 export QT_QPA_PLATFORM=offscreen QT_QUICK_BACKEND=software
@@ -181,11 +182,12 @@ check_dmenu remotes second 'first|second' -sep '|' -dmenu -case-smart -p ''
 check_dmenu recording second $'first\nsecond\n' -i -p ''
 check_dmenu power '<span>Second</span>' '<span>First</span>|<span>Second</span>' -sep '|' -markup-rows -eh 4 -dmenu -case-smart -sort -sorting-method fzf --grid -p ''
 
-if [[ -n ${PICKER_TEST_POWER_SCRIPT:-} ]]; then
+power_script=${PICKER_TEST_POWER_SCRIPT:-$test_dir/src/services/launcher/providers/power.sh}
+if [[ -f $power_script ]]; then
     power_home="$test_dir/power-home"
     mkdir -p "$power_home/.config"
     ln -s "$test_dir" "$power_home/.config/quickshell"
-    HOME="$power_home" bash "$PICKER_TEST_POWER_SCRIPT" > "$test_dir/result" 2> "$test_dir/client-error" & client_pid=$!
+    HOME="$power_home" bash "$power_script" > "$test_dir/result" 2> "$test_dir/client-error" & client_pid=$!
     wait_open
     ipc call pickertest snapshot | jq -e '.layout == "grid" and [.items[].title] == ["Reboot","Lock","Logout","Shutdown","Bios"]
         and [.filtered[].title] == [.items[].title] and all(.items[]; (.glyph | length) == 1)' >/dev/null
@@ -213,13 +215,15 @@ wait_open
 ipc call pickertest custom 0
 wait_client 10
 
-if [[ -n ${PICKER_TEST_PROVIDER_HANDLE:-} ]]; then
+provider_handle=${PICKER_TEST_PROVIDER_HANDLE:-$test_dir/src/services/launcher/providers/_common/handle.sh}
+if [[ -f $provider_handle ]]; then
     provider_dir="$test_dir/provider"
     test_home="$test_dir/home"
     mkdir -p "$provider_dir" "$test_home/.config"
     ln -s "$test_dir" "$test_home/.config/quickshell"
-    cp "$PICKER_TEST_PROVIDER_HANDLE" "$provider_dir/handle.sh"
-    printf 'open_url() { printf "%%s\\n" "$1" >> "${QS_PROVIDER_TEST_OUTPUT:?}"; }\n' > "$provider_dir/utils.sh"
+    cp "$provider_handle" "$provider_dir/handle.sh"
+    printf 'PICKER_LAUNCHER=%q\n' "$picker" > "$provider_dir/utils.sh"
+    printf 'open_url() { printf "%%s\\n" "$1" >> "${QS_PROVIDER_TEST_OUTPUT:?}"; }\n' >> "$provider_dir/utils.sh"
     jq '. + {action:"output"}' "$test_dir/options.json" > "$test_dir/provider.json"
     HOME="$test_home" bash "$provider_dir/handle.sh" "$test_dir/provider.json" > "$test_dir/result" 2> "$test_dir/client-error" & client_pid=$!
     wait_open

@@ -70,7 +70,7 @@ is ten minutes; `QS_PICKER_TIMEOUT` overrides it. `QS_PICKER_CONFIG` selects a
 different shell root. IPC functions open requests asynchronously so the UI never
 blocks while a Bash client waits.
 
-## Existing providers
+## Providers
 
 ```sh
 bash "$picker" provider bookmarks
@@ -78,18 +78,39 @@ bash "$picker" provider code
 bash "$picker" provider azure --pick
 ```
 
-Providers reuse existing Bash scripts and their caches/configuration. Available
+Providers live together in `src/services/launcher/providers/`, reusing the existing
+Bash actions and cache locations. Available
 names are `code`, `webapps`, `github`, `azure`, `n8n`, `remotes`, `bookmarks`,
 `books`, `directories`, `media`, `power`, `screenshot`, and `recording`.
 Their shared JSON handler and direct menu calls invoke `launcher.sh`; no Rofi
-adapter or PATH override is required. Provider actions remain in their original
-Bash scripts, including browser selection, work/personal filtering, and editor profiles.
+adapter or PATH override is required. `_common/` holds the shared Bash helpers;
+`web/` contains webapps, GitHub, Azure and n8n, and `remotes/` contains the VM/RDP
+scripts. The other providers are named `<provider>.sh`. Browser selection,
+work/personal filtering, editor profiles and cache rebuild flags are preserved.
+Shared browser/status helpers remain in Zsh, and URL cleaning remains in Qutebrowser.
+
+Private configuration lives beside its provider and stays Git-ignored:
+
+- `_common/utils.env`: shared category settings.
+- `web/webapps.env` and `web/n8n.env`: JSON picker entries.
+- `remotes/hosts.json`: VM/RDP hosts; `hosts.json.sample` documents the format.
+- `directories.env`: JSON directory entries.
+- `screenshot.env`: Bash `SCREENSHOT_FOLDER` setting.
+- `recording.env`: Bash `VIDEOS_FOLDER`, `HEADPHONES` and `MIC` settings.
+
+Hyprland bindings call `launcher.sh provider NAME [ARGS...]`; new callers should
+use this entry point rather than reaching into the provider tree. Books and Azure
+use `--pick`; both also support `--rebuild-cache`. Qutebrowser's media shortcuts
+call `provider media TITLE URL`. Run `:config-source` in an already-running
+Qutebrowser to refresh these bindings. Hypridle calls `provider power Lock`.
 
 Hyprland uses Super+D for applications and Super+V for clipboard history.
-Existing provider and window-switching shortcuts keep their original scripts.
-CopyQ is no longer started automatically. The configuration before migration is
-saved under `data/launcher-migration-2026-10-07/before/`, with restoration
-instructions alongside it.
+Existing shortcuts retain their keys. Window-switching shortcuts call launcher
+IPC directly. CopyQ is no longer started automatically.
+
+`bash tests/launcher/providers.sh` checks every provider with synthetic configuration
+and mocked actions. `bash tests/launcher/launcher.sh` exercises actual Bash/QML
+IPC in an isolated offscreen shell. Neither test opens applications on the desktop.
 
 ## Clipboard
 
