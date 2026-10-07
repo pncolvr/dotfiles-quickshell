@@ -14,7 +14,7 @@ Item {
   // readonly property color background:"#000000"
   readonly property color tooltipBackground: background
   readonly property color alternateBackground: "#be1b1a1a"
-  readonly property color accent: "#6272a4"
+  readonly property color accent: "#6B8FB3"
   readonly property color urgent: "#B80F0A"
   readonly property color ok: "#3E8E5A"
   readonly property color active: "#5C9E7E"
