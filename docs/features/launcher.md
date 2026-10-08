@@ -162,7 +162,17 @@ Private configuration lives beside its provider and stays Git-ignored:
   wildcards are passed literally.
 - `directories.json`: JSON directory entries.
 - `screenshot.env`: Bash `SCREENSHOT_FOLDER` setting.
-- `recording.env`: Bash `VIDEOS_FOLDER`, `HEADPHONES` and `MIC` settings.
+- `recording.env`: Bash `VIDEOS_FOLDER` setting.
+
+Recording offers no audio, desktop audio, microphone audio, or both. Audio modes
+open the relevant output and microphone pickers, with the current defaults first
+so Enter accepts them immediately. Capture, output, framerate and audio choices
+keep their existing order and defaults; choosing no audio skips the device pickers.
+Devices belonging to cards with an off profile are excluded from both pickers.
+The Hyprland start notification lasts one second, followed by a 1.1-second wait
+before capture begins. The stop notification and file-manager action follow only
+after the recorder exits successfully, keeping both notifications out of the video.
+Recordings are encoded directly to MP4; there is no separate conversion stage.
 
 Hyprland bindings call `launcher.sh provider NAME [ARGS...]`; new callers should
 use this entry point rather than reaching into the provider tree. Books and Azure
