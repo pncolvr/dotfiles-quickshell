@@ -93,6 +93,8 @@ gets a fresh capture view. Windows without an available capture use their app
 icon. After the closing animation, the overview destroys its preview grid and stops capture.
 `Theme.exposeBackdropOpacity` controls wallpaper dimming;
 `Theme.exposeAnimationDuration` sets the open/close animation duration (300ms).
+Exposé skips these animations during screen sharing by default. Set
+`Config.exposeAnimateDuringScreenShare` to `true` in `config/Config.qml` to allow them.
 
 ## Bash pickers
 

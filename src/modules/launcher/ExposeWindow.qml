@@ -15,7 +15,7 @@ PanelWindow {
     property var picker: PickerService
     property var wallpapers: ({})
     readonly property Item previewItem: panel
-    property bool animationsEnabled: !AudioService.screencastActive
+    property bool animationsEnabled: Config.exposeAnimateDuringScreenShare || !AudioService.screencastActive
     property int transitionWorkspace: 0
     property string transitionAddress: ""
     property real transitionProgress: 0

@@ -65,6 +65,7 @@ Item {
     readonly property bool pickerShowPrompt: false
     readonly property var exposeWallpaperCommand: ["awww", "query", "--json"]
     readonly property var exposeWorkspaceIds: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    readonly property bool exposeAnimateDuringScreenShare: false
     readonly property string pickerNamespace: "quickshell-picker"
     readonly property int clipboardMaxItems: 1000
     readonly property int clipboardMaxTotalBytes: 500000000
