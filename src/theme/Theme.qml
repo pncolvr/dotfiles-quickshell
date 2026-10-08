@@ -116,6 +116,7 @@ Item {
 
   readonly property string updatesIcon: ""
   readonly property int updatesTooltipWidth: 250
+  readonly property real updatesTooltipMaxHeightRatio: 0.5
 
   // TOTP (Font Awesome icons)
   readonly property string totpIcon: ""

@@ -43,7 +43,6 @@ Item {
         "vivaldi-teams.microsoft.com__v2_-lt": "teams"
     })
 
-    readonly property int updatesMax: 30
     readonly property int updatesScheduleDelay: Timespan.fromSeconds(30)
     readonly property string updatesMarkdownFile: `${_internal.runtimeDirectory}/quickshell-updates.md`
     readonly property string updatesCacheFile: `${_internal.home}/.cache/quickshell/updates.cache`
