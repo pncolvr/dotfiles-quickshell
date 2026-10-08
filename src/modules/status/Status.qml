@@ -6,7 +6,7 @@ import "../../services"
 
 UI.TooltipArea {
     id: root
-    acceptedButtons: Qt.LeftButton | Qt.RightButton
+    acceptedButtons: Qt.LeftButton
     hoverEnabled: true
     tooltipSource: root
     readonly property bool tooltipKeyboardFocus: true
@@ -20,18 +20,14 @@ UI.TooltipArea {
     }
 
     UI.IconText {
-        color: StatusService.source == "manual" ? Theme.warning : Theme.text
+        color: TooltipService.pinned && TooltipService.source === root ? Theme.accent
+            : StatusService.source === "manual" ? Theme.warning : Theme.text
         text: root.statusToIcon(StatusService.status)
     }
 
-    onClicked: (mouse) => {
-        switch (mouse.button) {
-        case Qt.LeftButton:
-            StatusService.toggle()
-            break
-        case Qt.RightButton:
-             StatusService.clear()
-            break
-        }
+    onClicked: mouse => {
+        if (mouse.button !== Qt.LeftButton) return
+        const pos = root.mapToGlobal(root.width / 2, 0)
+        TooltipService.togglePin(pos.x, tooltip, root, centerTooltip, tooltipScreen)
     }
 }

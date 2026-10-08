@@ -5,8 +5,9 @@ executable=''
 events_file=''
 report_date=$(date +%F)
 include_weeks=false
+include_months=false
 fail() {
-    jq -n --arg error "$1" '{summary: "", today: "", currentWeek: "", lastWeek: "", error: $error}'
+    jq -n --arg error "$1" '{summary: "", today: "", currentWeek: "", lastWeek: "", currentMonth: "", lastMonth: "", error: $error}'
     exit 1
 }
 while (($#)); do
@@ -20,6 +21,7 @@ while (($#)); do
             esac
             shift 2 ;;
         --weeks) include_weeks=true; shift ;;
+        --months) include_months=true; shift ;;
         *) fail 'Unknown timecard option.' ;;
     esac
 done
@@ -41,18 +43,15 @@ elif ! "$executable" -f "$work_dir/events.csv" -d "$report_date" -b > "$work_dir
 fi
 : > "$work_dir/current-week"
 : > "$work_dir/last-week"
-if $include_weeks; then
-    weekday=$(date -d "$report_date" +%u) || fail 'Invalid timecard date.'
-    current_start=$(date -d "$report_date -$((weekday - 1)) days" +%F)
-    last_start=$(date -d "$current_start -7 days" +%F)
-    current_end=$(date -d "$current_start +6 days" +%F)
-    last_end=$(date -d "$last_start +6 days" +%F)
-    # Keep the native report's midnight splitting and offline accounting, then
-    # select complete daily sections using local Monday–Sunday calendar dates.
+: > "$work_dir/current-month"
+: > "$work_dir/last-month"
+if $include_weeks || $include_months; then
+    # Keep native midnight splitting and offline accounting, then select
+    # complete daily sections for the requested calendar periods.
     if ! "$executable" -f "$work_dir/events.csv" > "$work_dir/report" 2> "$work_dir/error"; then
         fail "$(cat "$work_dir/error")"
     fi
-    week_report() {
+    period_report() {
         printf '%s – %s\n\n' "$1" "$2"
         awk -v start="$1" -v end="$2" '
             /^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]$/ {
@@ -63,10 +62,26 @@ if $include_weeks; then
             END { if (!found) print "No completed time blocks found." }
         ' "$work_dir/report"
     }
-    week_report "$current_start" "$current_end" > "$work_dir/current-week"
-    week_report "$last_start" "$last_end" > "$work_dir/last-week"
+    if $include_weeks; then
+        weekday=$(date -d "$report_date" +%u) || fail 'Invalid timecard date.'
+        current_start=$(date -d "$report_date -$((weekday - 1)) days" +%F)
+        last_start=$(date -d "$current_start -7 days" +%F)
+        current_end=$(date -d "$current_start +6 days" +%F)
+        last_end=$(date -d "$last_start +6 days" +%F)
+        period_report "$current_start" "$current_end" > "$work_dir/current-week"
+        period_report "$last_start" "$last_end" > "$work_dir/last-week"
+    fi
+    if $include_months; then
+        current_start=$(date -d "${report_date:0:7}-01" +%F) || fail 'Invalid timecard date.'
+        last_start=$(date -d "$current_start -1 month" +%F)
+        current_end=$(date -d "$current_start +1 month -1 day" +%F)
+        last_end=$(date -d "$current_start -1 day" +%F)
+        period_report "$current_start" "$current_end" > "$work_dir/current-month"
+        period_report "$last_start" "$last_end" > "$work_dir/last-month"
+    fi
 fi
-jq -n --arg date "$report_date" --argjson weeksLoaded "$include_weeks" \
+jq -n --arg date "$report_date" --argjson weeksLoaded "$include_weeks" --argjson monthsLoaded "$include_months" \
     --rawfile summary "$work_dir/summary" --rawfile today "$work_dir/today" \
     --rawfile currentWeek "$work_dir/current-week" --rawfile lastWeek "$work_dir/last-week" \
-    '{date: $date, summary: $summary, today: $today, currentWeek: $currentWeek, lastWeek: $lastWeek, weeksLoaded: $weeksLoaded, error: ""}'
+    --rawfile currentMonth "$work_dir/current-month" --rawfile lastMonth "$work_dir/last-month" \
+    '{date: $date, summary: $summary, today: $today, currentWeek: $currentWeek, lastWeek: $lastWeek, weeksLoaded: $weeksLoaded, currentMonth: $currentMonth, lastMonth: $lastMonth, monthsLoaded: $monthsLoaded, error: ""}'

@@ -1,21 +1,28 @@
 # Work/personal status and timecard
 
-Hover the work/personal icon to see the current mode, whether it was detected or
-manually set, and today's work/personal totals. The summary uses the same brief
-report as the previous Conky display.
+Hover the work/personal icon to see the current mode and whether it is automatic
+or manually set. Work and Personal totals follow the selected period.
 
-The **Today** tab shows the detailed report used by the zsh `timecard` function:
-start, end, category, duration, and ongoing blocks. **Current week** and **Last week**
-show each day's totals and blocks within their Monday–Sunday ranges, displayed
-at the top of each report. Reports keep their original
-monospace columns, with scrolling for long or wide tables. The summary above
-the tabs always refers to today.
+**Today** opens with a compact daily summary and hides session details until
+expanded. **This week** and **Last week** cover Monday–Sunday; **This month** and
+**Last month** cover full calendar months. Each period shows daily work/personal
+totals and a proportional color bar, including days without activity. Dates keep
+chronological order. Week views show the full weekday; hover its name for the
+`yyyy-MM-dd` date. Month views show only `yyyy-MM-dd`, while Today shows the
+full weekday followed by the date.
+Click a day with activity to expand its start/end times, category and duration.
+An ongoing session ends with “now”; hover its time range for precise timestamps.
+Long lists scroll vertically within a bounded panel using the shared scrollbar.
 
-The tooltip opens on Today and refreshes immediately, then every minute while
-open, and after a mode reload. Use the refresh button to update it manually.
-Weekly reports are read when either week tab is selected. Left-clicking the bar icon still
-toggles the manual mode; right-clicking clears the override and restores
-automatic detection.
+The tooltip opens on Today and refreshes the timecard immediately, every minute
+while open, and after a mode reload. The refresh button reruns the status manager's
+`--check` and `--source` commands, then reloads the timecard. In automatic mode,
+this reevaluates the configured work processes and open files. A manual override
+stays in place. Week and month reports are read when their tabs are selected.
+The mode button after Reload switches Work/Personal and sets a manual override.
+The Reset button after it clears the override and restores automatic detection.
+Left-clicking the bar icon pins or unpins the tooltip; the icon uses the accent
+color while pinned. Bar clicks do not change the mode.
 
 ## Commands and configuration
 

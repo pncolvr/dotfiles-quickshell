@@ -1,10 +1,19 @@
 import QtQuick
+import QtQuick as Q
 import QtQuick.Controls as QC
 import "../../"
 
 Item {
     id: root
     anchors.fill: parent
+    // Text labels may fill a row; anchor the hint to the displayed text.
+    readonly property Q.Text label: parent as Q.Text
+    readonly property real labelWidth: label ? Math.min(label.contentWidth, label.width) : 0
+    readonly property real labelOffset: !label ? 0
+        : label.effectiveHorizontalAlignment === Q.Text.AlignHCenter ? (label.width - labelWidth) / 2
+        : label.effectiveHorizontalAlignment === Q.Text.AlignRight ? label.width - labelWidth : 0
+    anchors.leftMargin: labelOffset
+    anchors.rightMargin: label ? label.width - labelWidth - labelOffset : 0
 
     signal clicked
 

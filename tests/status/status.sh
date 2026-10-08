@@ -34,12 +34,14 @@ printf '%s;work\n%s;personal\n%s;inactive\n%s;active\n%s;work\n%s;personal\n%s;i
     "$yesterday_start" "$((yesterday_start+60))" "$((yesterday_start+120))" \
     "$today_start" "$today_start" "$((today_start+60))" "$((today_start+120))" > "$TIMETABLE_FILE"
 before=$(sha256sum "$TIMETABLE_FILE")
-sed 's@"../../src@"src@g' "$project_root/tests/status/status-smoke.qml" > "$test_dir/shell.qml"
-output=$(QT_QPA_PLATFORM=offscreen QT_QUICK_BACKEND=software XDG_RUNTIME_DIR="$test_dir/runtime" \
-    XDG_CACHE_HOME="$test_dir/cache" XDG_DATA_HOME="$test_dir/data" \
-    timeout 15 qs -p "$test_dir/shell.qml" 2>&1) || { printf '%s\n' "$output" >&2; exit 1; }
-printf '%s\n' "$output"
-[[ $output == *'PASS: status timecard'* && $output != *'STATUS FAIL:'* \
-    && $output != *'Failed to load configuration'* && $output != *'Binding loop detected'* \
-    && $output != *'TypeError:'* && $output != *'ReferenceError:'* ]]
+for fixture in status-smoke timecard-parser; do
+    sed 's@"../../src@"src@g' "$project_root/tests/status/$fixture.qml" > "$test_dir/shell.qml"
+    output=$(QT_QPA_PLATFORM=offscreen QT_QUICK_BACKEND=software XDG_RUNTIME_DIR="$test_dir/runtime" \
+        XDG_CACHE_HOME="$test_dir/cache" XDG_DATA_HOME="$test_dir/data" \
+        timeout 15 qs -p "$test_dir/shell.qml" 2>&1) || { printf '%s\n' "$output" >&2; exit 1; }
+    printf '%s\n' "$output"
+    [[ $output == *'PASS:'* && $output != *'STATUS FAIL:'* \
+        && $output != *'Failed to load configuration'* && $output != *'Binding loop detected'* \
+        && $output != *'TypeError:'* && $output != *'ReferenceError:'* ]]
+done
 [[ $(sha256sum "$TIMETABLE_FILE") == "$before" ]]

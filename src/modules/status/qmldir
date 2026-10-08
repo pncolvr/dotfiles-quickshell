@@ -1,2 +1,3 @@
 Status 1.0 Status.qml
 StatusTooltip 1.0 StatusTooltip.qml
+singleton Timecard 1.0 Timecard.qml

@@ -16,6 +16,8 @@ Singleton {
     readonly property string todayTimecard: _internal.todayTimecard
     readonly property string currentWeekTimecard: _internal.currentWeekTimecard
     readonly property string lastWeekTimecard: _internal.lastWeekTimecard
+    readonly property string currentMonthTimecard: _internal.currentMonthTimecard
+    readonly property string lastMonthTimecard: _internal.lastMonthTimecard
     readonly property string timecardError: _internal.timecardError
     readonly property string timecardDate: _internal.timecardDate
     readonly property bool timecardLoading: reportProcess.running
@@ -28,29 +30,36 @@ Singleton {
         property string todayTimecard: ""
         property string currentWeekTimecard: ""
         property string lastWeekTimecard: ""
+        property string currentMonthTimecard: ""
+        property string lastMonthTimecard: ""
         property string timecardError: ""
         property string timecardDate: ""
         property int panels: 0
         property bool includeWeeks: false
+        property bool includeMonths: false
         property bool reportPending: false
     }
     function reload() {
         reloadTimer.restart()
     }
     function beginPanel() {
-        if (_internal.panels === 0) _internal.includeWeeks = false
+        if (_internal.panels === 0) {
+            _internal.includeWeeks = false
+            _internal.includeMonths = false
+        }
         _internal.panels++
         refreshTimecard()
     }
     function endPanel() { _internal.panels = Math.max(0, _internal.panels - 1) }
-    function showWeeks(show) {
-        _internal.includeWeeks = show
-        if (show) refreshTimecard()
+    function showPeriod(index) {
+        _internal.includeWeeks = index === 1 || index === 2
+        _internal.includeMonths = index === 3 || index === 4
+        if (index > 0) refreshTimecard()
     }
     function refreshTimecard() {
         if (reportProcess.running) { _internal.reportPending = true; return }
         _internal.reportPending = false
-        reportProcess.command = Config.statusTimecardCommand(_internal.includeWeeks)
+        reportProcess.command = Config.statusTimecardCommand(_internal.includeWeeks, _internal.includeMonths)
         reportProcess.running = true
     }
     Timer {
@@ -113,12 +122,17 @@ Singleton {
             try { report = JSON.parse(reportOutput.text) } catch (_) { report = null }
             if (exitCode === 0 && exitStatus === 0 && typeof report?.summary === "string"
                 && typeof report.today === "string" && typeof report.currentWeek === "string"
-                && typeof report.lastWeek === "string" && typeof report.date === "string") {
+                && typeof report.lastWeek === "string" && typeof report.currentMonth === "string"
+                && typeof report.lastMonth === "string" && typeof report.date === "string") {
                 _internal.summary = report.summary.trim()
                 _internal.todayTimecard = report.today.trim()
                 if (report.weeksLoaded) {
                     _internal.currentWeekTimecard = report.currentWeek.trim()
                     _internal.lastWeekTimecard = report.lastWeek.trim()
+                }
+                if (report.monthsLoaded) {
+                    _internal.currentMonthTimecard = report.currentMonth.trim()
+                    _internal.lastMonthTimecard = report.lastMonth.trim()
                 }
                 _internal.timecardDate = report.date
                 _internal.timecardError = ""

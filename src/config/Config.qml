@@ -92,11 +92,11 @@ Item {
     readonly property string statusTimecardExecutable: `${Quickshell.env("ZDOTDIR") || `${_internal.home}/.config/zsh`}/scripts/status/bin/timecard`
     readonly property string statusTimetableFile: Quickshell.env("TIMETABLE_FILE") || `${_internal.home}/Documents/timetable.csv`
     readonly property int statusTimecardRefreshInterval: Timespan.fromMinutes(1)
-    readonly property var statusTimecardCommand: (includeWeeks) => [
+    readonly property var statusTimecardCommand: (includeWeeks, includeMonths) => [
         "bash", Qt.resolvedUrl("../services/status/timecard.sh").toString().replace("file://", ""),
         "--executable", statusTimecardExecutable, "--file", statusTimetableFile,
         "--date", Qt.formatDateTime(new Date(), "yyyy-MM-dd")
-    ].concat(includeWeeks ? ["--weeks"] : [])
+    ].concat(includeWeeks ? ["--weeks"] : [], includeMonths ? ["--months"] : [])
 
     readonly property string screenShareHiddenNamespace: "quickshell-private"
     readonly property int notificationLowTimeout: 2000

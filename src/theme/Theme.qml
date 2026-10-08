@@ -238,7 +238,7 @@ Item {
   readonly property string statusWorkingIcon:""
   readonly property string statusPersonalIcon:""
   readonly property string statusUnknownIcon:""
-  readonly property int statusTooltipWidth: 650
+  readonly property int statusTooltipWidth: 420
   readonly property real statusTooltipMaxHeightRatio: 0.6
   // tray
   readonly property string trayOpenIcon: ""

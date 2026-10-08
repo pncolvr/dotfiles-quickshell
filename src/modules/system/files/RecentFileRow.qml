@@ -57,7 +57,7 @@ Rectangle {
         UI.Text {
             objectName: "fileName"
             centerVertical: false
-            width: parent.width
+            width: Math.min(implicitWidth, parent.width)
             text: root.file.name
             color: root.selected ? Theme.accent : Theme.text
             textFormat: Text.PlainText
@@ -72,7 +72,7 @@ Rectangle {
         }
         UI.Text {
             centerVertical: false
-            width: parent.width
+            width: Math.min(implicitWidth, parent.width)
             text: root.file.directory + " · " + Qt.formatDateTime(new Date(root.file.usedAt), "dd MMM hh:mm")
             textFormat: Text.PlainText
             color: Theme.inactive
