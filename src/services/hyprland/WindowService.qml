@@ -76,32 +76,6 @@ Singleton {
         stdout: SplitParser {
             onRead: data => clientsProcess._buffer += data
         }
-        function getDisplayTitle(wsId, title, className) {
-            // console.debug("getDisplayTitle:", wsId, title, className)
-            switch (wsId) {
-                case 3:
-                    return Config.workspaceClassOverrides[className] ?? className
-                case 4:
-                    // return className === "code"
-                    //     ? title.split("$")[0].trim()
-                    //     : title
-                case 10:
-                    return title
-                default:
-                    return cleanTitle(title)
-            }
-        }
-
-        function cleanTitle(title) {
-            let t = title
-            for (const pat of Config.windowTitleCleanPatterns) {
-                if (t.endsWith(` ${pat}`)) {
-                    t = t.slice(0, -(pat.length + 1))
-                }
-            }
-            return t.slice(0, 100)
-        }
-
         onRunningChanged: {
             if (!running && _buffer.length > 0) {
                 try {
@@ -118,7 +92,7 @@ Singleton {
                         })
                         .map(c => ({
                             address: c.address,
-                            title: getDisplayTitle(wsId, c.title, c.class),
+                            title: root.getDisplayTitle(wsId, c.title, c.class),
                             active: c.focusHistoryID === 0,
                             className: c.class,
                             initialClass: c.initialClass,
@@ -166,9 +140,44 @@ Singleton {
         }
     }
 
+    function getDisplayTitle(wsId, title, className) {
+        // console.debug("getDisplayTitle:", wsId, title, className)
+        switch (wsId) {
+            case 3:
+                return Config.workspaceClassOverrides[className] ?? className
+            case 4:
+                // return className === "code"
+                //     ? title.split("$")[0].trim()
+                //     : title
+            case 10:
+                return title
+            default:
+                return cleanTitle(title)
+        }
+    }
+
+    function cleanTitle(title) {
+        let t = title
+        for (const pat of Config.windowTitleCleanPatterns) {
+            if (t.endsWith(` ${pat}`)) {
+                t = t.slice(0, -(pat.length + 1))
+            }
+        }
+        return t.slice(0, 100)
+    }
+
     function focusWindow(address) {
         if (!/^0x[0-9a-f]+$/i.test(address)) return
         Hyprland.dispatch(Config.hyprlandFocusWindowByAddress(address))
+    }
+
+    function moveWindowToWorkspace(address, workspace) {
+        if (!/^0x[0-9a-f]+$/i.test(address) || !Number.isInteger(workspace) || workspace <= 0) return false
+        const client = allWindows.find(window => window.address === address && window.mapped !== false)
+        if (!client || client.workspace.id === workspace) return false
+        Hyprland.dispatch(Config.hyprlandMoveWindowToWorkspace(address, workspace))
+        buildWindows()
+        return true
     }
 
     function focusEmitter(desktopEntry, appName) {

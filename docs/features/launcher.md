@@ -3,8 +3,8 @@
 The launcher uses the same theme, search field, buttons and scrollbar as the bar.
 Clickable rows, buttons and scrollbars show a pointing-hand cursor. It opens on
 the focused monitor, centered horizontally and attached below the bar with the
-same curved joins and shadow as tooltips. Every mode, including the power grid,
-uses `Theme.pickerWidth` (clamped on small screens). The search field stays at the same horizontal position and
+same curved joins and shadow as tooltips. List modes and the power grid
+use `Theme.pickerWidth` (clamped on small screens). The search field stays at the same horizontal position and
 height across picker modes. It keeps keyboard focus while the pointer moves, and closes
 with Escape or an outside click.
 Picker headers contain search. Prompt titles are hidden by
@@ -23,6 +23,8 @@ and `MultiSelectPickerPanel` extend it with their own shortcuts and action butto
 qs ipc call launcher apps
 qs ipc call launcher windows all
 qs ipc call launcher windows current
+qs ipc call launcher expose all
+qs ipc call launcher expose current
 qs ipc call launcher clipboard
 ```
 
@@ -32,6 +34,46 @@ Enter focuses a window, Ctrl+Enter focuses without dismissing, and two-window li
 switch immediately to the previous window. Focusing a grouped window activates
 its tab using live group membership. Current-workspace mode considers tiled
 windows and falls back to all windows if fewer than two are available.
+
+## Exposé overview
+
+**Meta+Shift+E** toggles a fullscreen overview on the focused monitor, starting
+with the current workspace and the focused window preselected. The centered workspace strip shows large icons with
+workspace names below. Click a workspace to see its windows, or **Show all** to show
+every workspace. The All view orders windows by workspace, then top to bottom
+and left to right within each workspace. Grouped workspaces use the same
+alphabetical display-name order as the bar. `launcher.sh expose` also starts with the current workspace;
+`launcher.sh expose all` opens all windows directly.
+Empty workspaces remain available as drop targets. `Config.exposeWorkspaceIds`
+provides the default numbered workspaces (1–10); other existing numbered
+workspaces are added automatically.
+
+Type to filter window titles and applications. Hovering selects a window card;
+arrow keys navigate the grid;
+Enter or a click focuses the selected window. Escape or a background click
+closes the overview. Unlike the list switcher, the overview always opens even
+when there are only two windows.
+
+Drag a window card onto a workspace tile to move that individual window
+without following it or closing the overview. A grouped window is detached
+before moving, so its other tabs remain in their workspace. The grid stays
+stable throughout the pointer gesture; live compositor updates refresh it after
+release. Dragged cards animate shrinking around the grab point so the destination stays
+visible, then animate back to their full size. A tile highlights while it is the drop target. Empty workspaces can
+receive windows without opening them first.
+
+The background reads the current monitor's wallpaper from `awww query --json`.
+Missing wallpapers fall back to the theme background. Workspace tiles show
+large icons and names without wallpapers, with live miniature window layouts
+below. Layouts refresh after moving a window between workspaces.
+
+Native `ScreencopyView` captures window thumbnails while the overview is open.
+Captures update as applications produce frames and preserve the captured image's
+aspect ratio through resizes.
+Applications can still suspend drawing themselves. Each changed window source
+gets a fresh capture view. Windows without an available capture use their app
+icon. Closing the overview destroys its preview grid and stops capture.
+`Theme.exposeBackdropOpacity` controls wallpaper dimming.
 
 ## Bash pickers
 
@@ -176,6 +218,7 @@ the bar's screen-sharing toggle.
 
 ```sh
 bash tests/launcher/launcher.sh
+bash tests/launcher/expose.sh
 bash tests/clipboard/clipboard.sh
 bash tests/launcher/wayland.sh
 bash tests/qml/lint.sh

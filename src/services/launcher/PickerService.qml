@@ -30,6 +30,13 @@ Singleton {
     property string destinationClass: ""
     property bool openingClipboard: false
     property string windowScope: "all"
+    property int exposeWorkspace: 0
+    property bool exposeDragging: false
+    readonly property var exposeWorkspaces: {
+        const native = Hyprland.workspaces.values
+        const ids = [...new Set(Config.exposeWorkspaceIds.concat(native.filter(ws => ws.id > 0).map(ws => ws.id)))].sort((a, b) => a - b)
+        return ids.map(id => ({id, name: native.find(ws => ws.id === id)?.name || String(id)}))
+    }
     property string error: ""
     property var targetScreen: null
     readonly property var filteredItems: {
@@ -101,16 +108,27 @@ Singleton {
             search: [entry.name, entry.genericName, entry.id, ...entry.keywords].join(" "), result: entry.id}))
             .sort((a, b) => (usage[b.id] || 0) - (usage[a.id] || 0) || a.title.localeCompare(b.title))
     }
-    function windowItems(scope) {
+    function windowItems(scope, spatial = false) {
         const workspace = Hyprland.focusedWorkspace?.id
         let clients = WindowService.allWindows.filter(client => client.mapped !== false
             && (scope !== "current" || (client.workspace.id === workspace && !client.floating)))
         if (scope === "current" && clients.length < 2) clients = WindowService.allWindows.filter(client => client.mapped !== false)
         return clients
-            .sort((a, b) => a.focusHistoryID - b.focusHistoryID)
+            .sort((a, b) => {
+                if (!spatial) return a.focusHistoryID - b.focusHistoryID
+                const workspaceOrder = a.workspace.id - b.workspace.id
+                if (workspaceOrder) return workspaceOrder
+                if (Config.specialWorkspaces.includes(a.workspace.id) || a.grouped?.includes(b.address)) {
+                    return WindowService.getDisplayTitle(a.workspace.id, a.title || a.class, a.class)
+                        .localeCompare(WindowService.getDisplayTitle(b.workspace.id, b.title || b.class, b.class))
+                        || a.address.localeCompare(b.address)
+                }
+                return (a.at?.[1] ?? 0) - (b.at?.[1] ?? 0) || (a.at?.[0] ?? 0) - (b.at?.[0] ?? 0)
+                    || a.address.localeCompare(b.address)
+            })
             .map(client => ({id: client.address, title: client.title || client.class,
                 subtitle: client.class + " · " + client.workspace.name,
-                search: client.title + " " + client.class + " " + client.workspace.name, result: client.address}))
+                search: client.title + " " + client.class + " " + client.workspace.name, result: client.address, workspaceId: client.workspace.id, client}))
     }
     function windows(scope) {
         begin("windows", scope === "current" ? "Windows in this workspace" : "Windows")
@@ -126,6 +144,36 @@ Singleton {
         show()
         WindowService.buildWindows()
     }
+    function expose(scope) {
+        if (visible && layout === "expose") { close(); return }
+        const focused = Hyprland.activeToplevel?.address
+        begin("windows", "Windows")
+        layout = "expose"
+        windowScope = "all"
+        items = windowItems("all", true)
+        selectExposeWorkspace(scope === "all" ? 0 : Hyprland.focusedWorkspace?.id ?? 0)
+        const focusedIndex = filteredItems.findIndex(item => item.id.replace(/^0x/, "").toLowerCase() === focused?.replace(/^0x/, "").toLowerCase())
+        currentIndex = Math.max(0, focusedIndex)
+        show()
+        Hyprland.refreshToplevels()
+        WindowService.buildWindows()
+    }
+    function selectExposeWorkspace(id) {
+        exposeWorkspace = id
+        itemCriteria = id === 0 ? ({}) : ({workspaceId: id})
+        currentIndex = 0
+    }
+    function syncExpose() {
+        if (!visible || layout !== "expose" || exposeDragging) return
+        const id = currentItem?.id
+        items = windowItems("all", true)
+        currentIndex = Math.max(0, filteredItems.findIndex(item => item.id === id))
+    }
+    function moveExposeWindow(address, workspace) {
+        return WindowService.moveWindowToWorkspace(address, workspace)
+    }
+    onExposeDraggingChanged: if (!exposeDragging) syncExpose()
+
     function clipboard() {
         begin("clipboard", "Clipboard")
         ClipboardService.initialize()
@@ -162,6 +210,7 @@ Singleton {
     }
     function close() {
         openingClipboard = false
+        exposeDragging = false
         if (mode === "clipboard" && activeWindow.running) activeWindow.running = false
         if (requestDirectory) reply(requestDirectory, {status: "cancelled", items: [], exitCode: 1})
         requestDirectory = ""
@@ -231,9 +280,18 @@ Singleton {
         target: WindowService
         function onAllWindowsChanged() {
             if (root.mode !== "windows" || !root.visible) return
+            if (root.layout === "expose") { root.syncExpose(); return }
             const id = root.currentItem?.id
             root.items = root.windowItems(root.windowScope)
             root.currentIndex = Math.max(0, root.filteredItems.findIndex(item => item.id === id))
+        }
+    }
+    Connections {
+        target: Hyprland
+        function onRawEvent(event) {
+            if (root.visible && root.layout === "expose"
+                && ["movewindow", "movewindowv2", "windowtitle", "windowtitlev2", "changefloatingmode", "togglegroup", "moveintogroup", "moveoutofgroup"].includes(event.name))
+                WindowService.buildWindows()
         }
     }
     Process {
@@ -304,6 +362,7 @@ Singleton {
         target: "launcher"
         function apps(): void { root.apps() }
         function windows(scope: string): void { root.windows(scope) }
+        function expose(scope: string): void { root.expose(scope) }
         function clipboard(): void { root.clipboard() }
         function open(directory: string): void { root.open(directory) }
         function cancel(directory: string): void { root.cancel(directory) }

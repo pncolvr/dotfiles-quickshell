@@ -20,6 +20,7 @@ Scope {
         implicitWidth: 560
         implicitHeight: 550
         PickerPanel { id: panel }
+        UI.InputField { id: pasteSource; visible: false; text: "Beta" }
     }
     function check(condition, message) {
         if (!condition) { failed = true; console.error("PICKER FAIL: " + message) }
@@ -119,6 +120,19 @@ Scope {
         function toggleEntry(): void { panel.focusSearch(); events.keyClick(Qt.Key_Space, Qt.ShiftModifier, 0) }
         function toggleVisible(): void { panel.focusSearch(); events.keyClick(Qt.Key_A, Qt.ControlModifier, 0) }
         function clearSelection(): void { panel.focusSearch(); events.keyClick(Qt.Key_A, Qt.ControlModifier | Qt.ShiftModifier, 0) }
+        function pasteFixture(focusButton: bool, replaceSelection: bool): bool {
+            pasteSource.selectAll()
+            pasteSource.copy()
+            const search = objects.findChild(panel.panel, "pickerSearch") as UI.SearchField
+            if (replaceSelection) search.selectAll()
+            else search.cursorPosition = search.text.length
+            if (focusButton) {
+                const button = objects.findChild(panel.panel, "pickerSelectVisible") as UI.ActionButton
+                button.forceActiveFocus()
+            } else panel.focusSearch()
+            events.keyClick(Qt.Key_V, Qt.ControlModifier, 0)
+            return search.activeFocus
+        }
         function typeSpace(): void { panel.focusSearch(); events.keyClick(Qt.Key_Space, Qt.NoModifier, 0) }
         function clipboardFixture(): void {
             PickerService.begin("clipboard", "Clipboard")

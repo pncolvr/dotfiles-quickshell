@@ -96,6 +96,16 @@ Item {
   readonly property int clipboardRowHeight: 52
   readonly property int clipboardImagePreviewHeight: 200
   readonly property int pickerRowPadding: 4
+  readonly property int exposeWorkspaceWidth: 124
+  readonly property int exposeWorkspaceHeight: 78
+  readonly property int exposeWorkspacePreviewHeight: 64
+  readonly property int exposeWorkspaceIconSize: 36
+  readonly property int exposeDragWidth: 220
+  readonly property int exposeDragAnimationDuration: 160
+  readonly property int exposeCardMinWidth: 280
+  readonly property int exposeSpacing: 16
+  readonly property real exposeBackdropOpacity: 0.45
+  readonly property string exposeIcon: "" // Exposé: window grid
   readonly property int pickerGridHeight: 52
   readonly property int scrollbarWidth: 6
   readonly property int scrollbarHideDelay: 450

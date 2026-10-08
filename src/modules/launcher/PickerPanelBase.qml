@@ -70,6 +70,11 @@ Rectangle {
         Keys.forwardTo: [root]
         Keys.onPressed: event => {
             switch (event.key) {
+                case Qt.Key_V:
+                    if (event.modifiers !== Qt.ControlModifier) { event.accepted = false; return }
+                    search.forceActiveFocus()
+                    search.paste()
+                    break
                 case Qt.Key_Escape: root.picker.close(); break
                 case Qt.Key_Down: root.picker.move(1); break
                 case Qt.Key_Up: root.picker.move(-1); break

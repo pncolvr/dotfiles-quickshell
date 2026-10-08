@@ -124,6 +124,14 @@ printf '%s\n' '{"action":"default","allowMultipleSelection":true,"items":[{"titl
 bash "$picker" --json "$test_dir/links.json" > "$test_dir/result" 2> "$test_dir/client-error" & client_pid=$!
 wait_open
 ipc call pickertest snapshot | jq -e '.acceptLabel == "Open links" and .canAccept and .selected == []' >/dev/null
+ipc call pickertest pasteFixture false false | jq -e '.' >/dev/null
+ipc call pickertest snapshot | jq -e '.query == "Beta" and .selected == []' >/dev/null
+ipc call pickertest query 'Prefix '
+ipc call pickertest pasteFixture true false | jq -e '.' >/dev/null
+ipc call pickertest snapshot | jq -e '.query == "Prefix Beta" and .selected == []' >/dev/null
+ipc call pickertest pasteFixture false true | jq -e '.' >/dev/null
+ipc call pickertest snapshot | jq -e '.query == "Beta" and .selected == []' >/dev/null
+printf 'PASS: Ctrl+V pastes into search from input/button focus, inserts at the cursor and replaces selected text\n'
 ipc call pickertest query Alpha
 ipc call pickertest clickControl pickerSelectVisible | jq -e '.' >/dev/null
 ipc call pickertest snapshot | jq -e '.selected == ["0"]' >/dev/null

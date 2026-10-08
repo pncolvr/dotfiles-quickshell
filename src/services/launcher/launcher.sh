@@ -34,6 +34,7 @@ fi
 case ${1:-apps} in
     apps|clipboard) ipc call launcher "${1:-apps}"; exit ;;
     windows) ipc call launcher windows "${2:-all}"; exit ;;
+    expose) ipc call launcher expose "${2:-current}"; exit ;;
     provider)
         name=${2:?Provider name required}; shift 2
         case $name in
@@ -49,7 +50,7 @@ case ${1:-apps} in
     --json) input_file=${2:?JSON file required}; output_format=results ;;
     --json-response) input_file=${2:?JSON file required}; output_format=json ;;
     --dmenu) input_file=""; output_format=titles ;;
-    *) fail 'Usage: launcher.sh apps|windows [all|current]|clipboard|provider NAME [ARGS...]|--json FILE|--json-response FILE|--dmenu [OPTIONS]' ;;
+    *) fail 'Usage: launcher.sh apps|windows [all|current]|expose [all|current]|clipboard|provider NAME [ARGS...]|--json FILE|--json-response FILE|--dmenu [OPTIONS]' ;;
 esac
 
 runtime_root=${XDG_RUNTIME_DIR:?XDG_RUNTIME_DIR is required}/quickshell-picker

@@ -14,7 +14,7 @@ TopPanelTooltip {
     property var picker: PickerService
     readonly property Item previewItem: contentItem
     screen: Quickshell.screens.includes(picker.targetScreen) ? picker.targetScreen : Quickshell.screens[0] ?? null
-    visible: picker.visible && !!picker.targetScreen
+    visible: picker.visible && picker.layout !== "expose" && !!picker.targetScreen
     contentWidth: Math.min(Theme.pickerWidth,
         Math.max(0, (screen?.width || 800) - Theme.tooltipRadius * 2 - Theme.tooltipPaddingWidth * 2))
     contentHeight: Math.min(panel.implicitHeight,

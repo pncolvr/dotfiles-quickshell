@@ -63,6 +63,8 @@ Item {
     readonly property string databaseName: "quickshell"
     readonly property int pickerMaxRows: 12
     readonly property bool pickerShowPrompt: false
+    readonly property var exposeWallpaperCommand: ["awww", "query", "--json"]
+    readonly property var exposeWorkspaceIds: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
     readonly property string pickerNamespace: "quickshell-picker"
     readonly property int clipboardMaxItems: 1000
     readonly property int clipboardMaxTotalBytes: 500000000
@@ -196,6 +198,17 @@ Item {
                     end
                 end
                 hl.dispatch(hl.dsp.focus({ window = window }))
+                return
+            end
+        end
+    end`
+    readonly property var hyprlandMoveWindowToWorkspace: (address, workspace) => `function()
+        for _, window in ipairs(hl.get_windows()) do
+            if window.address == "${address}" and window.mapped then
+                if window.group then
+                    hl.dispatch(hl.dsp.window.move({ window = window, out_of_group = true }))
+                end
+                hl.dispatch(hl.dsp.window.move({ window = window, workspace = ${workspace}, follow = false }))
                 return
             end
         end

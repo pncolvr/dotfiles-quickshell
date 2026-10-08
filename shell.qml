@@ -13,4 +13,5 @@ Scope {
   NotificationManagerWindow {}
   TotpWindow {}
   PickerWindow {}
+  ExposeWindow {}
 }
