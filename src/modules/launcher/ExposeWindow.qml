@@ -21,6 +21,8 @@ PanelWindow {
     property real transitionProgress: 0
     property rect zoomRect: Qt.rect(0, 0, 0, 0)
     property string zoomTarget: ""
+    property point monitorOrigin: Qt.point(Hyprland.monitorFor(screen)?.lastIpcObject?.x ?? screen?.x ?? 0,
+        Hyprland.monitorFor(screen)?.lastIpcObject?.y ?? screen?.y ?? 0)
     property var reservedMargins: Hyprland.monitorFor(screen)?.lastIpcObject?.reserved ?? [0, Theme.barHeight, 0, 0]
     readonly property rect desktopRect: Qt.rect(reservedMargins[0], reservedMargins[1],
         Math.max(1, width - reservedMargins[0] - reservedMargins[2]),
@@ -33,9 +35,19 @@ PanelWindow {
         - (zoomRect.x + zoomRect.width / 2) * zoomFactor) * (1 - transitionProgress)
     readonly property real cameraY: (desktopRect.y + desktopRect.height / 2
         - (zoomRect.y + zoomRect.height / 2) * zoomFactor) * (1 - transitionProgress)
+    function windowIsCentered(address) {
+        const client = picker.items.find(entry => entry.id === address)?.client
+        if (!client?.at || !(client.size?.[0] > 0) || !(client.size?.[1] > 0)) return false
+        const centerX = client.at[0] - monitorOrigin.x + client.size[0] / 2
+        const centerY = client.at[1] - monitorOrigin.y + client.size[1] / 2
+        const tolerance = Theme.controlSpacing * 2
+        return Math.abs(centerX - desktopRect.x - desktopRect.width / 2) <= tolerance
+            && Math.abs(centerY - desktopRect.y - desktopRect.height / 2) <= tolerance
+    }
     function chooseZoomTarget() {
         const view = contentLoader.item as ExposePanel
-        let rect = view?.windowPreviewRect(transitionAddress)
+        // An off-center destination would jump from the enlarged central preview on unmap.
+        let rect = requested || windowIsCentered(transitionAddress) ? view?.windowPreviewRect(transitionAddress) : null
         zoomTarget = rect ? "window" : "workspace"
         if (!rect) rect = view?.workspacePreviewRect(transitionWorkspace)
         zoomRect = rect ? Qt.rect(contentLoader.x + rect.x, contentLoader.y + rect.y, rect.width, rect.height)
@@ -163,6 +175,7 @@ PanelWindow {
                 sourceComponent: ExposePanel {
                     picker: root.picker
                     transitionProgress: root.transitionProgress
+                    animationsEnabled: root.animationsEnabled
                     captureAddress: root.zoomTarget === "window" ? root.transitionAddress : ""
                 }
             }

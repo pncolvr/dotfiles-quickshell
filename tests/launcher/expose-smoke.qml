@@ -12,6 +12,7 @@ Scope {
     property bool failed: false
     property int moves: 0
     property real originalCardWidth: 0
+    property var retainedCard: null
     function check(ok, message) { if (!ok) { failed = true; console.error("EXPOSE FAIL:", message) } }
     Test.TestCase { id: events; when: false }
     QtObject {
@@ -22,10 +23,12 @@ Scope {
         property int exposeWorkspace: 0
         property int exposeReturnWorkspace: 1
         property bool exposeDragging: false
+        property var exposePendingMoves: ({})
         property int accepted: 0
         readonly property var currentItem: filteredItems[currentIndex] ?? null
         property string movedAddress: ""
         property int movedWorkspace: 0
+        property bool simulateDropUpdate: false
         property var items: Array.from({length: 8}, (_, index) => ({id: "0x" + (index + 1), result: "0x" + (index + 1),
             title: index === 0 ? "Browser" : "Editor " + index, search: index === 0 ? "browser" : "editor", workspaceId: index % 2 + 1,
             client: {address: "0x" + (index + 1), class: "", at: [index % 2 * 400, 0], size: index === 0 ? [800, 600] : index === 1 ? [400, 600] : index === 2 ? [1200, 400] : [400, 300]}}))
@@ -41,10 +44,41 @@ Scope {
             if (!id && exposeWorkspace) exposeReturnWorkspace = exposeWorkspace
             exposeWorkspace = id; currentIndex = 0
         }
-        function moveExposeWindow(address, workspace) { movedAddress = address; movedWorkspace = workspace; root.moves++; return true }
+        function moveExposeWindow(address, workspace) {
+            movedAddress = address; movedWorkspace = workspace; root.moves++
+            if (simulateDropUpdate) {
+                exposePendingMoves = Object.assign({}, exposePendingMoves, {[address]: workspace})
+                delayedMove.restart()
+            }
+            return true
+        }
         function accept(_custom, _copy) { accepted++; visible = false }
         function close() { visible = false }
         onQueryChanged: currentIndex = 0
+    }
+    Timer {
+        id: delayedMove
+        interval: 350
+        onTriggered: {
+            picker.items = picker.items.map(item => item.id === picker.movedAddress
+                ? Object.assign({}, item, {workspaceId: picker.movedWorkspace}) : item)
+                .sort((a, b) => a.workspaceId - b.workspaceId || a.id.localeCompare(b.id))
+            picker.exposePendingMoves = ({})
+            checkRearrangement.restart()
+        }
+    }
+    Timer {
+        id: checkRearrangement
+        interval: 60
+        onTriggered: {
+            const grid = events.findChild(panel, "exposeWindows") as ExposeWindowGrid
+            const index = picker.filteredItems.findIndex(item => item.id === "0x2")
+            const card = grid.itemAtIndex(index) as ExposeWindowCard
+            root.check(card === root.retainedCard, "workspace updates preserve surviving window cards")
+            const target = grid.arrangement.cards[index]
+            root.check(Math.abs(card.x - target.x) > 1 || Math.abs(card.y - target.y) > 1,
+                "surviving windows animate towards their rearranged positions instead of jumping")
+        }
     }
     function testWorkspaceShortcuts(search) {
         search.select(0, 3)
@@ -92,7 +126,7 @@ Scope {
         ExposePanel { id: panel; anchors.fill: parent; anchors.margins: 24; picker: picker }
     }
     Timer {
-        interval: 220; running: true; repeat: true
+        interval: 330; running: true; repeat: true
         onTriggered: {
             const search = events.findChild(panel, "exposeSearch") as UI.SearchField
             const grid = events.findChild(panel, "exposeWindows") as ExposeWindowGrid
@@ -100,13 +134,12 @@ Scope {
             if (root.step === 0) {
                 root.check(grid.count === 8 && strip.count === picker.exposeWorkspaces.length && search.activeFocus, "overview displays all windows and focuses search")
                 const row = strip.parent
-                const all = events.findChild(panel, "exposeAllWorkspaces") as UI.ActionButton
                 root.check(Math.abs(row.x + row.width / 2 - panel.width / 2) < 1, "workspace strip is centered")
                 const controls = search.parent
                 root.check(Math.abs(controls.x + controls.width / 2 - panel.width / 2) < 1,
-                    "search and Show all are centered together")
-                root.check(search.x + search.width <= all.x && controls.y + controls.height <= row.y,
-                    "search is left of Show all above the workspace strip")
+                    "search is centered")
+                root.check(controls.y + controls.height <= row.y,
+                    "search sits above the workspace strip")
                 root.check(controls.x >= 0 && controls.x + controls.width <= panel.width + 1,
                     "header controls stay within the screen")
                 for (let index = 0; index < grid.count; index++) {
@@ -177,10 +210,10 @@ Scope {
                 events.mouseClick(empty, empty.width / 2, empty.height - 10)
             } else if (root.step === 3) {
                 root.check(grid.count === 0, "empty workspace remains selectable and a drop target")
-                const all = events.findChild(panel, "exposeAllWorkspaces") as UI.ActionButton
-                events.mouseClick(all, all.width / 2, all.height / 2)
+                events.keyClick(Qt.Key_A, Qt.ControlModifier)
             } else if (root.step === 4) {
-                root.check(grid.count === 8 && picker.exposeWorkspace === 0 && search.activeFocus, "All restores the window grid")
+                root.check(grid.count === 8 && picker.exposeWorkspace === 0 && search.activeFocus, "Ctrl+A restores the window grid")
+                picker.simulateDropUpdate = true
                 const card = grid.itemAtIndex(0) as ExposeWindowCard
                 events.mousePress(card, card.width / 2, card.height / 2)
                 events.mouseMove(card, card.width / 2 + 30, card.height / 2 - 20)
@@ -193,6 +226,7 @@ Scope {
                 const point = workspace.mapToItem(panel, workspace.width / 2, workspace.height / 2)
                 events.mouseMove(panel, point.x, point.y)
             } else if (root.step === 6) {
+                root.retainedCard = grid.itemAtIndex(1)
                 const card = grid.itemAtIndex(0) as ExposeWindowCard
                 const body = card.dragLayer.children.find(child => child.objectName === "exposeDragCard" && child.parent === card.dragLayer && child !== card) as Rectangle
                 const left = body.mapToItem(panel, 0, 0)
@@ -204,9 +238,23 @@ Scope {
                     "hovering a drop target highlights it without replacing the dragged grid")
                 const point = workspace.mapToItem(panel, workspace.width / 2, workspace.height / 2)
                 events.mouseRelease(panel, point.x, point.y)
+                root.check(card.dropAccepted && !body.visible, "accepted drop never snaps visibly back to its grid slot")
             } else if (root.step === 7) {
                 root.check(root.moves === 1 && picker.movedAddress === "0x1" && picker.movedWorkspace === 2
                     && !picker.exposeDragging && picker.accepted === 0 && picker.visible, "drop moves exactly the dragged window without activating it")
+                const card = grid.itemAtIndex(0) as ExposeWindowCard
+                const body = events.findChild(card, "exposeDragCard") as Rectangle
+                root.check(card.dropAccepted && !body.visible && card.entry.workspaceId === 1,
+                    "accepted card stays hidden after drag cleanup while the workspace update is delayed")
+            } else if (root.step === 8) {
+                const updated = grid.itemAtIndex(picker.filteredItems.findIndex(item => item.id === "0x1")) as ExposeWindowCard
+                const body = events.findChild(updated, "exposeDragCard") as Rectangle
+                root.check(!updated.dropAccepted && body.visible && updated.entry.workspaceId === 2,
+                    "confirmed workspace update restores the card in the updated grid")
+                const index = picker.filteredItems.findIndex(item => item.id === "0x2")
+                const target = grid.arrangement.cards[index]
+                root.check(Math.abs(root.retainedCard.x - target.x) < 1 && Math.abs(root.retainedCard.y - target.y) < 1,
+                    "rearranged windows settle at their final grid positions")
                 events.keyClick(Qt.Key_Escape)
                 root.check(!picker.visible, "Escape dismisses the overview")
                 picker.visible = true

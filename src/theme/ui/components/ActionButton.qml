@@ -34,7 +34,10 @@ QC.Button {
 
         Q.Text {
             id: codeLabel
-            anchors.centerIn: parent
+            anchors.horizontalCenter: parent.horizontalCenter
+            // Match the glyph's visible center, rather than the font's line box.
+            y: (parent.height - labelMetrics.tightBoundingRect.height) / 2
+                - baselineOffset - labelMetrics.tightBoundingRect.y
             visible: root.label.length > 0
             text: root.label
             color: root.foreground
@@ -55,6 +58,12 @@ QC.Button {
             color: root.foreground
             font.family: Theme.fontFamilyIcons
             font.pixelSize: Theme.fontSize
+        }
+
+        TextMetrics {
+            id: labelMetrics
+            font: codeLabel.font
+            text: codeLabel.text
         }
 
         TextMetrics {

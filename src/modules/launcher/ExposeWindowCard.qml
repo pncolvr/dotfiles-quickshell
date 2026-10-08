@@ -13,9 +13,15 @@ Item {
     signal hovered()
     signal dragStarted()
     signal dragFinished()
+    signal dragMoved(real pointerX, real pointerY)
+    signal dropCompleted(bool accepted)
     property real pressX: 0
     property real pressY: 0
+    property bool dropAccepted: false
+    property real dragWidth: 0
+    property real dragHeight: 0
     readonly property bool dragging: mouse.drag.active
+    onEntryChanged: if (dropAccepted) restoreDrop.restart()
     function resetDrag() {
         body.parent = root
         body.x = 0
@@ -27,23 +33,31 @@ Item {
         interval: Theme.exposeDragAnimationDuration
         onTriggered: root.dragFinished()
     }
+    Timer {
+        id: restoreDrop
+        interval: Theme.exposeRearrangeAnimationDuration
+        onTriggered: root.dropAccepted = false
+    }
     HoverHandler {
         id: hover
+        enabled: !root.dropAccepted
         cursorShape: root.dragging ? Qt.ClosedHandCursor : Qt.PointingHandCursor
         onHoveredChanged: if (hovered) root.hovered()
     }
     Rectangle {
         id: body
         objectName: "exposeDragCard"
+        // Keep accepted drops out of the old grid until its model catches up.
+        visible: !root.dropAccepted
         transform: Scale {
             origin.x: root.pressX
             origin.y: root.pressY
-            xScale: root.dragging ? Math.min(1, Theme.exposeDragWidth / root.width) : 1
+            xScale: root.dragging ? Math.min(1, Theme.exposeDragWidth / root.dragWidth) : 1
             yScale: xScale
             Behavior on xScale { NumberAnimation { duration: Theme.exposeDragAnimationDuration; easing.type: Easing.OutCubic } }
         }
-        width: root.width
-        height: root.height
+        width: root.dragging ? root.dragWidth : root.width
+        height: root.dragging ? root.dragHeight : root.height
         radius: 0
         color: Theme.alternateBackground
         border.width: root.current || hover.hovered || root.dragging ? 2 : 1
@@ -93,6 +107,7 @@ Item {
     MouseArea {
         id: mouse
         anchors.fill: parent
+        enabled: !root.dropAccepted
         drag.target: body
         drag.smoothed: false
         onPressed: {
@@ -100,18 +115,35 @@ Item {
             root.dragStarted()
             root.pressX = mouseX
             root.pressY = mouseY
+            root.dragWidth = root.width
+            root.dragHeight = root.height
             const position = root.mapToItem(root.dragLayer, 0, 0)
             body.parent = root.dragLayer
             body.x = position.x
             body.y = position.y
         }
+        onPositionChanged: event => {
+            if (!root.dragging) return
+            const pointer = mouse.mapToItem(root.dragLayer, event.x, event.y)
+            root.dragMoved(pointer.x, pointer.y)
+        }
         onReleased: {
-            if (root.dragging) body.Drag.drop()
+            // Drag.drop() can change drag state; remember it before dispatching.
+            const wasDragging = root.dragging
+            if (wasDragging) {
+                root.dropAccepted = body.Drag.drop() === Qt.MoveAction
+                root.dropCompleted(root.dropAccepted)
+            }
             else root.activated()
             root.resetDrag()
-            if (root.dragging) finishDrag.restart()
+            if (wasDragging) finishDrag.restart()
             else root.dragFinished()
         }
-        onCanceled: { body.Drag.cancel(); root.resetDrag(); finishDrag.restart() }
+        onCanceled: {
+            body.Drag.cancel()
+            root.dropCompleted(false)
+            root.resetDrag()
+            finishDrag.restart()
+        }
     }
 }

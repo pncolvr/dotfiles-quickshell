@@ -8,6 +8,7 @@ FocusScope {
     required property var picker
     property real transitionProgress: 1
     property string captureAddress: ""
+    property bool animationsEnabled: true
     readonly property int workspaceCount: picker.exposeWorkspaces.length
     readonly property real workspaceSpacing: Math.min(Theme.controlSpacing, width / Math.max(1, workspaceCount * 4))
     readonly property real workspaceScale: Math.max(0, Math.min(1, width / 1920, height / 1080,
@@ -22,6 +23,7 @@ FocusScope {
         return 0
     }
     function windowPreviewRect(address) {
+        grid.finishWorkspaceTransition()
         const index = picker.filteredItems.findIndex(entry => entry.id === address)
         const card = grid.itemAtIndex(index) as ExposeWindowCard
         if (!card) return null
@@ -34,6 +36,7 @@ FocusScope {
         return Qt.rect(point.x, point.y, preview.width, preview.height)
     }
     function workspacePreviewRect(workspace) {
+        grid.finishWorkspaceTransition()
         const index = picker.exposeWorkspaces.findIndex(entry => entry.id === workspace)
         const tile = strip.itemAtIndex(index) as WorkspacePreview
         if (!tile) return null
@@ -103,6 +106,7 @@ FocusScope {
                 workspace: modelData
                 picker: root.picker
                 sizeScale: root.workspaceScale
+                animationsEnabled: root.animationsEnabled
                 width: root.workspaceWidth
                 height: strip.height
                 current: root.picker.exposeWorkspace === modelData.id
@@ -112,8 +116,8 @@ FocusScope {
     Item {
         id: controls
         anchors.horizontalCenter: parent.horizontalCenter
-        width: search.width + Theme.controlSpacing + all.width
-        height: Math.max(search.height, all.height)
+        width: search.width
+        height: search.height
         UI.SearchField {
             id: search
             objectName: "exposeSearch"
@@ -128,17 +132,6 @@ FocusScope {
             Keys.priority: Keys.BeforeItem
             Keys.forwardTo: [root]
         }
-        UI.ActionButton {
-            id: all
-            objectName: "exposeAllWorkspaces"
-            anchors.right: parent.right
-            anchors.bottom: parent.bottom
-            width: 96
-            label: "Show all"
-            foreground: root.picker.exposeWorkspace === 0 ? Theme.accent : Theme.inactive
-            fillColor: Theme.background
-            onClicked: { root.picker.selectExposeWorkspace(0); root.focusSearch() }
-        }
     }
     ExposeWindowGrid {
         id: grid
@@ -146,6 +139,7 @@ FocusScope {
         picker: root.picker
         transitionProgress: root.transitionProgress
         captureAddress: root.captureAddress
+        animationsEnabled: root.animationsEnabled
         dragLayer: dragOverlay
         y: workspaces.y + workspaces.height + Theme.exposeSpacing
         width: parent.width

@@ -104,6 +104,7 @@ Item {
   readonly property int exposeSearchWidth: 300
   readonly property int exposeDragWidth: 220
   readonly property int exposeDragAnimationDuration: 160
+  readonly property int exposeRearrangeAnimationDuration: 250
   readonly property int exposeAnimationDuration: 300
   readonly property int exposeCardMinWidth: 280
   readonly property int exposeSpacing: 16

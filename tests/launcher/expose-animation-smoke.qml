@@ -9,6 +9,8 @@ Scope {
     id: root
     property int step: 0
     property bool failed: false
+    property bool openingIntermediate: false
+    property bool openingZoomed: false
     function check(ok, message) { if (!ok) { failed = true; console.error("EXPOSE FAIL:", message) } }
     QtObject {
         id: picker
@@ -24,9 +26,11 @@ Scope {
         property int exposeWorkspace: 1
         property var exposeWorkspaces: [{id: 1, name: "Original"}, {id: 2, name: "Other"}]
         property var items: [{id: "0x1", result: "0x1", title: "Original", workspaceId: 1,
-            client: {address: "0x1", class: "", at: [0, 0], size: [800, 600]}},
+            client: {address: "0x1", class: "", at: [window.monitorOrigin.x + window.desktopRect.x + window.desktopRect.width / 2 - 400,
+                window.monitorOrigin.y + window.desktopRect.y + window.desktopRect.height / 2 - 300], size: [800, 600]}},
             {id: "0x2", result: "0x2", title: "Other", workspaceId: 2,
-            client: {address: "0x2", class: "", at: [0, 0], size: [600, 400]}}]
+            client: {address: "0x2", class: "", at: [window.monitorOrigin.x + window.desktopRect.x + window.desktopRect.width / 2 - 300,
+                window.monitorOrigin.y + window.desktopRect.y + window.desktopRect.height / 2 - 200], size: [600, 400]}}]
         readonly property var filteredItems: items.filter(item => item.workspaceId === exposeWorkspace)
         property string error: ""
         function close() { visible = false }
@@ -41,6 +45,15 @@ Scope {
         function accept(_custom, _copy) {}
     }
     ExposeWindow { id: window; picker: picker; reservedMargins: [8, 30, 12, 6] }
+    Connections {
+        target: window
+        function onTransitionProgressChanged() {
+            if (root.step <= 5 && window.requested && window.transitionProgress > 0 && window.transitionProgress < 1) {
+                root.openingIntermediate = true
+                root.openingZoomed = root.openingZoomed || (window.zoomTarget === "window" && window.zoomFactor > 1)
+            }
+        }
+    }
     Timer {
         interval: Theme.exposeAnimationDuration / 3
         running: true
@@ -50,10 +63,7 @@ Scope {
                 root.check(!window.visible, "closed overview starts unmapped")
                 picker.visible = true
             } else if (root.step === 1) {
-                root.check(window.visible && window.transitionProgress > 0 && window.transitionProgress < 1,
-                    "opening zooms out over multiple frames")
-                root.check(window.zoomTarget === "window" && window.cameraScale > 1,
-                    "opening frames the focused preview at a larger scale")
+                root.check(window.visible, "opening maps the overview surface")
                 const fittedWidth = window.zoomRect.width * window.zoomFactor
                 const fittedHeight = window.zoomRect.height * window.zoomFactor
                 root.check(fittedWidth <= window.desktopRect.width + 1 && fittedHeight <= window.desktopRect.height + 1,
@@ -62,6 +72,8 @@ Scope {
                     || Math.abs(fittedHeight - window.desktopRect.height) < 1,
                     "zoom uses the largest scale that fits the usable desktop")
             } else if (root.step === 5) {
+                root.check(root.openingIntermediate, "opening zooms out over multiple frames")
+                root.check(root.openingZoomed, "opening frames the focused preview at a larger scale")
                 root.check(window.transitionProgress === 1, "opening settles at full opacity")
                 picker.visible = false
                 root.check(window.visible, "closing keeps the surface mapped for the fade")
@@ -124,7 +136,31 @@ Scope {
             } else if (root.step === 27) {
                 root.check(!window.visible && picker.focusedAddress === "0x1",
                     "cancellation returns to the original desktop without selecting the other workspace's window")
-                console.log(root.failed ? "EXPOSE FAIL: animation" : "PASS: Exposé zooming, full-view zoom, selected preview, workspace cancellation, immediate focus release and screen-sharing suppression")
+                picker.exposeWorkspace = 1
+                picker.visible = true
+            } else if (root.step === 32) {
+                root.check(window.windowIsCentered("0x1"), "centered windows use the available desktop below the bar")
+                const previousOriginX = window.monitorOrigin.x
+                const previousOriginY = window.monitorOrigin.y
+                const previousItems = picker.items
+                window.monitorOrigin = Qt.point(1400, 900)
+                picker.items = previousItems.map(entry => Object.assign({}, entry, {client: Object.assign({}, entry.client, {
+                    at: [entry.client.at[0] + window.monitorOrigin.x - previousOriginX,
+                        entry.client.at[1] + window.monitorOrigin.y - previousOriginY]
+                })}))
+                root.check(window.windowIsCentered("0x1"), "window centers account for the monitor's global position")
+                picker.items = picker.items.map(entry => entry.id !== "0x1" ? entry : Object.assign({}, entry, {
+                    client: Object.assign({}, entry.client, {at: [entry.client.at[0] - window.desktopRect.width / 4, entry.client.at[1]]})
+                }))
+                root.check(!window.windowIsCentered("0x1"), "off-center desktop windows are detected")
+                picker.exposeCloseTarget = {id: "0x1", result: "0x1", workspaceId: 1}
+                picker.visible = false
+                root.check(window.zoomTarget === "workspace" && window.transitionWorkspace === 1 && window.zoomFactor > 1,
+                    "accepting an off-center window zooms into its workspace layout")
+            } else if (root.step === 37) {
+                root.check(!window.visible && picker.focusedAddress === "0x1",
+                    "workspace zoom still activates the selected off-center window after closing")
+                console.log(root.failed ? "EXPOSE FAIL: animation" : "PASS: Exposé zooming, centered/off-center destinations, monitor origins, workspace cancellation, focus release and screen-sharing suppression")
                 stop()
                 Qt.quit()
             }

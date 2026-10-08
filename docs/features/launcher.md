@@ -40,10 +40,10 @@ windows and falls back to all windows if fewer than two are available.
 **Meta+Shift+E** toggles a fullscreen overview on the focused monitor, starting
 with the current workspace and the focused window preselected. The centered workspace strip shows large icons with
 workspace names below. Tiles and icons scale down on smaller screens. Search
-sits to the left of **Show all**, centered together above the workspace strip.
+is centered above the workspace strip.
 Window cards retain each window's original proportions and relative size,
 packing wide and narrow windows together. A single window uses the largest
-size that fits the preview area. Opaque rectangular title boxes sit above the previews. Click a workspace to see its windows, or **Show all** to show
+size that fits the preview area. Opaque rectangular title boxes sit above the previews. Click a workspace to see its windows, or press **Ctrl+A** to show
 every workspace. The All view orders windows by workspace, then top to bottom
 and left to right within each workspace. Grouped workspaces use the same
 alphabetical display-name order as the bar. `launcher.sh expose` also starts with the current workspace;
@@ -53,7 +53,7 @@ provides the default numbered workspaces (1–10); other existing numbered
 workspaces are added automatically.
 
 **Ctrl+1–9** selects workspace views 1–9; **Ctrl+0** selects workspace 10.
-**Ctrl+A** toggles Show all and the workspace view where the toggle started.
+**Ctrl+A** toggles the All view and the workspace view where the toggle started.
 **Ctrl+Shift+1–9** and **Ctrl+Shift+0** move the selected window to that
 workspace without following it or closing Exposé. Search text stays in place.
 
@@ -72,15 +72,27 @@ always opens even when there are only two windows.
 Drag a window card onto a workspace tile to move that individual window
 without following it or closing the overview. A grouped window is detached
 before moving, so its other tabs remain in their workspace. The grid stays
-stable throughout the pointer gesture; live compositor updates refresh it after
-release. Dragged cards animate shrinking around the grab point so the destination stays
-visible, then animate back to their full size. A tile highlights while it is the drop target. Empty workspaces can
+stable while the pointer remains in the grid. Moving toward the workspace strip
+animates the remaining windows into the space the dragged window leaves; returning
+to the grid animates room for it again. Accepted drops keep that layout while the
+compositor confirms the move. Rejected or unconfirmed moves restore the original
+slot. Dragged cards animate shrinking around the grab point so the destination stays
+visible. A tile highlights while it is the drop target. Empty workspaces can
 receive windows without opening them first.
+
+Switching workspaces slides the new windows in from the selected workspace's
+direction and slides the previous windows out the opposite way.
+`Theme.exposeRearrangeAnimationDuration` controls workspace slides and grid
+rearrangement (250ms).
 
 The background reads the current monitor's wallpaper from `awww query --json`.
 Missing wallpapers fall back to the theme background. Workspace tiles show
 large icons and names without wallpapers, with live miniature window layouts
 below. Layouts refresh after moving a window between workspaces.
+Empty workspace previews show the Exposé grid icon. Hovering a dragged window
+over a workspace crossfades to its prospective miniature; accepted moves keep
+that preview while the compositor updates the layout. Returning or a failed move
+fades back to the empty placeholder.
 
 Native `ScreencopyView` captures window thumbnails while the overview is open.
 Captures update as applications produce frames and preserve the captured image's
@@ -88,6 +100,8 @@ aspect ratio through resizes. Strongly downscaled previews use a source-resoluti
 Qt Quick layer with smooth mipmap filtering to reduce aliasing in miniatures.
 The animation respects the monitor's reserved margins, including the bar, and
 fits previews without cropping their content.
+Closing onto a window away from the desktop's center zooms into its workspace
+layout.
 Applications can still suspend drawing themselves. Each changed window source
 gets a fresh capture view. Windows without an available capture use their app
 icon. After the closing animation, the overview destroys its preview grid and stops capture.

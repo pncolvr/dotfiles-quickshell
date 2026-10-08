@@ -33,6 +33,7 @@ Singleton {
     property int exposeWorkspace: 0
     property int exposeReturnWorkspace: 0
     property bool exposeDragging: false
+    property var exposePendingMoves: ({})
     property var exposeCloseTarget: null
     readonly property var exposeWorkspaces: {
         const native = Hyprland.workspaces.values
@@ -174,14 +175,32 @@ Singleton {
     }
     function syncExpose() {
         if (!visible || layout !== "expose" || exposeDragging) return
+        const nextItems = windowItems("all", true)
+        // Old compositor snapshots must not restore a dropped card in its source slot.
+        if (nextItems.some(item => exposePendingMoves[item.id] !== undefined
+            && item.workspaceId !== exposePendingMoves[item.id])) return
+        exposePendingMoves = ({})
+        exposeMoveTimeout.stop()
         const id = currentItem?.id
-        items = windowItems("all", true)
+        items = nextItems
         currentIndex = Math.max(0, filteredItems.findIndex(item => item.id === id))
     }
     function moveExposeWindow(address, workspace) {
-        return WindowService.moveWindowToWorkspace(address, workspace)
+        if (!WindowService.moveWindowToWorkspace(address, workspace)) return false
+        exposePendingMoves = Object.assign({}, exposePendingMoves, {[address]: workspace})
+        exposeMoveTimeout.restart()
+        return true
     }
     onExposeDraggingChanged: if (!exposeDragging) syncExpose()
+    Timer {
+        id: exposeMoveTimeout
+        interval: 1000
+        onTriggered: {
+            // Restore the current snapshot if the compositor did not apply the move.
+            root.exposePendingMoves = ({})
+            root.syncExpose()
+        }
+    }
 
     function clipboard() {
         begin("clipboard", "Clipboard")
@@ -219,6 +238,8 @@ Singleton {
     }
     function close() {
         openingClipboard = false
+        exposeMoveTimeout.stop()
+        exposePendingMoves = ({})
         exposeDragging = false
         if (mode === "clipboard" && activeWindow.running) activeWindow.running = false
         if (requestDirectory) reply(requestDirectory, {status: "cancelled", items: [], exitCode: 1})
