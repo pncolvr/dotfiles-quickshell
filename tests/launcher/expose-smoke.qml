@@ -20,8 +20,10 @@ Scope {
         property string query: ""
         property int currentIndex: 0
         property int exposeWorkspace: 0
+        property int exposeReturnWorkspace: 1
         property bool exposeDragging: false
         property int accepted: 0
+        readonly property var currentItem: filteredItems[currentIndex] ?? null
         property string movedAddress: ""
         property int movedWorkspace: 0
         property var items: Array.from({length: 8}, (_, index) => ({id: "0x" + (index + 1), result: "0x" + (index + 1),
@@ -34,11 +36,53 @@ Scope {
             windows: items.filter(item => item.workspaceId === id).map(item => item.client)}))
         function move(delta) { currentIndex = Math.max(0, Math.min(filteredItems.length - 1, currentIndex + delta)) }
         function select(index, _toggle) { currentIndex = index }
-        function selectExposeWorkspace(id) { exposeWorkspace = id; currentIndex = 0 }
+        function toggleExposeAll() { selectExposeWorkspace(exposeWorkspace === 0 ? exposeReturnWorkspace : 0) }
+        function selectExposeWorkspace(id) {
+            if (!id && exposeWorkspace) exposeReturnWorkspace = exposeWorkspace
+            exposeWorkspace = id; currentIndex = 0
+        }
         function moveExposeWindow(address, workspace) { movedAddress = address; movedWorkspace = workspace; root.moves++; return true }
         function accept(_custom, _copy) { accepted++; visible = false }
         function close() { visible = false }
         onQueryChanged: currentIndex = 0
+    }
+    function testWorkspaceShortcuts(search) {
+        search.select(0, 3)
+        for (let workspace = 1; workspace <= 10; workspace++) {
+            const before = picker.exposeWorkspace
+            const available = picker.exposeWorkspaces.some(entry => entry.id === workspace)
+            events.keyClick(workspace === 10 ? Qt.Key_0 : Qt.Key_0 + workspace, Qt.ControlModifier)
+            check(picker.exposeWorkspace === (available ? workspace : before), "Ctrl+digit selects its numbered workspace")
+        }
+        events.keyClick(Qt.Key_2, Qt.ControlModifier)
+        events.keyClick(Qt.Key_A, Qt.ControlModifier)
+        check(picker.exposeWorkspace === 0, "Ctrl+A shows all from a workspace")
+        events.keyClick(Qt.Key_A, Qt.ControlModifier)
+        check(picker.exposeWorkspace === 2, "Ctrl+A returns to the workspace where the toggle started")
+        events.keyClick(Qt.Key_1, Qt.ControlModifier)
+        events.keyClick(Qt.Key_A, Qt.ControlModifier)
+        events.keyClick(Qt.Key_A, Qt.ControlModifier)
+        check(picker.exposeWorkspace === 1, "a different workspace becomes the next toggle's return view")
+        const selected = picker.currentItem.id
+        for (let workspace = 1; workspace <= 10; workspace++) {
+            const before = root.moves
+            const available = picker.exposeWorkspaces.some(entry => entry.id === workspace)
+            events.keyClick(workspace === 10 ? Qt.Key_0 : Qt.Key_0 + workspace, Qt.ControlModifier | Qt.ShiftModifier)
+            check(root.moves === before + (available ? 1 : 0)
+                && (!available || (picker.movedAddress === selected && picker.movedWorkspace === workspace))
+                && picker.exposeWorkspace === 1, "Ctrl+Shift+digit moves the selected window without following it")
+        }
+        events.keyClick(Qt.Key_2, Qt.ControlModifier)
+        const before = root.moves
+        events.keyClick(Qt.Key_1, Qt.ControlModifier | Qt.ShiftModifier)
+        check(root.moves === before, "moving from an empty filtered view is harmless")
+        check(search.activeFocus && search.text === "browser" && search.selectedText === "bro"
+            && picker.visible && !picker.accepted, "shortcuts preserve search text, selection, focus and the open overview")
+        check(panel.workspaceForKey({key: Qt.Key_Exclam, nativeScanCode: 10}) === 1
+            && panel.workspaceForKey({key: Qt.Key_Equal, nativeScanCode: 19}) === 10,
+            "shifted number-row punctuation maps to the original workspace digits")
+        picker.selectExposeWorkspace(0)
+        root.moves = 0
     }
     FloatingWindow {
         visible: true
@@ -83,6 +127,18 @@ Scope {
                     / (narrow.width - Theme.controlSpacing * 2) - 2) < 0.001,
                     "narrow windows occupy proportionally less width")
                 root.originalCardWidth = (grid.itemAtIndex(0) as ExposeWindowCard).width
+                const previewWidth = wide.previewItem.width
+                panel.transitionProgress = 0.5
+                root.check(wide.previewItem.width === previewWidth && wide.width === root.originalCardWidth,
+                    "camera animation keeps thumbnail geometry fixed")
+                panel.transitionProgress = 1
+                root.check(strip.contentWidth <= strip.width + 1, "all workspace tiles fit without scrolling")
+                for (let index = 0; index < strip.count; index++) {
+                    const tile = strip.itemAtIndex(index) as WorkspacePreview
+                    const position = tile.mapToItem(strip, 0, 0)
+                    root.check(position.x >= 0 && position.x + tile.width <= strip.width + 1,
+                        "every workspace tile remains on screen")
+                }
                 const label = events.findChild(strip.itemAtIndex(0), "exposeWorkspaceName") as UI.ColumnText
                 root.check(label.text === "Code", "workspace names are shown below icons")
                 const icon = events.findChild(strip.itemAtIndex(0), "exposeWorkspaceIcon") as UI.IconText
@@ -111,6 +167,7 @@ Scope {
                     "a single window uses the maximum space that fits its geometry")
                 const caption = events.findChild(single, "exposeWindowCaption") as Rectangle
                 root.check(caption.radius === 0 && caption.color === Theme.background, "window caption is rectangular and opaque")
+                root.testWorkspaceShortcuts(search)
                 search.text = ""
                 const workspace = strip.itemAtIndex(1) as WorkspacePreview
                 events.mouseClick(workspace, workspace.width / 2, workspace.height - 10)

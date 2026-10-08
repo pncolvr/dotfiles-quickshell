@@ -12,7 +12,7 @@ PickerPanelBase {
     panelError: picker.error || ClipboardService.error
     minimumRowHeight: Theme.clipboardRowHeight
     readonly property bool pinnedOnly: picker.itemCriteria.pinned === true
-    footerHint: "Enter to paste · Ctrl+Enter to copy · Del to delete\n"
+    footerHint: "Enter to paste · Ctrl+C to copy · Del to delete\n"
         + "Ctrl+P pin/unpin · Ctrl+Shift+P pinned only"
 
     function sizeListForOpening() {
@@ -32,12 +32,16 @@ PickerPanelBase {
         picker.itemCriteria = pinnedOnly ? ({}) : ({pinned: true})
         picker.currentIndex = 0
     }
-    function acceptSelection(modifiers) {
-        const copyOnly = (modifiers & Qt.ControlModifier) !== 0
-        picker.accept(copyOnly, copyOnly)
+    function acceptSelection(_modifiers) {
+        picker.accept(false, false)
     }
     Keys.onDeletePressed: event => { root.deleteCurrentEntry(); event.accepted = true }
     Keys.onPressed: event => {
+        if (event.key === Qt.Key_C && event.modifiers === Qt.ControlModifier) {
+            root.picker.accept(false, true)
+            event.accepted = true
+            return
+        }
         if (event.key !== Qt.Key_P) { event.accepted = false; return }
         if (event.modifiers === (Qt.ControlModifier | Qt.ShiftModifier)) root.togglePinnedOnly()
         else if (event.modifiers === Qt.ControlModifier) root.toggleCurrentPin()

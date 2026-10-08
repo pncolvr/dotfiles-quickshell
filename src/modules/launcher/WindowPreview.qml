@@ -30,7 +30,13 @@ Rectangle {
             objectName: "exposeCapture"
             captureSource: root.captureSource
             live: true
-            constraintSize: Qt.size(Math.max(1, Math.round(root.width)), Math.max(1, Math.round(root.height)))
+            // Screencopy's native texture uses linear filtering without mipmaps.
+            // Preserve source pixels in the layer before generating lower-resolution levels.
+            layer.enabled: hasContent && width > 0 && height > 0
+                && (sourceSize.width > width * 2 || sourceSize.height > height * 2)
+            layer.textureSize: sourceSize
+            layer.mipmap: true
+            layer.smooth: true
             // Fit the actual buffer through resize and output-scale changes.
             readonly property real aspectRatio: sourceSize.width > 0 && sourceSize.height > 0 ? sourceSize.width / sourceSize.height : 1
             width: Math.min(root.width, root.height * aspectRatio)

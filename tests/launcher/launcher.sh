@@ -12,7 +12,18 @@ cleanup() {
 }
 trap cleanup EXIT
 mkdir -m 700 "$test_dir/runtime"
-mkdir -p "$test_dir/data" "$test_dir/cache"
+mkdir -p "$test_dir/data" "$test_dir/cache" "$test_dir/bin"
+# Clipboard acceptance must never alter the real desktop clipboard or inject keys.
+cat > "$test_dir/bin/wl-copy" <<'MOCK'
+#!/usr/bin/env bash
+cat > "$PICKER_COPY_TEST_DIR/copied"
+MOCK
+cat > "$test_dir/bin/ydotool" <<'MOCK'
+#!/usr/bin/env bash
+printf '%s\n' "$*" > "$PICKER_COPY_TEST_DIR/injected"
+MOCK
+chmod +x "$test_dir/bin/wl-copy" "$test_dir/bin/ydotool"
+export PICKER_COPY_TEST_DIR="$test_dir" PATH="$test_dir/bin:$PATH"
 mkdir -p "$test_dir/data/applications"
 cat > "$test_dir/data/applications/picker-test.desktop" <<'DESKTOP'
 [Desktop Entry]
@@ -124,14 +135,14 @@ printf '%s\n' '{"action":"default","allowMultipleSelection":true,"items":[{"titl
 bash "$picker" --json "$test_dir/links.json" > "$test_dir/result" 2> "$test_dir/client-error" & client_pid=$!
 wait_open
 ipc call pickertest snapshot | jq -e '.acceptLabel == "Open links" and .canAccept and .selected == []' >/dev/null
-ipc call pickertest pasteFixture false false | jq -e '.' >/dev/null
+ipc call pickertest pasteFixture false | jq -e '.' >/dev/null
 ipc call pickertest snapshot | jq -e '.query == "Beta" and .selected == []' >/dev/null
 ipc call pickertest query 'Prefix '
-ipc call pickertest pasteFixture true false | jq -e '.' >/dev/null
+ipc call pickertest pasteFixture false | jq -e '.' >/dev/null
 ipc call pickertest snapshot | jq -e '.query == "Prefix Beta" and .selected == []' >/dev/null
-ipc call pickertest pasteFixture false true | jq -e '.' >/dev/null
+ipc call pickertest pasteFixture true | jq -e '.' >/dev/null
 ipc call pickertest snapshot | jq -e '.query == "Beta" and .selected == []' >/dev/null
-printf 'PASS: Ctrl+V pastes into search from input/button focus, inserts at the cursor and replaces selected text\n'
+printf 'PASS: native Ctrl+V inserts clipboard text at the cursor and replaces selected text\n'
 ipc call pickertest query Alpha
 ipc call pickertest clickControl pickerSelectVisible | jq -e '.' >/dev/null
 ipc call pickertest snapshot | jq -e '.selected == ["0"]' >/dev/null
@@ -209,7 +220,16 @@ printf 'PASS: pinned-only keyboard/button toggle, combined search, unpinning whi
 ipc call pickertest clickControl clearClipboardHistory | jq -e '.' >/dev/null
 ipc call pickertest snapshot | jq -e '(.items | length) == 1 and .items[0].pinned and .items[0].result.text == "hello\nworld\n"' >/dev/null
 [[ -f $test_dir/data/clipboard/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa ]]
-ipc call pickertest pressEscape
+ipc call pickertest query hello
+ipc call pickertest copyEntry
+ipc call pickertest snapshot | jq -e '(.visible | not)' >/dev/null
+for ((try=0;try<60;try++)); do
+    [[ -f $test_dir/copied ]] && break
+    sleep 0.025
+done
+cmp "$test_dir/data/clipboard/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" "$test_dir/copied"
+[[ ! -f $test_dir/injected ]]
+printf 'PASS: Ctrl+C copies the highlighted entry rather than selected search text, closes the launcher and does not paste\n'
 printf 'PASS: Ctrl+P and pin button toggle pins; Clear history retains pinned payloads; Delete explicitly removes a pinned entry\n'
 
 printf 'first\nsecond\n' | bash "$picker" --dmenu -no-custom > "$test_dir/result" 2> "$test_dir/client-error" & client_pid=$!

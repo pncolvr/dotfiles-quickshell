@@ -8,6 +8,7 @@ Item {
     required property var entry
     required property Item dragLayer
     property bool current: false
+    readonly property Item previewItem: preview
     signal activated()
     signal hovered()
     signal dragStarted()
@@ -55,6 +56,7 @@ Item {
         Drag.hotSpot.x: root.pressX
         Drag.hotSpot.y: root.pressY
         WindowPreview {
+            id: preview
             objectName: "exposeWindowPreview"
             anchors.left: parent.left
             anchors.right: parent.right
@@ -72,6 +74,7 @@ Item {
             anchors.top: parent.top
             anchors.margins: 1
             height: Theme.controlHeight
+            clip: true
             color: Theme.background
             radius: 0
             UI.ColumnText {
@@ -91,6 +94,7 @@ Item {
         id: mouse
         anchors.fill: parent
         drag.target: body
+        drag.smoothed: false
         onPressed: {
             finishDrag.stop()
             root.dragStarted()

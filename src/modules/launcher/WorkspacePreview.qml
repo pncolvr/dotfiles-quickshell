@@ -8,6 +8,7 @@ Rectangle {
     required property var workspace
     property bool current: false
     property real sizeScale: 1
+    readonly property Item previewItem: desktop
     property var picker
     readonly property var windows: picker.items.filter(entry => entry.workspaceId === workspace.id).map(entry => entry.client).sort((a, b) => (b.focusHistoryID ?? 0) - (a.focusHistoryID ?? 0))
     readonly property var bounds: {

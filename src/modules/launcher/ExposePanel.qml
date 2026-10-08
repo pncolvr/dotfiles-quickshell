@@ -1,19 +1,73 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Controls as QC
 import "../../theme"
 import "../../theme/ui" as UI
 
 FocusScope {
     id: root
     required property var picker
-    readonly property real workspaceScale: Math.max(0.72, Math.min(1, width / 1920, height / 1080))
-    readonly property real workspaceWidth: Math.round(Theme.exposeWorkspaceWidth * workspaceScale)
+    property real transitionProgress: 1
+    property string captureAddress: ""
+    readonly property int workspaceCount: picker.exposeWorkspaces.length
+    readonly property real workspaceSpacing: Math.min(Theme.controlSpacing, width / Math.max(1, workspaceCount * 4))
+    readonly property real workspaceScale: Math.max(0, Math.min(1, width / 1920, height / 1080,
+        (width - Math.max(0, workspaceCount - 1) * workspaceSpacing) / Math.max(1, workspaceCount) / Theme.exposeWorkspaceWidth))
+    readonly property real workspaceWidth: Math.max(1, Math.floor(Theme.exposeWorkspaceWidth * workspaceScale))
     readonly property real searchWidth: Math.min(Theme.exposeSearchWidth, Math.max(140, width * 0.18))
     function focusSearch() { search.forceActiveFocus() }
+    function workspaceForKey(event) {
+        // Use physical number-row keys when Shift changes digits into punctuation.
+        if (event.nativeScanCode >= 10 && event.nativeScanCode <= 19) return event.nativeScanCode - 9
+        if (event.key >= Qt.Key_0 && event.key <= Qt.Key_9) return event.key === Qt.Key_0 ? 10 : event.key - Qt.Key_0
+        return 0
+    }
+    function windowPreviewRect(address) {
+        const index = picker.filteredItems.findIndex(entry => entry.id === address)
+        const card = grid.itemAtIndex(index) as ExposeWindowCard
+        if (!card) return null
+        const preview = card.previewItem
+        const position = preview.mapToItem(grid, 0, 0)
+        // Off-screen previews use their workspace miniature as the zoom target.
+        if (position.x < 0 || position.y < 0 || position.x + preview.width > grid.width + 1
+            || position.y + preview.height > grid.height + 1) return null
+        const point = preview.mapToItem(root, 0, 0)
+        return Qt.rect(point.x, point.y, preview.width, preview.height)
+    }
+    function workspacePreviewRect(workspace) {
+        const index = picker.exposeWorkspaces.findIndex(entry => entry.id === workspace)
+        const tile = strip.itemAtIndex(index) as WorkspacePreview
+        if (!tile) return null
+        const preview = tile.previewItem
+        const point = preview.mapToItem(root, 0, 0)
+        return Qt.rect(point.x, point.y, preview.width, preview.height)
+    }
+
     Component.onCompleted: Qt.callLater(root.focusSearch)
     Keys.priority: Keys.BeforeItem
     Keys.onPressed: event => {
+        const modifiers = event.modifiers & ~Qt.KeypadModifier
+        if (modifiers === Qt.ControlModifier && event.key === Qt.Key_A) {
+            if (!event.isAutoRepeat) root.picker.toggleExposeAll()
+            root.focusSearch()
+            event.accepted = true
+            return
+        }
+        if (modifiers === Qt.ControlModifier || modifiers === (Qt.ControlModifier | Qt.ShiftModifier)) {
+            const workspace = root.workspaceForKey(event)
+            if (workspace) {
+                if (root.picker.exposeWorkspaces.some(entry => entry.id === workspace)) {
+                    if (modifiers & Qt.ShiftModifier) {
+                        const selected = root.picker.currentItem
+                        if (selected && !event.isAutoRepeat) root.picker.moveExposeWindow(selected.id, workspace)
+                    } else {
+                        root.picker.selectExposeWorkspace(workspace)
+                        root.focusSearch()
+                    }
+                }
+                event.accepted = true
+                return
+            }
+        }
         switch (event.key) {
             case Qt.Key_Escape: root.picker.close(); break
             case Qt.Key_Left: root.picker.move(-1); break
@@ -28,9 +82,9 @@ FocusScope {
     }
     Item {
         id: workspaces
-        y: controls.height + Theme.controlSpacing
+        y: controls.height + Theme.exposeSpacing
         width: Math.max(0, Math.min(parent.width,
-            root.picker.exposeWorkspaces.length * (root.workspaceWidth + Theme.controlSpacing) - Theme.controlSpacing))
+            root.picker.exposeWorkspaces.length * (root.workspaceWidth + root.workspaceSpacing) - root.workspaceSpacing))
         anchors.horizontalCenter: parent.horizontalCenter
         height: Math.round((Theme.exposeWorkspaceHeight + Theme.exposeWorkspacePreviewHeight) * root.workspaceScale) + Theme.controlSpacing * 2
         ListView {
@@ -38,8 +92,10 @@ FocusScope {
             objectName: "exposeWorkspaces"
             anchors.fill: parent
             orientation: ListView.Horizontal
+            interactive: false
+            contentX: 0
             model: root.picker.exposeWorkspaces
-            spacing: Theme.controlSpacing
+            spacing: root.workspaceSpacing
             clip: true
             boundsBehavior: Flickable.StopAtBounds
             delegate: WorkspacePreview {
@@ -50,15 +106,6 @@ FocusScope {
                 width: root.workspaceWidth
                 height: strip.height
                 current: root.picker.exposeWorkspace === modelData.id
-            }
-            QC.ScrollBar.horizontal: UI.ScrollBar {}
-            WheelHandler {
-                target: null
-                onWheel: event => {
-                    strip.contentX = Math.max(0, Math.min(Math.max(0, strip.contentWidth - strip.width), strip.contentX
-                        - (event.pixelDelta.x || event.pixelDelta.y || (event.angleDelta.x || event.angleDelta.y) / 120 * 40)))
-                    event.accepted = true
-                }
             }
         }
     }
@@ -97,6 +144,8 @@ FocusScope {
         id: grid
         objectName: "exposeWindows"
         picker: root.picker
+        transitionProgress: root.transitionProgress
+        captureAddress: root.captureAddress
         dragLayer: dragOverlay
         y: workspaces.y + workspaces.height + Theme.exposeSpacing
         width: parent.width

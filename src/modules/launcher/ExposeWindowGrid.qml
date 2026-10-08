@@ -7,6 +7,8 @@ import "../../theme/ui" as UI
 Flickable {
     id: root
     required property var picker
+    property real transitionProgress: 1
+    property string captureAddress: ""
     required property Item dragLayer
     readonly property int count: picker.filteredItems.length
     readonly property int currentIndex: picker.currentIndex
@@ -85,8 +87,8 @@ Flickable {
     onArrangementChanged: Qt.callLater(revealCurrent)
     contentWidth: width
     contentHeight: Math.max(height, arrangement.height)
-    clip: true
-    interactive: !picker.exposeDragging
+    clip: transitionProgress === 1 || captureAddress === ""
+    interactive: transitionProgress === 1 && !picker.exposeDragging
     boundsBehavior: Flickable.StopAtBounds
     flickableDirection: Flickable.VerticalFlick
 
@@ -104,6 +106,10 @@ Flickable {
                 readonly property var geometry: root.arrangement.cards[index]
                 objectName: "exposeWindow-" + modelData.id
                 entry: modelData
+                visible: root.transitionProgress === 1 || modelData.id === root.captureAddress
+                    || ((geometry?.y ?? 0) + content.y - root.contentY < root.height
+                        && (geometry?.y ?? 0) + content.y - root.contentY + height > 0)
+                enabled: root.transitionProgress === 1
                 x: geometry?.x ?? 0
                 y: geometry?.y ?? 0
                 width: geometry?.width ?? 0

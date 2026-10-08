@@ -31,7 +31,9 @@ Singleton {
     property bool openingClipboard: false
     property string windowScope: "all"
     property int exposeWorkspace: 0
+    property int exposeReturnWorkspace: 0
     property bool exposeDragging: false
+    property var exposeCloseTarget: null
     readonly property var exposeWorkspaces: {
         const native = Hyprland.workspaces.values
         const ids = [...new Set(Config.exposeWorkspaceIds.concat(native.filter(ws => ws.id > 0).map(ws => ws.id)))].sort((a, b) => a - b)
@@ -84,6 +86,7 @@ Singleton {
         return Quickshell.screens.find(screen => screen.name === Hyprland.focusedMonitor?.name) ?? Quickshell.screens[0] ?? null
     }
     function begin(newMode, title) {
+        exposeCloseTarget = null
         if (pendingDirectory) {
             reply(pendingDirectory, {status: "cancelled", items: [], exitCode: 1})
             pendingDirectory = ""
@@ -151,14 +154,20 @@ Singleton {
         layout = "expose"
         windowScope = "all"
         items = windowItems("all", true)
-        selectExposeWorkspace(scope === "all" ? 0 : Hyprland.focusedWorkspace?.id ?? 0)
+        const workspace = Hyprland.focusedWorkspace?.id ?? exposeWorkspaces[0]?.id ?? 0
+        selectExposeWorkspace(scope === "all" ? 0 : workspace)
+        exposeReturnWorkspace = workspace
         const focusedIndex = filteredItems.findIndex(item => item.id.replace(/^0x/, "").toLowerCase() === focused?.replace(/^0x/, "").toLowerCase())
         currentIndex = Math.max(0, focusedIndex)
         show()
         Hyprland.refreshToplevels()
         WindowService.buildWindows()
     }
+    function toggleExposeAll() {
+        selectExposeWorkspace(exposeWorkspace === 0 ? exposeReturnWorkspace : 0)
+    }
     function selectExposeWorkspace(id) {
+        if (id === 0 && exposeWorkspace !== 0) exposeReturnWorkspace = exposeWorkspace
         exposeWorkspace = id
         itemCriteria = id === 0 ? ({}) : ({workspaceId: id})
         currentIndex = 0
@@ -215,8 +224,16 @@ Singleton {
         if (requestDirectory) reply(requestDirectory, {status: "cancelled", items: [], exitCode: 1})
         requestDirectory = ""
         visible = false
-        query = ""; selectedIds = []
+        // Keep the outgoing Exposé grid stable until its closing animation ends.
+        if (layout !== "expose") { query = ""; selectedIds = [] }
     }
+    function finishExposeClose() {
+        const target = exposeCloseTarget
+        exposeCloseTarget = null
+        // The overview surface has unmapped; compositor focus restoration can no longer override selection.
+        if (target) Qt.callLater(() => WindowService.focusWindow(target.result))
+    }
+
     function cancel(directory) {
         if (requestDirectory === directory) close()
         if (pendingDirectory === directory) pendingDirectory = ""
@@ -255,7 +272,10 @@ Singleton {
             Quickshell.execDetached(["gtk-launch", item.result])
         } else if (mode === "windows") {
             if (custom) WindowService.focusWindow(item.result)
-            else {
+            else if (layout === "expose") {
+                exposeCloseTarget = item
+                close()
+            } else {
                 close()
                 // Release the layer's exclusive keyboard focus before activating the window.
                 Qt.callLater(() => WindowService.focusWindow(item.result))

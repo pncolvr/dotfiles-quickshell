@@ -52,11 +52,22 @@ Empty workspaces remain available as drop targets. `Config.exposeWorkspaceIds`
 provides the default numbered workspaces (1–10); other existing numbered
 workspaces are added automatically.
 
+**Ctrl+1–9** selects workspace views 1–9; **Ctrl+0** selects workspace 10.
+**Ctrl+A** toggles Show all and the workspace view where the toggle started.
+**Ctrl+Shift+1–9** and **Ctrl+Shift+0** move the selected window to that
+workspace without following it or closing Exposé. Search text stays in place.
+
 Type to filter window titles and applications. Hovering selects a window card;
 arrow keys navigate the grid;
 Enter or a click focuses the selected window. Escape or a background click
-closes the overview. Unlike the list switcher, the overview always opens even
-when there are only two windows.
+closes the overview. Opening zooms the whole view out from the focused window's
+preview; selecting a window zooms its preview up to fit the usable desktop, then focuses
+it after the overlay disappears. Escape and the Exposé keybind return to the
+starting window, or zoom into its workspace miniature if that window is hidden by
+search, scrolling, or another workspace view. All workspace tiles remain visible
+by scaling the strip to fit the screen. Animations are disabled during screen
+sharing. Keyboard focus is released as soon as closing begins. The overview
+always opens even when there are only two windows.
 
 Drag a window card onto a workspace tile to move that individual window
 without following it or closing the overview. A grouped window is detached
@@ -73,11 +84,15 @@ below. Layouts refresh after moving a window between workspaces.
 
 Native `ScreencopyView` captures window thumbnails while the overview is open.
 Captures update as applications produce frames and preserve the captured image's
-aspect ratio through resizes.
+aspect ratio through resizes. Strongly downscaled previews use a source-resolution
+Qt Quick layer with smooth mipmap filtering to reduce aliasing in miniatures.
+The animation respects the monitor's reserved margins, including the bar, and
+fits previews without cropping their content.
 Applications can still suspend drawing themselves. Each changed window source
 gets a fresh capture view. Windows without an available capture use their app
-icon. Closing the overview destroys its preview grid and stops capture.
-`Theme.exposeBackdropOpacity` controls wallpaper dimming.
+icon. After the closing animation, the overview destroys its preview grid and stops capture.
+`Theme.exposeBackdropOpacity` controls wallpaper dimming;
+`Theme.exposeAnimationDuration` sets the open/close animation duration (300ms).
 
 ## Bash pickers
 
@@ -172,7 +187,7 @@ time out after five seconds without blocking other copies. The picker shows
 text previews and images across the row width, preserving their aspect ratio.
 `Theme.clipboardImagePreviewHeight` sets the image preview height (200px by default).
 Click selects, double-click/Enter pastes into
-the window active before opening, and Ctrl+Enter restores without pasting.
+the window active before opening, and Ctrl+C restores without pasting.
 Paste inserts the highlighted entry into the original window. The red trash
 button removes that entry, while Clear history removes only unpinned entries.
 The thumbtack button or Ctrl+P toggles the highlighted entry's pin. Pinned entries

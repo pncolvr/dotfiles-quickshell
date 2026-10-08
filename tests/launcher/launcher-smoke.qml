@@ -55,6 +55,34 @@ Scope {
         check(PickerService.query === "Same" && !TooltipService.typingPaused, "picker search does not pause tooltips")
         PickerService.close()
         check(search.text === "", "closing clears search")
+        PickerService.begin("windows", "Windows")
+        PickerService.layout = "expose"
+        PickerService.items = [{id: "0x1", result: "0x1", workspaceId: 1, title: "Start"},
+            {id: "0x2", result: "0x2", workspaceId: 2, title: "Destination"}]
+        PickerService.selectExposeWorkspace(2)
+        PickerService.query = "Destination"
+        PickerService.toggleExposeAll()
+        check(PickerService.exposeWorkspace === 0 && Object.keys(PickerService.itemCriteria).length === 0,
+            "Exposé all toggle removes workspace criteria")
+        PickerService.toggleExposeAll()
+        check(PickerService.exposeWorkspace === 2 && PickerService.itemCriteria.workspaceId === 2
+            && PickerService.query === "Destination", "Exposé toggle restores its source workspace and preserves the query")
+        PickerService.query = ""
+        PickerService.selectExposeWorkspace(1)
+        PickerService.toggleExposeAll()
+        PickerService.toggleExposeAll()
+        check(PickerService.exposeWorkspace === 1, "Exposé toggle remembers the latest source workspace")
+        PickerService.selectExposeWorkspace(0)
+        PickerService.show()
+        PickerService.select(1, false)
+        PickerService.accept(false, false)
+        check(!PickerService.visible && PickerService.exposeCloseTarget?.result === "0x2"
+            && PickerService.exposeCloseTarget?.workspaceId === 2, "Exposé retains the selected destination for animation and deferred activation")
+        PickerService.begin("windows", "Windows")
+        check(PickerService.exposeCloseTarget === null, "opening another picker cancels pending Exposé activation")
+        PickerService.layout = "expose"
+        PickerService.close()
+        check(PickerService.exposeCloseTarget === null, "cancelling Exposé does not activate the hovered window")
         const entry = {id:"a".repeat(64),mime:"text/plain",kind:"text",bytes:12,text:"hello\nworld\n"}
         check(ClipboardRepository.add(entry) !== null, "clipboard schema accepts entry")
         check(ClipboardRepository.add(entry) !== null && ClipboardRepository.entries().length === 1, "clipboard deduplicates")
@@ -120,16 +148,13 @@ Scope {
         function toggleEntry(): void { panel.focusSearch(); events.keyClick(Qt.Key_Space, Qt.ShiftModifier, 0) }
         function toggleVisible(): void { panel.focusSearch(); events.keyClick(Qt.Key_A, Qt.ControlModifier, 0) }
         function clearSelection(): void { panel.focusSearch(); events.keyClick(Qt.Key_A, Qt.ControlModifier | Qt.ShiftModifier, 0) }
-        function pasteFixture(focusButton: bool, replaceSelection: bool): bool {
+        function pasteFixture(replaceSelection: bool): bool {
             pasteSource.selectAll()
             pasteSource.copy()
             const search = objects.findChild(panel.panel, "pickerSearch") as UI.SearchField
             if (replaceSelection) search.selectAll()
             else search.cursorPosition = search.text.length
-            if (focusButton) {
-                const button = objects.findChild(panel.panel, "pickerSelectVisible") as UI.ActionButton
-                button.forceActiveFocus()
-            } else panel.focusSearch()
+            panel.focusSearch()
             events.keyClick(Qt.Key_V, Qt.ControlModifier, 0)
             return search.activeFocus
         }
@@ -139,6 +164,12 @@ Scope {
             ClipboardRepository.add({id:"c".repeat(64),mime:"text/plain",kind:"text",bytes:9,text:"delete me"})
             PickerService.syncClipboard()
             PickerService.show()
+        }
+        function copyEntry(): void {
+            panel.focusSearch()
+            const search = objects.findChild(panel.panel, "pickerSearch") as UI.SearchField
+            search.selectAll()
+            events.keyClick(Qt.Key_C, Qt.ControlModifier, 0)
         }
         function deleteEntry(): void { panel.focusSearch(); events.keyClick(Qt.Key_Delete, Qt.NoModifier, 0) }
         function togglePin(): void { panel.focusSearch(); events.keyClick(Qt.Key_P, Qt.ControlModifier, 0) }
