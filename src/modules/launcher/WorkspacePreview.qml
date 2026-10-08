@@ -7,6 +7,7 @@ Rectangle {
     id: root
     required property var workspace
     property bool current: false
+    property real sizeScale: 1
     property var picker
     readonly property var windows: picker.items.filter(entry => entry.workspaceId === workspace.id).map(entry => entry.client).sort((a, b) => (b.focusHistoryID ?? 0) - (a.focusHistoryID ?? 0))
     readonly property var bounds: {
@@ -25,18 +26,20 @@ Rectangle {
     HoverHandler { id: hover; cursorShape: Qt.PointingHandCursor }
     MouseArea { anchors.fill: parent; onClicked: root.picker.selectExposeWorkspace(root.workspace.id) }
     UI.IconText {
+        id: icon
         objectName: "exposeWorkspaceIcon"
         anchors.horizontalCenter: parent.horizontalCenter
-        y: Theme.controlSpacing
+        y: Math.round(Theme.exposeWorkspaceTopPadding * root.sizeScale)
         centerVertical: false
         text: Theme.workspaceIcons[root.workspace.id - 1] ?? Theme.workspaceUnknownIcon
-        font.pixelSize: Theme.exposeWorkspaceIconSize
+        font.pixelSize: Math.round(Theme.exposeWorkspaceIconSize * root.sizeScale)
         color: root.dropHovered ? Theme.background : root.current ? Theme.accent : Theme.inactive
     }
     UI.ColumnText {
+        id: name
         objectName: "exposeWorkspaceName"
         anchors.horizontalCenter: parent.horizontalCenter
-        y: Theme.exposeWorkspaceIconSize + Theme.controlSpacing * 2
+        y: icon.y + icon.height + Theme.controlSpacing
         width: Math.max(0, Math.min(implicitWidth, root.width - Theme.controlSpacing * 2))
         text: root.workspace.name
         textFormat: Text.PlainText
@@ -48,9 +51,9 @@ Rectangle {
         id: desktop
         objectName: "exposeWorkspaceLayout"
         x: Theme.controlSpacing
-        y: Theme.exposeWorkspaceHeight
+        y: Math.max(Math.round(Theme.exposeWorkspaceHeight * root.sizeScale), name.y + name.height + Theme.controlSpacing)
         width: parent.width - x * 2
-        height: Theme.exposeWorkspacePreviewHeight
+        height: Math.max(0, root.height - y - Theme.controlSpacing * 2)
         clip: true
         readonly property real previewScale: Math.min(width / root.bounds.width, height / root.bounds.height)
         Repeater {

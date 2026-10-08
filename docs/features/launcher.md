@@ -39,7 +39,11 @@ windows and falls back to all windows if fewer than two are available.
 
 **Meta+Shift+E** toggles a fullscreen overview on the focused monitor, starting
 with the current workspace and the focused window preselected. The centered workspace strip shows large icons with
-workspace names below. Click a workspace to see its windows, or **Show all** to show
+workspace names below. Tiles and icons scale down on smaller screens. Search
+sits to the left of **Show all**, centered together above the workspace strip.
+Window cards retain each window's original proportions and relative size,
+packing wide and narrow windows together. A single window uses the largest
+size that fits the preview area. Opaque rectangular title boxes sit above the previews. Click a workspace to see its windows, or **Show all** to show
 every workspace. The All view orders windows by workspace, then top to bottom
 and left to right within each workspace. Grouped workspaces use the same
 alphabetical display-name order as the bar. `launcher.sh expose` also starts with the current workspace;

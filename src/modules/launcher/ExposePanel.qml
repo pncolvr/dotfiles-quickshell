@@ -7,6 +7,9 @@ import "../../theme/ui" as UI
 FocusScope {
     id: root
     required property var picker
+    readonly property real workspaceScale: Math.max(0.72, Math.min(1, width / 1920, height / 1080))
+    readonly property real workspaceWidth: Math.round(Theme.exposeWorkspaceWidth * workspaceScale)
+    readonly property real searchWidth: Math.min(Theme.exposeSearchWidth, Math.max(140, width * 0.18))
     function focusSearch() { search.forceActiveFocus() }
     Component.onCompleted: Qt.callLater(root.focusSearch)
     Keys.priority: Keys.BeforeItem
@@ -15,8 +18,8 @@ FocusScope {
             case Qt.Key_Escape: root.picker.close(); break
             case Qt.Key_Left: root.picker.move(-1); break
             case Qt.Key_Right: root.picker.move(1); break
-            case Qt.Key_Up: root.picker.move(-grid.columns); break
-            case Qt.Key_Down: root.picker.move(grid.columns); break
+            case Qt.Key_Up: grid.moveVertical(-1); break
+            case Qt.Key_Down: grid.moveVertical(1); break
             case Qt.Key_Return:
             case Qt.Key_Enter: root.picker.accept(false, false); break
             default: event.accepted = false; return
@@ -25,26 +28,15 @@ FocusScope {
     }
     Item {
         id: workspaces
-        width: Math.min(parent.width, all.width + Theme.controlSpacing + root.picker.exposeWorkspaces.length * (Theme.exposeWorkspaceWidth + Theme.controlSpacing) - Theme.controlSpacing)
+        y: controls.height + Theme.controlSpacing
+        width: Math.max(0, Math.min(parent.width,
+            root.picker.exposeWorkspaces.length * (root.workspaceWidth + Theme.controlSpacing) - Theme.controlSpacing))
         anchors.horizontalCenter: parent.horizontalCenter
-        height: Theme.exposeWorkspaceHeight + Theme.exposeWorkspacePreviewHeight + Theme.controlSpacing * 2
-        UI.ActionButton {
-            id: all
-            objectName: "exposeAllWorkspaces"
-            width: 96
-            height: workspaces.height
-            label: "Show all"
-            foreground: root.picker.exposeWorkspace === 0 ? Theme.accent : Theme.inactive
-            fillColor: Theme.background
-            onClicked: { root.picker.selectExposeWorkspace(0); root.focusSearch() }
-        }
+        height: Math.round((Theme.exposeWorkspaceHeight + Theme.exposeWorkspacePreviewHeight) * root.workspaceScale) + Theme.controlSpacing * 2
         ListView {
             id: strip
             objectName: "exposeWorkspaces"
-            anchors.left: all.right
-            anchors.leftMargin: Theme.controlSpacing
-            anchors.right: parent.right
-            height: parent.height
+            anchors.fill: parent
             orientation: ListView.Horizontal
             model: root.picker.exposeWorkspaces
             spacing: Theme.controlSpacing
@@ -54,7 +46,8 @@ FocusScope {
                 required property var modelData
                 workspace: modelData
                 picker: root.picker
-                width: Theme.exposeWorkspaceWidth
+                sizeScale: root.workspaceScale
+                width: root.workspaceWidth
                 height: strip.height
                 current: root.picker.exposeWorkspace === modelData.id
             }
@@ -69,54 +62,45 @@ FocusScope {
             }
         }
     }
-    UI.SearchField {
-        id: search
-        objectName: "exposeSearch"
-        y: workspaces.height + Theme.exposeSpacing
-        width: parent.width
-        placeholderText: "Search windows"
-        pauseTooltipDismissal: false
-        resetWithTooltip: false
-        handleEscape: false
-        onTextChanged: root.picker.query = text
-        Keys.priority: Keys.BeforeItem
-        Keys.forwardTo: [root]
+    Item {
+        id: controls
+        anchors.horizontalCenter: parent.horizontalCenter
+        width: search.width + Theme.controlSpacing + all.width
+        height: Math.max(search.height, all.height)
+        UI.SearchField {
+            id: search
+            objectName: "exposeSearch"
+            anchors.left: parent.left
+            anchors.bottom: parent.bottom
+            width: root.searchWidth
+            placeholderText: "Search windows"
+            pauseTooltipDismissal: false
+            resetWithTooltip: false
+            handleEscape: false
+            onTextChanged: root.picker.query = text
+            Keys.priority: Keys.BeforeItem
+            Keys.forwardTo: [root]
+        }
+        UI.ActionButton {
+            id: all
+            objectName: "exposeAllWorkspaces"
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            width: 96
+            label: "Show all"
+            foreground: root.picker.exposeWorkspace === 0 ? Theme.accent : Theme.inactive
+            fillColor: Theme.background
+            onClicked: { root.picker.selectExposeWorkspace(0); root.focusSearch() }
+        }
     }
-    GridView {
+    ExposeWindowGrid {
         id: grid
         objectName: "exposeWindows"
-        y: search.y + search.height + Theme.exposeSpacing
+        picker: root.picker
+        dragLayer: dragOverlay
+        y: workspaces.y + workspaces.height + Theme.exposeSpacing
         width: parent.width
         height: Math.max(0, footer.y - y - Theme.exposeSpacing)
-        readonly property int columns: {
-            const maximum = Math.max(1, Math.floor(width / Theme.exposeCardMinWidth))
-            let result = Math.min(maximum, Math.max(1, Math.ceil(Math.sqrt(count * width / Math.max(1, height) * 9 / 16))))
-            while (result < maximum && Math.ceil(count / result) * (width / result * 9 / 16 + Theme.controlHeight + Theme.exposeSpacing) > height) result++
-            return result
-        }
-        cellWidth: width / columns
-        cellHeight: cellWidth * 9 / 16 + Theme.controlHeight + Theme.exposeSpacing
-        clip: true
-        model: root.picker.filteredItems
-        currentIndex: root.picker.currentIndex
-        boundsBehavior: Flickable.StopAtBounds
-        highlightMoveDuration: 0
-        onCurrentIndexChanged: if (currentIndex >= 0) positionViewAtIndex(currentIndex, GridView.Contain)
-        delegate: ExposeWindowCard {
-            required property var modelData
-            required property int index
-            objectName: "exposeWindow-" + modelData.id
-            entry: modelData
-            width: grid.cellWidth - Theme.exposeSpacing
-            height: grid.cellHeight - Theme.exposeSpacing
-            current: root.picker.currentIndex === index
-            dragLayer: dragOverlay
-            onHovered: if (!root.picker.exposeDragging) root.picker.select(index, false)
-            onActivated: { root.picker.select(index, false); root.picker.accept(false, false) }
-            onDragStarted: root.picker.exposeDragging = true
-            onDragFinished: root.picker.exposeDragging = false
-        }
-        QC.ScrollBar.vertical: UI.ScrollBar {}
     }
     UI.ColumnText {
         anchors.centerIn: grid

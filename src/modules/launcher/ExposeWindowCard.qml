@@ -43,7 +43,7 @@ Item {
         }
         width: root.width
         height: root.height
-        radius: Theme.tooltipRadius
+        radius: 0
         color: Theme.alternateBackground
         border.width: root.current || hover.hovered || root.dragging ? 2 : 1
         border.color: root.current || root.dragging ? Theme.accent : Theme.empty
@@ -55,11 +55,13 @@ Item {
         Drag.hotSpot.x: root.pressX
         Drag.hotSpot.y: root.pressY
         WindowPreview {
+            objectName: "exposeWindowPreview"
             anchors.left: parent.left
             anchors.right: parent.right
-            anchors.top: parent.top
+            anchors.top: caption.bottom
+            anchors.bottom: parent.bottom
             anchors.margins: Theme.controlSpacing
-            height: Math.max(0, parent.height - caption.height - Theme.controlSpacing * 3)
+            anchors.topMargin: 0
             client: root.entry.client
         }
         Rectangle {
@@ -67,11 +69,11 @@ Item {
             objectName: "exposeWindowCaption"
             anchors.left: parent.left
             anchors.right: parent.right
-            anchors.bottom: parent.bottom
+            anchors.top: parent.top
             anchors.margins: 1
             height: Theme.controlHeight
             color: Theme.background
-            radius: Theme.tooltipRadius
+            radius: 0
             UI.ColumnText {
                 objectName: "exposeWindowName"
                 anchors.fill: parent

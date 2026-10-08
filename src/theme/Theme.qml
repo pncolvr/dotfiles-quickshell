@@ -96,10 +96,12 @@ Item {
   readonly property int clipboardRowHeight: 52
   readonly property int clipboardImagePreviewHeight: 200
   readonly property int pickerRowPadding: 4
-  readonly property int exposeWorkspaceWidth: 124
-  readonly property int exposeWorkspaceHeight: 78
-  readonly property int exposeWorkspacePreviewHeight: 64
-  readonly property int exposeWorkspaceIconSize: 36
+  readonly property int exposeWorkspaceWidth: 156
+  readonly property int exposeWorkspaceHeight: 100
+  readonly property int exposeWorkspacePreviewHeight: 76
+  readonly property int exposeWorkspaceIconSize: 44
+  readonly property int exposeWorkspaceTopPadding: 12
+  readonly property int exposeSearchWidth: 300
   readonly property int exposeDragWidth: 220
   readonly property int exposeDragAnimationDuration: 160
   readonly property int exposeCardMinWidth: 280
