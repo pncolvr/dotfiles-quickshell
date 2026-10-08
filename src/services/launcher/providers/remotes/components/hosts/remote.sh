@@ -46,8 +46,14 @@ function handle_remote() {
     local hopSSHKey
     local port=$(get_random_port)
 
-    IFS=';' read endpoint username password domain rdpParams hopHost hopUsername displayName remotePort hopSSHKey\
-        <<< "$(jq -r --arg name "$picked" '.hosts[] | select(.name==$name) | [.endpoint, .username , .password, .domain, .rdpParams, .hopHost, .hopUsername, .displayName, .port, .sshKeyPath] | join(";")' "$HOSTS_FILE")"
+    local -a fields=()
+    mapfile -d '' -t fields < <(jq -j --arg name "$picked" '.hosts[] | select(.name==$name)
+        | [.endpoint, .username, .password, .domain, .rdpParams, .hopHost, .hopUsername, .displayName, .port, .sshKeyPath][]
+        | (. // "" | tostring) + "\u0000"' "$HOSTS_FILE")
+    [[ ${#fields[@]} -eq 10 ]] || return 1
+    endpoint=${fields[0]}; username=${fields[1]}; password=${fields[2]}; domain=${fields[3]}
+    rdpParams=${fields[4]}; hopHost=${fields[5]}; hopUsername=${fields[6]}; displayName=${fields[7]}
+    remotePort=${fields[8]}; hopSSHKey=${fields[9]}
     base_rdp_params=$(jq -r '.baseRDPParams' "$HOSTS_FILE")
     endpoint=$(dns "$endpoint")
     local ssh_pid=$(connect_ssh "$endpoint" "$port" "$remotePort" "$hopHost" "$hopUsername" "$hopSSHKey")

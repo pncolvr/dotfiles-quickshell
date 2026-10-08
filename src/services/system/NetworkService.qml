@@ -26,6 +26,46 @@ Singleton {
         return `${(bytesPerSec / 1073741824).toFixed(1)}GB`
     }
 
+    function splitNmcli(line) {
+        const fields = []
+        let field = ""
+        for (let index = 0; index < line.length; index++) {
+            const character = line[index]
+            if (character === "\\" && [":", "\\"].includes(line[index + 1])) field += line[++index]
+            else if (character === ":") { fields.push(field); field = "" }
+            else field += character
+        }
+        fields.push(field)
+        return fields
+    }
+
+    function applyNetworkSample(output, timestamp = Date.now()) {
+        const bytes = {}
+        const speeds = {}
+        const interval = (timestamp - _internal._prevNetTimestamp) / 1000
+        for (const line of output.trim().split("\n")) {
+            const parts = line.trim().split(/\s+/)
+            if (parts.length !== 3 || parts[0] === "lo") continue
+            const iface = parts[0]
+            const rx = Number(parts[1]); const tx = Number(parts[2])
+            if (!Number.isFinite(rx) || !Number.isFinite(tx) || rx < 0 || tx < 0) continue
+            const prev = _internal._prevNetBytes[iface]
+            bytes[iface] = {rx, tx}
+            speeds[iface] = {
+                down: prev && interval > 0 ? Math.max(0, (rx - prev.rx) / interval) : 0,
+                up: prev && interval > 0 ? Math.max(0, (tx - prev.tx) / interval) : 0
+            }
+        }
+        // Replace the whole snapshot so disconnected interfaces lose their rate and baseline.
+        _internal._prevNetBytes = bytes
+        _internal._prevNetTimestamp = timestamp
+        _internal._ifaceSpeeds = speeds
+        _internal.downloadSpeed = Object.values(speeds).reduce((sum, speed) => sum + speed.down, 0)
+        _internal.uploadSpeed = Object.values(speeds).reduce((sum, speed) => sum + speed.up, 0)
+        const history = _internal.speedHistory.concat([{down: root.downloadSpeed, up: root.uploadSpeed}])
+        _internal.speedHistory = history.slice(-60)
+    }
+
     QtObject {
         id: _internal
         property bool online: false
@@ -36,6 +76,7 @@ Singleton {
         property var vpnConnections: []
         property var topProcesses: []
         property var _prevNetBytes: ({})
+        property real _prevNetTimestamp: 0
         property var _ifaceSpeeds: ({})
     }
 
@@ -43,6 +84,7 @@ Singleton {
         if (active) {
             _internal.speedHistory = []
             _internal._prevNetBytes = {}
+            _internal._prevNetTimestamp = 0
             _internal._ifaceSpeeds = {}
         }
     }
@@ -117,50 +159,12 @@ Singleton {
     Process {
         id: netDevProcess
         command: Config.networkStatsCommand
-
-        property real _totalDown: 0
-        property real _totalUp: 0
-
-        stdout: SplitParser {
-            onRead: data => {
-                const parts = data.trim().split(/\s+/)
-                if (parts.length < 3) return
-                const iface = parts[0]
-                if (iface === "lo") return
-                const rx = parseInt(parts[1])
-                const tx = parseInt(parts[2])
-                const prev = _internal._prevNetBytes[iface]
-                if (prev) {
-                    const interval = Config.statsInterval / 1000
-                    const down = Math.max(0, (rx - prev.rx) / interval)
-                    const up = Math.max(0, (tx - prev.tx) / interval)
-                    const speeds = Object.assign({}, _internal._ifaceSpeeds)
-                    speeds[iface] = { down, up }
-                    _internal._ifaceSpeeds = speeds
-                }
-                const bytes = Object.assign({}, _internal._prevNetBytes)
-                bytes[iface] = { rx, tx }
-                _internal._prevNetBytes = bytes
-            }
+        stdout: StdioCollector { id: netOutput; waitForEnd: true }
+        // qmllint disable signal-handler-parameters
+        onExited: (exitCode, exitStatus) => {
+            if (root.active && exitCode === 0 && exitStatus === 0) root.applyNetworkSample(netOutput.text)
         }
-        onRunningChanged: {
-            if (running) {
-                _totalDown = 0
-                _totalUp = 0
-                return
-            }
-            let totalDown = 0
-            let totalUp = 0
-            for (const iface in _internal._ifaceSpeeds) {
-                totalDown += _internal._ifaceSpeeds[iface].down
-                totalUp += _internal._ifaceSpeeds[iface].up
-            }
-            _internal.downloadSpeed = totalDown
-            _internal.uploadSpeed = totalUp
-            const maxHistory = 60
-            const h = _internal.speedHistory.concat([{ down: totalDown, up: totalUp }])
-            _internal.speedHistory = h.length > maxHistory ? h.slice(h.length - maxHistory) : h
-        }
+        // qmllint enable signal-handler-parameters
     }
 
     Process {
@@ -171,7 +175,7 @@ Singleton {
 
         stdout: SplitParser {
             onRead: data => {
-                const parts = data.trim().split(":")
+                const parts = root.splitNmcli(data)
                 if (parts.length < 4) return
                 const device = parts[0]
                 const name = parts[1]
@@ -207,7 +211,7 @@ Singleton {
 
         stdout: SplitParser {
             onRead: data => {
-                const parts = data.trim().split(":")
+                const parts = root.splitNmcli(data)
                 if (parts.length < 2) return
                 const name = parts[0]
                 const type = parts[1]

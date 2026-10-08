@@ -11,6 +11,14 @@ Column {
     spacing: 4
 
     UI.ColumnText {
+        visible: UpdatesService.error.length > 0
+        text: UpdatesService.error
+        width: parent.width
+        wrapMode: Text.Wrap
+        color: Theme.warning
+    }
+
+    UI.ColumnText {
         visible: UpdatesService.hasUpdates
         text: `${UpdatesService.count} updates available`
         width: parent.width
@@ -40,7 +48,7 @@ Column {
     }
 
     UI.ColumnText {
-        visible: !UpdatesService.hasUpdates
+        visible: !UpdatesService.hasUpdates && !UpdatesService.error
         text: "no updates available"
         width: parent.width
         horizontalAlignment: Text.AlignHCenter

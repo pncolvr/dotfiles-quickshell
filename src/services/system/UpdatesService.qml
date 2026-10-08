@@ -19,6 +19,7 @@ Singleton {
     readonly property bool hasUpdates: _internal.hasUpdates
     readonly property bool hasPriority: _internal.hasPriority
     readonly property date lastChecked: _internal.lastChecked
+    readonly property string error: _internal.error
 
     QtObject {
         id: _internal
@@ -29,6 +30,7 @@ Singleton {
         property bool hasUpdates: count > 0
         property bool hasPriority: priorityUpdates.length > 0
         property date lastChecked: new Date(0)
+        property string error: ""
     }
 
     function install() {
@@ -84,11 +86,7 @@ Singleton {
     }
 
     function refresh() {
-        if (updatesProcess.running) return;
-        
-        _internal.updates = []
-        _internal.priorityUpdates = []
-        _internal.normalUpdates = []
+        if (updatesProcess.running) return
         updatesProcess.running = true
     }
 
@@ -105,31 +103,33 @@ Singleton {
         command: Config.updatesCheckCommand
         // Quickshell.Io omits QProcess::ExitStatus from its qmltypes.
         // qmllint disable signal-handler-parameters
-        onExited: exitCode => {
-            if (exitCode === 0) _internal.lastChecked = new Date()
+        onExited: (exitCode, exitStatus) => {
+            if (exitCode !== 0 || exitStatus !== 0) {
+                _internal.error = "Could not read available updates."
+                return
+            }
+            const priority = []
+            const normal = []
+            for (const line of updatesOutput.text.split("\n").filter(line => line.trim())) {
+                const parts = line.trim().split(/\s+/)
+                if (parts.length !== 5) {
+                    _internal.error = "Invalid response from the update checker."
+                    return
+                }
+                const update = {repository: parts[0], architecture: parts[1], name: parts[2],
+                    oldVersion: parts[3], newVersion: parts[4]}
+                const target = root.isPriority(update.name) ? priority : normal
+                target.push(update)
+            }
+            _internal.priorityUpdates = root.sortUpdates(priority)
+            _internal.normalUpdates = root.sortUpdates(normal)
+            _internal.updates = [..._internal.priorityUpdates, ..._internal.normalUpdates]
+            _internal.lastChecked = new Date()
+            _internal.error = ""
             root.writeMarkdown()
         }
         // qmllint enable signal-handler-parameters
-        stdout: SplitParser {
-            onRead: data => {
-                const line = data.trim()
-                if (!line) return
-                const parts = line.split(/\s+/)
-                const update = {
-                    repository: parts[0],
-                    architecture: parts[1],
-                    name: parts[2],
-                    oldVersion: parts[3],
-                    newVersion: parts[4]
-                }
-                if (root.isPriority(update.name)) {
-                    _internal.priorityUpdates = root.sortUpdates([..._internal.priorityUpdates, update])
-                } else {
-                    _internal.normalUpdates = root.sortUpdates([..._internal.normalUpdates, update])
-                }
-                _internal.updates = [..._internal.priorityUpdates, ...root.normalUpdates]
-            }
-        }
+        stdout: StdioCollector { id: updatesOutput; waitForEnd: true }
     }
     Process {
         id: refreshScriptProcess

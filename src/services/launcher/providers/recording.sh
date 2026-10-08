@@ -69,42 +69,41 @@ function capture () {
     # Need at least one of output or region to know what to capture.
     [[ -z "$output" && -z "$region" ]] && exit 0
 
-    local audio
+    local audio fps cast_status status
     local filename
     local file
-    local params=" "
-    fps=$(request_fps)
-    [ -z "$fps" ] && exit 0
-    audio=$(handle_audio_choice)
-    [ -n "$output" ] && params+=" --output $output"
-    [ -n "$region" ] && params+=" --geometry \"$region\""
+    local -a command=(wf-recorder)
+    fps=$(request_fps) || return 0
+    audio=$(handle_audio_choice) || return 0
+    [ -n "$output" ] && command+=(--output "$output")
+    [ -n "$region" ] && command+=(--geometry "$region")
     file=$(date '+Recording %Y-%m-%d at %Hh%Mm%Ss').mp4
     mkdir -p "$VIDEOS_FOLDER"
     filename="$VIDEOS_FOLDER/$file"
 
     hyprctl notify -1 1000 "rgb(2E7D32)" "recording starting" > /dev/null 2>&1
     sleep 1.1
-    command="wf-recorder $params \
-        --codec hevc_nvenc \
-        --codec-param preset=p7 \
-        --codec-param tune=hq \
-        --codec-param rc=vbr \
-        --codec-param cq=21 \
-        --codec-param rc-lookahead=32 \
-        --codec-param bf=3 \
-        --codec-param spatial_aq=1 \
-        --codec-param temporal_aq=1 \
-        --codec-param aq-strength=10 \
-        --framerate $fps"
+    command+=(
+        --codec hevc_nvenc
+        --codec-param preset=p7
+        --codec-param tune=hq
+        --codec-param rc=vbr
+        --codec-param cq=21
+        --codec-param rc-lookahead=32
+        --codec-param bf=3
+        --codec-param spatial_aq=1
+        --codec-param temporal_aq=1
+        --codec-param aq-strength=10
+        --framerate "$fps")
 
-    [ -n "$audio" ] && command+=" --audio=$audio"
+    [ -n "$audio" ] && command+=("--audio=$audio")
 
-    command+=" -f \"$filename\""
+    command+=(-f "$filename")
 
-    echo "$command"
+    printf '%q ' "${command[@]}"; printf '\n'
     cast_status=$(cat "$SCREENCAST_STATUS_FILE")
     echo "1" > "$SCREENCAST_STATUS_FILE"
-    eval "$command"
+    "${command[@]}"
     status=$?
     echo "$status"
     if [[ $status -ne 0 ]]; then

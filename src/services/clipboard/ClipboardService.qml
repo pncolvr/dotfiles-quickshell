@@ -10,6 +10,8 @@ import "../../config"
 Singleton {
     id: root
     property bool enabled: false
+    property bool initialized: false
+    property bool initializing: false
     property bool paused: PreferencesRepository.value("clipboard.paused", false) === true
     property string error: ""
     property string ignoredId: ""
@@ -19,13 +21,24 @@ Singleton {
         QS_CLIPBOARD_MAX_BYTES: String(Config.clipboardMaxBytes)})
 
     function initialize() {
-        if (enabled) return
+        if (initialized || initializing) return
         enabled = Config.clipboardMonitorEnabled
-        ClipboardRepository.entries()
+        const entries = ClipboardRepository.readEntries()
+        if (entries === null) { error = DbService.error; retry.restart(); return }
         // Capture files are durable; remove leftovers only while no watcher is running.
-        run(Config.clipboardCommand.concat(["prune"]), JSON.stringify(ClipboardRepository.entries().map(row => row.id)), () => start())
+        initializing = true
+        run(Config.clipboardCommand.concat(["prune"]), JSON.stringify(entries.map(row => row.id)), success => {
+            initializing = false
+            if (!success) { error = "Could not clean up clipboard payloads; retrying."; retry.restart(); return }
+            initialized = true
+            error = ""
+            start()
+        })
     }
-    function start() { if (enabled && !paused && !monitor.running) monitor.running = true }
+    function start() {
+        if (!initialized) { initialize(); return }
+        if (enabled && !paused && !monitor.running) monitor.running = true
+    }
     function togglePaused() {
         const next = !paused
         if (!PreferencesRepository.setValue("clipboard.paused", next)) { error = DbService.error; return }
@@ -38,7 +51,8 @@ Singleton {
         try { entry = JSON.parse(line) } catch (_) { error = "Invalid response from the clipboard helper."; return }
         if ((paused && !imported) || entry.id === ignoredId) return
         if (ignoredText && entry.kind === "text" && entry.text === ignoredText) {
-            if (!ClipboardRepository.entries().some(row => row.id === entry.id)) run(Config.clipboardCommand.concat(["delete", entry.id]))
+            const entries = ClipboardRepository.readEntries()
+            if (entries !== null && !entries.some(row => row.id === entry.id)) run(Config.clipboardCommand.concat(["delete", entry.id]))
             return
         }
         const removed = ClipboardRepository.add(entry)
@@ -59,7 +73,9 @@ Singleton {
     }
     function ignoreTextOnce(text) { ignoredText = text; textIgnoreTimer.restart() }
     function clear() {
-        const ids = ClipboardRepository.entries().filter(row => !row.pinned).map(row => row.id)
+        const entries = ClipboardRepository.readEntries()
+        if (entries === null) { error = DbService.error; return }
+        const ids = entries.filter(row => !row.pinned).map(row => row.id)
         if (!ClipboardRepository.clear()) { error = DbService.error; return }
         if (ids.length) run(Config.clipboardCommand.concat(["delete"]).concat(ids))
     }

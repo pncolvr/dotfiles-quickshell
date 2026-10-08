@@ -175,4 +175,21 @@ python3 tests/ui/tooltip-search.py
 This uses a fake compositor socket and checks typing, focus, mouse movement,
 and dismissal without moving the real mouse.
 
+## Service failure regressions
+
+```sh
+python3 tests/system/services.py
+bash tests/system/update-cache.sh
+bash tests/launcher/providers.sh
+```
+
+These use private runtime data and mocked desktop commands. They check that failed
+clipboard database reads preserve payloads, cleanup failures can be retried,
+removed network interfaces stop contributing traffic, rates use elapsed time,
+escaped NetworkManager fields retain their names and connection states, and failed
+or malformed update reads preserve the last successful list. Update-cache checks
+cover atomic publication of populated and empty snapshots and query/write failures.
+Provider checks include recording cancellation at each picker and literal shell
+characters in RDP credentials, recording paths, and audio devices.
+
 [Documentation](README.md)

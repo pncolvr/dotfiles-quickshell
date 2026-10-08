@@ -10,8 +10,13 @@ Singleton {
     property int revision: 0
 
     function entries() {
+        return readEntries() ?? []
+    }
+
+    // Cleanup callers must distinguish a failed read from an empty history.
+    function readEntries() {
         const dependency = revision
-        return DbService.read("SELECT id, mime, kind, bytes, text, updated_at, pinned FROM store.clipboard ORDER BY updated_at DESC, id DESC") ?? []
+        return DbService.read("SELECT id, mime, kind, bytes, text, updated_at, pinned FROM store.clipboard ORDER BY updated_at DESC, id DESC")
     }
 
     function prune(tx) {

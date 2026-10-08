@@ -11,8 +11,14 @@ function handle_remote() {
     local password
     echo $picked
 
-    IFS=';' read endpoint port name username password displayName \
-        <<< "$(jq -r --arg name "$picked" '.hosts[] | select(.name==$name) | [.endpoint, .port, .vmName, .username , .password, .displayName ] | join(";")' "$HOSTS_FILE")"
+    # NUL-separated fields preserve empty values, delimiters, and backslashes.
+    local -a fields=()
+    mapfile -d '' -t fields < <(jq -j --arg name "$picked" '.hosts[] | select(.name==$name)
+        | [.endpoint, .port, .vmName, .username, .password, .displayName][]
+        | (. // "" | tostring) + "\u0000"' "$HOSTS_FILE")
+    [[ ${#fields[@]} -eq 6 ]] || return 1
+    endpoint=${fields[0]}; port=${fields[1]}; name=${fields[2]}
+    username=${fields[3]}; password=${fields[4]}; displayName=${fields[5]}
     base_rdp_params=$(jq -r '.baseRDPParams' "$HOSTS_FILE")
     start_virtual_machine "$name"
     monitor_virtual_machine "$endpoint" "$port" "$name"

@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 # Refreshes the AUR/pacman update cache consumed by UpdatesService.
+set -uo pipefail
+export LC_ALL=C
 
 # sudo cron
 # 59 * * * * /usr/bin/yay -Sy --noconfirm >/dev/null 2>&1
@@ -31,20 +33,21 @@ cache_file="$cache_dir/updates.cache"
 
 mkdir -p "$cache_dir" || exit 0
 tmp_file="$(mktemp "$cache_dir/updates.cache.XXXXXX" 2>/dev/null)" || exit 0
-err_file="$(mktemp "$cache_dir/updates.err.XXXXXX" 2>/dev/null)" || exit 0
+err_file=""
 trap 'rm -f "$tmp_file" "$err_file"' EXIT
+err_file="$(mktemp "$cache_dir/updates.err.XXXXXX" 2>/dev/null)" || exit 0
 
 raw_updates="$(yay -Qu 2>"$err_file")"
 yay_status=$?
 
-# yay -Qu exits 1 with no stderr when there are simply no updates
-if (( yay_status != 0 )) && [[ -s "$err_file" ]]; then
+# Only the documented empty exit-1 response means there are no updates.
+if (( yay_status != 0 )) && ! { (( yay_status == 1 )) && [[ ! -s "$err_file" && -z "$raw_updates" ]]; }; then
     qs ipc call updates schedule 2>/dev/null || true
     exit 0
 fi
 
 if [[ -z "$raw_updates" ]]; then
-    : > "$cache_file"
+    : > "$tmp_file"
 else
     mapfile -t names < <(awk '{print $1}' <<< "$raw_updates")
 
@@ -52,7 +55,7 @@ else
     si_output="$(yay -Si "${names[@]}" 2>/dev/null)"
 
     declare -A repo_of arch_of
-    name=""
+    name=""; repo_of_tmp=""
     while IFS= read -r line; do
         case "$line" in
             Repository*) repo_of_tmp="$(awk -F': ' '{print $2}' <<< "$line")" ;;
@@ -62,13 +65,20 @@ else
     done <<< "$si_output"
 
     while IFS= read -r line; do
-        read -r pkg old arrow new _ <<< "$line"
-        [[ "$arrow" == "->" ]] || continue
+        read -r pkg old arrow new extra <<< "$line"
+        [[ -n $pkg && -n $old && $arrow == '->' && -n $new && -z $extra ]] || exit 1
         repo="${repo_of[$pkg]:-aur}"
         arch="${arch_of[$pkg]:-x86_64}"
         printf "%s %s %s %s %s\n" "$repo" "$arch" "$pkg" "$old" "$new"
-    done <<< "$raw_updates" | sort > "$tmp_file"
-    cat "$tmp_file" > "$cache_file" 2>/dev/null || cp "$tmp_file" "$cache_file" 2>/dev/null || true
+    done <<< "$raw_updates" | sort > "$tmp_file" || {
+        qs ipc call updates schedule 2>/dev/null || true
+        exit 0
+    }
 fi
+# Publish both empty and populated snapshots with one atomic rename.
+mv -f -- "$tmp_file" "$cache_file" || {
+    qs ipc call updates schedule 2>/dev/null || true
+    exit 0
+}
 qs ipc call updates reload 2>/dev/null || true
 exit 0
