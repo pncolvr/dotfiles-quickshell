@@ -43,6 +43,10 @@ then fades away. Keep content and row widths equal to the viewport width; do not
 reserve a gutter or change panel dimensions when a scrollbar appears. The shared
 component draws above the content and handles both vertical and horizontal bars.
 
+Large expandable lists can use `UI.BatchedListModel` to add a few rows per
+rendered frame while preserving existing delegates. Run
+`bash tests/qml/batched-model.sh` for expansion, collapse and source-change checks.
+
 Inline editors use `UI.EditorActions` for a neutral Cancel button followed by an
 accent Apply button. Recent files, TOTP, and Twitch share this component.
 

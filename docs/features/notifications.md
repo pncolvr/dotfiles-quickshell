@@ -9,7 +9,8 @@ Hover the bell to open the manager and left-click to pin/unpin
 it. The manager provides **History** and **Emitters** tabs. Emitter groups start
 collapsed with their latest notification visible and the bottom edges of up to
 two older cards stacked underneath. Click the header or a stacked edge to expand
-the group. Both groups and their entries
+the group. Cards are added in small batches across successive frames, keeping
+already displayed cards in place while the expanded list builds up. Both groups and their entries
 are ordered newest first; **Load older** controls keep older records accessible.
 **Clear emitter** and **Clear all** delete history and dismiss current notifications
 while preserving source settings and DND. The manager uses the shared tooltip
@@ -55,6 +56,10 @@ enclosed dark details. The title sits directly below the app name,
 with a small gap before the body. Timestamps appear only in history and use
 `yyyy-MM-dd hh:mm:ss`, always including seconds. Markdown bodies render code
 blocks, emphasis, links, and lists; plain-text bodies keep their line breaks.
+Teams for Linux inbox reports flatten n8n's HTML into headers followed by
+counts. Only that emitter and the exact Inbox/Junk/Error report format, preceded
+by an inbox mailbox address, are reconstructed as a table in popups and history,
+using the original column order. Stored bodies remain unchanged.
 Long formatted bodies are clipped in popups and shown in full in history.
 Timed popup outlines drain symmetrically from the bottom center up both sides to the top
 center, synchronized with rendered frames as in TOTP. Hovering a popup pauses its

@@ -21,7 +21,7 @@ build_cache() {
         portkey:latest sleep infinity
 
     json_output=$(podman exec -it azure-tools /workspaces/scripts/azure/updateip/scripts/list-subs.sh | sed -n '/^\[/,$p' | tr -d '\r')
-    items_json=$(jq 'map({title: .name, result: ("https://portal.azure.com/#@teambizdocs.onmicrosoft.com/resource/subscriptions/" + .id + "/resources")})' <<< "$json_output")
+    items_json=$(jq 'map({title: .name, result: ("https://portal.azure.com/#" + (if (.tenantId // "") != "" then "@" + .tenantId + "/" else "" end) + "resource/subscriptions/" + .id + "/resources")})' <<< "$json_output")
     final_json=$(jq -n --argjson items "$items_json" --argjson template "$TEMPLATE_JSON" '$template + {items: $items}')
 
     echo "$final_json" > "$CACHE_FILE"

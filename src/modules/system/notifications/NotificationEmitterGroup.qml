@@ -19,6 +19,7 @@ Column {
         return NotificationRepository.entries(group.emitterKey,
             expanded ? entryLimit : Theme.notificationStackMaxCards, 0)
     }
+    UI.BatchedListModel { id: historyModel; items: root.entries }
     spacing: 8
     RowLayout {
         width: parent.width
@@ -74,10 +75,10 @@ Column {
         width: root.width
         spacing: root.expanded ? root.spacing : 0
         Repeater {
-            model: root.entries
+            model: historyModel
             Item {
                 id: historyEntry
-                required property var modelData
+                required property var value
                 required property int index
                 readonly property bool stacked: !root.expanded && index > 0
                 readonly property real cardInset: stacked ? index * Theme.notificationStackInset : 0
@@ -87,7 +88,7 @@ Column {
 
                 NotificationCard {
                     id: historyCard
-                    entry: historyEntry.modelData
+                    entry: historyEntry.value
                     x: historyEntry.cardInset
                     y: historyEntry.stacked ? historyEntry.height - height : 0
                     width: Math.max(0, historyEntry.width - historyEntry.cardInset * 2)

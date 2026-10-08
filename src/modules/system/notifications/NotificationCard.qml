@@ -245,6 +245,7 @@ Rectangle {
                 objectName: "notificationBody"
                 width: parent.width
                 body: root.entry.body || ""
+                emitterKey: root.entry.emitterKey || ""
                 popup: root.popup
             }
             Flow {

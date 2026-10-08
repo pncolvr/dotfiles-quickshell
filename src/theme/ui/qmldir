@@ -15,6 +15,7 @@ TabBar 1.0 components/TabBar.qml
 TooltipBackground 1.0 components/TooltipBackground.qml
 PickerRow 1.0 components/PickerRow.qml
 PickerList 1.0 components/PickerList.qml
+BatchedListModel 1.0 components/BatchedListModel.qml
 
 PulseText 1.0 PulseText.qml
 IconText 1.0 IconText.qml
