@@ -5,8 +5,8 @@ import "../../../services"
 
 Column {
     id: root
-    spacing: 4
-    width: Theme.networkTooltipWidth
+    property var networkService: NetworkService
+    spacing: Theme.controlSpacing
 
     Canvas {
         id: graph
@@ -14,7 +14,7 @@ Column {
         height: Theme.networkGraphHeight
 
         Connections {
-            target: NetworkService
+            target: root.networkService
             function onSpeedHistoryChanged() { graph.requestPaint() }
         }
 
@@ -22,7 +22,7 @@ Column {
             const ctx = getContext("2d")
             ctx.clearRect(0, 0, width, height)
 
-            const history = NetworkService.speedHistory
+            const history = root.networkService.speedHistory
             if (history.length < 2) return
 
             let maxSpeed = 1
@@ -50,21 +50,21 @@ Column {
     }
 
     Row {
-        spacing: 12
+        spacing: Theme.controlSpacing
 
         UI.ColumnText {
-            text: `↓ ${NetworkService.formatSpeed(NetworkService.downloadSpeed)}/s`
+            text: `↓ ${root.networkService.formatSpeed(root.networkService.downloadSpeed)}/s`
             color: Theme.networkDownColor
         }
         UI.ColumnText {
-            text: `↑ ${NetworkService.formatSpeed(NetworkService.uploadSpeed)}/s`
+            text: `↑ ${root.networkService.formatSpeed(root.networkService.uploadSpeed)}/s`
             color: Theme.networkUpColor
         }
     }
 
     Column {
         width: parent.width
-        visible: NetworkService.connectedNetworks.length > 0
+        visible: root.networkService.connectedNetworks.length > 0
 
         UI.ColumnText {
             text: "networks"
@@ -72,7 +72,7 @@ Column {
         }
 
         Repeater {
-            model: NetworkService.connectedNetworks
+            model: root.networkService.connectedNetworks
             delegate: Item {
                 id: netRow
                 required property var modelData
@@ -92,7 +92,7 @@ Column {
                     id: netSpeed
                     anchors.right: parent.right
                     text: netRow.modelData.connected
-                        ? `↓${NetworkService.formatSpeed(netRow.modelData.downloadSpeed)} ↑${NetworkService.formatSpeed(netRow.modelData.uploadSpeed)}`
+                        ? `↓${root.networkService.formatSpeed(netRow.modelData.downloadSpeed)} ↑${root.networkService.formatSpeed(netRow.modelData.uploadSpeed)}`
                         : ""
                     color: Theme.inactive
                 }
@@ -102,7 +102,7 @@ Column {
 
     Column {
         width: parent.width
-        visible: NetworkService.vpnConnections.length > 0
+        visible: root.networkService.vpnConnections.length > 0
 
         UI.ColumnText {
             text: "vpn"
@@ -110,7 +110,7 @@ Column {
         }
 
         Repeater {
-            model: NetworkService.vpnConnections
+            model: root.networkService.vpnConnections
             delegate: Item {
                 id: vpnRow
                 required property var modelData
@@ -135,38 +135,4 @@ Column {
         }
     }
 
-    Column {
-        width: parent.width
-        visible: NetworkService.topProcesses.length > 0
-
-        UI.ColumnText {
-            text: "processes"
-            color: Theme.inactive
-        }
-
-        Repeater {
-            model: NetworkService.topProcesses
-            delegate: Item {
-                id: procRow
-                required property var modelData
-                width: parent.width
-                height: procName.implicitHeight
-
-                UI.ColumnText {
-                    id: procName
-                    anchors.left: parent.left
-                    anchors.right: procSpeed.left
-                    anchors.rightMargin: 4
-                    elide: Text.ElideRight
-                    text: procRow.modelData.program
-                }
-                UI.ColumnText {
-                    id: procSpeed
-                    anchors.right: parent.right
-                    text: `↓${NetworkService.formatSpeed(procRow.modelData.received)}/s ↑${NetworkService.formatSpeed(procRow.modelData.sent)}/s`
-                    color: Theme.inactive
-                }
-            }
-        }
-    }
 }

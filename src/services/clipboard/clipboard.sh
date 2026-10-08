@@ -21,13 +21,11 @@ capture() {
         *) cat >/dev/null; exit 0 ;;
     esac
     initialize
-    exec {lock_fd}>"$clipboard_dir/.lock"
-    flock -x "$lock_fd"
     temporary=$(mktemp "$clipboard_dir/.capture.XXXXXXXX")
     trap 'rm -f -- "$temporary"' EXIT
     # Read a bounded payload, then drain stdin so the source can finish normally.
-    head -c "$((limit + 1))" > "$temporary"
-    cat >/dev/null
+    timeout 5s head -c "$((limit + 1))" > "$temporary"
+    timeout 5s cat >/dev/null
     size=$(stat -c %s -- "$temporary")
     [[ $size -gt 0 && $size -le $limit ]] || exit 0
     if [[ $kind == image ]]; then
@@ -38,6 +36,10 @@ capture() {
     fi
     id=$({ printf '%s\0' "$mime"; cat -- "$temporary"; } | sha256sum)
     id=${id%% *}
+    # Hold the shared lock only when publishing a complete payload and JSON line.
+    # A stalled source must not block either watcher while reading its bytes.
+    exec {lock_fd}>"$clipboard_dir/.lock"
+    flock -x -w 5 "$lock_fd"
     # Renaming within the same filesystem prevents partial payload reads.
     mv -f -- "$temporary" "$clipboard_dir/$id"
     if [[ $kind == text ]]; then
@@ -55,13 +57,30 @@ case ${1:-} in
         # The installed wl-clipboard does not expose CLIPBOARD_TYPE. Watch each
         # supported family directly; a lock serializes stdout and file writes.
         watcher_pids=()
-        cleanup_watchers() { kill "${watcher_pids[@]}" 2>/dev/null || true; wait "${watcher_pids[@]}" 2>/dev/null || true; }
+        guard_pid=''
+        cleanup_watchers() {
+            [[ -z $guard_pid ]] || kill "$guard_pid" 2>/dev/null || true
+            for watcher_pid in "${watcher_pids[@]}"; do kill -- "-$watcher_pid" 2>/dev/null || true; done
+            wait "${watcher_pids[@]}" 2>/dev/null || true
+            [[ -z $guard_pid ]] || wait "$guard_pid" 2>/dev/null || true
+        }
         trap cleanup_watchers EXIT
         trap 'exit 0' TERM INT HUP
-        wl-paste --type text --watch bash "${BASH_SOURCE[0]}" capture text/plain &
+        # Each watcher owns a process group so cleanup also stops active captures.
+        setsid wl-paste --type text --watch bash "${BASH_SOURCE[0]}" capture text/plain &
         watcher_pids+=("$!")
-        wl-paste --type image --watch bash "${BASH_SOURCE[0]}" capture image &
+        setsid wl-paste --type image --watch bash "${BASH_SOURCE[0]}" capture image &
         watcher_pids+=("$!")
+        watch_pid=$BASHPID
+        owner_pid=$PPID
+        # Quickshell can kill the supervisor before its EXIT trap runs on reload.
+        # A surviving guard cleans up those watcher groups without reading content.
+        (
+            trap - EXIT TERM INT HUP
+            while kill -0 "$watch_pid" 2>/dev/null && kill -0 "$owner_pid" 2>/dev/null; do sleep 1; done
+            for watcher_pid in "${watcher_pids[@]}"; do kill -- "-$watcher_pid" 2>/dev/null || true; done
+        ) >/dev/null 2>&1 &
+        guard_pid=$!
         wait -n "${watcher_pids[@]}"
         exit 1
         ;;

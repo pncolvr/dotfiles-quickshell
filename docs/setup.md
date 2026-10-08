@@ -35,9 +35,9 @@ those before running on another desktop.
 | `libxslt` (`xsltproc`) | Desktop recent-file history (with Bash, coreutils, and `jq`) |
 | BlueZ | Bluetooth battery reporting |
 | Solaar | Optional Logitech receiver battery readings |
-| NetworkManager (`nmcli`), `ping` | Connected networks, VPN status and connectivity |
+| NetworkManager (`nmcli`), `ping` | Native network devices, VPN discovery and connectivity |
 | `bandwhich` | Optional per-process network bandwidth |
-| `powerprofilesctl` | Power profile controls |
+| power-profiles-daemon | Native Quickshell power profile controls |
 | `twitch` CLI, `curl`, `notify-send` | Twitch data, avatars and stream notifications |
 | qutebrowser and jq-compatible `yq` | Optional suggestions from saved browser sessions |
 | `yay`, Ghostty | Arch package update checking and installation |

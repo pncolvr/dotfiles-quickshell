@@ -1,84 +1,23 @@
-pragma ComponentBehavior: Bound
-
 import QtQuick
 import "../../../theme/ui" as UI
 import "../../../theme"
 import "../../../services"
-import "../../../config"
-import "../"
-UI.Row {
+import ".."
+
+UI.TooltipArea {
     id: root
-    property bool expanded: hoverHandler.hovered || TooltipService.source === root
-    onExpandedChanged: {
-        StatsService.active = expanded
-        NetworkService.active = expanded
-        statsBackground.visible = expanded
+    acceptedButtons: Qt.LeftButton
+    readonly property bool tooltipKeyboardFocus: true
+    tooltipSource: root
+    tooltip: Component { StatsTooltip {} }
+    onClicked: mouse => {
+        if (mouse.button !== Qt.LeftButton) return
+        const pos = root.mapToGlobal(root.width / 2, 0)
+        TooltipService.togglePin(pos.x, tooltip, root, centerTooltip, tooltipScreen)
     }
-    
-    HoverHandler {
-        id: hoverHandler
-        target: root
-    }
-
     UI.IconText {
-        text: root.expanded ? Theme.statsOpenIcon : Theme.statsClosedIcon
+        objectName: "statsBarIcon"
+        text: Theme.statsIcon
+        color: TooltipService.pinned && TooltipService.source === root ? Theme.accent : Theme.text
     }
-
-    Rectangle {
-        id: statsBackground
-        visible: false
-        color: Theme.expandedBackground
-        radius: Theme.expandedBackgroundRadius
-        implicitWidth: items.implicitWidth + Theme.expandedBackgroundPaddingWidth * 2
-        implicitHeight: items.implicitHeight + Theme.expandedBackgroundPaddingHeight
-
-        UI.Row {
-            id: items
-            spacing: Theme.moduleSpacing
-            anchors.centerIn: parent
-
-            UI.TooltipArea {
-                tooltipSource: root
-                tooltip: Component {
-                    UI.Text {
-                        text: PowerProfileService.profile
-                    }
-                }
-                UI.IconButton {
-                    onClicked: PowerProfileService.cycleProfile()
-                    text: Theme.powerProfileIcons[Config.powerProfiles.indexOf(PowerProfileService.profile)]
-                }
-            }
-
-            UI.TooltipArea {
-                tooltipSource: root
-                tooltip: Component { MemoryTooltip {} }
-                UI.Text {
-                    text: `${(StatsService.memoryUsed / 1024).toFixed(1)}G`
-                }
-            }
-
-            UI.TooltipArea {
-                tooltipSource: root
-                tooltip: Component { CpuTooltip {} }
-                UI.Text {
-                    text: `${String(StatsService.cpu).padStart(3)}%`
-                }
-            }
-
-            UI.Text {
-                text: `${String(Math.round(StatsService.temperature)).padStart(3)}°C`
-            }
-
-            UI.TooltipArea {
-                tooltipSource: root
-                tooltip: Component { NetworkTooltip {} }
-                UI.IconText {
-                    text: Theme.networkIcon
-                }
-            }
-        }
-    }
-
-
 }

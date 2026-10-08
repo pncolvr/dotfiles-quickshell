@@ -17,6 +17,7 @@
 - [Batteries](features/batteries.md): discovery, warning levels and cached readings.
 - [Recent files](features/recent-files.md): desktop history, folder tabs, limits and file drag.
 - [Status and timecard](features/status.md): work/personal mode, daily totals and detailed reports.
+- [Stats](features/stats.md): resource totals, process lists, filtering and PID copying.
 
 ## Implementation and maintenance
 

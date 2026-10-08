@@ -166,6 +166,16 @@ Run `bash tests/system/batteries.sh` for the headless battery discovery and QML
 card checks, including live updates, duplicates, disconnection, and scrolling.
 Add `--native-imports` to verify the complete bar and live tooltip on Wayland.
 
+## Stats
+
+Run `bash tests/system/stats.sh` for Bash process snapshots, IPv4/IPv6 and UDP
+socket ownership, parent/name grouping, launcher boundaries, ambiguous PIDs, capture failures, native file readings, process
+deltas and sorting, tab activation, typing and focus retention, filtering, stable panel height, expand/collapse, subprocess usage and PID copying, expansion persistence, scrolling and pinning.
+The tests use private storage and a mock clipboard; power controls are mocked.
+The checks cover helper-role labels, table headers, count badges and separate
+network rate columns. Set `STATS_TEST_SCREENSHOT=/tmp/stats.png` to save a CPU
+tab preview, or `STATS_TEST_NETWORK_SCREENSHOT=/tmp/stats-network.png` for Network.
+
 ## Panel search
 
 ```sh
@@ -178,7 +188,7 @@ and dismissal without moving the real mouse.
 ## Service failure regressions
 
 ```sh
-python3 tests/system/services.py
+bash tests/system/services.sh
 bash tests/system/update-cache.sh
 bash tests/launcher/providers.sh
 ```

@@ -120,7 +120,9 @@ IPC in an isolated offscreen shell. Neither test opens applications on the deskt
 ## Clipboard
 
 Regular clipboard text and supported images are captured through supervised
-`wl-paste --watch` processes; primary selection is not recorded. The picker shows
+`wl-paste --watch` processes; primary selection is not recorded. Watcher groups
+are cleaned up on reload, including active capture workers. Stalled transfers
+time out after five seconds without blocking other copies. The picker shows
 text previews and images across the row width, preserving their aspect ratio.
 `Theme.clipboardImagePreviewHeight` sets the image preview height (200px by default).
 Click selects, double-click/Enter pastes into

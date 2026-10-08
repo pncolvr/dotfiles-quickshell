@@ -10,3 +10,7 @@ Stats 1.0 stats/Stats.qml
 CpuTooltip 1.0 stats/CpuTooltip.qml
 MemoryTooltip 1.0 stats/MemoryTooltip.qml
 NetworkTooltip 1.0 stats/NetworkTooltip.qml
+StatsTooltip 1.0 stats/StatsTooltip.qml
+StatsBar 1.0 stats/StatsBar.qml
+StatsOverview 1.0 stats/StatsOverview.qml
+StatsProcessRow 1.0 stats/StatsProcessRow.qml

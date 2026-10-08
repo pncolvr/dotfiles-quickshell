@@ -1,54 +1,40 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import "../../../theme"
+import ".."
 import "../../../theme/ui" as UI
 import "../../../services"
 
 Column {
     id: root
-    width: Theme.memoryTooltipWidth
-    spacing: 6
-
-    function barColor(colors, used, total) {
-        const ratio = total > 0 ? used / total : 0
-        const i = Math.min(colors.length - 1, Math.floor(ratio * colors.length))
-        return colors[i]
-    }
-
-    UI.ColumnText {
-        horizontalAlignment: Text.AlignLeft
-        text: "memory"
-    }
-
-    Rectangle {
+    property var statsService: StatsService
+    spacing: Theme.controlSpacing
+    function size(mib) { return mib >= 1024 ? (mib / 1024).toFixed(1) + " GiB" : Math.round(mib) + " MiB" }
+    StatsBar {
         width: parent.width
-        height: 6
-        radius: 3
-        color: Theme.memoryTooltipMemFreeColor
-
-        Rectangle {
-            width: parent.width * (StatsService.memoryUsed / StatsService.memoryTotal)
-            height: parent.height
-            radius: parent.radius
-            color: root.barColor(Theme.memoryTooltipMemColors, StatsService.memoryUsed, StatsService.memoryTotal)
+        label: "RAM"
+        value: root.size(root.statsService.memoryUsed) + " / " + root.size(root.statsService.memoryTotal)
+        ratio: root.statsService.memoryTotal > 0 ? root.statsService.memoryUsed / root.statsService.memoryTotal : 0
+    }
+    Repeater {
+        model: ["Free", "Available", "Cached"]
+        Item {
+            required property string modelData
+            width: root.width
+            height: Theme.controlHeight
+            UI.ColumnText { text: parent.modelData; color: Theme.inactive }
+            UI.ColumnText {
+                anchors.right: parent.right
+                text: root.size(parent.modelData === "Free" ? root.statsService.memoryFree
+                    : parent.modelData === "Available" ? root.statsService.memoryAvailable : root.statsService.memoryCache)
+            }
         }
     }
-
-    UI.ColumnText {
-        horizontalAlignment: Text.AlignLeft
-        text: "swap"
-    }
-
-    Rectangle {
+    StatsBar {
         width: parent.width
-        height: 6
-        radius: 3
-        color: Theme.memoryTooltipSwapFreeColor
-
-        Rectangle {
-            width: parent.width * (StatsService.swapTotal > 0 ? StatsService.swapUsed / StatsService.swapTotal : 0)
-            height: parent.height
-            radius: parent.radius
-            color: root.barColor(Theme.memoryTooltipSwapColors, StatsService.swapUsed, StatsService.swapTotal)
-        }
+        label: "Swap"
+        value: root.statsService.swapTotal > 0 ? root.size(root.statsService.swapUsed) + " / " + root.size(root.statsService.swapTotal) : "Disabled"
+        ratio: root.statsService.swapTotal > 0 ? root.statsService.swapUsed / root.statsService.swapTotal : 0
+        fillColor: Theme.warning
     }
 }

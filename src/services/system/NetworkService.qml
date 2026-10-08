@@ -3,6 +3,7 @@ pragma Singleton
 import QtQml
 import Quickshell
 import Quickshell.Io
+import Quickshell.Networking
 import "../../config"
 import "../"
 
@@ -15,15 +16,25 @@ Singleton {
     readonly property real downloadSpeed: _internal.downloadSpeed
     readonly property real uploadSpeed: _internal.uploadSpeed
     readonly property var speedHistory: _internal.speedHistory
-    readonly property var connectedNetworks: _internal.connectedNetworks
+    property var devices: Networking.devices.values
+    readonly property var connectedNetworks: collectNetworks(devices, _internal._ifaceSpeeds)
     readonly property var vpnConnections: _internal.vpnConnections
-    readonly property var topProcesses: _internal.topProcesses
 
     function formatSpeed(bytesPerSec) {
         if (bytesPerSec < 1024) return `${Math.round(bytesPerSec)}B`
         if (bytesPerSec < 1048576) return `${(bytesPerSec / 1024).toFixed(1)}KB`
         if (bytesPerSec < 1073741824) return `${(bytesPerSec / 1048576).toFixed(1)}MB`
         return `${(bytesPerSec / 1073741824).toFixed(1)}GB`
+    }
+
+    function collectNetworks(devices, speeds) {
+        return devices.map(device => {
+            const connected = device.networks.values.find(network => network.connected)
+            const speed = speeds[device.name] || {}
+            return {device: device.name, name: connected?.name || device.name,
+                type: device.type === DeviceType.Wifi ? "wifi" : "ethernet", connected: device.connected,
+                downloadSpeed: speed.down || 0, uploadSpeed: speed.up || 0}
+        })
     }
 
     function splitNmcli(line) {
@@ -72,9 +83,7 @@ Singleton {
         property real downloadSpeed: 0
         property real uploadSpeed: 0
         property var speedHistory: []
-        property var connectedNetworks: []
         property var vpnConnections: []
-        property var topProcesses: []
         property var _prevNetBytes: ({})
         property real _prevNetTimestamp: 0
         property var _ifaceSpeeds: ({})
@@ -134,7 +143,7 @@ Singleton {
         running: root.active
         repeat: true
         triggeredOnStart: true
-        onTriggered: netDevProcess.running = true
+        onTriggered: netDevFile.reload()
     }
 
     Timer {
@@ -143,63 +152,21 @@ Singleton {
         repeat: true
         triggeredOnStart: true
         onTriggered: {
-            nmcliProcess.running = true
             vpnProcess.running = true
         }
     }
 
-    Timer {
-        interval: Config.networkProcessesInterval
-        running: root.active
-        repeat: true
-        triggeredOnStart: true
-        onTriggered: nethogProcess.running = true
-    }
-
-    Process {
-        id: netDevProcess
-        command: Config.networkStatsCommand
-        stdout: StdioCollector { id: netOutput; waitForEnd: true }
-        // qmllint disable signal-handler-parameters
-        onExited: (exitCode, exitStatus) => {
-            if (root.active && exitCode === 0 && exitStatus === 0) root.applyNetworkSample(netOutput.text)
-        }
-        // qmllint enable signal-handler-parameters
-    }
-
-    Process {
-        id: nmcliProcess
-        command: Config.networkConnectionsCommand
-
-        property var _pending: []
-
-        stdout: SplitParser {
-            onRead: data => {
-                const parts = root.splitNmcli(data)
-                if (parts.length < 4) return
-                const device = parts[0]
-                const name = parts[1]
-                const type = parts[2]
-                const state = parts.slice(3).join(":")
-                if (type === "loopback") return
-                const connected = state.startsWith("connected")
-                const displayName = (name && name !== "--") ? name : device
-                nmcliProcess._pending.push({ device, name: displayName, type, connected })
-            }
-        }
-        onRunningChanged: {
-            if (running) {
-                _pending = []
-                return
-            }
-            _internal.connectedNetworks = _pending.map(n => ({
-                device: n.device,
-                name: n.name,
-                type: n.type,
-                connected: n.connected,
-                downloadSpeed: (_internal._ifaceSpeeds[n.device] || {}).down || 0,
-                uploadSpeed: (_internal._ifaceSpeeds[n.device] || {}).up || 0
-            }))
+    FileView {
+        id: netDevFile
+        path: Config.statsProcRoot + "/net/dev"
+        preload: root.active
+        printErrors: false
+        onLoaded: if (root.active) {
+            const rows = text().split("\n").slice(2).map(line => {
+                const fields = line.trim().replace(":", " ").split(/\s+/)
+                return fields.length >= 17 ? fields[0] + " " + fields[1] + " " + fields[9] : ""
+            }).join("\n")
+            root.applyNetworkSample(rows)
         }
     }
 
@@ -229,32 +196,6 @@ Singleton {
                 return
             }
             _internal.vpnConnections = _pending
-        }
-    }
-
-    Process {
-        id: nethogProcess
-        command: Config.networkProcessesCommand
-
-        property var _pending: []
-
-        stdout: SplitParser {
-            onRead: data => {
-                const parts = data.trim().split("|")
-                if (parts.length < 3) return
-                nethogProcess._pending.push({
-                    program: parts[0],
-                    sent: parseInt(parts[1]),
-                    received: parseInt(parts[2])
-                })
-            }
-        }
-        onRunningChanged: {
-            if (running) {
-                _pending = []
-                return
-            }
-            _internal.topProcesses = _pending
         }
     }
 

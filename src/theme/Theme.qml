@@ -76,6 +76,7 @@ Item {
   readonly property string editIcon: "" // pen
   readonly property string refreshIcon: "" // refresh
   readonly property string retryIcon: "" // arrows-rotate
+  readonly property string chevronRightIcon: "\uf054" // chevron-right: collapsed
   readonly property string chevronDownIcon: "" // chevron-down: choices
   readonly property string playIcon: "" // play
   readonly property string pauseIcon: "\uf04c" // pause
@@ -170,14 +171,7 @@ Item {
   readonly property int twitchSuggestionMaxRows: 3
   readonly property real twitchTooltipMaxHeightRatio: 0.5
 
-  readonly property int cpuTooltipLabelWidth: 60
-  readonly property int cpuTooltipValueWidth: 40
   
-  readonly property int memoryTooltipWidth: 200
-  readonly property var memoryTooltipMemColors: [ok, warning, urgent]
-  readonly property var memoryTooltipSwapColors: [urgent]
-  readonly property color memoryTooltipMemFreeColor: empty
-  readonly property color memoryTooltipSwapFreeColor: empty
   // modules
   readonly property int moduleSpacing: 5
   readonly property int groupedModuleSpacing: 16
@@ -222,15 +216,20 @@ Item {
   readonly property int audioAppOptionRowHeight: 36
   
   // stats
-  readonly property string statsClosedIcon: ""
-  readonly property string statsOpenIcon: ""
+  readonly property string statsIcon: ""
+  readonly property int statsTooltipWidth: 420
+  readonly property real statsTooltipMaxHeightRatio: 0.6
+  readonly property int statsPidWidth: 100
+  readonly property int statsValueWidth: 80
+  readonly property int statsTrafficWidth: 78
+  readonly property int statsProcessRowHeight: 32
+  readonly property int statsChildRowHeight: 28
+  readonly property int statsProcessRowSpacing: 2
   readonly property var powerProfileIcons: ["", "", ""]
 
   // network tooltip
   readonly property string networkIcon: ""
-  readonly property int networkTooltipWidth: 220
   readonly property int networkGraphHeight: 40
-  readonly property int networkTooltipLabelWidth: 120
   readonly property color networkDownColor: active
   readonly property color networkUpColor: warning
   

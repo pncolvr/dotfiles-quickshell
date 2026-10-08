@@ -83,4 +83,75 @@ jq -cn --arg id "$id" '[$id]' | bash "$helper" prune
 [[ -f $QS_CLIPBOARD_DIRECTORY/$id && ! -f $QS_CLIPBOARD_DIRECTORY/$image_id ]]
 bash "$helper" delete "$id"
 [[ ! -f $QS_CLIPBOARD_DIRECTORY/$id ]]
+
+# A source that never closes must not hold the publication lock or block a copy.
+mkfifo "$test_dir/stalled-source"
+{ printf 'incomplete transfer'; sleep 8; } > "$test_dir/stalled-source" & stalled_writer=$!
+bash "$helper" capture text/plain < "$test_dir/stalled-source" > "$test_dir/stalled-entry" & stalled_capture=$!
+for ((attempt=0; attempt<40; attempt++)); do
+    compgen -G "$QS_CLIPBOARD_DIRECTORY/.capture.*" >/dev/null && break
+    sleep 0.025
+done
+printf 'healthy copy' | timeout 2s bash "$helper" capture text/plain > "$test_dir/healthy-entry"
+jq -e '.text == "healthy copy"' "$test_dir/healthy-entry" >/dev/null
+capture_status=0; wait "$stalled_capture" || capture_status=$?
+[[ $capture_status == 124 && ! -s $test_dir/stalled-entry ]]
+! compgen -G "$QS_CLIPBOARD_DIRECTORY/.capture.*" >/dev/null
+kill "$stalled_writer" 2>/dev/null || true
+wait "$stalled_writer" 2>/dev/null || true
+
+# Mock watchers with live child processes; no access to the desktop clipboard.
+cat > "$test_dir/bin/wl-paste" <<'MOCK'
+#!/usr/bin/env bash
+set -euo pipefail
+[[ $1 == --type && $3 == --watch ]]
+family=$2
+printf '%s\n' "$BASHPID" > "$CLIPBOARD_TEST_DIR/watcher-$family"
+sleep 30 & child=$!
+printf '%s\n' "$child" > "$CLIPBOARD_TEST_DIR/child-$family"
+wait "$child"
+MOCK
+chmod +x "$test_dir/bin/wl-paste"
+watch_pid=''
+cleanup_watch_test() {
+    [[ -z $watch_pid ]] || kill "$watch_pid" 2>/dev/null || true
+    for marker in "$test_dir"/watcher-* "$test_dir"/child-*; do
+        [[ -f $marker ]] || continue
+        kill "$(<"$marker")" 2>/dev/null || true
+    done
+    rm -rf -- "$test_dir"
+}
+trap cleanup_watch_test EXIT
+start_watch() {
+    rm -f "$test_dir"/watcher-* "$test_dir"/child-*
+    bash "$helper" watch > "$test_dir/watch-output" 2> "$test_dir/watch-errors" & watch_pid=$!
+    for ((attempt=0; attempt<80; attempt++)); do
+        [[ -s $test_dir/child-text && -s $test_dir/child-image ]] && return
+        sleep 0.025
+    done
+    printf 'Clipboard watchers did not start.\n' >&2; exit 1
+}
+assert_watchers_stopped() {
+    for ((attempt=0; attempt<100; attempt++)); do
+        alive=false
+        for marker in "$test_dir"/watcher-* "$test_dir"/child-*; do
+            state=$(ps -p "$(<"$marker")" -o stat= || true)
+            [[ -z $state || $state == Z* ]] || alive=true
+        done
+        [[ $alive == true ]] || return 0
+        sleep 0.025
+    done
+    printf 'Clipboard watcher or capture child survived shutdown.\n' >&2; exit 1
+}
+start_watch
+kill -TERM "$watch_pid"
+wait "$watch_pid"
+watch_pid=''
+assert_watchers_stopped
+start_watch
+kill -KILL "$watch_pid"
+wait "$watch_pid" 2>/dev/null || true
+watch_pid=''
+assert_watchers_stopped
+printf 'PASS: stalled clipboard transfers time out without blocking copies; watcher and child cleanup survives termination and forced reload\n'
 printf 'PASS: clipboard byte preservation, Unicode/newlines, PNG, sensitive hints, limits, private files, target validation, paste shortcuts, CopyQ import and cleanup\n'

@@ -1,5 +1,6 @@
 import QtQuick
 import Quickshell
+import Quickshell.Networking
 import "../../src/services"
 
 Scope {
@@ -9,7 +10,11 @@ Scope {
         if (!condition) { failed = true; console.error("SERVICES FAIL: " + message) }
     }
 
-    Component.onCompleted: NetworkService.active = true
+    Component.onCompleted: {
+        NetworkService.devices = [{name: "wlan0", type: DeviceType.Wifi, connected: true,
+            networks: {values: [{name: "Cafe:Home\\Office", connected: true}]}}]
+        NetworkService.active = true
+    }
     Timer {
         interval: 300
         running: true
@@ -17,7 +22,7 @@ Scope {
             NetworkService.active = false
             const network = NetworkService.connectedNetworks[0]
             root.check(network?.name === "Cafe:Home\\Office" && network.type === "wifi" && network.connected,
-                "escaped device profile fields")
+                "native connected device profile fields")
             const vpn = NetworkService.vpnConnections[0]
             root.check(vpn?.name === "Work:VPN\\Office" && vpn.type === "vpn" && vpn.active, "escaped VPN fields")
 
