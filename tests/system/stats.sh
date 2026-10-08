@@ -5,7 +5,7 @@ project_root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)
 bash "$project_root/tests/system/stats-processes.sh"
 test_dir=$(mktemp -d /tmp/quickshell-stats-test.XXXXXX)
 trap 'rm -rf -- "$test_dir"' EXIT
-tar -C "$project_root" --exclude='*.env' --exclude='hosts.json' -cf - src | tar -C "$test_dir" -xf -
+tar -C "$project_root" --exclude='*.env' --exclude='src/services/launcher/providers/*.json' -cf - src | tar -C "$test_dir" -xf -
 mkdir -m 700 "$test_dir/runtime"
 mkdir "$test_dir/data" "$test_dir/cache" "$test_dir/bin"
 cat > "$test_dir/bin/wl-copy" <<'MOCK'

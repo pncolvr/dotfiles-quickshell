@@ -3,7 +3,7 @@
 WORKSPACE=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 source "$WORKSPACE"/_common/utils.sh
 
-FILE=$(get_env_file "${BASH_SOURCE[0]:-0}")
+FILE="${BASH_SOURCE[0]%.*}.json"
 STATUS=$($ZDOTDIR/scripts/status/manager.sh --get)
 
 if [[ "$STATUS" == "work" ]]; then

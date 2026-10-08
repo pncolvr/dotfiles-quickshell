@@ -3,7 +3,7 @@
 WORKSPACE=$(echo "${BASH_SOURCE[0]:-0}" | xargs realpath | xargs dirname | xargs dirname)/_common
 source "$WORKSPACE"/utils.sh
 
-links=$(realpath $(get_env_file ${BASH_SOURCE[0]:-0}))
+links=$(realpath -- "${BASH_SOURCE[0]%.*}.json")
 selection=$("$WORKSPACE"/handle.sh "$links" )
 
 IFS=';' read action url execute_before execute_after <<< "$(jq -r '[.action, .url, .executeBefore, .executeAfter] | join(";")' <<< $selection)"

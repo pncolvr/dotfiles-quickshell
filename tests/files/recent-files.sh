@@ -7,7 +7,7 @@ trap 'rm -rf -- "$test_dir"' EXIT
 mkdir -m 700 "$test_dir/runtime"
 mkdir -p "$test_dir/data" "$test_dir/cache"
 # Folder preferences use the real repository against a private shell database.
-tar -C "$project_root" --exclude='*.env' --exclude='hosts.json' -cf - src | tar -C "$test_dir" -xf -
+tar -C "$project_root" --exclude='*.env' --exclude='src/services/launcher/providers/*.json' -cf - src | tar -C "$test_dir" -xf -
 bash "$project_root/tests/files/recent-files-helper.sh"
 bash "$project_root/tests/files/folder-files-helper.sh"
 bash "$project_root/tests/files/pinned-files-helper.sh"

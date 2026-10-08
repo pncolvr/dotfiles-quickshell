@@ -156,11 +156,11 @@ Shared browser/status helpers remain in Zsh, and URL cleaning remains in Qutebro
 Private configuration lives beside its provider and stays Git-ignored:
 
 - `_common/utils.env`: shared category settings.
-- `web/webapps.env` and `web/n8n.env`: JSON picker entries.
+- `web/webapps.json` and `web/n8n.json`: JSON picker entries.
 - `remotes/hosts.json`: VM/RDP hosts; `hosts.json.sample` documents the format.
   RDP option strings support quotes and backslash escapes; shell expressions and
   wildcards are passed literally.
-- `directories.env`: JSON directory entries.
+- `directories.json`: JSON directory entries.
 - `screenshot.env`: Bash `SCREENSHOT_FOLDER` setting.
 - `recording.env`: Bash `VIDEOS_FOLDER`, `HEADPHONES` and `MIC` settings.
 

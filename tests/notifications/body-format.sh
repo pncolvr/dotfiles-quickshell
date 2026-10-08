@@ -5,7 +5,7 @@ test_dir=$(mktemp -d /tmp/quickshell-body-format.XXXXXX)
 trap 'rm -rf -- "$test_dir"' EXIT
 mkdir -m 700 "$test_dir/runtime"
 mkdir "$test_dir/data" "$test_dir/cache"
-tar -C "$project_root" --exclude='*.env' --exclude='hosts.json' -cf - src | tar -C "$test_dir" -xf -
+tar -C "$project_root" --exclude='*.env' --exclude='src/services/launcher/providers/*.json' -cf - src | tar -C "$test_dir" -xf -
 sed -i 's/readonly property bool clipboardMonitorEnabled: true/readonly property bool clipboardMonitorEnabled: false/' "$test_dir/src/config/Config.qml"
 sed 's@"../../src@"src@g' "$project_root/tests/notifications/body-format-smoke.qml" > "$test_dir/shell.qml"
 output=$(QT_QPA_PLATFORM=offscreen QT_QUICK_BACKEND=software XDG_RUNTIME_DIR="$test_dir/runtime" \

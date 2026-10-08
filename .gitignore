@@ -7,3 +7,6 @@
 !/data/.gitkeep
 /src/services/launcher/providers/**/*.env
 /src/services/launcher/providers/remotes/hosts.json
+/src/services/launcher/providers/directories.json
+/src/services/launcher/providers/web/n8n.json
+/src/services/launcher/providers/web/webapps.json

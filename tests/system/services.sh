@@ -7,7 +7,7 @@ trap 'rm -rf -- "$test_dir"' EXIT
 fixture_directory() {
     mkdir -p "$1/data" "$1/cache"
     mkdir -m 700 "$1/runtime"
-    tar -C "$project_root" --exclude='*.env' --exclude='hosts.json' -cf - src | tar -C "$1" -xf -
+    tar -C "$project_root" --exclude='*.env' --exclude='src/services/launcher/providers/*.json' -cf - src | tar -C "$1" -xf -
 }
 override_config() {
     local directory=$1 name=$2 value=$3 line count=0

@@ -6,7 +6,7 @@ test_dir=$(mktemp -d /tmp/quickshell-providers-test.XXXXXXXX)
 trap 'rm -rf -- "$test_dir"' EXIT
 mkdir -p "$test_dir/bin" "$test_dir/home" "$test_dir/cache" "$test_dir/runtime"
 chmod 700 "$test_dir/runtime"
-tar -C "$project_root" --exclude='*.env' --exclude='hosts.json' -cf - src | tar -C "$test_dir" -xf -
+tar -C "$project_root" --exclude='*.env' --exclude='src/services/launcher/providers/*.json' -cf - src | tar -C "$test_dir" -xf -
 export HOME="$test_dir/home" ZDOTDIR="$test_dir/zsh"
 export XDG_CACHE_HOME="$test_dir/cache" XDG_RUNTIME_DIR="$test_dir/runtime"
 export QS_PICKER_CONFIG="$test_dir" QS_PICKER_TIMEOUT=4
@@ -92,17 +92,17 @@ jq -n --arg home "$HOME" '[
     {name:"Alpha", rootPath:($home + "/Alpha"), category:"work", workspaces:[], url:"https://github.com/example/alpha"},
     {name:"Beta", rootPath:($home + "/Beta"), category:"personal", workspaces:[], url:"https://github.com/example/beta"}
 ]' > "$XDG_CACHE_HOME/code_projects_${USER}.json"
-cat > "$providers/web/webapps.env" <<'JSON'
+cat > "$providers/web/webapps.json" <<'JSON'
 {"action":"output","items":[{"title":"Alpha","result":{"action":"browser","url":"https://example.test/app"}},{"title":"Beta","result":{"action":"browser","url":"https://example.test/beta"}}]}
 JSON
-cat > "$providers/web/n8n.env" <<'JSON'
+cat > "$providers/web/n8n.json" <<'JSON'
 {"action":"default","items":[{"title":"Alpha","result":"https://example.test/workflow/alpha"},{"title":"Beta","result":"https://example.test/workflow/beta"}]}
 JSON
-cp "$providers/web/n8n.env" "$XDG_CACHE_HOME/azure_${USER}"
+cp "$providers/web/n8n.json" "$XDG_CACHE_HOME/azure_${USER}"
 jq -n --arg home "$HOME" '{action:"output",items:[
     {title:"Alpha",result:{type:"directory",path:($home + "/Alpha")}},
     {title:"Beta",result:{type:"directory",path:($home + "/Beta")}}
-]}' > "$providers/directories.env"
+]}' > "$providers/directories.json"
 jq -n --arg home "$HOME" '{action:"output",items:[
     {title:"Alpha",result:($home + "/alpha.pdf")},
     {title:"Beta",result:($home + "/beta.pdf")}

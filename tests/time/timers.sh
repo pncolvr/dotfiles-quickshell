@@ -5,7 +5,7 @@ test_dir=$(mktemp -d /tmp/quickshell-timers-test.XXXXXX)
 trap 'rm -rf -- "$test_dir"' EXIT
 mkdir -m 700 "$test_dir/runtime"
 mkdir -p "$test_dir/bin" "$test_dir/data" "$test_dir/cache"
-tar -C "$project_root" --exclude='*.env' --exclude='hosts.json' -cf - src | tar -C "$test_dir" -xf -
+tar -C "$project_root" --exclude='*.env' --exclude='src/services/launcher/providers/*.json' -cf - src | tar -C "$test_dir" -xf -
 cat > "$test_dir/bin/canberra-gtk-play" <<'BASH'
 #!/usr/bin/env bash
 printf '%s\n' "$*" >> "$TIMERS_TEST_SOUND_LOG"

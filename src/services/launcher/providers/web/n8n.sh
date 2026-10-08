@@ -3,7 +3,7 @@
 WORKSPACE=$(echo "${BASH_SOURCE[0]:-0}" | xargs realpath | xargs dirname | xargs dirname)/_common
 source "$WORKSPACE"/utils.sh
 
-# on the env file:
+# n8n.json:
 # {
 #     "prompt": "",
 #     "action": "default",
@@ -29,6 +29,6 @@ source "$WORKSPACE"/utils.sh
 # const toCopy = JSON.stringify(allItems, null, 2)
 # copy(toCopy)
 
-links=$(realpath $(get_env_file ${BASH_SOURCE[0]:-0}))
+links=$(realpath -- "${BASH_SOURCE[0]%.*}.json")
 
 "$WORKSPACE"/handle.sh "$links"

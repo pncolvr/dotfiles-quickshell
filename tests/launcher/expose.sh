@@ -5,7 +5,7 @@ test_dir=$(mktemp -d /tmp/quickshell-expose-test.XXXXXX)
 trap 'rm -rf -- "$test_dir"' EXIT
 mkdir -m 700 "$test_dir/runtime"
 mkdir "$test_dir/data" "$test_dir/cache"
-tar -C "$project_root" --exclude='*.env' --exclude='hosts.json' -cf - src | tar -C "$test_dir" -xf -
+tar -C "$project_root" --exclude='*.env' --exclude='src/services/launcher/providers/*.json' -cf - src | tar -C "$test_dir" -xf -
 sed -i 's/readonly property bool clipboardMonitorEnabled: true/readonly property bool clipboardMonitorEnabled: false/' "$test_dir/src/config/Config.qml"
 # Keep fixture timing predictable while the user experiments with animation duration.
 sed -Ei 's/readonly property int exposeAnimationDuration: [0-9]+/readonly property int exposeAnimationDuration: 300/' "$test_dir/src/theme/Theme.qml"
