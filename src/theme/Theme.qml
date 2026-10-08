@@ -71,6 +71,7 @@ Item {
   readonly property string checkIcon: "" // check: saved or selected
   readonly property string deleteIcon: "" // trash-can
   readonly property string upIcon: "" // arrow-up
+  readonly property string rightIcon: "" // arrow-right
   readonly property string copyIcon: "" // copy
   readonly property string editIcon: "" // pen
   readonly property string refreshIcon: "" // refresh
@@ -115,8 +116,9 @@ Item {
   readonly property color calendarWeekendText: calendarDayText
 
   readonly property string updatesIcon: ""
-  readonly property int updatesTooltipWidth: 250
+  readonly property int updatesTooltipWidth: 320
   readonly property real updatesTooltipMaxHeightRatio: 0.5
+  readonly property color updatesUnchangedColor: "#62666b"
 
   // TOTP (Font Awesome icons)
   readonly property string totpIcon: ""

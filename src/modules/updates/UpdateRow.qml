@@ -19,7 +19,7 @@ Item {
     Row {
         id: content
         width: parent.width
-        spacing: 0
+        spacing: Theme.controlSpacing
 
         UI.ColumnText {
             id: name
@@ -35,21 +35,54 @@ Item {
             }
         }
 
-        UI.ColumnText {
+        Row {
             id: versions
-            textFormat: Text.StyledText
-            elide: Text.ElideMiddle
-            width: Math.min(implicitWidth, root.width - Math.min(name.implicitWidth, root.width * 0.4))
-            text: '<font color="' + Theme.inactive + '">' + root.escapeHtml(root._shared) + '</font>'
-                + '<font color="' + Theme.urgent + '">' + root.escapeHtml(root.diffSuffix(root.update.oldVersion, root._shared)) + '</font>'
-                + '<font color="' + Theme.active + '">' + root.escapeHtml(root.diffSuffix(root.update.newVersion, root._shared)) + '</font>'
+            spacing: Theme.controlSpacing
+            width: Math.min(oldVersion.implicitWidth + arrow.implicitWidth + newVersion.implicitWidth + spacing * 2,
+                root.width - Math.min(name.implicitWidth, root.width * 0.4) - content.spacing)
+            readonly property real availableVersionWidth: Math.max(0, width - arrow.implicitWidth - spacing * 2)
 
-            UI.HoverTooltip {
-                text: `${root.update.oldVersion} ➡ ${root.update.newVersion}`
-                cursorShape: Qt.PointingHandCursor
-                onClicked: UpdatesService.openPackage(root.update)
+            UI.ColumnText {
+                id: oldVersion
+                textFormat: Text.StyledText
+                elide: Text.ElideMiddle
+                width: Math.min(implicitWidth, Math.max(versions.availableVersionWidth / 2,
+                    versions.availableVersionWidth - newVersion.implicitWidth))
+                text: root.versionText(root.update.oldVersion, Theme.urgent)
+
+                UI.HoverTooltip {
+                    text: `Installed: ${root.update.oldVersion}`
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: UpdatesService.openPackage(root.update)
+                }
+            }
+
+            UI.IconText {
+                id: arrow
+                text: Theme.rightIcon
+                color: Theme.updatesUnchangedColor
+            }
+
+            UI.ColumnText {
+                id: newVersion
+                textFormat: Text.StyledText
+                elide: Text.ElideMiddle
+                width: Math.min(implicitWidth, Math.max(versions.availableVersionWidth / 2,
+                    versions.availableVersionWidth - oldVersion.implicitWidth))
+                text: root.versionText(root.update.newVersion, Theme.active)
+
+                UI.HoverTooltip {
+                    text: `Available: ${root.update.newVersion}`
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: UpdatesService.openPackage(root.update)
+                }
             }
         }
+    }
+
+    function versionText(version, changeColor) {
+        return '<font color="' + Theme.updatesUnchangedColor + '">' + escapeHtml(_shared) + '</font>'
+            + '<font color="' + changeColor + '">' + escapeHtml(diffSuffix(version, _shared)) + '</font>'
     }
 
     function versionParts(v) {
