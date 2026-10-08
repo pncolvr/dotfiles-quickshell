@@ -207,8 +207,7 @@ Column {
                         UI.IconText {
                             id: expand
                             anchors.right: parent.right
-                            text: Theme.chevronDownIcon
-                            rotation: day.expanded ? 180 : 0
+                            text: day.expanded ? Theme.chevronDownIcon : Theme.chevronRightIcon
                             color: day.modelData.blocks.length ? Theme.inactive : Theme.empty
                         }
                         MouseArea {
@@ -237,9 +236,14 @@ Column {
                             color: Theme.active
                         }
                     }
-                    Repeater {
-                        model: day.expanded ? day.modelData.blocks : []
-                        delegate: SessionRow { required property var modelData; block: modelData; width: day.width }
+                    Column {
+                        width: day.width
+                        visible: day.expanded
+                        spacing: Theme.statusSessionRowSpacing
+                        Repeater {
+                            model: day.expanded ? day.modelData.blocks : []
+                            delegate: SessionRow { required property var modelData; block: modelData; width: day.width }
+                        }
                     }
                 }
             }
@@ -251,7 +255,7 @@ Column {
         id: session
         required property var block
         objectName: "statusSession"
-        height: Theme.controlHeight
+        height: Theme.statusSessionRowHeight
         UI.ColumnText {
             id: times
             anchors.left: parent.left

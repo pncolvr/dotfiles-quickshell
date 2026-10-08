@@ -37,8 +37,7 @@ Column {
             UI.IconText {
                 id: arrow
                 anchors.left: parent.left
-                text: Theme.chevronDownIcon
-                rotation: root.showingUsers ? 0 : -90
+                text: root.showingUsers ? Theme.chevronDownIcon : Theme.chevronRightIcon
                 color: Theme.inactive
             }
             UI.ColumnText {

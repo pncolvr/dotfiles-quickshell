@@ -21,7 +21,7 @@ passive text and panel space use the normal pointer.
 
 Low, normal, and critical notifications are saved in SQLite until manually deleted;
 transient notifications are popup-only. Each emitter header shows
-a plain **+/-** marker, its count, and its name, followed by **Show/Hide**,
+a shared chevron (right when collapsed, down when expanded), its count, and its\nname, followed by **Show/Hide**,
 **DND blocked/allowed**, **History on/off**, and a trash button to clear history.
 These buttons show the current state; clicking toggles it. New emitters start
 with notifications shown, DND blocked, and history on. The visibility filter is **Hidden**.

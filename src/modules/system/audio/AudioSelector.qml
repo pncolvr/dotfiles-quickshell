@@ -52,8 +52,7 @@ Column {
             UI.IconText {
                 id: arrow
                 anchors.right: parent.right
-                text: Theme.chevronDownIcon
-                rotation: root.expanded ? 180 : 0
+                text: root.expanded ? Theme.chevronDownIcon : Theme.chevronRightIcon
                 color: Theme.inactive
             }
         }

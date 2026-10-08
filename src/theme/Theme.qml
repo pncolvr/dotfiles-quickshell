@@ -76,8 +76,8 @@ Item {
   readonly property string editIcon: "" // pen
   readonly property string refreshIcon: "" // refresh
   readonly property string retryIcon: "" // arrows-rotate
-  readonly property string chevronRightIcon: "\uf054" // chevron-right: collapsed
-  readonly property string chevronDownIcon: "" // chevron-down: choices
+  readonly property string chevronRightIcon: "" // chevron-right: collapsed
+  readonly property string chevronDownIcon: "" // chevron-down: expanded
   readonly property string playIcon: "" // play
   readonly property string pauseIcon: "\uf04c" // pause
 
@@ -247,11 +247,13 @@ Item {
   readonly property string statusWorkingIcon:""
   readonly property string statusPersonalIcon:""
   readonly property string statusUnknownIcon:""
+  readonly property int statusSessionRowHeight: 15
+  readonly property int statusSessionRowSpacing: 2
   readonly property int statusTooltipWidth: 420
   readonly property real statusTooltipMaxHeightRatio: 0.6
   // tray
-  readonly property string trayOpenIcon: ""
-  readonly property string trayClosedIcon: ""
+  readonly property string trayOpenIcon: chevronDownIcon
+  readonly property string trayClosedIcon: chevronRightIcon
   readonly property int trayItemWidth: 16
   readonly property int trayItemHeight: 16
   readonly property color expandedBackground: alternateBackground
@@ -279,5 +281,6 @@ Item {
   readonly property color notificationBackground: Qt.rgba(33 / 255, 34 / 255, 44 / 255, 0.95)
   readonly property color notificationBorder: "#2a2d38"
   readonly property color notificationCritical: "#d32f2f"
-  readonly property string notificationFont: "JetBrains Mono"
+  // readonly property string notificationFont: "JetBrains Mono"
+  readonly property string notificationFont: fontFamily
 }

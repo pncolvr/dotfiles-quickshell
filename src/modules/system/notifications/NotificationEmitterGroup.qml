@@ -28,13 +28,14 @@ Column {
             Layout.fillWidth: true
             Layout.minimumWidth: countLabel.implicitWidth + expandIcon.width + 16
             Layout.preferredHeight: Theme.controlHeight
-            UI.Text {
+            UI.IconText {
                 id: expandIcon
                 anchors.left: parent.left
                 visible: root.group.count > 1
                 width: visible ? 16 : 0
-                text: root.expanded ? "-" : "+"
+                text: root.expanded ? Theme.chevronDownIcon : Theme.chevronRightIcon
                 horizontalAlignment: Text.AlignHCenter
+                color: Theme.inactive
             }
             UI.Text {
                 id: countLabel
