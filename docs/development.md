@@ -202,7 +202,9 @@ clipboard database reads preserve payloads, cleanup failures can be retried,
 removed network interfaces stop contributing traffic, rates use elapsed time,
 escaped NetworkManager fields retain their names and connection states, and failed
 or malformed update reads preserve the last successful list. Update-cache checks
-cover atomic publication of populated and empty snapshots and query/write failures.
+cover repository/AUR queries, yay age suffixes, atomic publication of populated
+and empty snapshots, query/write failures, interrupted runs, locking and stale
+temporary file cleanup.
 Provider checks include recording cancellation at each picker and literal shell
 characters in RDP credentials, recording paths, and audio devices.
 

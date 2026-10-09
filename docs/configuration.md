@@ -21,8 +21,14 @@ Review these defaults when adapting the configuration:
 - Update installation opens Ghostty and runs `yay`. The refresh helper is
   `src/config/update-check.sh`. The root `config` symlink preserves the old path
   for the installed pacman hook and any existing cron jobs. When those references
-  use the new path, the compatibility link can be removed. See the helper's
-  comments for examples.
+  use the new path, the compatibility link can be removed. The helper combines
+  `checkupdates --nocolor` (pacman-contrib) with `yay -Qua --color never`, refreshing
+  repository metadata in `~/.cache/quickshell/updates.db` without sudo. Schedule
+  the helper in your user crontab; remove the old root `yay -Sy` job. Running the
+  queries alone does not publish the five-column cache used by the module.
+  Concurrent checks are locked, failed checks preserve the previous snapshot and
+  report an error, and abandoned temporary cache/error files older than an hour
+  are removed. See the helper's comments for cron and pacman hook examples.
 - The temperature command reads `/sys/class/thermal/thermal_zone1/temp`.
 - `calendarUrl` opens Google Calendar. `mixerCommand` opens `pavucontrol`.
 

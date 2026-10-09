@@ -134,6 +134,15 @@ Singleton {
     Process {
         id: refreshScriptProcess
         command: Config.updatesRefreshCommand
+        // qmllint disable signal-handler-parameters
+        onExited: (exitCode, exitStatus) => {
+            if (exitCode !== 0 || exitStatus !== 0) {
+                _internal.error = "Could not refresh available updates."
+                return
+            }
+            root.refresh()
+        }
+        // qmllint enable signal-handler-parameters
     }
 
     function refreshIfOnline() {
