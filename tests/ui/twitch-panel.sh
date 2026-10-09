@@ -74,7 +74,7 @@ wait_for() {
         sleep 0.03
     done
 }
-pointer_below_icon() {
+pointer_on_icon() {
     local state cursor
     state=$(snapshot) || return 1
     cursor=$(hyprctl cursorpos -j) || return 1
@@ -88,7 +88,7 @@ ipc twitch open
 wait_for 'IPC opens panel and focuses search' state_matches '.visible and .focused and .windowActive'
 wait_for 'keyboard focus returns to on demand after activation' state_matches '.onDemand and (.requestingFocus | not)'
 check_state '(.pinned | not) and .keyboard and .source and .screen' 'panel opens without pinning on the target screen with keyboard focus'
-wait_for 'pointer moves just below the Twitch icon' pointer_below_icon
+wait_for 'pointer moves to the center of the Twitch icon' pointer_on_icon
 ipc twitchpaneltest type alice
 check_state '.text == "alice"' 'typing goes into search'
 ipc twitchpaneltest beginAdd

@@ -38,8 +38,8 @@ Scope {
     IpcHandler {
         target: "twitchpaneltest"
         function snapshot(): string {
-            const iconBottom = twitch.mapToGlobal(twitch.width / 2, twitch.height)
-            const pointerTarget = {x: iconBottom.x, y: iconBottom.y + Theme.tooltipPaddingHeight}
+            const iconCenter = twitch.mapToGlobal(twitch.width / 2, twitch.height / 2)
+            const pointerTarget = {x: iconCenter.x, y: iconCenter.y}
             return JSON.stringify({visible: window.visible, pinned: TooltipService.pinned,
                 keyboard: TooltipService.keyboardActive, source: TooltipService.source === twitch,
                 screen: TooltipService.screen === twitch.tooltipScreen,

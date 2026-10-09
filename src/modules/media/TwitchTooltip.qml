@@ -70,7 +70,7 @@ Item {
             if (!TooltipService.keyboardActive || !searchField.activeFocus) return
             const source = TooltipService.source
             if (!source) return
-            const pos = source.mapToGlobal(source.width / 2, source.height + Theme.tooltipPaddingHeight)
+            const pos = source.mapToGlobal(source.width / 2, source.height / 2)
             Hyprland.dispatch(`hl.dsp.cursor.move({ x = ${Math.round(pos.x)}, y = ${Math.round(pos.y)} })`)
         }
     }

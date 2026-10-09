@@ -191,7 +191,7 @@ and dismissal without moving the real mouse.
 
 Run `bash tests/ui/twitch-panel.sh` on Wayland to check Twitch open IPC,
 opening without auto-pinning, search focus and typing, on-demand focus after
-activation, pointer placement below the icon, repeated opening, add cancellation,
+activation, pointer placement on the icon, repeated opening, add cancellation,
 manual pin preservation, Escape and mouse-click pin toggling. When a window was
 focused before the test, it also checks focusing that window while Twitch is
 manually pinned, then refocusing Twitch through IPC. It briefly opens an

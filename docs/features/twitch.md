@@ -25,7 +25,7 @@ channels are hidden.
 
 Hyprland's **Meta+I** calls `qs ipc call twitch open`. This opens the
 panel on the focused monitor, focuses the search input, and moves the pointer
-just below the Twitch icon, inside the panel. Repeating the shortcut refocuses
+to the center of the Twitch icon. Repeating the shortcut refocuses
 search; an open add editor is cancelled. Escape dismisses a panel opened with
 this command. Keyboard focus is requested once, then returns to the panel's usual
 on-demand behavior. The shortcut does not pin the panel: hover and typing keep it
