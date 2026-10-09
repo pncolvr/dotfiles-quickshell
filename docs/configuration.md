@@ -28,7 +28,17 @@ Review these defaults when adapting the configuration:
   queries alone does not publish the five-column cache used by the module.
   Concurrent checks are locked, failed checks preserve the previous snapshot and
   report an error, and abandoned temporary cache/error files older than an hour
-  are removed. See the helper's comments for cron and pacman hook examples.
+  are removed. If pacman's configured database or the private update database
+  has `db.lck`, the helper preserves the cache, requests `updates schedule` and
+  exits successfully. The desktop retries after `updatesScheduleDelay` (30 seconds
+  by default), including when the helper is invoked by a post-transaction hook.
+  Locks are checked again after queries and before publication. The helper uses
+  `C.UTF-8` for English package fields and Qt IPC without locale warnings.
+  See the helper's comments for cron and pacman hook examples.
+  In the installed hook's `Exec`, use `sudo -H -u pncolvr --` instead of
+  `sudo -u pncolvr -i`: `-H` sets the user's home without loading the zsh login
+  profile, which starts an SSH agent and prints `Agent pid ...`. Script comments
+  do not update `/etc/pacman.d/hooks/95-quickshell-updates.hook` automatically.
 - The temperature command reads `/sys/class/thermal/thermal_zone1/temp`.
 - `calendarUrl` opens Google Calendar. `mixerCommand` opens `pavucontrol`.
 

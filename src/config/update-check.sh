@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Refreshes the AUR/pacman update cache consumed by UpdatesService.
 set -uo pipefail
-export LC_ALL=C
+# Keep pacman fields in English while giving Qt IPC a UTF-8 locale.
+export LC_ALL=C.UTF-8
 
 # User cron (crontab -e); no root database-sync job is needed.
 # Requires pacman-contrib (checkupdates), yay and util-linux (flock).
@@ -19,7 +20,7 @@ export LC_ALL=C
 # [Action]
 # Description = Updating Quickshell package update cache...
 # When = PostTransaction
-# Exec = /usr/bin/sudo -u pncolvr -i /home/pncolvr/.config/quickshell/src/config/update-check.sh
+# Exec = /usr/bin/sudo -H -u pncolvr -- /home/pncolvr/.config/quickshell/src/config/update-check.sh
 # Depends = sudo
 
 export PATH="/usr/local/bin:/usr/bin:/bin:$PATH"
@@ -53,14 +54,30 @@ fail() {
 
 # Refresh a private database, without changing /var/lib/pacman or needing sudo.
 export CHECKUPDATES_DB="$cache_dir/updates.db"
+pacman_db="$(pacman-conf DBPath 2>"$err_file")" || fail 'could not resolve the pacman database path.'
+[[ -n "$pacman_db" ]] || fail 'could not resolve the pacman database path.'
+
+defer_if_locked() {
+    # Pacman keeps db.lck during post-transaction hooks too. Let the desktop
+    # timer retry outside that transaction; do not query or replace the cache.
+    # Check the private database before checkupdates, which removes its db.lck.
+    if [[ -e "${pacman_db%/}/db.lck" || -e "$CHECKUPDATES_DB/db.lck" ]]; then
+        qs ipc call updates schedule 9>&- 2>/dev/null || true
+        exit 0
+    fi
+}
+
+defer_if_locked
 repo_updates="$(checkupdates --nocolor 2>"$err_file")"
 repo_status=$?
+defer_if_locked
 if (( repo_status != 0 )) && ! { (( repo_status == 2 )) && [[ ! -s "$err_file" && -z "$repo_updates" ]]; }; then
     fail 'could not query repository updates.'
 fi
 
 aur_updates="$(yay -Qua --color never 2>"$err_file")"
 yay_status=$?
+defer_if_locked
 
 # Only the documented empty exit-1 response means there are no updates.
 if (( yay_status != 0 )) && ! { (( yay_status == 1 )) && [[ ! -s "$err_file" && -z "$aur_updates" ]]; }; then
@@ -99,6 +116,7 @@ else
     }
 fi
 # Publish both empty and populated snapshots with one atomic rename.
+defer_if_locked
 mv -f -- "$tmp_file" "$cache_file" || {
     fail 'could not publish the update cache.'
 }

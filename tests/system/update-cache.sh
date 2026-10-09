@@ -5,17 +5,29 @@ project_root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)
 test_dir=$(mktemp -d /tmp/quickshell-update-cache-test.XXXXXXXX)
 trap 'rm -rf -- "$test_dir"' EXIT
 mkdir -p "$test_dir/home/.cache/quickshell"
+mkdir -p "$test_dir/pacman"
 export UPDATES_TEST_DIRECTORY="$test_dir"
 export UPDATES_TEST_CACHE="$test_dir/home/.cache/quickshell/updates.cache"
 export UPDATES_TEST_PREVIOUS='old cache remains available'
+# Pacman/cron may supply a non-UTF-8 locale; the helper must override it.
+export LC_ALL=C
 
+pacman-conf() {
+    [[ $* == DBPath ]] || return 1
+    printf '%s/\n' "$UPDATES_TEST_DIRECTORY/pacman"
+}
 checkupdates() {
     [[ $* == --nocolor ]] || return 1
+    [[ $(locale charmap) == UTF-8 ]] || { printf 'Non-UTF-8 query locale\n' >&2; return 1; }
+    printf 'repo\n' >> "$UPDATES_TEST_DIRECTORY/queries"
     case $UPDATES_TEST_MODE in
         empty) return 0 ;;
         empty-exit-one|aur-only) return 2 ;;
         unexpected-exit) return 3 ;;
         query-failure) printf 'Query failed\n' >&2; return 1 ;;
+        repo-lock-race)
+            touch "$UPDATES_TEST_DIRECTORY/pacman/db.lck"
+            printf 'Cannot fetch updates\n' >&2; return 1 ;;
         partial-failure) printf 'linux 1 -> 2\n'; return 1 ;;
         signal) kill -TERM "$UPDATES_TEST_SCRIPT_PID"; return 2 ;;
         malformed) printf 'linux 1 -> 2\nbroken row\n' ;;
@@ -24,10 +36,14 @@ checkupdates() {
 }
 yay() {
     [[ $* == '-Qua --color never' ]] || return 2
+    printf 'aur\n' >> "$UPDATES_TEST_DIRECTORY/queries"
     case $UPDATES_TEST_MODE in
         age|aur-only) printf 'visual-studio-code-bin 1.140.0-2 -> 1.141.0-1 [1d]\n' ;;
         invalid-age) printf 'example 1 -> 2 [1d] unexpected\n' ;;
         aur-failure) printf 'AUR failed\n' >&2; return 1 ;;
+        aur-lock-race)
+            touch "$UPDATES_TEST_DIRECTORY/pacman/db.lck"
+            printf 'AUR failed\n' >&2; return 1 ;;
         aur-partial-failure) printf 'example 1 -> 2\n'; return 1 ;;
         empty-exit-one) return 1 ;;
     esac
@@ -35,10 +51,17 @@ yay() {
 }
 pacman() {
     [[ $* == "--dbpath $HOME/.cache/quickshell/updates.db -Si --color never "* ]] || return 1
+    printf 'metadata\n' >> "$UPDATES_TEST_DIRECTORY/queries"
+    if [[ $UPDATES_TEST_MODE == metadata-lock-race ]]; then
+        touch "$UPDATES_TEST_DIRECTORY/pacman/db.lck"
+    fi
     # Duplicate entries must retain the first repository (pacman's priority order).
     printf 'Repository : core\nName : linux\nArchitecture : x86_64_v3\n\nRepository : extra\nName : linux\nArchitecture : x86_64\n'
 }
-qs() { printf '%s\n' "$*" >> "$UPDATES_TEST_DIRECTORY/actions"; }
+qs() {
+    [[ $(locale charmap) == UTF-8 ]] || { printf 'Non-UTF-8 IPC locale\n' >&2; return 1; }
+    printf '%s\n' "$*" >> "$UPDATES_TEST_DIRECTORY/actions"
+}
 mv() {
     # Both the populated and empty cases must preserve the old file up to publication.
     [[ $(cat "$UPDATES_TEST_CACHE") == "$UPDATES_TEST_PREVIOUS" ]] || {
@@ -49,11 +72,12 @@ mv() {
     [[ $UPDATES_TEST_MODE != publish-failure ]] || return 1
     command mv "$@"
 }
-export -f checkupdates yay pacman qs mv
+export -f pacman-conf checkupdates yay pacman qs mv
 
-for mode in success age aur-only empty empty-exit-one unexpected-exit query-failure partial-failure aur-failure aur-partial-failure malformed invalid-age publish-failure signal; do
+for mode in success age aur-only empty empty-exit-one unexpected-exit query-failure partial-failure aur-failure aur-partial-failure malformed invalid-age publish-failure signal repo-lock-race aur-lock-race metadata-lock-race; do
     printf '%s\n' "$UPDATES_TEST_PREVIOUS" > "$UPDATES_TEST_CACHE"
     : > "$test_dir/actions"
+    : > "$test_dir/queries"
     status=0
     HOME="$test_dir/home" UPDATES_TEST_MODE="$mode" bash -c 'export UPDATES_TEST_SCRIPT_PID=$$; exec bash "$1"' \
         update-cache-test "$project_root/src/config/update-check.sh" 2> "$test_dir/error" || status=$?
@@ -76,6 +100,17 @@ for mode in success age aur-only empty empty-exit-one unexpected-exit query-fail
             [[ $status == 143 && $(<"$UPDATES_TEST_CACHE") == "$UPDATES_TEST_PREVIOUS" ]]
             [[ ! -s $test_dir/actions ]]
             ;;
+        *-lock-race)
+            [[ $status == 0 && ! -s $test_dir/error ]]
+            [[ $(<"$UPDATES_TEST_CACHE") == "$UPDATES_TEST_PREVIOUS" ]]
+            [[ $(<"$test_dir/actions") == 'ipc call updates schedule' ]]
+            case $mode in
+                repo-lock-race) [[ $(<"$test_dir/queries") == repo ]] ;;
+                aur-lock-race) [[ $(<"$test_dir/queries") == $'repo\naur' ]] ;;
+                metadata-lock-race) [[ $(<"$test_dir/queries") == $'repo\naur\nmetadata' ]] ;;
+            esac
+            rm "$test_dir/pacman/db.lck"
+            ;;
         *)
             [[ $status == 1 && -s $test_dir/error ]]
             [[ $(<"$UPDATES_TEST_CACHE") == "$UPDATES_TEST_PREVIOUS" ]]
@@ -85,6 +120,26 @@ for mode in success age aur-only empty empty-exit-one unexpected-exit query-fail
     esac
     [[ $(find "$test_dir/home/.cache/quickshell" -maxdepth 1 -type f | wc -l) -eq 2 ]]
 done
+
+# Existing system/private database locks defer without querying or deleting locks.
+mkdir -p "$test_dir/home/.cache/quickshell/updates.db"
+for lock_file in "$test_dir/pacman/db.lck" "$test_dir/home/.cache/quickshell/updates.db/db.lck"; do
+    printf '%s\n' "$UPDATES_TEST_PREVIOUS" > "$UPDATES_TEST_CACHE"
+    : > "$test_dir/actions"
+    : > "$test_dir/queries"
+    touch "$lock_file"
+    HOME="$test_dir/home" UPDATES_TEST_MODE=success bash "$project_root/src/config/update-check.sh" 2> "$test_dir/error"
+    [[ -f $lock_file && ! -s $test_dir/queries && ! -s $test_dir/error ]]
+    [[ $(<"$UPDATES_TEST_CACHE") == "$UPDATES_TEST_PREVIOUS" ]]
+    [[ $(<"$test_dir/actions") == 'ipc call updates schedule' ]]
+    [[ $(find "$test_dir/home/.cache/quickshell" -maxdepth 1 -type f | wc -l) -eq 2 ]]
+    rm "$lock_file"
+done
+# Once pacman releases its lock, the scheduled invocation publishes normally.
+: > "$test_dir/actions"
+HOME="$test_dir/home" UPDATES_TEST_MODE=success bash "$project_root/src/config/update-check.sh"
+[[ $(<"$UPDATES_TEST_CACHE") == 'core x86_64_v3 linux 1 2' ]]
+[[ $(<"$test_dir/actions") == $'rename\nipc call updates reload' ]]
 
 # A simultaneous invocation leaves the active writer's files and snapshot intact.
 printf '%s\n' "$UPDATES_TEST_PREVIOUS" > "$UPDATES_TEST_CACHE"
@@ -102,4 +157,4 @@ touch -d '2 hours ago' "$cache_dir/updates.cache.ABC123" "$cache_dir/updates.err
 HOME="$test_dir/home" UPDATES_TEST_MODE=query-failure bash "$project_root/src/config/update-check.sh" 2> "$test_dir/error" && exit 1
 [[ ! -e $cache_dir/updates.cache.ABC123 && ! -e $cache_dir/updates.err.ABC123 ]]
 [[ -f $cache_dir/updates.cache.recent && -f $cache_dir/updates.cache.backup-copy ]]
-printf 'PASS: repository/AUR snapshots, yay age suffixes, atomic publication, failures, signals, locking and stale-file cleanup\n'
+printf 'PASS: UTF-8 query/IPC locale, database lock deferral/retry, repository/AUR snapshots, yay age suffixes, atomic publication, failures, signals, locking and stale-file cleanup\n'
