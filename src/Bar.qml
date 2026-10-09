@@ -1,8 +1,10 @@
 import QtQuick
 import Quickshell
+import Quickshell.Wayland
 import "theme"
 import "theme/ui" as UI
 import "bar"
+import "services"
 import "modules/system/notifications"
 
 Scope {
@@ -12,6 +14,9 @@ Scope {
       id: panelWindow
       required property var modelData
       screen: modelData
+      // Keep the launcher's attachment visible above fullscreen applications.
+      WlrLayershell.layer: PickerService.visible && PickerService.layout !== "expose"
+        && PickerService.targetScreen === panelWindow.screen ? WlrLayer.Overlay : WlrLayer.Top
 
       anchors {
         top: true

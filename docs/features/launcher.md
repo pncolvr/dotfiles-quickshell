@@ -3,8 +3,10 @@
 The launcher uses the same theme, search field, buttons and scrollbar as the bar.
 Clickable rows, buttons and scrollbars show a pointing-hand cursor. It opens on
 the focused monitor, centered horizontally and attached below the bar with the
-same curved joins and shadow as tooltips. List modes and the power grid
-use `Theme.pickerWidth` (clamped on small screens). The search field stays at the same horizontal position and
+same curved joins and shadow as tooltips. List and power-grid launchers temporarily
+raise the bar on their monitor above fullscreen applications; closing restores
+the bar's normal layer. These modes use `Theme.pickerWidth` (clamped on small
+screens). The search field stays at the same horizontal position and
 height across picker modes. It keeps keyboard focus while the pointer moves, and closes
 with Escape or an outside click.
 Picker headers contain search. Prompt titles are hidden by
