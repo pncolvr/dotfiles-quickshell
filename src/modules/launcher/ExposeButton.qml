@@ -18,7 +18,6 @@ UI.TooltipArea {
     UI.IconText {
         objectName: "exposeBarIcon"
         text: Theme.exposeIcon
-        color: root.hovered ? Theme.text
-            : PickerService.visible && PickerService.layout === "expose" ? Theme.accent : Theme.inactive
+        color: Theme.text
     }
 }
