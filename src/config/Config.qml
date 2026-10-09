@@ -79,7 +79,6 @@ Item {
     readonly property int twitchUndoDuration: Timespan.fromSeconds(6)
     readonly property string twitchBaseUrl: "https://www.twitch.tv/"
 
-    readonly property string twitchOnlineFile: `${Quickshell.env("XDG_RUNTIME_DIR")}/twitch_online_${_internal.userId}`
     readonly property string twitchCli: "twitch"
     readonly property string qutebrowserSessionsDirectory: `${Quickshell.env("XDG_DATA_HOME") || `${_internal.home}/.local/share`}/qutebrowser/sessions`
     readonly property var qutebrowserSessionFiles: [

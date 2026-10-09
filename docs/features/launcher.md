@@ -204,7 +204,9 @@ Recordings are encoded directly to MP4; there is no separate conversion stage.
 Hyprland bindings call `launcher.sh provider NAME [ARGS...]`; new callers should
 use this entry point rather than reaching into the provider tree. Books and Azure
 use `--pick`; both also support `--rebuild-cache`. Qutebrowser's media shortcuts
-call `provider media TITLE URL`. Run `:config-source` in an already-running
+call `provider media TITLE URL` for direct mpv playback without a picker.
+Meta+I opens Twitch through `qs ipc call twitch open`; the live-streamer JSON
+export and combined Twitch/YouTube picker are removed. Run `:config-source` in an already-running
 Qutebrowser to refresh these bindings. Hypridle calls `provider power Lock`.
 
 Hyprland uses Super+D for applications and Super+V for clipboard history.

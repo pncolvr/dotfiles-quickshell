@@ -11,6 +11,8 @@ Singleton {
 
     readonly property bool visible: _internal.visible
     readonly property bool pinned: _internal.pinned
+    readonly property bool keyboardActive: _internal.keyboardActive
+    signal focusRequested()
     readonly property real x: _internal.x
     readonly property bool centered: _internal.centered
     readonly property Component content: _internal.content
@@ -24,6 +26,7 @@ Singleton {
         id: _internal
         property bool visible: false
         property bool pinned: false
+        property bool keyboardActive: false
         property real x: 0
         property bool centered: false
         property Component content: null
@@ -42,6 +45,7 @@ Singleton {
         if (_internal.pinned) return
         if (_internal.typingPaused && _internal.source !== (tooltipSource ?? null)) return
         if (_internal.source !== (tooltipSource ?? null) || _internal.screen !== (tooltipScreen ?? null)) {
+            _internal.keyboardActive = false
             _internal.typingPaused = false
             _internal.triggerHovered = false
             _internal.panelHovered = false
@@ -62,6 +66,7 @@ Singleton {
 
     function togglePin(xPos: real, tooltipContent: Component, tooltipSource, screenCentered, tooltipScreen) {
         if (_internal.dragging) return
+        _internal.keyboardActive = false
         if (_internal.pinned && _internal.source === tooltipSource) {
             _internal.pinned = false
             // Keep it open while the pointer is still over the clicked icon.
@@ -72,6 +77,34 @@ Singleton {
         _internal.typingPaused = false
         show(xPos, tooltipContent, tooltipSource, screenCentered, tooltipScreen)
         _internal.pinned = true
+    }
+
+    function openForKeyboard(xPos: real, tooltipContent: Component, tooltipSource, screenCentered, tooltipScreen) {
+        if (_internal.dragging) return
+        const wasManuallyPinned = _internal.pinned && _internal.source === tooltipSource
+            && _internal.screen === (tooltipScreen ?? null)
+        _internal.pinned = false
+        _internal.typingPaused = false
+        show(xPos, tooltipContent, tooltipSource, screenCentered, tooltipScreen)
+        _internal.pinned = wasManuallyPinned
+        _internal.keyboardActive = true
+        pauseDismissal()
+        focusRequested()
+    }
+
+    function dismiss() {
+        hideTimer.stop()
+        _internal.visible = false
+        _internal.pinned = false
+        _internal.keyboardActive = false
+        _internal.typingPaused = false
+        _internal.triggerHovered = false
+        _internal.panelHovered = false
+        _internal.cursorBaseline = null
+        _internal.lastLocalPointer = null
+        _internal.content = null
+        _internal.source = null
+        _internal.screen = null
     }
 
     function cancelHide() {
@@ -152,16 +185,6 @@ Singleton {
     Timer {
         id: hideTimer
         interval: Config.tooltipHideDelay
-        onTriggered: {
-            _internal.visible = false
-            _internal.typingPaused = false
-            _internal.triggerHovered = false
-            _internal.panelHovered = false
-            _internal.cursorBaseline = null
-            _internal.lastLocalPointer = null
-            _internal.content = null
-            _internal.source = null
-            _internal.screen = null
-        }
+        onTriggered: root.dismiss()
     }
 }

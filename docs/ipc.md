@@ -11,6 +11,7 @@ qs ipc call windows next
 qs ipc call windows prev
 qs ipc call windows reload
 qs ipc call windows focus 0      # grouped window index
+qs ipc call twitch open          # open panel, focus search and move pointer
 qs ipc call twitch reload
 qs ipc call twitch addUser streamer_login
 qs ipc call twitch removeUser streamer_login

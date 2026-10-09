@@ -29,8 +29,8 @@ directly by QML. A changed profile-image URL refreshes the cached image; failed
 downloads retain the previous one. Removing a streamer deletes its schedule and
 avatar too. Schema version 4 adds `twitch_notified_streams`, with only one stream ID
 per followed streamer, plus its latest online/offline flag. New live alerts replace
-that ID; removing a streamer deletes it, and Undo restores it. The picker JSON
-remains a runtime export.
+that ID; removing a streamer deletes it, and Undo restores it. The panel reads the
+service directly; no automatic picker JSON file is written.
 
 ## Notification history
 

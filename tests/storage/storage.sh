@@ -116,6 +116,7 @@ for phase in seed restart avatar-failure avatar-update empty empty-restart live-
         exit 1
     }
     printf '%s\n' "$output"
+    [[ ! -e $XDG_RUNTIME_DIR/twitch_online_$(id -u) ]]
     [[ $output == *"PASS: storage $phase"* && $output != *'STORAGE FAIL:'* \
         && $output != *'Failed to load configuration'* && $output != *'Binding loop detected'* \
         && $output != *'TypeError:'* && $output != *'ReferenceError:'* ]]

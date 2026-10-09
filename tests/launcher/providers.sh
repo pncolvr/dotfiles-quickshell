@@ -49,9 +49,8 @@ BASH
 cat > "$test_dir/bin/action" <<'BASH'
 #!/usr/bin/env bash
 name=${0##*/}
-printf '%s' "$name" >> "$PROVIDER_TEST_DIR/actions"
-printf ' <%s>' "$@" >> "$PROVIDER_TEST_DIR/actions"
-printf '\n' >> "$PROVIDER_TEST_DIR/actions"
+printf -v action_args ' <%s>' "$@"
+printf '%s%s\n' "$name" "$action_args" >> "$PROVIDER_TEST_DIR/actions"
 case $name in
     hyprctl)
         case ${1:-} in
@@ -155,9 +154,6 @@ cat > "$providers/remotes/hosts.json" <<'JSON'
 JSON
 printf 'SCREENSHOT_FOLDER=%q\n' "$HOME/Pictures" > "$providers/screenshot.env"
 printf 'VIDEOS_FOLDER=%q\n' "$HOME/Videos" > "$providers/recording.env"
-cat > "$XDG_RUNTIME_DIR/twitch_online_$(id -u)" <<'JSON'
-{"action":"output","items":[{"title":"Alpha","result":"https://youtube.com/watch?v=alpha"},{"title":"Beta","result":"https://youtube.com/watch?v=beta"}]}
-JSON
 expect_action() {
     local expected=$1
     for ((attempt=0;attempt<50;attempt++)); do
@@ -188,7 +184,6 @@ expect_action 'sdl-freerdp3'
 run_provider bookmarks 'browser <https://example.test/alpha>'
 run_provider books "zathura <$HOME/alpha.pdf>" --pick
 run_provider directories "xdg-open <$HOME/Alpha>"
-run_provider media 'mpv <--force-window=immediate> <--wayland-app-id=mpv-youtube> <https://youtube.com/watch?v=alpha>'
 run_provider power 'loginctl <lock-session>'
 run_provider screenshot 'hyprshot <--freeze> <--silent> <--clipboard-only> <--raw> <--mode> <output>'
 run_provider recording 'wf-recorder <'
@@ -200,6 +195,10 @@ jq -se 'length == 4' "$test_dir/menus" >/dev/null
 : > "$test_dir/actions"; : > "$test_dir/menus"
 bash "$picker" provider media 'Video title' 'https://youtube.com/watch?v=direct' > "$test_dir/output" 2> "$test_dir/error"
 expect_action '<https://youtube.com/watch?v=direct>'
+[[ ! -s $test_dir/menus ]]
+if bash "$picker" provider media > "$test_dir/output" 2> "$test_dir/error"; then exit 1; fi
+rg -Fq 'qs ipc call twitch open' "$test_dir/error"
+[[ ! -s $test_dir/menus ]]
 bash "$picker" provider power Lock
 bash "$picker" provider screenshot ocr >/dev/null
 bash "$picker" provider screenshot qrcode >/dev/null
@@ -212,8 +211,8 @@ expect_action 'pkill <-SIGINT> <-x> <wf-recorder>'
 [[ ! -s $test_dir/menus ]]
 printf 'PASS: direct media, idle lock, OCR, QR and recording-stop calls bypass selection\n'
 
-# A cancelled browser/media request must not execute its selected action.
-for name in bookmarks media remotes power; do
+# A cancelled browser request must not execute its selected action.
+for name in bookmarks remotes power; do
     : > "$test_dir/actions"
     PROVIDER_TEST_CANCEL=1 PROVIDER_TEST_NAME="$name" bash "$picker" provider "$name" > "$test_dir/output" 2> "$test_dir/error" || true
     ! rg -q '^(browser|mpv|virsh|sdl-freerdp3|loginctl|systemctl) ' "$test_dir/actions"

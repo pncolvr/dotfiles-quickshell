@@ -21,6 +21,25 @@ the editor and search text open while other suggestions remain. **Add all (N)**
 shows how many currently displayed suggestions it will follow. Already followed
 channels are hidden.
 
+## Keyboard shortcut
+
+Hyprland's **Meta+I** calls `qs ipc call twitch open`. This opens the
+panel on the focused monitor, focuses the search input, and moves the pointer
+just below the Twitch icon, inside the panel. Repeating the shortcut refocuses
+search; an open add editor is cancelled. Escape dismisses a panel opened with
+this command. Keyboard focus is requested once, then returns to the panel's usual
+on-demand behavior. The shortcut does not pin the panel: hover and typing keep it
+open, and moving the pointer away restores normal dismissal. Click the bar icon
+to pin or unpin manually. Refocusing a manually pinned panel preserves its pin.
+
+The old streamer launcher and its automatic `twitch_online_<uid>` JSON export
+are removed. qutebrowser's `,mm` (current page) and `,mM` (hinted link) still call
+`launcher.sh provider media TITLE URL` for direct Twitch/YouTube playback in mpv,
+including Twitch chat. That helper uses `providers/_common/utils.sh`,
+qutebrowser's `scripts/url/_common.sh` for URL cleaning, and Zsh's
+`scripts/default-browser/default-browser.sh` to open chat; these remain in use.
+The unused `providers/media.new.sh` variant is removed.
+
 ## Search
 
 Search matches streamer logins, categories, and stream titles, temporarily expanding

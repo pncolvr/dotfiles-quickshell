@@ -3,6 +3,7 @@ pragma Singleton
 import QtQml
 import Quickshell
 import Quickshell.Io
+import Quickshell.Hyprland
 import "../../config"
 import "../"
 
@@ -23,6 +24,13 @@ Singleton {
     readonly property var browserSuggestions: {
         const followed = TwitchRepository.logins()
         return state.browserLogins.filter(login => !followed.includes(login))
+    }
+    signal panelRequested(var targetScreen)
+
+    function open() {
+        const screen = Quickshell.screens.find(screen => screen.name === Hyprland.focusedMonitor?.name)
+            ?? Quickshell.screens[0] ?? null
+        if (screen) panelRequested(screen)
     }
 
     onUsersReadyChanged: if (usersReady) Qt.callLater(root.refresh)
@@ -122,7 +130,6 @@ Singleton {
         const logins = TwitchRepository.logins()
         if (!logins.length) {
             syncUsers()
-            writeOnlineExport()
             return
         }
         state.refreshing = true
@@ -134,13 +141,6 @@ Singleton {
     function finishRefresh() {
         state.refreshing = false
         if (state.refreshAgain) Qt.callLater(root.refresh)
-    }
-
-    function writeOnlineExport() {
-        onlineFile.setText(JSON.stringify({
-            prompt: "", action: "output", allowTyped: false, allowMultipleSelection: false, sort: false,
-            items: state.onlineUsers.map(user => ({title: ` ${user.login}`, result: `${Config.twitchBaseUrl}${user.login}`}))
-        }))
     }
 
     function fetchAvatars() {
@@ -192,13 +192,6 @@ Singleton {
         scheduleProcess.running = true
     }
 
-    FileView {
-        id: onlineFile
-        path: Config.twitchOnlineFile
-        preload: false
-        printErrors: false
-    }
-
     Process {
         id: browserSessionProcess
         command: ["bash", Qt.resolvedUrl("qutebrowser-channels.sh").toString().replace("file://", ""), ...Config.qutebrowserSessionFiles]
@@ -247,7 +240,6 @@ Singleton {
                 root.syncUsers()
                 const changes = TwitchRepository.updateStreamSnapshot(state.onlineUsers)
                 if (changes) root.notifyChanges(changes)
-                root.writeOnlineExport()
                 root.fetchAvatars()
             } catch (error) {
                 console.warn("TwitchService streams response:", error)
@@ -336,7 +328,6 @@ Singleton {
         target: TwitchRepository
         function onUsersChanged() {
             root.syncUsers()
-            root.writeOnlineExport()
             root.refresh()
         }
         function onSchedulesChanged() { root.syncUsers() }
@@ -360,6 +351,7 @@ Singleton {
 
     IpcHandler {
         target: "twitch"
+        function open(): void { root.open() }
         function reload(): void { root.reload() }
         function addUser(login: string): bool { return root.addUser(login) }
         function removeUser(login: string): bool { return root.removeUser(login) }
