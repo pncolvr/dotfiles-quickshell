@@ -41,7 +41,6 @@ Item {
     HoverHandler {
         id: hover
         enabled: !root.dropAccepted
-        cursorShape: root.dragging ? Qt.ClosedHandCursor : Qt.PointingHandCursor
         onHoveredChanged: if (hovered) root.hovered()
     }
     Rectangle {
@@ -108,6 +107,8 @@ Item {
         id: mouse
         anchors.fill: parent
         enabled: !root.dropAccepted
+        hoverEnabled: true
+        cursorShape: root.dragging ? Qt.ClosedHandCursor : Qt.PointingHandCursor
         drag.target: body
         drag.smoothed: false
         onPressed: {

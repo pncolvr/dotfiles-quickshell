@@ -122,7 +122,7 @@ Singleton {
                 if (!spatial) return a.focusHistoryID - b.focusHistoryID
                 const workspaceOrder = a.workspace.id - b.workspace.id
                 if (workspaceOrder) return workspaceOrder
-                if (Config.specialWorkspaces.includes(a.workspace.id) || a.grouped?.includes(b.address)) {
+                if (a.grouped?.includes(b.address) || b.grouped?.includes(a.address)) {
                     return WindowService.getDisplayTitle(a.workspace.id, a.title || a.class, a.class)
                         .localeCompare(WindowService.getDisplayTitle(b.workspace.id, b.title || b.class, b.class))
                         || a.address.localeCompare(b.address)

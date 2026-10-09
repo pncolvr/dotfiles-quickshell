@@ -144,7 +144,8 @@ PanelWindow {
         color: Theme.background
         clip: true
         // Blend capture startup while the whole overview zooms out from its target.
-        opacity: !root.requested && root.picker.exposeCloseTarget
+        // Keep workspace closing visible until its miniature reaches desktop size.
+        opacity: !root.requested && (root.picker.exposeCloseTarget || root.zoomTarget === "workspace")
             ? 1 : Math.min(1, root.transitionProgress * 5)
         Image {
             anchors.fill: parent
@@ -176,6 +177,8 @@ PanelWindow {
                     picker: root.picker
                     transitionProgress: root.transitionProgress
                     animationsEnabled: root.animationsEnabled
+                    desktopGeometry: Qt.rect(root.monitorOrigin.x + root.desktopRect.x,
+                        root.monitorOrigin.y + root.desktopRect.y, root.desktopRect.width, root.desktopRect.height)
                     captureAddress: root.zoomTarget === "window" ? root.transitionAddress : ""
                 }
             }

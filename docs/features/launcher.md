@@ -38,15 +38,22 @@ windows and falls back to all windows if fewer than two are available.
 ## Exposé overview
 
 **Meta+Shift+E** toggles a fullscreen overview on the focused monitor, starting
-with the current workspace and the focused window preselected. The centered workspace strip shows large icons with
+with the current workspace and the focused window preselected. The Exposé grid
+button after audio in the bar's right modules opens the same overview.
+The centered workspace strip shows large icons with
 workspace names below. Tiles and icons scale down on smaller screens. Search
 is centered above the workspace strip.
-Window cards retain each window's original proportions and relative size,
-packing wide and narrow windows together. A single window uses the largest
+Ordinary workspace views follow the desktop's window layout, preserving which
+windows sit beside or above each other and scaling them together to fill the
+available space. Captions and gaps stay clear without overlapping previews.
+Views with floating windows or grouped application tabs, and the All view, use
+the packed card layout. Window cards retain their original proportions and
+relative size. A single window uses the largest
 size that fits the preview area. Opaque rectangular title boxes sit above the previews. Click a workspace to see its windows, or press **Ctrl+A** to show
 every workspace. The All view orders windows by workspace, then top to bottom
-and left to right within each workspace. Grouped workspaces use the same
-alphabetical display-name order as the bar. `launcher.sh expose` also starts with the current workspace;
+and left to right within each workspace, including special workspaces.
+Tabs in the same window group use alphabetical display-name order.
+`launcher.sh expose` also starts with the current workspace;
 `launcher.sh expose all` opens all windows directly.
 Empty workspaces remain available as drop targets. `Config.exposeWorkspaceIds`
 provides the default numbered workspaces (1–10); other existing numbered
@@ -58,9 +65,10 @@ workspaces are added automatically.
 workspace without following it or closing Exposé. Search text stays in place.
 
 Type to filter window titles and applications. Hovering selects a window card;
-arrow keys navigate the grid;
+arrow keys select windows in their displayed direction;
 Enter or a click focuses the selected window. Escape or a background click
-closes the overview. Opening zooms the whole view out from the focused window's
+closes the overview, as does the round close button in the upper-right corner.
+Opening zooms the whole view out from the focused window's
 preview; selecting a window zooms its preview up to fit the usable desktop, then focuses
 it after the overlay disappears. Escape and the Exposé keybind return to the
 starting window, or zoom into its workspace miniature if that window is hidden by
@@ -101,7 +109,8 @@ Qt Quick layer with smooth mipmap filtering to reduce aliasing in miniatures.
 The animation respects the monitor's reserved margins, including the bar, and
 fits previews without cropping their content.
 Closing onto a window away from the desktop's center zooms into its workspace
-layout.
+layout. Workspace zooms target the fitted usable desktop inside the miniature,
+excluding preview padding, and remain opaque until the layout reaches full size.
 Applications can still suspend drawing themselves. Each changed window source
 gets a fresh capture view. Windows without an available capture use their app
 icon. After the closing animation, the overview destroys its preview grid and stops capture.

@@ -18,6 +18,24 @@ Scope {
             focusHistoryID: index
         }))
     }
+    function checkWorkspaceOrder() {
+        const windows = [
+            {address: "0x3", title: "Cache", class: "com.mitchellh.ghostty", at: [1283, 738], size: [1275, 700], focusHistoryID: 0},
+            {address: "0x2", title: "Files", class: "pcmanfm-qt", at: [1283, 32], size: [1275, 700], focusHistoryID: 1},
+            {address: "0x1", title: "Theme.qml", class: "com.microsoft.VSCode", at: [2, 32], size: [1275, 1406], focusHistoryID: 2}
+        ].map(client => Object.assign({}, client, {mapped: true, workspace: {id: 4, name: "4"}, grouped: [client.address]}))
+        root.windowSource.allWindows = windows
+        const order = PickerService.windowItems("all", true).map(entry => entry.client.class)
+        root.check(order.join(",") === "com.microsoft.VSCode,pcmanfm-qt,com.mitchellh.ghostty",
+            "special workspace follows desktop order: Code left, file manager top right, terminal bottom right")
+        root.check(PickerService.windowItems("all")[0].id === "0x3",
+            "regular window picker retains focus-history order")
+        root.windowSource.allWindows = windows.slice(0, 2).map(client => Object.assign({}, client, {
+            at: [1283, 32], grouped: ["0x2", "0x3"]
+        }))
+        root.check(PickerService.windowItems("all", true).map(entry => entry.id).join(",") === "0x3,0x2",
+            "tabs sharing a window group retain alphabetical display-name order")
+    }
     Timer {
         interval: 100
         running: true
@@ -69,8 +87,9 @@ Scope {
                 PickerService.moveExposeWindow("0x2", 1)
                 PickerService.close()
                 root.check(!Object.keys(PickerService.exposePendingMoves).length, "closing clears pending moves")
+                root.checkWorkspaceOrder()
                 console.log(root.failed ? "EXPOSE FAIL: move synchronization"
-                    : "PASS: Exposé stale snapshots, confirmed moves, timeout recovery, multiple moves and closed windows")
+                    : "PASS: Exposé spatial ordering, grouped tabs, stale snapshots, confirmed moves, timeout recovery, multiple moves and closed windows")
                 stop()
                 Qt.quit()
             }

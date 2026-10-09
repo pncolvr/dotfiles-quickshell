@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtTest as Test
 import Quickshell
 import Quickshell.Wayland
 import "../../src/modules/launcher"
@@ -11,7 +12,16 @@ Scope {
     property bool failed: false
     property bool openingIntermediate: false
     property bool openingZoomed: false
+    property bool offCenterPlacementChecked: false
+    property bool cancellationZoomCompleted: false
     function check(ok, message) { if (!ok) { failed = true; console.error("EXPOSE FAIL:", message) } }
+    function checkWorkspaceFillsDesktop() {
+        root.check(Math.abs(window.zoomRect.width * window.zoomFactor - window.desktopRect.width) < 1
+            && Math.abs(window.zoomRect.height * window.zoomFactor - window.desktopRect.height) < 1,
+            "workspace zoom fills both dimensions of the usable desktop without preview padding")
+        root.check(window.previewItem.opacity === 1, "workspace closing stays opaque until the zoom finishes")
+    }
+    Test.TestCase { id: objects; when: false }
     QtObject {
         id: picker
         property bool visible: false
@@ -51,6 +61,33 @@ Scope {
             if (root.step <= 5 && window.requested && window.transitionProgress > 0 && window.transitionProgress < 1) {
                 root.openingIntermediate = true
                 root.openingZoomed = root.openingZoomed || (window.zoomTarget === "window" && window.zoomFactor > 1)
+            }
+            if (root.step > 22 && root.step <= 27 && !window.requested && window.zoomTarget === "workspace"
+                && window.transitionProgress > 0 && window.transitionProgress < 0.1) {
+                root.checkWorkspaceFillsDesktop()
+                root.cancellationZoomCompleted = true
+            }
+            if (root.step > 32 && !window.requested && window.zoomTarget === "workspace"
+                && window.transitionProgress > 0 && window.transitionProgress < 0.1 && !root.offCenterPlacementChecked) {
+                // Observe the rendered geometry after camera and miniature bindings have updated.
+                Qt.callLater(() => {
+                    const preview = objects.findChild(window.previewItem, "exposeWorkspaceWindow-0x1") as WindowPreview
+                    const camera = objects.findChild(window.previewItem, "exposeCamera") as Item
+                    if (!preview || !camera) return
+                    const position = preview.mapToItem(camera, 0, 0)
+                    const finalX = window.desktopRect.x + window.desktopRect.width / 2
+                        + (position.x - window.zoomRect.x - window.zoomRect.width / 2) * window.zoomFactor
+                    const finalY = window.desktopRect.y + window.desktopRect.height / 2
+                        + (position.y - window.zoomRect.y - window.zoomRect.height / 2) * window.zoomFactor
+                    const client = picker.items.find(entry => entry.id === "0x1").client
+                    root.check(Math.abs(finalX - client.at[0] + window.monitorOrigin.x) < 1
+                        && Math.abs(finalY - client.at[1] + window.monitorOrigin.y) < 1
+                        && Math.abs(preview.width * window.zoomFactor - client.size[0]) < 1
+                        && Math.abs(preview.height * window.zoomFactor - client.size[1]) < 1,
+                        "workspace zoom lands the off-center window at its actual desktop position and size")
+                    root.checkWorkspaceFillsDesktop()
+                    root.offCenterPlacementChecked = true
+                })
             }
         }
     }
@@ -123,6 +160,7 @@ Scope {
                 root.check(window.zoomRect.width > 0 && window.zoomRect.height > 0,
                     "the workspace miniature is available as a zoom target")
             } else if (root.step === 23) {
+                root.checkWorkspaceFillsDesktop()
                 root.check(window.cameraScale > 1, "workspace cancellation zooms the whole scene toward the tile")
                 const camera = window.previewItem.children.find(child => child.objectName === "exposeCamera") as Item
                 const center = camera.mapToItem(window.previewItem,
@@ -134,6 +172,7 @@ Scope {
                 root.check(Math.abs(center.x - expectedX) < 1 && Math.abs(center.y - expectedY) < 1,
                     "camera moves the zoom target toward the usable desktop center below the bar")
             } else if (root.step === 27) {
+                root.check(root.cancellationZoomCompleted, "workspace cancellation remains visible through the end of its zoom")
                 root.check(!window.visible && picker.focusedAddress === "0x1",
                     "cancellation returns to the original desktop without selecting the other workspace's window")
                 picker.exposeWorkspace = 1
@@ -157,7 +196,9 @@ Scope {
                 picker.visible = false
                 root.check(window.zoomTarget === "workspace" && window.transitionWorkspace === 1 && window.zoomFactor > 1,
                     "accepting an off-center window zooms into its workspace layout")
+                root.checkWorkspaceFillsDesktop()
             } else if (root.step === 37) {
+                root.check(root.offCenterPlacementChecked, "off-center workspace zoom reaches its final desktop geometry")
                 root.check(!window.visible && picker.focusedAddress === "0x1",
                     "workspace zoom still activates the selected off-center window after closing")
                 console.log(root.failed ? "EXPOSE FAIL: animation" : "PASS: Exposé zooming, centered/off-center destinations, monitor origins, workspace cancellation, focus release and screen-sharing suppression")

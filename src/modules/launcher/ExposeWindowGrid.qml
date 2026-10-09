@@ -33,6 +33,8 @@ Flickable {
     readonly property int columns: arrangement.columns
     readonly property var arrangement: {
         if (!layoutCount || width <= 0 || height <= 0) return {columns: 1, cards: [], byId: {}, height: 0}
+        const desktop = desktopArrangement()
+        if (desktop) return desktop
         const spacing = Theme.exposeSpacing
         const horizontalPadding = Theme.controlSpacing * 2
         const verticalPadding = Theme.controlHeight + Theme.controlSpacing + 1
@@ -81,6 +83,79 @@ Flickable {
         layoutEntries.forEach((entry, index) => byId[entry.id] = cards[index])
         return {columns: best.columns, cards: arrangedEntries.map(entry => byId[entry.id] ?? null), byId,
             height: Math.max(0, y - spacing)}
+    }
+    function desktopArrangement() {
+        if (picker.exposeWorkspace === 0) return null
+        const windows = layoutEntries.map(entry => ({id: entry.id, client: entry.client,
+            x: entry.client?.at?.[0], y: entry.client?.at?.[1],
+            width: entry.client?.size?.[0], height: entry.client?.size?.[1]}))
+        if (windows.some(window => window.client?.floating || (window.client?.grouped?.length ?? 0) > 1
+            || !Number.isFinite(window.x) || !Number.isFinite(window.y)
+            || !Number.isFinite(window.width) || !Number.isFinite(window.height)
+            || !(window.width > 0) || !(window.height > 0))) return null
+        // Coincident captures (such as grouped tabs) need the packed layout to remain accessible.
+        for (let index = 0; index < windows.length; index++) {
+            const first = windows[index]
+            if (windows.slice(index + 1).some(second => first.x < second.x + second.width
+                && second.x < first.x + first.width && first.y < second.y + second.height
+                && second.y < first.y + first.height)) return null
+        }
+        const horizontalPadding = Theme.controlSpacing * 2
+        const verticalPadding = Theme.controlHeight + Theme.controlSpacing + 1
+        const spacing = Theme.exposeSpacing
+        const horizontal = [...windows].sort((a, b) => a.x - b.x)
+        const vertical = [...windows].sort((a, b) => a.y - b.y)
+        const leftOf = {}
+        const above = {}
+        windows.forEach(window => {
+            leftOf[window.id] = windows.filter(other => other.x + other.width <= window.x)
+            above[window.id] = windows.filter(other => other.y + other.height <= window.y)
+        })
+        function layout(scale) {
+            const byId = {}
+            windows.forEach(window => byId[window.id] = {x: 0, y: 0,
+                width: window.width * scale + horizontalPadding,
+                height: window.height * scale + verticalPadding})
+            // Preserve desktop relationships while replacing its gaps with room for card captions.
+            horizontal.forEach(window => {
+                for (const other of leftOf[window.id]) {
+                    byId[window.id].x = Math.max(byId[window.id].x,
+                        byId[other.id].x + byId[other.id].width + spacing)
+                }
+            })
+            vertical.forEach(window => {
+                for (const other of above[window.id]) {
+                    byId[window.id].y = Math.max(byId[window.id].y,
+                        byId[other.id].y + byId[other.id].height + spacing)
+                }
+            })
+            return {byId, width: Math.max(...windows.map(window => byId[window.id].x + byId[window.id].width)),
+                height: Math.max(...windows.map(window => byId[window.id].y + byId[window.id].height))}
+        }
+        if (layout(0).width > width) return null
+        function fitScale(fitHeight) {
+            let low = 0
+            let high = width / Math.max(...windows.map(window => window.width))
+            for (let iteration = 0; iteration < 24; iteration++) {
+                const middle = (low + high) / 2
+                const candidate = layout(middle)
+                if (candidate.width <= root.width && (!fitHeight || candidate.height <= root.height)) low = middle
+                else high = middle
+            }
+            return low
+        }
+        const minimumScale = windows.length > 1 ? Theme.exposeCardMinWidth / Math.max(...windows.map(window => window.width)) : 0
+        const result = layout(Math.min(fitScale(false), Math.max(fitScale(true), minimumScale)))
+        const offset = Math.max(0, (width - result.width) / 2)
+        const rows = [...new Set(windows.map(window => result.byId[window.id].y))].sort((a, b) => a - b)
+        const columns = new Set(windows.map(window => result.byId[window.id].x)).size
+        windows.forEach(window => {
+            const card = result.byId[window.id]
+            card.row = rows.indexOf(card.y)
+            card.x += offset
+        })
+        return {spatial: true, columns, byId: result.byId,
+            cards: arrangedEntries.map(entry => result.byId[entry.id] ?? null), height: result.height}
     }
     function itemAtIndex(index) { return cards.itemAt(index) }
     function synchronizeWindows() {
@@ -148,7 +223,39 @@ Flickable {
     }
     // Preserve cards by window address so layout changes can animate existing previews.
     ListModel { id: windowModel; dynamicRoles: true }
+    function moveHorizontal(direction) {
+        if (arrangement.spatial) moveSpatial(direction, 0)
+        else picker.move(direction)
+    }
+    function moveSpatial(horizontal, vertical) {
+        const current = arrangement.cards[currentIndex]
+        if (!current) return
+        const centerX = current.x + current.width / 2
+        const centerY = current.y + current.height / 2
+        let next = currentIndex
+        let best = [Infinity, Infinity, Infinity]
+        arrangement.cards.forEach((card, index) => {
+            if (!card || index === currentIndex) return
+            const dx = card.x + card.width / 2 - centerX
+            const dy = card.y + card.height / 2 - centerY
+            if (horizontal ? dx * horizontal <= 0 : dy * vertical <= 0) return
+            const perpendicular = horizontal
+                ? Math.max(0, card.y - centerY, centerY - card.y - card.height)
+                : Math.max(0, card.x - centerX, centerX - card.x - card.width)
+            const gap = Math.max(0, horizontal > 0 ? card.x - current.x - current.width
+                : horizontal < 0 ? current.x - card.x - card.width
+                : vertical > 0 ? card.y - current.y - current.height : current.y - card.y - card.height)
+            const score = [perpendicular, gap, dx * dx + dy * dy]
+            if (score[0] < best[0] || (score[0] === best[0] && (score[1] < best[1]
+                || (score[1] === best[1] && score[2] < best[2])))) {
+                best = score
+                next = index
+            }
+        })
+        if (next !== currentIndex) picker.select(next, false)
+    }
     function moveVertical(direction) {
+        if (arrangement.spatial) { moveSpatial(0, direction); return }
         const current = arrangement.cards[currentIndex]
         if (!current) return
         const center = current.x + current.width / 2

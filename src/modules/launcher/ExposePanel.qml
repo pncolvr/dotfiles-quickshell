@@ -9,6 +9,7 @@ FocusScope {
     property real transitionProgress: 1
     property string captureAddress: ""
     property bool animationsEnabled: true
+    property rect desktopGeometry: Qt.rect(0, 0, 0, 0)
     readonly property int workspaceCount: picker.exposeWorkspaces.length
     readonly property real workspaceSpacing: Math.min(Theme.controlSpacing, width / Math.max(1, workspaceCount * 4))
     readonly property real workspaceScale: Math.max(0, Math.min(1, width / 1920, height / 1080,
@@ -40,9 +41,12 @@ FocusScope {
         const index = picker.exposeWorkspaces.findIndex(entry => entry.id === workspace)
         const tile = strip.itemAtIndex(index) as WorkspacePreview
         if (!tile) return null
+        // Settle the miniature before the camera uses it as the desktop destination.
+        tile.finishPreviewTransition()
         const preview = tile.previewItem
-        const point = preview.mapToItem(root, 0, 0)
-        return Qt.rect(point.x, point.y, preview.width, preview.height)
+        const rect = tile.previewRect
+        const point = preview.mapToItem(root, rect.x, rect.y)
+        return Qt.rect(point.x, point.y, rect.width, rect.height)
     }
 
     Component.onCompleted: Qt.callLater(root.focusSearch)
@@ -73,8 +77,8 @@ FocusScope {
         }
         switch (event.key) {
             case Qt.Key_Escape: root.picker.close(); break
-            case Qt.Key_Left: root.picker.move(-1); break
-            case Qt.Key_Right: root.picker.move(1); break
+            case Qt.Key_Left: grid.moveHorizontal(-1); break
+            case Qt.Key_Right: grid.moveHorizontal(1); break
             case Qt.Key_Up: grid.moveVertical(-1); break
             case Qt.Key_Down: grid.moveVertical(1); break
             case Qt.Key_Return:
@@ -106,7 +110,8 @@ FocusScope {
                 workspace: modelData
                 picker: root.picker
                 sizeScale: root.workspaceScale
-                animationsEnabled: root.animationsEnabled
+                animationsEnabled: root.animationsEnabled && root.transitionProgress === 1
+                desktopGeometry: root.desktopGeometry
                 width: root.workspaceWidth
                 height: strip.height
                 current: root.picker.exposeWorkspace === modelData.id
@@ -133,6 +138,26 @@ FocusScope {
             Keys.forwardTo: [root]
         }
     }
+    UI.ActionButton {
+        id: closeButton
+        objectName: "exposeClose"
+        anchors.right: parent.right
+        anchors.top: parent.top
+        width: Theme.controlHeight
+        height: width
+        glyph: Theme.cancelIcon
+        foreground: hovered || down ? Theme.text : Theme.accent
+        hint: "Close Exposé"
+        background: Rectangle {
+            radius: width / 2
+            antialiasing: true
+            color: closeButton.down ? Qt.darker(Theme.notificationCritical, 1.2)
+                : closeButton.hovered ? Theme.notificationCritical : Theme.alternateBackground
+            border.width: closeButton.activeFocus ? 1 : 0
+            border.color: Theme.accent
+        }
+        onClicked: root.picker.close()
+    }
     ExposeWindowGrid {
         id: grid
         objectName: "exposeWindows"
@@ -155,9 +180,11 @@ FocusScope {
         id: footer
         anchors.bottom: parent.bottom
         width: parent.width
-        text: root.picker.filteredItems.length + " windows · Arrows to select · Enter to focus · Drag to a workspace"
+        text: root.picker.filteredItems.length + " windows · Type to search · Arrows select · Enter focus · Esc close"
+            + " · Ctrl+A all/current · Ctrl+1–0 workspace · Ctrl+Shift+1–0 move (0 = 10)"
+            + " · Meta+Shift+E toggle · Drag to a workspace"
         color: Theme.inactive
-        elide: Text.ElideRight
+        wrapMode: Text.WordWrap
     }
     Item { id: dragOverlay; anchors.fill: parent; z: 100 }
 }
