@@ -24,6 +24,7 @@ Singleton {
     property bool customAccept: false
     property string requestDirectory: ""
     property string pendingDirectory: ""
+    property string selectionKey: ""
     property string destination: ""
     property string destinationClass: ""
     property bool openingClipboard: false
@@ -116,7 +117,7 @@ Singleton {
         itemCriteria = ({})
         acceptLabel = newMode === "apps" ? "Open" : newMode === "windows" ? "Focus" : "Select"
         layout = "list"; multiple = false; allowTyped = false; customAccept = false
-        error = ""; destination = ""; destinationClass = ""
+        error = ""; destination = ""; destinationClass = ""; selectionKey = ""
         targetScreen = chooseScreen()
     }
     function show() { visible = true; opened() }
@@ -301,6 +302,8 @@ Singleton {
         if (!picked.length) return
         const item = picked[0]
         if (mode === "menu") {
+            if (Config.pickerRememberSelection && selectionKey && item.id !== "typed")
+                PreferencesRepository.setValue("launcher.selection." + selectionKey, item.result)
             reply(requestDirectory, {status: "accepted", items: picked, exitCode: custom && customAccept ? 10 : 0})
             requestDirectory = ""
             close()
@@ -398,6 +401,12 @@ Singleton {
             const rows = request.items.map((item, index) => Object.assign({}, item, {id: String(index), result: item.result ?? item.title}))
             root.items = request.sort === true ? rows.sort((a, b) => a.title.localeCompare(b.title)) : rows
             root.query = request.query || ""
+            root.selectionKey = typeof request.selectionKey === "string" ? request.selectionKey : ""
+            if (Config.pickerRememberSelection && root.selectionKey) {
+                const previous = PreferencesRepository.value("launcher.selection." + root.selectionKey, null)
+                root.currentIndex = Math.max(0, root.filteredItems.findIndex(item =>
+                    JSON.stringify(item.result) === JSON.stringify(previous)))
+            }
             root.show()
         }
         // qmllint enable signal-handler-parameters

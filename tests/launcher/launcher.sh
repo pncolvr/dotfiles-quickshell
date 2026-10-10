@@ -151,6 +151,45 @@ wait_client 0
 [[ $(<"$test_dir/result") == Tomato ]]
 printf 'PASS: JSON and dmenu use shared fuzzy search and cannot override case or matching settings\n'
 
+# Restore accepted results by identity, with independent history for each step.
+printf '%s\n' '{"selectionKey":"test.menu","allowTyped":false,"items":[{"title":"Banana","result":"banana"},{"title":"Potato","result":"potato"},{"title":"Tomato","result":"tomato"}]}' > "$test_dir/remember.json"
+bash "$picker" --json "$test_dir/remember.json" > "$test_dir/result" 2> "$test_dir/client-error" & client_pid=$!
+wait_open
+ipc call pickertest snapshot | jq -e '.currentIndex == 0' >/dev/null
+ipc call pickertest accept 2
+wait_client 0
+bash "$picker" --json "$test_dir/remember.json" > "$test_dir/result" 2> "$test_dir/client-error" & client_pid=$!
+wait_open
+ipc call pickertest snapshot | jq -e '.currentIndex == 2 and .filtered[.currentIndex].result == "tomato" and .query == ""' >/dev/null
+ipc call pickertest pressEscape
+wait_client 1
+jq '.items = [.items[1], .items[2], .items[0]]' "$test_dir/remember.json" > "$test_dir/reordered.json"
+bash "$picker" --json "$test_dir/reordered.json" > "$test_dir/result" 2> "$test_dir/client-error" & client_pid=$!
+wait_open
+ipc call pickertest snapshot | jq -e '.currentIndex == 1 and .filtered[.currentIndex].result == "tomato"' >/dev/null
+ipc call pickertest pressEscape
+wait_client 1
+
+for project in banana potato; do
+    printf 'Open folder\nBanana\nTomato\n' | bash "$picker" --dmenu -no-custom --selection-key "projects.workspaces:$project" > "$test_dir/result" 2> "$test_dir/client-error" & client_pid=$!
+    wait_open
+    ipc call pickertest snapshot | jq -e '.currentIndex == 0 and .items[0].title == "Open folder"' >/dev/null
+    if [[ $project == banana ]]; then ipc call pickertest accept 2; else ipc call pickertest enter; fi
+    wait_client 0
+done
+printf 'Open folder\nBanana\nTomato\n' | bash "$picker" --dmenu -no-custom --selection-key projects.workspaces:banana > "$test_dir/result" 2> "$test_dir/client-error" & client_pid=$!
+wait_open
+ipc call pickertest snapshot | jq -e '.currentIndex == 2 and .items[0].title == "Open folder"' >/dev/null
+ipc call pickertest pressEscape
+wait_client 1
+jq '.items |= map(select(.result != "tomato"))' "$test_dir/remember.json" > "$test_dir/missing.json"
+bash "$picker" --json "$test_dir/missing.json" > "$test_dir/result" 2> "$test_dir/client-error" & client_pid=$!
+wait_open
+ipc call pickertest snapshot | jq -e '.currentIndex == 0' >/dev/null
+ipc call pickertest pressEscape
+wait_client 1
+printf 'PASS: remembered choices survive cancellation and row reordering, stay separate per project and fall back when removed\n'
+
 printf 'Alpha\nbeta\ngamma\n' | bash "$picker" --dmenu -multi-select -case-smart -p Test > "$test_dir/result" 2> "$test_dir/client-error" & client_pid=$!
 wait_open
 ipc call pickertest select 0
@@ -348,6 +387,12 @@ export PICKER_TEST_PHASE=restart
 # Pins remain durable even if limits are reduced below their combined size.
 sed -Ei 's/readonly property int clipboardMaxTotalBytes: 24/readonly property int clipboardMaxTotalBytes: 1/' "$test_dir/src/config/Config.qml"
 start
+bash "$picker" --json "$test_dir/remember.json" > "$test_dir/result" 2> "$test_dir/client-error" & client_pid=$!
+wait_open
+ipc call pickertest snapshot | jq -e '.currentIndex == 2 and .filtered[.currentIndex].result == "tomato"' >/dev/null
+ipc call pickertest pressEscape
+wait_client 1
+printf 'PASS: remembered launcher choice survives shell restart\n'
 ipc call pickertest quit
 wait "$shell_pid"; shell_pid=""
 if [[ -n $placement_display ]]; then

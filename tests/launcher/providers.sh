@@ -29,6 +29,9 @@ index=0
 case ${PROVIDER_TEST_NAME:-} in
     power|screenshot) index=1 ;;
 esac
+if [[ -n ${PROVIDER_TEST_CODE_CHOICE:-} ]] && jq -e '.selectionKey | startswith("projects.workspaces:")' "$request" >/dev/null; then
+    index=$(jq --arg title "$PROVIDER_TEST_CODE_CHOICE" '.items | map(.title) | index($title)' "$request")
+fi
 if [[ -n ${PROVIDER_TEST_AUDIO:-} ]] && jq -e 'any(.items[]; .title == "desktop")' "$request" >/dev/null; then
     index=$(jq --arg title "$PROVIDER_TEST_AUDIO" '.items | map(.title) | index($title)' "$request")
 fi
@@ -174,6 +177,22 @@ run_provider() {
     printf 'PASS: %s provider dispatch, shared helpers and selected action\n' "$name"
 }
 run_provider code "code <$HOME/Alpha> <--profile> <Work>"
+mkdir -p "$HOME/Alpha/Banana" "$HOME/Alpha/Tomato"
+jq --arg home "$HOME" 'map(if .name == "Alpha" then .workspaces = [
+    {name:"Tomato", path:($home + "/Alpha/Tomato")},
+    {name:"Banana", path:($home + "/Alpha/Banana")}
+] else . end)' "$XDG_CACHE_HOME/code_projects_${USER}.json" > "$test_dir/projects.json"
+cp "$test_dir/projects.json" "$XDG_CACHE_HOME/code_projects_${USER}.json"
+run_provider code "code <$HOME/Alpha> <--profile> <Work>"
+jq -se --arg key "projects.workspaces:$HOME/Alpha" '
+    length == 2 and .[0].selectionKey == "" and .[1].selectionKey == $key
+    and .[1].sort == false and [.[1].items[].title] == ["Open folder","Banana","Tomato"]
+' "$test_dir/menus" >/dev/null
+PROVIDER_TEST_CODE_CHOICE=Banana run_provider code "code <$HOME/Alpha/Banana>"
+: > "$test_dir/actions"; : > "$test_dir/menus"
+PROVIDER_TEST_CANCEL_TITLE='Open folder' bash "$picker" provider code > "$test_dir/output" 2> "$test_dir/error"
+[[ ! -s $test_dir/actions ]]
+printf 'PASS: project list has no remembered selection; submenus use per-project history, keep Open folder first, sort workspaces and skip actions on cancellation\n'
 run_provider webapps 'browser <https://example.test/app>'
 run_provider github 'browser <https://github.com/example/alpha>'
 expect_action 'browser <https://github.com/example/beta>'

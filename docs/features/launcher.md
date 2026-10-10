@@ -130,7 +130,7 @@ bash "$picker" --json-response options.json
 ```
 
 JSON requests accept `prompt`, `allowTyped`, `allowMultipleSelection`, `sort`,
-`customAccept`, `query`, `layout` (`list` or `grid`), and
+`customAccept`, `query`, `selectionKey`, `layout` (`list` or `grid`), and
 `items`. Each item has a `title` and a `result` (a string or JSON value), with
 optional `subtitle`, `icon`, `glyph`, and `search` strings. `icon` names a desktop
 icon; `glyph` uses the shared icon font in grid menus. `acceptLabel` optionally
@@ -138,6 +138,12 @@ names the submit action. Source indexes identify items;
 duplicate labels cannot change the selected result. `--json` prints selected
 results, one per line, and serializes objects as compact JSON. `--json-response`
 returns the entire response object. The client never executes returned content.
+
+Menus with a `selectionKey` (or dmenu `--selection-key KEY`) remember the last
+accepted result in the preferences database and highlight it when reopened.
+Remembered selections survive shell restarts and row reordering; missing results
+fall back to the first matching row. Cancellation leaves the saved choice unchanged.
+`Config.pickerRememberSelection` controls this behavior and defaults to `true`.
 
 Escape/outside click exits 1, errors/timeouts exit 2, acceptance exits 0, and
 Ctrl+Enter exits 10 when `customAccept` is enabled. Multi-selection rows toggle
@@ -190,6 +196,11 @@ adapter or PATH override is required. `_common/` holds the shared Bash helpers;
 scripts. The other providers are named `<provider>.sh`. Browser selection,
 work/personal filtering, editor profiles and cache rebuild flags are preserved.
 Shared browser/status helpers remain in Zsh, and URL cleaning remains in Qutebrowser.
+
+The project list starts at the first row and remains alphabetically ordered.
+Within each project, the launcher remembers its last folder/workspace choice.
+The submenu always puts **Open folder** first, followed by alphabetically ordered
+workspaces; remembering a choice changes the highlight without moving rows.
 
 Private configuration lives beside its provider and stays Git-ignored:
 

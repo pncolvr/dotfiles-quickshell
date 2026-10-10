@@ -72,7 +72,7 @@ if [[ -n $input_file ]]; then
 else
     shift
     prompt=""; separator=$'\n'; multi=false; allow_typed=true
-    sort_results=false; custom_accept=false; layout=list; initial_query=""
+    sort_results=false; custom_accept=false; layout=list; initial_query=""; selection_key=""
     while (($#)); do
         case $1 in
             -dmenu) ;;
@@ -87,6 +87,7 @@ else
             -kb-accept-custom) [[ -z ${2-} ]] && allow_typed=false; shift ;;
             -kb-custom-1) [[ ${2:?} == Control+Return ]] || fail 'Only Control+Return custom acceptance is supported.'; custom_accept=true; shift ;;
             -filter) initial_query=${2-}; shift ;;
+            --selection-key) selection_key=${2:?Selection key required}; shift ;;
             -theme) [[ ${2:?} == *custom-row.rasi ]] && layout=grid; shift ;;
             -markup-rows) ;;
             -eh) shift ;;
@@ -95,11 +96,11 @@ else
         esac
         shift
     done
-    jq -Rsc --arg prompt "$prompt" --arg sep "$separator" --arg query "$initial_query" --arg layout "$layout" \
+    jq -Rsc --arg prompt "$prompt" --arg sep "$separator" --arg query "$initial_query" --arg layout "$layout" --arg selectionKey "$selection_key" \
         --argjson multi "$multi" --argjson typed "$allow_typed" \
         --argjson sort "$sort_results" --argjson custom "$custom_accept" '
         {prompt:$prompt, allowMultipleSelection:$multi, allowTyped:$typed,
-         sort:$sort, customAccept:$custom, layout:$layout, query:$query,
+         sort:$sort, customAccept:$custom, layout:$layout, query:$query, selectionKey:$selectionKey,
          items: (split($sep) | if .[-1] == "" then .[:-1] else . end | to_entries |
             map({id:(.key|tostring), title:.value, result:.value}))}
     ' > "$request_dir/request.json"

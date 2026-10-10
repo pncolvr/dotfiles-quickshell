@@ -66,6 +66,7 @@ Item {
     readonly property bool pickerFuzzySearch: true
     // Only mixed-case queries are case sensitive; lowercase and uppercase ignore case.
     readonly property bool pickerSmartCase: true
+    readonly property bool pickerRememberSelection: true
     readonly property var exposeWallpaperCommand: ["awww", "query", "--json"]
     readonly property var exposeWorkspaceIds: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
     readonly property bool exposeAnimateDuringScreenShare: false

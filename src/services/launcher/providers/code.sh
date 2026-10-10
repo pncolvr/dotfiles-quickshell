@@ -6,14 +6,16 @@ source "$WORKSPACE"/utils.sh
 PROJECTS_JSON="${XDG_CACHE_HOME:-$HOME/.cache}/code_projects_${USER}.json"
 
 function pick() {
-  bash "$PICKER_LAUNCHER" --dmenu -sort -p ""
+  local selection_args=()
+  if [[ -n ${1:-} ]]; then selection_args=(--selection-key "$1"); fi
+  bash "$PICKER_LAUNCHER" --dmenu -no-custom "${selection_args[@]}" -p ""
 }
 
 function pick_path() {
   local ignored_category="$1"
   local project_name project_list
   project_list=$(get_project_names "$ignored_category")
-  project_name=$(printf "%s\n" "$project_list" | sort | tr '[:upper:]' '[:lower:]' | pick)
+  project_name=$(printf "%s\n" "$project_list" | tr '[:upper:]' '[:lower:]' | sort | pick) || return 0
   [ -z "$project_name" ] && exit 0
   grep -Fxqi "$project_name" <<< "$project_list" || exit
   local workspaces
@@ -30,7 +32,9 @@ function pick_path() {
       return
     fi
 
-    workspace_name=$(printf "%s\nOpen folder\n" "${workspace_names[@]}" | pick)
+    local project_path
+    project_path=$(get_project_path "$project_name")
+    workspace_name=$(printf "Open folder\n%s\n" "$workspace_names" | pick "projects.workspaces:$project_path") || return 0
     if [ "$workspace_name" = "Open folder" ]; then
       get_project_path "$project_name"
     else
