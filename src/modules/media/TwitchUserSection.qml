@@ -12,6 +12,7 @@ Column {
     required property int columns
     property bool expanded: true
     property bool forceExpanded: false
+    signal editRequested(string login)
     readonly property bool showingUsers: expanded || forceExpanded
     spacing: Theme.twitchTooltipSpacing
     visible: users.length > 0
@@ -65,6 +66,7 @@ Column {
                 required property var modelData
                 width: root.width
                 user: modelData
+                onEditRequested: login => root.editRequested(login)
             }
         }
     }

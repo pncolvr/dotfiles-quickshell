@@ -66,7 +66,13 @@ Scope {
         const footer = objects.findChild(panel, "twitchEditorFooter") as Item
         const height = footer.height
         begin.clicked()
-        check(panel.adding && footer.height === height, "plus opens editor without resizing footer")
+        check(panel.adding && footer.height === height, "plus opens a single-row channel editor")
+        const second = objects.findChild(panel, "twitchSecondChannelField") as UI.InputField
+        check(second?.visible && second.placeholderText === "Second channel", "second channel field is immediately available")
+        check(second.parent === field.parent && second.y === field.y && second.x >= field.x + field.width
+            && second.width === field.width && second.x + second.width <= cancel.parent.x,
+            "equally sized channel inputs share a row before cancel and submit buttons")
+        check(!objects.findChild(panel, "showTwitchFallbackField"), "no extra button to reveal second channel")
         check(cancel.x < add.x, "cancel is left of submit, as in TOTP")
         field.text = "https://www.twitch.tv/AL"
         check(panel.browserSuggestions.join() === "alice", "browser suggestions filter by typed Twitch URL")
@@ -157,7 +163,7 @@ Scope {
         check(panel.implicitHeight <= panel.maximumHeight + 1, "entire tooltip respects screen height cap")
         check(editor.width === footer.width && footer.y + footer.height <= panel.height, "add controls fill the footer and remain on screen")
         check(usersView.contentHeight > usersView.height, "large followed list scrolls within its budget")
-        check(field.placeholderText === "Login or Twitch URL", "short placeholder fits narrow editor")
+        check(field.placeholderText === "Twitch channel", "main field is distinguished from second channel")
         check(bulk.label === "Add all (2)", "bulk count matches displayed suggestions")
         field.text = "bo"
         check(bulk.label === "Add all (1)", "bulk count follows the search filter")
@@ -269,7 +275,7 @@ Scope {
                         && TwitchRepository.notifiedStreams.bob?.streamId === "bob-stream-1", "latest streams restored before offline check")
                 }
                 else if (root.phase === "restart") {
-                    root.check(DbService.schemaVersion === 6
+                    root.check(DbService.schemaVersion === 7
                         && DbService.read("SELECT login FROM twitch_notified_streams").length === 0, "v3 schema upgraded without losing existing data")
                     root.check(TimeService.showSeconds, "clock preference restored after process restart")
                     root.check(TwitchRepository.exportUsers() === "alice\nbob", "Twitch users restored after process restart")
@@ -279,7 +285,7 @@ Scope {
                 } else if (root.phase === "avatar-failure" || root.phase === "avatar-update") {
                     root.check(TwitchRepository.avatars.alice?.sourceUrl === "https://avatars.test/alice.png", "previous avatar initially available")
                 } else if (root.phase === "empty") {
-                    const remove = root.find(panel, "removeTwitchUser_alice")
+                    const remove = root.find(panel, "removeTwitchUser_alice") as UI.ActionButton
                     root.check(!!remove, "dropdown remove control exists")
                     if (!remove) return
                     remove.clicked()

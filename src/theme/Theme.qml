@@ -139,7 +139,6 @@ Item {
   readonly property real updatesTooltipMaxHeightRatio: 0.5
   readonly property color updatesUnchangedColor: "#62666b"
 
-  // TOTP (Font Awesome icons)
   readonly property string totpIcon: ""
   readonly property int totpTooltipWidth: 380
   readonly property int totpRowHeight: controlHeight
@@ -157,7 +156,6 @@ Item {
   readonly property color totpDeleteBackground: urgent
   readonly property color totpRowHoverBackground: alternateBackground
 
-  // Batteries (Font Awesome: glyphs kept visible, with their icon names)
   readonly property string batteryIcon: "" // battery-full: horizontal battery
   readonly property string batteryPlugIcon: "" // plug: connected to external power
   readonly property int batteryTooltipWidth: 340
@@ -182,7 +180,6 @@ Item {
   readonly property int twitchAvatarSize: 40
   readonly property int twitchTooltipSpacing: controlSpacing
   readonly property int twitchUserSpacing: 8
-  readonly property int twitchRemoveButtonSize: 24
   readonly property int twitchEditorHeight: controlHeight
   readonly property int twitchEditorButtonWidth: actionButtonWidth
   readonly property int twitchSuggestionMinWidth: 200

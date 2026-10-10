@@ -9,10 +9,11 @@ import "../"
 Singleton {
     id: root
 
-    readonly property var onlineUsers: state.onlineUsers
+    readonly property var entries: selectUsers(TwitchRepository.users, state.streams)
+    readonly property var onlineUsers: entries.filter(user => user.online)
     readonly property var offlineUsers: {
         TimeService.time // Reformat relative dates when the clock changes, including midnight.
-        return formatOfflineUsers(state.offlineUsers, Date.now())
+        return formatOfflineUsers(entries.filter(user => !user.online), Date.now())
     }
     readonly property var allUsers: [...onlineUsers, ...offlineUsers].sort((a, b) => a.login.localeCompare(b.login))
     readonly property bool hasOnline: onlineUsers.length > 0
@@ -21,7 +22,7 @@ Singleton {
     readonly property string error: TwitchRepository.error
     readonly property var removedUsers: TwitchRepository.removedUsers.map(entry => ({login: entry.user.login, expiresAt: entry.expiresAt}))
     readonly property var browserSuggestions: {
-        const followed = TwitchRepository.logins()
+        const followed = TwitchRepository.channelLogins()
         return state.browserLogins.filter(login => !followed.includes(login))
     }
     onUsersReadyChanged: if (usersReady) Qt.callLater(root.refresh)
@@ -29,13 +30,15 @@ Singleton {
 
     QtObject {
         id: state
-        property var onlineUsers: []
-        property var offlineUsers: []
+        property var streams: []
         property var downloadQueue: []
         property var userIds: ({})
         property var scheduleQueue: []
         property var browserLogins: []
         property var notificationQueue: []
+        property var streamQueue: []
+        property var pendingStreams: []
+        property var avatarQueue: []
         property bool available: false
         property bool refreshing: false
         property bool refreshAgain: false
@@ -70,7 +73,11 @@ Singleton {
         notifyProcess.running = true
     }
     function avatarSource(login) { return TwitchRepository.avatars[login]?.dataUrl ?? "" }
-    function addUser(login) { return usersReady && TwitchRepository.addUser(login) }
+    function addUser(login, fallback = "", linkExisting = false) { return usersReady && TwitchRepository.addUser(login, fallback, linkExisting) }
+    function updateUser(original, login, fallback = "", linkExisting = false) {
+        return usersReady && TwitchRepository.updateUser(original, login, fallback, linkExisting)
+    }
+    function fallbackEntry(login, original = "") { return TwitchRepository.fallbackEntry(login, original) }
     function removeUser(login) { return usersReady && TwitchRepository.removeUser(login) }
     function undoRemoveUser(login) { return usersReady && TwitchRepository.undoRemoveUser(login) }
     function undoAllRemovals() {
@@ -86,14 +93,22 @@ Singleton {
         if (!browserSessionProcess.running) browserSessionProcess.running = true
     }
 
+    function selectUsers(users, streams) {
+        const live = Object.create(null)
+        for (const stream of streams) live[stream.login] = stream
+        return users.map(user => {
+            const stream = live[user.login] ?? live[user.fallbackLogin]
+            const login = stream?.login ?? user.login
+            return Object.assign({}, stream ?? {}, {login, mainLogin: user.login,
+                fallbackLogin: user.fallbackLogin ?? "", usingFallback: !!stream && login !== user.login,
+                online: !!stream, avatar: avatarSource(login),
+                nextStreamAt: TwitchRepository.schedules[user.login]?.startsAt ?? null})
+        }).sort((a, b) => a.login.localeCompare(b.login))
+    }
+
     function syncUsers() {
-        const logins = TwitchRepository.logins()
-        state.onlineUsers = state.onlineUsers.filter(user => logins.includes(user.login))
-        const online = state.onlineUsers.map(user => user.login)
-        state.offlineUsers = logins.filter(login => !online.includes(login)).map(login => ({
-            login, online: false, avatar: avatarSource(login),
-            nextStreamAt: TwitchRepository.schedules[login]?.startsAt ?? null
-        }))
+        const logins = TwitchRepository.channelLogins()
+        state.streams = state.streams.filter(user => logins.includes(user.login))
     }
 
     function formatOfflineUsers(users, now) {
@@ -118,14 +133,28 @@ Singleton {
             return
         }
         state.refreshAgain = false
-        const logins = TwitchRepository.logins()
+        const logins = TwitchRepository.channelLogins()
         if (!logins.length) {
             syncUsers()
             return
         }
         state.refreshing = true
+        state.streamQueue = queryBatches(logins)
+        state.pendingStreams = []
+        fetchStreams()
+    }
+
+    function queryBatches(logins) {
+        const batches = []
+        // Helix accepts at most 100 channel logins per request.
+        for (let index = 0; index < logins.length; index += 100) batches.push(logins.slice(index, index + 100))
+        return batches
+    }
+
+    function fetchStreams() {
+        const logins = state.streamQueue.shift()
         const query = logins.map(login => `user_login=${encodeURIComponent(login)}`).join("&")
-        streamsProcess.command = [Config.twitchCli, "api", "get", `streams?${query}`]
+        streamsProcess.command = [Config.twitchCli, "api", "get", `streams?first=100&${query}`]
         streamsProcess.running = true
     }
 
@@ -135,8 +164,14 @@ Singleton {
     }
 
     function fetchAvatars() {
-        const logins = TwitchRepository.logins()
+        const logins = TwitchRepository.channelLogins()
         if (!logins.length) { finishRefresh(); return }
+        state.avatarQueue = queryBatches(logins)
+        fetchAvatarBatch()
+    }
+
+    function fetchAvatarBatch() {
+        const logins = state.avatarQueue.shift()
         const query = logins.map(login => `login=${encodeURIComponent(login)}`).join("&")
         avatarQueryProcess.command = [Config.twitchCli, "api", "get", `users?${query}`]
         avatarQueryProcess.running = true
@@ -144,7 +179,7 @@ Singleton {
 
     function processDownloadQueue() {
         if (downloadProcess.running || !state.downloadQueue.length) return
-        state.downloadQueue = state.downloadQueue.filter(item => TwitchRepository.logins().includes(item.login))
+        state.downloadQueue = state.downloadQueue.filter(item => TwitchRepository.channelLogins().includes(item.login))
         if (!state.downloadQueue.length) return
         const next = state.downloadQueue.shift()
         downloadProcess.login = next.login
@@ -161,7 +196,8 @@ Singleton {
 
     function fetchSchedules() {
         const now = Date.now()
-        state.scheduleQueue = state.offlineUsers.map(user => user.login).filter(login =>
+        const online = state.streams.map(user => user.login)
+        state.scheduleQueue = TwitchRepository.logins().filter(login => !online.includes(login)).filter(login =>
             state.userIds[login] && !scheduleIsFresh(TwitchRepository.schedules[login], now))
         processScheduleQueue()
     }
@@ -222,14 +258,15 @@ Singleton {
                 // The CLI update check can fail after a successful API response; validate the JSON itself.
                 const json = JSON.parse(streamsOutput.text)
                 if (!Array.isArray(json.data)) throw new Error("Missing streams data")
-                const logins = TwitchRepository.logins()
-                state.onlineUsers = json.data.filter(stream => logins.includes(stream.user_login.toLowerCase())).map(stream => ({
+                const logins = TwitchRepository.channelLogins()
+                state.pendingStreams = [...state.pendingStreams, ...json.data.filter(stream => logins.includes(stream.user_login.toLowerCase())).map(stream => ({
                     login: stream.user_login.toLowerCase(), streamId: String(stream.id ?? stream.started_at ?? ""),
                     online: true, viewers: stream.viewer_count,
                     title: stream.title, game: stream.game_name, avatar: root.avatarSource(stream.user_login.toLowerCase())
-                })).sort((a, b) => a.login.localeCompare(b.login))
-                root.syncUsers()
-                const changes = TwitchRepository.updateStreamSnapshot(state.onlineUsers)
+                }))]
+                if (state.streamQueue.length) { Qt.callLater(root.fetchStreams); return }
+                state.streams = state.pendingStreams.filter(stream => logins.includes(stream.login))
+                const changes = TwitchRepository.updateStreamSnapshot(state.streams)
                 if (changes) root.notifyChanges(changes)
                 root.fetchAvatars()
             } catch (error) {
@@ -258,7 +295,7 @@ Singleton {
                 try {
                     const json = JSON.parse(avatarOutput.text)
                     if (!Array.isArray(json.data)) throw new Error("Missing users data")
-                    const logins = TwitchRepository.logins()
+                    const logins = TwitchRepository.channelLogins()
                     for (const user of json.data) {
                         const login = user.login.toLowerCase()
                         if (!logins.includes(login)) continue
@@ -272,7 +309,8 @@ Singleton {
                     root.processDownloadQueue()
                 } catch (error) { console.warn("TwitchService users response:", error) }
             }
-            root.fetchSchedules()
+            if (state.avatarQueue.length) Qt.callLater(root.fetchAvatarBatch)
+            else root.fetchSchedules()
         }
         // qmllint enable signal-handler-parameters
     }
@@ -320,11 +358,6 @@ Singleton {
         function onUsersChanged() {
             root.syncUsers()
             root.refresh()
-        }
-        function onSchedulesChanged() { root.syncUsers() }
-        function onAvatarsChanged() {
-            state.onlineUsers = state.onlineUsers.map(user => Object.assign({}, user, {avatar: root.avatarSource(user.login)}))
-            root.syncUsers()
         }
     }
 

@@ -28,7 +28,8 @@ qs ipc call clipboard togglePause # pause/resume history capture
 qs ipc call clipboard importCopyq # import text/image history without changing CopyQ
 ```
 
-Twitch exports contain lowercase logins as ordinary text. New databases start
+Twitch exports contain lowercase main-channel logins as ordinary text; second channel
+associations remain in the database. New databases start
 with an empty list; there is no users-file import. See [Twitch](features/twitch.md).
 
 **Meta+I** enters a one-shot module submap. Selection, Escape, or an unassigned

@@ -25,16 +25,12 @@ cat > "$test_dir/bin/xdg-open" <<'MOCK'
 printf '%s\n' "$1" >> "$NOTIFICATION_TEST_DIR/opened-urls"
 MOCK
 chmod +x "$test_dir/bin/"*
-python3 - "$project_root" "$test_dir" <<'PY'
-import pathlib
-import sys
-project, target = map(pathlib.Path, sys.argv[1:])
-text = (project / 'tests/notifications/notification-smoke.qml').read_text()
-text = text.replace('@NATIVE_WINDOWS@', (project / 'tests/notifications/notification-wayland-smoke.qml').as_uri())
-for relative in ('services', 'modules/system/notifications'):
-    text = text.replace(f'import "../../src/{relative}"', f'import "{(project / "src" / relative).as_uri()}"')
-(target / 'config/shell.qml').write_text(text)
-PY
+while IFS= read -r line; do
+    line=${line//@NATIVE_WINDOWS@/file://$project_root/tests/notifications/notification-wayland-smoke.qml}
+    line=${line//\"..\/..\/src\/services\"/\"file://$project_root/src/services\"}
+    line=${line//\"..\/..\/src\/modules\/system\/notifications\"/\"file://$project_root/src/modules/system/notifications\"}
+    printf '%s\n' "$line"
+done < "$project_root/tests/notifications/notification-smoke.qml" > "$test_dir/config/shell.qml"
 cat > "$test_dir/bus.conf" <<'BUS'
 <!DOCTYPE busconfig PUBLIC "-//freedesktop//DTD D-Bus Bus Configuration 1.0//EN" "http://www.freedesktop.org/standards/dbus/1.0/busconfig.dtd">
 <busconfig>
@@ -58,4 +54,4 @@ if [[ ${1:-} == --wayland ]]; then
     if [[ $notification_test_display == /* ]]; then export WAYLAND_DISPLAY="$notification_test_display";
     else export WAYLAND_DISPLAY="$notification_test_runtime/$notification_test_display"; fi
 fi
-dbus-run-session --config-file "$test_dir/bus.conf" -- python3 "$project_root/tests/notifications/notifications.py"
+dbus-run-session --config-file "$test_dir/bus.conf" -- bash "$project_root/tests/notifications/protocol.sh"

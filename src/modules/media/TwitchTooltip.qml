@@ -9,19 +9,23 @@ import "../../services"
 Item {
     id: root
     property bool adding: false
+    property string editingLogin: ""
+    readonly property var linkEntry: adding
+        ? TwitchService.fallbackEntry(secondChannelField.text, editingLogin) : null
     property var users: TwitchService.allUsers
     property alias searchText: searchField.text
     readonly property string searchQuery: adding ? "" : searchField.query
     readonly property var filteredUsers: users.filter(user => !searchQuery
-        || [user.login, user.game, user.title].some(value => String(value ?? "").toLowerCase().includes(searchQuery)))
+        || [user.login, user.mainLogin, user.fallbackLogin, user.game, user.title]
+            .some(value => String(value ?? "").toLowerCase().includes(searchQuery)))
     readonly property var liveUsers: filteredUsers.filter(user => user.online).sort((a, b) => a.login.localeCompare(b.login))
     readonly property var offlineUsers: filteredUsers.filter(user => !user.online).sort((a, b) => a.login.localeCompare(b.login))
     readonly property var browserSuggestions: TwitchService.browserSuggestions.filter(login =>
         login.includes(loginField.text.trim().toLowerCase().replace(/^(?:https?:\/\/)?(?:www\.|m\.)?twitch\.tv\//, "").split(/[/?#]/)[0]))
-    readonly property bool hasSuggestions: adding && browserSuggestions.length > 0
+    readonly property bool hasSuggestions: adding && !editingLogin && !secondChannelField.text.trim() && browserSuggestions.length > 0
     readonly property bool hasUndo: TwitchService.removedUsers.length > 0
     readonly property int spacing: Theme.twitchTooltipSpacing
-    readonly property int rowWidth: Theme.twitchAvatarSize + Theme.twitchInfoWidth + Theme.twitchRemoveButtonSize + 2 * Theme.twitchUserSpacing
+    readonly property int rowWidth: Theme.twitchAvatarSize + Theme.twitchInfoWidth + 2 * Theme.actionButtonWidth + Theme.controlSpacing + 2 * Theme.twitchUserSpacing
     readonly property int widthColumns: Math.min(2, Math.max(1, users.filter(user => user.online).length,
         users.filter(user => !user.online).length), Math.max(1,
         Math.floor(((TooltipService.screen?.width ?? 1920) - 2 * Theme.tooltipPaddingWidth
@@ -49,7 +53,28 @@ Item {
         if (view) view.contentY = 0
     }
 
-    function cancelEditor() { adding = false; loginField.clear() }
+    function cancelEditor() {
+        adding = false
+        editingLogin = ""
+        loginField.clear()
+        secondChannelField.clear()
+    }
+    function editUser(login) {
+        if (adding && editingLogin === login) {
+            cancelEditor()
+            return
+        }
+        const user = TwitchService.allUsers.find(entry => (entry.mainLogin ?? entry.login) === login)
+        if (!user) return
+        cancelEditor()
+        editingLogin = login
+        loginField.text = login
+        secondChannelField.text = user.fallbackLogin ?? ""
+        adding = true
+        Qt.callLater(() => {
+            if (root.adding && root.editingLogin === login) secondChannelField.forceActiveFocus()
+        })
+    }
     function focusSearch() {
         cancelEditor()
         searchField.forceActiveFocus()
@@ -58,8 +83,12 @@ Item {
         if (TooltipService.keyboardActive) TooltipService.dismiss()
         else event.accepted = false
     }
-    function addUser() {
-        if (TwitchService.addUser(loginField.text)) cancelEditor()
+    function addUser(linkExisting = false) {
+        if (linkEntry && !linkExisting) return
+        const saved = editingLogin
+            ? TwitchService.updateUser(editingLogin, loginField.text, secondChannelField.text, linkExisting)
+            : TwitchService.addUser(loginField.text, secondChannelField.text, linkExisting)
+        if (saved) cancelEditor()
     }
     function addSuggestion(login) {
         if (!TwitchService.addUser(login)) return
@@ -77,7 +106,7 @@ Item {
 
     Timer {
         interval: 3000
-        running: root.adding
+        running: root.adding && !root.editingLogin && !secondChannelField.text.trim()
         repeat: true
         triggeredOnStart: true
         onTriggered: TwitchService.refreshBrowserSuggestions()
@@ -110,6 +139,7 @@ Item {
                     users: root.liveUsers
                     columns: 1
                     forceExpanded: root.searchQuery.length > 0
+                    onEditRequested: login => root.editUser(login)
                 }
                 TwitchUserSection {
                     objectName: "twitchOfflineUsersSection"
@@ -119,6 +149,7 @@ Item {
                     users: root.offlineUsers
                     columns: 1
                     forceExpanded: root.searchQuery.length > 0
+                    onEditRequested: login => root.editUser(login)
                 }
                 UI.ColumnText {
                     visible: !root.users.length
@@ -145,7 +176,7 @@ Item {
             id: editor
             objectName: "twitchEditorFooter"
             width: root.width
-            height: Theme.twitchEditorHeight
+            height: root.adding ? editorControls.implicitHeight : Theme.twitchEditorHeight
 
             UI.SearchField {
                 id: searchField
@@ -170,40 +201,78 @@ Item {
                 visible: !root.adding
                 enabled: TwitchService.usersReady
                 onClicked: {
+                    root.cancelEditor()
                     root.adding = true
                     Qt.callLater(() => loginField.forceActiveFocus())
                 }
             }
 
-            Row {
+            Column {
+                id: editorControls
                 objectName: "twitchEditorControls"
                 anchors.right: parent.right
                 width: parent.width
                 spacing: root.spacing
                 visible: root.adding
 
-                UI.InputField {
-                    id: loginField
-                    objectName: "twitchLoginField"
-                    width: parent.width - 2 * (Theme.twitchEditorButtonWidth + parent.spacing)
-                    height: Theme.twitchEditorHeight
-                    placeholderText: "Login or Twitch URL"
-                    enabled: TwitchService.usersReady
-                    Accessible.name: "Streamer login or Twitch URL"
-                    onAccepted: root.addUser()
-                    Keys.onEscapePressed: root.cancelEditor()
-                }
-                UI.EditorActions {
+                Row {
+                    width: parent.width
                     spacing: root.spacing
-                    buttonWidth: Theme.twitchEditorButtonWidth
-                    buttonHeight: Theme.twitchEditorHeight
-                    cancelObjectName: "cancelAddTwitchUser"
-                    submitObjectName: "addTwitchUser"
-                    submitGlyph: Theme.addIcon
-                    submitHint: "Add streamer"
-                    submitEnabled: TwitchService.usersReady && loginField.text.trim().length > 0
-                    onCancelled: root.cancelEditor()
-                    onSubmitted: root.addUser()
+                    UI.InputField {
+                        id: loginField
+                        objectName: "twitchLoginField"
+                        width: Math.max(0, (parent.width - editorActions.width - 2 * parent.spacing) / 2)
+                        height: Theme.twitchEditorHeight
+                        placeholderText: "Twitch channel"
+                        enabled: TwitchService.usersReady
+                        Accessible.name: "Main streamer login or Twitch URL"
+                        onAccepted: root.addUser()
+                        Keys.onEscapePressed: root.cancelEditor()
+                    }
+                    UI.InputField {
+                        id: secondChannelField
+                        objectName: "twitchSecondChannelField"
+                        width: loginField.width
+                        height: Theme.twitchEditorHeight
+                        placeholderText: "Second channel"
+                        enabled: TwitchService.usersReady
+                        Accessible.name: "Optional second channel; clear to unlink"
+                        onAccepted: root.addUser()
+                        Keys.onEscapePressed: root.cancelEditor()
+                    }
+                    UI.EditorActions {
+                        id: editorActions
+                        spacing: root.spacing
+                        buttonWidth: Theme.twitchEditorButtonWidth
+                        buttonHeight: Theme.twitchEditorHeight
+                        cancelObjectName: "cancelAddTwitchUser"
+                        submitObjectName: "addTwitchUser"
+                        submitGlyph: root.editingLogin ? Theme.checkIcon : Theme.addIcon
+                        submitHint: root.editingLogin ? "Save channels" : "Add streamer"
+                        submitEnabled: TwitchService.usersReady && loginField.text.trim().length > 0 && !root.linkEntry
+                        onCancelled: root.cancelEditor()
+                        onSubmitted: root.addUser()
+                    }
+                }
+                UI.ColumnText {
+                    width: parent.width
+                    visible: !!root.linkEntry
+                    text: root.linkEntry?.fallbackLogin
+                        ? "That entry already has a second channel. Choose another channel."
+                        : "This replaces the separate " + (root.linkEntry?.login ?? "") + " entry with a second channel."
+                    wrapMode: Text.Wrap
+                    color: Theme.inactive
+                    textFormat: Text.PlainText
+                }
+                UI.ActionButton {
+                    objectName: "linkTwitchEntries"
+                    width: parent.width
+                    height: Theme.twitchEditorHeight
+                    visible: !!root.linkEntry && !root.linkEntry.fallbackLogin
+                    label: "Link these entries"
+                    fillColor: Theme.accent
+                    enabled: TwitchService.usersReady && loginField.text.trim().length > 0
+                    onClicked: root.addUser(true)
                 }
             }
         }

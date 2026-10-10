@@ -11,9 +11,12 @@ import "../../services"
 Row {
     id: root
     spacing: Theme.twitchUserSpacing
-    width: Theme.twitchAvatarSize + Theme.twitchInfoWidth + Theme.twitchRemoveButtonSize + 2 * spacing
+    width: Theme.twitchAvatarSize + Theme.twitchInfoWidth + controls.implicitWidth + 2 * spacing
 
     required property var user
+    readonly property string mainLogin: user.mainLogin ?? user.login
+    objectName: "twitchUserRow_" + mainLogin
+    signal editRequested(string login)
 
     opacity: user.online ? 1.0 : 0.4
 
@@ -62,8 +65,14 @@ Row {
 
     // Info
     Item {
-        width: Math.max(0, root.width - Theme.twitchAvatarSize - Theme.twitchRemoveButtonSize - 2 * root.spacing)
-        height: Theme.twitchAvatarSize
+        objectName: "twitchUserDetails_" + root.mainLogin
+        width: Math.max(0, root.width - Theme.twitchAvatarSize - controls.implicitWidth - 2 * root.spacing)
+        height: Math.max(Theme.twitchAvatarSize, info.implicitHeight)
+        MouseArea {
+            anchors.fill: parent
+            cursorShape: Qt.PointingHandCursor
+            onClicked: TwitchService.openUrl(root.user.login)
+        }
         Column {
             id: info
             width: parent.width
@@ -128,6 +137,22 @@ Row {
             }
 
             UI.ColumnText {
+                objectName: "twitchSecondChannelLabel_" + root.mainLogin
+                visible: root.user.usingFallback === true
+                text: "Second channel for " + root.mainLogin
+                color: Theme.inactive
+                elide: Text.ElideRight
+                width: parent.width
+                centerVertical: false
+                UI.HoverTooltip { text: parent.text }
+                MouseArea {
+                    anchors.fill: parent
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: TwitchService.openUrl(root.mainLogin)
+                }
+            }
+
+            UI.ColumnText {
                 visible: !root.user.online && !!root.user.nextStream
                 text: root.user.nextStream ?? ""
                 color: Theme.inactive
@@ -137,23 +162,28 @@ Row {
                 UI.HoverTooltip { text: parent.text }
             }
         }
-        MouseArea {
-            anchors.fill: parent
-            cursorShape: Qt.PointingHandCursor
-            onClicked: TwitchService.openUrl(root.user.login)
-        }
     }
 
-    UI.ActionButton {
-        objectName: "removeTwitchUser_" + root.user.login
-        glyph: Theme.deleteIcon
-        hint: "Remove " + root.user.login
-        fillColor: hovered ? Theme.urgent : Theme.alternateBackground
-        width: Theme.twitchRemoveButtonSize
-        height: Theme.twitchRemoveButtonSize
-        padding: 0
+    Row {
+        id: controls
+        spacing: Theme.controlSpacing
         anchors.verticalCenter: parent.verticalCenter
-        enabled: TwitchService.usersReady
-        onClicked: TwitchService.removeUser(root.user.login)
+
+        UI.ActionButton {
+            objectName: "editTwitchUser_" + root.mainLogin
+            glyph: Theme.editIcon
+            hint: "edit channel"
+            enabled: TwitchService.usersReady
+            onClicked: root.editRequested(root.mainLogin)
+        }
+
+        UI.ActionButton {
+            objectName: "removeTwitchUser_" + root.mainLogin
+            glyph: Theme.deleteIcon
+            hint: "remove streamer"
+            fillColor: Theme.urgent
+            enabled: TwitchService.usersReady
+            onClicked: TwitchService.removeUser(root.mainLogin)
+        }
     }
 }

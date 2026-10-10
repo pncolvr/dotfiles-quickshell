@@ -29,9 +29,59 @@ Singleton {
     function normalizeLogin(login) { return String(login ?? "").trim().toLowerCase() }
     function validLogin(login) { return /^[a-z0-9_]{1,25}$/.test(login) }
     function logins() { return users.map(user => user.login) }
+    function channelLogins() {
+        const channels = []
+        for (const user of users) {
+            channels.push(user.login)
+            if (user.fallbackLogin) channels.push(user.fallbackLogin)
+        }
+        return channels
+    }
+    function parseLogin(value) {
+        const input = normalizeLogin(value)
+        const twitchUrl = input.match(/^(?:https?:\/\/)?(?:www\.|m\.)?twitch\.tv\/([a-z0-9_]+)\/?(?:[?#].*)?$/)
+        return twitchUrl ? twitchUrl[1] : input
+    }
+
+    function fallbackEntry(value, original = "") {
+        const login = parseLogin(value)
+        return users.find(user => user.login === login && user.login !== original) ?? null
+    }
+
+    function validateChannels(login, fallback, original = "", linkExisting = false) {
+        if (!validLogin(login) || (fallback && !validLogin(fallback))) {
+            state.error = "Enter a Twitch login (letters, numbers or underscores, up to 25 characters) or a streamer Twitch URL"
+            return false
+        }
+        if (login === fallback) {
+            state.error = "Main and second channel must be different channels"
+            return false
+        }
+        const others = users.filter(user => user.login !== original)
+        if (others.some(user => user.login === login || user.fallbackLogin === login)) {
+            state.error = "That streamer is already in the list"
+            return false
+        }
+        if (fallback && others.some(user => user.fallbackLogin === fallback || (user.login === fallback && user.fallbackLogin))) {
+            state.error = "That channel already belongs to another association"
+            return false
+        }
+        if (fallback && others.some(user => user.login === fallback) && !linkExisting) {
+            state.error = "That channel is already followed. Use Link these entries."
+            return false
+        }
+        return true
+    }
+
+    function pruneCaches(tx) {
+        const channels = "SELECT login FROM twitch_users UNION SELECT fallback_login FROM twitch_users WHERE fallback_login <> ''"
+        tx.executeSql("DELETE FROM twitch_schedules WHERE login NOT IN (" + channels + ")")
+        tx.executeSql("DELETE FROM twitch_avatars WHERE login NOT IN (" + channels + ")")
+        tx.executeSql("DELETE FROM twitch_notified_streams WHERE login NOT IN (SELECT login FROM twitch_users)")
+    }
 
     function reload() {
-        const userRows = DbService.read("SELECT login, added_at FROM twitch_users ORDER BY login")
+        const userRows = DbService.read("SELECT login, fallback_login, added_at FROM twitch_users ORDER BY login")
         const scheduleRows = DbService.read("SELECT login, starts_at, fetched_at FROM twitch_schedules")
         const avatarRows = DbService.read("SELECT login, source_url, image_data_url, fetched_at FROM twitch_avatars")
         const notifiedRows = DbService.read("SELECT login, stream_id, online FROM twitch_notified_streams")
@@ -47,28 +97,39 @@ Singleton {
         state.schedules = cache
         state.avatars = avatars
         state.notifiedStreams = notifiedStreams
-        state.users = userRows.map(row => ({login: row.login, addedAt: row.added_at}))
+        state.users = userRows.map(row => ({login: row.login, fallbackLogin: row.fallback_login, addedAt: row.added_at}))
         return true
     }
 
-    function addUser(value) {
-        const input = normalizeLogin(value)
-        const twitchUrl = input.match(/^(?:https?:\/\/)?(?:www\.)?twitch\.tv\/([a-z0-9_]+)\/?(?:[?#].*)?$/)
-        const login = twitchUrl ? twitchUrl[1] : input
-        if (!validLogin(login)) {
-            state.error = "Enter a Twitch login (letters, numbers or underscores, up to 25 characters) or a streamer Twitch URL"
+    function addUser(value, fallback = "", linkExisting = false) {
+        return saveUser(value, fallback, "", linkExisting)
+    }
+
+    function updateUser(original, value, fallback = "", linkExisting = false) {
+        const login = normalizeLogin(original)
+        if (!users.some(user => user.login === login)) {
+            state.error = "That streamer is no longer in the list"
             return false
         }
-        let added = false
+        return saveUser(value, fallback, login, linkExisting)
+    }
+
+    function saveUser(value, fallbackValue, original, linkExisting) {
+        const login = parseLogin(value)
+        const fallback = parseLogin(fallbackValue)
+        if (!validateChannels(login, fallback, original, linkExisting)) return false
         if (!DbService.write(tx => {
-            added = tx.executeSql("INSERT OR IGNORE INTO twitch_users (login, added_at) VALUES (?, ?)", [login, Date.now()]).rowsAffected > 0
+            if (linkExisting && fallback && fallback !== original) tx.executeSql("DELETE FROM twitch_users WHERE login = ?", [fallback])
+            if (original)
+                tx.executeSql("UPDATE twitch_users SET login = ?, fallback_login = ? WHERE login = ?", [login, fallback, original])
+            else
+                tx.executeSql("INSERT INTO twitch_users (login, fallback_login, added_at) VALUES (?, ?, ?)", [login, fallback, Date.now()])
+            pruneCaches(tx)
         })) return false
-        if (!added) {
-            state.error = "That streamer is already in the list"
-            return false
-        }
         state.error = ""
         clearUndo(login)
+        if (fallback) clearUndo(fallback)
+        if (original && original !== login) clearUndo(original)
         return reload()
     }
 
@@ -76,13 +137,12 @@ Singleton {
         const login = normalizeLogin(value)
         const user = users.find(entry => entry.login === login)
         if (!user) return false
-        const snapshot = {user, schedule: schedules[login], avatar: avatars[login], stream: notifiedStreams[login]}
+        const snapshot = {user, schedule: schedules[login], avatar: avatars[login],
+            fallbackSchedule: schedules[user.fallbackLogin], fallbackAvatar: avatars[user.fallbackLogin], stream: notifiedStreams[login]}
         let removed = false
         if (!DbService.write(tx => {
-            tx.executeSql("DELETE FROM twitch_schedules WHERE login = ?", [login])
-            tx.executeSql("DELETE FROM twitch_avatars WHERE login = ?", [login])
-            tx.executeSql("DELETE FROM twitch_notified_streams WHERE login = ?", [login])
             removed = tx.executeSql("DELETE FROM twitch_users WHERE login = ?", [login]).rowsAffected > 0
+            pruneCaches(tx)
         })) return false
         state.error = ""
         if (removed) {
@@ -117,14 +177,19 @@ Singleton {
         const login = normalizeLogin(value)
         const snapshot = state.removedUsers.find(entry => entry.user.login === login)
         if (!snapshot) return false
+        if (!validateChannels(login, snapshot.user.fallbackLogin)) return false
         if (!DbService.write(tx => {
-            tx.executeSql("INSERT INTO twitch_users (login, added_at) VALUES (?, ?)", [login, snapshot.user.addedAt])
-            if (snapshot.schedule)
-                tx.executeSql("INSERT INTO twitch_schedules (login, starts_at, fetched_at) VALUES (?, ?, ?)",
-                    [login, snapshot.schedule.startsAt, snapshot.schedule.fetchedAt])
-            if (snapshot.avatar)
-                tx.executeSql("INSERT INTO twitch_avatars (login, source_url, image_data_url, fetched_at) VALUES (?, ?, ?, ?)",
-                    [login, snapshot.avatar.sourceUrl, snapshot.avatar.dataUrl, snapshot.avatar.fetchedAt])
+            tx.executeSql("INSERT INTO twitch_users (login, fallback_login, added_at) VALUES (?, ?, ?)",
+                [login, snapshot.user.fallbackLogin, snapshot.user.addedAt])
+            for (const [channel, schedule, avatar] of [[login, snapshot.schedule, snapshot.avatar],
+                [snapshot.user.fallbackLogin, snapshot.fallbackSchedule, snapshot.fallbackAvatar]]) {
+                if (schedule)
+                    tx.executeSql("INSERT INTO twitch_schedules (login, starts_at, fetched_at) VALUES (?, ?, ?)",
+                        [channel, schedule.startsAt, schedule.fetchedAt])
+                if (avatar)
+                    tx.executeSql("INSERT INTO twitch_avatars (login, source_url, image_data_url, fetched_at) VALUES (?, ?, ?, ?)",
+                        [channel, avatar.sourceUrl, avatar.dataUrl, avatar.fetchedAt])
+            }
             if (snapshot.stream)
                 tx.executeSql("INSERT INTO twitch_notified_streams (login, stream_id, online) VALUES (?, ?, ?)",
                     [login, snapshot.stream.streamId, snapshot.stream.online ? 1 : 0])
@@ -144,7 +209,7 @@ Singleton {
     function saveSchedule(value, startsAt, fetchedAt) {
         const login = normalizeLogin(value)
         // A removed user's in-flight response must not recreate its cache.
-        if (!logins().includes(login)) return false
+        if (!channelLogins().includes(login)) return false
         if (startsAt !== null && (!Number.isFinite(startsAt) || startsAt <= 0)) return false
         if (!Number.isFinite(fetchedAt) || fetchedAt <= 0) return false
         if (!DbService.write(tx => {
@@ -194,7 +259,7 @@ Singleton {
     function saveAvatar(value, sourceUrl, base64, fetchedAt) {
         const login = normalizeLogin(value)
         const dataUrl = imageDataUrl(base64)
-        if (!logins().includes(login) || !sourceUrl || !dataUrl || !Number.isFinite(fetchedAt) || fetchedAt <= 0) return false
+        if (!channelLogins().includes(login) || !sourceUrl || !dataUrl || !Number.isFinite(fetchedAt) || fetchedAt <= 0) return false
         // Data URLs keep the actual image payload in SQLite and are directly readable by QML Image.
         if (!DbService.write(tx => {
             tx.executeSql("INSERT OR REPLACE INTO twitch_avatars (login, source_url, image_data_url, fetched_at) VALUES (?, ?, ?, ?)", [login, sourceUrl, dataUrl, fetchedAt])

@@ -10,7 +10,7 @@ Singleton {
 
     readonly property string name: Config.databaseName
     readonly property string path: Config.databasePath
-    readonly property int schemaVersion: 6
+    readonly property int schemaVersion: 7
     readonly property bool ready: state.ready
     readonly property string error: state.error
 
@@ -45,6 +45,13 @@ Singleton {
                 if (version < 0 || version > schemaVersion)
                     throw new Error("Unsupported schema version " + version)
                 tx.executeSql("CREATE TABLE IF NOT EXISTS store.twitch_users (login TEXT PRIMARY KEY COLLATE NOCASE, added_at INTEGER NOT NULL)")
+                if (version < 7) {
+                    const columns = tx.executeSql("PRAGMA store.table_info(twitch_users)").rows
+                    const names = []
+                    for (let index = 0; index < columns.length; index++) names.push(columns.item(index).name)
+                    if (!names.includes("fallback_login")) tx.executeSql("ALTER TABLE store.twitch_users ADD COLUMN fallback_login TEXT NOT NULL DEFAULT '' COLLATE NOCASE")
+                }
+                tx.executeSql("CREATE UNIQUE INDEX IF NOT EXISTS store.twitch_fallback_login ON twitch_users (fallback_login) WHERE fallback_login <> ''")
                 tx.executeSql("CREATE TABLE IF NOT EXISTS store.twitch_schedules (login TEXT PRIMARY KEY COLLATE NOCASE, starts_at INTEGER, fetched_at INTEGER NOT NULL)")
                 tx.executeSql("CREATE TABLE IF NOT EXISTS store.twitch_avatars (login TEXT PRIMARY KEY COLLATE NOCASE, source_url TEXT NOT NULL, image_data_url TEXT NOT NULL, fetched_at INTEGER NOT NULL)")
                 tx.executeSql("CREATE TABLE IF NOT EXISTS store.twitch_notified_streams (login TEXT PRIMARY KEY COLLATE NOCASE, stream_id TEXT NOT NULL, online INTEGER NOT NULL DEFAULT 1)")

@@ -19,7 +19,32 @@ Click **+** to enter a streamer login or Twitch URL, then **+** or Enter to save
 the field in a compact grid of buttons you can click to follow. Adding one keeps
 the editor and search text open while other suggestions remain. **Add all (N)**
 shows how many currently displayed suggestions it will follow. Already followed
-channels are hidden.
+channels are hidden. Suggestions are available while the optional second channel
+field is empty.
+
+## Main and second channels
+
+Each followed streamer can have one optional second channel. The Live list shows
+the main channel whenever it is live, otherwise the second channel if it is live. When
+neither is live, only the main entry appears in Offline, with its next scheduled
+stream. Each association counts as one entry.
+
+The add and edit forms show the main and optional second channel fields side by
+side, before the cancel and submit buttons.
+Both fields accept logins or Twitch URLs. The row's edit button opens both fields
+and focuses the second channel input. Clicking the same edit button again closes
+the editor and discards its draft. Save applies both fields and Cancel discards
+the draft. Clearing the second channel field unlinks it. When the proposed second
+channel is already followed independently, **Link these entries** explicitly replaces its
+separate entry with the association. Channels already used in another association
+cannot be linked again, and the main cannot be its own second channel.
+
+A second channel row uses that channel's avatar, name, category, title, and viewer
+count, with a muted **Second channel for banana** label identifying its main channel. Clicking
+the avatar or other details opens the displayed second channel; clicking the
+**Second channel for banana** label opens banana's main channel. The row's actions always edit
+or remove the main association. Second-channel switching is silent; live/offline alerts
+remain tied to the main channel.
 
 ## Keyboard shortcut
 
@@ -43,7 +68,7 @@ The unused `providers/media.new.sh` variant is removed.
 
 ## Search
 
-Search matches streamer logins, categories, and stream titles, temporarily expanding
+Search matches both associated logins, categories, and stream titles, temporarily expanding
 Offline to show results. See [shared panel behavior](../configuration.md#panels-and-search).
 
 ## qutebrowser suggestions
@@ -58,10 +83,11 @@ Only the newest snapshot is read; previous browsing history is excluded.
 
 ## Removal, undo, and opening streams
 
-The trash button removes a streamer. A Recently removed grid offers individual
-Undo buttons and **Undo all (N)**, using the same layout as suggestions. Each
+The row's trash button removes a streamer and its second channel. A Recently
+removed grid offers individual Undo buttons and **Undo all (N)**, using the same layout as suggestions. Each
 removal stays available for six seconds independently and restores the streamer
-with their cached avatar and schedule.
+with the association and both channels' cached avatars and schedules. Undo cannot
+restore an association if one of its channels has since been followed elsewhere.
 Left-click the Twitch icon to pin/unpin the
 dropdown, with an accent color while pinned, as in TOTP and notifications.
 Clicking a streamer's avatar or details opens their Twitch page in the default browser.
@@ -73,7 +99,8 @@ Notifications contain only login names under Live and Offline headings, with no
 view button. Both types are retained in notification history.
 Logins are stored in lowercase and duplicates are rejected. A new database starts
 with an empty list; there is no users-file import. Exported lists are ordinary text
-files that you can save or share.
+files of main-channel logins that you can save or share. Associations are stored
+in SQLite and retained by database backups.
 
 See [IPC](../ipc.md) for commands and exporting logins, and
 [storage](../storage.md) for schedule and avatar caching.

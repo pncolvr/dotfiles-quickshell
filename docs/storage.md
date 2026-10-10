@@ -21,6 +21,13 @@ tab leaves its document pins intact. No schema migration is needed for document 
 
 ## Twitch cache
 
+Schema version 7 adds `twitch_users.fallback_login`, defaulting existing entries to
+no second channel. Main and second channels form a single followed entry; each
+channel has one owner and cannot also be followed independently. Linking an existing entry
+is explicit and atomic. Removing an association deletes both channels' unused
+caches; Undo restores the association and cached data. Plain login exports contain
+main channels only, so back up the database to preserve associations.
+
 Twitch schedules store absolute start times and refresh at most hourly while
 cached, or sooner once the cached start has passed. Relative labels update with
 the clock, including across midnight. Failed requests preserve the previous

@@ -111,8 +111,11 @@ migration; and reload/restart persistence. `--wayland` also briefly displays the
 test popup/manager on the current desktop, checks bounded layer surfaces and saves
 a sample manager image to `/tmp/quickshell-notifications-preview.png`. The tests
 also send a title-only notification with `notify-send` and verify its history
-survives expiry and restart. Tests need `notify-send`, `python-dbus`, PyGObject and
-QtTest; these are test dependencies only.
+survives expiry and restart. The Bash runner uses `gdbus` for protocol calls and
+signal monitoring, `jq` for assertions, and `sqlite3` for migration fixtures.
+Tests also need `notify-send` and QtTest; these are test dependencies only.
+Offscreen tests verify the legacy Twitch URL request in Qt's log; `--wayland`
+also verifies that request reaches the mocked browser opener.
 The startup test briefly launches a temporary copy of the complete shell on the
 current Wayland desktop with notifications enabled by default. It checks
 the real module loader, with a private D-Bus session and mocked startup commands.
@@ -128,6 +131,13 @@ Run `bash tests/storage/storage.sh` to check first-run creation, dropdown action
 restart persistence, transaction rollback, avatar downloads, schedule caching, and midnight labels
 using an isolated database and mock Twitch/receiver commands.
 Add `--ipc` to check the real IPC commands and redirected export too.
+
+Run `bash tests/storage/twitch-fallback.sh` for main/second-channel selection, database
+migration, explicit linking, editing, unlinking, removal and Undo, restart
+persistence, and main-only alerts. It also checks requests across the
+[Helix 100-channel limit](https://dev.twitch.tv/docs/api/reference/#get-streams)
+and preserves the previous live list when a later batch fails. Both storage
+suites use Bash, jq, sqlite3, and isolated QML fixtures.
 
 ## TOTP
 
