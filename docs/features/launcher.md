@@ -193,14 +193,84 @@ names are `code`, `webapps`, `github`, `azure`, `n8n`, `remotes`, `bookmarks`,
 Their shared JSON handler and direct menu calls invoke `launcher.sh`; no Rofi
 adapter or PATH override is required. `_common/` holds the shared Bash helpers;
 `web/` contains webapps, GitHub, Azure and n8n, and `remotes/` contains the VM/RDP
-scripts. The other providers are named `<provider>.sh`. Browser selection,
+scripts. Projects and GitHub dispatch directly to native QML services; their
+former Bash providers are removed. The other providers are named `<provider>.sh`. Browser selection,
 work/personal filtering, editor profiles and cache rebuild flags are preserved.
 Shared browser/status helpers remain in Zsh, and URL cleaning remains in Qutebrowser.
 
-The project list starts at the first row and remains alphabetically ordered.
-Within each project, the launcher remembers its last folder/workspace choice.
-The submenu always puts **Open folder** first, followed by alphabetically ordered
-workspaces; remembering a choice changes the highlight without moving rows.
+### Projects
+
+`launcher.sh projects` and `launcher.sh provider code` open the native project
+picker. Every opening starts in **Projects**, with the first alphabetical row
+selected. **Ctrl+M** toggles between **Manage** and the Projects picker. This
+shortcut and discovery/launch policy live in `src/config/Config.qml`.
+Projects use the work-status filter by default on every opening. **Ctrl+W**
+toggles between that filter and all projects, including in the GitHub URL picker
+(`projectShowAllShortcut`). The footer shows the current filter and shortcuts.
+
+In Manage, the add form starts with the folder path and browse, cancel and add
+buttons. Use the folder-open button to choose a path in the native folder picker.
+Accepting or cancelling the folder picker keeps Manage open and returns focus
+to the path field; selecting a folder does not start a scan.
+Two buttons show the current options: **Single folder** / **Repositories root**
+and **Personal** / **Work**. Clicking a button switches to its other option.
+Once sources exist, the plus button at the bottom right expands into the add
+controls in the footer, while search and projects remain above. **Ctrl+A** opens
+the same controls only in Manage (`projectAddShortcut` in Config.qml).
+Both views show shortcut hints. In the GitHub Projects picker, Ctrl+A selects
+visible URLs or clears the selection; it never opens the add form. While the add
+form is open, Ctrl+A retains the input field's Select all behavior. Save or Cancel
+collapses the form. With no sources, the form appears immediately.
+A repositories root includes each immediate
+child directory; neither kind requires Git. The add action scans the source.
+If no workspaces are found, it saves immediately without a checklist. Otherwise
+it shows the workspace choices before Save. Detected `.code-workspace` files
+start included. Deselect any, select none, or Cancel without adding the source.
+**Open folder** is always available. Paths can start with `~/` and retain spaces.
+
+Manage groups projects under each added path. Its edit button opens the category
+and all its detected workspaces, including excluded ones. Category changes are
+saved with workspace choices; Cancel discards both. A root's category applies
+to all its projects. Repository roots also list subfolders by name with individual
+workspace edit buttons when workspaces exist. Subfolder rows have dividers and
+highlight on hover to associate each edit button with its folder.
+The search field filters paths and
+repository names using the shared fuzzy matching. The refresh icon at the top
+right of Manage rescans all configured sources. Each added path also has a
+refresh icon to rescan only that folder; for a repositories root, it rescans its
+subfolders. Both actions preserve choices and ask about newly found workspaces.
+Existing choices survive. When new workspaces are found, Manage opens a checklist
+of those new choices, initially checked. **Apply refresh** saves your choices and
+the refreshed list; **Cancel refresh** keeps the previous list so the next refresh
+asks again. No background scanning or scanning on picker opening occurs.
+Missing or unreadable sources retain their previous results and show an error.
+Removing a source removes its listing, without modifying project files.
+
+Projects inherit their source's category. Change it inside the source's edit
+view. By default, work projects are hidden outside the configured work status;
+personal projects remain available. Ctrl+W can temporarily show both categories.
+Manage always shows both categories. Sources with overlapping
+projects share workspace choices; a single-folder source takes category priority.
+Projects with identical names remain distinct by path.
+
+Within each project, **Open folder** stays first, followed by alphabetically
+ordered included workspaces. The last folder/workspace choice is remembered per
+project without rearranging rows. Opening focuses a matching VS Code window when
+available, otherwise launches the selected folder/workspace with its source's
+configured editor profile.
+
+`launcher.sh provider github` uses the same stored projects, filtering by category
+and offering unique remote URLs with multiple selection. Git origin URLs, SSH
+aliases and tracked folders from the bare dotfiles repository are supported.
+SSH remote hosts resolve through `HostName` in `~/.ssh/config` (the path is
+`projectSshConfig` in Config.qml). OpenSSH evaluates wildcard hosts and `Include`
+files locally, without connecting. Unmapped hosts retain their original name.
+Workspace discovery is recursive and excludes `*/.config/Code/*` by default.
+
+Sources, projects and workspace choices live in SQLite. The project JSON cache,
+Zsh updater and `g` wrapper are removed. Existing JSON is not imported; the
+project list starts empty until you add sources. Private paths remain in the
+local database and are not committed.
 
 Private configuration lives beside its provider and stays Git-ignored:
 

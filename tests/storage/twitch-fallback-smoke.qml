@@ -48,7 +48,7 @@ Scope {
     }
     function mainEntry() { return TwitchService.allUsers.find(user => user.mainLogin === "banana") }
     function link() {
-        check(DbService.schemaVersion === 7 && TwitchRepository.logins().join() === "banana,tomato", "v6 upgrade preserves existing entries")
+        check(DbService.schemaVersion === 8 && TwitchRepository.logins().join() === "banana,tomato", "v6 upgrade preserves existing entries")
         check(TwitchRepository.users.every(user => user.fallbackLogin === ""), "migration defaults to no fallback")
         find("editTwitchUser_banana").clicked()
         const main = find("twitchLoginField") as UI.InputField

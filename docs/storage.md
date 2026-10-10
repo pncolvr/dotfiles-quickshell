@@ -19,6 +19,19 @@ Recent-file folder tabs, aliases and default selection use preferences. Pinned
 document metadata is stored separately under `files.pinned`, so removing a folder
 tab leaves its document pins intact. No schema migration is needed for document pins.
 
+## Projects
+
+Schema version 8 adds `project_sources`, `projects`, and `project_workspaces`.
+Sources hold canonical paths, root/single-folder kinds, explicit categories and
+scan status. Projects retain names and remote URLs per source. Workspace records
+retain both included and excluded choices per project path. Overlapping sources
+are deduplicated for display; removing one preserves projects owned by another.
+Refresh replaces successful source snapshots transactionally, preserving existing
+workspace choices. Newly discovered workspaces require an inclusion checklist
+before the refreshed snapshot is saved; cancelling retains the previous snapshot.
+Failed sources
+retain their previous data. No project JSON import or generated cache is used.
+
 ## Twitch cache
 
 Schema version 7 adds `twitch_users.fallback_login`, defaulting existing entries to

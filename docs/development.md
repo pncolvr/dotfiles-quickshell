@@ -94,6 +94,19 @@ The status manager is mocked, so the tests do not change the desktop mode,
 wallpaper, or activity log. `TIMECARD_TEST_EXECUTABLE` can point to another build.
 Set `STATUS_TEST_SCREENSHOT=/tmp/status-timecard.png` to save a tooltip preview.
 
+## Projects
+
+Run `bash tests/projects/projects.sh` for native project sources, workspace
+selection/editing, category choices, manual refresh, failed scan preservation,
+launch profiles and restart persistence. The suite uses isolated Git/non-Git
+folders, mocked launch commands, Bash, jq, sqlite3 and an offscreen QML window.
+Run `bash tests/projects/folder-picker.sh` in a Wayland session to verify that
+Ctrl+A opens Add from focused Projects and Manage searches, and accepting or cancelling the native
+folder picker keeps Manage open and restores its keyboard focus. This test
+briefly shows an isolated picker and folder dialog.
+`bash tests/launcher/providers.sh` also checks that code/GitHub dispatch to native
+IPC without a project cache file.
+
 ## Notifications
 
 ```sh

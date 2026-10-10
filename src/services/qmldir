@@ -35,3 +35,5 @@ singleton TotpService 1.0 security/TotpService.qml
 singleton ClipboardRepository 1.0 storage/ClipboardRepository.qml
 singleton ClipboardService 1.0 clipboard/ClipboardService.qml
 singleton PickerService 1.0 launcher/PickerService.qml
+singleton ProjectRepository 1.0 storage/ProjectRepository.qml
+singleton ProjectService 1.0 projects/ProjectService.qml

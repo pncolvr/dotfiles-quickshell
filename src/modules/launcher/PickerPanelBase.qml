@@ -17,6 +17,7 @@ Rectangle {
     property real minimumRowHeight: 0
     property int minimumListRows: 1
     property Component actionButtons: null
+    property var searchKeyHandler: null
     property string footerHint: gridMode ? "Arrows to select · Enter to choose · Esc to cancel"
         : "Arrows to select · Enter to " + picker.acceptLabel.toLowerCase() + " · Esc to cancel"
     property real openedListHeight: Theme.pickerRowHeight
@@ -97,10 +98,14 @@ Rectangle {
                 pauseTooltipDismissal: false
                 resetWithTooltip: false
                 handleEscape: false
+                Keys.onShortcutOverride: event => {
+                    if (root.searchKeyHandler && root.searchKeyHandler(event,false)) event.accepted = true
+                }
                 onTextChanged: root.picker.query = text
                 Keys.priority: Keys.BeforeItem
                 Keys.forwardTo: [root]
                 Keys.onPressed: event => {
+                    if (root.searchKeyHandler && root.searchKeyHandler(event,true)) { event.accepted = true; return }
                     if (event.key === Qt.Key_Up || event.key === Qt.Key_Down || event.key === Qt.Key_Return
                         || event.key === Qt.Key_Enter || event.key === Qt.Key_Escape || event.key === Qt.Key_PageDown || event.key === Qt.Key_PageUp) event.accepted = false
                 }
@@ -154,6 +159,7 @@ Rectangle {
                 sourceComponent: root.actionButtons
             }
             UI.Text {
+                objectName: "pickerFooterHint"
                 centerVertical: false
                 width: parent.width
                 font.pixelSize: Theme.fontSize - 1

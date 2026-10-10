@@ -22,6 +22,10 @@ touch "$test_dir/actions" "$test_dir/menus"
 cat > "$test_dir/bin/qs" <<'BASH'
 #!/usr/bin/env bash
 set -euo pipefail
+if [[ ${6:-} == projects || ${6:-} == projectUrls ]]; then
+    printf 'native <%s>\n' "$6" >> "$PROVIDER_TEST_DIR/actions"
+    exit 0
+fi
 [[ ${6:-} == open ]] || exit 0
 request=$7/request.json
 cat "$request" >> "$PROVIDER_TEST_DIR/menus"
@@ -29,9 +33,6 @@ index=0
 case ${PROVIDER_TEST_NAME:-} in
     power|screenshot) index=1 ;;
 esac
-if [[ -n ${PROVIDER_TEST_CODE_CHOICE:-} ]] && jq -e '.selectionKey | startswith("projects.workspaces:")' "$request" >/dev/null; then
-    index=$(jq --arg title "$PROVIDER_TEST_CODE_CHOICE" '.items | map(.title) | index($title)' "$request")
-fi
 if [[ -n ${PROVIDER_TEST_AUDIO:-} ]] && jq -e 'any(.items[]; .title == "desktop")' "$request" >/dev/null; then
     index=$(jq --arg title "$PROVIDER_TEST_AUDIO" '.items | map(.title) | index($title)' "$request")
 fi
@@ -130,10 +131,6 @@ cat > "$HOME/.config/qutebrowser/bookmarks/urls" <<'DATA'
 https://example.test/alpha Alpha
 https://example.test/beta Beta
 DATA
-jq -n --arg home "$HOME" '[
-    {name:"Alpha", rootPath:($home + "/Alpha"), category:"work", workspaces:[], url:"https://github.com/example/alpha"},
-    {name:"Beta", rootPath:($home + "/Beta"), category:"personal", workspaces:[], url:"https://github.com/example/beta"}
-]' > "$XDG_CACHE_HOME/code_projects_${USER}.json"
 cat > "$providers/web/webapps.json" <<'JSON'
 {"action":"output","items":[{"title":"Alpha","result":{"action":"browser","url":"https://example.test/app"}},{"title":"Beta","result":{"action":"browser","url":"https://example.test/beta"}}]}
 JSON
@@ -176,26 +173,15 @@ run_provider() {
     [[ ! -s $test_dir/error ]] || { cat "$test_dir/error" >&2; exit 1; }
     printf 'PASS: %s provider dispatch, shared helpers and selected action\n' "$name"
 }
-run_provider code "code <$HOME/Alpha> <--profile> <Work>"
-mkdir -p "$HOME/Alpha/Banana" "$HOME/Alpha/Tomato"
-jq --arg home "$HOME" 'map(if .name == "Alpha" then .workspaces = [
-    {name:"Tomato", path:($home + "/Alpha/Tomato")},
-    {name:"Banana", path:($home + "/Alpha/Banana")}
-] else . end)' "$XDG_CACHE_HOME/code_projects_${USER}.json" > "$test_dir/projects.json"
-cp "$test_dir/projects.json" "$XDG_CACHE_HOME/code_projects_${USER}.json"
-run_provider code "code <$HOME/Alpha> <--profile> <Work>"
-jq -se --arg key "projects.workspaces:$HOME/Alpha" '
-    length == 2 and .[0].selectionKey == "" and .[1].selectionKey == $key
-    and .[1].sort == false and [.[1].items[].title] == ["Open folder","Banana","Tomato"]
-' "$test_dir/menus" >/dev/null
-PROVIDER_TEST_CODE_CHOICE=Banana run_provider code "code <$HOME/Alpha/Banana>"
-: > "$test_dir/actions"; : > "$test_dir/menus"
-PROVIDER_TEST_CANCEL_TITLE='Open folder' bash "$picker" provider code > "$test_dir/output" 2> "$test_dir/error"
-[[ ! -s $test_dir/actions ]]
-printf 'PASS: project list has no remembered selection; submenus use per-project history, keep Open folder first, sort workspaces and skip actions on cancellation\n'
+for provider in code github; do
+    : > "$test_dir/actions"; : > "$test_dir/menus"
+    bash "$picker" provider "$provider"
+    if [[ $provider == code ]]; then expect_action 'native <projects>';
+    else expect_action 'native <projectUrls>'; fi
+    [[ ! -s $test_dir/menus ]]
+done
+printf 'PASS: project and GitHub providers dispatch to native IPC without a JSON cache\n'
 run_provider webapps 'browser <https://example.test/app>'
-run_provider github 'browser <https://github.com/example/alpha>'
-expect_action 'browser <https://github.com/example/beta>'
 run_provider azure 'browser <https://example.test/workflow/alpha>' --pick
 run_provider n8n 'browser <https://example.test/workflow/alpha>'
 run_provider remotes 'virsh <-c> <qemu:///system> <start> <alpha-test>'

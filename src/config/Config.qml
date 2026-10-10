@@ -67,6 +67,18 @@ Item {
     // Only mixed-case queries are case sensitive; lowercase and uppercase ignore case.
     readonly property bool pickerSmartCase: true
     readonly property bool pickerRememberSelection: true
+    readonly property var projectScanCommand: ["bash", Quickshell.shellPath("src/services/projects/scan.sh"), "scan"]
+    readonly property string projectWorkStatus: "work"
+    readonly property string projectManageShortcut: "Ctrl+M"
+    readonly property string projectAddShortcut: "Ctrl+A"
+    readonly property string projectShowAllShortcut: "Ctrl+W"
+    readonly property var projectEditorCommand: ["code"]
+    readonly property var projectEditorProfiles: ({work: "Work", personal: "Personal"})
+    readonly property var projectBrowserCommand: ["bash", _internal.home + "/.config/zsh/scripts/default-browser/default-browser.sh"]
+    readonly property string projectSshConfig: _internal.home + "/.ssh/config"
+    readonly property var projectWorkspaceExclusions: ["*/.config/Code/*"]
+    readonly property string projectDotfilesGitDirectory: _internal.home + "/.cfg"
+    readonly property string projectDotfilesWorkTree: _internal.home
     readonly property var exposeWallpaperCommand: ["awww", "query", "--json"]
     readonly property var exposeWorkspaceIds: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
     readonly property bool exposeAnimateDuringScreenShare: false

@@ -74,6 +74,7 @@ Item {
   readonly property string rightIcon: "" // arrow-right
   readonly property string copyIcon: "" // copy
   readonly property string editIcon: "" // pen
+  readonly property string folderOpenIcon: "" // folder-open: browse for a folder
   readonly property string refreshIcon: "" // refresh
   readonly property string retryIcon: "" // arrows-rotate
   readonly property string chevronRightIcon: "" // chevron-right: collapsed
@@ -90,6 +91,9 @@ Item {
   readonly property int actionButtonWidth: 30
   readonly property int controlSpacing: 6
   readonly property int controlFieldPadding: 8
+  readonly property int projectManagePadding: controlFieldPadding
+  readonly property int projectManageSectionSpacing: controlSpacing * 2
+  readonly property int projectOptionButtonWidth: 160
   readonly property int pickerWidth: 560
   readonly property real pickerBackgroundOpacity: 0.7 // 0–1; text and controls stay opaque.
   readonly property int pickerRowHeight: 36

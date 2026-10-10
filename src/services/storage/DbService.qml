@@ -10,7 +10,7 @@ Singleton {
 
     readonly property string name: Config.databaseName
     readonly property string path: Config.databasePath
-    readonly property int schemaVersion: 7
+    readonly property int schemaVersion: 8
     readonly property bool ready: state.ready
     readonly property string error: state.error
 
@@ -83,6 +83,9 @@ Singleton {
                 tx.executeSql("CREATE INDEX IF NOT EXISTS store.notifications_emitter_time ON notifications (emitter_key, updated_at DESC, archive_id DESC)")
                 // Only lifecycle metadata is retained here, including for excluded sources.
                 tx.executeSql("CREATE TABLE IF NOT EXISTS store.notification_live (live_token TEXT PRIMARY KEY, archive_id TEXT NOT NULL DEFAULT '', deadline INTEGER NOT NULL, duration INTEGER NOT NULL, popup_visible INTEGER NOT NULL DEFAULT 0)")
+                tx.executeSql("CREATE TABLE IF NOT EXISTS store.project_sources (path TEXT PRIMARY KEY, kind TEXT NOT NULL, category TEXT NOT NULL, error TEXT NOT NULL DEFAULT '', refreshed_at INTEGER NOT NULL DEFAULT 0)")
+                tx.executeSql("CREATE TABLE IF NOT EXISTS store.projects (source_path TEXT NOT NULL, path TEXT NOT NULL, name TEXT NOT NULL, remote_url TEXT NOT NULL DEFAULT '', PRIMARY KEY(source_path,path))")
+                tx.executeSql("CREATE TABLE IF NOT EXISTS store.project_workspaces (project_path TEXT NOT NULL, path TEXT NOT NULL, name TEXT NOT NULL, included INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(project_path,path))")
                 tx.executeSql("PRAGMA store.user_version = " + schemaVersion)
             })
             state.database = database

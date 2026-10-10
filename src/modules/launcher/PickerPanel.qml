@@ -10,7 +10,8 @@ Item {
     property var picker: PickerService
     property bool backgroundVisible: true
     readonly property real radius: Theme.tooltipRadius
-    readonly property PickerPanelBase panel: content.item as PickerPanelBase
+    readonly property var panel: content.item
+    readonly property bool nativeDialogOpen: panel?.nativeDialogOpen ?? false
     implicitWidth: panel?.implicitWidth ?? Theme.pickerWidth
     implicitHeight: panel?.implicitHeight ?? 0
 
@@ -19,8 +20,13 @@ Item {
     Loader {
         id: content
         anchors.fill: parent
-        sourceComponent: root.picker.mode === "clipboard" ? clipboardPanel
+        sourceComponent: root.picker.mode === "projects" ? projectPanel
+            : root.picker.mode === "clipboard" ? clipboardPanel
             : root.picker.multiple ? multiSelectPanel : standardPanel
+    }
+    Component {
+        id: projectPanel
+        ProjectPickerPanel { picker: root.picker; backgroundVisible: root.backgroundVisible }
     }
 
     Component {

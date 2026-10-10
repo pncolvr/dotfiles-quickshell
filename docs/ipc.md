@@ -21,6 +21,8 @@ qs ipc call twitch exportUsers > twitch-users.txt # one login per line
 qs ipc call updates reload       # reread the package update cache
 qs ipc call recentfiles reload   # reread desktop recent files
 qs ipc call launcher apps        # application picker
+qs ipc call launcher projects    # Projects picker; Ctrl+M toggles Manage
+qs ipc call launcher projectUrls # project remote URLs with multiple selection
 qs ipc call launcher windows all # searchable window picker
 qs ipc call launcher windows current # tiled windows on the current workspace
 qs ipc call launcher clipboard   # text/image history with copy and paste

@@ -38,7 +38,7 @@ Scope {
             return
         }
         const legacy = ClipboardRepository.entries()[0]
-        check(DbService.schemaVersion === 7 && legacy?.text === "legacy" && legacy.pinned === 0, "v5 migration preserves history and defaults existing entries to unpinned")
+        check(DbService.schemaVersion === 8 && legacy?.text === "legacy" && legacy.pinned === 0, "v5 migration preserves history and defaults existing entries to unpinned")
         ClipboardRepository.clear()
         check(PickerService.filter([{title:"Banana"}, {title:"potato"}], "BAN")[0].title === "Banana", "uppercase-only queries ignore case")
         check(PickerService.filter([{title:"Banana"}, {title:"banana"}], "Ban").length === 1, "mixed-case queries respect capitalization")

@@ -12,6 +12,8 @@ import "../../config"
 TopPanelTooltip {
     id: root
     property var picker: PickerService
+    property bool restoringDialogFocus: false
+    readonly property bool windowActive: contentItem.Window.active
     readonly property Item previewItem: contentItem
     screen: Quickshell.screens.includes(picker.targetScreen) ? picker.targetScreen : Quickshell.screens[0] ?? null
     visible: picker.visible && picker.layout !== "expose" && !!picker.targetScreen
@@ -23,17 +25,30 @@ TopPanelTooltip {
     backgroundOpacity: Theme.pickerBackgroundOpacity
     WlrLayershell.namespace: Config.pickerNamespace
     WlrLayershell.layer: WlrLayer.Overlay
-    WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
+    WlrLayershell.keyboardFocus: panel.nativeDialogOpen ? WlrKeyboardFocus.None : WlrKeyboardFocus.Exclusive
 
-    onVisibleChanged: if (visible) Qt.callLater(() => { panel.focusSearch(); grab.active = true })
+    function updateFocus() {
+        if (!visible) { restoringDialogFocus = false; grab.active = false; return }
+        if (panel.nativeDialogOpen) { restoringDialogFocus = true; grab.active = false; return }
+        Qt.callLater(() => {
+            if (!root.visible || panel.nativeDialogOpen) return
+            panel.focusSearch()
+            if (!root.restoringDialogFocus || root.windowActive) {
+                root.restoringDialogFocus = false
+                grab.active = true
+            }
+        })
+    }
+    onVisibleChanged: updateFocus()
+    onWindowActiveChanged: if (windowActive && restoringDialogFocus && !panel.nativeDialogOpen) updateFocus()
     HyprlandFocusGrab {
         id: grab
         windows: [root]
-        onCleared: if (root.visible) root.picker.close()
+        onCleared: if (root.visible && !panel.nativeDialogOpen && !root.restoringDialogFocus) root.picker.close()
     }
     Connections {
-        target: root.picker
-        function onVisibleChanged() { if (!root.picker.visible) grab.active = false }
+        target: panel
+        function onNativeDialogOpenChanged() { root.updateFocus() }
     }
     Component.onCompleted: ClipboardService.initialize()
 
