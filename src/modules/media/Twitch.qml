@@ -5,6 +5,8 @@ import "../../services"
 
 UI.TooltipArea {
     id: root
+    moduleName: "twitch"
+    moduleFocusSearch: true
     readonly property bool tooltipKeyboardFocus: true
     tooltipSource: root
     visible: TwitchService.available

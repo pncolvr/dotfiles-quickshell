@@ -7,6 +7,7 @@ import "../../../services"
 import "../../../config"
 
 TooltipArea {
+    moduleName: "mic"
     id: root
     acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
     readonly property bool tooltipKeyboardFocus: true

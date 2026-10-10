@@ -9,7 +9,7 @@ import "../../../services"
 UI.Row {
     id: root
     required property var window
-    property string moduleName: ""
+    property string moduleName: "tray"
     readonly property var tooltipScreen: window.screen
     readonly property var tooltipWindow: window
     readonly property var tooltip: null

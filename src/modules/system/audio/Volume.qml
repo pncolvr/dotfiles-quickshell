@@ -7,6 +7,7 @@ import "../../../theme/ui"
 import "../../../config"
 
 TooltipArea {
+    moduleName: "volume"
     id: root
     acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
     readonly property bool tooltipKeyboardFocus: true

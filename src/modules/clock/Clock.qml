@@ -5,6 +5,7 @@ import "../../services"
 import "../../theme/ui"
 
 TooltipArea {
+  moduleName: "clock"
   id: root
   acceptedButtons: Qt.LeftButton | Qt.RightButton
 

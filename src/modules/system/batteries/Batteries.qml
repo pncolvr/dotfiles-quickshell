@@ -4,6 +4,7 @@ import "../../../theme/ui" as UI
 import "../../../services"
 
 UI.TooltipArea {
+    moduleName: "batteries"
     id: root
     required property var window
     readonly property bool batteryModule: true

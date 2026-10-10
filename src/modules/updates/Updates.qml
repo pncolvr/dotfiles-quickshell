@@ -4,6 +4,7 @@ import "../../theme"
 import "../../services"
 
 UI.TooltipArea {
+    moduleName: "updates"
     cursorShape: Qt.PointingHandCursor
     tooltip: Component { UpdatesTooltip {} }
     onClicked: UpdatesService.install()

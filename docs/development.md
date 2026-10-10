@@ -174,6 +174,13 @@ tray expansion without an extra mouse movement, button-edge hover, and dismissal
 when the pointer leaves.
 The TOTP keyring and runtime storage are isolated.
 
+Bar modules declare their own `moduleName`; Twitch and TOTP also set
+`moduleFocusSearch: true`. `TooltipArea` registers those modules with
+`BarModuleService`, while the tray registers its own trigger. Bar layout files
+only supply placement and window references. Capture detection lives in
+`services/audio/ScreencastModel.qml`, whose stream list follows its native
+PipeWire node and link inputs.
+
 ## Batteries
 
 ```sh

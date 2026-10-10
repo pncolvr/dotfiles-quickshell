@@ -4,6 +4,7 @@ import "../../services"
 import "../../theme/ui"
 
 TooltipArea {
+    moduleName: "sharing"
     visible: AudioService.screencastActive
     cursorShape: Qt.ArrowCursor
     tooltip: screencastTooltip

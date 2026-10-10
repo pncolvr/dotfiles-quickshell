@@ -8,7 +8,7 @@ Row {
     required property var window
     // spacing: Theme.moduleSpacing
     spacing: 8
-    Updates { moduleName: "updates"; centerTooltip: true }
-    Clock { moduleName: "clock"; centerTooltip: true }
-    RecentFiles { moduleName: "files"; window: root.window; centerTooltip: true }
+    Updates { centerTooltip: true }
+    Clock { centerTooltip: true }
+    RecentFiles { window: root.window; centerTooltip: true }
 }

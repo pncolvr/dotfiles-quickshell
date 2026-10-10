@@ -36,11 +36,11 @@ Scope {
         implicitHeight: 30
         Row {
             anchors.right: parent.right
-            Twitch { id: twitch; moduleName: "twitch"; moduleFocusSearch: true }
-            Totp { id: totp; moduleName: "totp"; moduleFocusSearch: true; window: testBar }
-            Volume { id: volume; moduleName: "volume" }
+            Twitch { id: twitch }
+            Totp { id: totp; window: testBar }
+            Volume { id: volume }
             Rectangle { width: root.badgeVisible ? 120 : 0; height: 30; visible: root.badgeVisible }
-            Tray { id: tray; moduleName: "tray"; window: testBar }
+            Tray { id: tray; window: testBar }
             UI.TooltipArea { moduleName: "hidden"; visible: false; tooltip: Component { Item {} } }
         }
     }

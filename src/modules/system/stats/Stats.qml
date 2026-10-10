@@ -5,6 +5,7 @@ import "../../../services"
 import ".."
 
 UI.TooltipArea {
+    moduleName: "stats"
     id: root
     acceptedButtons: Qt.LeftButton
     readonly property bool tooltipKeyboardFocus: true

@@ -4,6 +4,7 @@ import "../../../theme/ui" as UI
 import "../../../services"
 
 UI.TooltipArea {
+    moduleName: "timers"
     id: root
     required property var window
     readonly property bool tooltipKeyboardFocus: true

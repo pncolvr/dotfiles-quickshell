@@ -5,6 +5,7 @@ import "../../theme/ui" as UI
 import "../../services"
 
 UI.TooltipArea {
+    moduleName: "status"
     id: root
     acceptedButtons: Qt.LeftButton
     hoverEnabled: true

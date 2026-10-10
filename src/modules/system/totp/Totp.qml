@@ -5,6 +5,8 @@ import "../../../services"
 
 UI.TooltipArea {
     id: root
+    moduleName: "totp"
+    moduleFocusSearch: true
     required property var window
     readonly property bool totpModule: true
     readonly property bool tooltipKeyboardFocus: true
