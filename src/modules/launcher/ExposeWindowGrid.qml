@@ -8,7 +8,6 @@ Flickable {
     id: root
     required property var picker
     property real transitionProgress: 1
-    property string captureAddress: ""
     required property Item dragLayer
     property var entries: picker.filteredItems
     property var arrangedEntries: []
@@ -281,7 +280,7 @@ Flickable {
     onArrangementChanged: Qt.callLater(revealCurrent)
     contentWidth: width
     contentHeight: Math.max(height, arrangement.height)
-    clip: transitionProgress === 1 || captureAddress === ""
+    clip: true
     interactive: transitionProgress === 1 && !picker.exposeDragging
     boundsBehavior: Flickable.StopAtBounds
     flickableDirection: Flickable.VerticalFlick
@@ -310,7 +309,7 @@ Flickable {
                 Component.onCompleted: Qt.callLater(() => cardDelegate.geometryReady = true)
                 objectName: "exposeWindow-" + value.id
                 entry: value
-                visible: root.transitionProgress === 1 || value.id === root.captureAddress
+                visible: root.transitionProgress === 1
                     || ((geometry?.y ?? 0) + content.y - root.contentY < root.height
                         && (geometry?.y ?? 0) + content.y - root.contentY + height > 0)
                 enabled: root.transitionProgress === 1

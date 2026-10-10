@@ -37,7 +37,8 @@ Singleton {
     property var exposeCloseTarget: null
     readonly property var exposeWorkspaces: {
         const native = Hyprland.workspaces.values
-        const ids = [...new Set(Config.exposeWorkspaceIds.concat(native.filter(ws => ws.id > 0).map(ws => ws.id)))].sort((a, b) => a - b)
+        const ids = [...new Set(Config.exposeWorkspaceIds.concat(native.map(ws => ws.id),
+            items.map(item => item.workspaceId).filter(id => id < 0)))].filter(id => id !== 0).sort((a, b) => a - b)
         return ids.map(id => ({id, name: native.find(ws => ws.id === id)?.name || String(id)}))
     }
     property string error: ""

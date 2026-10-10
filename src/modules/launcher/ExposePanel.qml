@@ -7,7 +7,6 @@ FocusScope {
     id: root
     required property var picker
     property real transitionProgress: 1
-    property string captureAddress: ""
     property bool animationsEnabled: true
     property rect desktopGeometry: Qt.rect(0, 0, 0, 0)
     readonly property int workspaceCount: picker.exposeWorkspaces.length
@@ -22,19 +21,6 @@ FocusScope {
         if (event.nativeScanCode >= 10 && event.nativeScanCode <= 19) return event.nativeScanCode - 9
         if (event.key >= Qt.Key_0 && event.key <= Qt.Key_9) return event.key === Qt.Key_0 ? 10 : event.key - Qt.Key_0
         return 0
-    }
-    function windowPreviewRect(address) {
-        grid.finishWorkspaceTransition()
-        const index = picker.filteredItems.findIndex(entry => entry.id === address)
-        const card = grid.itemAtIndex(index) as ExposeWindowCard
-        if (!card) return null
-        const preview = card.previewItem
-        const position = preview.mapToItem(grid, 0, 0)
-        // Off-screen previews use their workspace miniature as the zoom target.
-        if (position.x < 0 || position.y < 0 || position.x + preview.width > grid.width + 1
-            || position.y + preview.height > grid.height + 1) return null
-        const point = preview.mapToItem(root, 0, 0)
-        return Qt.rect(point.x, point.y, preview.width, preview.height)
     }
     function workspacePreviewRect(workspace) {
         grid.finishWorkspaceTransition()
@@ -163,7 +149,6 @@ FocusScope {
         objectName: "exposeWindows"
         picker: root.picker
         transitionProgress: root.transitionProgress
-        captureAddress: root.captureAddress
         animationsEnabled: root.animationsEnabled
         dragLayer: dragOverlay
         y: workspaces.y + workspaces.height + Theme.exposeSpacing

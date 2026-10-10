@@ -123,7 +123,6 @@ Scope {
         implicitWidth: Number(Quickshell.env("EXPOSE_TEST_WIDTH") || 1000)
         implicitHeight: Number(Quickshell.env("EXPOSE_TEST_HEIGHT") || 800)
         color: Theme.background
-        ExposeButton { id: barButton; visible: false }
         ExposePanel { id: panel; anchors.fill: parent; anchors.margins: 24; picker: picker }
     }
     Timer {
@@ -133,10 +132,6 @@ Scope {
             const grid = events.findChild(panel, "exposeWindows") as ExposeWindowGrid
             const strip = events.findChild(panel, "exposeWorkspaces") as ListView
             if (root.step === 0) {
-                const barIcon = events.findChild(barButton, "exposeBarIcon") as UI.IconText
-                root.check(barIcon && barButton.child === barIcon && barIcon.text === Theme.exposeIcon
-                    && barIcon.width > 0 && barIcon.height > 0 && barButton.width > 0 && barButton.height > 0,
-                    "Exposé bar button retains its visible glyph as wrapper content alongside its tooltip")
                 root.check(grid.count === 8 && strip.count === picker.exposeWorkspaces.length && search.activeFocus, "overview displays all windows and focuses search")
                 const row = strip.parent
                 root.check(Math.abs(row.x + row.width / 2 - panel.width / 2) < 1, "workspace strip is centered")

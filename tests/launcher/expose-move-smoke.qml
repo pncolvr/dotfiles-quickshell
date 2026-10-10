@@ -87,6 +87,10 @@ Scope {
                 PickerService.moveExposeWindow("0x2", 1)
                 PickerService.close()
                 root.check(!Object.keys(PickerService.exposePendingMoves).length, "closing clears pending moves")
+                root.windowSource.allWindows = root.clients(-99, 1)
+                PickerService.items = PickerService.windowItems("all", true)
+                root.check(PickerService.exposeWorkspaces.some(workspace => workspace.id === -99),
+                    "special-workspace windows have a workspace preview for their open and close animations")
                 root.checkWorkspaceOrder()
                 console.log(root.failed ? "EXPOSE FAIL: move synchronization"
                     : "PASS: Exposé spatial ordering, grouped tabs, stale snapshots, confirmed moves, timeout recovery, multiple moves and closed windows")

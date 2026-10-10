@@ -40,8 +40,7 @@ windows and falls back to all windows if fewer than two are available.
 ## Exposé overview
 
 **Meta+Shift+E** toggles a fullscreen overview on the focused monitor, starting
-with the current workspace and the focused window preselected. The Exposé grid
-button after audio in the bar's right modules opens the same overview.
+with the current workspace and the focused window preselected.
 The centered workspace strip shows large icons with
 workspace names below. Tiles and icons scale down on smaller screens. Search
 is centered above the workspace strip.
@@ -59,7 +58,8 @@ Tabs in the same window group use alphabetical display-name order.
 `launcher.sh expose all` opens all windows directly.
 Empty workspaces remain available as drop targets. `Config.exposeWorkspaceIds`
 provides the default numbered workspaces (1–10); other existing numbered
-workspaces are added automatically.
+workspaces are added automatically. Existing special workspaces also have tiles,
+so their windows use the same workspace transitions.
 
 **Ctrl+1–9** selects workspace views 1–9; **Ctrl+0** selects workspace 10.
 **Ctrl+A** toggles the All view and the workspace view where the toggle started.
@@ -70,11 +70,11 @@ Type to filter window titles and applications. Hovering selects a window card;
 arrow keys select windows in their displayed direction;
 Enter or a click focuses the selected window. Escape or a background click
 closes the overview, as does the round close button in the upper-right corner.
-Opening zooms the whole view out from the focused window's
-preview; selecting a window zooms its preview up to fit the usable desktop, then focuses
-it after the overlay disappears. Escape and the Exposé keybind return to the
-starting window, or zoom into its workspace miniature if that window is hidden by
-search, scrolling, or another workspace view. All workspace tiles remain visible
+Opening always zooms the whole view out from the starting workspace's miniature.
+Selecting a window zooms into that window's workspace miniature, then focuses
+the window after the overlay disappears. Dismissing the overview zooms back into
+the starting workspace's miniature, including after searching, scrolling, or
+switching workspace views. All workspace tiles remain visible
 by scaling the strip to fit the screen. Animations are disabled during screen
 sharing. Keyboard focus is released as soon as closing begins. The overview
 always opens even when there are only two windows.
@@ -110,8 +110,7 @@ aspect ratio through resizes. Strongly downscaled previews use a source-resoluti
 Qt Quick layer with smooth mipmap filtering to reduce aliasing in miniatures.
 The animation respects the monitor's reserved margins, including the bar, and
 fits previews without cropping their content.
-Closing onto a window away from the desktop's center zooms into its workspace
-layout. Workspace zooms target the fitted usable desktop inside the miniature,
+Open and close animations target the fitted usable desktop inside the workspace miniature,
 excluding preview padding, and remain opaque until the layout reaches full size.
 Applications can still suspend drawing themselves. Each changed window source
 gets a fresh capture view. Windows without an available capture use their app

@@ -34,14 +34,17 @@ Scope {
         property int currentIndex: 0
         property bool exposeDragging: false
         property int exposeWorkspace: 1
-        property var exposeWorkspaces: [{id: 1, name: "Original"}, {id: 2, name: "Other"}]
+        property int exposeReturnWorkspace: 1
+        property var exposeWorkspaces: [{id: 1, name: "Original"}, {id: 2, name: "Other"},
+            {id: 3, name: "Empty"}, {id: -99, name: "special:test"}]
         property var items: [{id: "0x1", result: "0x1", title: "Original", workspaceId: 1,
             client: {address: "0x1", class: "", at: [window.monitorOrigin.x + window.desktopRect.x + window.desktopRect.width / 2 - 400,
                 window.monitorOrigin.y + window.desktopRect.y + window.desktopRect.height / 2 - 300], size: [800, 600]}},
             {id: "0x2", result: "0x2", title: "Other", workspaceId: 2,
             client: {address: "0x2", class: "", at: [window.monitorOrigin.x + window.desktopRect.x + window.desktopRect.width / 2 - 300,
                 window.monitorOrigin.y + window.desktopRect.y + window.desktopRect.height / 2 - 200], size: [600, 400]}}]
-        readonly property var filteredItems: items.filter(item => item.workspaceId === exposeWorkspace)
+        readonly property var filteredItems: items.filter(item => (!exposeWorkspace || item.workspaceId === exposeWorkspace)
+            && (!query || item.title.includes(query)))
         property string error: ""
         function close() { visible = false }
         function finishExposeClose() {
@@ -60,14 +63,14 @@ Scope {
         function onTransitionProgressChanged() {
             if (root.step <= 5 && window.requested && window.transitionProgress > 0 && window.transitionProgress < 1) {
                 root.openingIntermediate = true
-                root.openingZoomed = root.openingZoomed || (window.zoomTarget === "window" && window.zoomFactor > 1)
+                root.openingZoomed = root.openingZoomed || (window.transitionWorkspace === 1 && window.zoomFactor > 1)
             }
-            if (root.step > 22 && root.step <= 27 && !window.requested && window.zoomTarget === "workspace"
+            if (root.step > 22 && root.step <= 27 && !window.requested
                 && window.transitionProgress > 0 && window.transitionProgress < 0.1) {
                 root.checkWorkspaceFillsDesktop()
                 root.cancellationZoomCompleted = true
             }
-            if (root.step > 32 && !window.requested && window.zoomTarget === "workspace"
+            if (root.step > 32 && root.step <= 37 && !window.requested
                 && window.transitionProgress > 0 && window.transitionProgress < 0.1 && !root.offCenterPlacementChecked) {
                 // Observe the rendered geometry after camera and miniature bindings have updated.
                 Qt.callLater(() => {
@@ -101,35 +104,39 @@ Scope {
                 picker.visible = true
             } else if (root.step === 1) {
                 root.check(window.visible, "opening maps the overview surface")
+                root.check(window.transitionWorkspace === picker.exposeReturnWorkspace,
+                    "opening targets the starting workspace")
                 const fittedWidth = window.zoomRect.width * window.zoomFactor
                 const fittedHeight = window.zoomRect.height * window.zoomFactor
                 root.check(fittedWidth <= window.desktopRect.width + 1 && fittedHeight <= window.desktopRect.height + 1,
                     "zoom fits the preview inside the desktop's reserved margins without cropping")
                 root.check(Math.abs(fittedWidth - window.desktopRect.width) < 1
-                    || Math.abs(fittedHeight - window.desktopRect.height) < 1,
-                    "zoom uses the largest scale that fits the usable desktop")
+                    && Math.abs(fittedHeight - window.desktopRect.height) < 1,
+                    "opening fits the workspace miniature to both usable desktop dimensions")
             } else if (root.step === 5) {
                 root.check(root.openingIntermediate, "opening zooms out over multiple frames")
-                root.check(root.openingZoomed, "opening frames the focused preview at a larger scale")
+                root.check(root.openingZoomed, "opening frames the starting workspace at a larger scale")
                 root.check(window.transitionProgress === 1, "opening settles at full opacity")
                 picker.visible = false
-                root.check(window.visible, "closing keeps the surface mapped for the fade")
+                root.check(window.visible, "closing keeps the surface mapped for the zoom")
+                root.checkWorkspaceFillsDesktop()
                 root.check(window.WlrLayershell.keyboardFocus === WlrKeyboardFocus.None,
                     "closing releases keyboard focus immediately")
             } else if (root.step === 6) {
                 root.check(window.visible && window.transitionProgress > 0 && window.transitionProgress < 1,
-                    "closing fades out over multiple frames")
+                    "closing zooms in over multiple frames")
                 picker.visible = true
             } else if (root.step === 11) {
                 root.check(window.visible && window.transitionProgress === 1,
-                    "reopening during the fade reverses cleanly: visible=" + window.visible + " requested=" + window.requested + " opacity=" + window.transitionProgress)
+                    "reopening during the zoom reverses cleanly: visible=" + window.visible + " requested=" + window.requested + " progress=" + window.transitionProgress)
                 picker.exposeWorkspace = 2
                 picker.exposeCloseTarget = {id: "0x2", result: "0x2", workspaceId: 2}
                 picker.visible = false
-                root.check(window.transitionWorkspace === 2 && window.transitionAddress === "0x2",
-                    "accepted window becomes the closing animation destination")
+                root.check(window.transitionWorkspace === 2,
+                    "the accepted window's workspace becomes the closing animation destination")
                 root.check(picker.focusedAddress === "", "activation waits until the overlay disappears")
-                root.check(window.zoomTarget === "window" && window.zoomFactor > 1, "acceptance zooms the selected preview up to fit the usable desktop")
+                root.check(window.zoomFactor > 1, "accepting a centered window zooms into its workspace miniature")
+                root.checkWorkspaceFillsDesktop()
             } else if (root.step === 16) {
                 root.check(!window.visible && window.transitionProgress === 0,
                     "closing unmaps the surface after the animation")
@@ -155,8 +162,8 @@ Scope {
             } else if (root.step === 22) {
                 picker.exposeWorkspace = 2
                 picker.close()
-                root.check(window.zoomTarget === "workspace" && window.transitionWorkspace === 1,
-                    "cancellation zooms into the original workspace when its window preview is hidden")
+                root.check(window.transitionWorkspace === 1,
+                    "cancellation zooms into the original workspace after switching views")
                 root.check(window.zoomRect.width > 0 && window.zoomRect.height > 0,
                     "the workspace miniature is available as a zoom target")
             } else if (root.step === 23) {
@@ -178,7 +185,6 @@ Scope {
                 picker.exposeWorkspace = 1
                 picker.visible = true
             } else if (root.step === 32) {
-                root.check(window.windowIsCentered("0x1"), "centered windows use the available desktop below the bar")
                 const previousOriginX = window.monitorOrigin.x
                 const previousOriginY = window.monitorOrigin.y
                 const previousItems = picker.items
@@ -187,21 +193,49 @@ Scope {
                     at: [entry.client.at[0] + window.monitorOrigin.x - previousOriginX,
                         entry.client.at[1] + window.monitorOrigin.y - previousOriginY]
                 })}))
-                root.check(window.windowIsCentered("0x1"), "window centers account for the monitor's global position")
                 picker.items = picker.items.map(entry => entry.id !== "0x1" ? entry : Object.assign({}, entry, {
                     client: Object.assign({}, entry.client, {at: [entry.client.at[0] - window.desktopRect.width / 4, entry.client.at[1]]})
                 }))
-                root.check(!window.windowIsCentered("0x1"), "off-center desktop windows are detected")
                 picker.exposeCloseTarget = {id: "0x1", result: "0x1", workspaceId: 1}
                 picker.visible = false
-                root.check(window.zoomTarget === "workspace" && window.transitionWorkspace === 1 && window.zoomFactor > 1,
+                root.check(window.transitionWorkspace === 1 && window.zoomFactor > 1,
                     "accepting an off-center window zooms into its workspace layout")
                 root.checkWorkspaceFillsDesktop()
             } else if (root.step === 37) {
                 root.check(root.offCenterPlacementChecked, "off-center workspace zoom reaches its final desktop geometry")
                 root.check(!window.visible && picker.focusedAddress === "0x1",
                     "workspace zoom still activates the selected off-center window after closing")
-                console.log(root.failed ? "EXPOSE FAIL: animation" : "PASS: Exposé zooming, centered/off-center destinations, monitor origins, workspace cancellation, focus release and screen-sharing suppression")
+                picker.exposeReturnWorkspace = 3
+                picker.exposeWorkspace = 0
+                picker.query = "No match"
+                picker.visible = true
+            } else if (root.step === 38) {
+                root.check(window.transitionWorkspace === 3 && window.zoomFactor > 1,
+                    "All view opens from the empty starting workspace even when search hides every window")
+                root.check(Math.abs(window.zoomRect.width * window.zoomFactor - window.desktopRect.width) < 1
+                    && Math.abs(window.zoomRect.height * window.zoomFactor - window.desktopRect.height) < 1,
+                    "empty workspace opening uses its fitted desktop miniature")
+            } else if (root.step === 42) {
+                picker.close()
+                root.check(window.transitionWorkspace === 3, "filtered All view dismisses to the empty starting workspace")
+                root.checkWorkspaceFillsDesktop()
+            } else if (root.step === 47) {
+                root.check(!window.visible, "empty workspace cancellation completes")
+                picker.query = ""
+                picker.items = picker.items.concat([{id: "0x3", result: "0x3", title: "Special", workspaceId: -99,
+                    client: Object.assign({}, picker.items[1].client, {address: "0x3"})}])
+                picker.exposeWorkspace = 0
+                picker.visible = true
+            } else if (root.step === 52) {
+                picker.exposeCloseTarget = picker.items.find(entry => entry.id === "0x3")
+                picker.close()
+                root.check(window.transitionWorkspace === -99 && window.zoomFactor > 1,
+                    "accepting a special-workspace window targets its workspace miniature")
+                root.checkWorkspaceFillsDesktop()
+            } else if (root.step === 57) {
+                root.check(!window.visible && picker.focusedAddress === "0x3",
+                    "special-workspace acceptance activates only after the animation completes")
+                console.log(root.failed ? "EXPOSE FAIL: animation" : "PASS: Exposé workspace transitions, centered/off-center destinations, monitor origins, cancellation, empty and special workspaces, filtered All view, focus release and screen-sharing suppression")
                 stop()
                 Qt.quit()
             }

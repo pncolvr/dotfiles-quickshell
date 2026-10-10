@@ -3,7 +3,6 @@ import "../modules/system"
 import "../modules/media"
 import "../modules/status"
 import "../modules/hyprland"
-import "../modules/launcher"
 import "../theme"
 import "../theme/ui"
 
@@ -18,7 +17,6 @@ Row {
     Timers { window: root.window }
     Mic {}
     Volume {}
-    ExposeButton {}
     Stats {}
     Twitch {}
     

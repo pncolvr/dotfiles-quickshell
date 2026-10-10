@@ -17,10 +17,8 @@ PanelWindow {
     readonly property Item previewItem: panel
     property bool animationsEnabled: Config.exposeAnimateDuringScreenShare || !AudioService.screencastActive
     property int transitionWorkspace: 0
-    property string transitionAddress: ""
     property real transitionProgress: 0
     property rect zoomRect: Qt.rect(0, 0, 0, 0)
-    property string zoomTarget: ""
     property point monitorOrigin: Qt.point(Hyprland.monitorFor(screen)?.lastIpcObject?.x ?? screen?.x ?? 0,
         Hyprland.monitorFor(screen)?.lastIpcObject?.y ?? screen?.y ?? 0)
     property var reservedMargins: Hyprland.monitorFor(screen)?.lastIpcObject?.reserved ?? [0, Theme.barHeight, 0, 0]
@@ -35,21 +33,9 @@ PanelWindow {
         - (zoomRect.x + zoomRect.width / 2) * zoomFactor) * (1 - transitionProgress)
     readonly property real cameraY: (desktopRect.y + desktopRect.height / 2
         - (zoomRect.y + zoomRect.height / 2) * zoomFactor) * (1 - transitionProgress)
-    function windowIsCentered(address) {
-        const client = picker.items.find(entry => entry.id === address)?.client
-        if (!client?.at || !(client.size?.[0] > 0) || !(client.size?.[1] > 0)) return false
-        const centerX = client.at[0] - monitorOrigin.x + client.size[0] / 2
-        const centerY = client.at[1] - monitorOrigin.y + client.size[1] / 2
-        const tolerance = Theme.controlSpacing * 2
-        return Math.abs(centerX - desktopRect.x - desktopRect.width / 2) <= tolerance
-            && Math.abs(centerY - desktopRect.y - desktopRect.height / 2) <= tolerance
-    }
-    function chooseZoomTarget() {
+    function updateZoomRect() {
         const view = contentLoader.item as ExposePanel
-        // An off-center destination would jump from the enlarged central preview on unmap.
-        let rect = requested || windowIsCentered(transitionAddress) ? view?.windowPreviewRect(transitionAddress) : null
-        zoomTarget = rect ? "window" : "workspace"
-        if (!rect) rect = view?.workspacePreviewRect(transitionWorkspace)
+        const rect = view?.workspacePreviewRect(transitionWorkspace)
         zoomRect = rect ? Qt.rect(contentLoader.x + rect.x, contentLoader.y + rect.y, rect.width, rect.height)
             : Qt.rect(0, 0, width, height)
     }
@@ -62,7 +48,7 @@ PanelWindow {
     }
     function updateTransition() {
         transitionAnimation.stop()
-        chooseZoomTarget()
+        updateZoomRect()
         if (animationsEnabled) {
             transitionAnimation.to = requested ? 1 : 0
             transitionAnimation.restart()
@@ -109,11 +95,9 @@ PanelWindow {
     }
     onRequestedChanged: {
         if (requested) {
-            transitionWorkspace = Hyprland.focusedWorkspace?.id ?? picker.exposeWorkspace
-            transitionAddress = picker.currentItem?.id ?? ""
+            transitionWorkspace = picker.exposeReturnWorkspace
         } else if (picker.exposeCloseTarget) {
             transitionWorkspace = picker.exposeCloseTarget.workspaceId
-            transitionAddress = picker.exposeCloseTarget.id
         }
         prepareTransition.stop()
         if (requested && animationsEnabled) prepareTransition.restart()
@@ -145,8 +129,7 @@ PanelWindow {
         clip: true
         // Blend capture startup while the whole overview zooms out from its target.
         // Keep workspace closing visible until its miniature reaches desktop size.
-        opacity: !root.requested && (root.picker.exposeCloseTarget || root.zoomTarget === "workspace")
-            ? 1 : Math.min(1, root.transitionProgress * 5)
+        opacity: root.requested ? Math.min(1, root.transitionProgress * 5) : 1
         Image {
             anchors.fill: parent
             source: root.imageUrl(root.wallpapers[root.screen?.name])
@@ -179,7 +162,6 @@ PanelWindow {
                     animationsEnabled: root.animationsEnabled
                     desktopGeometry: Qt.rect(root.monitorOrigin.x + root.desktopRect.x,
                         root.monitorOrigin.y + root.desktopRect.y, root.desktopRect.width, root.desktopRect.height)
-                    captureAddress: root.zoomTarget === "window" ? root.transitionAddress : ""
                 }
             }
         }
