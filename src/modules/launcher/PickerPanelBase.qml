@@ -50,6 +50,19 @@ Rectangle {
         font.weight: Theme.fontWeight
     }
     function acceptSelection(modifiers) { picker.accept((modifiers & Qt.ControlModifier) !== 0, false) }
+    function handleSelectionKey(event, activate) {
+        if (!picker.multiple) return false
+        if (event.key === Qt.Key_Space) {
+            if (searchHasFocus && !(event.modifiers & Qt.ShiftModifier)) return false
+            if (activate) { picker.select(picker.currentIndex,true); picker.move(1) }
+        } else if (event.key === Qt.Key_A && (event.modifiers & Qt.ControlModifier)) {
+            if (activate) {
+                if (event.modifiers & Qt.ShiftModifier) picker.deselectAll()
+                else picker.toggleVisibleSelection()
+            }
+        } else return false
+        return true
+    }
     Connections {
         target: root.picker
         function onOpened() {
@@ -158,15 +171,10 @@ Rectangle {
                 visible: sourceComponent !== null
                 sourceComponent: root.actionButtons
             }
-            UI.Text {
+            UI.ShortcutHints {
                 objectName: "pickerFooterHint"
-                centerVertical: false
                 width: parent.width
-                font.pixelSize: Theme.fontSize - 1
-                horizontalAlignment: Text.AlignHCenter
-                wrapMode: Text.Wrap
-                color: Theme.inactive
-                text: root.footerHint
+                hints: root.footerHint
             }
         }
     }

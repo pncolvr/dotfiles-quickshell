@@ -46,13 +46,9 @@ Item {
         return true
     }
     function handlePickerKey(event, activate) {
-        if (!ProjectService.urls || !(event.modifiers & Qt.ControlModifier) || event.key !== Qt.Key_A) return false
-        if (activate) {
-            if (event.modifiers & Qt.ShiftModifier) root.picker.deselectAll()
-            else root.picker.toggleVisibleSelection()
-        }
-        return true
+        return ProjectService.urls && list.handleSelectionKey(event,activate)
     }
+    Keys.onPressed: event => { event.accepted = !ProjectService.managing && root.handlePickerKey(event,true) }
     function management(value) {
         if (!value) cancelAdd()
         ProjectService.setManaging(value)
@@ -132,9 +128,9 @@ Item {
         searchPlaceholder: ProjectService.urls ? "Search repository URLs" : "Search projects"
         searchKeyHandler: root.handlePickerKey
         footerHint: (ProjectService.showAll ? "All projects" : "By status") + " · " + Config.projectShowAllShortcut
-            + (ProjectService.showAll ? ": by status" : ": all projects") + " · " + Config.projectManageShortcut + ": manage"
-            + (ProjectService.urls ? "\n" + root.picker.selectedIds.length + " selected · Ctrl+A: select visible / clear all" : "")
-            + " · Enter: select · Esc: close"
+            + (ProjectService.showAll ? ": status" : ": all") + " · " + Config.projectManageShortcut + ": manage"
+            + (ProjectService.urls ? " · Esc: close\n" + root.picker.selectedIds.length + " selected · Shift+Space: toggle + next\nCtrl+A: all / clear · Enter: open"
+                : " · Enter: open · Esc: close")
     }
     QC.ScrollView {
         id: manage
@@ -454,19 +450,14 @@ Item {
             onCancelled: { ProjectService.cancelDraft(); root.cancelAdd() }
             onSubmitted: { if (ProjectService.saveDraft()) root.cancelAdd() }
         }
-        UI.Text {
+        UI.ShortcutHints {
             id: manageHints
             objectName: "projectManageHints"
-            centerVertical: false
             x: Theme.projectManagePadding
             width: Math.max(0,parent.width - Theme.projectManagePadding * 2)
             anchors.bottom: parent.bottom
             anchors.bottomMargin: Theme.projectManagePadding
-            font.pixelSize: Theme.fontSize - 1
-            horizontalAlignment: Text.AlignHCenter
-            wrapMode: Text.Wrap
-            color: Theme.inactive
-            text: Config.projectManageShortcut + ": projects"
+            hints: Config.projectManageShortcut + ": projects"
                 + (!root.showAddForm && !ProjectService.draft ? " · " + Config.projectAddShortcut + ": add folder" : "")
                 + " · Esc: " + (root.adding || ProjectService.draft ? "cancel" : "close")
         }

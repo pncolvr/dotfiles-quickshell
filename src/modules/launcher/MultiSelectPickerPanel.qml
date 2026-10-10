@@ -10,22 +10,8 @@ PickerPanelBase {
         + "Ctrl+A select visible / clear all · "
         + (picker.selectedIds.length ? "Enter to " + picker.acceptLabel.toLowerCase() : "Enter uses highlighted row")
 
-    Keys.onPressed: event => {
-        switch (event.key) {
-            case Qt.Key_Space:
-                if (root.searchHasFocus && !(event.modifiers & Qt.ShiftModifier)) { event.accepted = false; return }
-                root.picker.select(root.picker.currentIndex, true)
-                root.picker.move(1)
-                break
-            case Qt.Key_A:
-                if (!(event.modifiers & Qt.ControlModifier)) { event.accepted = false; return }
-                if (event.modifiers & Qt.ShiftModifier) root.picker.deselectAll()
-                else root.picker.toggleVisibleSelection()
-                break
-            default: event.accepted = false; return
-        }
-        event.accepted = true
-    }
+    searchKeyHandler: root.handleSelectionKey
+    Keys.onPressed: event => { event.accepted = root.handleSelectionKey(event,true) }
 
     actionButtons: Component {
         Item {

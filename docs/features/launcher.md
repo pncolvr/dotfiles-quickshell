@@ -18,6 +18,8 @@ dialog and footer stay in place.
 `PickerPanelBase` shares layout, search and navigation. `ClipboardPickerPanel`
 and `MultiSelectPickerPanel` extend it with their own shortcuts and action buttons;
 `PickerPanel` loads the appropriate panel.
+Shortcut hints keep each key and action together when wrapping. Project and
+directory hints fit one line; GitHub groups its selection shortcuts on separate lines.
 
 ## Commands
 
@@ -289,6 +291,9 @@ project without rearranging rows. Opening focuses a matching VS Code window when
 available, otherwise launches the selected folder/workspace with its source's
 configured editor profile.
 
+In the GitHub picker, **Shift+Space** toggles the highlighted repository and moves
+to the next row without adding a space to search. Repeat to select repositories,
+then press Enter to open the selected URLs. Plain Space still types in search.
 `launcher.sh provider github` uses the same stored projects, filtering by category
 and offering unique remote URLs with multiple selection. Git origin URLs, SSH
 aliases and tracked folders from the bare dotfiles repository are supported.

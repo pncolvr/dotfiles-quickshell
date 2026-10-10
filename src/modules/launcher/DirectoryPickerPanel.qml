@@ -97,7 +97,7 @@ Item {
         visible: !DirectoryService.managing
         searchPlaceholder: "Search directories"
         footerHint: (DirectoryService.showAll ? "All directories" : "By status") + " · " + Config.directoryShowAllShortcut
-            + (DirectoryService.showAll ? ": by status" : ": all directories") + " · " + Config.directoryManageShortcut
+            + (DirectoryService.showAll ? ": status" : ": all") + " · " + Config.directoryManageShortcut
             + ": manage · Enter: open · Esc: close"
     }
     QC.ScrollView {
@@ -250,15 +250,10 @@ Item {
             enabled: !DirectoryService.busy
             onClicked: root.beginAdd()
         }
-        UI.Text {
+        UI.ShortcutHints {
             objectName: "directoryManageHints"
             width: parent.width
-            centerVertical: false
-            horizontalAlignment: Text.AlignHCenter
-            color: Theme.inactive
-            font.pixelSize: Theme.fontSize - 1
-            wrapMode: Text.Wrap
-            text: Config.directoryManageShortcut + ": directories"
+            hints: Config.directoryManageShortcut + ": directories"
                 + (!root.showForm ? " · " + Config.directoryAddShortcut + ": add folder" : "")
                 + " · Esc: " + (root.adding || root.editing ? "cancel" : "close")
         }
