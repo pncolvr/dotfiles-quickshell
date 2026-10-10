@@ -47,7 +47,7 @@ Scope {
 
     function seed() {
         check(DbService.ready, "database created on first use")
-        check(DbService.read("SELECT name FROM store.sqlite_master WHERE type = 'table'").length === 13, "central schema")
+        check(DbService.read("SELECT name FROM store.sqlite_master WHERE type = 'table'").length === 14, "central schema")
         check(!TimeService.showSeconds, "default clock preference")
         check(TwitchRepository.exportUsers() === "", "fresh Twitch list is empty")
         check(TwitchService.browserSuggestions.join() === "alice,bob", "current qutebrowser tabs suggested without history or directory pages")
@@ -275,7 +275,7 @@ Scope {
                         && TwitchRepository.notifiedStreams.bob?.streamId === "bob-stream-1", "latest streams restored before offline check")
                 }
                 else if (root.phase === "restart") {
-                    root.check(DbService.schemaVersion === 8
+                    root.check(DbService.schemaVersion === 9
                         && DbService.read("SELECT login FROM twitch_notified_streams").length === 0, "v3 schema upgraded without losing existing data")
                     root.check(TimeService.showSeconds, "clock preference restored after process restart")
                     root.check(TwitchRepository.exportUsers() === "alice\nbob", "Twitch users restored after process restart")

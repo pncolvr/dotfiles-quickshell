@@ -9,6 +9,8 @@ HoverTooltip 1.0 components/HoverTooltip.qml
 ActionButton 1.0 components/ActionButton.qml
 EditorActions 1.0 components/EditorActions.qml
 InputField 1.0 components/InputField.qml
+FolderPathField 1.0 components/FolderPathField.qml
+ManagementRow 1.0 components/ManagementRow.qml
 SearchField 1.0 components/SearchField.qml
 ScrollBar 1.0 components/ScrollBar.qml
 TabBar 1.0 components/TabBar.qml

@@ -37,3 +37,5 @@ singleton ClipboardService 1.0 clipboard/ClipboardService.qml
 singleton PickerService 1.0 launcher/PickerService.qml
 singleton ProjectRepository 1.0 storage/ProjectRepository.qml
 singleton ProjectService 1.0 projects/ProjectService.qml
+singleton DirectoryRepository 1.0 storage/DirectoryRepository.qml
+singleton DirectoryService 1.0 files/DirectoryService.qml

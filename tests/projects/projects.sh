@@ -48,7 +48,7 @@ for phase in setup restart missing; do
     [[ $output == *"PASS: projects $phase"* && $output != *'PROJECT FAIL:'* && $output != *'TypeError:'* && $output != *'ReferenceError:'* && $output != *'Binding loop detected'* ]]
 done
 jq -se --arg path "$test_dir/repos/banana/Banana.code-workspace" 'any(.[]; . == [$path,"--profile","Personal"])' "$test_dir/actions" >/dev/null
-[[ $(sqlite3 "$test_dir/config/data/quickshell.db" 'PRAGMA user_version; PRAGMA integrity_check;') == $'8\nok' ]]
+[[ $(sqlite3 "$test_dir/config/data/quickshell.db" 'PRAGMA user_version; PRAGMA integrity_check;') == $'9\nok' ]]
 # A missing source retains the last successful snapshot. No cache JSON is written.
 [[ ! -e $XDG_CACHE_HOME/code_projects_${USER}.json ]]
 printf 'PASS: project discovery, explicit categories, workspace choices, manual refresh, failed scans, native picker and restart persistence\n'

@@ -131,6 +131,11 @@ Singleton {
         ProjectService.open(browser)
         show()
     }
+    function directories() {
+        begin("directories", "Directories")
+        DirectoryService.open()
+        show()
+    }
     function syncApps() {
         const usage = PreferencesRepository.value("launcher.usage", {})
         items = DesktopEntries.applications.values.map(entry => ({id: entry.id, title: entry.name,
@@ -314,6 +319,8 @@ Singleton {
             close()
         } else if (mode === "projects") {
             ProjectService.accept(picked)
+        } else if (mode === "directories") {
+            DirectoryService.accept(picked)
         } else if (mode === "apps") {
             const usage = Object.assign({}, PreferencesRepository.value("launcher.usage", {}))
             usage[item.id] = (usage[item.id] || 0) + 1
@@ -439,6 +446,7 @@ Singleton {
         function expose(scope: string): void { root.expose(scope) }
         function clipboard(): void { root.clipboard() }
         function projects(): void { root.projects() }
+        function directories(): void { root.directories() }
         function projectUrls(): void { root.projects(true) }
         function open(directory: string): void { root.open(directory) }
         function cancel(directory: string): void { root.cancel(directory) }

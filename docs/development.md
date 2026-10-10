@@ -114,6 +114,7 @@ bash tests/notifications/notifications.sh
 bash tests/notifications/notifications.sh --wayland
 bash tests/notifications/startup.sh
 bash tests/storage/storage.sh
+bash tests/directories/directories.sh
 bash tests/qml/lint.sh
 ```
 

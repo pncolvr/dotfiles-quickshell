@@ -19,6 +19,14 @@ Recent-file folder tabs, aliases and default selection use preferences. Pinned
 document metadata is stored separately under `files.pinned`, so removing a folder
 tab leaves its document pins intact. No schema migration is needed for document pins.
 
+## Directories
+
+Schema version 9 adds `directories`, keyed by canonical folder path or a
+file-manager URI, with a display name and explicit Personal/Work category.
+Editing changes all fields atomically; removing an entry never deletes files.
+There is no runtime JSON import. Both pickers retain their existing records when
+the database schema upgrades.
+
 ## Projects
 
 Schema version 8 adds `project_sources`, `projects`, and `project_workspaces`.

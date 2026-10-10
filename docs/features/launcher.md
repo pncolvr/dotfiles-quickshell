@@ -192,11 +192,41 @@ names are `code`, `webapps`, `github`, `azure`, `n8n`, `remotes`, `bookmarks`,
 `books`, `directories`, `media`, `power`, `screenshot`, and `recording`.
 Their shared JSON handler and direct menu calls invoke `launcher.sh`; no Rofi
 adapter or PATH override is required. `_common/` holds the shared Bash helpers;
-`web/` contains webapps, GitHub, Azure and n8n, and `remotes/` contains the VM/RDP
-scripts. Projects and GitHub dispatch directly to native QML services; their
+`web/` contains webapps, Azure and n8n, and `remotes/` contains the VM/RDP
+scripts. Projects, GitHub and directories dispatch directly to native QML services; their
 former Bash providers are removed. The other providers are named `<provider>.sh`. Browser selection,
 work/personal filtering, editor profiles and cache rebuild flags are preserved.
 Shared browser/status helpers remain in Zsh, and URL cleaning remains in Qutebrowser.
+
+### Directories
+
+`launcher.sh directories`, `launcher.sh provider directories` and
+`qs ipc call launcher directories` open the native directory picker. Each opening
+starts in **Directories**, with the work-status filter enabled. Personal folders
+remain available; work folders appear while the status is `directoryWorkStatus`.
+**Ctrl+W** toggles all directories for the current opening. **Ctrl+M** toggles
+**Manage**. **Ctrl+A** opens the bottom-right Add form only in Manage; while
+editing a field it retains Select all. Both tabs show shortcut hints. Commands,
+status and shortcuts live in `src/config/Config.qml`.
+
+Add a local path, `~/` path, or choose a folder with the native browse button.
+The dialog returns focus to the input and keeps Manage open. Local folders must
+exist; symlinks resolve to their canonical path. File-manager locations such as
+`computer:///`, `trash:///`, `network:///` and `smb://server/share` are detected
+automatically and kept as URIs, without checking or connecting to them on Add.
+Opening sends the stored location directly to the configured file manager.
+No administrative permission or separate system-folder setting is needed.
+
+The form offers an optional display name and a Personal/Work button. Save hides
+the form; Edit lets you change the path, name and category together, and Cancel
+discards changes. Duplicate paths are rejected. Manage searches names and paths
+with the shared fuzzy matcher and shows both categories, with row dividers and
+hover highlighting. Removing an entry removes only the shortcut, leaving the
+folder intact. Empty lists show the add form immediately.
+
+Entries live in SQLite. The former JSON provider is removed, and there is no
+automatic import or migration script. `FolderPathField` and `ManagementRow` are
+shared with project management, along with the existing tabs and editor actions.
 
 ### Projects
 
@@ -279,7 +309,6 @@ Private configuration lives beside its provider and stays Git-ignored:
 - `remotes/hosts.json`: VM/RDP hosts; `hosts.json.sample` documents the format.
   RDP option strings support quotes and backslash escapes; shell expressions and
   wildcards are passed literally.
-- `directories.json`: JSON directory entries.
 - `screenshot.env`: Bash `SCREENSHOT_FOLDER` setting.
 - `recording.env`: Bash `VIDEOS_FOLDER` setting.
 

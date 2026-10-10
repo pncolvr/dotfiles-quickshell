@@ -32,7 +32,7 @@ if [[ ${1:-} == --bridge ]]; then
 fi
 
 case ${1:-apps} in
-    apps|clipboard|projects) ipc call launcher "${1:-apps}"; exit ;;
+    apps|clipboard|projects|directories) ipc call launcher "${1:-apps}"; exit ;;
     windows) ipc call launcher windows "${2:-all}"; exit ;;
     expose) ipc call launcher expose "${2:-current}"; exit ;;
     provider)
@@ -40,9 +40,10 @@ case ${1:-apps} in
         case $name in
             code) ipc call launcher projects; exit ;;
             github) ipc call launcher projectUrls; exit ;;
+            directories) ipc call launcher directories; exit ;;
         esac
         case $name in
-            bookmarks|books|directories|media|power|screenshot|recording) provider="$launcher_dir/providers/$name.sh" ;;
+            bookmarks|books|media|power|screenshot|recording) provider="$launcher_dir/providers/$name.sh" ;;
             webapps|azure|n8n) provider="$launcher_dir/providers/web/$name.sh" ;;
             remotes) provider="$launcher_dir/providers/remotes/pick.sh" ;;
             *) fail "Unknown provider: $name" ;;
@@ -54,7 +55,7 @@ case ${1:-apps} in
     --json) input_file=${2:?JSON file required}; output_format=results ;;
     --json-response) input_file=${2:?JSON file required}; output_format=json ;;
     --dmenu) input_file=""; output_format=titles ;;
-    *) fail 'Usage: launcher.sh apps|projects|windows [all|current]|expose [all|current]|clipboard|provider NAME [ARGS...]|--json FILE|--json-response FILE|--dmenu [OPTIONS]' ;;
+    *) fail 'Usage: launcher.sh apps|projects|directories|windows [all|current]|expose [all|current]|clipboard|provider NAME [ARGS...]|--json FILE|--json-response FILE|--dmenu [OPTIONS]' ;;
 esac
 
 runtime_root=${XDG_RUNTIME_DIR:?XDG_RUNTIME_DIR is required}/quickshell-picker

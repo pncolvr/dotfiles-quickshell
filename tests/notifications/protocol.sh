@@ -323,7 +323,7 @@ stop
 start
 check_rows 'length == 0'
 check_state '.emitters["desktop:test"].excludeFromHistory'
-[[ $(sqlite3 "$database" "PRAGMA user_version; PRAGMA integrity_check; SELECT value_json FROM preferences WHERE key='preserve';") == $'8\nok\n42' ]] || fail 'schema integrity and unrelated preferences'
+[[ $(sqlite3 "$database" "PRAGMA user_version; PRAGMA integrity_check; SELECT value_json FROM preferences WHERE key='preserve';") == $'9\nok\n42' ]] || fail 'schema integrity and unrelated preferences'
 stop
 sqlite3 "$database" <<'SQL'
 ALTER TABLE notifications DROP COLUMN actions_json;

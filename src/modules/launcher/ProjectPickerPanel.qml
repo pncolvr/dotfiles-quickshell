@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls as QC
-import QtQuick.Dialogs as Dialogs
 import "../../theme"
 import "../../theme/ui" as UI
 import "../../services"
@@ -17,8 +16,8 @@ Item {
     property string sourceCategory: "personal"
     property bool adding: false
     readonly property bool showAddForm: adding || ProjectService.sources.length === 0
-    property alias folderPicker: folderDialog
-    readonly property bool nativeDialogOpen: folderDialog.visible
+    property alias folderPicker: sourcePath.folderPicker
+    readonly property bool nativeDialogOpen: sourcePath.nativeDialogOpen
     function matchesManagement(text) {
         return !manageSearch.text.trim() || root.picker.filter([{title:text}],manageSearch.text).length > 0
     }
@@ -34,7 +33,7 @@ Item {
     function focusSearch() {
         if (!root.picker.visible) return
         if (ProjectService.managing) {
-            if (root.showAddForm && !ProjectService.draft) sourcePath.forceActiveFocus()
+            if (root.showAddForm && !ProjectService.draft) sourcePath.focusInput()
             else if (!ProjectService.draft) manageSearch.forceActiveFocus()
         }
         else list.focusSearch()
@@ -94,16 +93,6 @@ Item {
         if (ProjectService.draft) { ProjectService.cancelDraft(); root.cancelAdd() }
         else if (root.adding) root.cancelAdd()
         else root.picker.close()
-    }
-    Dialogs.FolderDialog {
-        id: folderDialog
-        title: root.sourceKind === "root" ? "Choose repositories root" : "Choose project folder"
-        options: Dialogs.FolderDialog.ReadOnly
-        onAccepted: {
-            sourcePath.text = decodeURIComponent(selectedFolder.toString().replace(/^file:\/\/(?:localhost)?/, ""))
-            Qt.callLater(root.focusSearch)
-        }
-        onRejected: Qt.callLater(root.focusSearch)
     }
     RowLayout {
         id: header
@@ -275,46 +264,25 @@ Item {
                             }
                             Repeater {
                                 model: sourceRow.modelData.kind === "root" ? sourceRow.projects : []
-                                delegate: Item {
+                                delegate: UI.ManagementRow {
                                     id: projectRow
                                     required property var modelData
                                     objectName: "managedProject_" + modelData.path
                                     width: sourceContent.width
-                                    implicitHeight: Theme.controlHeight + Theme.controlSpacing + 1
-                                    Rectangle {
-                                        objectName: "managedProjectHover_" + projectRow.modelData.path
-                                        width: parent.width
-                                        height: Theme.controlHeight
-                                        visible: projectHover.hovered
-                                        color: Theme.alternateBackground
-                                        radius: Theme.iconButtonRadius
+                                    UI.ColumnText {
+                                        objectName: "managedProjectName_" + projectRow.modelData.path
+                                        text: projectRow.modelData.name
+                                        elide: Text.ElideMiddle
+                                        Layout.fillWidth: true
+                                        UI.HoverTooltip { text: projectRow.modelData.path }
                                     }
-                                    HoverHandler { id: projectHover }
-                                    Rectangle {
-                                        objectName: "managedProjectDivider_" + projectRow.modelData.path
-                                        anchors.bottom: parent.bottom
-                                        width: parent.width
-                                        height: 1
-                                        color: Theme.empty
-                                    }
-                                    RowLayout {
-                                        width: parent.width
-                                        height: Theme.controlHeight
-                                        UI.ColumnText {
-                                            objectName: "managedProjectName_" + projectRow.modelData.path
-                                            text: projectRow.modelData.name
-                                            elide: Text.ElideMiddle
-                                            Layout.fillWidth: true
-                                            UI.HoverTooltip { text: projectRow.modelData.path }
-                                        }
-                                        UI.ActionButton {
-                                            objectName: "editProject_" + projectRow.modelData.path
-                                            glyph: Theme.editIcon
-                                            hint: "edit workspaces"
-                                            visible: projectRow.modelData.workspaces.length > 0
-                                            enabled: !ProjectService.busy
-                                            onClicked: ProjectService.editProject(projectRow.modelData.path)
-                                        }
+                                    UI.ActionButton {
+                                        objectName: "editProject_" + projectRow.modelData.path
+                                        glyph: Theme.editIcon
+                                        hint: "edit workspaces"
+                                        visible: projectRow.modelData.workspaces.length > 0
+                                        enabled: !ProjectService.busy
+                                        onClicked: ProjectService.editProject(projectRow.modelData.path)
                                     }
                                 }
                             }
@@ -419,22 +387,15 @@ Item {
             Row {
                 width: parent.width
                 spacing: Theme.controlSpacing
-                UI.InputField {
+                UI.FolderPathField {
                     id: sourcePath
-                    objectName: "projectSourcePath"
-                    width: Math.max(0,parent.width - browseSource.width - editorActions.width - parent.spacing * 2)
+                    inputObjectName: "projectSourcePath"
+                    browseObjectName: "browseProjectSource"
+                    width: Math.max(0,parent.width - editorActions.width - parent.spacing)
                     placeholderText: root.sourceKind === "root" ? "Repositories root folder" : "Project folder"
+                    dialogTitle: root.sourceKind === "root" ? "Choose repositories root" : "Choose project folder"
                     enabled: !ProjectService.busy
-                    pauseTooltipDismissal: false
                     onAccepted: if (text.trim()) ProjectService.addSource(text,root.sourceKind,root.sourceCategory)
-                }
-                UI.ActionButton {
-                    id: browseSource
-                    objectName: "browseProjectSource"
-                    glyph: Theme.folderOpenIcon
-                    hint: "choose folder"
-                    enabled: !ProjectService.busy
-                    onClicked: folderDialog.open()
                 }
                 UI.EditorActions {
                     id: editorActions

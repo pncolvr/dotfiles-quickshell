@@ -21,6 +21,7 @@ Item {
         id: content
         anchors.fill: parent
         sourceComponent: root.picker.mode === "projects" ? projectPanel
+            : root.picker.mode === "directories" ? directoryPanel
             : root.picker.mode === "clipboard" ? clipboardPanel
             : root.picker.multiple ? multiSelectPanel : standardPanel
     }
@@ -29,6 +30,10 @@ Item {
         ProjectPickerPanel { picker: root.picker; backgroundVisible: root.backgroundVisible }
     }
 
+    Component {
+        id: directoryPanel
+        DirectoryPickerPanel { picker: root.picker; backgroundVisible: root.backgroundVisible }
+    }
     Component {
         id: standardPanel
         PickerPanelBase {

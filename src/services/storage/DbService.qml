@@ -10,7 +10,7 @@ Singleton {
 
     readonly property string name: Config.databaseName
     readonly property string path: Config.databasePath
-    readonly property int schemaVersion: 8
+    readonly property int schemaVersion: 9
     readonly property bool ready: state.ready
     readonly property string error: state.error
 
@@ -86,6 +86,7 @@ Singleton {
                 tx.executeSql("CREATE TABLE IF NOT EXISTS store.project_sources (path TEXT PRIMARY KEY, kind TEXT NOT NULL, category TEXT NOT NULL, error TEXT NOT NULL DEFAULT '', refreshed_at INTEGER NOT NULL DEFAULT 0)")
                 tx.executeSql("CREATE TABLE IF NOT EXISTS store.projects (source_path TEXT NOT NULL, path TEXT NOT NULL, name TEXT NOT NULL, remote_url TEXT NOT NULL DEFAULT '', PRIMARY KEY(source_path,path))")
                 tx.executeSql("CREATE TABLE IF NOT EXISTS store.project_workspaces (project_path TEXT NOT NULL, path TEXT NOT NULL, name TEXT NOT NULL, included INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(project_path,path))")
+                tx.executeSql("CREATE TABLE IF NOT EXISTS store.directories (path TEXT PRIMARY KEY, name TEXT NOT NULL, category TEXT NOT NULL CHECK(category IN ('personal','work')))")
                 tx.executeSql("PRAGMA store.user_version = " + schemaVersion)
             })
             state.database = database

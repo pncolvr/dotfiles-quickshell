@@ -22,7 +22,7 @@ touch "$test_dir/actions" "$test_dir/menus"
 cat > "$test_dir/bin/qs" <<'BASH'
 #!/usr/bin/env bash
 set -euo pipefail
-if [[ ${6:-} == projects || ${6:-} == projectUrls ]]; then
+if [[ ${6:-} == projects || ${6:-} == projectUrls || ${6:-} == directories ]]; then
     printf 'native <%s>\n' "$6" >> "$PROVIDER_TEST_DIR/actions"
     exit 0
 fi
@@ -139,10 +139,6 @@ cat > "$providers/web/n8n.json" <<'JSON'
 JSON
 cp "$providers/web/n8n.json" "$XDG_CACHE_HOME/azure_${USER}"
 jq -n --arg home "$HOME" '{action:"output",items:[
-    {title:"Alpha",result:{type:"directory",path:($home + "/Alpha")}},
-    {title:"Beta",result:{type:"directory",path:($home + "/Beta")}}
-]}' > "$providers/directories.json"
-jq -n --arg home "$HOME" '{action:"output",items:[
     {title:"Alpha",result:($home + "/alpha.pdf")},
     {title:"Beta",result:($home + "/beta.pdf")}
 ]}' > "$XDG_CACHE_HOME/books_${USER}"
@@ -173,14 +169,15 @@ run_provider() {
     [[ ! -s $test_dir/error ]] || { cat "$test_dir/error" >&2; exit 1; }
     printf 'PASS: %s provider dispatch, shared helpers and selected action\n' "$name"
 }
-for provider in code github; do
+for provider in code github directories; do
     : > "$test_dir/actions"; : > "$test_dir/menus"
     bash "$picker" provider "$provider"
     if [[ $provider == code ]]; then expect_action 'native <projects>';
-    else expect_action 'native <projectUrls>'; fi
+    elif [[ $provider == github ]]; then expect_action 'native <projectUrls>';
+    else expect_action 'native <directories>'; fi
     [[ ! -s $test_dir/menus ]]
 done
-printf 'PASS: project and GitHub providers dispatch to native IPC without a JSON cache\n'
+printf 'PASS: projects, GitHub and directories dispatch to native IPC without a JSON cache\n'
 run_provider webapps 'browser <https://example.test/app>'
 run_provider azure 'browser <https://example.test/workflow/alpha>' --pick
 run_provider n8n 'browser <https://example.test/workflow/alpha>'
@@ -188,7 +185,6 @@ run_provider remotes 'virsh <-c> <qemu:///system> <start> <alpha-test>'
 expect_action 'sdl-freerdp3'
 run_provider bookmarks 'browser <https://example.test/alpha>'
 run_provider books "zathura <$HOME/alpha.pdf>" --pick
-run_provider directories "xdg-open <$HOME/Alpha>"
 run_provider power 'loginctl <lock-session>'
 run_provider screenshot 'hyprshot <--freeze> <--silent> <--clipboard-only> <--raw> <--mode> <output>'
 run_provider recording 'wf-recorder <'

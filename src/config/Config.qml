@@ -72,6 +72,12 @@ Item {
     readonly property string projectManageShortcut: "Ctrl+M"
     readonly property string projectAddShortcut: "Ctrl+A"
     readonly property string projectShowAllShortcut: "Ctrl+W"
+    readonly property string directoryManageShortcut: "Ctrl+M"
+    readonly property string directoryAddShortcut: "Ctrl+A"
+    readonly property string directoryShowAllShortcut: "Ctrl+W"
+    readonly property string directoryWorkStatus: "work"
+    readonly property var directoryResolveCommand: ["bash", Quickshell.shellPath("src/services/files/resolve-folder.sh")]
+    readonly property var directoryOpenCommand: ["pcmanfm-qt"]
     readonly property var projectEditorCommand: ["code"]
     readonly property var projectEditorProfiles: ({work: "Work", personal: "Personal"})
     readonly property var projectBrowserCommand: ["bash", _internal.home + "/.config/zsh/scripts/default-browser/default-browser.sh"]

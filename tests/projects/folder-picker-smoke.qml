@@ -27,7 +27,7 @@ Scope {
     function openDialog() {
         projectPanel.folderPicker.options = Dialogs.FolderDialog.ReadOnly
         projectPanel.folderPicker.currentFolder = "file://" + root.folder
-        root.find(popup.contentItem,"browseProjectSource").clicked()
+        root.find(popup.contentItem,PickerService.mode === "directories" ? "browseDirectory" : "browseProjectSource").clicked()
     }
     Timer {
         interval: 150
@@ -114,13 +114,37 @@ Scope {
                 if (popup.windowActive) return
                 root.projectPanel.folderPicker.reject()
                 root.step = 5
-            } else {
+            } else if (root.step === 5) {
                 root.check(PickerService.visible && popup.visible,"cancel keeps Manage open")
                 if (!popup.windowActive || popup.restoringDialogFocus) return
                 root.check(root.find(popup.contentItem,"projectSourcePath").text === root.folder,"cancel preserves the previous path")
                 root.check(!ProjectService.busy && ProjectService.sources.length === 2 && ProjectRepository.projects.length === 2,"choosing a folder does not scan or save")
+                PickerService.directories()
+                root.step = 10
+            } else if (root.step === 10) {
+                if (!popup.visible || !popup.windowActive) return
+                root.projectPanel = root.find(popup.contentItem,"directoryPickerPanel")
+                root.check(!!root.projectPanel,"native directory panel exists")
+                root.check(events.keyClick(Qt.Key_M,Qt.ControlModifier,0),"Ctrl+M opens native directory management")
+                root.check(DirectoryService.managing,"native directory management is open")
+                root.step = 11
+            } else if (root.step === 11) {
+                root.check(root.find(popup.contentItem,"directoryPath").activeFocus,"directory form focuses its path input")
+                root.openDialog()
+                root.step = 12
+            } else if (root.step === 12) {
+                if (popup.windowActive) return
+                root.check(PickerService.visible,"native directory dialog keeps picker open")
+                root.projectPanel.folderPicker.selectedFolder = "file://" + root.folder
+                root.projectPanel.folderPicker.accept()
+                root.step = 13
+            } else {
+                root.check(PickerService.visible && popup.visible && DirectoryService.managing,"directory dialog accept keeps Manage open")
+                if (!popup.windowActive || popup.restoringDialogFocus) return
+                root.check(root.find(popup.contentItem,"directoryPath").text === root.folder,"directory dialog selection fills shared field")
+                root.check(DirectoryService.directories.length === 0,"choosing directory does not save automatically")
                 PickerService.close()
-                if (!root.failed) console.log("PASS: project folder picker returns focus after accept and cancel")
+                if (!root.failed) console.log("PASS: project folder picker returns focus after accept and cancel; directories share native dialog focus")
                 stop(); Qt.quit()
             }
         }
