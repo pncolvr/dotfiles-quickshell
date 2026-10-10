@@ -4,26 +4,41 @@ import QtQuick
 import Quickshell.Services.SystemTray
 import "../../../theme"
 import "../../../theme/ui" as UI
+import "../../../services"
 
 UI.Row {
     id: root
     required property var window
+    property string moduleName: ""
+    readonly property var tooltipScreen: window.screen
+    readonly property var tooltipWindow: window
+    readonly property var tooltip: null
+    readonly property Item modulePointerTarget: trigger
+    property bool pointerHovered: false
+    readonly property bool expanded: hoverHandler.hovered || pointerHovered
+    height: Math.max(Theme.barHeight, implicitHeight)
+    Component.onCompleted: if (moduleName) BarModuleService.register(root)
+    Component.onDestruction: if (moduleName) BarModuleService.unregister(root)
     HoverHandler {
         id: hoverHandler
+        parent: root
         target: root
-        onHoveredChanged: {
-            tray.visible = hovered
-            trayBackground.visible = hovered
-        }
+        onHoveredChanged: if (hovered) BarModuleService.releasePointerHover(root)
     }
 
-    UI.IconText {
-        text: tray.visible ? Theme.trayOpenIcon : Theme.trayClosedIcon
+    UI.WrapperMouseArea {
+        id: trigger
+        implicitHeight: Theme.barHeight
+        leftMargin: Theme.tooltipHoverPaddingWidth
+        rightMargin: Theme.tooltipHoverPaddingWidth
+        resizeChild: false
+        acceptedButtons: Qt.NoButton
+        UI.IconText { text: root.expanded ? Theme.trayOpenIcon : Theme.trayClosedIcon }
     }
 
     Rectangle {
         id: trayBackground
-        visible: false
+        visible: root.expanded
         color: Theme.expandedBackground
         radius: Theme.expandedBackgroundRadius
         implicitWidth: tray.implicitWidth + Theme.expandedBackgroundPaddingWidth * 2
@@ -31,6 +46,7 @@ UI.Row {
 
         Row {
             id: tray
+            visible: root.expanded
             anchors.centerIn: parent
 
             Repeater {

@@ -26,6 +26,11 @@ Column {
     readonly property real nameWidth: (width - Theme.totpButtonWidth * 2 - Theme.totpSpacing * 3) * 0.42
 
     function cancelEditor() { editingId = ""; adding = false; draftName = ""; draftToken = "" }
+    function focusSearch() { cancelEditor(); searchField.forceActiveFocus() }
+    Keys.onEscapePressed: event => {
+        if (TooltipService.keyboardActive) TooltipService.dismiss()
+        else event.accepted = false
+    }
     onSearchQueryChanged: {
         filteredEntries.updateFilter()
         list.positionViewAtBeginning()

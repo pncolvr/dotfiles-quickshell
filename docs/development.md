@@ -153,11 +153,26 @@ hover styling, and keyboard navigation.
 ```sh
 bash tests/audio/audio.sh
 bash tests/audio/audio.sh --native-imports
+bash tests/audio/screencast.sh
+bash tests/audio/screencast.sh --native
 ```
 
 Run `bash tests/audio/audio.sh` for routing, profile, and QML interaction checks.
 Add `--native-imports` to check the complete bar, real device/profile mapping,
 sorted lists, and system default bindings without changing your audio settings.
+The screencast checks use Qt 6 tests for independent captures, webcam exclusion,
+and description fallbacks. `--native` additionally creates two disposable video
+nodes on a private PipeWire server and checks their descriptions in the real
+tooltip. The native fixture requires `pw-cli`; it does not affect desktop captures.
+
+`bash tests/ui/twitch-panel.sh` briefly opens isolated panels on Wayland and
+restores focus and pointer afterward. It verifies Twitch and TOTP search focus,
+pointer targeting, repeated opens, editor cancellation, pins, Escape, `twi`
+typing in TOTP, hidden-module handling, and volume opening without clicking.
+It also checks panel reuse, pointer placement after bar layout changes, and
+tray expansion without an extra mouse movement, button-edge hover, and dismissal
+when the pointer leaves.
+The TOTP keyring and runtime storage are isolated.
 
 ## Batteries
 

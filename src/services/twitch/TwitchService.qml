@@ -3,7 +3,6 @@ pragma Singleton
 import QtQml
 import Quickshell
 import Quickshell.Io
-import Quickshell.Hyprland
 import "../../config"
 import "../"
 
@@ -25,14 +24,6 @@ Singleton {
         const followed = TwitchRepository.logins()
         return state.browserLogins.filter(login => !followed.includes(login))
     }
-    signal panelRequested(var targetScreen)
-
-    function open() {
-        const screen = Quickshell.screens.find(screen => screen.name === Hyprland.focusedMonitor?.name)
-            ?? Quickshell.screens[0] ?? null
-        if (screen) panelRequested(screen)
-    }
-
     onUsersReadyChanged: if (usersReady) Qt.callLater(root.refresh)
     onAvailableChanged: if (available) Qt.callLater(root.refresh)
 
@@ -351,7 +342,6 @@ Singleton {
 
     IpcHandler {
         target: "twitch"
-        function open(): void { root.open() }
         function reload(): void { root.reload() }
         function addUser(login: string): bool { return root.addUser(login) }
         function removeUser(login: string): bool { return root.removeUser(login) }

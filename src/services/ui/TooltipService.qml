@@ -79,14 +79,20 @@ Singleton {
         _internal.pinned = true
     }
 
-    function openForKeyboard(xPos: real, tooltipContent: Component, tooltipSource, screenCentered, tooltipScreen) {
+    function openForHover(xPos: real, tooltipContent: Component, tooltipSource, screenCentered, tooltipScreen) {
         if (_internal.dragging) return
         const wasManuallyPinned = _internal.pinned && _internal.source === tooltipSource
             && _internal.screen === (tooltipScreen ?? null)
         _internal.pinned = false
         _internal.typingPaused = false
+        _internal.keyboardActive = false
         show(xPos, tooltipContent, tooltipSource, screenCentered, tooltipScreen)
         _internal.pinned = wasManuallyPinned
+    }
+
+    function openForKeyboard(xPos: real, tooltipContent: Component, tooltipSource, screenCentered, tooltipScreen) {
+        if (_internal.dragging) return
+        openForHover(xPos, tooltipContent, tooltipSource, screenCentered, tooltipScreen)
         _internal.keyboardActive = true
         pauseDismissal()
         focusRequested()
@@ -158,7 +164,7 @@ Singleton {
     // Hover events stop outside our windows. Query the compositor only while typing
     // protection is active, so movement elsewhere also restores normal dismissal.
     Timer {
-        interval: 100
+        interval: Config.tooltipPointerInterval
         running: root.typingPaused && root.visible && cursorSocket.path.length > 0
         repeat: true
         triggeredOnStart: true

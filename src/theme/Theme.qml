@@ -209,6 +209,7 @@ Item {
 
   // screencast
   readonly property string screencastIcon: ""
+  readonly property int screencastTooltipWidth: 380
 
   // Audio (Font Awesome: visible glyphs with readable icon names)
   readonly property string micIcon: "" // microphone

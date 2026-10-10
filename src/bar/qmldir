@@ -4,5 +4,7 @@ RightModules 1.0 RightModules.qml
 TopPanelTooltip 1.0 TopPanelTooltip.qml
 PrivateTooltipWindow 1.0 PrivateTooltipWindow.qml
 TooltipWindow 1.0 TooltipWindow.qml
+TooltipFocusHandler 1.0 TooltipFocusHandler.qml
+TooltipPointerHandler 1.0 TooltipPointerHandler.qml
 SubmapWindow 1.0 SubmapWindow.qml
 AlertWindow 1.0 AlertWindow.qml

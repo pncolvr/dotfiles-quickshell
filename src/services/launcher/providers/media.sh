@@ -117,7 +117,7 @@ function force_close_previous_of_same_type() {
 
 # qutebrowser passes TITLE URL; streamer selection now lives in the Twitch panel.
 if [[ -z ${1:-} || -z ${2:-} ]]; then
-    printf 'Usage: launcher.sh provider media TITLE URL (streamers: qs ipc call twitch open)\n' >&2
+    printf 'Usage: launcher.sh provider media TITLE URL (streamers: qs ipc call bar open twitch)\n' >&2
     exit 2
 fi
 url=$(clean "$2")

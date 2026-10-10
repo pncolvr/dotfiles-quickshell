@@ -216,7 +216,7 @@ bash "$picker" provider media 'Video title' 'https://youtube.com/watch?v=direct'
 expect_action '<https://youtube.com/watch?v=direct>'
 [[ ! -s $test_dir/menus ]]
 if bash "$picker" provider media > "$test_dir/output" 2> "$test_dir/error"; then exit 1; fi
-rg -Fq 'qs ipc call twitch open' "$test_dir/error"
+rg -Fq 'qs ipc call bar open twitch' "$test_dir/error"
 [[ ! -s $test_dir/menus ]]
 bash "$picker" provider power Lock
 bash "$picker" provider screenshot ocr >/dev/null

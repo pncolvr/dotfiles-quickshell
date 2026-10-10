@@ -1,9 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtQuick.Window
 import QtQuick.Controls as QC
-import Quickshell.Hyprland
 import "../../theme"
 import "../../theme/ui" as UI
 import "../../services"
@@ -52,27 +50,9 @@ Item {
     }
 
     function cancelEditor() { adding = false; loginField.clear() }
-    function focusSearch(movePointer = false) {
+    function focusSearch() {
         cancelEditor()
         searchField.forceActiveFocus()
-        if (movePointer && Hyprland.requestSocketPath) {
-            root.pointerPending = true
-            root.Window.window?.update()
-        }
-    }
-    property bool pointerPending: false
-    Connections {
-        target: root.Window.window
-        // Global coordinates are valid once the mapped surface has rendered its layout.
-        function onFrameSwapped() {
-            if (!root.pointerPending) return
-            root.pointerPending = false
-            if (!TooltipService.keyboardActive || !searchField.activeFocus) return
-            const source = TooltipService.source
-            if (!source) return
-            const pos = source.mapToGlobal(source.width / 2, source.height / 2)
-            Hyprland.dispatch(`hl.dsp.cursor.move({ x = ${Math.round(pos.x)}, y = ${Math.round(pos.y)} })`)
-        }
     }
     Keys.onEscapePressed: event => {
         if (TooltipService.keyboardActive) TooltipService.dismiss()

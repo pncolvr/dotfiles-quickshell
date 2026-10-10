@@ -11,7 +11,9 @@ qs ipc call windows next
 qs ipc call windows prev
 qs ipc call windows reload
 qs ipc call windows focus 0      # grouped window index
-qs ipc call twitch open          # open panel, focus search and move pointer
+qs ipc call bar open twitch      # open panel, focus search and move pointer
+qs ipc call bar open totp        # open TOTP panel and focus search
+qs ipc call bar open batteries   # open panel and move pointer to icon
 qs ipc call twitch reload
 qs ipc call twitch addUser streamer_login
 qs ipc call twitch removeUser streamer_login
@@ -28,5 +30,23 @@ qs ipc call clipboard importCopyq # import text/image history without changing C
 
 Twitch exports contain lowercase logins as ordinary text. New databases start
 with an empty list; there is no users-file import. See [Twitch](features/twitch.md).
+
+**Meta+I** enters a one-shot module submap. Selection, Escape, or an unassigned
+key exits it. `bar open` returns false for hidden or unknown modules and targets
+the focused monitor. It opens panels by hover without triggering click actions.
+Repeated selection reuses the open panel. Pointer placement follows bar layout
+changes and targets the full module button; the tray expands immediately.
+Twitch and TOTP also focus search. The capture-state and submap badges have no
+panels. Available module names and shortcut keys:
+
+| Key | Module | Key | Module |
+| --- | --- | --- | --- |
+| `u` | `updates` | `c` | `clock` |
+| `f` | `files` | `r` | `timers` |
+| `m` | `mic` | `v` | `volume` |
+| `s` | `stats` | `t` | `twitch` |
+| `w` | `status` | `p` | `totp` |
+| `b` | `batteries` | `n` | `notifications` |
+| `a` | `tray` | `h` | `sharing` |
 
 [Documentation](README.md)

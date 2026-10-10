@@ -19,6 +19,12 @@ The pencil edits both fields, **✓** saves, and **×** cancels. Enter submits t
 field; Escape cancels. The trash button deletes the entry immediately.
 Click the key icon to pin the panel open; click again to return to hover behavior.
 The icon uses the accent color while pinned.
+Press **Meta+I**, then **P**, or run `qs ipc call bar open totp`, to open
+the panel on the focused monitor, move the pointer to the key icon and focus
+search. The submap closes before typing: entering `twi` stays in TOTP search.
+Reopening cancels an editor and preserves the search query. It does not pin
+the panel; an existing manual pin is preserved. Escape dismisses a panel
+opened through the shortcut.
 The TOTP panel uses the same `quickshell-private` capture rule as notifications,
 so it remains visible locally while excluded from screen sharing.
 

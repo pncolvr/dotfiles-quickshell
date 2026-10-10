@@ -18,6 +18,7 @@ TopPanelTooltip {
     WlrLayershell.namespace: Config.screenShareHiddenNamespace
     WlrLayershell.layer: WlrLayer.Top
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
+    TooltipPointerHandler { tooltipWindow: root }
 
     HoverHandler {
         onPointChanged: if (hovered) {

@@ -5,6 +5,7 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Services.Pipewire
 import "../../config"
+import "Screencast.js" as Screencast
 
 Singleton {
     id: root
@@ -244,13 +245,8 @@ Singleton {
         command: Config.mixerCommand
     }
 
-    readonly property bool screencastActive: {
-        for (const node of Pipewire.nodes.values) {
-            if (node.properties?.["media.class"] === "Stream/Input/Video") return true
-        }
-        return false
-    }
-
+    readonly property var screencastStreams: Screencast.streams(Pipewire.nodes.values, Pipewire.links.values)
+    readonly property bool screencastActive: screencastStreams.length > 0
     onScreencastActiveChanged: {
         const sound = screencastActive ? Config.screencastStartSound : Config.screencastStopSound
         screencastSound.command = Config.screencastSoundCommand(sound)

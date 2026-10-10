@@ -13,16 +13,16 @@ Row {
 
     ActiveWindowNoScreenShare {}
     Submap {}
-    Screencast {}
-    Timers { window: root.window }
-    Mic {}
-    Volume {}
-    Stats {}
-    Twitch {}
+    Screencast { moduleName: "sharing" }
+    Timers { moduleName: "timers"; window: root.window }
+    Mic { moduleName: "mic" }
+    Volume { moduleName: "volume" }
+    Stats { moduleName: "stats" }
+    Twitch { moduleName: "twitch"; moduleFocusSearch: true }
     
-    Status {}
-    Totp { window: root.window }
-    Batteries { window: root.window }
-    Notifications { window: root.window }
-    Tray { window: root.window }
+    Status { moduleName: "status" }
+    Totp { moduleName: "totp"; moduleFocusSearch: true; window: root.window }
+    Batteries { moduleName: "batteries"; window: root.window }
+    Notifications { moduleName: "notifications"; window: root.window }
+    Tray { moduleName: "tray"; window: root.window }
 }

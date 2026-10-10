@@ -23,7 +23,8 @@ channels are hidden.
 
 ## Keyboard shortcut
 
-Hyprland's **Meta+I** calls `qs ipc call twitch open`. This opens the
+Press **Meta+I**, then **T**, to select Twitch from the bar-module submap.
+The submap exits immediately. `qs ipc call bar open twitch` opens the
 panel on the focused monitor, focuses the search input, and moves the pointer
 to the center of the Twitch icon. Repeating the shortcut refocuses
 search; an open add editor is cancelled. Escape dismisses a panel opened with

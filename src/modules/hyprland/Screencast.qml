@@ -10,8 +10,21 @@ TooltipArea {
 
     Component {
         id: screencastTooltip
-        ColumnText {
-            text: "Screenshare active"
+        Column {
+            width: Theme.screencastTooltipWidth
+            spacing: Theme.controlSpacing
+            ColumnText { text: "Screen sharing"; color: Theme.accent }
+            Repeater {
+                model: AudioService.screencastStreams
+                delegate: ColumnText {
+                    required property var modelData
+                    width: parent.width
+                    text: modelData.description
+                    elide: Text.ElideRight
+                    textFormat: Text.PlainText
+                    color: Theme.inactive
+                }
+            }
         }
     }
 

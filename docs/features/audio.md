@@ -38,4 +38,11 @@ use the native PipeWire service. Profile data refreshes only while a panel is op
 
 See [development](../development.md#audio) for routing and native device checks.
 
+## Screen sharing
+
+Hover the screen-sharing indicator, or press **Meta+I**, then **H**. Its panel
+shows **Screen sharing** and one description per PipeWire video capture. It uses
+the source name or stream name, falling back to app metadata and then **Video
+capture**. Known webcam sources are excluded. The panel has no capture controls.
+
 [Documentation](../README.md)

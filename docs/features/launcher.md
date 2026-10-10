@@ -227,7 +227,7 @@ Hyprland bindings call `launcher.sh provider NAME [ARGS...]`; new callers should
 use this entry point rather than reaching into the provider tree. Books and Azure
 use `--pick`; both also support `--rebuild-cache`. Qutebrowser's media shortcuts
 call `provider media TITLE URL` for direct mpv playback without a picker.
-Meta+I opens Twitch through `qs ipc call twitch open`; the live-streamer JSON
+Meta+I, then T, opens Twitch through `qs ipc call bar open twitch`; the live-streamer JSON
 export and combined Twitch/YouTube picker are removed. Run `:config-source` in an already-running
 Qutebrowser to refresh these bindings. Hypridle calls `provider power Lock`.
 

@@ -28,7 +28,7 @@ those before running on another desktop.
 | `gtk-launch` | Desktop application launching, including terminal entries |
 | `ydotool` and its daemon | Optional paste on clipboard activation |
 | Noto Sans Mono, JetBrains Mono, Font Awesome 7 Free Solid | Text and icons configured in `src/theme/Theme.qml` |
-| PipeWire, WirePlumber, `pactl` | Audio devices, defaults, application routing and profiles |
+| PipeWire, WirePlumber, `pactl` | Audio controls, routing, profiles and video capture detection |
 | `pavucontrol` | Mixer opened by middle-clicking audio icons |
 | `libsecret` (`secret-tool`), `oath-toolkit` (`oathtool`), Secret Service provider | TOTP storage and code generation |
 | UPower | Laptop and peripheral batteries |
