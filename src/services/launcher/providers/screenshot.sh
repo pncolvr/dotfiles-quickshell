@@ -7,7 +7,7 @@ source "$(get_env_file "${BASH_SOURCE[0]:-0}")"
 # SCREENSHOT_FOLDER=
 
 function pick() {
-    bash "$PICKER_LAUNCHER" --dmenu -case-smart -sort -sorting-method fzf -p ""
+    bash "$PICKER_LAUNCHER" --dmenu -sort -p ""
 }
 
 function capture_screenshot() {

@@ -21,7 +21,7 @@ show_menu() {
     done
     # Keep the original action order and render glyphs with the shell's icon font.
     bash "$PICKER_LAUNCHER" --json <(
-        printf '%s\n' "${rows[@]}" | jq -s '{allowTyped:false, sort:false, smartCase:true, fuzzy:true, layout:"grid", items:.}'
+        printf '%s\n' "${rows[@]}" | jq -s '{allowTyped:false, sort:false, layout:"grid", items:.}'
     )
 }
 

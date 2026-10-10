@@ -123,6 +123,34 @@ ipc call pickertest accept 1
 wait_client 0
 [[ $(<"$test_dir/result") == '{"path":"second"}' ]]
 
+# External search flags must not override the shared Config.qml settings.
+printf '%s\n' '{"fuzzy":false,"smartCase":false,"allowTyped":false,"items":[{"title":"Banana","result":"fruit"},{"title":"Potato","result":"vegetable"}]}' > "$test_dir/search.json"
+bash "$picker" --json "$test_dir/search.json" > "$test_dir/result" 2> "$test_dir/client-error" & client_pid=$!
+wait_open
+ipc call pickertest query bna
+ipc call pickertest snapshot | jq -e '.filtered | length == 1 and .[0].title == "Banana"' >/dev/null
+ipc call pickertest query BNA
+ipc call pickertest snapshot | jq -e '.filtered | length == 1 and .[0].title == "Banana"' >/dev/null
+ipc call pickertest query bNa
+ipc call pickertest snapshot | jq -e '.filtered | length == 0' >/dev/null
+ipc call pickertest query bna
+ipc call pickertest enter
+wait_client 0
+[[ $(<"$test_dir/result") == fruit ]]
+
+printf 'Tomato\nPotato\n' | bash "$picker" --dmenu -i -sorting-method normal -no-custom > "$test_dir/result" 2> "$test_dir/client-error" & client_pid=$!
+wait_open
+ipc call pickertest query TMT
+ipc call pickertest snapshot | jq -e '.filtered | length == 1 and .[0].title == "Tomato"' >/dev/null
+ipc call pickertest query tMt
+ipc call pickertest snapshot | jq -e '.filtered | length == 0' >/dev/null
+ipc call pickertest query tmt
+ipc call pickertest snapshot | jq -e '.filtered | length == 1 and .[0].title == "Tomato"' >/dev/null
+ipc call pickertest enter
+wait_client 0
+[[ $(<"$test_dir/result") == Tomato ]]
+printf 'PASS: JSON and dmenu use shared fuzzy search and cannot override case or matching settings\n'
+
 printf 'Alpha\nbeta\ngamma\n' | bash "$picker" --dmenu -multi-select -case-smart -p Test > "$test_dir/result" 2> "$test_dir/client-error" & client_pid=$!
 wait_open
 ipc call pickertest select 0
@@ -239,7 +267,7 @@ ipc call pickertest enter
 wait_client 0
 [[ $(<"$test_dir/result") == second ]]
 
-# These flag combinations are used by the migrated provider scripts. An empty
+# Legacy provider flags remain accepted without changing search settings. An empty
 # prompt is intentional and must reach QML rather than failing in Bash parsing.
 check_dmenu() {
     local label=$1 expected=$2 input=$3; shift 3

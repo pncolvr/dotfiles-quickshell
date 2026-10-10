@@ -21,8 +21,6 @@ Singleton {
     property int currentIndex: 0
     property bool multiple: false
     property bool allowTyped: false
-    property bool smartCase: true
-    property bool fuzzy: true
     property bool customAccept: false
     property string requestDirectory: ""
     property string pendingDirectory: ""
@@ -47,7 +45,7 @@ Singleton {
         const criteria = itemCriteria
         const keys = Object.keys(criteria)
         const matching = items.filter(item => keys.every(key => item[key] === criteria[key]))
-        return filter(matching, query, smartCase, fuzzy)
+        return filter(matching, query)
     }
     readonly property var currentItem: filteredItems[currentIndex] ?? null
     readonly property var selectedItems: items.filter(item => selectedIds.includes(item.id))
@@ -57,30 +55,50 @@ Singleton {
         || (allowTyped && query.trim().length > 0)
     signal opened()
 
-    function score(text, search, caseSmart, useFuzzy) {
+    function score(text, search) {
         if (!search.trim()) return 0
-        const sensitive = caseSmart && /[A-Z]/.test(search)
+        const sensitive = Config.pickerSmartCase && search !== search.toLowerCase()
+            && search !== search.toUpperCase()
         const haystack = sensitive ? text : text.toLowerCase()
         const needles = (sensitive ? search : search.toLowerCase()).trim().split(/\s+/)
         let total = 0
         for (const needle of needles) {
-            const exact = haystack.indexOf(needle)
-            if (exact >= 0) { total += exact + (exact === 0 ? -20 : 0); continue }
-            if (!useFuzzy) return Infinity
-            let position = -1
-            let first = -1
-            for (const character of needle) {
-                position = haystack.indexOf(character, position + 1)
-                if (position < 0) return Infinity
-                if (first < 0) first = position
+            if (!Config.pickerFuzzySearch) {
+                const exact = haystack.indexOf(needle)
+                if (exact < 0) return Infinity
+                total += exact + (exact === 0 ? -20 : 0)
+                continue
             }
-            total += 100 + first + position - first - needle.length
+            // Find the best subsequence, including later, more compact matches.
+            // Word starts, camel-case initials and consecutive letters score better.
+            let previous = []
+            for (let character = 0; character < needle.length; character++) {
+                const next = new Array(haystack.length).fill(Infinity)
+                let bestGap = Infinity
+                for (let position = 0; position < haystack.length; position++) {
+                    if (character > 0 && position > 1)
+                        bestGap = Math.min(bestGap, previous[position - 2] - 2 * (position - 2))
+                    if (haystack[position] !== needle[character]) continue
+                    const boundary = position === 0 || /[\s._:/\\-]/.test(text[position - 1])
+                        || (text[position - 1] !== text[position - 1].toUpperCase()
+                            && text[position] !== text[position].toLowerCase())
+                    const cost = character === 0 ? Math.min(20, position * 0.1)
+                        : Math.min(position > 0 ? previous[position - 1] - 16 : Infinity,
+                            bestGap + 2 * (position - 1))
+                    next[position] = cost - (boundary ? 12 : 0)
+                }
+                previous = next
+            }
+            const best = previous.reduce((minimum, value) => Math.min(minimum, value), Infinity)
+            if (best === Infinity) return Infinity
+            total += best
         }
         return total
     }
-    function filter(rows, search, caseSmart, useFuzzy) {
+    function filter(rows, search) {
         return rows.map((item, index) => ({item: item, index: index,
-            score: score(String(item.search || item.title), search, caseSmart, useFuzzy)}))
+            score: Math.min(score(String(item.title ?? ""), search),
+                item.search ? score(String(item.search), search) + 12 : Infinity)}))
             .filter(row => row.score !== Infinity)
             .sort((a, b) => a.score - b.score || a.index - b.index).map(row => row.item)
     }
@@ -97,7 +115,7 @@ Singleton {
         mode = newMode; prompt = title; query = ""; items = []; selectedIds = []; currentIndex = 0
         itemCriteria = ({})
         acceptLabel = newMode === "apps" ? "Open" : newMode === "windows" ? "Focus" : "Select"
-        layout = "list"; multiple = false; allowTyped = false; smartCase = true; fuzzy = true; customAccept = false
+        layout = "list"; multiple = false; allowTyped = false; customAccept = false
         error = ""; destination = ""; destinationClass = ""
         targetScreen = chooseScreen()
     }
@@ -374,8 +392,6 @@ Singleton {
             root.acceptLabel = request.acceptLabel || (request.action === "default" ? "Open links" : "Select")
             root.multiple = request.allowMultipleSelection === true
             root.allowTyped = request.allowTyped === true
-            root.smartCase = request.smartCase !== false
-            root.fuzzy = request.fuzzy === true
             root.customAccept = request.customAccept === true
             root.layout = request.layout === "grid" ? "grid" : "list"
             // Source indexes are stable even when labels or provider IDs collide.

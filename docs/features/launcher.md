@@ -130,7 +130,7 @@ bash "$picker" --json-response options.json
 ```
 
 JSON requests accept `prompt`, `allowTyped`, `allowMultipleSelection`, `sort`,
-`smartCase`, `fuzzy`, `customAccept`, `query`, `layout` (`list` or `grid`), and
+`customAccept`, `query`, `layout` (`list` or `grid`), and
 `items`. Each item has a `title` and a `result` (a string or JSON value), with
 optional `subtitle`, `icon`, `glyph`, and `search` strings. `icon` names a desktop
 icon; `glyph` uses the shared icon font in grid menus. `acceptLabel` optionally
@@ -151,8 +151,20 @@ Ctrl+Shift+A always clears every selection. Enter and the submit button use the
 selected entries, or the highlighted row when none are selected. A typed value
 with no matches can still be submitted when the provider allows it. Browser menus label submission
 Open links, which opens each selected URL through the existing browser helper.
-Smart-case matching becomes case sensitive when the query contains uppercase.
-Fuzzy matching uses stable subsequence ranking; its scores are not identical to fzf.
+All launcher modes, including applications, windows, Exposé, clipboard, provider
+menus and JSON/dmenu requests, share the search settings in `src/config/Config.qml`.
+`pickerFuzzySearch` defaults to `true`: `bna` matches Banana, `ptt` matches Potato,
+and `tmt` matches Tomato. Characters must appear in order; this does not correct
+substitutions or transposed letters. Ranking favors consecutive letters, word starts,
+camel-case initials and title matches; equal scores preserve the source order.
+Each query word must match, independently of word order. An empty query keeps the
+initial order. Set `pickerFuzzySearch` to `false` for substring matching.
+`pickerSmartCase` defaults to `true`: only mixed-case queries are case sensitive.
+Lowercase and uppercase-only queries ignore capitalization: `ban` and `BAN` both
+match Banana, while `Ban` respects case and `bAn` does not match Banana.
+Set it to `false` to always ignore case.
+Requests cannot override these settings. Legacy JSON `smartCase`/`fuzzy` fields
+and dmenu `-case-smart`, `-i`, and `-sorting-method` options are ignored.
 
 Requests and reply FIFOs live in a private `$XDG_RUNTIME_DIR/quickshell-picker`
 directory and are cleaned up on completion or interruption. The default timeout

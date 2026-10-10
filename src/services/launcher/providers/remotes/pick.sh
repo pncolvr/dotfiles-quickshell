@@ -7,7 +7,7 @@ HOSTS_FILE="$WORKSPACE/hosts.json"
 LOCALHOST_SSH=localhost
 
 options=$(jq -r '.hosts | map(select(.enabled == true)) | map(.name) | join("|")' "$HOSTS_FILE")
-chosen=$(echo -n "$options|kill|shutdown vm" | bash "$PICKER_LAUNCHER" --dmenu -sep '|' -dmenu -case-smart -p "")
+chosen=$(echo -n "$options|kill|shutdown vm" | bash "$PICKER_LAUNCHER" --dmenu -sep '|' -dmenu -p "")
 [ -z "$chosen" ] && exit
 
 component="$WORKSPACE/components/options"

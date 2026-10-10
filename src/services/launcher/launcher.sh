@@ -71,8 +71,8 @@ if [[ -n $input_file ]]; then
     jq -ce 'if type == "object" and (.items | type) == "array" then . else error("Expected picker JSON") end' "$input_file" > "$request_dir/request.json"
 else
     shift
-    prompt=""; separator=$'\n'; multi=false; allow_typed=true; smart_case=true
-    sort_results=false; fuzzy=false; custom_accept=false; layout=list; initial_query=""
+    prompt=""; separator=$'\n'; multi=false; allow_typed=true
+    sort_results=false; custom_accept=false; layout=list; initial_query=""
     while (($#)); do
         case $1 in
             -dmenu) ;;
@@ -80,11 +80,10 @@ else
             -sep) separator=${2:?}; shift ;;
             -multi-select|--multi-select) multi=true ;;
             --grid) layout=grid ;;
-            -case-smart) smart_case=true ;;
-            -i) smart_case=false ;;
+            -case-smart|-i) ;; # Legacy options cannot override Config.qml search settings.
             -sort) sort_results=true ;;
             -no-custom|--no-custom) allow_typed=false ;;
-            -sorting-method) [[ ${2:?} == fzf ]] && fuzzy=true; shift ;;
+            -sorting-method) : "${2:?}"; shift ;; # Search method belongs to Config.qml.
             -kb-accept-custom) [[ -z ${2-} ]] && allow_typed=false; shift ;;
             -kb-custom-1) [[ ${2:?} == Control+Return ]] || fail 'Only Control+Return custom acceptance is supported.'; custom_accept=true; shift ;;
             -filter) initial_query=${2-}; shift ;;
@@ -97,10 +96,10 @@ else
         shift
     done
     jq -Rsc --arg prompt "$prompt" --arg sep "$separator" --arg query "$initial_query" --arg layout "$layout" \
-        --argjson multi "$multi" --argjson typed "$allow_typed" --argjson smart "$smart_case" \
-        --argjson sort "$sort_results" --argjson fuzzy "$fuzzy" --argjson custom "$custom_accept" '
-        {prompt:$prompt, allowMultipleSelection:$multi, allowTyped:$typed, smartCase:$smart,
-         sort:$sort, fuzzy:$fuzzy, customAccept:$custom, layout:$layout, query:$query,
+        --argjson multi "$multi" --argjson typed "$allow_typed" \
+        --argjson sort "$sort_results" --argjson custom "$custom_accept" '
+        {prompt:$prompt, allowMultipleSelection:$multi, allowTyped:$typed,
+         sort:$sort, customAccept:$custom, layout:$layout, query:$query,
          items: (split($sep) | if .[-1] == "" then .[:-1] else . end | to_entries |
             map({id:(.key|tostring), title:.value, result:.value}))}
     ' > "$request_dir/request.json"

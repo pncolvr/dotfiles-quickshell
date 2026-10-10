@@ -103,12 +103,12 @@ Item {
   readonly property int exposeWorkspaceTopPadding: 12
   readonly property int exposeSearchWidth: 300
   readonly property int exposeDragWidth: 220
-  // readonly property int exposeDragAnimationDuration: 160
-  // readonly property int exposeRearrangeAnimationDuration: 250
-  // readonly property int exposeAnimationDuration: 300
-  readonly property int exposeDragAnimationDuration: 1000
-  readonly property int exposeRearrangeAnimationDuration: 2000
-  readonly property int exposeAnimationDuration: 3000
+  readonly property int exposeDragAnimationDuration: 160
+  readonly property int exposeRearrangeAnimationDuration: 250
+  readonly property int exposeAnimationDuration: 300
+  // readonly property int exposeDragAnimationDuration: 1000
+  // readonly property int exposeRearrangeAnimationDuration: 2000
+  // readonly property int exposeAnimationDuration: 3000
 
   readonly property int exposeCardMinWidth: 280
   readonly property int exposeSpacing: 16

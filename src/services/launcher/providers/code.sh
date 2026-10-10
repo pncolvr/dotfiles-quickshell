@@ -6,7 +6,7 @@ source "$WORKSPACE"/utils.sh
 PROJECTS_JSON="${XDG_CACHE_HOME:-$HOME/.cache}/code_projects_${USER}.json"
 
 function pick() {
-  bash "$PICKER_LAUNCHER" --dmenu -case-smart -sort -sorting-method fzf -p ""
+  bash "$PICKER_LAUNCHER" --dmenu -sort -p ""
 }
 
 function pick_path() {
