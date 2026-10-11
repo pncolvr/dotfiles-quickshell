@@ -287,8 +287,7 @@ Item {
   readonly property int statusTooltipWidth: 420
   readonly property real statusTooltipMaxHeightRatio: 0.6
   // tray
-  readonly property string trayOpenIcon: chevronDownIcon
-  readonly property string trayClosedIcon: chevronRightIcon
+  readonly property string trayIcon: "" // ellipsis: tray apps
   readonly property int trayItemWidth: 16
   readonly property int trayItemHeight: 16
   readonly property color expandedBackground: alternateBackground

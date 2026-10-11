@@ -28,16 +28,21 @@ UI.Row {
 
     UI.WrapperMouseArea {
         id: trigger
+        visible: !root.expanded
         implicitHeight: Theme.barHeight
         leftMargin: Theme.tooltipHoverPaddingWidth
         rightMargin: Theme.tooltipHoverPaddingWidth
         resizeChild: false
         acceptedButtons: Qt.NoButton
-        UI.BarIcon { text: root.expanded ? Theme.trayOpenIcon : Theme.trayClosedIcon }
+        UI.BarIcon {
+            text: Theme.trayIcon
+            color: Theme.text
+        }
     }
 
     Rectangle {
         id: trayBackground
+        anchors.verticalCenter: parent.verticalCenter
         visible: root.expanded
         color: Theme.expandedBackground
         radius: Theme.expandedBackgroundRadius
