@@ -16,14 +16,15 @@ Singleton {
     property string editingProject: ""
     property string editingSource: ""
     signal sourceAdded()
-    property string operation: ""
+    enum Operation { None, Add, Refresh, Discard }
+    property int operation: ProjectService.Operation.None
     readonly property bool busy: scan.running
     readonly property var sources: ProjectRepository.sources
     readonly property var projects: ProjectRepository.projects
     readonly property var availableProjects: projects.filter(project => showAll || StatusService.status === Config.projectWorkStatus || project.category !== "work")
 
     function open(browser = false) {
-        if (busy && operation === "add") operation = "discard"
+        if (busy && operation === ProjectService.Operation.Add) operation = ProjectService.Operation.Discard
         managing = false; urls = browser; showAll = false; projectPath = ""; draft = null; editingProject = ""; editingSource = ""; error = ""
         syncPicker()
     }
@@ -37,7 +38,7 @@ Singleton {
         if (!value) { cancelDraft(); syncPicker(); PickerService.opened() }
     }
     function syncPicker() {
-        if (PickerService.mode !== "projects") return
+        if (PickerService.mode !== PickerService.Mode.Projects) return
         const previous = PickerService.currentItem?.id
         const rows = []
         if (urls) {
@@ -119,13 +120,13 @@ Singleton {
         if (!path.startsWith("/") || !["root","folder"].includes(kind) || !["work","personal"].includes(category)) {
             error = "Choose an absolute folder path and a category"; return false
         }
-        return startScan([{path,kind,category}],"add")
+        return startScan([{path,kind,category}],ProjectService.Operation.Add)
     }
     function refresh(path = "") {
         if (draft) { error = "Save or cancel the current draft before refreshing"; return false }
         const selected = path ? sources.filter(source => source.path === path) : sources
         if (path && !selected.length) { error = "That folder is not configured"; return false }
-        return startScan(selected,"refresh")
+        return startScan(selected,ProjectService.Operation.Refresh)
     }
     function editProject(path) {
         if (busy) return
@@ -158,7 +159,7 @@ Singleton {
             : Object.assign({},project,{workspaces:project.workspaces.map(workspace => workspace.path !== path ? workspace : Object.assign({},workspace,{included}))}))})
     }
     function cancelDraft() {
-        if (busy && operation === "add") operation = "discard"
+        if (busy && operation === ProjectService.Operation.Add) operation = ProjectService.Operation.Discard
         draft = null; editingProject = ""; editingSource = ""; error = ""
     }
     function reviewRefresh(results) {
@@ -234,7 +235,8 @@ Singleton {
             if (exitCode !== 0 || exitStatus !== 0) { root.error = errors.text.trim() || "Project scan failed"; root.syncPicker(); return }
             try {
                 const results = JSON.parse(output.text).sources
-                if (root.operation === "add") {
+                switch (root.operation) {
+                  case ProjectService.Operation.Add: {
                     const source = results[0]
                     if (source.error) throw new Error(source.error)
                     if (root.sources.some(existing => existing.path === source.path)) throw new Error("That source is already configured")
@@ -244,9 +246,16 @@ Singleton {
                     } else {
                         root.draft = Object.assign({},source,{projects:source.projects.map(project => Object.assign({},project,{workspaces:project.workspaces.map(workspace => Object.assign({},workspace,{included:true}))}))})
                     }
-                } else if (root.operation === "refresh") {
+                    break
+                  }
+                  case ProjectService.Operation.Refresh: {
                     if (!root.reviewRefresh(results) && !ProjectRepository.apply(results)) throw new Error(ProjectRepository.error)
                     root.error = results.filter(source => source.error).map(source => source.path + ": " + source.error).join("\n")
+                    break
+                  }
+                  case ProjectService.Operation.None:
+                  case ProjectService.Operation.Discard:
+                    break
                 }
             } catch (error) { root.error = error.message || String(error) }
             root.syncPicker()

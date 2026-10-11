@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Controls as QC
+import "../../../services"
 import "../../"
 import "../" as UI
 
@@ -26,7 +27,7 @@ ListView {
         current: root.currentIndex === index
         selected: root.picker.selectedIds.includes(modelData.id)
         multiple: root.picker.multiple
-        clipboard: root.picker.mode === "clipboard"
+        clipboard: root.picker.mode === PickerService.Mode.Clipboard
         grid: root.picker.layout === "grid"
         onChosen: toggle => root.picker.select(index, toggle || root.picker.multiple)
         onActivated: if (!root.picker.multiple) root.picker.accept(false, false)

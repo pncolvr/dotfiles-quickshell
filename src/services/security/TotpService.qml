@@ -112,7 +112,8 @@ Singleton {
         }
         state.busy = false
         if (!active || state.stopping) return
-        if (message.type === "snapshot") {
+        switch (message.type) {
+          case "snapshot":
             updateEntries(message.entries)
             state.timestamp = message.timestamp
             state.expiresAt = message.expiresAt
@@ -120,17 +121,21 @@ Singleton {
             state.now = Date.now() / 1000
             state.ready = true
             if (message.action === "save") root.saved(message.id)
-        } else if (message.type === "edit") {
+            break
+          case "edit":
             root.editorLoaded(message.id, message.name, message.token)
-        } else if (message.type === "copy") {
+            break
+          case "copy":
             ClipboardService.ignoreTextOnce(message.code)
             Quickshell.clipboardText = message.code
             state.copiedId = message.id
             copiedTimer.restart()
-        } else if (message.type === "error") {
+            break
+          case "error":
             state.error = message.message
             if (message.action === "load") state.ready = false
             if (message.action === "edit") root.editFailed()
+            break
         }
     }
 

@@ -52,19 +52,19 @@ Item {
     }
     Shortcut {
         sequence: Config.directoryManageShortcut
-        enabled: root.visible && root.picker.visible && root.picker.mode === "directories" && !root.nativeDialogOpen
+        enabled: root.visible && root.picker.visible && root.picker.mode === PickerService.Mode.Directories && !root.nativeDialogOpen
         onActivated: root.management(!DirectoryService.managing)
     }
     Shortcut {
         id: addShortcut
         sequence: Config.directoryAddShortcut
-        enabled: root.visible && root.picker.visible && root.picker.mode === "directories"
+        enabled: root.visible && root.picker.visible && root.picker.mode === PickerService.Mode.Directories
             && DirectoryService.managing && !root.showForm && !DirectoryService.busy && !root.nativeDialogOpen
         onActivated: root.beginAdd()
     }
     Shortcut {
         sequence: Config.directoryShowAllShortcut
-        enabled: root.visible && root.picker.visible && root.picker.mode === "directories" && !DirectoryService.managing
+        enabled: root.visible && root.picker.visible && root.picker.mode === PickerService.Mode.Directories && !DirectoryService.managing
         onActivated: DirectoryService.toggleShowAll()
     }
     Keys.onEscapePressed: {

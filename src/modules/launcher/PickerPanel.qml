@@ -20,10 +20,14 @@ Item {
     Loader {
         id: content
         anchors.fill: parent
-        sourceComponent: root.picker.mode === "projects" ? projectPanel
-            : root.picker.mode === "directories" ? directoryPanel
-            : root.picker.mode === "clipboard" ? clipboardPanel
-            : root.picker.multiple ? multiSelectPanel : standardPanel
+        sourceComponent: {
+            switch (root.picker.mode) {
+                case PickerService.Mode.Projects: return projectPanel
+                case PickerService.Mode.Directories: return directoryPanel
+                case PickerService.Mode.Clipboard: return clipboardPanel
+                default: return root.picker.multiple ? multiSelectPanel : standardPanel
+            }
+        }
     }
     Component {
         id: projectPanel
@@ -39,7 +43,7 @@ Item {
         PickerPanelBase {
             picker: root.picker
             backgroundVisible: root.backgroundVisible
-            minimumListRows: root.picker.mode === "apps" ? Config.pickerMaxRows : 1
+            minimumListRows: root.picker.mode === PickerService.Mode.Apps ? Config.pickerMaxRows : 1
         }
     }
     Component {

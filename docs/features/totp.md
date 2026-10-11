@@ -51,6 +51,11 @@ pipes, never command arguments or plaintext config files. Closing the tooltip
 stops updates, clears its model, and exits the helper after any pending write.
 The copied code remains on the clipboard until it is replaced.
 
+The service dispatches helper responses with a switch on `message.type`:
+`snapshot`, `edit`, `copy` and `error`. These remain strings in the JSON protocol;
+unknown response types are ignored. Invalid JSON still reports an error, and
+responses received while inactive or stopping are not applied.
+
 See [setup](../setup.md#screen-sharing) for the private capture rule and
 [development](../development.md#totp) for isolated verification.
 

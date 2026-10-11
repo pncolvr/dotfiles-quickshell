@@ -10,7 +10,8 @@ import "../../config"
 Singleton {
     id: root
     property bool visible: false
-    property string mode: ""
+    enum Mode { None, Menu, Projects, Directories, Apps, Windows, Clipboard }
+    property int mode: PickerService.Mode.None
     property string prompt: ""
     property string acceptLabel: "Select"
     property string query: ""
@@ -115,24 +116,24 @@ Singleton {
         close()
         mode = newMode; prompt = title; query = ""; items = []; selectedIds = []; currentIndex = 0
         itemCriteria = ({})
-        acceptLabel = newMode === "apps" ? "Open" : newMode === "windows" ? "Focus" : "Select"
+        acceptLabel = newMode === PickerService.Mode.Apps ? "Open" : newMode === PickerService.Mode.Windows ? "Focus" : "Select"
         layout = "list"; multiple = false; allowTyped = false; customAccept = false
         error = ""; destination = ""; destinationClass = ""; selectionKey = ""
         targetScreen = chooseScreen()
     }
     function show() { visible = true; opened() }
     function apps() {
-        begin("apps", "Applications")
+        begin(PickerService.Mode.Apps, "Applications")
         syncApps()
         show()
     }
     function projects(browser = false) {
-        begin("projects", "Projects")
+        begin(PickerService.Mode.Projects, "Projects")
         ProjectService.open(browser)
         show()
     }
     function directories() {
-        begin("directories", "Directories")
+        begin(PickerService.Mode.Directories, "Directories")
         DirectoryService.open()
         show()
     }
@@ -165,7 +166,7 @@ Singleton {
                 search: client.title + " " + client.class + " " + client.workspace.name, result: client.address, workspaceId: client.workspace.id, client}))
     }
     function windows(scope) {
-        begin("windows", scope === "current" ? "Windows in this workspace" : "Windows")
+        begin(PickerService.Mode.Windows, scope === "current" ? "Windows in this workspace" : "Windows")
         windowScope = scope
         items = windowItems(scope)
         customAccept = true
@@ -181,7 +182,7 @@ Singleton {
     function expose(scope) {
         if (visible && layout === "expose") { close(); return }
         const focused = Hyprland.activeToplevel?.address
-        begin("windows", "Windows")
+        begin(PickerService.Mode.Windows, "Windows")
         layout = "expose"
         windowScope = "all"
         items = windowItems("all", true)
@@ -233,7 +234,7 @@ Singleton {
     }
 
     function clipboard() {
-        begin("clipboard", "Clipboard")
+        begin(PickerService.Mode.Clipboard, "Clipboard")
         ClipboardService.initialize()
         syncClipboard()
         // Snapshot the destination before the picker takes keyboard focus.
@@ -242,7 +243,7 @@ Singleton {
         activeWindow.running = true
     }
     function syncClipboard() {
-        if (mode !== "clipboard") return
+        if (mode !== PickerService.Mode.Clipboard) return
         items = ClipboardRepository.entries().map(entry => ({id: entry.id,
             pinned: !!entry.pinned,
             title: entry.kind === "image" ? "" : entry.text.replace(/\s+/g, " ").slice(0, 240),
@@ -255,7 +256,7 @@ Singleton {
             reply(directory, {status: "error", items: [], exitCode: 2})
             return
         }
-        begin("menu", "")
+        begin(PickerService.Mode.Menu, "")
         pendingDirectory = directory
         loadRequest.command = Config.pickerBridgeCommand.concat(["load", directory])
         loadRequest.running = true
@@ -271,7 +272,7 @@ Singleton {
         exposeMoveTimeout.stop()
         exposePendingMoves = ({})
         exposeDragging = false
-        if (mode === "clipboard" && activeWindow.running) activeWindow.running = false
+        if (mode === PickerService.Mode.Clipboard && activeWindow.running) activeWindow.running = false
         if (requestDirectory) reply(requestDirectory, {status: "cancelled", items: [], exitCode: 1})
         requestDirectory = ""
         visible = false
@@ -311,23 +312,32 @@ Singleton {
             : currentItem ? [currentItem] : [{id: "typed", title: query, result: query}]
         if (!picked.length) return
         const item = picked[0]
-        if (mode === "menu") {
+        switch (mode) {
+          case PickerService.Mode.Menu: {
             if (Config.pickerRememberSelection && selectionKey && item.id !== "typed")
                 PreferencesRepository.setValue("launcher.selection." + selectionKey, item.result)
             reply(requestDirectory, {status: "accepted", items: picked, exitCode: custom && customAccept ? 10 : 0})
             requestDirectory = ""
             close()
-        } else if (mode === "projects") {
+            break
+          }
+          case PickerService.Mode.Projects: {
             ProjectService.accept(picked)
-        } else if (mode === "directories") {
+            break
+          }
+          case PickerService.Mode.Directories: {
             DirectoryService.accept(picked)
-        } else if (mode === "apps") {
+            break
+          }
+          case PickerService.Mode.Apps: {
             const usage = Object.assign({}, PreferencesRepository.value("launcher.usage", {}))
             usage[item.id] = (usage[item.id] || 0) + 1
             PreferencesRepository.setValue("launcher.usage", usage)
             close()
             Quickshell.execDetached(["gtk-launch", item.result])
-        } else if (mode === "windows") {
+            break
+          }
+          case PickerService.Mode.Windows: {
             if (custom) WindowService.focusWindow(item.result)
             else if (layout === "expose") {
                 exposeCloseTarget = item
@@ -337,17 +347,21 @@ Singleton {
                 // Release the layer's exclusive keyboard focus before activating the window.
                 Qt.callLater(() => WindowService.focusWindow(item.result))
             }
-        } else if (mode === "clipboard") {
+            break
+          }
+          case PickerService.Mode.Clipboard: {
             const target = destination; const targetClass = destinationClass
             close()
             ClipboardService.restore(item.result, target, targetClass, !copyOnly)
+            break
+          }
         }
     }
     onQueryChanged: currentIndex = 0
     onFilteredItemsChanged: currentIndex = Math.max(0, Math.min(currentIndex, filteredItems.length - 1))
     Connections {
         target: DesktopEntries
-        function onApplicationsChanged() { if (root.mode === "apps") root.syncApps() }
+        function onApplicationsChanged() { if (root.mode === PickerService.Mode.Apps) root.syncApps() }
     }
     Connections {
         target: ClipboardRepository
@@ -356,7 +370,7 @@ Singleton {
     Connections {
         target: WindowService
         function onAllWindowsChanged() {
-            if (root.mode !== "windows" || !root.visible) return
+            if (root.mode !== PickerService.Mode.Windows || !root.visible) return
             if (root.layout === "expose") { root.syncExpose(); return }
             const id = root.currentItem?.id
             root.items = root.windowItems(root.windowScope)
@@ -378,7 +392,7 @@ Singleton {
         stderr: StdioCollector { waitForEnd: true }
         // qmllint disable signal-handler-parameters
         onExited: (exitCode, exitStatus) => {
-            if (root.mode !== "clipboard" || !root.openingClipboard) return
+            if (root.mode !== PickerService.Mode.Clipboard || !root.openingClipboard) return
             root.openingClipboard = false
             try {
                 const client = JSON.parse(windowOutput.text)

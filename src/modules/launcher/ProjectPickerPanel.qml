@@ -71,18 +71,18 @@ Item {
     Shortcut {
         id: addShortcut
         sequence: Config.projectAddShortcut
-        enabled: root.visible && root.picker.visible && root.picker.mode === "projects"
+        enabled: root.visible && root.picker.visible && root.picker.mode === PickerService.Mode.Projects
             && ProjectService.managing && !ProjectService.busy && !ProjectService.draft && !root.showAddForm && !root.nativeDialogOpen
         onActivated: root.beginAdd()
     }
     Shortcut {
         sequence: Config.projectShowAllShortcut
-        enabled: root.visible && root.picker.visible && root.picker.mode === "projects" && !ProjectService.managing
+        enabled: root.visible && root.picker.visible && root.picker.mode === PickerService.Mode.Projects && !ProjectService.managing
         onActivated: ProjectService.toggleShowAll()
     }
     Shortcut {
         sequence: Config.projectManageShortcut
-        enabled: root.visible && root.picker.visible && root.picker.mode === "projects"
+        enabled: root.visible && root.picker.visible && root.picker.mode === PickerService.Mode.Projects
         onActivated: root.management(!ProjectService.managing)
     }
     Keys.onEscapePressed: {

@@ -21,6 +21,24 @@ and `MultiSelectPickerPanel` extend it with their own shortcuts and action butto
 Shortcut hints keep each key and action together when wrapping. Project and
 directory hints fit one line; GitHub groups its selection shortcuts on separate lines.
 
+## Internal dispatch
+
+`PickerService.Mode` identifies the internal modes: `None`, `Menu`, `Projects`,
+`Directories`, `Apps`, `Windows` and `Clipboard`. Acceptance and panel selection
+use switches on that enum; panels and services use the same values for their
+mode checks. `begin()` accepts an enum value. IPC command names and provider
+request/reply formats stay unchanged; enum numbers are not part of that protocol.
+
+`ProjectService.Operation` identifies scan operations: `None`, `Add`, `Refresh`
+and `Discard`. A switch handles completed scans. Cancelling a pending add marks
+it as `Discard`, so its results are not applied. These are internal states;
+source kinds, categories and scan JSON retain their existing strings.
+
+Use enums for mutually exclusive internal states and switches for dispatch on
+one state. Keep conditions for validation, overlapping facts and priority rules,
+such as the calendar's day-style resolver. Protocol values can use switches
+directly without introducing a duplicate enum and translation layer.
+
 ## Commands
 
 ```sh

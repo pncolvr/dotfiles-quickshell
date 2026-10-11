@@ -60,7 +60,7 @@ Scope {
         check(PickerService.filter([{title:"Banana"}], "bnz").length === 0, "missing query characters reject an entry")
         check(PickerService.filter([{title:"Banana", result:1}, {title:"Banana", result:2}], "ban")[0].result === 1, "ties preserve source order")
         check(DesktopEntries.byId("picker-test") !== null, "native application metadata")
-        PickerService.begin("menu", "Pick a project")
+        PickerService.begin(PickerService.Mode.Menu, "Pick a project")
         PickerService.multiple = true
         PickerService.items = [{id:"0", title:"Same", result:"first"}, {id:"1", title:"Same", result:"second"}]
         PickerService.show()
@@ -71,7 +71,7 @@ Scope {
         check(PickerService.query === "Same" && !TooltipService.typingPaused, "picker search does not pause tooltips")
         PickerService.close()
         check(search.text === "", "closing clears search")
-        PickerService.begin("windows", "Windows")
+        PickerService.begin(PickerService.Mode.Windows, "Windows")
         PickerService.layout = "expose"
         PickerService.items = [{id: "0x1", result: "0x1", workspaceId: 1, title: "Start"},
             {id: "0x2", result: "0x2", workspaceId: 2, title: "Destination"}]
@@ -94,7 +94,7 @@ Scope {
         PickerService.accept(false, false)
         check(!PickerService.visible && PickerService.exposeCloseTarget?.result === "0x2"
             && PickerService.exposeCloseTarget?.workspaceId === 2, "Exposé retains the selected destination for animation and deferred activation")
-        PickerService.begin("windows", "Windows")
+        PickerService.begin(PickerService.Mode.Windows, "Windows")
         check(PickerService.exposeCloseTarget === null, "opening another picker cancels pending Exposé activation")
         PickerService.layout = "expose"
         PickerService.close()
@@ -176,7 +176,7 @@ Scope {
         }
         function typeSpace(): void { panel.focusSearch(); events.keyClick(Qt.Key_Space, Qt.NoModifier, 0) }
         function clipboardFixture(): void {
-            PickerService.begin("clipboard", "Clipboard")
+            PickerService.begin(PickerService.Mode.Clipboard, "Clipboard")
             ClipboardRepository.add({id:"c".repeat(64),mime:"text/plain",kind:"text",bytes:9,text:"delete me"})
             PickerService.syncClipboard()
             PickerService.show()

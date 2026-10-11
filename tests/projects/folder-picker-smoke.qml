@@ -27,7 +27,7 @@ Scope {
     function openDialog() {
         projectPanel.folderPicker.options = Dialogs.FolderDialog.ReadOnly
         projectPanel.folderPicker.currentFolder = "file://" + root.folder
-        root.find(popup.contentItem,PickerService.mode === "directories" ? "browseDirectory" : "browseProjectSource").clicked()
+        root.find(popup.contentItem,PickerService.mode === PickerService.Mode.Directories ? "browseDirectory" : "browseProjectSource").clicked()
     }
     Timer {
         interval: 150

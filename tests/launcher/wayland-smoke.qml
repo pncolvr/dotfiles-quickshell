@@ -24,7 +24,7 @@ Scope {
                     Qt.quit()
                     return
                 }
-                PickerService.begin("menu", "Quickshell picker preview")
+                PickerService.begin(PickerService.Mode.Menu, "Quickshell picker preview")
                 PickerService.items = [{id:"0",title:"Applications",subtitle:"Native desktop entries",result:"apps"},
                     {id:"1",title:"Clipboard",subtitle:"Text and image history",result:"clipboard"},
                     {id:"2",title:"Projects",subtitle:"Existing Bash providers",result:"projects"}]
@@ -46,7 +46,7 @@ Scope {
                         {id:"2",title:"Bookmarks",result:"https://example.com/bookmarks"}]
                     PickerService.selectedIds = ["0", "2"]
                 } else if (preview === "clipboard") {
-                    PickerService.mode = "clipboard"
+                    PickerService.mode = PickerService.Mode.Clipboard
                     PickerService.destination = "0x123"
                     PickerService.items = [{id:"0",title:"Short copied text",result:{}},
                         {id:"1",title:"A longer copied paragraph, previewed over two lines so the contents remain readable while each row stays compact.",result:{}},

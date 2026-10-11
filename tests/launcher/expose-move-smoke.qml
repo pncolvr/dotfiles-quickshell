@@ -42,7 +42,7 @@ Scope {
         repeat: true
         onTriggered: {
             if (root.step === 0) {
-                PickerService.begin("windows", "Windows")
+                PickerService.begin(PickerService.Mode.Windows, "Windows")
                 PickerService.layout = "expose"
                 PickerService.selectExposeWorkspace(0)
                 PickerService.show()

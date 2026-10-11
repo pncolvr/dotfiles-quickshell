@@ -28,7 +28,7 @@ Scope {
         if (!condition) { failed = true; console.error("PICKER FAIL: " + message) }
     }
     function prepare(mode) {
-        PickerService.begin(mode === "clipboard" ? mode : "menu", "Visible test prompt")
+        PickerService.begin(mode === "clipboard" ? PickerService.Mode.Clipboard : PickerService.Mode.Menu, "Visible test prompt")
         PickerService.items = [{id:"0",title:"First",result:"first"}, {id:"1",title:"Second",result:"second"}]
         PickerService.layout = mode === "grid" ? "grid" : "list"
         PickerService.multiple = mode === "multiple"

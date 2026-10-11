@@ -22,7 +22,7 @@ Singleton {
         syncPicker()
     }
     function syncPicker() {
-        if (PickerService.mode !== "directories") return
+        if (PickerService.mode !== PickerService.Mode.Directories) return
         const previous = PickerService.currentItem?.id
         PickerService.items = availableDirectories.map(entry => ({id:entry.path,title:entry.name,subtitle:entry.path,search:entry.name + " " + entry.path,result:entry.path}))
         PickerService.currentIndex = Math.max(0,PickerService.filteredItems.findIndex(entry => entry.id === previous))
