@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls as QC
 import "../../../theme"
+import "../../../theme/ui" as UI
 import "../../../config"
 
 QC.Slider {
@@ -16,6 +17,7 @@ QC.Slider {
     stepSize: Config.audioVolumeStep
     wheelEnabled: true
     onMoved: root.volumeMoved(value)
+    UI.PointerFocus {}
     HoverHandler {
         enabled: root.enabled
         cursorShape: Qt.PointingHandCursor
@@ -47,8 +49,8 @@ QC.Slider {
         width: Theme.audioSliderHandleSize
         height: width
         radius: width / 2
-        color: root.pressed || root.activeFocus ? Theme.accent : Theme.text
+        color: root.pressed || root.visualFocus ? Theme.accent : Theme.text
         border.color: Theme.accent
-        border.width: root.activeFocus ? 2 : 0
+        border.width: root.visualFocus ? 2 : 0
     }
 }

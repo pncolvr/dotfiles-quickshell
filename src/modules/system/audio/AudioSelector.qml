@@ -24,6 +24,7 @@ Column {
 
     QC.Button {
         id: selector
+        UI.PointerFocus {}
         objectName: root.toggleObjectName
         width: parent.width
         implicitHeight: root.compact ? Theme.audioButtonHeight
@@ -36,7 +37,7 @@ Column {
         background: Rectangle {
             color: selector.hovered ? Theme.empty : Theme.background
             radius: Theme.iconButtonRadius
-            border.width: selector.activeFocus || root.expanded ? 1 : 0
+            border.width: selector.visualFocus ? 1 : 0
             border.color: Theme.accent
         }
         contentItem: Item {
@@ -72,6 +73,7 @@ Column {
         boundsBehavior: Flickable.StopAtBounds
         delegate: QC.ItemDelegate {
             id: option
+            UI.PointerFocus {}
             required property var modelData
             width: choices.width
             height: choices.rowHeight
@@ -86,7 +88,7 @@ Column {
             }
             background: Rectangle {
                 radius: Theme.iconButtonRadius
-                color: option.hovered || option.activeFocus ? Theme.empty : Theme.background
+                color: option.hovered || option.visualFocus ? Theme.empty : Theme.background
             }
             contentItem: Item {
                 UI.ColumnText {

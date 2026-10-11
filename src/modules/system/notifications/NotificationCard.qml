@@ -232,7 +232,7 @@ Rectangle {
                         radius: width / 2
                         antialiasing: true
                         color: dismissButton.down ? Qt.darker(Theme.notificationCritical, 1.2) : dismissButton.hovered ? Theme.notificationCritical : Theme.alternateBackground
-                        border.width: dismissButton.activeFocus ? 1 : 0
+                        border.width: dismissButton.visualFocus ? 1 : 0
                         border.color: Theme.accent
                     }
                     onClicked: NotificationService.dismiss(root.entry, !root.popup)

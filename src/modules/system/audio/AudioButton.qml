@@ -16,11 +16,12 @@ QC.Button {
     hoverEnabled: true
     opacity: enabled ? 1 : 0.5
     Accessible.name: hint || label
+    UI.PointerFocus {}
 
     background: Rectangle {
         radius: Theme.iconButtonRadius
         color: root.down ? Theme.empty : root.hovered ? Qt.lighter(Theme.alternateBackground, 1.5) : Theme.alternateBackground
-        border.width: root.activeFocus ? 1 : 0
+        border.width: root.visualFocus ? 1 : 0
         border.color: Theme.accent
     }
     contentItem: Row {

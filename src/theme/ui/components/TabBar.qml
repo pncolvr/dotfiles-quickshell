@@ -49,6 +49,7 @@ QC.TabBar {
         model: root.labels
         QC.TabButton {
             id: tabButton
+            UI.PointerFocus {}
             required property string modelData
             required property int index
             text: modelData

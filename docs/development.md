@@ -56,6 +56,14 @@ Large expandable lists can use `UI.BatchedListModel` to add a few rows per
 rendered frame while preserving existing delegates. Run
 `bash tests/qml/batched-model.sh` for expansion, collapse and source-change checks.
 
+Button and slider focus decorations use Qt's `visualFocus`, which indicates
+keyboard navigation, rather than `activeFocus`. Clicking must not leave a focus
+border after release. Shared buttons and custom controls use `UI.PointerFocus`
+to change an existing keyboard focus to pointer focus on press. Run
+`bash tests/qml/button-focus.sh` to check pointer/keyboard transitions and clicks.
+Selected tabs, active devices and input-field borders
+continue to indicate their own states.
+
 Inline editors use `UI.EditorActions` for a neutral Cancel button followed by an
 accent Apply button. Recent files, TOTP, and Twitch share this component.
 

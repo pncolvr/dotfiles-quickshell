@@ -139,7 +139,7 @@ FocusScope {
             antialiasing: true
             color: closeButton.down ? Qt.darker(Theme.notificationCritical, 1.2)
                 : closeButton.hovered ? Theme.notificationCritical : Theme.alternateBackground
-            border.width: closeButton.activeFocus ? 1 : 0
+            border.width: closeButton.visualFocus ? 1 : 0
             border.color: Theme.accent
         }
         onClicked: root.picker.close()

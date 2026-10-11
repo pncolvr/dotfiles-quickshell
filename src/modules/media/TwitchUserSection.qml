@@ -19,6 +19,7 @@ Column {
 
     QC.Button {
         id: heading
+        UI.PointerFocus {}
         objectName: "toggleTwitchUserSection"
         width: parent.width
         implicitHeight: Math.max(label.implicitHeight, arrow.implicitHeight)
@@ -32,7 +33,7 @@ Column {
 
         background: Rectangle {
             radius: Theme.iconButtonRadius
-            color: heading.hovered || heading.activeFocus ? Theme.alternateBackground : "transparent"
+            color: heading.hovered || heading.visualFocus ? Theme.alternateBackground : "transparent"
         }
         contentItem: Item {
             UI.IconText {

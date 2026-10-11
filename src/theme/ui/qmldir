@@ -8,6 +8,7 @@ ScaledImage 1.0 components/ScaledImage.qml
 IconButton 1.0 components/IconButton.qml
 HoverTooltip 1.0 components/HoverTooltip.qml
 ActionButton 1.0 components/ActionButton.qml
+PointerFocus 1.0 components/PointerFocus.qml
 EditorActions 1.0 components/EditorActions.qml
 InputField 1.0 components/InputField.qml
 FolderPathField 1.0 components/FolderPathField.qml
