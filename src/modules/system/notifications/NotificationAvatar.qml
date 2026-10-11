@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import "../../../theme/ui" as UI
 import QtQuick.Effects
 
 Item {
@@ -47,13 +48,11 @@ Item {
         return alpha
     }
 
-    Image {
+    UI.ScaledImage {
         id: avatar
         anchors.fill: parent
         source: root.source
         fillMode: Image.PreserveAspectCrop
-        smooth: true
-        mipmap: true
         visible: false
         onStatusChanged: if (status === Image.Ready) paddingMask.requestPaint()
     }

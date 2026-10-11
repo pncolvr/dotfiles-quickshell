@@ -37,6 +37,15 @@ metadata: runtime-selected `PanelWindow` backends, the missing
 `QProcess::ExitStatus` enum, and the tray menu handle's outdated C++ type name.
 Other warnings remain enabled, including signal checks outside those handlers.
 
+Changing audio glyphs use `UI.FixedIconText`, with a centered icon in a fixed
+slot. `AudioButton` uses `Theme.iconButtonWidth`; bar icons use `UI.BarIcon` and
+the compact `Theme.barIconWidth` slot. All bar module icons share that width, so
+their centers remain evenly spaced and state changes do not resize controls.
+
+Static images use `UI.ScaledImage` for smooth filtering and mipmaps, with aspect
+fit by default. Keep source sizing, cropping and asynchronous loading at the
+call site when needed. Screencopy textures retain their separate layer handling.
+
 Scrollable modules use `UI.ScrollBar` from `src/theme/ui/components/ScrollBar.qml`.
 It overlays the content with an accent-colored thumb during scrolling or hover,
 then fades away. Keep content and row widths equal to the viewport width; do not
@@ -176,12 +185,18 @@ hover styling, and keyboard navigation.
 
 ```sh
 bash tests/audio/audio.sh
+bash tests/audio/media.sh
 bash tests/audio/audio.sh --native-imports
 bash tests/audio/screencast.sh
 bash tests/audio/screencast.sh --native
 ```
 
 Run `bash tests/audio/audio.sh` for routing, profile, and QML interaction checks.
+`bash tests/audio/media.sh` checks transport capabilities, artwork loading,
+the all-player list, timeline dragging and capability checks, screen-height
+limits, track metadata changes, late position responses, elapsed-time limits,
+preserved scroll position, mute restoration and safe association with app audio streams
+using isolated player fixtures without controlling desktop playback.
 Add `--native-imports` to check the complete bar, real device/profile mapping,
 sorted lists, and system default bindings without changing your audio settings.
 The screencast checks use Qt 6 tests for independent captures, webcam exclusion,

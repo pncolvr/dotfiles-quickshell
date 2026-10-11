@@ -20,7 +20,7 @@ UI.TooltipArea {
         }
     }
 
-    UI.IconText {
+    UI.BarIcon {
         color: TooltipService.pinned && TooltipService.source === root ? Theme.accent
             : StatusService.source === "manual" ? Theme.warning : Theme.text
         text: root.statusToIcon(StatusService.status)

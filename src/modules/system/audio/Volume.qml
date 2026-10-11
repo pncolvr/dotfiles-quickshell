@@ -9,6 +9,7 @@ import "../../../config"
 TooltipArea {
     moduleName: "volume"
     id: root
+    readonly property var mediaService: MediaService
     acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
     readonly property bool tooltipKeyboardFocus: true
     tooltipSource: root
@@ -17,7 +18,7 @@ TooltipArea {
 
     Component {
         id: audioTooltip
-        AudioTooltip {}
+        AudioTooltip { mediaService: root.mediaService }
     }
 
     onClicked: (mouse) => {
@@ -38,7 +39,8 @@ TooltipArea {
     }
 
     Row {
-        PulseIconText {
+        BarIcon {
+            font.pixelSize: Theme.fontSize
             pulsing: AudioService.muted
             text: root.volumeIcon()
         }

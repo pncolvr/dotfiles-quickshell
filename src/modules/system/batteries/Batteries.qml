@@ -12,7 +12,7 @@ UI.TooltipArea {
     tooltipScreen: window.screen
     tooltip: Component { BatteriesTooltip {} }
 
-    UI.IconText {
+    UI.BarIcon {
         objectName: "batteryBarIcon"
         text: Theme.batteryIcon
         color: BatteryService.lowestLevelStatus === "normal" ? Theme.text

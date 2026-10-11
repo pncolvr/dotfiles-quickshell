@@ -16,7 +16,7 @@ UI.TooltipArea {
     Row {
         spacing: 4
 
-        UI.IconText {
+        UI.BarIcon {
             text: Theme.updatesIcon
             color: UpdatesService.hasPriority ? Theme.warning : UpdatesService.hasUpdates ? Theme.text : Theme.empty
         }

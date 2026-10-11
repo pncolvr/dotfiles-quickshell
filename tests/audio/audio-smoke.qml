@@ -7,6 +7,7 @@ import Quickshell
 import "../../src/modules/system/audio"
 import "../../src/services"
 import "../../src/theme"
+import "../../src/theme/ui" as UI
 import "../../src/config"
 
 Scope {
@@ -14,6 +15,7 @@ Scope {
     property int step: 0
     property bool failed: false
     property bool screenshotTaken: false
+    QtObject { id: emptyMedia; property var players: []; property bool playing: false }
     function check(condition, message) {
         if (condition) return
         failed = true
@@ -26,6 +28,12 @@ Scope {
             if (result) return result
         }
         return null
+    }
+    function checkMuteSize(button, action, message) {
+        const width = button.implicitWidth
+        const height = button.implicitHeight
+        action()
+        root.check(button.implicitWidth === width && button.implicitHeight === height, message)
     }
     function appRow(panel, key) {
         const apps = find(panel, "audioProcesses")
@@ -150,12 +158,13 @@ Scope {
         implicitHeight: 760
         color: Theme.background
         Test.TestCase { id: wheelEvents; when: false }
+        UI.BarIcon { id: barGlyph; visible: false; text: Theme.micIcon }
         Row {
             id: panels
             anchors.centerIn: parent
             spacing: 20
-            AudioTooltip { id: outputPanel; audioService: backend }
-            AudioTooltip { id: inputPanel; input: true; audioService: backend }
+            AudioTooltip { id: outputPanel; audioService: backend; mediaService: emptyMedia }
+            AudioTooltip { id: inputPanel; input: true; audioService: backend; mediaService: emptyMedia }
         }
     }
     Timer {
@@ -164,6 +173,14 @@ Scope {
         repeat: true
         onTriggered: {
             if (root.step === 0) {
+                const glyphWidth = barGlyph.implicitWidth
+                const glyphHeight = barGlyph.implicitHeight
+                root.check(glyphWidth < Theme.iconButtonWidth, "bar audio glyph uses compact spacing instead of the button slot")
+                for (const glyph of [Theme.micMutedIcon, Theme.volumeMutedIcon, ...Theme.volumeIcons]) {
+                    barGlyph.text = glyph
+                    root.check(barGlyph.implicitWidth === glyphWidth && barGlyph.implicitHeight === glyphHeight,
+                        "bar audio icon dimensions remain stable across mute and volume states")
+                }
                 const screenshot = Quickshell.env("AUDIO_TEST_SCREENSHOT")
                 if (screenshot && !root.screenshotTaken) {
                     root.screenshotTaken = true
@@ -198,7 +215,7 @@ Scope {
                 root.selectTab(inputPanel, 0)
                 let mute = root.find(root.appRow(outputPanel, "process:10"), "appMute")
                 root.check(mute.enabled && !mute.highlightedDevice, "app starts unmuted")
-                wheelEvents.mouseClick(mute)
+                root.checkMuteSize(mute, () => wheelEvents.mouseClick(mute), "app mute keeps button dimensions")
                 root.check(browser.audio.muted && secondBrowser.audio.muted && !player.audio.muted
                     && !recorder.audio.muted && !output.audio.muted && !input.audio.muted,
                     "app mute affects all of its streams without muting other apps or hardware")
@@ -303,7 +320,8 @@ Scope {
                 root.check(backend.currentOutput === secondOutput && backend.defaultOutput === output, "Use now leaves default unchanged")
                 root.find(row, "deviceDefault").clicked()
                 root.check(backend.defaultOutput === secondOutput && row.isDefault, "default marker follows selected output")
-                wheelEvents.mouseClick(root.find(row, "deviceMute"))
+                const deviceMute = root.find(row, "deviceMute")
+                root.checkMuteSize(deviceMute, () => wheelEvents.mouseClick(deviceMute), "device mute keeps button dimensions")
                 root.check(secondOutput.audio.muted && !output.audio.muted, "mute affects only its device")
                 const slider = root.find(row, "deviceVolume")
                 slider.value = 0.77
@@ -328,7 +346,8 @@ Scope {
                 profiles.itemAtIndex(1).clicked()
                 root.check(backend.card.activeProfile === "stereo" && !profile.expanded
                     && root.find(micRow, "deviceProfile").activeDescription === "Analog Stereo Output", "profile selection updates both panels")
-                root.find(micRow, "deviceMute").clicked()
+                const micMute = root.find(micRow, "deviceMute")
+                root.checkMuteSize(micMute, () => micMute.clicked(), "microphone mute keeps button dimensions")
                 root.check(input.audio.muted, "microphone mute")
                 AudioService.setNodeVolume(input, 2)
                 root.check(input.audio.volume === Config.audioMaxVolume, "volume caps at configured boost limit")

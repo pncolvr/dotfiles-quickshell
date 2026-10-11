@@ -16,7 +16,7 @@ UI.TooltipArea {
     tooltip: Component {
         UI.Text { text: NotificationService.dndEnabled ? "dnd enabled" : "dnd disabled" }
     }
-    UI.IconText {
+    UI.BarIcon {
         text: NotificationService.dndEnabled ? Theme.notificationsDndEnabledIcon : Theme.notificationsDndDisabledIcon
         color: TooltipService.pinned && TooltipService.source === root ? Theme.accent : Theme.text
     }

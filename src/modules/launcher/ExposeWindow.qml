@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import "../../theme/ui" as UI
 import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
@@ -130,7 +131,7 @@ PanelWindow {
         // Blend capture startup while the whole overview zooms out from its target.
         // Keep workspace closing visible until its miniature reaches desktop size.
         opacity: root.requested ? Math.min(1, root.transitionProgress * 5) : 1
-        Image {
+        UI.ScaledImage {
             anchors.fill: parent
             source: root.imageUrl(root.wallpapers[root.screen?.name])
             fillMode: Image.PreserveAspectCrop

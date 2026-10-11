@@ -33,7 +33,7 @@ UI.Row {
         rightMargin: Theme.tooltipHoverPaddingWidth
         resizeChild: false
         acceptedButtons: Qt.NoButton
-        UI.IconText { text: root.expanded ? Theme.trayOpenIcon : Theme.trayClosedIcon }
+        UI.BarIcon { text: root.expanded ? Theme.trayOpenIcon : Theme.trayClosedIcon }
     }
 
     Rectangle {

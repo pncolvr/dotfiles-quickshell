@@ -15,7 +15,7 @@ UI.TooltipArea {
         const pos = root.mapToGlobal(root.width / 2, 0)
         TooltipService.togglePin(pos.x, tooltip, root, centerTooltip, tooltipScreen)
     }
-    UI.IconText {
+    UI.BarIcon {
         objectName: "recentFilesBarIcon"
         text: Theme.recentFilesIcon
         color: TooltipService.pinned && TooltipService.source === root ? Theme.accent : Theme.text

@@ -21,7 +21,7 @@ UI.TooltipArea {
 
     Row {
         spacing: Theme.moduleSpacing
-        UI.IconText {
+        UI.BarIcon {
             text: Theme.timersIcon
             color: TooltipService.pinned && TooltipService.source === root ? Theme.accent : Theme.text
         }

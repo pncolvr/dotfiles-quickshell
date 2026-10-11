@@ -43,7 +43,7 @@ Rectangle {
             height: width / aspectRatio
         }
     }
-    Image {
+    UI.ScaledImage {
         id: fallback
         anchors.centerIn: parent
         width: Math.min(48, parent.width * 0.3)
@@ -51,7 +51,6 @@ Rectangle {
         source: root.icon ? Quickshell.iconPath(root.icon, true) : ""
         visible: !root.hasContent && status === Image.Ready
         asynchronous: true
-        fillMode: Image.PreserveAspectFit
     }
     UI.IconText {
         anchors.centerIn: parent

@@ -19,7 +19,7 @@ UI.TooltipArea {
         TooltipService.togglePin(pos.x, tooltip, root, centerTooltip, tooltipScreen)
     }
 
-    UI.IconText {
+    UI.BarIcon {
         text: Theme.totpIcon
         color: TooltipService.pinned && TooltipService.source === root ? Theme.accent : Theme.text
     }

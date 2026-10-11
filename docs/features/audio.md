@@ -1,8 +1,59 @@
 # Audio
 
+## Playing media
+
+The volume panel has a **Media** tab with artwork, track and player information,
+previous, play/pause, next and stop controls. When a player is playing, opening
+the panel selects Media by default (`mediaPreferPlayingTab` in Config.qml).
+Otherwise it opens Apps. Playback changes do not switch tabs while the panel is
+open. The microphone panel keeps its existing tabs.
+
+Native MPRIS discovers supported players, including paused players. Stopped
+players are hidden when they cannot accept Play, and reappear when their state
+or Play capability changes. Every visible player
+has its own card in a scrollable list, ordered by app name. Playback changes keep
+that order stable. Media can grow to the available screen height, accounting for
+the bar, panel padding and shadow. The other audio tabs keep their existing height
+limit. Switching tabs preserves the Media list's scroll position.
+Artwork uses the shared `UI.ScaledImage` filtering and mipmaps.
+Missing or failed artwork falls back to the app icon or a music glyph.
+Artwork sits beside the title, artist and player state. A mute button,
+short horizontal volume slider and percentage sit below the metadata. Transport
+buttons, elapsed time, timeline and duration share a row below that information.
+Artwork spans from the Previous button's left edge to the Stop button's right
+edge. Song details are centered beside it, and the volume slider extends to the
+timeline's right endpoint. Both sliders reserve the same width for their readouts.
+Unsupported playback controls are disabled; Stop stops playback without quitting
+the application. Other audio applications remain available in Apps.
+
+Each card shows elapsed and total time when the player provides them. Drag or
+click the timeline to seek; keyboard adjustment also works. Seeking requires a
+known positive duration and player support for both position and seeking. Live
+streams or unsupported players have a disabled timeline or no timeline when
+position is unavailable. The mouse wheel scrolls the list rather than seeking.
+Position refreshes at `mediaPositionInterval` from Config.qml, only while the
+player is playing and its card is visible in the Media viewport. A read-only
+`busctl` query reads the player's MPRIS position directly, avoiding stale native
+position estimates after a track change. Hidden cards stop polling; showing a
+card or resuming playback requests a fresh position.
+Playback-state changes request a fresh position. Stopped players immediately
+display zero elapsed time; Play after Stop updates the timeline to the restarted
+position supplied by the player. Track changes clear elapsed time and the timeline
+until the new position arrives. Responses from before a track change or seek are
+discarded, and elapsed time cannot exceed a known duration. Metadata, duration and artwork
+continue to update through native MPRIS.
+
+Volume and mute reuse AudioService when player and audio-app metadata identify
+one unambiguous association. These controls affect all of that app's current
+streams, which can include other browser tabs. Ambiguous associations use the
+player's own volume when supported; otherwise volume and mute are unavailable.
+Player mute sets volume to zero and restores its previous level on unmute,
+falling back to `mediaUnmuteVolume` when no previous level is known. App-stream
+mute uses PipeWire's mute control. No extra bar icon or keyboard shortcut is added.
+
 ## Devices and applications
 
-Hover the mic or volume icon to open the **Apps** tab. Switch to **Audio outputs**
+Hover the mic or volume icon to open the panel. Switch to **Apps**, **Audio outputs**
 or **Microphones** for device controls. Each list keeps its scroll position when
 switching tabs. The tabs share their style with the notification panel.
 Devices have a level slider,

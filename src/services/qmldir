@@ -1,4 +1,5 @@
 singleton AudioService 1.0 audio/AudioService.qml
+singleton MediaService 1.0 audio/MediaService.qml
 
 singleton HyprlandEventsService 1.0 hyprland/HyprlandEventsService.qml
 singleton WindowService 1.0 hyprland/WindowService.qml

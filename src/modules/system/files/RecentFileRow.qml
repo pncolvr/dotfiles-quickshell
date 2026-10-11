@@ -41,7 +41,7 @@ Rectangle {
         }
     }
 
-    Image {
+    UI.ScaledImage {
         id: icon
         x: Theme.controlFieldPadding
         anchors.verticalCenter: parent.verticalCenter

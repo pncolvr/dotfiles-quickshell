@@ -29,7 +29,8 @@ TooltipArea {
         }
     }
 
-    PulseIconText {
+    BarIcon {
+        font.pixelSize: Theme.fontSize
         pulsing: true
         pulseColor: Theme.screencastPulseColor
         text: Theme.screencastIcon

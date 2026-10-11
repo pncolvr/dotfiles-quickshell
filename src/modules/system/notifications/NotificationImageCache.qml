@@ -1,10 +1,11 @@
 import QtQuick
+import "../../../theme/ui" as UI
 import Quickshell
 import Quickshell.Io
 import "../../../services"
 
 // Render outside the bar's viewport to snapshot provider images, including muted ones.
-Image {
+UI.ScaledImage {
     id: root
     x: -8192
     y: -8192
@@ -13,9 +14,6 @@ Image {
     property bool capturing: false
     width: Math.max(1, Math.min(512, sourceSize.width))
     height: Math.max(1, Math.min(512, sourceSize.height))
-    fillMode: Image.PreserveAspectFit
-    smooth: true
-    mipmap: true
     source: job?.source || ""
     readonly property string temporaryPath: job ? Quickshell.shellPath("data/notification-image-" + job.id + ".png") : ""
     readonly property string encoderPath: Quickshell.shellPath("src/services/notifications/encode-image.sh")

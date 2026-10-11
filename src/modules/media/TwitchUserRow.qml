@@ -25,13 +25,12 @@ Row {
         width: Theme.twitchAvatarSize
         height: width
 
-        Image {
+        UI.ScaledImage {
             id: avatarImage
             objectName: "twitchAvatar_" + root.user.login
             anchors.fill: parent
             source: root.user.avatar || ""
             fillMode: Image.PreserveAspectCrop
-            smooth: true
             visible: false
         }
 

@@ -51,7 +51,7 @@ Rectangle {
         border.color: root.current || root.selected ? Theme.text : Theme.inactive
         text: root.selected ? Theme.checkIcon : ""
     }
-    Image {
+    UI.ScaledImage {
         id: thumbnail
         anchors.left: parent.left
         anchors.leftMargin: Theme.controlFieldPadding + (root.multiple ? selectionBox.width + Theme.controlSpacing : 0)
@@ -64,7 +64,6 @@ Rectangle {
         height: root.clipboardImage ? Theme.clipboardImagePreviewHeight : root.clipboard ? 36 : 18
         source: root.entry.image || (root.entry.icon ? Quickshell.iconPath(root.entry.icon, true) : "")
         visible: source.toString().length > 0 && !root.grid
-        fillMode: Image.PreserveAspectFit
         sourceSize: Qt.size(Math.ceil(width), Math.ceil(height))
         asynchronous: true
     }

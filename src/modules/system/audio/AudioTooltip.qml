@@ -6,21 +6,29 @@ import Quickshell
 import "../../../theme"
 import "../../../theme/ui" as UI
 import "../../../services"
+import "../../../config"
 
 Column {
     id: root
     property bool input: false
     property var audioService: AudioService
+    property var mediaService: MediaService
     property alias currentIndex: tabs.currentIndex
     readonly property var devices: input ? audioService.inputDevices : audioService.outputDevices
     readonly property var apps: input ? audioService.micApps : audioService.playbackApps
     readonly property var monitor: TooltipService.screen ?? (root.QsWindow.window as QsWindow)?.screen
-    readonly property real maxPanelHeight: (monitor?.height ?? 1080) * Theme.audioTooltipMaxHeightRatio
+    readonly property real maxPanelHeight: !input && tabs.currentIndex === 2
+        ? Math.max(0,(monitor?.height ?? 1080) - Theme.barHeight - Theme.tooltipPaddingHeight * 2
+            - (Theme.tooltipShadowEnabled ? Math.max(2,Math.min(64,Theme.tooltipShadowBlurRadius)) + Math.max(0,Theme.tooltipShadowVerticalOffset) : 0))
+        : (monitor?.height ?? 1080) * Theme.audioTooltipMaxHeightRatio
     readonly property real listHeight: Math.max(0, maxPanelHeight - header.height - spacing
         - (routingFeedback.visible ? routingFeedback.height + spacing : 0))
     width: Math.min(Theme.audioTooltipWidth, (monitor?.width ?? Theme.audioTooltipWidth + Theme.tooltipPaddingWidth * 2) - Theme.tooltipPaddingWidth * 2)
     spacing: Theme.audioSpacing
-    Component.onCompleted: audioService.beginPanel()
+    Component.onCompleted: {
+        audioService.beginPanel()
+        if (!input && Config.mediaPreferPlayingTab && mediaService.playing) tabs.currentIndex = 2
+    }
     Component.onDestruction: audioService.endPanel()
 
     Item {
@@ -31,7 +39,7 @@ Column {
         UI.TabBar {
             id: tabs
             objectName: "audioTabs"
-            labels: ["Apps", root.input ? "Microphones" : "Audio outputs"]
+            labels: root.input ? ["Apps", "Microphones"] : ["Apps", "Audio outputs", "Media"]
             anchors.left: parent.left
             anchors.right: root.input ? micActivity.left : parent.right
             anchors.rightMargin: root.input ? Theme.audioSpacing : 0
@@ -60,6 +68,15 @@ Column {
         text: root.audioService.routingBusy ? "Switching audio…" : root.audioService.routingError || root.audioService.routingMessage
         color: root.audioService.routingError ? Theme.warning : Theme.inactive
         wrapMode: Text.Wrap
+    }
+
+    MediaPanel {
+        objectName: "audioMediaPanel"
+        width: parent.width
+        maximumHeight: root.listHeight
+        mediaService: root.mediaService
+        audioService: root.audioService
+        visible: !root.input && tabs.currentIndex === 2
     }
 
     Flickable {

@@ -14,15 +14,12 @@ UI.WrapperMouseArea {
     hoverEnabled: true
     acceptedButtons: Qt.LeftButton | Qt.RightButton
 
-    Image {
+    UI.ScaledImage {
         anchors.centerIn: parent
         width: Theme.trayItemWidth
         height: Theme.trayItemHeight
         sourceSize.width: Theme.trayItemWidth
         sourceSize.height: Theme.trayItemHeight
-        fillMode: Image.PreserveAspectFit
-        smooth: true
-        mipmap: true
         source: root.item ? root.item.icon : Quickshell.iconPath("application-x-executable", false)
     }
 

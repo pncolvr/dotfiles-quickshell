@@ -7,3 +7,6 @@ AudioProfileSelector 1.0 AudioProfileSelector.qml
 AudioSelector 1.0 AudioSelector.qml
 AudioAppRow 1.0 AudioAppRow.qml
 AudioVolumeSlider 1.0 AudioVolumeSlider.qml
+MediaPanel 1.0 MediaPanel.qml
+MediaPlayerCard 1.0 MediaPlayerCard.qml
+MediaPosition 1.0 MediaPosition.qml

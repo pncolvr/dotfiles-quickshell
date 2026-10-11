@@ -26,13 +26,13 @@ QC.Button {
     contentItem: Row {
         id: contents
         spacing: root.label ? Theme.audioSpacing : 0
-        Text {
+        UI.FixedIconText {
             anchors.verticalCenter: parent.verticalCenter
             text: root.glyph
             visible: text.length > 0
             color: root.foreground
-            font.family: Theme.fontFamilyIcons
             font.pixelSize: Theme.fontSize
+            font.bold: false
         }
         Text {
             anchors.verticalCenter: parent.verticalCenter

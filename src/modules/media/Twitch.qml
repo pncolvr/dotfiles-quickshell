@@ -16,7 +16,7 @@ UI.TooltipArea {
         const pos = root.mapToGlobal(root.width / 2, 0)
         TooltipService.togglePin(pos.x, tooltip, root, centerTooltip, tooltipScreen)
     }
-    UI.IconText {
+    UI.BarIcon {
         text: Theme.twitchIcon
         color: TooltipService.pinned && TooltipService.source === root ? Theme.accent
             : TwitchService.hasOnline ? Theme.twitchColor : Theme.inactive

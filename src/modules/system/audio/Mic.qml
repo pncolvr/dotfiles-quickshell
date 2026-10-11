@@ -36,7 +36,8 @@ TooltipArea {
     }
 
     Row {
-        PulseIconText {
+        BarIcon {
+            font.pixelSize: Theme.fontSize
             pulsing: AudioService.micMuted
             baseColor: AudioService.micActive ? Theme.ok : Theme.pulsingTextBaseColor
             text: AudioService.micMuted ? Theme.micMutedIcon : Theme.micIcon

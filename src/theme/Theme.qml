@@ -80,6 +80,11 @@ Item {
   readonly property string chevronRightIcon: "" // chevron-right: collapsed
   readonly property string chevronDownIcon: "" // chevron-down: expanded
   readonly property string playIcon: "" // play
+  readonly property string mediaPreviousIcon: "" // backward-step
+  readonly property string mediaNextIcon: "" // forward-step
+  readonly property string mediaStopIcon: "" // stop
+  readonly property string mediaIcon: "" // music
+  readonly property int mediaFallbackIconSize: 32
   readonly property string pauseIcon: "\uf04c" // pause
 
   // Countdowns and elapsed timers (Font Awesome stopwatch).
@@ -211,7 +216,8 @@ Item {
 
   
   // modules
-  readonly property int moduleSpacing: 5
+  readonly property int moduleSpacing: 3
+  readonly property int barIconWidth: 13
   readonly property int groupedModuleSpacing: 16
   readonly property int iconButtonWidth: 18
   readonly property int iconButtonHeight: 22

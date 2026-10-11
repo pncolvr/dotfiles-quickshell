@@ -157,15 +157,12 @@ Rectangle {
             id: iconColumn
             width: root.hasExtraImage ? 48 : 40
             height: width
-            Image {
+            UI.ScaledImage {
                 width: 40
                 height: 40
                 source: root.iconSource
                 // Qt applies the screen's pixel ratio to icon-provider requests.
                 sourceSize: root.iconSource.startsWith("image://icon/") ? Qt.size(width, height) : undefined
-                fillMode: Image.PreserveAspectFit
-                smooth: true
-                mipmap: true
             }
             NotificationAvatar {
                 x: root.hasExtraImage ? 8 : 0
