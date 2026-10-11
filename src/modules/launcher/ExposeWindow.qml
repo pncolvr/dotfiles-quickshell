@@ -156,6 +156,7 @@ PanelWindow {
                 enabled: root.requested
                 anchors.margins: Theme.exposeSpacing * 2
                 anchors.topMargin: Theme.exposeSpacing
+                anchors.bottomMargin: Theme.exposeSpacing
                 active: root.visible
                 sourceComponent: ExposePanel {
                     picker: root.picker

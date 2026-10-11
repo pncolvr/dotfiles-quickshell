@@ -165,6 +165,7 @@ FocusScope {
         id: footer
         anchors.bottom: parent.bottom
         width: parent.width
+        horizontalAlignment: Text.AlignHCenter
         text: root.picker.filteredItems.length + " windows · Type to search · Arrows select · Enter focus · Esc close"
             + " · Ctrl+A all/current · Ctrl+1–0 workspace · Ctrl+Shift+1–0 move (0 = 10)"
             + " · Meta+Shift+E toggle · Drag to a workspace"
