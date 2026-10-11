@@ -92,7 +92,6 @@ Singleton {
             [easter, "Páscoa"],
             [new Date(year, 3, 25), "Dia da Liberdade"],
             [new Date(year, 4, 1), "Dia do Trabalhador"],
-            [new Date(year, 4, 22), "Dia de Leiria"],
             [new Date(year, 5, 10), "Dia de Portugal"],
             [corpusChristi, "Corpo de Deus"],
             [new Date(year, 7, 15), "Assunção de Nossa Senhora"],
@@ -103,9 +102,22 @@ Singleton {
             [new Date(year, 11, 25), "Natal"]
         ];
 
+        for (const holiday of Config.calendarMunicipalHolidays) {
+            if (!holiday || !Number.isInteger(holiday.month) || !Number.isInteger(holiday.day)
+                || holiday.month < 1 || holiday.month > 12 || holiday.day < 1
+                || typeof holiday.name !== "string" || !holiday.name.trim()) continue;
+            const date = new Date(year, holiday.month - 1, holiday.day);
+            if (date.getFullYear() !== year || date.getMonth() !== holiday.month - 1
+                || date.getDate() !== holiday.day) continue;
+            entries.push([date, holiday.name.trim()]);
+        }
+
         const map = {};
         for (const [date, name] of entries) {
-            map[_key(date)] = name;
+            const key = _key(date);
+            const names = map[key] ? map[key].split("\n") : [];
+            if (!names.includes(name)) names.push(name);
+            map[key] = names.join("\n");
         }
         _holidaysByYear[year] = map;
     }
