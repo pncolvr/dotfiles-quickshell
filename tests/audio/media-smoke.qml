@@ -145,6 +145,12 @@ Scope {
                 root.check(!timeline.enabled && root.find(card,"mediaDuration").text === "--:--", "unknown duration does not offer seeking")
                 banana.lengthSupported = true; banana.length = 0
                 root.check(!timeline.enabled, "zero duration does not offer seeking")
+                banana.length = 9223372036854775807 / 1000000
+                root.check(!timeline.enabled && timeline.value === 0
+                    && !timeline.visible
+                    && !root.find(card,"mediaDuration").visible
+                    && !root.find(card,"mediaElapsed").visible,
+                    "live stream duration sentinel hides the entire timeline")
                 banana.length = 240; banana.positionSupported = false
                 root.check(!timeline.enabled && !timeline.visible, "missing position hides timeline")
                 banana.positionSupported = true

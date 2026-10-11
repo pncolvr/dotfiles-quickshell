@@ -15,7 +15,9 @@ Rectangle {
     property var mediaService: MediaService
     property bool monitorPosition: true
     readonly property bool hasPosition: !!player?.positionSupported
-    readonly property bool hasDuration: !!player?.lengthSupported && Number.isFinite(player.length) && player.length > 0
+    // MPRIS lengths are microseconds; live players can report an int64 maximum sentinel.
+    readonly property bool hasDuration: !!player?.lengthSupported && Number.isFinite(player.length)
+        && player.length > 0 && player.length * 1000000 <= Number.MAX_SAFE_INTEGER
     readonly property bool canSeek: !!player?.canSeek && hasPosition && hasDuration
     readonly property real position: playbackPosition.position
     function timeText(seconds) {
@@ -44,7 +46,7 @@ Rectangle {
         objectName: "mediaPositionTracker"
         player: root.player
         mediaService: root.mediaService
-        active: root.visible && root.monitorPosition
+        active: root.visible && root.monitorPosition && root.hasDuration
     }
     Column {
         id: contents
@@ -216,8 +218,8 @@ Rectangle {
             }
             UI.ColumnText {
                 objectName: "mediaElapsed"
-                visible: root.hasPosition
-                text: root.timeText(timeline.pressed ? timeline.value : root.position)
+                visible: root.hasPosition && root.hasDuration
+                text: root.hasDuration ? root.timeText(timeline.pressed ? timeline.value : root.position) : "--:--"
                 color: Theme.inactive
                 Layout.alignment: Qt.AlignVCenter
             }
@@ -226,8 +228,8 @@ Rectangle {
                 objectName: "mediaTimeline"
                 Layout.fillWidth: true
                 Layout.alignment: Qt.AlignVCenter
-                visible: root.hasPosition
-                volume: root.position
+                visible: root.hasPosition && root.hasDuration
+                volume: root.hasDuration ? root.position : 0
                 to: root.hasDuration ? root.player.length : 1
                 stepSize: 1
                 wheelEnabled: false
@@ -240,14 +242,14 @@ Rectangle {
                 Layout.preferredWidth: root.readoutWidth
                 horizontalAlignment: Text.AlignRight
                 objectName: "mediaDuration"
-                visible: root.hasPosition
+                visible: root.hasPosition && root.hasDuration
                 text: root.hasDuration ? root.timeText(root.player.length) : "--:--"
                 color: Theme.inactive
                 Layout.alignment: Qt.AlignVCenter
             }
 
             Item {
-                visible: !root.hasPosition
+                visible: !root.hasPosition || !root.hasDuration
                 Layout.fillWidth: true
             }
         }

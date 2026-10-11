@@ -29,8 +29,10 @@ the application. Other audio applications remain available in Apps.
 Each card shows elapsed and total time when the player provides them. Drag or
 click the timeline to seek; keyboard adjustment also works. Seeking requires a
 known positive duration and player support for both position and seeking. Live
-streams or unsupported players have a disabled timeline or no timeline when
-position is unavailable. The mouse wheel scrolls the list rather than seeking.
+streams with unknown durations, including overflowing duration sentinels, hide
+the elapsed time, timeline and duration. Missing position support also hides them.
+Players with a known duration but no seeking support have a disabled timeline.
+The mouse wheel scrolls the list rather than seeking.
 Position refreshes at `mediaPositionInterval` from Config.qml, only while the
 player is playing and its card is visible in the Media viewport. A read-only
 `busctl` query reads the player's MPRIS position directly, avoiding stale native
