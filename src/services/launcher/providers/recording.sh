@@ -8,6 +8,11 @@ source "$provider_dir/_common/utils.sh"
 
 loopback_id=''
 
+recording_alert() {
+    "${QS_PICKER_EXECUTABLE:-qs}" ipc -p "${QS_PICKER_CONFIG:-$provider_dir/../../../..}" \
+        call alerts "$@" >/dev/null 2>&1 || true
+}
+
 cleanup_recording() {
     if [[ -n $loopback_id ]]; then
         pactl unload-module "$loopback_id" >/dev/null 2>&1 || true
@@ -114,17 +119,18 @@ record_video() {
     [[ -z $audio_source ]] || command+=("--audio=$audio_source")
     command+=(-f "$filename")
 
-    hyprctl notify -1 1000 "rgb(2E7D32)" "recording starting" >/dev/null 2>&1 || true
+    recording_alert post recording "recording starting" success 1000
     sleep 1.1
+    recording_alert dismiss recording
     printf '%q ' "${command[@]}"; printf '\n'
     "${command[@]}" || recorder_status=$?
     cleanup_recording
 
     if [[ $recorder_status != 0 || ! -s $filename ]]; then
-        hyprctl notify -1 3000 "rgb(FF0000)" "recording error" >/dev/null 2>&1 || true
+        recording_alert post recording "recording error" error 3000
         return 1
     fi
-    hyprctl notify -1 1000 "rgb(2E7D32)" "recording stopped" >/dev/null 2>&1 || true
+    recording_alert post recording "recording stopped" success 1000
     open_file_explorer "$filename"
 }
 

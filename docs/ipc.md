@@ -5,6 +5,8 @@ are running, select this one with `qs ipc -p "$HOME/.config/quickshell" call …
 
 ```sh
 qs ipc call shell reload         # reload the whole shell and recreate windows
+qs ipc call alerts post example "Custom message" info 3000 # milliseconds; 0 persists
+qs ipc call alerts dismiss example # remove by message ID
 qs ipc call notifications reload # resynchronize notification/capture status
 qs ipc call notifications toggle # toggle DND
 qs ipc call status reload        # refresh mode and any open timecard tooltip
@@ -34,6 +36,8 @@ qs ipc call clipboard importCopyq # import text/image history without changing C
 
 **Meta+Period**, then **R**, reloads Quickshell from Hyprland's tools submap.
 The submap exits after selection. Reload closes open panels and rebuilds the shell.
+
+See [bar alerts](features/alerts.md) for severities, replacement and expiration.
 
 Twitch exports contain lowercase main-channel logins as ordinary text; second channel
 associations remain in the database. New databases start

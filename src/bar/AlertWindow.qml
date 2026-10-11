@@ -22,7 +22,14 @@ TopPanelTooltip {
                 required property var modelData
                 centerVertical: false
                 text: modelData.text
-                color: Theme.urgent
+                color: {
+                    switch (modelData.severity) {
+                        case "info": return Theme.text
+                        case "success": return Theme.ok
+                        case "warning": return Theme.warning
+                        default: return Theme.urgent
+                    }
+                }
             }
         }
     }

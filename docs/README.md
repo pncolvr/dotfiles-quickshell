@@ -8,6 +8,7 @@
 
 ## Feature guides
 
+- [Bar alerts](features/alerts.md): custom messages, severity, expiration and recording status.
 - [Clock, calendar and holidays](features/calendar.md): municipal holidays, previous-day clock-change warnings and calendar event links.
 - [Launcher and clipboard](features/launcher.md): reusable Bash pickers, applications, windows and clipboard history.
 - [Notifications](features/notifications.md): history, emitters, DND, popups and actions.

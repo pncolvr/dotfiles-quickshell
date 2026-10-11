@@ -22,6 +22,12 @@ touch "$test_dir/actions" "$test_dir/menus"
 cat > "$test_dir/bin/qs" <<'BASH'
 #!/usr/bin/env bash
 set -euo pipefail
+if [[ ${5:-} == alerts ]]; then
+    printf 'alerts' >> "$PROVIDER_TEST_DIR/actions"
+    printf ' <%s>' "${@:6}" >> "$PROVIDER_TEST_DIR/actions"
+    printf '\n' >> "$PROVIDER_TEST_DIR/actions"
+    exit 0
+fi
 if [[ ${6:-} == projects || ${6:-} == projectUrls || ${6:-} == directories ]]; then
     printf 'native <%s>\n' "$6" >> "$PROVIDER_TEST_DIR/actions"
     exit 0
@@ -245,18 +251,19 @@ for audio_mode in desktop mic both; do
             .sort == false and (.items | length) == 2 and (.items[0].title | endswith(" (default)"))
             and all(.items[]; (.result | startswith("off.")) | not))
     ' "$test_dir/menus" >/dev/null
-    expect_action 'hyprctl <notify> <-1> <1000> <rgb(2E7D32)> <recording stopped>'
+    expect_action 'alerts <post> <recording> <recording stopped> <success> <1000>'
     jq -Rse '
         split("\n") | to_entries
-        | (map(select(.value | startswith("hyprctl <notify>"))) | map(.key)) as $notifications
+        | (map(select(.value | startswith("alerts <post>"))) | map(.key)) as $notifications
+        | (map(select(.value == "alerts <dismiss> <recording>")) | .[0].key) as $dismiss
         | (map(select(.value == "sleep <1.1>")) | .[0].key) as $delay
         | (map(select(.value | startswith("wf-recorder <"))) | .[0].key) as $start
         | (map(select(.value == "wf-recorder-finished")) | .[0].key) as $finish
-        | $notifications | length == 2 and .[0] < $delay and $delay < $start and $finish < .[1]
+        | $notifications | length == 2 and .[0] < $delay and $delay < $dismiss and $dismiss < $start and $finish < .[1]
     ' "$test_dir/actions" >/dev/null
-    ! rg -q '^notify-send ' "$test_dir/actions"
+    ! rg -q '^notify-send |^hyprctl <notify>' "$test_dir/actions"
 done
-printf 'PASS: recording defaults, loopback cleanup and Hyprland notifications outside capture\n'
+printf 'PASS: recording defaults, loopback cleanup and bar alerts outside capture\n'
 
 # Audio device pickers always open and return identities rather than display labels.
 : > "$test_dir/actions"; : > "$test_dir/menus"
@@ -280,7 +287,7 @@ printf 'PASS: output/input pickers hide off profiles, keep defaults and virtual 
 if PROVIDER_TEST_NAME=recording PROVIDER_TEST_AUDIO=both PROVIDER_TEST_RECORDER_EXIT=1 \
     bash "$picker" provider recording > "$test_dir/output" 2> "$test_dir/error"; then exit 1; fi
 expect_action 'pactl <unload-module> <99>'
-expect_action 'hyprctl <notify> <-1> <3000> <rgb(FF0000)> <recording error>'
+expect_action 'alerts <post> <recording> <recording error> <error> <3000>'
 ! rg -q 'recording stopped|^notify-send |^dbus-send' "$test_dir/actions"
 printf 'PASS: recorder failure releases loopback routing without claiming a saved recording\n'
 
