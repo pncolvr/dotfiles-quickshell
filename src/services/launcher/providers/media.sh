@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 source "$(dirname -- "${BASH_SOURCE[0]}")/_common/utils.sh"
-source "$HOME"/.config/qutebrowser/scripts/url/_common.sh
+source "$HOME"/.config/qutebrowser/src/scripts/url/_common.sh
 function show_error() {
     hyprctl notify -1 3000 "rgb(FE8D59)" "$1" > >(log) 2> >(log_error)
 }

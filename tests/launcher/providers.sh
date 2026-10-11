@@ -16,7 +16,7 @@ export PATH="$test_dir/bin:$PATH"
 picker="$test_dir/src/services/launcher/launcher.sh"
 providers="$test_dir/src/services/launcher/providers"
 mkdir -p "$ZDOTDIR/scripts/status" "$ZDOTDIR/scripts/default-browser"
-mkdir -p "$HOME/.config/qutebrowser/scripts/url" "$HOME/.config/qutebrowser/bookmarks"
+mkdir -p "$HOME/.config/qutebrowser/src/scripts/url" "$HOME/.config/qutebrowser/bookmarks"
 mkdir -p "$HOME/Alpha" "$HOME/Beta" "$HOME/Pictures" "$HOME/Videos"
 touch "$test_dir/actions" "$test_dir/menus"
 cat > "$test_dir/bin/qs" <<'BASH'
@@ -132,7 +132,7 @@ cat > "$ZDOTDIR/scripts/default-browser/default-browser.sh" <<'BASH'
 printf 'browser <%s>\n' "$*" >> "$PROVIDER_TEST_DIR/actions"
 BASH
 chmod +x "$ZDOTDIR/scripts/status/manager.sh" "$ZDOTDIR/scripts/default-browser/default-browser.sh"
-printf 'clean() { printf "%%s" "$1"; }\n' > "$HOME/.config/qutebrowser/scripts/url/_common.sh"
+printf 'clean() { printf "%%s" "$1"; }\n' > "$HOME/.config/qutebrowser/src/scripts/url/_common.sh"
 cat > "$HOME/.config/qutebrowser/bookmarks/urls" <<'DATA'
 https://example.test/alpha Alpha
 https://example.test/beta Beta
