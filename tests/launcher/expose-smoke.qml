@@ -25,6 +25,7 @@ Scope {
         property bool exposeDragging: false
         property var exposePendingMoves: ({})
         property int accepted: 0
+        property int activatedWorkspace: 0
         readonly property var currentItem: filteredItems[currentIndex] ?? null
         property string movedAddress: ""
         property int movedWorkspace: 0
@@ -44,6 +45,7 @@ Scope {
             if (!id && exposeWorkspace) exposeReturnWorkspace = exposeWorkspace
             exposeWorkspace = id; currentIndex = 0
         }
+        function activateExposeWorkspace(id) { activatedWorkspace = id }
         function moveExposeWindow(address, workspace) {
             movedAddress = address; movedWorkspace = workspace; root.moves++
             if (simulateDropUpdate) {
@@ -203,10 +205,19 @@ Scope {
                 root.testWorkspaceShortcuts(search)
                 search.text = ""
                 const workspace = strip.itemAtIndex(1) as WorkspacePreview
+                events.mouseClick(workspace.previewItem, workspace.previewItem.width / 2, workspace.previewItem.height / 2)
+                root.check(picker.activatedWorkspace === 2 && picker.exposeWorkspace === 0,
+                    "miniature click activates the workspace without changing the overview filter")
+                events.mouseClick(workspace, workspace.width / 2, 5)
+                root.check(picker.exposeWorkspace === 2, "workspace header keeps selecting the overview filter")
+                picker.selectExposeWorkspace(0)
                 events.mouseClick(workspace, workspace.width / 2, workspace.height - 10)
             } else if (root.step === 2) {
                 root.check(picker.exposeWorkspace === 2 && grid.count === 4, "workspace click filters windows")
                 const empty = strip.itemAtIndex(2) as WorkspacePreview
+                events.mouseClick(empty.previewItem, empty.previewItem.width / 2, empty.previewItem.height / 2)
+                root.check(picker.activatedWorkspace === 3 && picker.exposeWorkspace === 2,
+                    "empty miniature also activates its workspace")
                 events.mouseClick(empty, empty.width / 2, empty.height - 10)
             } else if (root.step === 3) {
                 root.check(grid.count === 0, "empty workspace remains selectable and a drop target")

@@ -70,7 +70,9 @@ available space. Captions and gaps stay clear without overlapping previews.
 Views with floating windows or grouped application tabs, and the All view, use
 the packed card layout. Window cards retain their original proportions and
 relative size. A single window uses the largest
-size that fits the preview area. Opaque rectangular title boxes sit above the previews. Click a workspace to see its windows, or press **Ctrl+A** to show
+size that fits the preview area. Opaque rectangular title boxes sit above the previews.
+Click a workspace tile's miniature preview to close Exposé into that workspace.
+Click its header or outer area to see its windows within Exposé, or press **Ctrl+A** to show
 every workspace. The All view orders windows by workspace, then top to bottom
 and left to right within each workspace, including special workspaces.
 Tabs in the same window group use alphabetical display-name order.

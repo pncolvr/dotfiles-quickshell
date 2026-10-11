@@ -204,6 +204,15 @@ Rectangle {
             }
         }
     }
+    MouseArea {
+        objectName: "exposeWorkspaceActivate"
+        x: desktop.x
+        y: desktop.y
+        width: desktop.width
+        height: desktop.height
+        cursorShape: Qt.PointingHandCursor
+        onClicked: root.picker.activateExposeWorkspace(root.workspace.id)
+    }
     DropArea {
         id: drop
         objectName: "exposeDropWorkspace-" + root.workspace.id

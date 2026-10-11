@@ -204,6 +204,10 @@ Singleton {
         itemCriteria = id === 0 ? ({}) : ({workspaceId: id})
         currentIndex = 0
     }
+    function activateExposeWorkspace(id) {
+        exposeCloseTarget = {workspaceId: id}
+        close()
+    }
     function syncExpose() {
         if (!visible || layout !== "expose" || exposeDragging) return
         const nextItems = windowItems("all", true)
@@ -283,7 +287,14 @@ Singleton {
         const target = exposeCloseTarget
         exposeCloseTarget = null
         // The overview surface has unmapped; compositor focus restoration can no longer override selection.
-        if (target) Qt.callLater(() => WindowService.focusWindow(target.result))
+        if (target) Qt.callLater(() => {
+            if (target.result) WindowService.focusWindow(target.result)
+            else {
+                const workspace = Hyprland.workspaces.values.find(workspace => workspace.id === target.workspaceId)
+                if (workspace) workspace.activate()
+                else Hyprland.dispatch("workspace " + target.workspaceId)
+            }
+        })
     }
 
     function cancel(directory) {
