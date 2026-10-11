@@ -148,7 +148,7 @@ Item {
         "bash", Qt.resolvedUrl("../services/files/folder-files.sh").toString().replace("file://", "")
     ]
 
-    readonly property real micActivityThreshold: 0.02
+    readonly property real micActivityThreshold: 0.20 // Quickshell peak scale; calibrated above MMX silence (~0.14 max).
     readonly property int micActivityHold: 200
     readonly property var mixerCommand: ["pavucontrol"]
     readonly property real audioVolumeStep: 0.01
