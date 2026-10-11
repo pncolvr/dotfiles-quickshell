@@ -241,12 +241,16 @@ The form offers an optional display name and a Personal/Work button. Save hides
 the form; Edit lets you change the path, name and category together, and Cancel
 discards changes. Duplicate paths are rejected. Manage searches names and paths
 with the shared fuzzy matcher and shows both categories, with row dividers and
-hover highlighting. Removing an entry removes only the shortcut, leaving the
+hover highlighting. Each row has a copy button for its full path or location URI.
+Removing an entry removes only the shortcut, leaving the
 folder intact. Empty lists show the add form immediately.
 
 Entries live in SQLite. The former JSON provider is removed, and there is no
-automatic import or migration script. `FolderPathField` and `ManagementRow` are
-shared with project management, along with the existing tabs and editor actions.
+automatic import or migration script. `FolderForm`, `ManagementActions` and
+`FolderCategoryButton` share the path/name fields, browse dialog, category colors
+and copy/edit/refresh/remove controls with project management. They build on
+`FolderPathField`, `ManagementRow` and the existing tabs and editor actions.
+Panels supply their own service callbacks and enable only relevant controls.
 
 ### Projects
 
@@ -278,12 +282,16 @@ it shows the workspace choices before Save. Detected `.code-workspace` files
 start included. Deselect any, select none, or Cancel without adding the source.
 **Open folder** is always available. Paths can start with `~/` and retain spaces.
 
-Manage groups projects under each added path. Its edit button opens the category
-and all its detected workspaces, including excluded ones. Category changes are
-saved with workspace choices; Cancel discards both. A root's category applies
-to all its projects. Repository roots also list subfolders by name with individual
-workspace edit buttons when workspaces exist. Subfolder rows have dividers and
-highlight on hover to associate each edit button with its folder.
+Manage groups projects under each added path. Repository roots list subfolders
+by name, with dividers and hover highlighting. Added paths have edit, refresh and
+remove buttons. Edit opens the bottom form while keeping the source list, search
+and scroll position visible. It supports the folder path, native folder picker,
+folder type, category and included workspaces. Add and Edit reuse the same form.
+Changing Single folder / Repositories root rescans before saving. Repository
+subfolders have workspace edit
+buttons; their paths are derived from the configured root. Both added paths and
+repository subfolders have a copy button that copies their full folder path to
+the clipboard.
 The search field filters paths and
 repository names using the shared fuzzy matching. The refresh icon at the top
 right of Manage rescans all configured sources. Each added path also has a
@@ -296,8 +304,12 @@ asks again. No background scanning or scanning on picker opening occurs.
 Missing or unreadable sources retain their previous results and show an error.
 Removing a source removes its listing, without modifying project files.
 
-Projects inherit their source's category. Change it inside the source's edit
-view. By default, work projects are hidden outside the configured work status;
+Projects inherit their source category. Edit saves category and workspace choices
+together. Changing a source path scans the replacement before saving; duplicate
+or unavailable paths leave the original source intact. Workspace choices follow
+matching relative paths, and newly discovered workspaces require confirmation.
+Cancel keeps the original source and choices. By default, work projects are hidden
+outside the configured work status;
 personal projects remain available. Ctrl+W can temporarily show both categories.
 Manage always shows both categories. Sources with overlapping
 projects share workspace choices; a single-folder source takes category priority.

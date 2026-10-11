@@ -16,8 +16,8 @@ Item {
     property string sourceCategory: "personal"
     property bool adding: false
     readonly property bool showAddForm: adding || ProjectService.sources.length === 0
-    property alias folderPicker: sourcePath.folderPicker
-    readonly property bool nativeDialogOpen: sourcePath.nativeDialogOpen
+    property alias folderPicker: sourceForm.folderPicker
+    readonly property bool nativeDialogOpen: sourceForm.nativeDialogOpen
     function matchesManagement(text) {
         return !manageSearch.text.trim() || root.picker.filter([{title:text}],manageSearch.text).length > 0
     }
@@ -33,12 +33,33 @@ Item {
     function focusSearch() {
         if (!root.picker.visible) return
         if (ProjectService.managing) {
-            if (root.showAddForm && !ProjectService.draft) sourcePath.focusInput()
+            if (root.showAddForm && !ProjectService.draft) sourceForm.focusInput()
             else if (!ProjectService.draft) manageSearch.forceActiveFocus()
         }
         else list.focusSearch()
     }
-    function cancelAdd() { adding = false; sourcePath.clear(); Qt.callLater(root.focusSearch) }
+    function editSource(path) {
+        ProjectService.editSource(path)
+        if (ProjectService.draft?.previousPath) {
+            sourceForm.text = ProjectService.draft.path
+            root.sourceKind = ProjectService.draft.kind
+            root.sourceCategory = ProjectService.draft.category
+            Qt.callLater(sourceForm.focusInput)
+        }
+    }
+    function submitForm() {
+        if (ProjectService.draft) root.saveDraft()
+        else if (sourceForm.text.trim()) ProjectService.addSource(sourceForm.text,root.sourceKind,root.sourceCategory)
+    }
+    function saveDraft() {
+        if (ProjectService.draft?.previousPath) {
+            ProjectService.setDraftPath(sourceForm.text)
+            ProjectService.setDraftKind(root.sourceKind)
+            ProjectService.setDraftCategory(root.sourceCategory)
+        }
+        if (ProjectService.saveDraft()) root.cancelAdd()
+    }
+    function cancelAdd() { adding = false; sourceForm.clear(); Qt.callLater(root.focusSearch) }
     function beginAdd() { ProjectService.setManaging(true); adding = true; Qt.callLater(root.focusSearch) }
     function handleAddKey(event, activate) {
         if (!addShortcut.enabled || addShortcut.portableText !== "Ctrl+A" || !event.matches(StandardKey.SelectAll)) return false
@@ -57,13 +78,14 @@ Item {
     Connections {
         target: ProjectService
         function onSourceAdded() { root.cancelAdd() }
+        function onSourcePathResolved(path: string) { sourceForm.text = path }
     }
     Connections {
         target: root.picker
         function onVisibleChanged() {
             if (!root.picker.visible) {
                 root.adding = false
-                sourcePath.clear()
+                sourceForm.clear()
                 manageSearch.clear()
             }
         }
@@ -162,7 +184,6 @@ Item {
             Column {
                 width: parent.width
                 spacing: Theme.projectManageSectionSpacing
-                visible: !ProjectService.draft
                 UI.SearchField {
                     id: manageSearch
                     objectName: "projectManageSearch"
@@ -216,26 +237,21 @@ Item {
                                     Layout.fillWidth: true
                                     UI.HoverTooltip { text: parent.text }
                                 }
-                                UI.ActionButton {
-                                    objectName: "refreshSource_" + sourceRow.modelData.path
-                                    glyph: Theme.refreshIcon
-                                    hint: "refresh this folder"
-                                    enabled: !ProjectService.busy && !ProjectService.draft
-                                    onClicked: ProjectService.refresh(sourceRow.modelData.path)
-                                }
-                                UI.ActionButton {
-                                    objectName: "editSource_" + sourceRow.modelData.path
-                                    glyph: Theme.editIcon
-                                    hint: "edit folder and workspaces"
-                                    enabled: !ProjectService.busy
-                                    onClicked: ProjectService.editSource(sourceRow.modelData.path)
-                                }
-                                UI.ActionButton {
-                                    glyph: Theme.deleteIcon
-                                    hint: "remove source"
-                                    fillColor: Theme.urgent
-                                    enabled: !ProjectService.busy
-                                    onClicked: ProjectService.removeSource(sourceRow.modelData.path)
+                                UI.ManagementActions {
+                                    path: sourceRow.modelData.path
+                                    copyObjectName: "copySourcePath_" + path
+                                    editObjectName: "editSource_" + path
+                                    refreshObjectName: "refreshSource_" + path
+                                    editHint: "edit folder and workspaces"
+                                    removeHint: "remove source"
+                                    removeColor: Theme.urgent
+                                    showRefresh: true
+                                    editEnabled: !ProjectService.busy && !ProjectService.draft
+                                    refreshEnabled: !ProjectService.busy && !ProjectService.draft
+                                    removeEnabled: !ProjectService.busy
+                                    onEditRequested: root.editSource(path)
+                                    onRefreshRequested: ProjectService.refresh(path)
+                                    onRemoveRequested: ProjectService.removeSource(path)
                                 }
                             }
                             RowLayout {
@@ -272,13 +288,15 @@ Item {
                                         Layout.fillWidth: true
                                         UI.HoverTooltip { text: projectRow.modelData.path }
                                     }
-                                    UI.ActionButton {
-                                        objectName: "editProject_" + projectRow.modelData.path
-                                        glyph: Theme.editIcon
-                                        hint: "edit workspaces"
-                                        visible: projectRow.modelData.workspaces.length > 0
-                                        enabled: !ProjectService.busy
-                                        onClicked: ProjectService.editProject(projectRow.modelData.path)
+                                    UI.ManagementActions {
+                                        path: projectRow.modelData.path
+                                        copyObjectName: "copyProjectPath_" + path
+                                        editObjectName: "editProject_" + path
+                                        editHint: "edit workspaces"
+                                        showEdit: projectRow.modelData.workspaces.length > 0
+                                        showRemove: false
+                                        editEnabled: !ProjectService.busy && !ProjectService.draft
+                                        onEditRequested: ProjectService.editProject(path)
                                     }
                                 }
                             }
@@ -291,31 +309,78 @@ Item {
                     }
                 }
             }
+
+        }
+    }
+    Item {
+        id: manageFooter
+        anchors.bottom: parent.bottom
+        width: parent.width
+        height: footerDivider.height + Theme.controlSpacing
+            + (sourceForm.visible ? sourceForm.implicitHeight + Theme.controlSpacing : 0)
+            + (draftScroll.visible ? draftScroll.height + Theme.controlSpacing : 0)
+            + Theme.controlHeight
+            + Theme.controlSpacing + manageHints.implicitHeight + Theme.projectManagePadding
+        visible: ProjectService.managing
+        Rectangle {
+            id: footerDivider
+            x: Theme.projectManagePadding
+            width: Math.max(0,parent.width - Theme.projectManagePadding * 2)
+            height: 1
+            color: Theme.empty
+        }
+        UI.FolderForm {
+            id: sourceForm
+            objectName: "projectAddForm"
+            x: Theme.projectManagePadding
+            y: footerDivider.height + Theme.controlSpacing
+            width: Math.max(0,parent.width - Theme.projectManagePadding * 2)
+            visible: !!ProjectService.draft?.previousPath || (!ProjectService.draft && root.showAddForm)
+            enabled: !ProjectService.busy
+            inputObjectName: ProjectService.draft?.previousPath ? "editProjectSourcePath" : "projectSourcePath"
+            browseObjectName: ProjectService.draft?.previousPath ? "browseEditProjectSource" : "browseProjectSource"
+            categoryObjectName: ProjectService.draft?.previousPath ? "editSourceCategory" : "projectSourceCategory"
+            kindObjectName: "projectSourceKind"
+            placeholderText: root.sourceKind === "root" ? "Repositories root folder" : "Project folder"
+            dialogTitle: root.sourceKind === "root" ? "Choose repositories root" : "Choose project folder"
+            showKind: true
+            kind: root.sourceKind
+            category: root.sourceCategory
+            onKindRequested: kind => root.sourceKind = kind
+            onCategoryRequested: category => root.sourceCategory = category
+            onAccepted: root.submitForm()
+        }
+        UI.ActionButton {
+            objectName: "beginAddProjectSource"
+            y: footerDivider.height + Theme.controlSpacing
+            visible: !ProjectService.draft && !root.showAddForm
+            anchors.right: parent.right
+            anchors.rightMargin: Theme.projectManagePadding
+            glyph: Theme.addIcon
+            hint: "add folder (" + Config.projectAddShortcut + ")"
+            enabled: !ProjectService.busy
+            onClicked: root.beginAdd()
+        }
+        QC.ScrollView {
+            id: draftScroll
+            x: Theme.projectManagePadding
+            y: footerDivider.height + Theme.controlSpacing + (sourceForm.visible ? sourceForm.implicitHeight + Theme.controlSpacing : 0)
+            width: parent.width - Theme.projectManagePadding * 2
+            height: visible ? Math.min(draftContent.implicitHeight, Theme.pickerRowHeight * 4) : 0
+            contentWidth: availableWidth
+            contentHeight: draftContent.implicitHeight
+            visible: !!ProjectService.draft
+            clip: true
             Column {
-                width: parent.width
+                id: draftContent
+                width: draftScroll.availableWidth
                 spacing: Theme.projectManageSectionSpacing
                 visible: !!ProjectService.draft
                 UI.ColumnText {
-                    text: ProjectService.draft?.review ? "New workspaces found. Choose which to include."
-                        : ProjectService.editingSource ? "Edit folder" : ProjectService.editingProject ? "Choose workspaces to include" : "Choose workspaces before adding"
-                }
-                RowLayout {
-                    width: parent.width
-                    visible: !!ProjectService.editingSource
-                    UI.ColumnText {
-                        text: ProjectService.editingSource
-                        elide: Text.ElideMiddle
-                        Layout.fillWidth: true
-                        UI.HoverTooltip { text: parent.text }
-                    }
-                    UI.ActionButton {
-                        objectName: "editSourceCategory"
-                        label: ProjectService.draft?.category === "work" ? "Work" : "Personal"
-                        foreground: ProjectService.draft?.category === "work" ? Theme.accent : Theme.active
-                        Layout.preferredWidth: Theme.projectOptionButtonWidth
-                        hint: "switch category"
-                        onClicked: ProjectService.setDraftCategory(ProjectService.draft.category === "work" ? "personal" : "work")
-                    }
+                    visible: !!text
+                    text: ProjectService.draft?.previousPath ? ""
+                        : ProjectService.draft?.review ? "New workspaces found. Choose which to include."
+                        : ProjectService.draft?.workspaceEdit ? "Choose workspaces to include" : "Choose workspaces before adding"
                 }
                 Repeater {
                     model: ProjectService.draft?.projects ?? []
@@ -323,7 +388,7 @@ Item {
                         id: projectDraft
                         required property var modelData
                         visible: modelData.workspaces.length > 0
-                        width: content.width
+                        width: draftContent.width
                         spacing: Theme.controlSpacing
                         UI.ColumnText {
                             text: projectDraft.modelData.path
@@ -336,7 +401,7 @@ Item {
                             delegate: RowLayout {
                                 id: workspaceRow
                                 required property var modelData
-                                width: content.width
+                                width: draftContent.width
                                 UI.ActionButton {
                                     objectName: "projectWorkspace_" + workspaceRow.modelData.path
                                     glyph: workspaceRow.modelData.included ? Theme.checkIcon : Theme.addIcon
@@ -356,99 +421,20 @@ Item {
                 }
             }
         }
-    }
-    Item {
-        id: manageFooter
-        anchors.bottom: parent.bottom
-        width: parent.width
-        height: footerDivider.height + Theme.controlSpacing
-            + (!ProjectService.draft && root.showAddForm ? addForm.implicitHeight : Theme.controlHeight)
-            + Theme.controlSpacing + manageHints.implicitHeight + Theme.projectManagePadding
-        visible: ProjectService.managing
-        Rectangle {
-            id: footerDivider
-            x: Theme.projectManagePadding
-            width: Math.max(0,parent.width - Theme.projectManagePadding * 2)
-            height: 1
-            color: Theme.empty
-        }
-        Column {
-            id: addForm
-            x: Theme.projectManagePadding
-            y: footerDivider.height + Theme.controlSpacing
-            objectName: "projectAddForm"
-            width: Math.max(0,parent.width - Theme.projectManagePadding * 2)
-            spacing: Theme.controlSpacing
-            visible: !ProjectService.draft && root.showAddForm
-            Row {
-                width: parent.width
-                spacing: Theme.controlSpacing
-                UI.FolderPathField {
-                    id: sourcePath
-                    inputObjectName: "projectSourcePath"
-                    browseObjectName: "browseProjectSource"
-                    width: Math.max(0,parent.width - editorActions.width - parent.spacing)
-                    placeholderText: root.sourceKind === "root" ? "Repositories root folder" : "Project folder"
-                    dialogTitle: root.sourceKind === "root" ? "Choose repositories root" : "Choose project folder"
-                    enabled: !ProjectService.busy
-                    onAccepted: if (text.trim()) ProjectService.addSource(text,root.sourceKind,root.sourceCategory)
-                }
-                UI.EditorActions {
-                    id: editorActions
-                    cancelObjectName: "cancelAddProjectSource"
-                    submitObjectName: "addProjectSource"
-                    submitGlyph: Theme.addIcon
-                    submitHint: "scan folder before adding"
-                    cancelEnabled: !ProjectService.busy
-                    submitEnabled: !ProjectService.busy && !!sourcePath.text.trim()
-                    onCancelled: root.cancelAdd()
-                    onSubmitted: ProjectService.addSource(sourcePath.text,root.sourceKind,root.sourceCategory)
-                }
-            }
-            Row {
-                spacing: Theme.projectManageSectionSpacing
-                UI.ActionButton {
-                    objectName: "projectSourceKind"
-                    label: root.sourceKind === "root" ? "Repositories root" : "Single folder"
-                    width: Theme.projectOptionButtonWidth
-                    hint: "switch folder type"
-                    enabled: !ProjectService.busy
-                    onClicked: root.sourceKind = root.sourceKind === "root" ? "folder" : "root"
-                }
-                UI.ActionButton {
-                    objectName: "projectSourceCategory"
-                    label: root.sourceCategory === "work" ? "Work" : "Personal"
-                    foreground: root.sourceCategory === "work" ? Theme.accent : Theme.active
-                    width: Theme.projectOptionButtonWidth
-                    hint: "switch category"
-                    enabled: !ProjectService.busy
-                    onClicked: root.sourceCategory = root.sourceCategory === "work" ? "personal" : "work"
-                }
-            }
-        }
-        UI.ActionButton {
-            objectName: "beginAddProjectSource"
-            y: footerDivider.height + Theme.controlSpacing
-            visible: !ProjectService.draft && !root.showAddForm
-            anchors.right: parent.right
-            anchors.rightMargin: Theme.projectManagePadding
-            glyph: Theme.addIcon
-            hint: "add folder (" + Config.projectAddShortcut + ")"
-            enabled: !ProjectService.busy
-            onClicked: root.beginAdd()
-        }
         UI.EditorActions {
-            y: footerDivider.height + Theme.controlSpacing
+            y: draftScroll.y + draftScroll.height + Theme.controlSpacing
             anchors.right: parent.right
             anchors.rightMargin: Theme.projectManagePadding
-            visible: !!ProjectService.draft
-            cancelObjectName: "cancelProjectDraft"
-            submitObjectName: "saveProjectDraft"
+            visible: !!ProjectService.draft || sourceForm.visible
+            cancelObjectName: ProjectService.draft ? "cancelProjectDraft" : "cancelAddProjectSource"
+            submitObjectName: ProjectService.draft ? "saveProjectDraft" : "addProjectSource"
+            submitGlyph: ProjectService.draft ? Theme.checkIcon : Theme.addIcon
             cancelHint: ProjectService.draft?.review ? "Cancel refresh" : "Cancel"
-            submitHint: ProjectService.draft?.review ? "Apply refresh" : "Save"
-            submitEnabled: !ProjectService.busy
+            submitHint: ProjectService.draft?.review ? "Apply refresh" : ProjectService.draft ? "Save" : "scan folder before adding"
+            submitEnabled: !ProjectService.busy && (!sourceForm.visible || !!sourceForm.text.trim())
+            cancelEnabled: !ProjectService.busy
             onCancelled: { ProjectService.cancelDraft(); root.cancelAdd() }
-            onSubmitted: { if (ProjectService.saveDraft()) root.cancelAdd() }
+            onSubmitted: root.submitForm()
         }
         UI.ShortcutHints {
             id: manageHints

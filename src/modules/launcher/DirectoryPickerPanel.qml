@@ -16,8 +16,8 @@ Item {
     property string category: "personal"
     readonly property bool editing: !!DirectoryService.draft
     readonly property bool showForm: adding || editing || DirectoryService.directories.length === 0
-    readonly property bool nativeDialogOpen: pathField.nativeDialogOpen
-    property alias folderPicker: pathField.folderPicker
+    readonly property bool nativeDialogOpen: folderForm.nativeDialogOpen
+    property alias folderPicker: folderForm.folderPicker
     readonly property var managedDirectories: picker.filter(DirectoryService.directories.map(entry => Object.assign({title:entry.name,search:entry.name + " " + entry.path},entry)),manageSearch.text)
     implicitWidth: Theme.pickerWidth
     implicitHeight: header.height + Theme.controlSpacing + (DirectoryService.managing
@@ -25,11 +25,11 @@ Item {
     function focusSearch() {
         if (!picker.visible) return
         if (!DirectoryService.managing) list.focusSearch()
-        else if (showForm) pathField.focusInput()
+        else if (showForm) folderForm.focusInput()
         else manageSearch.forceActiveFocus()
     }
     function resetForm() {
-        adding = false; pathField.clear(); nameField.clear(); category = "personal"
+        adding = false; folderForm.clear(); category = "personal"
         Qt.callLater(root.focusSearch)
     }
     function management(value) {
@@ -40,11 +40,11 @@ Item {
     function beginAdd() { adding = true; Qt.callLater(root.focusSearch) }
     function edit(entry) {
         DirectoryService.edit(entry)
-        pathField.text = entry.path; nameField.text = entry.name; category = entry.category
+        folderForm.text = entry.path; folderForm.displayName = entry.name; category = entry.category
         Qt.callLater(root.focusSearch)
     }
     function cancel() { DirectoryService.cancel(); resetForm() }
-    function save() { DirectoryService.save(pathField.text,nameField.text,category) }
+    function save() { DirectoryService.save(folderForm.text,folderForm.displayName,category) }
     function handleAddKey(event, activate) {
         if (!addShortcut.enabled || addShortcut.portableText !== "Ctrl+A" || !event.matches(StandardKey.SelectAll)) return false
         if (activate) beginAdd()
@@ -160,21 +160,18 @@ Item {
                             }
                         }
                     }
-                    UI.ActionButton {
-                        objectName: "editDirectory_" + entryRow.modelData.path
-                        glyph: Theme.editIcon
-                        hint: "edit directory"
-                        enabled: !DirectoryService.busy
-                        onClicked: root.edit(entryRow.modelData)
-                    }
-                    UI.ActionButton {
-                        objectName: "removeDirectory_" + entryRow.modelData.path
-                        glyph: Theme.deleteIcon
-                        hint: "remove from picker"
-                        enabled: !DirectoryService.busy
-                        onClicked: {
-                            if (DirectoryService.draft?.path === entryRow.modelData.path) root.cancel()
-                            DirectoryService.remove(entryRow.modelData.path)
+                    UI.ManagementActions {
+                        path: entryRow.modelData.path
+                        copyObjectName: "copyDirectoryPath_" + path
+                        editObjectName: "editDirectory_" + path
+                        removeObjectName: "removeDirectory_" + path
+                        editHint: "edit directory"
+                        editEnabled: !DirectoryService.busy
+                        removeEnabled: !DirectoryService.busy
+                        onEditRequested: root.edit(entryRow.modelData)
+                        onRemoveRequested: {
+                            if (DirectoryService.draft?.path === path) root.cancel()
+                            DirectoryService.remove(path)
                         }
                     }
                 }
@@ -199,35 +196,19 @@ Item {
             width: parent.width - Theme.projectManagePadding * 2
             visible: root.showForm
             spacing: Theme.controlSpacing
-            UI.FolderPathField {
-                id: pathField
+            UI.FolderForm {
+                id: folderForm
                 width: parent.width
                 inputObjectName: "directoryPath"
                 browseObjectName: "browseDirectory"
+                nameObjectName: "directoryName"
+                categoryObjectName: "directoryCategory"
                 placeholderText: "Folder path or location (trash:///...)"
                 enabled: !DirectoryService.busy
+                showName: true
+                category: root.category
+                onCategoryRequested: category => root.category = category
                 onAccepted: root.save()
-            }
-            RowLayout {
-                width: parent.width
-                UI.InputField {
-                    id: nameField
-                    objectName: "directoryName"
-                    Layout.fillWidth: true
-                    placeholderText: "Name (optional)"
-                    enabled: !DirectoryService.busy
-                    pauseTooltipDismissal: false
-                    onAccepted: root.save()
-                }
-                UI.ActionButton {
-                    objectName: "directoryCategory"
-                    label: root.category === "work" ? "Work" : "Personal"
-                    foreground: root.category === "work" ? Theme.accent : Theme.active
-                    Layout.preferredWidth: Theme.projectOptionButtonWidth
-                    hint: "switch category"
-                    enabled: !DirectoryService.busy
-                    onClicked: root.category = root.category === "work" ? "personal" : "work"
-                }
             }
             UI.EditorActions {
                 anchors.right: parent.right
@@ -235,7 +216,7 @@ Item {
                 cancelObjectName: "cancelDirectory"
                 submitGlyph: root.editing ? Theme.checkIcon : Theme.addIcon
                 submitHint: root.editing ? "save directory" : "add directory"
-                submitEnabled: !DirectoryService.busy && !!pathField.text.trim()
+                submitEnabled: !DirectoryService.busy && !!folderForm.text.trim()
                 onSubmitted: root.save()
                 onCancelled: root.cancel()
             }

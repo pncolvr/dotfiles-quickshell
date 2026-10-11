@@ -13,10 +13,9 @@ Singleton {
     property string projectPath: ""
     property string error: ""
     property var draft: null
-    property string editingProject: ""
-    property string editingSource: ""
     signal sourceAdded()
-    enum Operation { None, Add, Refresh, Discard }
+    signal sourcePathResolved(string path)
+    enum Operation { None, Add, Refresh, Edit, Discard }
     property int operation: ProjectService.Operation.None
     readonly property bool busy: scan.running
     readonly property var sources: ProjectRepository.sources
@@ -24,8 +23,8 @@ Singleton {
     readonly property var availableProjects: projects.filter(project => showAll || StatusService.status === Config.projectWorkStatus || project.category !== "work")
 
     function open(browser = false) {
-        if (busy && operation === ProjectService.Operation.Add) operation = ProjectService.Operation.Discard
-        managing = false; urls = browser; showAll = false; projectPath = ""; draft = null; editingProject = ""; editingSource = ""; error = ""
+        if (busy && [ProjectService.Operation.Add,ProjectService.Operation.Edit].includes(operation)) operation = ProjectService.Operation.Discard
+        managing = false; urls = browser; showAll = false; projectPath = ""; draft = null; error = ""
         syncPicker()
     }
     function toggleShowAll() {
@@ -128,30 +127,29 @@ Singleton {
         if (path && !selected.length) { error = "That folder is not configured"; return false }
         return startScan(selected,ProjectService.Operation.Refresh)
     }
-    function editProject(path) {
-        if (busy) return
-        const project = projects.find(project => project.path === path)
-        if (!project) return
-        editingProject = path
-        editingSource = ""
-        draft = {projects:[Object.assign({},project,{workspaces:project.workspaces.map(workspace => Object.assign({},workspace))})]}
-        managing = true
-        error = ""
-    }
     function editSource(path) {
-        if (busy) return
+        if (busy || draft) return
         const source = sources.find(source => source.path === path)
         if (!source) return
-        editingSource = path
-        editingProject = ""
-        draft = Object.assign({},source,{projects:projects.filter(project => project.sourcePaths.includes(path))
+        draft = Object.assign({},source,{previousPath:path,originalKind:source.kind,projects:projects.filter(project => project.sourcePaths.includes(path))
             .map(project => Object.assign({},project,{workspaces:project.workspaces.map(workspace => Object.assign({},workspace))}))})
-        managing = true
-        error = ""
+        managing = true; error = ""
+    }
+    function editProject(path) {
+        if (busy || draft) return
+        const project = projects.find(project => project.path === path)
+        if (!project) return
+        draft = {workspaceEdit:true,projects:[Object.assign({},project,{workspaces:project.workspaces.map(workspace => Object.assign({},workspace))})]}
+        managing = true; error = ""
+    }
+    function setDraftPath(path) {
+        if (draft?.previousPath) draft = Object.assign({},draft,{path})
+    }
+    function setDraftKind(kind) {
+        if (draft?.previousPath && ["folder","root"].includes(kind)) draft = Object.assign({},draft,{kind})
     }
     function setDraftCategory(category) {
-        if (!editingSource || !draft || !["work","personal"].includes(category)) return
-        draft = Object.assign({},draft,{category})
+        if (draft?.previousPath && ["work","personal"].includes(category)) draft = Object.assign({},draft,{category})
     }
     function setIncluded(projectPath, path, included) {
         if (!draft) return
@@ -159,8 +157,8 @@ Singleton {
             : Object.assign({},project,{workspaces:project.workspaces.map(workspace => workspace.path !== path ? workspace : Object.assign({},workspace,{included}))}))})
     }
     function cancelDraft() {
-        if (busy && operation === ProjectService.Operation.Add) operation = ProjectService.Operation.Discard
-        draft = null; editingProject = ""; editingSource = ""; error = ""
+        if (busy && [ProjectService.Operation.Add,ProjectService.Operation.Edit].includes(operation)) operation = ProjectService.Operation.Discard
+        draft = null; error = ""
     }
     function reviewRefresh(results) {
         const discoveries = []
@@ -188,6 +186,16 @@ Singleton {
     }
     function saveDraft() {
         if (!draft || busy) return false
+        if (draft.previousPath) {
+            const path = draft.path.trim().replace(/^~(?=\/|$)/,Quickshell.env("HOME")).replace(/\/+$/,"") || "/"
+            if (!path.startsWith("/")) { error = "Choose an absolute folder path"; return false }
+            if (sources.some(source => source.path === path && source.path !== draft.previousPath)) { error = "That source is already configured"; return false }
+            if (path !== (draft.scannedPath || draft.previousPath) || draft.kind !== (draft.scannedKind || draft.originalKind)) {
+                startScan([{path,kind:draft.kind,category:draft.category}],ProjectService.Operation.Edit)
+                return false
+            }
+            draft = Object.assign({},draft,{path})
+        }
         let results
         if (draft.review) {
             results = draft.results.map(source => Object.assign({},source,{projects:source.projects.map(project => {
@@ -198,8 +206,9 @@ Singleton {
                 })})
             })}))
         }
-        const adding = !editingProject && !editingSource && !draft.review
-        const saved = editingProject || editingSource ? ProjectRepository.saveEdit(draft.projects,editingSource,draft.category)
+        const adding = !draft.review && !draft.previousPath && !draft.workspaceEdit
+        const saved = draft.workspaceEdit ? ProjectRepository.saveWorkspaces(draft.projects)
+            : draft.previousPath ? ProjectRepository.apply([draft],draft.path !== draft.previousPath,draft.path !== draft.previousPath ? draft.previousPath : "")
             : draft.review ? ProjectRepository.apply(results) : ProjectRepository.apply([draft],true)
         if (!saved) { error = ProjectRepository.error; return false }
         const refreshErrors = results?.filter(source => source.error).map(source => source.path + ": " + source.error).join("\n") || ""
@@ -245,6 +254,32 @@ Singleton {
                         root.sourceAdded()
                     } else {
                         root.draft = Object.assign({},source,{projects:source.projects.map(project => Object.assign({},project,{workspaces:project.workspaces.map(workspace => Object.assign({},workspace,{included:true}))}))})
+                    }
+                    break
+                  }
+                  case ProjectService.Operation.Edit: {
+                    if (!root.draft?.previousPath) break
+                    const source = results[0]
+                    if (source.error) throw new Error(source.error)
+                    if (root.sources.some(existing => existing.path === source.path && existing.path !== root.draft.previousPath))
+                        throw new Error("That source is already configured")
+                    const previousPath = root.draft.scannedPath || root.draft.previousPath
+                    const previousProjects = root.draft.projects
+                    const relative = (path,base) => path.slice(base === "/" ? 1 : base.length + 1)
+                    let discovered = false
+                    const updated = source.projects.map(project => {
+                        const old = previousProjects.find(item => relative(item.path,previousPath) === relative(project.path,source.path))
+                        return Object.assign({},project,{workspaces:project.workspaces.map(workspace => {
+                            const choice = old?.workspaces.find(item => relative(item.path,previousPath) === relative(workspace.path,source.path))
+                            if (!choice) discovered = true
+                            return Object.assign({},workspace,{included:choice ? choice.included : true})
+                        })})
+                    })
+                    root.draft = Object.assign({},root.draft,source,{scannedPath:source.path,scannedKind:source.kind,projects:updated})
+                    root.sourcePathResolved(source.path)
+                    if (!discovered) {
+                        const scannedDraft = root.draft
+                        Qt.callLater(() => { if (root.draft === scannedDraft) root.saveDraft() })
                     }
                     break
                   }

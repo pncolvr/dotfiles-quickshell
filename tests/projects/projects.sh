@@ -6,6 +6,9 @@ test_dir=$(mktemp -d /tmp/quickshell-projects.XXXXXXXX)
 trap 'rm -rf -- "$test_dir"' EXIT
 mkdir -p "$test_dir/config/data" "$test_dir/bin" "$test_dir/repos/banana/nested" "$test_dir/repos/banana/.config/Code" "$test_dir/repos/potato" "$test_dir/single folder" "$test_dir/home/.config/zsh/scripts/status"
 mkdir -m700 "$test_dir/runtime"
+mkdir -p "$test_dir/renamed folder" "$test_dir/other folder"
+printf '{}' > "$test_dir/other folder/New.code-workspace"
+printf '{}' > "$test_dir/renamed folder/Single.code-workspace"
 mkdir -p "$test_dir/no workspaces" "$test_dir/plain root/tomato" "$test_dir/empty root"
 mkdir -p "$test_dir/home/.ssh"
 printf 'Host github-personal\n    HostName github.com\n' > "$test_dir/home/.ssh/config"

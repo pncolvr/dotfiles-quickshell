@@ -30,12 +30,16 @@ Singleton {
     function prune(tx) {
         tx.executeSql("DELETE FROM project_workspaces WHERE project_path NOT IN (SELECT path FROM projects)")
     }
-    function apply(results, adding = false) {
+    function apply(results, adding = false, previousPath = "") {
         if (!DbService.write(tx => {
+            if (previousPath) {
+                tx.executeSql("DELETE FROM projects WHERE source_path = ?", [previousPath])
+                tx.executeSql("DELETE FROM project_sources WHERE path = ?", [previousPath])
+            }
             for (const source of results) {
                 if (adding && source.error) throw new Error(source.error)
                 if (adding) tx.executeSql("INSERT INTO project_sources (path,kind,category) VALUES (?,?,?)", [source.path,source.kind,source.category])
-                tx.executeSql("UPDATE project_sources SET error = COALESCE(?, ''), refreshed_at = ? WHERE path = ?", [source.error || "",Date.now(),source.path])
+                tx.executeSql("UPDATE project_sources SET kind = ?, category = ?, error = COALESCE(?, ''), refreshed_at = ? WHERE path = ?", [source.kind,source.category,source.error || "",Date.now(),source.path])
                 if (source.error) continue
                 tx.executeSql("DELETE FROM projects WHERE source_path = ?", [source.path])
                 for (const project of source.projects) {
@@ -57,13 +61,11 @@ Singleton {
         })) { error = DbService.error; return false }
         return reload()
     }
-    function saveEdit(projects, sourcePath, category) {
-        if (sourcePath && !['work','personal'].includes(category)) return false
+    function saveWorkspaces(projects) {
         if (!DbService.write(tx => {
-            if (sourcePath) tx.executeSql("UPDATE project_sources SET category = ? WHERE path = ?", [category,sourcePath])
-            for (const project of projects) {
-                for (const workspace of project.workspaces) tx.executeSql("UPDATE project_workspaces SET included = ? WHERE project_path = ? AND path = ?", [workspace.included ? 1 : 0,project.path,workspace.path])
-            }
+            for (const project of projects)
+                for (const workspace of project.workspaces)
+                    tx.executeSql("UPDATE project_workspaces SET included = ? WHERE project_path = ? AND path = ?", [workspace.included ? 1 : 0,project.path,workspace.path])
         })) { error = DbService.error; return false }
         return reload()
     }

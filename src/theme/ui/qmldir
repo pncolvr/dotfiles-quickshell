@@ -11,6 +11,9 @@ EditorActions 1.0 components/EditorActions.qml
 InputField 1.0 components/InputField.qml
 FolderPathField 1.0 components/FolderPathField.qml
 ManagementRow 1.0 components/ManagementRow.qml
+ManagementActions 1.0 components/ManagementActions.qml
+FolderCategoryButton 1.0 components/FolderCategoryButton.qml
+FolderForm 1.0 components/FolderForm.qml
 ShortcutHints 1.0 components/ShortcutHints.qml
 SearchField 1.0 components/SearchField.qml
 ScrollBar 1.0 components/ScrollBar.qml

@@ -41,7 +41,7 @@ Scope {
             if (root.phase === "restart") {
                 if (root.step === 0) {
                     root.check(ProjectRepository.projects.length === 3 && root.banana().workspaces.length === 2
-                        && root.banana().workspaces.find(workspace => workspace.name === "Tomato").included, "sources and choices persist without automatic discovery")
+                        && !root.banana().workspaces.find(workspace => workspace.name === "Tomato").included, "sources and choices persist without automatic discovery")
                     root.check(ProjectService.sources.length === 2, "source records persist")
                     PickerService.projects()
                     root.check(!ProjectService.managing && PickerService.currentIndex === 0, "opening always starts at picker first row")
@@ -75,7 +75,7 @@ Scope {
                         root.check(ProjectRepository.projects.length === 4 && root.banana().workspaces.length === 4, "approved refresh saves discovered projects and workspaces")
                         root.check(root.banana().workspaces.find(workspace=>workspace.name === "New").included
                             && !root.banana().workspaces.find(workspace=>workspace.name === "Optional").included
-                            && root.banana().workspaces.find(workspace=>workspace.name === "Tomato").included, "approved choices and previous inclusions persist")
+                            && !root.banana().workspaces.find(workspace=>workspace.name === "Tomato").included, "approved choices and previous inclusions persist")
                         ProjectService.refresh()
                         root.step=3
                     }
@@ -169,9 +169,7 @@ Scope {
                 root.check(!!root.find("managedProject_" + project.path)
                     && !root.find("managedProject_" + root.directory + "/repos/potato"), "management search filters subfolders")
                 root.find("projectManageSearch").clear()
-                root.find("editProject_" + project.path).clicked()
-                root.check(ProjectService.draft.projects[0].workspaces.length === 2, "edit includes previously excluded choices")
-                root.find("cancelProjectDraft").clicked()
+                root.check(!!root.find("editProject_" + project.path) && !!root.find("editSource_" + root.directory + "/repos"), "project management provides source and workspace editing")
                 root.find("projectTabs").itemAt(0).clicked()
                 PickerService.currentIndex=0
                 PickerService.accept(false,false)
@@ -192,37 +190,90 @@ Scope {
                 ProjectService.saveDraft()
                 root.check(ProjectService.sources.length === 2 && ProjectRepository.projects.length === 3, "single non-Git folder saved")
                 const singleGroup = root.find("projectSource_" + root.directory + "/single folder")
-                root.check(!!root.find("editSource_" + root.directory + "/single folder",singleGroup)
-                    && !root.find("managedProject_" + root.directory + "/single folder"), "single folder has edit beside its path without a duplicate project row")
+                root.check(!!singleGroup && !!root.find("editSource_" + root.directory + "/single folder",singleGroup)
+                    && !root.find("managedProject_" + root.directory + "/single folder"), "single folder has edit without a duplicate project row")
                 root.find("projectManageSearch").text="single folder"
                 root.check(!root.find("projectSource_" + root.directory + "/repos")
                     && !!root.find("projectSource_" + root.directory + "/single folder"), "management search filters added paths")
                 root.find("projectManageSearch").clear()
-                root.find("editSource_" + root.directory + "/single folder").clicked()
-                root.check(ProjectService.editingSource === root.directory + "/single folder"
-                    && root.find("editSourceCategory").label === "Work", "source category is available inside edit")
-                root.find("cancelProjectDraft").clicked()
                 ProjectService.refresh()
                 root.step=3
             } else if (root.step === 3) {
                 root.check(!root.banana().workspaces.find(workspace=>workspace.name === "Tomato").included, "refresh preserves deselection")
+                root.find("editSource_" + root.directory + "/single folder").clicked()
+                root.check(root.find("projectManageSearch").visible && !!root.find("projectSource_" + root.directory + "/repos"), "bottom editor keeps source list and search visible")
+                root.find("editProjectSourcePath").text = root.directory + "/repos"
+                root.find("saveProjectDraft").clicked()
+                root.check(!!ProjectService.error && ProjectService.sources.length === 2, "duplicate edit is rejected without changing sources")
+                root.find("editProjectSourcePath").text = root.directory + "/missing folder"
+                root.find("saveProjectDraft").clicked()
+                root.step=30
+                return
+            } else if (root.step === 30) {
+                root.check(!!ProjectService.error && ProjectService.sources.some(source => source.path === root.directory + "/single folder"), "failed replacement scan keeps original source")
+                root.find("editProjectSourcePath").text = root.directory + "/renamed folder"
+                root.find("saveProjectDraft").clicked()
+                root.step=31
+                return
+            } else if (root.step === 31) {
+                root.check(!ProjectService.draft && ProjectService.sources.some(source => source.path === root.directory + "/renamed folder")
+                    && !ProjectService.sources.some(source => source.path === root.directory + "/single folder"), "path edit replaces source after successful scan")
+                root.check(ProjectRepository.projects.find(project => project.path === root.directory + "/renamed folder").workspaces[0].included, "moved workspace retains inclusion by relative path")
+                root.find("editSource_" + root.directory + "/renamed folder").clicked()
+                root.find("editProjectSourcePath").text = root.directory + "/single folder"
+                root.find("saveProjectDraft").clicked()
+                root.step=32
+                return
+            } else if (root.step === 32) {
+                root.check(!ProjectService.draft && ProjectService.sources.length === 2, "restoring path leaves one source record")
+                root.find("editSource_" + root.directory + "/single folder").clicked()
+                root.check(root.find("projectSourceKind").label === "Single folder", "edit reuses add form and exposes source kind")
+                root.find("projectSourceKind").clicked()
+                root.find("saveProjectDraft").clicked()
+                root.step=34
+                return
+            } else if (root.step === 34) {
+                root.check(!ProjectService.draft && ProjectService.sources.find(source => source.path === root.directory + "/single folder").kind === "root"
+                    && ProjectRepository.projects.length === 2, "switching folder type rescans and saves source kind")
+                root.find("editSource_" + root.directory + "/single folder").clicked()
+                root.find("projectSourceKind").clicked()
+                root.find("saveProjectDraft").clicked()
+                root.step=35
+                return
+            } else if (root.step === 35) {
+                root.check(!!ProjectService.draft && ProjectService.draft.projects[0].workspaces.length === 1, "switching back asks about rediscovered workspaces")
+                root.find("saveProjectDraft").clicked()
+                root.check(ProjectService.sources.find(source => source.path === root.directory + "/single folder").kind === "folder"
+                    && ProjectRepository.projects.length === 3, "same form saves folder type and workspace choices")
                 root.find("editSource_" + root.directory + "/repos").clicked()
                 root.find("editSourceCategory").clicked()
-                root.check(ProjectService.sources.find(source=>source.kind === "root").category === "personal", "editing category does not save immediately")
                 root.find("cancelProjectDraft").clicked()
-                root.check(ProjectService.sources.find(source=>source.kind === "root").category === "personal", "cancel discards category changes")
+                root.check(ProjectService.sources.find(source => source.kind === "root").category === "personal", "cancel discards edit category")
                 root.find("editSource_" + root.directory + "/repos").clicked()
                 root.find("editSourceCategory").clicked()
                 root.find("saveProjectDraft").clicked()
-                root.check(ProjectRepository.projects.filter(project=>project.sourcePaths.includes(root.directory + "/repos")).every(project=>project.category === "work"), "saving root category updates all its projects")
+                root.check(root.banana().category === "work", "source edit updates category")
                 root.find("editSource_" + root.directory + "/repos").clicked()
                 root.find("editSourceCategory").clicked()
                 root.find("saveProjectDraft").clicked()
+                root.find("editProject_" + root.banana().path).clicked()
+                const workspace = ProjectService.draft.projects[0].workspaces.find(item => item.name === "Tomato")
+                root.find("projectWorkspace_" + workspace.path).clicked()
+                root.find("saveProjectDraft").clicked()
+                root.check(root.banana().workspaces.find(item => item.name === "Tomato").included, "workspace edit restores excluded option")
                 ProjectService.editProject(root.banana().path)
-                const workspace=ProjectService.draft.projects[0].workspaces.find(workspace=>workspace.name === "Tomato")
-                ProjectService.setIncluded(root.banana().path,workspace.path,true)
+                ProjectService.setIncluded(root.banana().path,workspace.path,false)
                 ProjectService.saveDraft()
-                root.check(root.banana().workspaces.every(workspace=>workspace.included), "edit can restore previously excluded workspace")
+                root.find("editSource_" + root.directory + "/single folder").clicked()
+                root.find("editProjectSourcePath").text = root.directory + "/other folder"
+                root.find("saveProjectDraft").clicked()
+                root.step=33
+                return
+            } else if (root.step === 33) {
+                root.check(!!ProjectService.draft && ProjectService.draft.projects[0].workspaces[0].included, "changed path asks about newly discovered workspace before replacing source")
+                root.check(ProjectService.sources.some(source => source.path === root.directory + "/single folder"), "workspace review retains original source")
+                root.find("cancelProjectDraft").clicked()
+                root.check(!ProjectService.draft && !ProjectService.sources.some(source => source.path === root.directory + "/other folder"), "cancel path edit leaves original source unchanged")
                 // Failed source scan should keep the current project/workspace snapshot.
                 ProjectRepository.apply([{path:root.directory + "/repos",kind:"root",category:"personal",error:"Unavailable",projects:[]}])
                 root.check(ProjectRepository.projects.length === 3 && root.banana().workspaces.length === 2, "failed scan keeps previous data")
@@ -237,16 +288,13 @@ Scope {
                 root.check(!ProjectService.managing, "default always picker even after management")
                 ProjectService.setManaging(true)
                 root.find("beginAddProjectSource").clicked()
-                root.find("projectSourceKind").clicked()
+                if (root.find("projectSourceKind").label !== "Single folder") root.find("projectSourceKind").clicked()
                 root.find("projectSourcePath").text = root.directory + "/no workspaces"
                 root.find("addProjectSource").clicked()
                 root.step=5
             } else if (root.step === 5) {
                 root.check(!ProjectService.draft && ProjectService.sources.length === 3 && ProjectRepository.projects.length === 4, "folder without workspaces saves without a checklist")
                 root.check(!root.find("projectAddForm").visible && root.find("projectSourcePath").text === "", "automatic save closes and clears the add form")
-                root.find("editSource_" + root.directory + "/no workspaces").clicked()
-                root.check(root.find("editSourceCategory").visible && ProjectService.draft.projects[0].workspaces.length === 0, "folder without workspaces can still edit its category")
-                root.find("cancelProjectDraft").clicked()
                 ProjectService.removeSource(root.directory + "/no workspaces")
                 ProjectService.addSource(root.directory + "/plain root","root","personal")
                 root.step=6
