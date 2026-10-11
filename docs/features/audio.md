@@ -17,6 +17,9 @@ the bar, panel padding and shadow. The other audio tabs keep their existing heig
 limit. Switching tabs preserves the Media list's scroll position.
 Artwork uses the shared `UI.ScaledImage` filtering and mipmaps.
 Missing or failed artwork falls back to the app icon or a music glyph.
+Available artwork also fills the card background with a heavily blurred, darkened
+image, clipped to its rounded corners. Missing or failed artwork keeps the usual
+solid background. Theme.qml controls the blur radius, tint and opacity.
 Artwork sits beside the title, artist and player state. A mute button,
 short horizontal volume slider and percentage sit below the metadata. Transport
 buttons, elapsed time, timeline and duration share a row below that information.

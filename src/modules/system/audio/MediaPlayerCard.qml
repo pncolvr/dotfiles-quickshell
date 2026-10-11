@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Effects
 import Quickshell
 import Quickshell.Services.Mpris
 import "../../../theme"
@@ -41,6 +42,46 @@ Rectangle {
     radius: Theme.audioDeviceRadius
     border.width: 1
     border.color: Theme.empty
+    Item {
+        anchors.fill: parent
+        anchors.margins: root.border.width
+        visible: backgroundArtwork.status === Image.Ready
+        UI.ScaledImage {
+            id: backgroundArtwork
+            anchors.fill: parent
+            source: artwork.source
+            fillMode: Image.PreserveAspectCrop
+            asynchronous: true
+            sourceSize: Qt.size(width * Screen.devicePixelRatio, height * Screen.devicePixelRatio)
+            visible: false
+        }
+        Rectangle {
+            id: backgroundMask
+            anchors.fill: parent
+            radius: Math.max(0, root.radius - root.border.width)
+            color: "white"
+            visible: false
+        }
+        UI.ScaledTexture {
+            id: backgroundMaskTexture
+            sourceItem: backgroundMask
+            hideSource: true
+            visible: false
+        }
+        MultiEffect {
+            anchors.fill: parent
+            source: backgroundArtwork
+            autoPaddingEnabled: false
+            blurEnabled: true
+            blurMax: Theme.mediaArtworkBlurRadius
+            blur: 1
+            colorization: Theme.mediaArtworkBackgroundTint
+            colorizationColor: Theme.alternateBackground
+            opacity: Theme.mediaArtworkBackgroundOpacity
+            maskEnabled: true
+            maskSource: backgroundMaskTexture
+        }
+    }
     MediaPosition {
         id: playbackPosition
         objectName: "mediaPositionTracker"
@@ -100,7 +141,7 @@ Rectangle {
                     spacing: Theme.audioSpacing
                     UI.ColumnText {
                         objectName: "mediaTitle"
-                        color: Theme.inactive
+                        color: Theme.text
                         width: parent.width
                         horizontalAlignment: Text.AlignHCenter
                         text: root.player?.trackTitle || root.player?.identity || "Media player"
@@ -115,7 +156,7 @@ Rectangle {
                         horizontalAlignment: Text.AlignHCenter
                         text: root.player?.trackArtist || ""
                         textFormat: Text.PlainText
-                        color: Theme.inactive
+                        color: Theme.text
                         visible: !!text
                         elide: Text.ElideRight
                     }
@@ -125,7 +166,7 @@ Rectangle {
                         horizontalAlignment: Text.AlignHCenter
                         text: (root.player?.identity || "Media player") + " · " + (root.player?.isPlaying ? "Playing" : root.player?.playbackState === MprisPlaybackState.Paused ? "Paused" : "Stopped")
                         textFormat: Text.PlainText
-                        color: Theme.inactive
+                        color: Theme.text
                         elide: Text.ElideRight
                     }
                 }
@@ -168,7 +209,7 @@ Rectangle {
                         Layout.preferredWidth: root.readoutWidth
                         horizontalAlignment: Text.AlignRight
                         text: root.canVolume ? Math.round(root.volume * 100) + "%" : "Unavailable"
-                        color: root.canVolume ? Theme.text : Theme.inactive
+                        color: Theme.text
                     }
                 }
             }
@@ -220,7 +261,7 @@ Rectangle {
                 objectName: "mediaElapsed"
                 visible: root.hasPosition && root.hasDuration
                 text: root.hasDuration ? root.timeText(timeline.pressed ? timeline.value : root.position) : "--:--"
-                color: Theme.inactive
+                color: Theme.text
                 Layout.alignment: Qt.AlignVCenter
             }
             AudioVolumeSlider {
@@ -244,7 +285,7 @@ Rectangle {
                 objectName: "mediaDuration"
                 visible: root.hasPosition && root.hasDuration
                 text: root.hasDuration ? root.timeText(root.player.length) : "--:--"
-                color: Theme.inactive
+                color: Theme.text
                 Layout.alignment: Qt.AlignVCenter
             }
 

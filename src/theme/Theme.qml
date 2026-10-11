@@ -85,6 +85,9 @@ Item {
   readonly property string mediaStopIcon: "" // stop
   readonly property string mediaIcon: "" // music
   readonly property int mediaFallbackIconSize: 32
+  readonly property int mediaArtworkBlurRadius: 64
+  readonly property real mediaArtworkBackgroundTint: 0.5
+  readonly property real mediaArtworkBackgroundOpacity: 0.65
   readonly property string pauseIcon: "\uf04c" // pause
 
   // Countdowns and elapsed timers (Font Awesome stopwatch).
