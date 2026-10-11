@@ -8,6 +8,7 @@
 
 ## Feature guides
 
+- [Clock, calendar and holidays](features/calendar.md): municipal holidays, previous-day clock-change warnings and calendar event links.
 - [Launcher and clipboard](features/launcher.md): reusable Bash pickers, applications, windows and clipboard history.
 - [Notifications](features/notifications.md): history, emitters, DND, popups and actions.
 - [Twitch](features/twitch.md): following, search, browser suggestions and removal undo.

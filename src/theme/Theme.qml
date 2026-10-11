@@ -132,6 +132,25 @@ Item {
   readonly property int calendarSpacing: 2
 
   readonly property color calendarTodayBackground: accent
+  readonly property color calendarClockChangeEveBackground: warning
+  readonly property color calendarHolidayBackground: active
+
+  function calendarBackground(style) {
+    switch (style) {
+      case CalendarService.DayStyle.Today: return calendarTodayBackground
+      case CalendarService.DayStyle.ClockChangeEve: return calendarClockChangeEveBackground
+      case CalendarService.DayStyle.Holiday: return calendarHolidayBackground
+      default: return "transparent"
+    }
+  }
+
+  function calendarForeground(style, weekend) {
+    switch (style) {
+      case CalendarService.DayStyle.Invalid: return "transparent"
+      case CalendarService.DayStyle.Today: return calendarTodayText
+      default: return weekend ? calendarWeekendText : calendarDayText
+    }
+  }
   readonly property color calendarTodayText: text
   readonly property color calendarDayText: text
   readonly property color calendarHeaderText: inactive

@@ -132,24 +132,18 @@ Item {
                             root.displayMonth === _internal.todayMonth &&
                             root.displayYear === _internal.todayYear
                         property bool valid: dayNum >= 1 && dayNum <= root.daysInMonth(root.displayMonth, root.displayYear)
-                        property var holidayName: valid
-                            ? CalendarService.holidayFor(new Date(root.displayYear, root.displayMonth, dayNum))
-                            : null
+                        property date date: new Date(root.displayYear, root.displayMonth, dayNum)
+                        property int style: CalendarService.dayStyle(date, valid, isToday)
 
                         width: Theme.calendarCellWidth
                         height: Theme.calendarCellHeight
                         radius: Theme.calendarCellRadius
-                        color: 
-                            isToday ? Theme.calendarTodayBackground
-                            : holidayName ? Theme.active : "transparent"
+                        color: Theme.calendarBackground(style)
 
                         UI.ColumnText {
                             anchors.centerIn: parent
                             text: day.valid ? day.dayNum : ""
-                            color: day.isToday ? Theme.calendarTodayText
-                                : !day.valid ? "transparent"
-                                : day.index >= 5 ? Theme.calendarWeekendText
-                                : Theme.calendarDayText
+                            color: Theme.calendarForeground(day.style, day.index >= 5)
                             horizontalAlignment: Text.AlignHCenter
                             verticalAlignment: Text.AlignVCenter
 
@@ -158,9 +152,9 @@ Item {
                         UI.HoverTooltip {
                             enabled: day.valid
                             cursorShape: Qt.PointingHandCursor
-                            text: day.holidayName || CalendarService.dateUrl(new Date(root.displayYear, root.displayMonth, day.dayNum))
+                            text: day.valid ? CalendarService.dayTooltip(day.date) : ""
                             delay: Theme.calendarDayTooltipDelay
-                            onClicked: CalendarService.openDate(new Date(root.displayYear, root.displayMonth, day.dayNum))
+                            onClicked: CalendarService.openDate(day.date)
                         }
                     }
                 }

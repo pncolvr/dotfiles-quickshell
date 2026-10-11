@@ -2,9 +2,93 @@ pragma Singleton
 
 import QtQml
 import Quickshell
+import "../"
 import "../../config"
+import "../../theme"
 
 Singleton {
+    id: root
+
+    enum DayStyle { Invalid, Regular, Weekend, Holiday, ClockChangeEve, Today }
+    enum Direction { Forward, Backward }
+
+    property var _transitions: ({})
+    readonly property string currentDateKey: Qt.formatDateTime(new Date(TimeService.time), "yyyy-MM-dd")
+    readonly property string clockChangeNotice: warningFor(new Date(currentDateKey + "T12:00:00"))
+
+    Connections {
+        target: Config
+        function onCalendarMunicipalHolidaysChanged() { root._holidaysByYear = ({}) }
+    }
+
+    function transitionsFor(year) {
+        if (_transitions[year]) return _transitions[year];
+        let events = [];
+        if (Number.isInteger(year) && year >= 2002) {
+            events = [_clockChange(year, 2), _clockChange(year, 9)];
+        }
+        _transitions[year] = events;
+        return events;
+    }
+
+    function _clockChange(year, month) {
+        const day = 31 - new Date(Date.UTC(year, month, 31)).getUTCDay();
+        const instant = Date.UTC(year, month, day, 1);
+        const spring = month === 2;
+        const before = spring ? 0 : 3600;
+        const after = spring ? 3600 : 0;
+        const civil = offset => new Date(instant + offset * 1000).toISOString().slice(0, 19);
+        const date = civil(before).slice(0, 10);
+        const eve = new Date(Date.UTC(year, month, day - 1)).toISOString().slice(0, 10);
+        return {date: date, eve: eve, old: civil(before), new: civil(after),
+            instant: instant, before: before, after: after};
+    }
+
+    function transitionFor(date, eve = false) {
+        const key = _key(date);
+        return transitionsFor(date.getFullYear()).find(event => (eve ? event.eve : event.date) === key) || null;
+    }
+
+    function direction(event) {
+        return event.after > event.before ? CalendarService.Direction.Forward : CalendarService.Direction.Backward;
+    }
+
+    function transitionText(event, tomorrow = false) {
+        const forward = direction(event) === CalendarService.Direction.Forward;
+        return "Clocks go " + (forward ? "forward" : "back") + (tomorrow ? " tomorrow" : "")
+            + ": " + event.old.slice(11).replace(/:00$/, "") + " → " + event.new.slice(11).replace(/:00$/, "");
+    }
+
+    function tooltipText(text) {
+        return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+            .replace(/→/g, '<font face="' + Theme.fontFamilyIcons + '">' + Theme.rightIcon + '</font>')
+            .replace(/\n/g, "<br>");
+    }
+
+    function warningFor(date) {
+        const event = transitionFor(date, true);
+        return event ? tooltipText(transitionText(event, true)) : "";
+    }
+
+    function dayTooltip(date) {
+        const parts = [];
+        const holiday = holidayFor(date);
+        if (holiday) parts.push(holiday);
+        const eve = transitionFor(date, true);
+        const transition = transitionFor(date);
+        if (eve) parts.push(transitionText(eve, _key(date) === currentDateKey));
+        if (transition) parts.push(transitionText(transition));
+        return tooltipText(parts.join("\n") || dateUrl(date));
+    }
+
+    function dayStyle(date, valid, today) {
+        if (!valid) return CalendarService.DayStyle.Invalid;
+        if (transitionFor(date, true)) return CalendarService.DayStyle.ClockChangeEve;
+        if (today) return CalendarService.DayStyle.Today;
+        if (holidayFor(date)) return CalendarService.DayStyle.Holiday;
+        if (date.getDay() === 0 || date.getDay() === 6) return CalendarService.DayStyle.Weekend;
+        return CalendarService.DayStyle.Regular;
+    }
 
     property var _holidaysByYear: ({})
 
@@ -16,7 +100,22 @@ Singleton {
     }
 
     function openDate(date) {
-        Qt.openUrlExternally(dateUrl(date));
+        Qt.openUrlExternally(eventUrlFor(date) || dateUrl(date));
+    }
+
+    function eventUrlFor(date) {
+        const event = transitionFor(date, true) || transitionFor(date);
+        if (!event) return "";
+        const parts = event.eve.split("-").map(Number);
+        const start = Date.UTC(parts[0], parts[1] - 1, parts[2], Config.calendarClockChangeEventHour,
+            Config.calendarClockChangeEventMinute) - event.before * 1000;
+        const end = start + Config.calendarClockChangeEventDurationMinutes * 60000;
+        const stamp = value => new Date(value).toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+        const title = "Clocks go " + (direction(event) === CalendarService.Direction.Forward ? "forward" : "back") + " tonight";
+        return Config.calendarEventUrl + "&text=" + encodeURIComponent(title)
+            + "&dates=" + encodeURIComponent(stamp(start) + "/" + stamp(end))
+            + "&ctz=Europe%2FLisbon"
+            + "&details=" + encodeURIComponent(transitionText(event) + "\n" + event.date);
     }
 
     function formatDate(date, referenceTime) {
@@ -120,6 +219,11 @@ Singleton {
             map[key] = names.join("\n");
         }
         _holidaysByYear[year] = map;
+    }
+
+    function hasHolidays(year, month = -1) {
+        computeHolidaysForYear(year);
+        return Object.keys(_holidaysByYear[year]).some(key => month < 0 || Number(key.slice(5, 7)) === month + 1);
     }
 
     function holidayFor(date) {

@@ -52,6 +52,10 @@ Item {
     readonly property string submapParserCommand: _internal.home +  "/.config/hypr/scripts/keybinds/parser.sh"
 
     readonly property string calendarUrl: "https://calendar.google.com/calendar/r/day" 
+    readonly property string calendarEventUrl: "https://calendar.google.com/calendar/render?action=TEMPLATE"
+    readonly property int calendarClockChangeEventHour: 18
+    readonly property int calendarClockChangeEventMinute: 0
+    readonly property int calendarClockChangeEventDurationMinutes: 15
     // Month numbers are 1–12; an empty list disables municipal holidays.
     readonly property var calendarMunicipalHolidays: [
         {month: 5, day: 22, name: "Dia de Leiria"}
