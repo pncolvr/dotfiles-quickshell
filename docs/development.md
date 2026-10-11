@@ -44,7 +44,11 @@ their centers remain evenly spaced and state changes do not resize controls.
 
 Static images use `UI.ScaledImage` for smooth filtering and mipmaps, with aspect
 fit by default. Keep source sizing, cropping and asynchronous loading at the
-call site when needed. Screencopy textures retain their separate layer handling.
+call site when needed. Live captures use `UI.ScaledScreencopyView`, which generates
+smooth mipmaps through a source-resolution layer even during parent transforms.
+Generated image masks use `UI.ScaledTexture`. All three components read smooth
+filtering and mipmap settings from the shared `UI.TextureSettings` singleton. Use these shared
+components for new images and captures rather than duplicating their settings.
 
 Scrollable modules use `UI.ScrollBar` from `src/theme/ui/components/ScrollBar.qml`.
 It overlays the content with an accent-colored thumb during scrolling or hover,

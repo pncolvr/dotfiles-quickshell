@@ -103,7 +103,7 @@ Item {
             ready = true
         }
     }
-    ShaderEffectSource {
+    UI.ScaledTexture {
         id: maskTexture
         sourceItem: paddingMask
         hideSource: true

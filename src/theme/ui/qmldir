@@ -5,6 +5,9 @@ WrapperMouseArea 1.0 components/WrapperMouseArea.qml
 Row 1.0 components/Row.qml
 Icon 1.0 components/Icon.qml
 ScaledImage 1.0 components/ScaledImage.qml
+singleton TextureSettings 1.0 components/TextureSettings.qml
+ScaledTexture 1.0 components/ScaledTexture.qml
+ScaledScreencopyView 1.0 components/ScaledScreencopyView.qml
 IconButton 1.0 components/IconButton.qml
 HoverTooltip 1.0 components/HoverTooltip.qml
 ActionButton 1.0 components/ActionButton.qml

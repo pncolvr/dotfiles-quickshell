@@ -76,7 +76,7 @@ PanelWindow {
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: requested ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
     // Initialize native capture buffers before the lazy grid attaches to the scene.
-    ScreencopyView { visible: false; captureSource: null }
+    UI.ScaledScreencopyView { visible: false; captureSource: null }
     function imageUrl(path) { return path ? "file://" + path.split("/").map(part => encodeURIComponent(part)).join("/") : "" }
     function applyWallpapers(text) {
         try {

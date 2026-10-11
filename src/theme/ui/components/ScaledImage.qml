@@ -1,7 +1,7 @@
 import QtQuick
 
 Image {
-    smooth: true
-    mipmap: true
+    smooth: TextureSettings.smooth
+    mipmap: TextureSettings.mipmap
     fillMode: Image.PreserveAspectFit
 }

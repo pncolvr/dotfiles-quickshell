@@ -108,8 +108,8 @@ stable while the pointer remains in the grid. Moving toward the workspace strip
 animates the remaining windows into the space the dragged window leaves; returning
 to the grid animates room for it again. Accepted drops keep that layout while the
 compositor confirms the move. Rejected or unconfirmed moves restore the original
-slot. Dragged cards animate shrinking around the grab point so the destination stays
-visible. A tile highlights while it is the drop target. Empty workspaces can
+slot. Dragged cards hide their outline and animate shrinking around the grab point
+so the destination stays visible. A tile highlights while it is the drop target. Empty workspaces can
 receive windows without opening them first.
 
 Switching workspaces slides the new windows in from the selected workspace's
@@ -128,8 +128,10 @@ fades back to the empty placeholder.
 
 Native `ScreencopyView` captures window thumbnails while the overview is open.
 Captures update as applications produce frames and preserve the captured image's
-aspect ratio through resizes. Strongly downscaled previews use a source-resolution
-Qt Quick layer with smooth mipmap filtering to reduce aliasing in miniatures.
+aspect ratio through resizes. Window cards and workspace miniatures share
+`WindowPreview` and `UI.ScaledScreencopyView`, using a source-resolution Qt Quick layer with smooth mipmap
+filtering. The layer stays enabled during parent scaling, including drag zooms,
+so dragging retains the same image filtering as the workspace previews.
 The animation respects the monitor's reserved margins, including the bar, and
 fits previews without cropping their content.
 Open and close animations target the fitted usable desktop inside the workspace miniature,

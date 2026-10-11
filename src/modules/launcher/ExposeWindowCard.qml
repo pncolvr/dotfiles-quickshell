@@ -59,8 +59,8 @@ Item {
         height: root.dragging ? root.dragHeight : root.height
         radius: 0
         color: Theme.alternateBackground
-        border.width: root.current || hover.hovered || root.dragging ? 2 : 1
-        border.color: root.current || root.dragging ? Theme.accent : Theme.empty
+        border.width: root.dragging ? 0 : root.current || hover.hovered ? 2 : 1
+        border.color: root.current ? Theme.accent : Theme.empty
         Drag.active: root.dragging
         Drag.source: root
         Drag.keys: ["quickshell-window"]
