@@ -86,41 +86,52 @@ Rectangle {
                 }
             }
 
-            Column {
+            Item {
+                id: information
+                readonly property real detailsTop: (height - details.implicitHeight - Theme.audioSpacing - volumeRow.implicitHeight) / 2
                 Layout.fillWidth: true
-                spacing: Theme.audioSpacing
-                UI.ColumnText {
-                    objectName: "mediaTitle"
-                    color: Theme.inactive
+                Layout.preferredHeight: Math.max(root.artworkSize, details.implicitHeight + Theme.audioSpacing + volumeRow.implicitHeight)
+                Column {
+                    id: details
                     width: parent.width
-                    horizontalAlignment: Text.AlignHCenter
-                    text: root.player?.trackTitle || root.player?.identity || "Media player"
-                    textFormat: Text.PlainText
-                    wrapMode: Text.Wrap
-                    maximumLineCount: 2
-                    elide: Text.ElideRight
-                }
-                UI.ColumnText {
-                    objectName: "mediaDetails"
-                    width: parent.width
-                    horizontalAlignment: Text.AlignHCenter
-                    text: root.player?.trackArtist || ""
-                    textFormat: Text.PlainText
-                    color: Theme.inactive
-                    visible: !!text
-                    elide: Text.ElideRight
-                }
-                UI.ColumnText {
-                    objectName: "mediaState"
-                    width: parent.width
-                    horizontalAlignment: Text.AlignHCenter
-                    text: (root.player?.identity || "Media player") + " · " + (root.player?.isPlaying ? "Playing" : root.player?.playbackState === MprisPlaybackState.Paused ? "Paused" : "Stopped")
-                    textFormat: Text.PlainText
-                    color: Theme.inactive
-                    elide: Text.ElideRight
+                    y: Math.max(0, information.detailsTop - Theme.audioSpacing)
+                    spacing: Theme.audioSpacing
+                    UI.ColumnText {
+                        objectName: "mediaTitle"
+                        color: Theme.inactive
+                        width: parent.width
+                        horizontalAlignment: Text.AlignHCenter
+                        text: root.player?.trackTitle || root.player?.identity || "Media player"
+                        textFormat: Text.PlainText
+                        wrapMode: Text.Wrap
+                        maximumLineCount: 2
+                        elide: Text.ElideRight
+                    }
+                    UI.ColumnText {
+                        objectName: "mediaDetails"
+                        width: parent.width
+                        horizontalAlignment: Text.AlignHCenter
+                        text: root.player?.trackArtist || ""
+                        textFormat: Text.PlainText
+                        color: Theme.inactive
+                        visible: !!text
+                        elide: Text.ElideRight
+                    }
+                    UI.ColumnText {
+                        objectName: "mediaState"
+                        width: parent.width
+                        horizontalAlignment: Text.AlignHCenter
+                        text: (root.player?.identity || "Media player") + " · " + (root.player?.isPlaying ? "Playing" : root.player?.playbackState === MprisPlaybackState.Paused ? "Paused" : "Stopped")
+                        textFormat: Text.PlainText
+                        color: Theme.inactive
+                        elide: Text.ElideRight
+                    }
                 }
                 RowLayout {
+                    id: volumeRow
                     width: parent.width
+                    y: Math.max(information.detailsTop + details.height + Theme.audioSpacing,
+                        (information.detailsTop + details.height + parent.height - height) / 2)
                     spacing: Theme.audioSpacing
                     AudioButton {
                         objectName: "mediaMute"
