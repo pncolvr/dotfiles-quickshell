@@ -200,12 +200,24 @@ Scope {
             root.check(CalendarService.dayStyle(eve, true, false) === CalendarService.DayStyle.ClockChangeEve
                 && CalendarService.dayTooltip(eve).includes("Banana"), "warning priority preserves holiday metadata")
             root.check(CalendarService.holidayFor(new Date(2026, 4, 22)) === "Dia de Leiria", "configured municipality")
-            root.check(CalendarService.dateUrl(before).endsWith("/2026/10/23"), "ordinary date link preserved")
+            const ordinaryLink = decodeURIComponent(CalendarService.eventUrlFor(before))
+            root.check(ordinaryLink.includes("dates=20261023/20261024")
+                && !ordinaryLink.includes("&text=") && !ordinaryLink.includes("&details="),
+                "ordinary date opens blank draft for clicked day")
+            root.check(decodeURIComponent(CalendarService.eventUrlFor(new Date(2026, 11, 31)))
+                .includes("dates=20261231/20270101"), "ordinary draft crosses year boundary")
+            root.check(decodeURIComponent(CalendarService.eventUrlFor(new Date(2028, 1, 29)))
+                .includes("dates=20280229/20280301"), "ordinary draft handles leap day")
+            const holidayLink = CalendarService.eventUrlFor(new Date(2026, 11, 25))
+            root.check(!holidayLink.includes("&text=") && !holidayLink.includes("&details="),
+                "holiday draft also has no preset title or description")
             const link = decodeURIComponent(CalendarService.eventUrlFor(change))
             root.check(link.includes("20261024T170000Z/20261024T171500Z")
-                && link.includes("ctz=Europe/Lisbon") && link.includes("2026-10-25"), "autumn draft on previous day uses its summer offset")
-            root.check(CalendarService.eventUrlFor(change) === CalendarService.eventUrlFor(eve)
-                && !CalendarService.eventUrlFor(before), "eve and transition share draft; ordinary dates keep day view")
+                && link.includes("ctz=Europe/Lisbon") && !link.includes("2026-10-25")
+                && link.includes("details=Clocks go back: 02:00 → 01:00"),
+                "autumn draft uses previous-day offset and omits transition date from description")
+            root.check(CalendarService.eventUrlFor(change) === CalendarService.eventUrlFor(eve),
+                "eve and transition share clock-change draft")
             root.check(decodeURIComponent(CalendarService.eventUrlFor(new Date(2027, 2, 28))).includes("20270327T180000Z/20270327T181500Z"), "future spring draft uses previous-day winter offset")
             const day = root.cells(month).find(cell => cell.dayNum === 24)
             root.check(day && day.color.toString() === Theme.warning.toString(), "rendered eve warning background")

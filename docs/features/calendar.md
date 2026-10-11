@@ -7,8 +7,10 @@ the monthly calendar; right-click switches between month and year views, and
 left-click toggles seconds. The seconds preference persists in SQLite. Scrolling
 changes the displayed month or year. The annual grid reuses twelve monthly views.
 
-Ordinary dates open their day view at `Config.calendarUrl`. A clock-change date
-or its preceding day opens a prefilled Google Calendar event editor instead.
+All dates open the Google Calendar event editor using `Config.calendarEventUrl`.
+Ordinary dates and holiday-only dates start a blank all-day draft on the clicked
+date, with no preset title or description. A clock-change date or its preceding
+day opens the clock-change draft described below.
 
 The implementation lives in:
 
@@ -110,8 +112,8 @@ reminder IPC endpoints or reminder database entries.
 
 Clicking either the clock-change date or its preceding date opens the same event
 draft on the **previous day**, initially 18:00–18:15 in Europe/Lisbon.
-The title describes the direction; the description contains the transition date,
-and old/new times. The event's timezone is supplied separately
+The title describes the direction; the description contains the direction and
+old/new times, without a transition date. The event's timezone is supplied separately
 in its link. Browsing past or future years
 uses that year's transition, rather than the current year's dates.
 
@@ -126,7 +128,10 @@ Configuration lives in `src/config/Config.qml`:
 The link encodes its title and details and supplies UTC start/end timestamps
 and Europe/Lisbon. For Lisbon's 25 October 2026 change, the event starts
 on 24 October at 18:00 local time (17:00 UTC), using the preceding day's offset.
-Ordinary dates and holiday-only dates retain their day-view links.
+Ordinary dates and holiday-only dates use the same template endpoint with an
+all-day date range (the clicked day through the exclusive following day), and
+no clock-change text. Their hover hint is “Create event” unless holiday names
+already provide the date's description.
 
 Opening the editor creates no saved event or local schedule. Review the event
 and its notification settings, then save it in Google Calendar. The template

@@ -51,7 +51,6 @@ Item {
 
     readonly property string submapParserCommand: _internal.home +  "/.config/hypr/scripts/keybinds/parser.sh"
 
-    readonly property string calendarUrl: "https://calendar.google.com/calendar/r/day" 
     readonly property string calendarEventUrl: "https://calendar.google.com/calendar/render?action=TEMPLATE"
     readonly property int calendarClockChangeEventHour: 18
     readonly property int calendarClockChangeEventMinute: 0

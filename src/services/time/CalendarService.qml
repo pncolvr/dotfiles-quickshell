@@ -78,7 +78,7 @@ Singleton {
         const transition = transitionFor(date);
         if (eve) parts.push(transitionText(eve, _key(date) === currentDateKey));
         if (transition) parts.push(transitionText(transition));
-        return tooltipText(parts.join("\n") || dateUrl(date));
+        return tooltipText(parts.join("\n") || "Create event");
     }
 
     function dayStyle(date, valid, today) {
@@ -92,20 +92,18 @@ Singleton {
 
     property var _holidaysByYear: ({})
 
-    function dateUrl(date) {
-        const y = date.getFullYear();
-        const m = date.getMonth() + 1;
-        const d = date.getDate();
-        return Config.calendarUrl + "/" + y + "/" + m + "/" + d;
-    }
-
     function openDate(date) {
-        Qt.openUrlExternally(eventUrlFor(date) || dateUrl(date));
+        Qt.openUrlExternally(eventUrlFor(date));
     }
 
     function eventUrlFor(date) {
         const event = transitionFor(date, true) || transitionFor(date);
-        if (!event) return "";
+        if (!event) {
+            const start = _key(date).replace(/-/g, "");
+            const end = _key(addDays(date, 1)).replace(/-/g, "");
+            return Config.calendarEventUrl + "&dates=" + encodeURIComponent(start + "/" + end)
+                + "&ctz=Europe%2FLisbon";
+        }
         const parts = event.eve.split("-").map(Number);
         const start = Date.UTC(parts[0], parts[1] - 1, parts[2], Config.calendarClockChangeEventHour,
             Config.calendarClockChangeEventMinute) - event.before * 1000;
@@ -115,7 +113,7 @@ Singleton {
         return Config.calendarEventUrl + "&text=" + encodeURIComponent(title)
             + "&dates=" + encodeURIComponent(stamp(start) + "/" + stamp(end))
             + "&ctz=Europe%2FLisbon"
-            + "&details=" + encodeURIComponent(transitionText(event) + "\n" + event.date);
+            + "&details=" + encodeURIComponent(transitionText(event));
     }
 
     function formatDate(date, referenceTime) {
