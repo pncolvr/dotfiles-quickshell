@@ -101,7 +101,7 @@ Rectangle {
             Rectangle {
                 Layout.preferredWidth: root.artworkSize
                 Layout.preferredHeight: root.artworkSize
-                color: Theme.background
+                color: artwork.status === Image.Ready ? "transparent" : Theme.background
                 radius: Theme.audioDeviceRadius
                 UI.ScaledImage {
                     id: artwork

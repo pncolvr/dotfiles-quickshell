@@ -16,6 +16,8 @@ that order stable. Media can grow to the available screen height, accounting for
 the bar, panel padding and shadow. The other audio tabs keep their existing height
 limit. Switching tabs preserves the Media list's scroll position.
 Artwork uses the shared `UI.ScaledImage` filtering and mipmaps.
+Wide artwork keeps its full image centered in the aligned square slot, with
+transparent space around it so the blurred card background shows through.
 Missing or failed artwork falls back to the app icon or a music glyph.
 Available artwork also fills the card background with a heavily blurred, darkened
 image, clipped to its rounded corners. Missing or failed artwork keeps the usual
