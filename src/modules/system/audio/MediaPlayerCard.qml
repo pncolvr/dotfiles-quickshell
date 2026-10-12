@@ -160,6 +160,15 @@ Rectangle {
                         visible: !!text
                         elide: Text.ElideRight
                     }
+                    UI.ColumnText {
+                        objectName: "mediaApp"
+                        width: parent.width
+                        horizontalAlignment: Text.AlignHCenter
+                        text: root.player?.identity || "Media player"
+                        textFormat: Text.PlainText
+                        color: Theme.text
+                        elide: Text.ElideRight
+                    }
                 }
                 RowLayout {
                     id: volumeRow

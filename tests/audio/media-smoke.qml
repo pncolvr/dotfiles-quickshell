@@ -130,6 +130,8 @@ Scope {
                 root.check(root.find(card,"mediaTitle").horizontalAlignment === Text.AlignHCenter
                     && root.find(card,"mediaDetails").horizontalAlignment === Text.AlignHCenter,
                     "song details are horizontally centered")
+                root.check(root.find(card,"mediaApp").text === banana.identity,
+                    "app identity remains visible without playback status")
                 root.check(timeline.enabled && root.find(card,"mediaElapsed").text === "1:05" && root.find(card,"mediaDuration").text === "4:00", "timeline shows elapsed and total time")
                 events.mousePress(timeline,timeline.width * 0.25,timeline.height / 2,Qt.LeftButton,Qt.NoModifier,0)
                 events.mouseMove(timeline,timeline.width * 0.75,timeline.height / 2,0,Qt.LeftButton,Qt.NoModifier)
