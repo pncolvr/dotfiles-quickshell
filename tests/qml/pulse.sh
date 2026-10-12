@@ -17,5 +17,6 @@ printf '%s\n' "$output"
 [[ $output == *'PASS: GPU pulse'* && $output == *'PASS: disabling pulse'* \
     && $output == *'PASS: hidden text'* && $output == *'PASS: hidden window'* \
     && $output == *'PASS: showing the window'* \
+    && $output == *'PASS: staggered pulses'* && $output == *'PASS: resumed pulse rejoins'* \
     && $output != *'PULSE FAIL:'* && $output != *'TypeError:'* && $output != *'ReferenceError:'* \
     && $output != *'Failed to load configuration'* && $output != *'Failed to load shader'* ]]

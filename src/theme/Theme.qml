@@ -1,6 +1,7 @@
 pragma Singleton
 
 import QtQuick
+import Quickshell
 import "../config"
 import "../services"
 
@@ -26,6 +27,10 @@ Item {
   readonly property color pulsingTextPulseColor: urgent
   readonly property color screencastPulseColor: active
   readonly property int pulsingTextDuration: Timespan.fromSeconds(2)
+  ElapsedTimer { id: pulseClock; Component.onCompleted: restart() }
+  function pulseOffset() {
+    return (pulseClock.elapsed() * 1000 % pulsingTextDuration) / pulsingTextDuration
+  }
   readonly property int calendarDayTooltipDelay: Timespan.fromSeconds(1)
   // typography
   readonly property string fontFamily: "Noto Sans Mono"

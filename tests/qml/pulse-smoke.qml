@@ -9,6 +9,7 @@ Scope {
     property int step: 0
     property real lowestRed: 1
     property real highestRed: 0
+    property bool phasesMatch: true
     Test.TestCase { id: test; when: false }
     PanelWindow {
         id: surface
@@ -32,6 +33,27 @@ Scope {
             pulsing: true
         }
     }
+    PanelWindow {
+        anchors { left: true; bottom: true }
+        margins.left: 100
+        implicitWidth: 100
+        implicitHeight: 100
+        exclusionMode: ExclusionMode.Ignore
+        WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+        WlrLayershell.namespace: "quickshell-pulse-test"
+        color: "black"
+        UI.PulseText {
+            id: secondGlyph
+            anchors.fill: parent
+            centerVertical: false
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+            text: "█"
+            font.pixelSize: 80
+            baseColor: "blue"
+            pulseColor: "red"
+        }
+    }
     Timer {
         interval: 100
         running: true
@@ -45,7 +67,14 @@ Scope {
                 root.lowestRed = Math.min(root.lowestRed, pixel.r)
                 root.highestRed = Math.max(root.highestRed, pixel.r)
             }
+            if (root.step === 6) secondGlyph.pulsing = true
+            if (root.step >= 8 && root.step <= 23) {
+                const otherPixel = test.grabImage(secondGlyph).pixel(50, 50)
+                if (Math.abs(pixel.r - otherPixel.r) > 0.08) root.phasesMatch = false
+            }
             if (root.step === 24) {
+                console.log(root.phasesMatch ? "PASS: staggered pulses stay synchronized across windows"
+                    : "PULSE FAIL: staggered pulses are out of phase")
                 const ok = root.highestRed > 0.8 && root.lowestRed < 0.2 && glyph.color === Qt.rgba(1, 1, 1, 1)
                 console.log(ok ? "PASS: GPU pulse changes rendered color without changing text color"
                     : "PULSE FAIL: color range " + root.lowestRed + " " + root.highestRed)
@@ -68,6 +97,10 @@ Scope {
             } else if (root.step === 28) {
                 console.log(glyph.pulseActive && glyph.layer.enabled
                     ? "PASS: showing the window resumes its requested pulse" : "PULSE FAIL: resumed pulse")
+                const firstPixel = test.grabImage(glyph).pixel(50, 50)
+                const secondPixel = test.grabImage(secondGlyph).pixel(50, 50)
+                console.log(Math.abs(firstPixel.r - secondPixel.r) < 0.08
+                    ? "PASS: resumed pulse rejoins the shared phase" : "PULSE FAIL: resumed pulse phase")
                 Qt.quit()
             }
         }

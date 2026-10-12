@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Window
 import "../"
@@ -20,12 +21,27 @@ UI.Text {
         property color baseColor: root.baseColor
         property color pulseColor: root.pulseColor
         property real phase: 0
+        property real phaseOffset: Theme.pulseOffset()
+        property bool active: root.pulseActive
+        property bool awaitingSync: true
+        onActiveChanged: if (active) awaitingSync = true
         fragmentShader: Qt.resolvedUrl("../shaders/pulse.frag.qsb")
-        SequentialAnimation {
-            running: root.pulseActive
+        Connections {
+            target: root.pulseActive && pulseShader.awaitingSync ? root.Window.window : null
+            function onFrameSwapped() {
+                // Window exposure and texture creation can delay the first rendered frame.
+                pulseShader.phaseOffset = Theme.pulseOffset()
+                pulseShader.awaitingSync = false
+            }
+        }
+        UniformAnimator {
+            target: pulseShader
+            uniform: "phase"
+            from: 0
+            to: 1
+            duration: Theme.pulsingTextDuration
+            running: root.pulseActive && !pulseShader.awaitingSync
             loops: Animation.Infinite
-            UniformAnimator { target: pulseShader; uniform: "phase"; from: 0; to: 1; duration: Theme.pulsingTextDuration / 2; easing.type: Easing.InOutSine }
-            UniformAnimator { target: pulseShader; uniform: "phase"; from: 1; to: 0; duration: Theme.pulsingTextDuration / 2; easing.type: Easing.InOutSine }
         }
     }
 }

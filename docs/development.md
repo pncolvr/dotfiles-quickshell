@@ -64,6 +64,10 @@ rendering while active; measure truly idle CPU with no ongoing animation.
 Pulsing text caches its glyph in a layer and blends colors in the shared
 `PulseText` shader. `UniformAnimator` runs the existing two-second sine pulse on
 the render thread, avoiding per-frame JavaScript and text-color updates. The
+shader's sine curve uses a shared elapsed-time origin, so later-starting or
+reshown indicators join the same pulse phase. Each effect synchronizes once after
+its first rendered frame, then disconnects that signal; no per-frame global timer
+or JavaScript synchronization runs. The
 layer and animation share one gate: a requested pulse, visible text and a visible
 containing window. Hiding either stops the animation and releases the layer;
 showing it again resumes the requested pulse. Muted mic and speaker indicators
