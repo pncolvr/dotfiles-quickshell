@@ -3,7 +3,6 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Effects
 import Quickshell
-import Quickshell.Services.Mpris
 import "../../../theme"
 import "../../../theme/ui" as UI
 import "../../../services"
@@ -158,15 +157,6 @@ Rectangle {
                         textFormat: Text.PlainText
                         color: Theme.text
                         visible: !!text
-                        elide: Text.ElideRight
-                    }
-                    UI.ColumnText {
-                        objectName: "mediaState"
-                        width: parent.width
-                        horizontalAlignment: Text.AlignHCenter
-                        text: (root.player?.identity || "Media player") + " · " + (root.player?.isPlaying ? "Playing" : root.player?.playbackState === MprisPlaybackState.Paused ? "Paused" : "Stopped")
-                        textFormat: Text.PlainText
-                        color: Theme.text
                         elide: Text.ElideRight
                     }
                 }
