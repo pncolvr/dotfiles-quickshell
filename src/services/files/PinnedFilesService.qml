@@ -8,6 +8,7 @@ import "../"
 
 Singleton {
     id: root
+    property bool active: false
     readonly property var files: {
         const saved = PreferencesRepository.value("files.pinned", [])
         return Array.isArray(saved) ? saved.filter(file => file && !file.isDirectory
@@ -135,8 +136,9 @@ Singleton {
     Component.onCompleted: refresh()
 
     Timer {
+        objectName: "pinnedFilesRefreshTimer"
         interval: Config.recentFilesRefreshInterval
-        running: root.files.length > 0
+        running: root.active && root.files.length > 0
         repeat: true
         onTriggered: root.refresh()
     }

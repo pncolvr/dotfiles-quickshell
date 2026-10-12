@@ -11,13 +11,16 @@ Singleton {
     id: root
 
     PwObjectTracker {
-        objects: [root.sink, root.source, ...Pipewire.nodes.values]
+        // Link state is unavailable until its group is bound, just like node audio.
+        objects: [root.sink, root.source, ...Pipewire.nodes.values,
+            ...Pipewire.linkGroups.values.filter(link => link.source === root.source || link.target === root.sink)]
     }
 
     // Output
     readonly property PwNode sink: Pipewire.defaultAudioSink
     readonly property real volume: sink?.audio?.volume ?? 0
     readonly property bool muted: sink?.audio?.muted ?? false
+    readonly property bool outputMutePulse: muted && hasDeviceRequest(sink, false, audioPlaybackNodes, Pipewire.linkGroups.values)
 
     readonly property var outputs: Pipewire.nodes.values.filter(node => node.audio && !node.isStream && node.isSink)
     readonly property var inputs: Pipewire.nodes.values.filter(node => node.audio && !node.isStream && !node.isSink)
@@ -144,13 +147,14 @@ Singleton {
     readonly property PwNode source: Pipewire.defaultAudioSource
     readonly property real micVolume: source?.audio?.volume ?? 0
     readonly property bool micMuted: source?.audio?.muted ?? false
+    readonly property bool micMutePulse: micMuted && hasDeviceRequest(source, true, micCaptureNodes, Pipewire.linkGroups.values)
     readonly property bool micActivityEnabled: micMonitor.enabled
     readonly property bool micActive: micActivityEnabled && micActivityRelease.running
 
     PwNodePeakMonitor {
         id: micMonitor
         node: root.source
-        enabled: root.micCaptureNodes.length > 0 && root.source !== null && !root.micMuted
+        enabled: !root.micMuted && root.hasDeviceRequest(root.source, true, root.micCaptureNodes, Pipewire.linkGroups.values)
         onEnabledChanged: {
             if (!enabled) micActivityRelease.stop()
         }
@@ -279,6 +283,13 @@ Singleton {
         node.properties?.["media.class"] === "Stream/Output/Audio" && !!nodeName(node)
     )
     readonly property var audioUsers: audioPlaybackNodes.map(node => nodeName(node))
+
+    function hasDeviceRequest(device, input, streams, links) {
+        if (!device) return false
+        return links.some(link => link.state === PwLinkState.Active
+            && (input ? link.source : link.target) === device
+            && streams.includes(input ? link.target : link.source))
+    }
 
     readonly property var micApps: appEntries(micCaptureNodes, true, Pipewire.linkGroups.values, inputs)
     readonly property var playbackApps: appEntries(audioPlaybackNodes, false, Pipewire.linkGroups.values, outputs)

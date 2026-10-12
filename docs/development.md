@@ -46,9 +46,41 @@ Static images use `UI.ScaledImage` for smooth filtering and mipmaps, with aspect
 fit by default. Keep source sizing, cropping and asynchronous loading at the
 call site when needed. Live captures use `UI.ScaledScreencopyView`, which generates
 smooth mipmaps through a source-resolution layer even during parent transforms.
+Live capture pauses when its view or containing window is hidden.
 Generated image masks use `UI.ScaledTexture`. All three components read smooth
 filtering and mipmap settings from the shared `UI.TextureSettings` singleton. Use these shared
 components for new images and captures rather than duplicating their settings.
+
+Panel-only polling runs while a panel is open and stops when its last instance
+closes. Recent files and pinned-file existence checks share that lifecycle.
+Notifications schedule a single timer for the next expiration; persistent or
+hover-paused notifications do not poll; popup countdown animations also stop
+when their window is hidden. Closed panels release their loaders,
+including media position queries and Exposé captures. Bar state still needs
+clock updates, running countdowns, periodic connectivity/battery/Twitch checks
+and event subscriptions. Mute and screen-sharing pulses deliberately keep
+rendering while active; measure truly idle CPU with no ongoing animation.
+
+Pulsing text caches its glyph in a layer and blends colors in the shared
+`PulseText` shader. `UniformAnimator` runs the existing two-second sine pulse on
+the render thread, avoiding per-frame JavaScript and text-color updates. The
+layer and animation share one gate: a requested pulse, visible text and a visible
+containing window. Hiding either stops the animation and releases the layer;
+showing it again resumes the requested pulse. Muted mic and speaker indicators
+pulse only while an application's active PipeWire link requests their default
+device. Paused links and requests routed to another device do not keep them
+animating. Screen sharing pulses while sharing is active. Duration and colors
+remain in Theme.qml. Rendering still runs while the pulse is active.
+Default-device link groups must be bound with `PwObjectTracker` before their
+state can be used; an unbound group's state does not reflect active audio.
+Run `bash tests/qml/pulse.sh` in a Wayland session to verify rendered colors and
+stopping behavior; software/offscreen tests cannot validate this GPU effect.
+The shader source and compiled bundle are both tracked. After changing it, rebuild:
+
+```sh
+/usr/lib/qt6/bin/qsb --glsl '100 es,120,150' --hlsl 50 --msl 12 \
+  -o src/theme/shaders/pulse.frag.qsb src/theme/shaders/pulse.frag
+```
 
 Scrollable modules use `UI.ScrollBar` from `src/theme/ui/components/ScrollBar.qml`.
 It overlays the content with an accent-colored thumb during scrolling or hover,

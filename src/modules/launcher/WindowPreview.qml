@@ -29,7 +29,6 @@ Rectangle {
         sourceComponent: UI.ScaledScreencopyView {
             objectName: "exposeCapture"
             captureSource: root.captureSource
-            live: true
             // Fit the actual buffer through resize and output-scale changes.
             readonly property real aspectRatio: sourceSize.width > 0 && sourceSize.height > 0 ? sourceSize.width / sourceSize.height : 1
             width: Math.min(root.width, root.height * aspectRatio)

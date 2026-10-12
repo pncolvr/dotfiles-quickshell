@@ -27,14 +27,6 @@ Item {
   readonly property color screencastPulseColor: active
   readonly property int pulsingTextDuration: Timespan.fromSeconds(2)
   readonly property int calendarDayTooltipDelay: Timespan.fromSeconds(1)
-  property real pulsePhase: 0
-
-  SequentialAnimation on pulsePhase {
-    loops: Animation.Infinite
-    running: AudioService.muted || AudioService.micMuted || AudioService.screencastActive
-    NumberAnimation { from: 0; to: 1; duration: Theme.pulsingTextDuration / 2; easing.type: Easing.InOutSine }
-    NumberAnimation { from: 1; to: 0; duration: Theme.pulsingTextDuration / 2; easing.type: Easing.InOutSine }
-  }
   // typography
   readonly property string fontFamily: "Noto Sans Mono"
   // readonly property string fontFamily: "Noto Sans"
@@ -244,7 +236,7 @@ Item {
   readonly property string micIcon: "" // microphone
   readonly property string micMutedIcon: "" // microphone-slash
   readonly property var volumeIcons: ["", "", ""] // volume-low, volume, volume-high
-  readonly property string volumeMutedIcon: "" // volume-off
+  readonly property string volumeMutedIcon: "" // volume-xmark: visibly muted even without a pulse
   readonly property string defaultIcon: "" // star
   readonly property string audioDefaultIcon: defaultIcon
   readonly property string audioRecordingIcon: "" // circle-dot: mic activity status

@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Window
 import QtQuick.Layouts
 import QtQuick.Effects
 import Quickshell
@@ -86,7 +87,7 @@ Rectangle {
         objectName: "mediaPositionTracker"
         player: root.player
         mediaService: root.mediaService
-        active: root.visible && root.monitorPosition && root.hasDuration
+        active: root.visible && (root.Window.window?.visible ?? false) && root.monitorPosition && root.hasDuration
     }
     Column {
         id: contents

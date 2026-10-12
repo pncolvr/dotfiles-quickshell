@@ -38,7 +38,7 @@ TooltipArea {
     Row {
         BarIcon {
             font.pixelSize: Theme.fontSize
-            pulsing: AudioService.micMuted
+            pulsing: AudioService.micMutePulse
             baseColor: AudioService.micActive ? Theme.ok : Theme.pulsingTextBaseColor
             text: AudioService.micMuted ? Theme.micMutedIcon : Theme.micIcon
         }

@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Window
 import QtQuick.Shapes
 import QtQuick.Controls as QC
 import Quickshell
@@ -144,7 +145,8 @@ Rectangle {
         }
     }
     FrameAnimation {
-        running: root.popup && root.visible && !root.timerPaused && root.timerEntry.duration > 0 && root.countdownProgress > 0
+        running: root.popup && root.visible && (root.Window.window?.visible ?? false)
+            && !root.timerPaused && root.timerEntry.duration > 0 && root.countdownProgress > 0
         onTriggered: root.clockNow = Date.now()
     }
     Row {

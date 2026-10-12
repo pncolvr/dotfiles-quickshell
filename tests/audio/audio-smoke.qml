@@ -4,6 +4,7 @@ import QtQuick
 import QtQuick.Controls as QC
 import QtTest as Test
 import Quickshell
+import Quickshell.Services.Pipewire
 import "../../src/modules/system/audio"
 import "../../src/services"
 import "../../src/theme"
@@ -173,6 +174,19 @@ Scope {
         repeat: true
         onTriggered: {
             if (root.step === 0) {
+                const playbackLink = {source: browser, target: output, state: PwLinkState.Active}
+                const captureLink = {source: input, target: recorder, state: PwLinkState.Active}
+                root.check(AudioService.hasDeviceRequest(output, false, [browser], [playbackLink])
+                    && AudioService.hasDeviceRequest(input, true, [recorder], [captureLink]),
+                    "active playback and recording links request their actual device")
+                root.check(!AudioService.hasDeviceRequest(input, false, [browser], [playbackLink])
+                    && !AudioService.hasDeviceRequest(output, true, [recorder], [captureLink])
+                    && !AudioService.hasDeviceRequest(null, true, [recorder], [captureLink]),
+                    "other devices and missing defaults do not request a pulse")
+                playbackLink.state = PwLinkState.Paused
+                root.check(!AudioService.hasDeviceRequest(output, false, [browser], [playbackLink])
+                    && !AudioService.hasDeviceRequest(input, true, [], [captureLink]),
+                    "paused links and excluded monitor streams do not request a pulse")
                 const glyphWidth = barGlyph.implicitWidth
                 const glyphHeight = barGlyph.implicitHeight
                 root.check(glyphWidth < Theme.iconButtonWidth, "bar audio glyph uses compact spacing instead of the button slot")

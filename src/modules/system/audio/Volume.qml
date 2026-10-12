@@ -41,7 +41,7 @@ TooltipArea {
     Row {
         BarIcon {
             font.pixelSize: Theme.fontSize
-            pulsing: AudioService.muted
+            pulsing: AudioService.outputMutePulse
             text: root.volumeIcon()
         }
 

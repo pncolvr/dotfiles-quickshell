@@ -21,6 +21,7 @@ Singleton {
         id: state
         property bool dnd: false
         property var liveEntries: ({})
+        onLiveEntriesChanged: root.scheduleExpiration()
         property var popups: []
         property var imageJobs: []
     }
@@ -225,14 +226,21 @@ Singleton {
         interval: 3000
         onTriggered: root.focusMessage = ""
     }
+    function scheduleExpiration() {
+        expiry.stop()
+        const deadlines = Object.values(state.liveEntries).filter(entry => entry.deadline > 0).map(entry => entry.deadline)
+        if (!deadlines.length) return
+        expiry.interval = Math.max(1, Math.ceil(Math.min(...deadlines) - Date.now()))
+        expiry.start()
+    }
     Timer {
-        interval: 100
-        repeat: true
-        running: Object.keys(state.liveEntries).length > 0
+        id: expiry
+        objectName: "notificationExpiryTimer"
         onTriggered: {
             const now = Date.now()
             for (const entry of Object.values(state.liveEntries))
                 if (entry.deadline > 0 && entry.deadline <= now) entry.notification.expire()
+            root.scheduleExpiration()
         }
     }
     IpcHandler {

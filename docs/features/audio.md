@@ -79,6 +79,12 @@ when their streams use different devices. Devices are sorted by their displayed
 name.
 Left-click a bar icon to mute; scroll it to adjust its default device. Right-click
 pins its panel; middle-click opens `pavucontrol`.
+Muted bar icons pulse only while an app has an active PipeWire link to the
+corresponding default device. With no request, the muted icon stays static.
+Volume mute uses a crossed-out speaker so its state is clear without animation.
+Paused streams and apps routed to other devices do not trigger that pulse.
+Microphone level monitoring uses the same active-device request check and also
+stops while the microphone is muted.
 
 ## Levels and profiles
 

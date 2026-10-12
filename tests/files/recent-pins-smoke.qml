@@ -28,6 +28,13 @@ Scope {
         console.error("RECENT FILES FAIL:", message)
     }
     function finish() {
+        check(PinnedFilesService.active, "open file panel enables pin refresh")
+        RecentFilesService.beginPanel()
+        RecentFilesService.endPanel()
+        check(PinnedFilesService.active, "closing one of two panels keeps pin refresh enabled")
+        RecentFilesService.endPanel()
+        check(!PinnedFilesService.active, "closing the last panel disables pin refresh")
+        RecentFilesService.beginPanel()
         console.log(failed ? "RECENT FILES FAIL: pins " + phase : "PASS: recent-file pinned tab " + phase)
         Qt.quit()
     }

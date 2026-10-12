@@ -62,9 +62,13 @@ Singleton {
             state.error = ""
         }
         state.panels++
+        PinnedFilesService.active = true
         refresh()
     }
-    function endPanel() { state.panels = Math.max(0, state.panels - 1) }
+    function endPanel() {
+        state.panels = Math.max(0, state.panels - 1)
+        PinnedFilesService.active = state.panels > 0
+    }
     function beginDrag() { state.dragging = true; PinnedFilesService.beginDrag() }
     function endDrag() {
         state.dragging = false
