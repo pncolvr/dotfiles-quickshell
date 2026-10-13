@@ -1,6 +1,8 @@
 pragma Singleton
 
 import QtQml
+import QtQml.WorkerScript
+import "Search.mjs" as Search
 import Quickshell
 import Quickshell.Io
 import Quickshell.Hyprland
@@ -43,13 +45,18 @@ Singleton {
     }
     property string error: ""
     property var targetScreen: null
+    readonly property bool searchPending: mode === PickerService.Mode.Clipboard && clipboardSearch.pending
+    readonly property bool searchRunning: clipboardSearch.busy
+    readonly property var searchStatistics: clipboardSearch.statistics
     readonly property var filteredItems: {
+        if (mode === PickerService.Mode.Clipboard && query.trim())
+            return clipboardSearch.indices.map(index => items[index]).filter(item => !!item)
         const criteria = itemCriteria
         const keys = Object.keys(criteria)
         const matching = items.filter(item => keys.every(key => item[key] === criteria[key]))
         return filter(matching, query)
     }
-    readonly property var currentItem: filteredItems[currentIndex] ?? null
+    readonly property var currentItem: searchPending ? null : filteredItems[currentIndex] ?? null
     readonly property var selectedItems: items.filter(item => selectedIds.includes(item.id))
     readonly property bool selectionToggleClears: filteredItems.length > 0
         ? filteredItems.every(item => selectedIds.includes(item.id)) : selectedIds.length > 0
@@ -57,76 +64,81 @@ Singleton {
         || (allowTyped && query.trim().length > 0)
     signal opened()
 
+    QtObject {
+        id: clipboardSearch
+        property int generation: 0
+        property int request: 0
+        property bool needsRows: true
+        property bool busy: false
+        property bool dirty: false
+        property bool pending: false
+        property var indices: []
+        property var pendingAccept: null
+        property var statistics: ({})
+        readonly property bool fuzzy: Config.pickerFuzzySearch
+        readonly property bool smartCase: Config.pickerSmartCase
+        onFuzzyChanged: root.queueClipboardSearch(false)
+        onSmartCaseChanged: root.queueClipboardSearch(false)
+    }
+    function queueClipboardSearch(changedRows) {
+        if (changedRows) {
+            clipboardSearch.generation++
+            clipboardSearch.needsRows = true
+            clipboardSearch.indices = []
+        }
+        clipboardSearch.request++
+        clipboardSearch.pendingAccept = null
+        clipboardSearch.pending = mode === PickerService.Mode.Clipboard && query.trim().length > 0
+        clipboardSearch.dirty = clipboardSearch.pending
+        if (clipboardSearch.pending) searchDispatch.restart()
+    }
+    function dispatchClipboardSearch() {
+        if (!clipboardSearch.dirty || clipboardSearch.busy || !searchWorker.ready) return
+        const message = {generation: clipboardSearch.generation, request: clipboardSearch.request,
+            query, fuzzy: clipboardSearch.fuzzy, smartCase: clipboardSearch.smartCase,
+            pinnedOnly: itemCriteria.pinned === true}
+        if (clipboardSearch.needsRows) {
+            // Only searchable data crosses the thread boundary; results retain the original rows.
+            message.rows = items.map(item => ({title: item.title, search: item.search, pinned: item.pinned}))
+            clipboardSearch.needsRows = false
+        }
+        clipboardSearch.busy = true
+        clipboardSearch.dirty = false
+        searchWorker.sendMessage(message)
+    }
+    Timer { id: searchDispatch; interval: 0; onTriggered: root.dispatchClipboardSearch() }
+    WorkerScript {
+        id: searchWorker
+        source: Qt.resolvedUrl("ClipboardSearch.mjs")
+        onReadyChanged: if (ready) root.dispatchClipboardSearch()
+        onMessage: message => {
+            clipboardSearch.busy = false
+            if (root.mode === PickerService.Mode.Clipboard && message.request === clipboardSearch.request
+                && message.generation === clipboardSearch.generation) {
+                clipboardSearch.indices = message.indices
+                clipboardSearch.statistics = {reused: message.reused, candidates: message.candidates, duration: message.duration}
+                clipboardSearch.pending = false
+                const deferred = clipboardSearch.pendingAccept
+                clipboardSearch.pendingAccept = null
+                if (deferred) Qt.callLater(() => {
+                    if (root.visible && root.mode === PickerService.Mode.Clipboard && deferred.request === clipboardSearch.request)
+                        root.accept(deferred.custom, deferred.copyOnly)
+                })
+            }
+            root.dispatchClipboardSearch()
+        }
+    }
+
     function searchPattern(search) {
-        const sensitive = Config.pickerSmartCase && search !== search.toLowerCase()
-            && search !== search.toUpperCase()
-        const normalized = (sensitive ? search : search.toLowerCase()).trim()
-        return {sensitive, needles: normalized ? normalized.split(/\s+/) : []}
+        return Search.searchPattern(search, Config.pickerSmartCase)
     }
     function score(text, search, pattern) {
-        pattern = pattern ?? searchPattern(search)
-        if (!pattern.needles.length) return 0
-        const haystack = pattern.sensitive ? text : text.toLowerCase()
-        let total = 0
-        for (const needle of pattern.needles) {
-            if (!Config.pickerFuzzySearch) {
-                const exact = haystack.indexOf(needle)
-                if (exact < 0) return Infinity
-                total += exact + (exact === 0 ? -20 : 0)
-                continue
-            }
-            // Reject missing subsequences with native string searches before scoring.
-            let found = -1
-            for (let character = 0; character < needle.length; character++) {
-                found = haystack.indexOf(needle[character], found + 1)
-                if (found < 0) return Infinity
-            }
-            // Keep only matching positions, rather than allocating and walking a
-            // full-text array for every query character. The same recurrence still
-            // finds later compact matches and rewards boundaries and adjacent letters.
-            let previousPositions = []
-            let previousCosts = []
-            let best = Infinity
-            for (let character = 0; character < needle.length; character++) {
-                const nextPositions = []
-                const nextCosts = []
-                let bestGap = Infinity
-                let previousIndex = 0
-                best = Infinity
-                const start = character === 0 ? 0 : previousPositions[0] + 1
-                for (let position = haystack.indexOf(needle[character], start); position >= 0;
-                    position = haystack.indexOf(needle[character], position + 1)) {
-                    while (previousIndex < previousPositions.length && previousPositions[previousIndex] < position - 1) {
-                        bestGap = Math.min(bestGap, previousCosts[previousIndex] - 2 * previousPositions[previousIndex])
-                        previousIndex++
-                    }
-                    const boundary = position === 0 || /[\s._:/\\-]/.test(text[position - 1])
-                        || (text[position - 1] !== text[position - 1].toUpperCase()
-                            && text[position] !== text[position].toLowerCase())
-                    const cost = character === 0 ? Math.min(20, position * 0.1)
-                        : Math.min(previousPositions[previousIndex] === position - 1 ? previousCosts[previousIndex] - 16 : Infinity,
-                            bestGap + 2 * (position - 1))
-                    const value = cost - (boundary ? 12 : 0)
-                    best = Math.min(best, value)
-                    if (character < needle.length - 1) {
-                        nextPositions.push(position)
-                        nextCosts.push(value)
-                    }
-                    // A single-letter query cannot improve on a boundary at position zero.
-                    if (needle.length === 1 && best === -12) break
-                }
-                previousPositions = nextPositions
-                previousCosts = nextCosts
-            }
-            if (best === Infinity) return Infinity
-            total += best
-        }
-        return total
+        return Search.score(text, pattern ?? searchPattern(search), Config.pickerFuzzySearch)
     }
     function filter(rows, search) {
         const pattern = searchPattern(search)
         if (!pattern.needles.length) return rows
-        return rows.map((item, index) => ({item: item, index: index,
+        return rows.map((item, index) => ({item, index,
             score: Math.min(score(String(item.title ?? ""), search, pattern),
                 item.search && item.search !== item.title ? score(String(item.search), search, pattern) + 12 : Infinity)}))
             .filter(row => row.score !== Infinity)
@@ -346,6 +358,10 @@ Singleton {
         else selectVisible()
     }
     function accept(custom, copyOnly) {
+        if (searchPending) {
+            clipboardSearch.pendingAccept = {request: clipboardSearch.request, custom, copyOnly}
+            return
+        }
         if (!canAccept) return
         const picked = multiple && selectedItems.length ? selectedItems
             : currentItem ? [currentItem] : [{id: "typed", title: query, result: query}]
@@ -396,7 +412,10 @@ Singleton {
           }
         }
     }
-    onQueryChanged: currentIndex = 0
+    onQueryChanged: { currentIndex = 0; queueClipboardSearch(false) }
+    onItemsChanged: queueClipboardSearch(true)
+    onItemCriteriaChanged: queueClipboardSearch(false)
+    onModeChanged: queueClipboardSearch(true)
     onFilteredItemsChanged: currentIndex = Math.max(0, Math.min(currentIndex, filteredItems.length - 1))
     Connections {
         target: DesktopEntries

@@ -10,7 +10,7 @@ Singleton {
 
     readonly property string name: Config.databaseName
     readonly property string path: Config.databasePath
-    readonly property int schemaVersion: 9
+    readonly property int schemaVersion: 10
     readonly property bool ready: state.ready
     readonly property string error: state.error
 
@@ -68,6 +68,7 @@ Singleton {
                     for (let index = 0; index < columns.length; index++) names.push(columns.item(index).name)
                     if (!names.includes("pinned")) tx.executeSql("ALTER TABLE store.clipboard ADD COLUMN pinned INTEGER NOT NULL DEFAULT 0")
                 }
+                tx.executeSql("CREATE INDEX IF NOT EXISTS store.clipboard_updated_at ON clipboard (updated_at DESC, id DESC)")
                 tx.executeSql("CREATE TABLE IF NOT EXISTS store.notification_emitters (emitter_key TEXT PRIMARY KEY, display_name TEXT NOT NULL, icon TEXT NOT NULL DEFAULT '', desktop_entry TEXT NOT NULL DEFAULT '', muted INTEGER NOT NULL DEFAULT 0, allow_dnd INTEGER NOT NULL DEFAULT 0, exclude_history INTEGER NOT NULL DEFAULT 0)")
                 tx.executeSql("CREATE TABLE IF NOT EXISTS store.notifications (archive_id TEXT PRIMARY KEY, emitter_key TEXT NOT NULL, summary TEXT NOT NULL, body TEXT NOT NULL, urgency INTEGER NOT NULL, received_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, image TEXT NOT NULL DEFAULT '', actions_json TEXT NOT NULL DEFAULT '[]', action_handler TEXT NOT NULL DEFAULT '')")
                 if (version < 3) {

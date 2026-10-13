@@ -38,7 +38,9 @@ Scope {
             return
         }
         const legacy = ClipboardRepository.entries()[0]
-        check(DbService.schemaVersion === 9 && legacy?.text === "legacy" && legacy.pinned === 0, "v5 migration preserves history and defaults existing entries to unpinned")
+        check(DbService.schemaVersion === 10 && legacy?.text === "legacy" && legacy.pinned === 0, "v5 migration preserves history and defaults existing entries to unpinned")
+        check(DbService.read("SELECT name FROM store.sqlite_master WHERE type = 'index' AND name = 'clipboard_updated_at'")?.length === 1,
+            "migration creates the clipboard ordering index")
         ClipboardRepository.clear()
         check(PickerService.filter([{title:"Banana"}, {title:"potato"}], "BAN")[0].title === "Banana", "uppercase-only queries ignore case")
         check(PickerService.filter([{title:"Banana"}, {title:"banana"}], "Ban").length === 1, "mixed-case queries respect capitalization")
@@ -158,7 +160,7 @@ Scope {
     IpcHandler {
         target: "pickertest"
         function snapshot(): string { return JSON.stringify({visible:PickerService.visible,mode:PickerService.mode,
-            query:PickerService.query,items:PickerService.items,filtered:PickerService.filteredItems,currentIndex:PickerService.currentIndex,
+            searchPending:PickerService.searchPending,query:PickerService.query,items:PickerService.items,filtered:PickerService.filteredItems,currentIndex:PickerService.currentIndex,
             selected:PickerService.selectedIds,canAccept:PickerService.canAccept,acceptLabel:PickerService.acceptLabel,
             layout:PickerService.layout,itemCriteria:PickerService.itemCriteria,
             directory:PickerService.requestDirectory}) }
@@ -199,6 +201,15 @@ Scope {
             const search = objects.findChild(panel.panel, "pickerSearch") as UI.SearchField
             search.selectAll()
             events.keyClick(Qt.Key_C, Qt.ControlModifier, 0)
+        }
+        function deferredCopy(): void {
+            PickerService.query = "unmatched"
+            PickerService.dispatchClipboardSearch()
+            const list = objects.findChild(panel.panel, "pickerList") as UI.PickerList
+            root.check(list.count > 0 && list.itemAtIndex(0)?.enabled === false,
+                "pending clipboard searches disable activation of stale rows")
+            PickerService.query = "hello"
+            PickerService.accept(false, true)
         }
         function deleteEntry(): void { panel.focusSearch(); events.keyClick(Qt.Key_Delete, Qt.NoModifier, 0) }
         function togglePin(): void { panel.focusSearch(); events.keyClick(Qt.Key_P, Qt.ControlModifier, 0) }

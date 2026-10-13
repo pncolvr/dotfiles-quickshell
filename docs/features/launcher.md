@@ -396,6 +396,12 @@ show a thumbtack and survive restarts, repeated copies, history clearing, and
 automatic pruning. The Pinned only button or Ctrl+Shift+P toggles a pinned-entry
 filter, highlighted with the accent color when active. Search still applies
 within the filtered entries; opening the picker again starts with all entries.
+Clipboard searches run in a background worker with cached lowercase text. As a
+query grows, the worker searches the previous matches; editing or shortening it,
+changing case rules or the pin filter, and updating history reset the candidates.
+Rapid typing replaces queued queries, and only the latest results are displayed.
+Enter and Ctrl+C pressed during a search wait for its results before pasting or
+copying; changing the query or closing the picker cancels that pending action.
 Pins count toward the entry and total-size limits, but are
 never removed to satisfy those limits; if pins alone exceed a limit, they are
 kept and new unpinned entries cannot be retained. Explicitly deleting a pinned
@@ -438,6 +444,7 @@ the bar's screen-sharing toggle.
 
 ```sh
 bash tests/launcher/launcher.sh
+bash tests/launcher/clipboard-search.sh
 bash tests/launcher/expose.sh
 bash tests/clipboard/clipboard.sh
 bash tests/launcher/wayland.sh

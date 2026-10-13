@@ -62,16 +62,31 @@ start() {
 }
 wait_open() {
     for ((try=0;try<60;try++)); do
-        if ipc call pickertest snapshot | jq -e '.visible and (.directory|length > 0)' >/dev/null; then return; fi
+        if snapshot | jq -e '.visible and (.directory|length > 0)' >/dev/null; then return; fi
         sleep 0.025
     done
     cat "$test_dir/log"; exit 1
+}
+snapshot() {
+    local state
+    for ((try=0;try<200;try++)); do
+        state=$(ipc call pickertest snapshot)
+        if jq -e '.searchPending | not' <<< "$state" >/dev/null; then
+            printf '%s\n' "$state"
+            return
+        fi
+        sleep 0.01
+    done
+    cat "$test_dir/log" >&2
+    return 1
 }
 wait_client() {
     client_exit=0; wait "$client_pid" || client_exit=$?; client_pid=""
     [[ $client_exit == "$1" ]] || { cat "$test_dir/client-error"; printf 'Unexpected client exit: %s\n' "$client_exit"; exit 1; }
 }
 start
+history_plan=$(sqlite3 "$test_dir/data/quickshell.db" 'EXPLAIN QUERY PLAN SELECT id, mime, kind, bytes, text, updated_at, pinned FROM clipboard ORDER BY updated_at DESC, id DESC;')
+[[ $history_plan == *clipboard_updated_at* && $history_plan != *'TEMP B-TREE'* ]]
 ipc call pickertest windowFocusCommand 0x2 > "$test_dir/focus-window.lua"
 lua - "$test_dir/focus-window.lua" <<'LUA'
 local file = assert(io.open(arg[1]))
@@ -128,11 +143,11 @@ printf '%s\n' '{"fuzzy":false,"smartCase":false,"allowTyped":false,"items":[{"ti
 bash "$picker" --json "$test_dir/search.json" > "$test_dir/result" 2> "$test_dir/client-error" & client_pid=$!
 wait_open
 ipc call pickertest query bna
-ipc call pickertest snapshot | jq -e '.filtered | length == 1 and .[0].title == "Banana"' >/dev/null
+snapshot | jq -e '.filtered | length == 1 and .[0].title == "Banana"' >/dev/null
 ipc call pickertest query BNA
-ipc call pickertest snapshot | jq -e '.filtered | length == 1 and .[0].title == "Banana"' >/dev/null
+snapshot | jq -e '.filtered | length == 1 and .[0].title == "Banana"' >/dev/null
 ipc call pickertest query bNa
-ipc call pickertest snapshot | jq -e '.filtered | length == 0' >/dev/null
+snapshot | jq -e '.filtered | length == 0' >/dev/null
 ipc call pickertest query bna
 ipc call pickertest enter
 wait_client 0
@@ -141,11 +156,11 @@ wait_client 0
 printf 'Tomato\nPotato\n' | bash "$picker" --dmenu -i -sorting-method normal -no-custom > "$test_dir/result" 2> "$test_dir/client-error" & client_pid=$!
 wait_open
 ipc call pickertest query TMT
-ipc call pickertest snapshot | jq -e '.filtered | length == 1 and .[0].title == "Tomato"' >/dev/null
+snapshot | jq -e '.filtered | length == 1 and .[0].title == "Tomato"' >/dev/null
 ipc call pickertest query tMt
-ipc call pickertest snapshot | jq -e '.filtered | length == 0' >/dev/null
+snapshot | jq -e '.filtered | length == 0' >/dev/null
 ipc call pickertest query tmt
-ipc call pickertest snapshot | jq -e '.filtered | length == 1 and .[0].title == "Tomato"' >/dev/null
+snapshot | jq -e '.filtered | length == 1 and .[0].title == "Tomato"' >/dev/null
 ipc call pickertest enter
 wait_client 0
 [[ $(<"$test_dir/result") == Tomato ]]
@@ -155,37 +170,37 @@ printf 'PASS: JSON and dmenu use shared fuzzy search and cannot override case or
 printf '%s\n' '{"selectionKey":"test.menu","allowTyped":false,"items":[{"title":"Banana","result":"banana"},{"title":"Potato","result":"potato"},{"title":"Tomato","result":"tomato"}]}' > "$test_dir/remember.json"
 bash "$picker" --json "$test_dir/remember.json" > "$test_dir/result" 2> "$test_dir/client-error" & client_pid=$!
 wait_open
-ipc call pickertest snapshot | jq -e '.currentIndex == 0' >/dev/null
+snapshot | jq -e '.currentIndex == 0' >/dev/null
 ipc call pickertest accept 2
 wait_client 0
 bash "$picker" --json "$test_dir/remember.json" > "$test_dir/result" 2> "$test_dir/client-error" & client_pid=$!
 wait_open
-ipc call pickertest snapshot | jq -e '.currentIndex == 2 and .filtered[.currentIndex].result == "tomato" and .query == ""' >/dev/null
+snapshot | jq -e '.currentIndex == 2 and .filtered[.currentIndex].result == "tomato" and .query == ""' >/dev/null
 ipc call pickertest pressEscape
 wait_client 1
 jq '.items = [.items[1], .items[2], .items[0]]' "$test_dir/remember.json" > "$test_dir/reordered.json"
 bash "$picker" --json "$test_dir/reordered.json" > "$test_dir/result" 2> "$test_dir/client-error" & client_pid=$!
 wait_open
-ipc call pickertest snapshot | jq -e '.currentIndex == 1 and .filtered[.currentIndex].result == "tomato"' >/dev/null
+snapshot | jq -e '.currentIndex == 1 and .filtered[.currentIndex].result == "tomato"' >/dev/null
 ipc call pickertest pressEscape
 wait_client 1
 
 for project in banana potato; do
     printf 'Open folder\nBanana\nTomato\n' | bash "$picker" --dmenu -no-custom --selection-key "projects.workspaces:$project" > "$test_dir/result" 2> "$test_dir/client-error" & client_pid=$!
     wait_open
-    ipc call pickertest snapshot | jq -e '.currentIndex == 0 and .items[0].title == "Open folder"' >/dev/null
+    snapshot | jq -e '.currentIndex == 0 and .items[0].title == "Open folder"' >/dev/null
     if [[ $project == banana ]]; then ipc call pickertest accept 2; else ipc call pickertest enter; fi
     wait_client 0
 done
 printf 'Open folder\nBanana\nTomato\n' | bash "$picker" --dmenu -no-custom --selection-key projects.workspaces:banana > "$test_dir/result" 2> "$test_dir/client-error" & client_pid=$!
 wait_open
-ipc call pickertest snapshot | jq -e '.currentIndex == 2 and .items[0].title == "Open folder"' >/dev/null
+snapshot | jq -e '.currentIndex == 2 and .items[0].title == "Open folder"' >/dev/null
 ipc call pickertest pressEscape
 wait_client 1
 jq '.items |= map(select(.result != "tomato"))' "$test_dir/remember.json" > "$test_dir/missing.json"
 bash "$picker" --json "$test_dir/missing.json" > "$test_dir/result" 2> "$test_dir/client-error" & client_pid=$!
 wait_open
-ipc call pickertest snapshot | jq -e '.currentIndex == 0' >/dev/null
+snapshot | jq -e '.currentIndex == 0' >/dev/null
 ipc call pickertest pressEscape
 wait_client 1
 printf 'PASS: remembered choices survive cancellation and row reordering, stay separate per project and fall back when removed\n'
@@ -201,37 +216,37 @@ wait_client 0
 printf '%s\n' '{"action":"default","allowMultipleSelection":true,"items":[{"title":"Alpha","result":"a"},{"title":"Beta","result":"b"},{"title":"Gamma","result":"g"}]}' > "$test_dir/links.json"
 bash "$picker" --json "$test_dir/links.json" > "$test_dir/result" 2> "$test_dir/client-error" & client_pid=$!
 wait_open
-ipc call pickertest snapshot | jq -e '.acceptLabel == "Open links" and .canAccept and .selected == []' >/dev/null
+snapshot | jq -e '.acceptLabel == "Open links" and .canAccept and .selected == []' >/dev/null
 ipc call pickertest pasteFixture false | jq -e '.' >/dev/null
-ipc call pickertest snapshot | jq -e '.query == "Beta" and .selected == []' >/dev/null
+snapshot | jq -e '.query == "Beta" and .selected == []' >/dev/null
 ipc call pickertest query 'Prefix '
 ipc call pickertest pasteFixture false | jq -e '.' >/dev/null
-ipc call pickertest snapshot | jq -e '.query == "Prefix Beta" and .selected == []' >/dev/null
+snapshot | jq -e '.query == "Prefix Beta" and .selected == []' >/dev/null
 ipc call pickertest pasteFixture true | jq -e '.' >/dev/null
-ipc call pickertest snapshot | jq -e '.query == "Beta" and .selected == []' >/dev/null
+snapshot | jq -e '.query == "Beta" and .selected == []' >/dev/null
 printf 'PASS: native Ctrl+V inserts clipboard text at the cursor and replaces selected text\n'
 ipc call pickertest query Alpha
 ipc call pickertest clickControl pickerSelectVisible | jq -e '.' >/dev/null
-ipc call pickertest snapshot | jq -e '.selected == ["0"]' >/dev/null
+snapshot | jq -e '.selected == ["0"]' >/dev/null
 ipc call pickertest toggleEntry
-ipc call pickertest snapshot | jq -e '.selected == [] and .query == "Alpha"' >/dev/null
+snapshot | jq -e '.selected == [] and .query == "Alpha"' >/dev/null
 ipc call pickertest toggleEntry
 ipc call pickertest typeSpace
-ipc call pickertest snapshot | jq -e '.selected == ["0"] and .query == "Alpha "' >/dev/null
+snapshot | jq -e '.selected == ["0"] and .query == "Alpha "' >/dev/null
 ipc call pickertest query Beta
 ipc call pickertest toggleVisible
-ipc call pickertest snapshot | jq -e '.selected == ["0","1"]' >/dev/null
+snapshot | jq -e '.selected == ["0","1"]' >/dev/null
 ipc call pickertest toggleVisible
-ipc call pickertest snapshot | jq -e '.selected == [] and .canAccept' >/dev/null
+snapshot | jq -e '.selected == [] and .canAccept' >/dev/null
 ipc call pickertest query 'no matching link'
 ipc call pickertest enter
-ipc call pickertest snapshot | jq -e '.visible and .selected == [] and (.canAccept | not)' >/dev/null
+snapshot | jq -e '.visible and .selected == [] and (.canAccept | not)' >/dev/null
 ipc call pickertest query ''
 ipc call pickertest down
 ipc call pickertest toggleEntry
-ipc call pickertest snapshot | jq -e '.selected == ["1"] and .currentIndex == 2' >/dev/null
+snapshot | jq -e '.selected == ["1"] and .currentIndex == 2' >/dev/null
 ipc call pickertest clearSelection
-ipc call pickertest snapshot | jq -e '.selected == [] and .query == ""' >/dev/null
+snapshot | jq -e '.selected == [] and .query == ""' >/dev/null
 ipc call pickertest query Beta
 ipc call pickertest clickControl pickerSelectVisible | jq -e '.' >/dev/null
 ipc call pickertest clickControl pickerAccept | jq -e '.' >/dev/null
@@ -241,7 +256,7 @@ for activation in keyboard button; do
     bash "$picker" --json "$test_dir/links.json" > "$test_dir/result" 2> "$test_dir/client-error" & client_pid=$!
     wait_open
     if [[ $activation == keyboard ]]; then ipc call pickertest down; else ipc call pickertest query Beta; fi
-    ipc call pickertest snapshot | jq -e '.selected == [] and .canAccept and .filtered[.currentIndex].result == "b"' >/dev/null
+    snapshot | jq -e '.selected == [] and .canAccept and .filtered[.currentIndex].result == "b"' >/dev/null
     if [[ $activation == keyboard ]]; then ipc call pickertest enter; else ipc call pickertest clickControl pickerAccept | jq -e '.' >/dev/null; fi
     wait_client 0
     [[ $(<"$test_dir/result") == b ]]
@@ -250,46 +265,51 @@ printf 'PASS: mouse/keyboard selection, search typing, filtered selection toggle
 
 ipc call pickertest clipboardFixture
 ipc call pickertest query 'delete me'
-ipc call pickertest snapshot | jq -e '.filtered | length == 1' >/dev/null
+snapshot | jq -e '.filtered | length == 1' >/dev/null
 ipc call pickertest togglePin
-ipc call pickertest snapshot | jq -e '.query == "delete me" and .filtered[0].pinned' >/dev/null
+snapshot | jq -e '.query == "delete me" and .filtered[0].pinned' >/dev/null
 ipc call pickertest deleteEntry
-ipc call pickertest snapshot | jq -e '.query == "delete me" and .filtered == [] and (.items | length) == 1
+snapshot | jq -e '.query == "delete me" and .filtered == [] and (.items | length) == 1
     and .items[0].result.text == "hello\nworld\n"' >/dev/null
 ipc call pickertest query ''
 ipc call pickertest togglePin
-ipc call pickertest snapshot | jq -e '.query == "" and .items[0].pinned and .currentIndex == 0' >/dev/null
+snapshot | jq -e '.query == "" and .items[0].pinned and .currentIndex == 0' >/dev/null
 ipc call pickertest clickControl pinClipboardEntry | jq -e '.' >/dev/null
-ipc call pickertest snapshot | jq -e '(.items[0].pinned | not)' >/dev/null
+snapshot | jq -e '(.items[0].pinned | not)' >/dev/null
 ipc call pickertest togglePin
 ipc call pickertest clipboardFixture
 ipc call pickertest togglePinnedOnly
-ipc call pickertest snapshot | jq -e '.itemCriteria.pinned and (.filtered | length) == 1 and .filtered[0].pinned and (.items | length) == 2' >/dev/null
+snapshot | jq -e '.itemCriteria.pinned and (.filtered | length) == 1 and .filtered[0].pinned and (.items | length) == 2' >/dev/null
 ipc call pickertest query 'delete me'
-ipc call pickertest snapshot | jq -e '.filtered == [] and (.canAccept | not)' >/dev/null
+snapshot | jq -e '.filtered == [] and (.canAccept | not)' >/dev/null
 ipc call pickertest togglePinnedOnly
-ipc call pickertest snapshot | jq -e '.itemCriteria == {} and .query == "delete me" and (.filtered | length) == 1 and (.filtered[0].pinned | not)' >/dev/null
+snapshot | jq -e '.itemCriteria == {} and .query == "delete me" and (.filtered | length) == 1 and (.filtered[0].pinned | not)' >/dev/null
 ipc call pickertest query hello
 ipc call pickertest togglePinnedOnly
+snapshot >/dev/null
 ipc call pickertest togglePin
-ipc call pickertest snapshot | jq -e '.itemCriteria.pinned and .query == "hello" and .filtered == [] and (.canAccept | not)' >/dev/null
+snapshot | jq -e '.itemCriteria.pinned and .query == "hello" and .filtered == [] and (.canAccept | not)' >/dev/null
 ipc call pickertest togglePinnedOnly
+snapshot >/dev/null
 ipc call pickertest togglePin
 ipc call pickertest query ''
 ipc call pickertest clickControl clipboardPinnedOnly | jq -e '.' >/dev/null
-ipc call pickertest snapshot | jq -e '.itemCriteria.pinned and (.filtered | length) == 1 and .filtered[0].pinned' >/dev/null
+snapshot | jq -e '.itemCriteria.pinned and (.filtered | length) == 1 and .filtered[0].pinned' >/dev/null
 ipc call pickertest clickControl clipboardPinnedOnly | jq -e '.' >/dev/null
-ipc call pickertest snapshot | jq -e '.itemCriteria == {} and (.filtered | length) == 2' >/dev/null
+snapshot | jq -e '.itemCriteria == {} and (.filtered | length) == 2' >/dev/null
 ipc call pickertest togglePinnedOnly
 ipc call pickertest clipboardFixture
-ipc call pickertest snapshot | jq -e '.itemCriteria == {} and (.filtered | length) == 2' >/dev/null
+snapshot | jq -e '.itemCriteria == {} and (.filtered | length) == 2' >/dev/null
 printf 'PASS: pinned-only keyboard/button toggle, combined search, unpinning while filtered, empty results and reset on reopening\n'
 ipc call pickertest clickControl clearClipboardHistory | jq -e '.' >/dev/null
-ipc call pickertest snapshot | jq -e '(.items | length) == 1 and .items[0].pinned and .items[0].result.text == "hello\nworld\n"' >/dev/null
+snapshot | jq -e '(.items | length) == 1 and .items[0].pinned and .items[0].result.text == "hello\nworld\n"' >/dev/null
 [[ -f $test_dir/data/clipboard/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa ]]
-ipc call pickertest query hello
-ipc call pickertest copyEntry
-ipc call pickertest snapshot | jq -e '(.visible | not)' >/dev/null
+ipc call pickertest deferredCopy
+for ((try=0;try<60;try++)); do
+    if snapshot | jq -e '(.visible | not)' >/dev/null; then break; fi
+    sleep 0.025
+done
+snapshot | jq -e '(.visible | not)' >/dev/null
 for ((try=0;try<60;try++)); do
     [[ -f $test_dir/copied ]] && break
     sleep 0.025
@@ -329,7 +349,7 @@ if [[ -f $power_script ]]; then
     ln -s "$test_dir" "$power_home/.config/quickshell"
     HOME="$power_home" bash "$power_script" > "$test_dir/result" 2> "$test_dir/client-error" & client_pid=$!
     wait_open
-    ipc call pickertest snapshot | jq -e '.layout == "grid" and [.items[].title] == ["Reboot","Lock","Logout","Shutdown","Bios"]
+    snapshot | jq -e '.layout == "grid" and [.items[].title] == ["Reboot","Lock","Logout","Shutdown","Bios"]
         and [.filtered[].title] == [.items[].title] and all(.items[]; (.glyph | length) == 1)' >/dev/null
     ipc call pickertest pressEscape
     wait_client 0
@@ -389,7 +409,7 @@ sed -Ei 's/readonly property int clipboardMaxTotalBytes: 24/readonly property in
 start
 bash "$picker" --json "$test_dir/remember.json" > "$test_dir/result" 2> "$test_dir/client-error" & client_pid=$!
 wait_open
-ipc call pickertest snapshot | jq -e '.currentIndex == 2 and .filtered[.currentIndex].result == "tomato"' >/dev/null
+snapshot | jq -e '.currentIndex == 2 and .filtered[.currentIndex].result == "tomato"' >/dev/null
 ipc call pickertest pressEscape
 wait_client 1
 printf 'PASS: remembered launcher choice survives shell restart\n'

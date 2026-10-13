@@ -23,6 +23,7 @@ ListView {
         required property var modelData
         required property int index
         entry: modelData
+        enabled: !root.picker.searchPending
         width: grid ? Math.max(80, (root.width - Theme.controlSpacing * 4) / 5) : root.width
         current: root.currentIndex === index
         selected: root.picker.selectedIds.includes(modelData.id)

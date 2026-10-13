@@ -80,6 +80,9 @@ existing entries to unpinned without changing their contents. Pinned entries are
 excluded from automatic pruning and Clear history. Include this directory alongside `data/quickshell.db`
 when backing up clipboard history. See [launcher and clipboard](features/launcher.md).
 
+Schema version 10 adds an index on clipboard timestamps and IDs, so opening
+history does not need to sort the table. Existing entries, pins and payloads are preserved.
+
 ## Backups
 
 Stop the shell before copying `data/quickshell.db` so pending writes have finished.
