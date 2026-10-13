@@ -59,12 +59,12 @@ open, and moving the pointer away restores normal dismissal. Click the bar icon
 to pin or unpin manually. Refocusing a manually pinned panel preserves its pin.
 
 The old streamer launcher and its automatic `twitch_online_<uid>` JSON export
-are removed. qutebrowser's `,mm` (current page) and `,mM` (hinted link) still call
-`launcher.sh provider media TITLE URL` for direct Twitch/YouTube playback in mpv,
-including Twitch chat. That helper uses `providers/_common/utils.sh`,
-qutebrowser's `scripts/url/_common.sh` for URL cleaning, and Zsh's
-`scripts/default-browser/default-browser.sh` to open chat; these remain in use.
-The unused `providers/media.new.sh` variant is removed.
+are removed. qutebrowser's `,mm` (current page) and `,mM` (hinted link) call the
+separate `to_mpv` userscript in `~/.local/share/qutebrowser/userscripts/` for
+direct Twitch/YouTube playback in mpv, including Twitch chat. URL cleaning and
+logging live in that script; chat still opens through Zsh's
+`scripts/default-browser/default-browser.sh`. The Quickshell media provider is
+removed.
 
 ## Search
 

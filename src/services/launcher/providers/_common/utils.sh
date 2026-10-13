@@ -23,18 +23,6 @@ function get_env_file() {
     printf '%s/%s.env\n' "$(dirname -- "$path")" "${filename%.*}"
 }
 
-function log() { _internal_log 7 "$@"; }
-function log_error() { _internal_log 4 "$@"; }
-
-function _internal_log() {
-    local priority=$1 input
-    local -a options=()
-    shift
-    if [[ -n ${1:-} ]]; then input=$1; else IFS= read -r input || return 0; fi
-    case $priority in 1|2|3|4) options+=(--stderr);; esac
-    logger "${options[@]}" --priority "$priority" --tag "$(basename -- "${BASH_SOURCE[0]}")" -- "$input"
-}
-
 function get_ignored_category() {
     local status working_state=${WORKING_STATE_NAME:-work}
     status=$("$ZDOTDIR/scripts/status/manager.sh" --get)

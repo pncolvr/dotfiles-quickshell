@@ -16,7 +16,7 @@ export PATH="$test_dir/bin:$PATH"
 picker="$test_dir/src/services/launcher/launcher.sh"
 providers="$test_dir/src/services/launcher/providers"
 mkdir -p "$ZDOTDIR/scripts/status" "$ZDOTDIR/scripts/default-browser"
-mkdir -p "$HOME/.config/qutebrowser/src/scripts/url" "$HOME/.config/qutebrowser/bookmarks"
+mkdir -p "$HOME/.config/qutebrowser/bookmarks"
 mkdir -p "$HOME/Alpha" "$HOME/Beta" "$HOME/Pictures" "$HOME/Videos"
 touch "$test_dir/actions" "$test_dir/menus"
 cat > "$test_dir/bin/qs" <<'BASH'
@@ -64,7 +64,6 @@ printf '%s%s\n' "$name" "$action_args" >> "$PROVIDER_TEST_DIR/actions"
 case $name in
     hyprctl)
         case ${1:-} in
-            clients) printf '%s\n' '[{"class":"mpv-youtube","address":"0xtest","title":"Test"}]' ;;
             monitors) printf '%s\n' '[{"name":"TEST-1"},{"name":"TEST-2"}]' ;;
         esac ;;
     pgrep) [[ ${PROVIDER_TEST_RECORDING:-0} == 1 ]] ;;
@@ -115,11 +114,10 @@ case $name in
     wl-copy) cat >/dev/null ;;
     tesseract) printf '%s\n' 'Test OCR' ;;
     zbarimg) printf '%s\n' 'https://example.test/qr' ;;
-    logger) if (($# == 0)); then cat >/dev/null; fi ;;
 esac
 BASH
 chmod +x "$test_dir/bin/qs" "$test_dir/bin/action"
-for command in hyprctl code zathura xdg-open dbus-send pcmanfm-qt mpv virsh nc sdl-freerdp3 systemctl loginctl wf-recorder hyprshot satty pactl slurp logger playerctl sleep pgrep pkill notify-send wl-copy tesseract zbarimg; do
+for command in hyprctl code zathura xdg-open dbus-send pcmanfm-qt virsh nc sdl-freerdp3 systemctl loginctl wf-recorder hyprshot satty pactl slurp sleep pgrep pkill notify-send wl-copy tesseract zbarimg; do
     ln -s action "$test_dir/bin/$command"
 done
 cat > "$ZDOTDIR/scripts/status/manager.sh" <<'BASH'
@@ -132,7 +130,6 @@ cat > "$ZDOTDIR/scripts/default-browser/default-browser.sh" <<'BASH'
 printf 'browser <%s>\n' "$*" >> "$PROVIDER_TEST_DIR/actions"
 BASH
 chmod +x "$ZDOTDIR/scripts/status/manager.sh" "$ZDOTDIR/scripts/default-browser/default-browser.sh"
-printf 'clean() { printf "%%s" "$1"; }\n' > "$HOME/.config/qutebrowser/src/scripts/url/_common.sh"
 cat > "$HOME/.config/qutebrowser/bookmarks/urls" <<'DATA'
 https://example.test/alpha Alpha
 https://example.test/beta Beta
@@ -200,12 +197,6 @@ jq -se 'length == 4' "$test_dir/menus" >/dev/null
 
 # Non-menu callers must keep working after the original scripts are removed.
 : > "$test_dir/actions"; : > "$test_dir/menus"
-bash "$picker" provider media 'Video title' 'https://youtube.com/watch?v=direct' > "$test_dir/output" 2> "$test_dir/error"
-expect_action '<https://youtube.com/watch?v=direct>'
-[[ ! -s $test_dir/menus ]]
-if bash "$picker" provider media > "$test_dir/output" 2> "$test_dir/error"; then exit 1; fi
-rg -Fq 'qs ipc call bar open twitch' "$test_dir/error"
-[[ ! -s $test_dir/menus ]]
 bash "$picker" provider power Lock
 bash "$picker" provider screenshot ocr >/dev/null
 bash "$picker" provider screenshot qrcode >/dev/null
@@ -216,13 +207,13 @@ expect_action 'zbarimg <--raw> <-q> <->'
 expect_action 'pkill <-SIGINT> <-x> <wf-recorder>'
 ! rg -q '^notify-send |^hyprctl <notify>' "$test_dir/actions"
 [[ ! -s $test_dir/menus ]]
-printf 'PASS: direct media, idle lock, OCR, QR and recording-stop calls bypass selection\n'
+printf 'PASS: idle lock, OCR, QR and recording-stop calls bypass selection\n'
 
 # A cancelled browser request must not execute its selected action.
 for name in bookmarks remotes power; do
     : > "$test_dir/actions"
     PROVIDER_TEST_CANCEL=1 PROVIDER_TEST_NAME="$name" bash "$picker" provider "$name" > "$test_dir/output" 2> "$test_dir/error" || true
-    ! rg -q '^(browser|mpv|virsh|sdl-freerdp3|loginctl|systemctl) ' "$test_dir/actions"
+    ! rg -q '^(browser|virsh|sdl-freerdp3|loginctl|systemctl) ' "$test_dir/actions"
 done
 [[ -z $(find "$test_dir/runtime/quickshell-picker" -mindepth 1 -print -quit) ]]
 printf 'PASS: cancellation skips actions and all request directories are cleaned up\n'

@@ -43,7 +43,7 @@ case ${1:-apps} in
             directories) ipc call launcher directories; exit ;;
         esac
         case $name in
-            bookmarks|books|media|power|screenshot|recording) provider="$launcher_dir/providers/$name.sh" ;;
+            bookmarks|books|power|screenshot|recording) provider="$launcher_dir/providers/$name.sh" ;;
             webapps|azure|n8n) provider="$launcher_dir/providers/web/$name.sh" ;;
             remotes) provider="$launcher_dir/providers/remotes/pick.sh" ;;
             *) fail "Unknown provider: $name" ;;
