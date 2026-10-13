@@ -21,6 +21,9 @@ Singleton {
     readonly property string timecardError: _internal.timecardError
     readonly property string timecardDate: _internal.timecardDate
     readonly property bool timecardLoading: reportProcess.running
+    readonly property var detectionMatches: _internal.detectionMatches
+    readonly property string detectionError: _internal.detectionError
+    readonly property bool detectionLoading: detectionProcess.running
     
     QtObject {
         id: _internal
@@ -38,6 +41,9 @@ Singleton {
         property bool includeWeeks: false
         property bool includeMonths: false
         property bool reportPending: false
+        property var detectionMatches: []
+        property string detectionError: ""
+        property bool detectionPending: false
     }
     function reload() {
         reloadTimer.restart()
@@ -49,8 +55,15 @@ Singleton {
         }
         _internal.panels++
         refreshTimecard()
+        refreshDetection()
     }
-    function endPanel() { _internal.panels = Math.max(0, _internal.panels - 1) }
+    function endPanel() {
+        _internal.panels = Math.max(0, _internal.panels - 1)
+        if (_internal.panels === 0) {
+            _internal.detectionPending = false
+            detectionProcess.running = false
+        }
+    }
     function showPeriod(index) {
         _internal.includeWeeks = index === 1 || index === 2
         _internal.includeMonths = index === 3 || index === 4
@@ -62,11 +75,17 @@ Singleton {
         reportProcess.command = Config.statusTimecardCommand(_internal.includeWeeks, _internal.includeMonths)
         reportProcess.running = true
     }
+    function refreshDetection() {
+        if (_internal.panels === 0) return
+        if (detectionProcess.running) { _internal.detectionPending = true; return }
+        _internal.detectionPending = false
+        detectionProcess.running = true
+    }
     Timer {
         interval: Config.statusTimecardRefreshInterval
         running: _internal.panels > 0
         repeat: true
-        onTriggered: root.refreshTimecard()
+        onTriggered: { root.refreshTimecard(); root.refreshDetection() }
     }
 
     Timer {
@@ -96,7 +115,7 @@ Singleton {
         // qmllint disable signal-handler-parameters
         onExited: (exitCode, exitStatus) => {
             if (exitCode === 0 && exitStatus === 0) _internal.status = modeOutput.text.trim()
-            if (_internal.panels > 0) root.refreshTimecard()
+            if (_internal.panels > 0) { root.refreshTimecard(); root.refreshDetection() }
         }
         // qmllint enable signal-handler-parameters
     }
@@ -109,6 +128,28 @@ Singleton {
         // qmllint disable signal-handler-parameters
         onExited: (exitCode, exitStatus) => {
             if (exitCode === 0 && exitStatus === 0) _internal.source = sourceOutput.text.trim()
+        }
+        // qmllint enable signal-handler-parameters
+    }
+
+    Process {
+        id: detectionProcess
+        command: Config.statusManagerDetectionCommand
+        stdout: StdioCollector { id: detectionOutput; waitForEnd: true }
+        // qmllint disable signal-handler-parameters
+        onExited: (exitCode, exitStatus) => {
+            if (_internal.panels === 0) return
+            let report
+            try { report = JSON.parse(detectionOutput.text) } catch (_) { report = null }
+            const valid = exitCode === 0 && exitStatus === 0 && Array.isArray(report?.matches)
+                && report.matches.every(match => typeof match.name === "string"
+                    && Array.isArray(match.methods) && match.methods.every(method => typeof method === "string")
+                    && Array.isArray(match.paths) && match.paths.every(path => typeof path === "string"))
+                && Array.isArray(report?.errors) && report.errors.every(error => typeof error === "string")
+            const matches = valid ? report.matches : []
+            if (JSON.stringify(matches) !== JSON.stringify(_internal.detectionMatches)) _internal.detectionMatches = matches
+            _internal.detectionError = valid ? report.errors.join("\n") : "Could not read automatic detection."
+            if (_internal.detectionPending) Qt.callLater(root.refreshDetection)
         }
         // qmllint enable signal-handler-parameters
     }

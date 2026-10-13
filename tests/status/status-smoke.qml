@@ -13,6 +13,7 @@ Scope {
     property int step: 0
     property int ticks: 0
     property bool failed: false
+    property bool capturingPreview: false
     function check(ok, message) { if (!ok) { failed = true; console.error("STATUS FAIL:", message) } }
     function find(name) { return mouse.findChild(panel, name) }
     function clickTab(index) {
@@ -30,6 +31,9 @@ Scope {
         property string timecardError: ""
         property string timecardDate: Qt.formatDateTime(new Date(), "yyyy-MM-dd")
         property bool timecardLoading: false
+        property var detectionMatches: []
+        property string detectionError: ""
+        property bool detectionLoading: false
         property int panels: 0
         property int refreshes: 0
         property bool weeksShown: false
@@ -60,6 +64,7 @@ Scope {
         interval: 100; repeat: true; running: true
         onTriggered: {
             if (++root.ticks > 100) { root.check(false, "timeout at step " + root.step); Qt.quit(); return }
+            if (root.capturingPreview) return
             if (StatusService.timecardLoading) return
             const tabs = root.find("statusTimecardTabs") as QC.TabBar
             const view = root.find("statusTimecardView") as Flickable
@@ -72,12 +77,37 @@ Scope {
                 root.check(backend.panels === 1 && tabs.currentIndex === 0 && tabs.count === 5, "opens on Today with five periods")
                 root.check(StatusService.currentWeekTimecard === "" && StatusService.lastWeekTimecard === "", "weeks are read on demand")
                 root.check(panel.expandedDay === "" && root.find("statusSession") === null, "Today hides session details initially")
-                const today = root.find("statusDay_" + backend.timecardDate) as MouseArea
-                mouse.mouseClick(today, today.width / 2, today.height / 2)
-                root.check(panel.expandedDay === backend.timecardDate, "Today sessions can be expanded")
-                root.clickTab(1)
-                root.check(panel.expandedDay === "", "changing period collapses Today")
-                StatusService.showPeriod(1)
+                root.check(root.find("statusDetectionDetails").visible
+                    && root.find("statusDetectionFeedback").text === "No active work detections.",
+                    "Today shows automatic detection below the collapsible day")
+                backend.detectionMatches = [
+                    {name:"dotnet", methods:["directory","file"], paths:["/work/gaia", "/work/hera"]},
+                    {name:"vivaldi-bin", methods:["process"], paths:["/opt/vivaldi/vivaldi-bin"]}
+                ]
+                backend.status = "work"
+                root.check(root.find("statusDetectionProcess").text === "dotnet"
+                    && root.find("statusDetectionPaths").text === "/work/gaia\n/work/hera",
+                    "automatic detection renders process names and distinct paths")
+                const detectionScreenshot = Quickshell.env("STATUS_TEST_DETECTION_SCREENSHOT")
+                const advance = () => {
+                    const today = root.find("statusDay_" + backend.timecardDate) as MouseArea
+                    mouse.mouseClick(today, today.width / 2, today.height / 2)
+                    root.check(panel.expandedDay === backend.timecardDate, "Today sessions can be expanded")
+                    root.clickTab(1)
+                    root.check(!root.find("statusDetectionDetails").visible, "current detections are not attributed to historical periods")
+                    root.check(panel.expandedDay === "", "changing period collapses Today")
+                    StatusService.showPeriod(1)
+                    root.step = 1
+                }
+                if (detectionScreenshot) {
+                    root.capturingPreview = true
+                    panel.grabToImage(result => {
+                        result.saveToFile(detectionScreenshot)
+                        root.capturingPreview = false
+                        advance()
+                    })
+                } else advance()
+                return
             } else if (root.step === 1) {
                 if (!StatusService.currentWeekTimecard) return
                 backend.currentWeekTimecard = StatusService.currentWeekTimecard
@@ -112,6 +142,10 @@ Scope {
                 StatusService.toggle()
             } else if (root.step === 4) {
                 if (StatusService.status !== "work" || StatusService.source !== "manual") return
+                if (StatusService.detectionLoading) return
+                root.check(StatusService.detectionMatches.length === 1
+                    && StatusService.detectionMatches[0].paths.length === 2,
+                    "mode refresh reads the manager detection report")
                 mouse.mouseClick(trigger, trigger.width / 2, trigger.height / 2, Qt.RightButton)
                 mouse.mouseClick(trigger, trigger.width / 2, trigger.height / 2, Qt.LeftButton)
                 root.check(TooltipService.pinned && TooltipService.source === trigger, "left-click pins the status tooltip")
@@ -120,6 +154,9 @@ Scope {
             } else if (root.step === 5) {
                 root.check(StatusService.status === "work" && StatusService.source === "manual", "bar clicks leave the manual mode unchanged")
                 backend.source = "manual"
+                root.clickTab(0)
+                root.check(root.find("statusDetectionManual").visible, "manual overrides are separated from automatic matches")
+                root.clickTab(2)
                 const reset = root.find("resetStatusMode") as QC.Button
                 const toggle = root.find("toggleStatusMode") as QC.Button
                 root.check(reset.x > toggle.x + toggle.width, "Reset follows the mode toggle")
@@ -146,11 +183,14 @@ Scope {
                 const previousDays = new Date(now.getFullYear(), now.getMonth(), 0).getDate()
                 root.check(panel.period.days.length === previousDays && panel.period.work === (now.getDate() === 1 ? 60 : 0), "Last month uses its own calendar boundaries and totals")
                 backend.timecardError = "The configured timetable file is unavailable."
+                backend.detectionError = "Could not inspect open work files."
                 backend.todayTimecard = ""
                 root.clickTab(0)
             } else if (root.step === 9) {
                 const feedback = root.find("statusTimecardFeedback") as Text
                 root.check(feedback.visible && feedback.text === backend.timecardError, "report failures remain visible")
+                root.check(root.find("statusDetectionFeedback").text === backend.detectionError,
+                    "detection failures remain visible independently of timecard failures")
                 root.check(panel.height <= panel.maxPanelHeight && !backend.weeksShown && !backend.monthsShown, "error view stays bounded and returns to Today")
                 console.log(root.failed ? "STATUS FAIL: panel" : "PASS: status timecard totals, period tabs, daily expansion, scrolling, refresh, mode actions and errors")
                 Qt.quit()

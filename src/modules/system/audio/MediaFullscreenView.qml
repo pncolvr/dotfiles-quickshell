@@ -164,7 +164,7 @@ Rectangle {
             color: Theme.inactive
             horizontalAlignment: Text.AlignHCenter
             text: visualizer.error ? "Audio visualizer unavailable"
-                : !root.app ? "Audio stream unavailable"
+                : !root.app ? ""
                 : !root.player?.isPlaying ? "Playback paused" : root.muted ? "Muted" : ""
             visible: !!text
         }

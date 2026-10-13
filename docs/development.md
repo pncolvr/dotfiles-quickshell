@@ -150,6 +150,11 @@ events, source preservation, module imports, scrolling, refresh, and mode action
 The status manager is mocked, so the tests do not change the desktop mode,
 wallpaper, or activity log. `TIMECARD_TEST_EXECUTABLE` can point to another build.
 Set `STATUS_TEST_SCREENSHOT=/tmp/status-timecard.png` to save a tooltip preview.
+`STATUS_TEST_DETECTION_SCREENSHOT` saves Today's automatic detection section.
+Run `bash tests/status/detection.sh` for distinct process/path reporting, literal
+directory boundaries, quoted/newline paths, detector failures and read-only manager
+output. It uses mocked processes and `lsof` data; `STATUS_DETECTION_SCRIPT` and
+`STATUS_MANAGER_SCRIPT` can point to a prepared copy of the zsh manager/helper.
 
 ## Projects
 

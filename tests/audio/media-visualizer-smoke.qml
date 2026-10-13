@@ -19,6 +19,7 @@ Scope {
     property bool reviewingStyle: false
     property bool checkedLastPreset: false
     property int mutePhase: 0
+    property int edgeProbe: 0
     readonly property bool nativeAudio: Quickshell.env("MEDIA_VISUALIZER_NATIVE") === "1"
     // Quickshell's UntypedObjectModel metadata omits the runtime values property.
     // qmllint disable missing-property
@@ -58,6 +59,17 @@ Scope {
             && !frontLayer.active && !backLayer.active && !frontLayer.item && !backLayer.item
             && !shader.active && !shader.item && root.find(visualizer, "mediaVisualizerPlot").outline.length === 0,
             reason + " stops analysis, texture updates, geometry and both face renderers");
+    }
+    function clickEffectText(choices, index, message) {
+        const option = choices.itemAtIndex(index) as QC.ItemDelegate;
+        const label = option.contentItem;
+        const point = label.mapToItem(choices, label.width / 2, label.height / 2);
+        root.check(point.y > 0 && point.y < choices.height, message + " text is visible");
+        events.mouseMove(label, label.width / 2, label.height / 2, 0, Qt.NoButton, Qt.NoModifier);
+        root.check(option.hovered, message + " text highlights the row");
+        events.mouseClick(label, label.width / 2, label.height / 2, Qt.LeftButton, Qt.NoModifier, 0);
+        const visualizer = root.find(card, "mediaVisualizer") as MediaVisualizer;
+        root.check(visualizer.effect === visualizer.effects[index].name, message + " text selects the effect");
     }
     QtObject {
         id: fixturePlayer
@@ -108,6 +120,8 @@ Scope {
         visible: true
         implicitWidth: 550
         implicitHeight: card.implicitHeight
+        minimumSize: Qt.size(implicitWidth, implicitHeight)
+        maximumSize: minimumSize
         MediaPlayerCard {
             id: card
             anchors.fill: parent
@@ -191,6 +205,35 @@ Scope {
                 root.check(card.implicitHeight === root.cardHeight, "effect list does not resize the card");
             } else if (root.step === 3) {
                 const choices = root.find(card, "mediaEffectChoices") as ListView;
+                if (root.edgeProbe === 0) {
+                    choices.contentY = selector.rowHeight / 3;
+                    choices.forceLayout();
+                    root.edgeProbe++;
+                    return;
+                }
+                if (root.edgeProbe === 1) {
+                    root.clickEffectText(choices, 0, "Partially visible first row");
+                    root.edgeProbe++;
+                    return;
+                }
+                if (root.edgeProbe === 2) {
+                    // Keep the last visible row's label inside the viewport with its bottom clipped.
+                    choices.contentY = selector.rowHeight * 6 - choices.height + selector.rowHeight * 0.75;
+                    choices.forceLayout();
+                    root.edgeProbe++;
+                    return;
+                }
+                if (root.edgeProbe === 3) {
+                    root.clickEffectText(choices, 6, "Partially visible last row");
+                    root.edgeProbe++;
+                    return;
+                }
+                if (root.edgeProbe === 4) {
+                    choices.positionViewAtIndex(1, ListView.Beginning);
+                    choices.forceLayout();
+                    root.edgeProbe++;
+                    return;
+                }
                 const option = choices.itemAtIndex(1) as QC.ItemDelegate;
                 events.mouseMove(option, 30, 10, 0, Qt.NoButton, Qt.NoModifier);
                 root.check((option.background as Rectangle).color.a === 1,
@@ -307,8 +350,7 @@ Scope {
             } else if (root.step === 15) {
                 if (!root.checkedLastPreset) {
                     const choices = root.find(card, "mediaEffectChoices") as ListView;
-                    const lastChoice = choices.itemAtIndex(visualizer.effects.length - 1);
-                    events.mouseClick(lastChoice, 30, 10, Qt.LeftButton, Qt.NoModifier, 0);
+                    root.clickEffectText(choices, visualizer.effects.length - 1, "Final preset");
                     root.check(visualizer.effect === "cava_spectrogram" && selector.view.visible,
                         "the last preset is reachable by scrolling and clicking the list");
                     root.checkedLastPreset = true;

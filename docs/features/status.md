@@ -13,6 +13,12 @@ full weekday followed by the date.
 Click a day with activity to expand its start/end times, category and duration.
 An ongoing session ends with “now”; hover its time range for precise timestamps.
 Long lists scroll vertically within a bounded panel using the shared scrollbar.
+Below Today's collapsible sessions, **Automatic detection** lists distinct process
+names, matching executable/work paths, and the rules that matched: configured
+processes, working directories, or open work files. Duplicate paths are removed.
+The evidence is current, rather than a history attached to earlier sessions. A
+manual override is labeled separately; its automatic matches do not set the mode.
+No active matches and detection errors are shown explicitly.
 
 The tooltip opens on Today and refreshes the timecard immediately, every minute
 while open, and after a mode reload. The refresh button reruns the status manager's
@@ -48,5 +54,10 @@ In `src/config/Config.qml`:
 panel dimensions. Missing commands, missing logs, and malformed events appear
 as errors in the tooltip. The status manager continues to own mode changes and
 event logging.
+The manager's read-only `--explain` command supplies the detection report as JSON.
+The panel reads it on opening, mode refresh and each minute while visible, and
+stops the scan when closed. This command does not change mode, wallpaper or the
+timetable. The report requires `jq` and uses the manager's existing process and
+work-directory configuration.
 
 [Development checks](../development.md#status-and-timecard)

@@ -124,18 +124,25 @@ Item {
         duration: Theme.mediaFlipDuration
         easing.type: Easing.InOutCubic
     }
-    Flipable {
+    QtObject {
+        id: flipRotation
+        property real angle: 0
+    }
+    Item {
         id: faces
         anchors.fill: parent
         transform: Rotation {
-            id: flipRotation
             origin.x: faces.width / 2
             origin.y: faces.height / 2
             axis { x: 0; y: 1; z: 0 }
+            // Fold the back half onto zero so the resting face has no 3D transform.
+            // Opposing 180-degree transforms break hit testing of clipped list rows.
+            angle: root.showingBack ? flipRotation.angle + 180 : flipRotation.angle
         }
-        front: Rectangle {
+        Rectangle {
             objectName: "mediaFront"
             anchors.fill: parent
+            visible: !root.showingBack
             enabled: !root.flipped && !root.flipping
             color: Theme.alternateBackground
             radius: Theme.audioDeviceRadius
@@ -232,10 +239,11 @@ Item {
 
                     Item {
                         id: information
-                        readonly property real volumeHeight: volumeRow.visible ? Theme.audioSpacing + volumeRow.implicitHeight : 0
-                        readonly property real singleLineTitleSpace: volumeRow.visible && titleText.lineCount === 1
+                        readonly property bool volumeBesideDetails: root.hasDuration && !!root.app
+                        readonly property real volumeHeight: volumeBesideDetails ? Theme.audioSpacing + volumeRow.implicitHeight : 0
+                        readonly property real singleLineTitleSpace: volumeBesideDetails && titleText.lineCount === 1
                             ? titleText.implicitHeight : 0
-                        readonly property real detailsTop: volumeRow.visible
+                        readonly property real detailsTop: volumeBesideDetails
                             ? height - details.implicitHeight - volumeHeight - singleLineTitleSpace
                             : (height - details.implicitHeight) / 2
                         Layout.fillWidth: true
@@ -282,12 +290,10 @@ Item {
                         }
                         RowLayout {
                             id: volumeRow
-                            visible: !!root.app
-                            width: parent.width
-                            anchors.bottom: parent.bottom
                             spacing: Theme.audioSpacing
                             AudioButton {
                                 objectName: "mediaMute"
+                                visible: !!root.app
                                 glyphSize: Theme.fontSize
                                 implicitHeight: Theme.audioButtonHeight
                                 glyph: root.muted ? Theme.volumeMutedIcon : Theme.volumeIcons[Theme.volumeIcons.length - 1]
@@ -300,6 +306,7 @@ Item {
                             }
                             AudioVolumeSlider {
                                 objectName: "mediaVolume"
+                                visible: !!root.app
                                 Layout.fillWidth: true
                                 volume: root.volume
                                 muted: root.muted
@@ -313,12 +320,21 @@ Item {
                             UI.ColumnText {
                                 id: volumeValue
                                 objectName: "mediaVolumeValue"
+                                visible: !!root.app
                                 font.pixelSize: Theme.fontSize
                                 Layout.preferredWidth: root.readoutWidth
                                 horizontalAlignment: Text.AlignRight
                                 text: Math.round(root.volume * 100) + "%"
                                 color: Theme.text
                             }
+                        }
+                        LayoutItemProxy {
+                            id: informationVolume
+                            target: volumeRow
+                            visible: root.hasDuration
+                            width: information.width
+                            height: volumeRow.implicitHeight
+                            anchors.bottom: parent.bottom
                         }
                     }
                 }
@@ -373,6 +389,12 @@ Item {
                             onClicked: root.player.stop()
                         }
                     }
+                    LayoutItemProxy {
+                        target: volumeRow
+                        visible: !root.hasDuration
+                        Layout.fillWidth: true
+                        Layout.alignment: Qt.AlignVCenter
+                    }
                     UI.ColumnText {
                         objectName: "mediaElapsed"
                         font.pixelSize: Theme.fontSize
@@ -408,15 +430,16 @@ Item {
                     }
 
                     Item {
-                        visible: !root.hasPosition || !root.hasDuration
+                        visible: root.hasDuration && !root.hasPosition
                         Layout.fillWidth: true
                     }
                 }
             }
         }
-        back: Rectangle {
+        Rectangle {
             objectName: "mediaBack"
             anchors.fill: parent
+            visible: root.showingBack
             enabled: root.flipped && !root.flipping
             color: Theme.alternateBackground
             radius: Theme.audioDeviceRadius

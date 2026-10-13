@@ -119,6 +119,7 @@ Item {
 
     readonly property var statusManagerCheckCommand:  [_internal.statusManager, "--check"]
     readonly property var statusManagerSourceCommand: [_internal.statusManager, "--source"]
+    readonly property var statusManagerDetectionCommand: [_internal.statusManager, "--explain"]
     readonly property var statusManagerToggleCommand: [_internal.statusManager, "--toggle"]
     readonly property var statusManagerClearCommand:  [_internal.statusManager, "--clear"]
     readonly property string statusTimecardExecutable: `${Quickshell.env("ZDOTDIR") || `${_internal.home}/.config/zsh`}/scripts/status/bin/timecard`

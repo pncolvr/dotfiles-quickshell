@@ -76,6 +76,8 @@ to the rounded corners. The playback face uses a softer overlay;
 control its strength. Flip aligns with the artwork's top edge. Details are
 centered across the full space beside the artwork, and the mute button's bottom
 aligns with the artwork's bottom.
+When the media length is unavailable, mute, volume and percentage move into the
+bottom row beside playback controls, replacing the hidden position controls.
 Flips also respect `Config.animateDuringScreenShare`: when disabled, they switch
 faces immediately during sharing, including finishing any flip already in progress.
 

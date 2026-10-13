@@ -18,6 +18,10 @@ cat > "$test_dir/bin/manager" <<'BASH'
 case "$1" in
     --check) cat "$STATUS_TEST_MODE" ;;
     --source) cat "$STATUS_TEST_SOURCE" ;;
+    --explain)
+        jq -n --arg source "$(cat "$STATUS_TEST_SOURCE")" --arg mode "$(cat "$STATUS_TEST_MODE")" \
+            '{source:$source, automaticStatus:$mode, errors:[], matches:(if $mode=="work" then
+                [{name:"dotnet", methods:["directory"], paths:["/work/gaia", "/work/hera"]}] else [] end)}' ;;
     --toggle)
         if [[ $(cat "$STATUS_TEST_MODE") == work ]]; then printf personal > "$STATUS_TEST_MODE";
         else printf work > "$STATUS_TEST_MODE"; fi
