@@ -49,16 +49,37 @@ Column {
         }
     }
 
-    Row {
-        spacing: Theme.controlSpacing
+    Item {
+        width: parent.width
+        height: Math.max(downloadRate.implicitHeight, uploadRate.implicitHeight)
 
-        UI.ColumnText {
-            text: `↓ ${root.networkService.formatSpeed(root.networkService.downloadSpeed)}/s`
-            color: Theme.networkDownColor
+        Row {
+            id: downloadRate
+            anchors.left: parent.left
+            spacing: Theme.controlSpacing
+            UI.IconText {
+                text: Theme.networkDownIcon
+                font.pixelSize: Theme.fontSize
+                color: Theme.networkDownColor
+            }
+            UI.ColumnText {
+                text: `${root.networkService.formatSpeed(root.networkService.downloadSpeed)}/s`
+                color: Theme.networkDownColor
+            }
         }
-        UI.ColumnText {
-            text: `↑ ${root.networkService.formatSpeed(root.networkService.uploadSpeed)}/s`
-            color: Theme.networkUpColor
+        Row {
+            id: uploadRate
+            anchors.right: parent.right
+            spacing: Theme.controlSpacing
+            UI.IconText {
+                text: Theme.networkUpIcon
+                font.pixelSize: Theme.fontSize
+                color: Theme.networkUpColor
+            }
+            UI.ColumnText {
+                text: `${root.networkService.formatSpeed(root.networkService.uploadSpeed)}/s`
+                color: Theme.networkUpColor
+            }
         }
     }
 
@@ -88,13 +109,29 @@ Column {
                     text: netRow.modelData.name
                     color: netRow.modelData.connected ? Theme.text : Theme.inactive
                 }
-                UI.ColumnText {
+                Row {
                     id: netSpeed
                     anchors.right: parent.right
-                    text: netRow.modelData.connected
-                        ? `↓${root.networkService.formatSpeed(netRow.modelData.downloadSpeed)} ↑${root.networkService.formatSpeed(netRow.modelData.uploadSpeed)}`
-                        : ""
-                    color: Theme.inactive
+                    spacing: Theme.controlSpacing
+                    visible: netRow.modelData.connected
+                    UI.IconText {
+                        text: Theme.networkDownIcon
+                        font.pixelSize: Theme.fontSize
+                        color: Theme.inactive
+                    }
+                    UI.ColumnText {
+                        text: root.networkService.formatSpeed(netRow.modelData.downloadSpeed)
+                        color: Theme.inactive
+                    }
+                    UI.IconText {
+                        text: Theme.networkUpIcon
+                        font.pixelSize: Theme.fontSize
+                        color: Theme.inactive
+                    }
+                    UI.ColumnText {
+                        text: root.networkService.formatSpeed(netRow.modelData.uploadSpeed)
+                        color: Theme.inactive
+                    }
                 }
             }
         }

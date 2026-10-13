@@ -5,7 +5,6 @@ import Quickshell
 import "../../../theme"
 import "../../../theme/ui" as UI
 import "../../../services"
-import "../../../config"
 import ".."
 
 Column {
@@ -99,38 +98,6 @@ Column {
         id: heading
         width: parent.width
         spacing: root.spacing
-        Item {
-            width: parent.width
-            height: Theme.controlHeight
-            Row {
-                spacing: Theme.controlSpacing
-                anchors.verticalCenter: parent.verticalCenter
-                UI.IconText { text: Theme.statsIcon; color: Theme.accent }
-                UI.ColumnText { text: "Stats" }
-            }
-        }
-        Row {
-            id: profiles
-            width: parent.width
-            spacing: Theme.controlSpacing
-            Repeater {
-                model: Config.powerProfiles
-                UI.ActionButton {
-                    required property string modelData
-                    required property int index
-                    objectName: "statsPowerProfile-" + modelData
-                    width: (profiles.width - profiles.spacing * (Config.powerProfiles.length - 1)) / Config.powerProfiles.length
-                    label: ["Power saver", "Balanced", "Performance"][index]
-                    glyph: Theme.powerProfileIcons[index]
-                    hint: label + (enabled ? "" : " unavailable")
-                    enabled: root.powerService.availableProfiles.includes(modelData)
-                    checked: root.powerService.profile === modelData
-                    foreground: checked ? Theme.accent : Theme.inactive
-                    fillColor: checked ? Theme.alternateBackground : "transparent"
-                    onClicked: root.powerService.setProfile(modelData)
-                }
-            }
-        }
         UI.TabBar {
             id: tabs
             objectName: "statsTabs"
@@ -254,7 +221,7 @@ Column {
         }
         QC.ScrollBar.vertical: UI.ScrollBar {}
     }
-    Component { id: overview; StatsOverview { width: root.width; statsService: root.statsService; networkService: root.networkService } }
+    Component { id: overview; StatsOverview { width: root.width; statsService: root.statsService; networkService: root.networkService; powerService: root.powerService } }
     Component { id: cpu; CpuTooltip { width: root.width; statsService: root.statsService } }
     Component { id: memory; MemoryTooltip { width: root.width; statsService: root.statsService } }
     Component { id: network; NetworkTooltip { width: root.width; networkService: root.networkService } }

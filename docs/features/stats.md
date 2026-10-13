@@ -2,8 +2,9 @@
 
 Hover the Stats icon to open its panel. Left-click pins or unpins the panel;
 the icon keeps the same width while hovering. Select **Power saver**, **Balanced**
-or **Performance** directly from the profile buttons. The active profile is
-highlighted; Performance is disabled when the system does not support it.
+or **Performance** directly from the profile buttons at the bottom of **Overview**.
+The active profile is highlighted; Performance is disabled when the system does
+not support it.
 
 The panel uses the shared tabs, search field, buttons and scrollbar. Its height
 is limited to 60% of the screen, with longer content scrolling inside it.

@@ -288,6 +288,8 @@ Item {
 
   // network tooltip
   readonly property string networkIcon: ""
+  readonly property string networkDownIcon: "" // arrow-down: download
+  readonly property string networkUpIcon: "" // arrow-up: upload
   readonly property int networkGraphHeight: 40
   readonly property color networkDownColor: active
   readonly property color networkUpColor: warning
