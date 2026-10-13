@@ -12,9 +12,13 @@ import "../../config"
 Singleton {
     id: root
     property bool visible: false
-    enum Mode { None, Menu, Projects, Directories, Apps, Windows, Clipboard }
+    enum Mode { None, Menu, Projects, Directories, Apps, Windows, Clipboard, Secret }
     property int mode: PickerService.Mode.None
+    property bool privateRequest: false
+    readonly property bool privateWindow: privateRequest || mode === PickerService.Mode.Secret
     property string prompt: ""
+    property bool forcePrompt: false
+    property string secretDescription: ""
     property string acceptLabel: "Select"
     property string query: ""
     property string layout: "list"
@@ -159,6 +163,7 @@ Singleton {
         acceptLabel = newMode === PickerService.Mode.Apps ? "Open" : newMode === PickerService.Mode.Windows ? "Focus" : "Select"
         layout = "list"; multiple = false; allowTyped = false; customAccept = false
         error = ""; destination = ""; destinationClass = ""; selectionKey = ""
+        forcePrompt = false; secretDescription = ""; privateRequest = false
         targetScreen = chooseScreen()
     }
     function show() { visible = true; opened() }
@@ -320,6 +325,7 @@ Singleton {
         if (requestDirectory) reply(requestDirectory, {status: "cancelled", items: [], exitCode: 1})
         requestDirectory = ""
         visible = false
+        if (mode === PickerService.Mode.Secret) { secretDescription = ""; error = ""; prompt = "" }
         // Keep the outgoing Exposé grid stable until its closing animation ends.
         if (layout !== "expose") { query = ""; selectedIds = [] }
     }
@@ -356,6 +362,12 @@ Singleton {
     function toggleVisibleSelection() {
         if (selectionToggleClears) deselectAll()
         else selectVisible()
+    }
+    function acceptSecret(value) {
+        if (mode !== PickerService.Mode.Secret || !requestDirectory || !visible) return
+        reply(requestDirectory, {status: "accepted", secret: value})
+        requestDirectory = ""
+        close()
     }
     function accept(custom, copyOnly) {
         if (searchPending) {
@@ -476,8 +488,25 @@ Singleton {
                 root.reply(directory, {status: "error", items: [], exitCode: 2})
                 return
             }
+            // QML enum metadata can survive a reload of a running shell. Never
+            // leave an invisible secret request waiting when its mode is absent.
+            if (request.kind === "secret" && typeof PickerService.Mode.Secret !== "number") {
+                root.reply(directory, {status: "error", items: [], exitCode: 2})
+                console.warn("Secret picker unavailable; restart Quickshell.")
+                return
+            }
+            root.privateRequest = request.private === true
             root.requestDirectory = directory
             root.prompt = request.prompt || "Choose"
+            root.forcePrompt = request.showPrompt === true
+            if (request.kind === "secret") {
+                root.mode = PickerService.Mode.Secret
+                root.secretDescription = request.description || ""
+                root.error = request.errorText || ""
+                root.items = []; root.query = ""; root.selectionKey = ""
+                root.show()
+                return
+            }
             root.acceptLabel = request.acceptLabel || (request.action === "default" ? "Open links" : "Select")
             root.multiple = request.allowMultipleSelection === true
             root.allowTyped = request.allowTyped === true
@@ -497,6 +526,28 @@ Singleton {
         }
         // qmllint enable signal-handler-parameters
     }
+    Timer {
+        interval: 1000
+        repeat: true
+        running: root.visible && root.mode === PickerService.Mode.Secret && !!root.requestDirectory
+        onTriggered: if (!secretOwner.running) {
+            secretOwner.directory = root.requestDirectory
+            secretOwner.command = Config.pickerBridgeCommand.concat(["watch", root.requestDirectory])
+            secretOwner.running = true
+        }
+    }
+    Process {
+        id: secretOwner
+        property string directory: ""
+        stdout: StdioCollector { waitForEnd: true }
+        stderr: StdioCollector { waitForEnd: true }
+        // qmllint disable signal-handler-parameters
+        onExited: (exitCode, exitStatus) => {
+            if ((exitCode !== 0 || exitStatus !== 0) && root.requestDirectory === directory
+                && root.mode === PickerService.Mode.Secret) root.close()
+        }
+        // qmllint enable signal-handler-parameters
+    }
     Component {
         id: replyTask
         Process {
@@ -505,7 +556,7 @@ Singleton {
             stdinEnabled: true
             stdout: StdioCollector { waitForEnd: true }
             stderr: StdioCollector { waitForEnd: true }
-            onStarted: { write(input); stdinEnabled = false }
+            onStarted: { write(input); input = ""; stdinEnabled = false }
             // qmllint disable signal-handler-parameters
             onExited: process.destroy()
             // qmllint enable signal-handler-parameters

@@ -127,7 +127,7 @@ Rectangle {
                 centerVertical: false
                 width: parent.width
                 height: visible ? Theme.controlHeight : 0
-                visible: Config.pickerShowPrompt && root.picker.prompt.length > 0
+                visible: (Config.pickerShowPrompt || root.picker.forcePrompt) && root.picker.prompt.length > 0
                 verticalAlignment: Text.AlignVCenter
                 text: root.picker.prompt
                 textFormat: Text.PlainText

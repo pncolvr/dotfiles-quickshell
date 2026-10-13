@@ -22,6 +22,7 @@ Scope {
   NotificationManagerWindow {}
   TotpWindow {}
   PickerWindow {}
+  PickerWindow { secretWindow: true }
   ExposeWindow {}
   MediaFullscreenWindow {}
 }

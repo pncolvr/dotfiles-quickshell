@@ -1,0 +1,70 @@
+#!/usr/bin/env bash
+# Assuan adapter. Passwords pass directly from the helper to stdout, never argv.
+set +x
+set -euo pipefail
+export LC_ALL=C
+helper_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+emit() { printf '%s\n' "$1"; }
+invalid() { emit 'ERR 83886183 Invalid request'; exit 1; }
+while (($#)); do
+    case $1 in
+        --timeout|--ttyname|--display) (($# >= 2)) || invalid; shift 2 ;;
+        --timeout=*|--ttyname=*|--display=*|--no-global-grab) shift ;;
+        *) invalid ;;
+    esac
+done
+decode() {
+    # Decode exactly once. A sentinel preserves trailing newlines in metadata.
+    local encoded=$1 decoded='' byte character
+    while [[ -n $encoded ]]; do
+        if [[ $encoded == %??* && ${encoded:1:2} =~ ^[[:xdigit:]]{2}$ ]]; then
+            byte=${encoded:1:2}
+            [[ $byte != 00 ]] || return 1
+            printf -v character '%b' "\\x$byte"
+            decoded+=$character
+            encoded=${encoded:3}
+        else
+            decoded+=${encoded:0:1}
+            encoded=${encoded:1}
+        fi
+    done
+    printf '%s.' "$decoded"
+}
+prompt='Master Password' description='' error=''
+emit 'OK Quickshell pinentry ready'
+while true; do
+    line=''
+    read_status=0
+    IFS= read -r -n 8193 line || read_status=$?
+    ((${#line} <= 8192)) || invalid
+    [[ -n $line || $read_status == 0 ]] || break
+    line=${line%$'\r'}
+    command=${line%% *}
+    argument=''
+    [[ $line != "$command" ]] && argument=${line#* }
+    value=$(decode "$argument") || invalid
+    value=${value%.}
+    printf '%s' "$value" | iconv -f UTF-8 -t UTF-8 >/dev/null 2>&1 || invalid
+    case $command in
+        SETTITLE|OPTION|SETOK|SETCANCEL) emit OK ;;
+        SETPROMPT) prompt=$value; emit OK ;;
+        SETDESC) description=$value; emit OK ;;
+        SETERROR) error=$value; emit OK ;;
+        GETPIN)
+            # --assuan streams the escaped response without capturing a password
+            # in a Bash substitution (which would drop trailing newlines/NUL).
+            status=0
+            bash "$helper_dir/secret_prompt.sh" --assuan --prompt "$prompt" \
+                --description "$description" --error "$error" 2>/dev/null || status=$?
+            case $status in
+                0) ;;
+                1) emit 'ERR 83886179 Cancelled' ;;
+                *) emit 'ERR 83886183 Prompt unavailable' ;;
+            esac
+            error='' ;;
+        RESET) prompt='Master Password'; description=''; error=''; emit OK ;;
+        BYE) emit OK; exit 0 ;;
+        *) emit 'ERR 83886183 Unsupported request' ;;
+    esac
+    ((read_status == 0)) || break
+done

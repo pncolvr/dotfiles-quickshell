@@ -71,6 +71,8 @@ Item {
   readonly property string rightIcon: "" // arrow-right
   readonly property string copyIcon: "" // copy
   readonly property string editIcon: "" // pen
+  readonly property string eyeIcon: "" // eye: reveal a secret
+  readonly property string eyeSlashIcon: "" // eye-slash: mask a secret
   readonly property string folderOpenIcon: "" // folder-open: browse for a folder
   readonly property string refreshIcon: "" // refresh
   readonly property string retryIcon: "" // arrows-rotate

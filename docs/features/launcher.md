@@ -24,7 +24,7 @@ directory hints fit one line; GitHub groups its selection shortcuts on separate 
 ## Internal dispatch
 
 `PickerService.Mode` identifies the internal modes: `None`, `Menu`, `Projects`,
-`Directories`, `Apps`, `Windows` and `Clipboard`. Acceptance and panel selection
+`Directories`, `Apps`, `Windows`, `Clipboard` and `Secret`. Acceptance and panel selection
 use switches on that enum; panels and services use the same values for their
 mode checks. `begin()` accepts an enum value. IPC command names and provider
 request/reply formats stay unchanged; enum numbers are not part of that protocol.
@@ -154,7 +154,7 @@ result=$(bash "$picker" --json options.json)
 bash "$picker" --json-response options.json
 ```
 
-JSON requests accept `prompt`, `allowTyped`, `allowMultipleSelection`, `sort`,
+JSON requests accept `prompt`, `private`, `allowTyped`, `allowMultipleSelection`, `sort`,
 `customAccept`, `query`, `selectionKey`, `layout` (`list` or `grid`), and
 `items`. Each item has a `title` and a `result` (a string or JSON value), with
 optional `subtitle`, `icon`, `glyph`, and `search` strings. `icon` names a desktop
@@ -163,6 +163,8 @@ names the submit action. Source indexes identify items;
 duplicate labels cannot change the selected result. `--json` prints selected
 results, one per line, and serializes objects as compact JSON. `--json-response`
 returns the entire response object. The client never executes returned content.
+Set `private: true` to display a JSON menu in `quickshell-private`; rbw entry
+selection uses this flag. Secret-input prompts always use the private window.
 
 Menus with a `selectionKey` (or dmenu `--selection-key KEY`) remember the last
 accepted result in the preferences database and highlight it when reopened.
@@ -456,3 +458,17 @@ The first two use temporary databases and mocked clipboard/input commands.
 The Wayland check briefly displays an isolated picker without capturing the real
 clipboard, saves `/tmp/quickshell-picker-preview.png`, then restores the original
 window focus.
+
+## Secret input and rbw
+
+`launcher.sh --secret --prompt "Master Password"` opens a masked field that
+bypasses search and remembered selections. It uses the `quickshell-private`
+namespace shared by TOTP and notifications. The eye button reveals the value on
+request; every new prompt starts masked. Enter confirms and Escape cancels,
+without Unlock or Cancel buttons. The exact value returns through a
+private reply FIFO; only public prompt metadata is written to disk. Cancellation,
+timeout and client death clear the field. The Bash helpers `secret_prompt.sh` and
+`pinentry-rbw` connect this UI to rbw; secret replies are decoded from stdin with
+jq and streamed to stdout without putting the password in command arguments.
+JSON menus can set `showPrompt: true` to always display their destination label.
+See [rbw integration](rbw.md) for setup, limitations and cross-repository tests.

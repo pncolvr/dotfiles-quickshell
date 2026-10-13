@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # Public launcher and synchronous Bash picker. No global PATH changes.
-set -euo pipefail
+set -Eeuo pipefail
+# Reserve exit 1 for an explicit cancelled reply. Failed IPC/JSON commands must
+# not be mistaken for user cancellation by password-manager callers.
+trap 'exit 2' ERR
 launcher_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 config_root=$(cd -- "$launcher_dir/../../.." && pwd)
 qs_bin=${QS_PICKER_EXECUTABLE:-qs}
@@ -25,10 +28,16 @@ if [[ ${1:-} == --bridge ]]; then
                 then error("Invalid picker request") else . + {requestDirectory: $directory} end
             ' "$request_dir/request.json"
             ;;
+        watch) exec bash "$launcher_dir/secret_prompt.sh" --check-owner "$request_dir" ;;
         reply) timeout 2 bash -c 'cat > "$1/reply"' bash "$request_dir" ;;
         *) exit 2 ;;
     esac
     exit
+fi
+
+if [[ ${1:-} == --secret ]]; then
+    shift
+    exec bash "$launcher_dir/secret_prompt.sh" "$@"
 fi
 
 case ${1:-apps} in

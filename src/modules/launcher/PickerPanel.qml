@@ -25,9 +25,14 @@ Item {
                 case PickerService.Mode.Projects: return projectPanel
                 case PickerService.Mode.Directories: return directoryPanel
                 case PickerService.Mode.Clipboard: return clipboardPanel
+                case PickerService.Mode.Secret: return secretPanel
                 default: return root.picker.multiple ? multiSelectPanel : standardPanel
             }
         }
+    }
+    Component {
+        id: secretPanel
+        SecretPickerPanel { picker: root.picker; backgroundVisible: root.backgroundVisible }
     }
     Component {
         id: projectPanel
