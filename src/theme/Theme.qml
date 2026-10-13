@@ -81,6 +81,10 @@ Item {
   readonly property string mediaNextIcon: "" // forward-step
   readonly property string mediaStopIcon: "" // stop
   readonly property string mediaIcon: "" // music
+  readonly property string mediaFlipIcon: "" // arrows-rotate
+  readonly property int mediaFlipDuration: 480
+  readonly property int mediaVisualizerPoints: 64
+  readonly property int mediaVisualizerInterval: 33
   readonly property int mediaFallbackIconSize: 32
   readonly property int mediaArtworkBlurRadius: 64
   readonly property real mediaArtworkBackgroundTint: 0.5

@@ -34,11 +34,13 @@ jq -e --arg name "$target" --arg direction "$direction" '
 ' <<< "$device_list" >/dev/null || fail 'That audio device is no longer available.'
 
 stream_list=$(pulse -f json list "$streams") || fail 'Could not read the current audio apps.'
-# Filter-chain plumbing and our activity monitor are not application streams.
+# Filter-chain plumbing and our activity/spectrum monitors are not application streams.
 indices=$(jq -r --argjson serials "$serials" --argjson targeted "$targeted" '
     .[] | select((.properties["application.name"] // "") != "")
     | select(.properties["application.name"] != "Quickshell Peak Detect")
     | select(.properties["node.name"] != "quickshell-peak-monitor")
+    | select(.properties["application.name"] != "Quickshell Spectrum Detect")
+    | select(.properties["node.name"] != "quickshell-spectrum-monitor")
     | . as $stream
     | select(($targeted | not) or ($serials | index($stream.properties["object.serial"] | tostring)))
     | [.index, (.properties["object.serial"] // "")] | @tsv

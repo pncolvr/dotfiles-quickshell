@@ -10,3 +10,7 @@ AudioVolumeSlider 1.0 AudioVolumeSlider.qml
 MediaPanel 1.0 MediaPanel.qml
 MediaPlayerCard 1.0 MediaPlayerCard.qml
 MediaPosition 1.0 MediaPosition.qml
+MediaVisualizer 1.0 MediaVisualizer.qml
+MediaCardBackground 1.0 MediaCardBackground.qml
+MediaCavaShader 1.0 MediaCavaShader.qml
+MediaSpectrumWorker 1.0 MediaSpectrumWorker.qml

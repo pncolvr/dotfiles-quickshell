@@ -5,7 +5,6 @@ import Quickshell
 import Quickshell.Services.Mpris
 import "../../src/modules/system/audio"
 import "../../src/services"
-import "../../src/config"
 
 Scope {
     id: root
@@ -65,7 +64,7 @@ Scope {
     QtObject { id: stream; property bool ready: true; property var audio: streamAudio; property var properties: ({"application.id":"banana"}) }
     QtObject {
         id: audio
-        property var playbackApps: []
+        property var playbackApps: [{key:"banana",name:"Banana",nodes:[stream],routable:false,deviceName:"",multipleDevices:false}]
         property var micApps: []
         property var outputDevices: []
         property var inputDevices: []
@@ -104,6 +103,7 @@ Scope {
         running: true
         repeat: true
         onTriggered: {
+            if (root.step > 0 && queriedPosition.query.running) return;
             const panel = root.find(output,"audioMediaPanel")
             if (root.step === 0 && !root.screenshotTaken && Quickshell.env("MEDIA_TEST_SCREENSHOT")) {
                 root.screenshotTaken = true
@@ -122,6 +122,9 @@ Scope {
                 const timelineEnd = timeline.mapToItem(card, timeline.width - timeline.rightPadding, 0).x
                 root.check(Math.abs(volumeEnd - timelineEnd) < 1, "volume and timeline right endpoints align")
                 const art = root.find(card,"mediaArtwork")
+                const flip = root.find(card,"mediaFlip")
+                root.check(Math.abs(flip.mapToItem(card,0,0).y - art.mapToItem(card,0,0).y) < 1,
+                    "flip aligns with the artwork top without an extra header row")
                 const previous = root.find(card,"mediaPrevious")
                 const stopButton = root.find(card,"mediaStop")
                 root.check(Math.abs(art.mapToItem(card,0,0).x - previous.mapToItem(card,0,0).x) < 1
@@ -188,17 +191,13 @@ Scope {
                 root.check(root.find(output,"mediaElapsed").text === "0:00" && root.find(output,"mediaTimeline").value === 0, "stop resets displayed elapsed time and timeline even if player position is stale")
                 root.find(output,"mediaPlayPause").clicked()
                 root.check(root.find(output,"mediaElapsed").text === "0:00" && root.find(output,"mediaTimeline").value === 0, "Play after Stop displays restarted position")
-                const mediaMute = root.find(output,"mediaMute")
-                const muteWidth = mediaMute.implicitWidth
-                const muteHeight = mediaMute.implicitHeight
-                mediaMute.clicked()
-                root.check(mediaMute.implicitWidth === muteWidth && mediaMute.implicitHeight === muteHeight, "media mute keeps button dimensions")
-                root.check(banana.volume === 0, "player volume fallback mutes")
-                root.find(output,"mediaMute").clicked()
-                root.check(mediaMute.implicitWidth === muteWidth && mediaMute.implicitHeight === muteHeight, "media unmute keeps button dimensions")
-                root.check(Math.abs(banana.volume - 0.65) < 0.001, "unmute restores previous player volume")
-                root.find(output,"mediaVolume").volumeMoved(0.3)
-                root.check(banana.volume === 0.3, "player volume slider targets player")
+                audio.playbackApps = []
+                root.check(!root.find(card,"mediaFlip").visible && !root.find(card,"mediaMute").visible
+                    && !root.find(card,"mediaVolume").visible && !root.find(card,"mediaVolumeValue").visible,
+                    "unmatched players hide flip, mute, slider and percentage even with MPRIS volume support")
+                root.find(card,"mediaMute").clicked()
+                root.find(card,"mediaVolume").volumeMoved(0.3)
+                root.check(banana.volume === 0.65, "unmatched volume controls do not change player volume")
                 banana.pause()
                 banana.canGoNext = false; banana.canGoPrevious = false; banana.canPlay = false; banana.canControl = false
                 root.check(!root.find(output,"mediaNext").enabled && !root.find(output,"mediaPrevious").enabled
@@ -206,10 +205,13 @@ Scope {
                     && !root.find(output,"mediaMute").enabled, "unsupported controls are disabled")
                 banana.canControl = true; banana.canPlay = true
                 audio.playbackApps = [{key:"banana",name:"Banana",nodes:[stream],routable:false,deviceName:"",multipleDevices:false}]
+                root.check(root.find(card,"mediaFlip").visible && root.find(card,"mediaMute").visible
+                    && root.find(card,"mediaVolume").visible && root.find(card,"mediaVolumeValue").visible,
+                    "matching stream reveals flip and volume controls")
                 root.find(output,"mediaVolume").volumeMoved(0.8)
-                root.check(streamAudio.volume === 0.8 && banana.volume === 0.3, "unique app association reuses stream volume")
+                root.check(streamAudio.volume === 0.8 && banana.volume === 0.65, "unique app association reuses stream volume")
                 root.find(output,"mediaMute").clicked()
-                root.check(streamAudio.muted && banana.volume === 0.3, "stream mute does not alter player volume")
+                root.check(streamAudio.muted && banana.volume === 0.65, "stream mute does not alter player volume")
                 panel.maximumHeight = 300
                 media.players = [banana,duplicate,potato]
                 root.find(output,"mediaPlayers").parent.forceLayout(); output.forceLayout()

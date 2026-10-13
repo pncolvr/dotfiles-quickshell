@@ -10,7 +10,7 @@ qs -p "$HOME/.config/quickshell"
 ```
 
 Keep `shell.qml` at the configuration root. It loads the QML implementation in
-`src/`; no build step is required. Quickshell creates `data/quickshell.db` on first
+`src/`; the audio spectrum helper builds automatically on first use. Quickshell creates `data/quickshell.db` on first
 run. Keep that directory writable.
 
 ## Dependencies
@@ -29,6 +29,7 @@ those before running on another desktop.
 | `ydotool` and its daemon | Optional paste on clipboard activation |
 | Noto Sans Mono, JetBrains Mono, Font Awesome 7 Free Solid | Text and icons configured in `src/theme/Theme.qml` |
 | PipeWire, WirePlumber, `pactl` | Audio controls, routing, profiles and video capture detection |
+| C compiler (`cc`), `pkg-config`, PipeWire and FFTW headers/libraries | Native cavacore spectrum helper; cached under `$XDG_RUNTIME_DIR/quickshell-spectrum` |
 | `pavucontrol` | Mixer opened by middle-clicking audio icons |
 | `libsecret` (`secret-tool`), `oath-toolkit` (`oathtool`), Secret Service provider | TOTP storage and code generation |
 | UPower | Laptop and peripheral batteries |

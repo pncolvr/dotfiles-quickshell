@@ -234,6 +234,10 @@ hover styling, and keyboard navigation.
 ```sh
 bash tests/audio/audio.sh
 bash tests/audio/media.sh
+bash tests/audio/spectrum.sh
+bash tests/audio/media-visualizer.sh
+bash tests/audio/media-visualizer.sh --native
+bash tests/audio/media-visualizer.sh --gpu
 bash tests/audio/audio.sh --native-imports
 bash tests/audio/screencast.sh
 bash tests/audio/screencast.sh --native
@@ -243,8 +247,31 @@ Run `bash tests/audio/audio.sh` for routing, profile, and QML interaction checks
 `bash tests/audio/media.sh` checks transport capabilities, artwork loading,
 the all-player list, timeline dragging and capability checks, screen-height
 limits, track metadata changes, late position responses, elapsed-time limits,
-preserved scroll position, mute restoration and safe association with app audio streams
+preserved scroll position, stream-control visibility and safe association with app audio streams
 using isolated player fixtures without controlling desktop playback.
+`bash tests/audio/media-visualizer.sh` checks both flip directions, effect
+selection of all 17 presets, stable card sizing, independent frequency bands, PCM
+waveforms, and pause/visibility gates.
+`bash tests/audio/spectrum.sh` builds the native helper and feeds deterministic
+PCM into cavacore to check bass/treble separation, opposite-phase stereo, silence,
+normalized spectrum/signed-waveform frame bounds and rejection of a default-output target.
+`--native` creates a private D-Bus session and PipeWire server, disables hardware
+discovery in its WirePlumber instance, and plays separate bass and treble apps into
+one silent virtual sink. It checks that only the matched app's bands appear, and
+that its native analyzer exits and restarts with the card face. Desktop playback
+is unaffected. Set `MEDIA_VISUALIZER_FRONT` and `MEDIA_VISUALIZER_BACK` to PNG
+paths to save previews of each face.
+`--gpu` briefly opens the fixture on Wayland, verifies Qt Quick's GPU curve
+renderer, and cycles all styles to check the compiled CAVA shader pipelines and
+pause/unload behavior. On Hyprland it restores the previous focus and pointer
+afterward. Set `MEDIA_VISUALIZER_STYLE_DIR` to save a PNG of every preset.
+
+The original CAVA 1.0.0 shader sources, Qt ports, and compiled bundles are tracked
+under `src/theme/shaders/cava`. Rebuild all shader stages with:
+
+```sh
+python3 src/theme/shaders/cava/build.py
+```
 Add `--native-imports` to check the complete bar, real device/profile mapping,
 sorted lists, and system default bindings without changing your audio settings.
 The screencast checks use Qt 6 tests for independent captures, webcam exclusion,

@@ -270,11 +270,13 @@ Singleton {
             ?? node.properties?.["application.name"]
     }
 
-    // Ignore our peak monitor so it cannot keep itself enabled after apps stop capturing.
+    // Internal monitors must not appear as microphone users or keep mic activity enabled.
     readonly property var micCaptureNodes: Pipewire.nodes.values.filter(node =>
         node.properties?.["media.class"] === "Stream/Input/Audio"
         && node.properties?.["application.name"] !== "Quickshell Peak Detect"
         && node.name !== "quickshell-peak-monitor"
+        && node.properties?.["application.name"] !== "Quickshell Spectrum Detect"
+        && node.name !== "quickshell-spectrum-monitor"
     )
 
     readonly property var micUsers: micCaptureNodes.map(node => nodeName(node)).filter(name => !!name)

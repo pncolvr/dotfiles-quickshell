@@ -155,6 +155,10 @@ Item {
     readonly property real audioMaxVolume: 1.5 // 150%, including microphone gain.
     readonly property bool mediaPreferPlayingTab: true
     readonly property int mediaPositionInterval: Timespan.fromSeconds(1)
+    readonly property var mediaSpectrumCommand: (serial, bands, fps) => [
+        "bash", Qt.resolvedUrl("../services/audio/audio-spectrum.sh").toString().replace("file://", ""),
+        serial, String(bands), String(fps)
+    ]
     readonly property real mediaUnmuteVolume: 1.0 // Fallback when the player's previous volume is unknown.
     readonly property int audioDevicesInterval: Timespan.fromSeconds(3)
     readonly property var audioDevicesCommand: [

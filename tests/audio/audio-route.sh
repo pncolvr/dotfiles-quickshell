@@ -38,11 +38,13 @@ cat > "$test_dir/sink-inputs.json" <<'JSON'
  {"index":22,"properties":{"application.name":"Player","object.serial":"102"}},
  {"index":23,"properties":{"node.name":"effect_output.virtual-surround","object.serial":"103"}},
  {"index":24,"properties":{"application.name":"Quickshell Peak Detect","object.serial":"104"}},
- {"index":25,"properties":{"application.name":"Monitor","node.name":"quickshell-peak-monitor","object.serial":"105"}}
+ {"index":25,"properties":{"application.name":"Monitor","node.name":"quickshell-peak-monitor","object.serial":"105"}},
+ {"index":26,"properties":{"application.name":"Quickshell Spectrum Detect","object.serial":"106"}},
+ {"index":27,"properties":{"application.name":"Monitor","node.name":"quickshell-spectrum-monitor","object.serial":"107"}}
 ]
 JSON
 cat > "$test_dir/source-outputs.json" <<'JSON'
-[{"index":31,"properties":{"application.name":"Recorder","object.serial":"201"}},{"index":32,"properties":{"application.name":"Quickshell Peak Detect","object.serial":"202"}}]
+[{"index":31,"properties":{"application.name":"Recorder","object.serial":"201"}},{"index":32,"properties":{"application.name":"Quickshell Peak Detect","object.serial":"202"}},{"index":33,"properties":{"application.name":"Quickshell Spectrum Detect","object.serial":"203"}}]
 JSON
 helper="$project_root/src/services/audio/audio-route.sh"
 result=$(bash "$helper" output 'speaker (desk) $literal')

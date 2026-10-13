@@ -52,11 +52,59 @@ continue to update through native MPRIS.
 
 Volume and mute reuse AudioService when player and audio-app metadata identify
 one unambiguous association. These controls affect all of that app's current
-streams, which can include other browser tabs. Ambiguous associations use the
-player's own volume when supported; otherwise volume and mute are unavailable.
-Player mute sets volume to zero and restores its previous level on unmute,
-falling back to `mediaUnmuteVolume` when no previous level is known. App-stream
-mute uses PipeWire's mute control. No extra bar icon or keyboard shortcut is added.
+streams, which can include other browser tabs. Unmatched or ambiguous players
+hide the mute button, volume slider, percentage, and Flip button. Controls
+reappear when a matching stream becomes available. Mute uses PipeWire's mute
+control. No extra bar icon or keyboard shortcut is added.
+
+The **Flip** icon at the top right turns a card from right to left to reveal
+its audio visualizer. The same button on the reverse turns it back from left to
+right. The selector at the top left offers **17 styles** in a scrollable list and keeps
+the selected effect when you flip back. Both faces keep
+the same card size and blurred artwork background. On the playback face, Flip
+aligns with the artwork's top edge; compact metadata leaves room beside it
+without adding a separate header row.
+
+The effects use actual frequency bands from cavacore, CAVA's analysis engine.
+The 64 stationary bands run from bass to treble on a logarithmic scale, and each
+moves independently with that part of the audio. Cavacore provides FFT analysis,
+automatic sensitivity, smoothing and falloff. The available styles are:
+
+- Native views: Wave, Bars, Mirror, Ribbon, Bars from top, Bars from left,
+  Bars from right, and Waveform.
+- All nine shaders shipped with CAVA 1.0.0: CAVA Spectrum, Winamp Line,
+  Northern Lights, Eye of Phi, Orion Circle, Orion Rotate, Orion Saturn Core,
+  Orion Saturn Subring, and Spectrogram.
+
+Wave and Ribbon connect the frequency bands. Waveform displays actual signed
+PCM samples. Spectrogram shows frequency intensity over time; the other CAVA
+presets use the original upstream shader algorithms, adapted to Qt Quick and
+transparent backgrounds. Eye of Phi and Orion Rotate animate only during active
+playback with audio. Shader presets require a hardware graphics backend with
+modern GLSL support; native views also work with Qt's software renderer.
+
+A small native helper captures the matched PipeWire stream directly and links
+against vendored cavacore 1.0.0 and the system FFTW library. It preserves stereo
+channels during analysis, then averages their magnitudes. Apps with multiple
+streams combine the highest value in each corresponding band. Association follows
+the same uniqueness checks as app volume. No system-output or microphone fallback
+is used. If the match disappears while viewing the visualizer, the card flips
+back to playback and hides its stream controls.
+
+The helper runs only while the reverse face is visible, playback is active, and
+the card is inside the viewport. Pausing, flipping back or hiding the panel stops
+the process. Muted app streams display a flat line. Analysis runs at 30 frames per
+second on the CPU; Qt Quick Shapes and scene graph rectangles draw on the GPU
+with the normal accelerated backend. The software backend remains supported.
+No Canvas bitmap is repainted or uploaded for each audio update. CAVA shaders
+read a tiny GPU-rendered band texture. Spectrogram uses a bounded 512-column
+GPU history texture, updated only on new audio frames. Flipping away unloads the
+shader renderer and its textures.
+
+The helper builds automatically into `$XDG_RUNTIME_DIR/quickshell-spectrum` on
+first use and rebuilds when its source changes. It requires `cc`, `pkg-config`,
+and the PipeWire and FFTW development files; the full CAVA executable is not
+required. A failed backend shows **Audio visualizer unavailable**.
 
 ## Devices and applications
 

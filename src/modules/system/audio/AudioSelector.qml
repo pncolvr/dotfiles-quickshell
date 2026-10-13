@@ -57,8 +57,17 @@ Column {
                 color: Theme.inactive
             }
         }
-        HoverHandler { cursorShape: Qt.PointingHandCursor }
         UI.HoverTooltip { hoverTarget: selector; text: root.hint; delay: root.hintDelay }
+        // Cover the content and padding uniformly, while letting the button handle clicks.
+        MouseArea {
+            objectName: root.toggleObjectName + "Cursor"
+            anchors.fill: parent
+            z: 1
+            enabled: selector.enabled
+            acceptedButtons: Qt.NoButton
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+        }
     }
 
     ListView {
@@ -109,8 +118,11 @@ Column {
                     color: Theme.accent
                 }
             }
-            HoverHandler {
+            MouseArea {
+                anchors.fill: parent
                 enabled: option.enabled
+                acceptedButtons: Qt.NoButton
+                hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
             }
         }
