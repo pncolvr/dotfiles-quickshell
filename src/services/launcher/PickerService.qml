@@ -57,50 +57,78 @@ Singleton {
         || (allowTyped && query.trim().length > 0)
     signal opened()
 
-    function score(text, search) {
-        if (!search.trim()) return 0
+    function searchPattern(search) {
         const sensitive = Config.pickerSmartCase && search !== search.toLowerCase()
             && search !== search.toUpperCase()
-        const haystack = sensitive ? text : text.toLowerCase()
-        const needles = (sensitive ? search : search.toLowerCase()).trim().split(/\s+/)
+        const normalized = (sensitive ? search : search.toLowerCase()).trim()
+        return {sensitive, needles: normalized ? normalized.split(/\s+/) : []}
+    }
+    function score(text, search, pattern) {
+        pattern = pattern ?? searchPattern(search)
+        if (!pattern.needles.length) return 0
+        const haystack = pattern.sensitive ? text : text.toLowerCase()
         let total = 0
-        for (const needle of needles) {
+        for (const needle of pattern.needles) {
             if (!Config.pickerFuzzySearch) {
                 const exact = haystack.indexOf(needle)
                 if (exact < 0) return Infinity
                 total += exact + (exact === 0 ? -20 : 0)
                 continue
             }
-            // Find the best subsequence, including later, more compact matches.
-            // Word starts, camel-case initials and consecutive letters score better.
-            let previous = []
+            // Reject missing subsequences with native string searches before scoring.
+            let found = -1
             for (let character = 0; character < needle.length; character++) {
-                const next = new Array(haystack.length).fill(Infinity)
+                found = haystack.indexOf(needle[character], found + 1)
+                if (found < 0) return Infinity
+            }
+            // Keep only matching positions, rather than allocating and walking a
+            // full-text array for every query character. The same recurrence still
+            // finds later compact matches and rewards boundaries and adjacent letters.
+            let previousPositions = []
+            let previousCosts = []
+            let best = Infinity
+            for (let character = 0; character < needle.length; character++) {
+                const nextPositions = []
+                const nextCosts = []
                 let bestGap = Infinity
-                for (let position = 0; position < haystack.length; position++) {
-                    if (character > 0 && position > 1)
-                        bestGap = Math.min(bestGap, previous[position - 2] - 2 * (position - 2))
-                    if (haystack[position] !== needle[character]) continue
+                let previousIndex = 0
+                best = Infinity
+                const start = character === 0 ? 0 : previousPositions[0] + 1
+                for (let position = haystack.indexOf(needle[character], start); position >= 0;
+                    position = haystack.indexOf(needle[character], position + 1)) {
+                    while (previousIndex < previousPositions.length && previousPositions[previousIndex] < position - 1) {
+                        bestGap = Math.min(bestGap, previousCosts[previousIndex] - 2 * previousPositions[previousIndex])
+                        previousIndex++
+                    }
                     const boundary = position === 0 || /[\s._:/\\-]/.test(text[position - 1])
                         || (text[position - 1] !== text[position - 1].toUpperCase()
                             && text[position] !== text[position].toLowerCase())
                     const cost = character === 0 ? Math.min(20, position * 0.1)
-                        : Math.min(position > 0 ? previous[position - 1] - 16 : Infinity,
+                        : Math.min(previousPositions[previousIndex] === position - 1 ? previousCosts[previousIndex] - 16 : Infinity,
                             bestGap + 2 * (position - 1))
-                    next[position] = cost - (boundary ? 12 : 0)
+                    const value = cost - (boundary ? 12 : 0)
+                    best = Math.min(best, value)
+                    if (character < needle.length - 1) {
+                        nextPositions.push(position)
+                        nextCosts.push(value)
+                    }
+                    // A single-letter query cannot improve on a boundary at position zero.
+                    if (needle.length === 1 && best === -12) break
                 }
-                previous = next
+                previousPositions = nextPositions
+                previousCosts = nextCosts
             }
-            const best = previous.reduce((minimum, value) => Math.min(minimum, value), Infinity)
             if (best === Infinity) return Infinity
             total += best
         }
         return total
     }
     function filter(rows, search) {
+        const pattern = searchPattern(search)
+        if (!pattern.needles.length) return rows
         return rows.map((item, index) => ({item: item, index: index,
-            score: Math.min(score(String(item.title ?? ""), search),
-                item.search ? score(String(item.search), search) + 12 : Infinity)}))
+            score: Math.min(score(String(item.title ?? ""), search, pattern),
+                item.search && item.search !== item.title ? score(String(item.search), search, pattern) + 12 : Infinity)}))
             .filter(row => row.score !== Infinity)
             .sort((a, b) => a.score - b.score || a.index - b.index).map(row => row.item)
     }

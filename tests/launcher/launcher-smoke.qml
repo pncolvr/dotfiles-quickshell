@@ -59,6 +59,19 @@ Scope {
         check(PickerService.filter([{title:"Banana tomato"}], "tmt bna").length === 1, "query words match independently")
         check(PickerService.filter([{title:"Banana"}], "bnz").length === 0, "missing query characters reject an entry")
         check(PickerService.filter([{title:"Banana", result:1}, {title:"Banana", result:2}], "ban")[0].result === 1, "ties preserve source order")
+        const longClipboardText = "x".repeat(40000) + "NeedlePhrase"
+        const clipboardRow = {title:"Short preview", search:longClipboardText}
+        check(PickerService.filter([clipboardRow], "nph")[0] === clipboardRow,
+            "fuzzy clipboard search reaches text beyond the preview")
+        check(PickerService.filter([clipboardRow], "nph z").length === 0,
+            "long clipboard entries must match every query word")
+        check(PickerService.score("a".repeat(40000), "aa") === -28,
+            "repeated characters keep consecutive-match ranking in long entries")
+        check(PickerService.score("a".repeat(40000), "az") === Infinity,
+            "long entries with a missing subsequence are rejected")
+        check(PickerService.filter([{title:"Banana", search:"Banana", result:1},
+            {title:"Banana", result:2}], "ban")[0].result === 1,
+            "identical title and metadata preserve source-order ties")
         check(DesktopEntries.byId("picker-test") !== null, "native application metadata")
         PickerService.begin(PickerService.Mode.Menu, "Pick a project")
         PickerService.multiple = true
