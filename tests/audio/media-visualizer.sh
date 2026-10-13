@@ -29,6 +29,8 @@ cleanup() {
 }
 trap cleanup EXIT
 mkdir -m700 "$test_dir/runtime"
+mkdir -p "$test_dir/data" "$test_dir/cache"
+export XDG_DATA_HOME="$test_dir/data" XDG_CACHE_HOME="$test_dir/cache"
 cat > "$test_dir/art.svg" <<'SVG'
 <svg xmlns="http://www.w3.org/2000/svg" width="550" height="275"><defs><linearGradient id="gradient"><stop stop-color="#ff8800"/><stop offset="1" stop-color="#0088ee"/></linearGradient></defs><rect width="550" height="275" fill="url(#gradient)"/></svg>
 SVG
@@ -116,3 +118,78 @@ if [[ -n ${MEDIA_VISUALIZER_STYLE_DIR:-} ]]; then mkdir -p -- "$MEDIA_VISUALIZER
 output=$(QT_QPA_PLATFORM="$test_platform" QT_NO_XDG_DESKTOP_PORTAL=1 XDG_RUNTIME_DIR="$test_dir/runtime" timeout 30 qs -p "$test_dir/shell.qml" 2>&1) || { printf '%s\n' "$output"; exit 1; }
 printf '%s\n' "$output"
 [[ $output == *'PASS: media flip'* && $output != *'VISUALIZER FAIL:'* && $output != *'TypeError:'* && $output != *'ReferenceError:'* && $output != *'Binding loop'* && $output != *'Error: Insufficient arguments'* && $output != *'Failed to compile shader'* && $output != *'Failed to build graphics pipeline'* && $output != *'no GLSL ES version in common'* ]]
+
+# Reopen the same private database in a fresh engine to check durable selection.
+cat > "$test_dir/shell.qml" <<QML
+import QtQml
+import Quickshell
+import "file://$project_root/src/modules/system/audio"
+import "file://$project_root/src/services" as Services
+Scope {
+    MediaVisualizer { id: restored; appId: "banana" }
+    Component { id: visualizerFactory; MediaVisualizer {} }
+    Timer {
+        interval: 1
+        running: true
+        onTriggered: {
+            const another = visualizerFactory.createObject(restored, {appId:"banana"});
+            const otherApp = visualizerFactory.createObject(restored, {appId:"potato"});
+            let passed = restored.effect === "cava_spectrogram" && another.effect === restored.effect;
+            passed = otherApp.effect === "wave" && restored.selectEffect("bars")
+                && another.effect === "bars" && otherApp.effect === "wave" && passed;
+            passed = otherApp.selectEffect("mirror") && restored.effect === "bars" && passed;
+            another.appId = "potato";
+            passed = another.effect === "mirror" && passed;
+            another.appId = "banana";
+            passed = another.effect === "bars" && passed;
+            Services.PreferencesRepository.setValue(restored.effectPreferenceKey, "removed-style");
+            passed = restored.effect === "wave" && another.effect === "wave" && otherApp.effect === "mirror" && passed;
+            passed = !restored.selectEffect("removed-style") && passed;
+            Services.PreferencesRepository.setValue("media.visualizer.effect", "ribbon");
+            const newApp = visualizerFactory.createObject(restored, {appId:"new-app"});
+            passed = newApp.effect === "ribbon" && restored.selectEffect("ribbon") && passed;
+            Services.PreferencesRepository.setValue("media.visualizer.effect", "wave");
+            passed = restored.effect === "ribbon" && newApp.effect === "wave" && otherApp.effect === "mirror" && passed;
+            another.destroy();
+            otherApp.destroy();
+            newApp.destroy();
+            console.log(passed ? "PASS: saved visualizer survives restart, applies to new cards and rejects unknown effects" : "VISUALIZER FAIL: saved effect");
+            Qt.quit();
+        }
+    }
+}
+QML
+saved_output=$(QT_QPA_PLATFORM=offscreen QT_NO_XDG_DESKTOP_PORTAL=1 XDG_RUNTIME_DIR="$test_dir/runtime" timeout 15 qs -p "$test_dir/shell.qml" 2>&1) || {
+    printf '%s\n' "$saved_output" >&2; exit 1
+}
+[[ $saved_output == *'PASS: saved visualizer'* && $saved_output != *'VISUALIZER FAIL:'* && $saved_output != *'Local database:'* ]] || {
+    printf '%s\n' "$saved_output" >&2; exit 1
+}
+printf 'PASS: saved visualizer survives restart, applies to new cards and rejects unknown effects\n'
+
+# Both app choices must remain independent after reopening the database again.
+cat > "$test_dir/shell.qml" <<QML
+import QtQml
+import Quickshell
+import "file://$project_root/src/modules/system/audio"
+Scope {
+    MediaVisualizer { id: banana; appId: "banana" }
+    MediaVisualizer { id: potato; appId: "potato" }
+    Timer {
+        interval: 1
+        running: true
+        onTriggered: {
+            console.log(banana.effect === "ribbon" && potato.effect === "mirror"
+                ? "PASS: independent per-app visualizers survive restart" : "VISUALIZER FAIL: per-app restart");
+            Qt.quit();
+        }
+    }
+}
+QML
+apps_output=$(QT_QPA_PLATFORM=offscreen QT_NO_XDG_DESKTOP_PORTAL=1 XDG_RUNTIME_DIR="$test_dir/runtime" timeout 15 qs -p "$test_dir/shell.qml" 2>&1) || {
+    printf '%s\n' "$apps_output" >&2; exit 1
+}
+[[ $apps_output == *'PASS: independent per-app visualizers'* && $apps_output != *'VISUALIZER FAIL:'* ]] || {
+    printf '%s\n' "$apps_output" >&2; exit 1
+}
+printf 'PASS: independent per-app visualizers survive restart\n'

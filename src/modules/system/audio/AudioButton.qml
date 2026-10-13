@@ -8,6 +8,7 @@ QC.Button {
     property string glyph: ""
     property string label: ""
     property string hint: ""
+    property int glyphSize: Theme.fontSize
     property bool highlightedDevice: false
     readonly property color foreground: highlightedDevice ? Theme.accent : Theme.text
     implicitWidth: contents.implicitWidth + Theme.audioButtonPadding * 2
@@ -24,25 +25,30 @@ QC.Button {
         border.width: root.visualFocus ? 1 : 0
         border.color: Theme.accent
     }
-    contentItem: Row {
-        id: contents
-        spacing: root.label ? Theme.audioSpacing : 0
-        UI.FixedIconText {
-            anchors.verticalCenter: parent.verticalCenter
-            text: root.glyph
-            visible: text.length > 0
-            color: root.foreground
-            font.pixelSize: Theme.fontSize
-            font.bold: false
-        }
-        Text {
-            anchors.verticalCenter: parent.verticalCenter
-            text: root.label
-            visible: text.length > 0
-            color: root.foreground
-            font.family: Theme.fontFamily
-            font.pixelSize: Theme.fontSize
-            font.bold: Theme.fontBold
+    contentItem: Item {
+        implicitWidth: contents.implicitWidth
+        implicitHeight: contents.implicitHeight
+        Row {
+            id: contents
+            anchors.centerIn: parent
+            spacing: root.label ? Theme.audioSpacing : 0
+            UI.FixedIconText {
+                anchors.verticalCenter: parent.verticalCenter
+                text: root.glyph
+                visible: text.length > 0
+                color: root.foreground
+                font.pixelSize: root.glyphSize
+                font.bold: false
+            }
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                text: root.label
+                visible: text.length > 0
+                color: root.foreground
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontSize
+                font.bold: Theme.fontBold
+            }
         }
     }
     HoverHandler { cursorShape: Qt.PointingHandCursor }

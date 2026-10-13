@@ -142,7 +142,8 @@ icon. After the closing animation, the overview destroys its preview grid and st
 `Theme.exposeBackdropOpacity` controls wallpaper dimming;
 `Theme.exposeAnimationDuration` sets the open/close animation duration (300ms).
 Exposé skips these animations during screen sharing by default. Set
-`Config.exposeAnimateDuringScreenShare` to `true` in `config/Config.qml` to allow them.
+`Config.animateDuringScreenShare` to `true` in `config/Config.qml` to allow them.
+Fullscreen media uses the same setting for opening, closing and player switches.
 
 ## Bash pickers
 

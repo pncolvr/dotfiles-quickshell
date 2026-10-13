@@ -4,16 +4,29 @@ import QtQuick.Shapes
 import QtQml.Models
 import Quickshell.Services.Pipewire
 import "../../../theme"
+import "../../../services"
 
 Item {
     id: root
     property var nodes: []
     property bool active: false
     property bool playing: false
-    property string effect: "wave"
+    property string appId: ""
+    readonly property string effectPreferenceKey: appId ? "media.visualizer.effect.app." + encodeURIComponent(appId) : ""
+    readonly property string effect: {
+        const previous = PreferencesRepository.value("media.visualizer.effect", "wave");
+        const saved = PreferencesRepository.value(effectPreferenceKey, previous);
+        return effects.some(option => option.name === saved) ? saved : "wave";
+    }
+    function selectEffect(name) {
+        if (!effectPreferenceKey || !effects.some(option => option.name === name)) return false;
+        return PreferencesRepository.value(effectPreferenceKey, null) === name
+            || PreferencesRepository.setValue(effectPreferenceKey, name);
+    }
     readonly property var audioNodes: nodes.filter(node => node instanceof PwNode && node.ready && node.audio)
     readonly property bool hasStreams: audioNodes.length > 0
-    readonly property bool capturing: active && playing && hasStreams
+    readonly property bool rendering: active && playing
+    readonly property bool capturing: rendering && hasStreams
     readonly property bool sampling: capturing && workers.count > 0
     property var bands: {
         const combined = Array(Theme.mediaVisualizerPoints).fill(0);
@@ -95,12 +108,18 @@ Item {
         model: root.audioNodes
         delegate: MediaSpectrumWorker {
             id: spectrumWorker
-            capturing: root.capturing
+            capturing: root.capturing && !modelData.audio?.muted
             onDataReceived: data => {
                 const values = root.parseFrame(data);
-                if (values) spectrumWorker.frame = values;
-                const samples = root.parseWaveform(data);
-                if (samples) spectrumWorker.waveform = samples;
+                // Spectrogram must advance its time axis even when the band values repeat.
+                if (values && (root.effect === "cava_spectrogram"
+                    || values.some((value, index) => value !== spectrumWorker.frame[index])))
+                    spectrumWorker.frame = values;
+                if (root.effect === "waveform") {
+                    const samples = root.parseWaveform(data);
+                    if (samples && samples.some((value, index) => value !== spectrumWorker.waveform[index]))
+                        spectrumWorker.waveform = samples;
+                }
             }
         }
     }
@@ -110,13 +129,13 @@ Item {
         id: plot
         objectName: "mediaVisualizerPlot"
         anchors.fill: parent
-        visible: root.active && !root.cavaPreset
+        visible: root.rendering && !root.cavaPreset
         readonly property real middle: height / 2
         readonly property real amplitude: Math.max(0, middle - Theme.audioSpacing)
         readonly property bool bars: ["bars", "mirror", "bars_top", "bars_left", "bars_right"].includes(root.effect)
         readonly property bool sideways: ["bars_left", "bars_right"].includes(root.effect)
         readonly property var outline: {
-            if (!root.active || bars || width <= 0 || height <= 0) return [];
+            if (!root.rendering || root.cavaPreset || bars || width <= 0 || height <= 0) return [];
             if (root.effect === "waveform")
                 return root.waveform.map((value, index) => Qt.point(index * width / (root.waveform.length - 1), middle - value * amplitude));
             const values = root.bands;
@@ -151,7 +170,7 @@ Item {
             }
         }
         Repeater {
-            model: root.active && !root.cavaPreset && plot.bars ? Theme.mediaVisualizerPoints : 0
+            model: root.rendering && !root.cavaPreset && plot.bars ? Theme.mediaVisualizerPoints : 0
             delegate: Rectangle {
                 required property int index
                 readonly property real level: root.bands[index] ?? 0
@@ -171,12 +190,12 @@ Item {
         id: cavaRenderer
         objectName: "mediaCavaRenderer"
         anchors.fill: parent
-        active: root.active && !!root.cavaPreset
+        active: root.rendering && !!root.cavaPreset
         sourceComponent: Component {
             MediaCavaShader {
                 preset: root.cavaPreset
                 bands: root.bands
-                active: root.active
+                active: root.rendering
                 playing: root.playing
             }
         }

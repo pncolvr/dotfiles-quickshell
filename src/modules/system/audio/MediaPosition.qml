@@ -13,7 +13,7 @@ QtObject {
     property bool awaitingTrackPosition: false
     property int generation: 0
     readonly property bool supported: !!player?.positionSupported
-    readonly property var queryCommand: mediaService.positionCommand(player)
+    readonly property var queryCommand: player ? mediaService.positionCommand(player) : []
     readonly property bool queriesPlayer: queryCommand.length > 0
     readonly property real position: {
         if (!supported || awaitingTrackPosition || player.playbackState === MprisPlaybackState.Stopped)

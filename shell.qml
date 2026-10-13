@@ -7,6 +7,7 @@ import "src"
 import "src/modules/system/notifications"
 import "src/modules/system/totp"
 import "src/modules/launcher"
+import "src/modules/system/audio"
 
 Scope {
   IpcHandler {
@@ -22,4 +23,5 @@ Scope {
   TotpWindow {}
   PickerWindow {}
   ExposeWindow {}
+  MediaFullscreenWindow {}
 }

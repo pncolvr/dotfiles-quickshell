@@ -29,17 +29,41 @@ Scope {
         events.mouseClick(button, button.width / 2, button.height / 2, Qt.LeftButton, Qt.NoModifier, 0)
         check(!button.visualFocus && button.background.border.width === 0, "click removes the keyboard border and leaves no persistent outline")
     }
+    function checkSelector(combo) {
+        const toggle = root.find(combo, combo.toggleObjectName) as QC.Button;
+        events.mouseMove(toggle, toggle.width / 2, toggle.height / 2, 0);
+        root.check((toggle.background as Rectangle).color.a === 1, "combo toggle hover stays opaque");
+        combo.expanded = true;
+        events.wait(20);
+        const choices = root.find(combo, combo.choicesObjectName) as ListView;
+        const option = choices.itemAtIndex(0) as QC.ItemDelegate;
+        events.mouseMove(option, option.width / 2, option.height / 2, 0);
+        events.wait(20);
+        root.check(option.hovered && (option.background as Rectangle).color.a === 1,
+            "generic, device and profile dropdown hover rows stay opaque");
+        option.forceActiveFocus(Qt.TabFocusReason);
+        root.check(option.visualFocus && (option.background as Rectangle).color.a === 1,
+            "keyboard-focused dropdown rows stay opaque");
+        combo.expanded = false;
+    }
+    QtObject {
+        id: mockAudio
+        property bool profileBusy: false
+        function setProfile(card, name) {}
+    }
     FloatingWindow {
         Test.TestCase { id: events; when: false }
         visible: true
         implicitWidth: 420
-        implicitHeight: 360
+        implicitHeight: 600
         Column {
             anchors.fill: parent
             spacing: 8
             UI.ActionButton { id: action; glyph: "x"; hint: "Action"; onClicked: root.actionClicks++ }
             AudioButton { id: audio; glyph: "x"; hint: "Audio"; onClicked: root.audioClicks++ }
             AudioSelector { id: selector; width: 350; options: [{name: "banana", description: "Banana", available: true}]; selectedName: "banana" }
+            UI.ComboSelector { id: generic; width: 350; options: [{name: "banana", description: "Banana"}]; selectedName: "banana" }
+            AudioProfileSelector { id: profile; width: 350; card: ({activeProfile:"banana", profiles:[{name:"banana", description:"Banana", available:true}]}); audioService: mockAudio }
             AudioVolumeSlider { id: slider; width: 350; volume: 0.5 }
             TwitchUserSection { id: section; width: 350; title: "Banana"; users: [{login: "banana", online: false}]; columns: 1; expanded: false }
             UI.TabBar { id: tabs; labels: ["Banana", "Potato"]; width: 350 }
@@ -60,6 +84,9 @@ Scope {
             root.checkButton(toggle)
             root.check(selector.expanded, "selector can remain open without a persistent focus border")
             selector.expanded = false
+            root.checkSelector(generic)
+            root.checkSelector(selector)
+            root.checkSelector(profile)
             slider.forceActiveFocus(Qt.TabFocusReason)
             root.check(slider.visualFocus && (slider.handle as Rectangle).border.width === 2, "slider keyboard focus remains visible")
             events.mouseClick(slider, slider.width / 2, slider.height / 2, Qt.LeftButton, Qt.NoModifier, 0)

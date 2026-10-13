@@ -133,6 +133,10 @@ Scope {
                 root.check(root.find(card,"mediaTitle").horizontalAlignment === Text.AlignHCenter
                     && root.find(card,"mediaDetails").horizontalAlignment === Text.AlignHCenter,
                     "song details are horizontally centered")
+                const title = root.find(card,"mediaTitle")
+                root.check(Math.abs(title.mapToItem(card,title.width / 2,0).x
+                    - volumeSlider.parent.mapToItem(card,volumeSlider.parent.width / 2,0).x) < 1,
+                    "song details use the full area between the artwork and card right edge")
                 root.check(root.find(card,"mediaApp").text === banana.identity,
                     "app identity remains visible without playback status")
                 root.check(timeline.enabled && root.find(card,"mediaElapsed").text === "1:05" && root.find(card,"mediaDuration").text === "4:00", "timeline shows elapsed and total time")

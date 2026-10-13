@@ -7,6 +7,8 @@ import "../../../theme/ui" as UI
 Item {
     id: root
     property url artworkSource: ""
+    property real radius: Math.max(0, Theme.audioDeviceRadius - 1)
+    readonly property bool ready: artwork.status === Image.Ready
     UI.ScaledImage {
         id: artwork
         anchors.fill: parent
@@ -19,7 +21,7 @@ Item {
     Rectangle {
         id: mask
         anchors.fill: parent
-        radius: Math.max(0, Theme.audioDeviceRadius - 1)
+        radius: root.radius
         color: "white"
         visible: false
     }
@@ -40,7 +42,7 @@ Item {
         colorization: Theme.mediaArtworkBackgroundTint
         colorizationColor: Theme.alternateBackground
         opacity: Theme.mediaArtworkBackgroundOpacity
-        maskEnabled: true
+        maskEnabled: root.radius > 0
         maskSource: maskTexture
     }
 }

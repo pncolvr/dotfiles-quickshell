@@ -16,7 +16,7 @@ PanelWindow {
     property var picker: PickerService
     property var wallpapers: ({})
     readonly property Item previewItem: panel
-    property bool animationsEnabled: Config.exposeAnimateDuringScreenShare || !AudioService.screencastActive
+    property bool animationsEnabled: Config.animateDuringScreenShare || !AudioService.screencastActive
     property int transitionWorkspace: 0
     property real transitionProgress: 0
     property rect zoomRect: Qt.rect(0, 0, 0, 0)

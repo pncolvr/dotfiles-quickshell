@@ -4,6 +4,8 @@ project_root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)
 test_dir=$(mktemp -d /tmp/quickshell-media.XXXXXXXX)
 trap 'rm -rf -- "$test_dir"' EXIT
 mkdir -m700 "$test_dir/runtime"
+mkdir -p "$test_dir/data" "$test_dir/cache"
+export XDG_DATA_HOME="$test_dir/data" XDG_CACHE_HOME="$test_dir/cache"
 cat > "$test_dir/art.svg" <<'SVG'
 <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"><rect width="64" height="64" fill="#729fcf"/></svg>
 SVG

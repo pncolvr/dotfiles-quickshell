@@ -57,13 +57,62 @@ hide the mute button, volume slider, percentage, and Flip button. Controls
 reappear when a matching stream becomes available. Mute uses PipeWire's mute
 control. No extra bar icon or keyboard shortcut is added.
 
-The **Flip** icon at the top right turns a card from right to left to reveal
-its audio visualizer. The same button on the reverse turns it back from left to
-right. The selector at the top left offers **17 styles** in a scrollable list and keeps
-the selected effect when you flip back. Both faces keep
-the same card size and blurred artwork background. On the playback face, Flip
-aligns with the artwork's top edge; compact metadata leaves room beside it
-without adding a separate header row.
+The **Flip** icon at the top right turns a compact card from right to left to
+reveal its visualizer. The same button turns it back from left to right.
+A permanent scrolling list offers **17 styles**, with opaque hover backgrounds.
+The reverse face omits track details; its list spans the card height with equal
+top and bottom padding, beside the Flip and Fullscreen buttons.
+Selection changes only the text to the accent color; it adds no background tint.
+The last selected effect is saved separately for each app and restored after
+reopening the panel or restarting the shell. Cards from the same app share its
+choice, using its desktop identity rather than a temporary player or process ID.
+The previous global choice remains the initial default for apps that have not
+picked an effect yet.
+
+Both compact faces keep the same size and blurred artwork background. The
+visualizer fills the card above that background and beneath its content, clipped
+to the rounded corners. The playback face uses a softer overlay;
+`Theme.mediaVisualizerFrontOpacity` and `Theme.mediaVisualizerBackOpacity`
+control its strength. Flip aligns with the artwork's top edge. Details are
+centered across the full space beside the artwork, and the mute button's bottom
+aligns with the artwork's bottom.
+Flips also respect `Config.animateDuringScreenShare`: when disabled, they switch
+faces immediately during sharing, including finishing any flip already in progress.
+
+The **Fullscreen** icon opens an opaque, borderless view with one player at a
+time. Entry zooms from the compact card's bounds; exit shrinks toward them using
+Exposé's cubic easing. Fullscreen has one face: a scrolling effect list on the
+left, larger text centered on the screen, and artwork at the bottom right above
+the app volume controls, matching their width. Transport, seeking and app volume
+run along the bottom. The bottom row spans the screen with **2% margins**
+on the left, right and bottom. The saved visualizer runs behind this content.
+
+**Left** and **Right** cycle between available players, wrapping at either end.
+Previous/next player buttons and a position indicator appear when there is more
+than one player. Next slides the current view left and brings the next in from
+the right; Previous reverses that direction, including at the wraparound.
+The outgoing view is one frozen image captured at native screen resolution.
+Rendering and position polling pause during the slide, with one live view.
+Repeated navigation during a slide is ignored. Set
+`Theme.mediaFullscreenSwitchDuration` to adjust the slide or zero to disable it.
+Only the selected player is processed. The icon at the top
+right, **Escape**, or **Alt+F4** exits independently of child focus or the zoom.
+Closing immediately releases keyboard focus and pointer capture. A 750 ms
+deadline hides and cleans up the view even if the closing animation stalls.
+Removing the selected player also closes fullscreen.
+
+Fullscreen draws the live visualizer directly at screen resolution, keeping
+native geometry and shader details sharp without an upscaled intermediate texture.
+Only the cached blurred artwork uses a smaller **960×540** texture, avoiding
+full-screen blur and mask passes on each audio frame. Pausing, muting and zoom
+transitions stop rendering and position polling; compact cards also stop while
+fullscreen is open. Exiting unloads the view and its textures. The animation is
+skipped during screen sharing by default, including player slides and the opening
+snapshot capture. `Config.animateDuringScreenShare` enables them during sharing
+and also controls Exposé. `Theme.mediaFullscreenAnimationDuration`
+controls entry duration; closing is capped at 300 ms. A zero duration disables
+the zoom. `Theme.mediaFullscreenCacheWidth` and
+`Theme.mediaFullscreenCacheHeight` control the blurred background's cache budget.
 
 The effects use actual frequency bands from cavacore, CAVA's analysis engine.
 The 64 stationary bands run from bass to treble on a logarithmic scale, and each
@@ -91,15 +140,25 @@ the same uniqueness checks as app volume. No system-output or microphone fallbac
 is used. If the match disappears while viewing the visualizer, the card flips
 back to playback and hides its stream controls.
 
-The helper runs only while the reverse face is visible, playback is active, and
-the card is inside the viewport. Pausing, flipping back or hiding the panel stops
-the process. Muted app streams display a flat line. Analysis runs at 30 frames per
+Both faces share one analysis stream and renderer. Capture and rendering run only
+for a visible, matched, unmuted app while playback is active and the card is inside
+the viewport. The visible face must also have nonzero visualizer opacity.
+Pausing, muting, hiding the card or panel, or playing the flip animation stops
+capture and texture updates, detaches the shared texture source, and unloads the
+face mask and shader renderers. Individually muted streams stop their analyzers
+even when other streams from the same app remain audible. Rendering resumes on
+the visible face when needed. Analysis runs at 30 frames per
 second on the CPU; Qt Quick Shapes and scene graph rectangles draw on the GPU
 with the normal accelerated backend. The software backend remains supported.
 No Canvas bitmap is repainted or uploaded for each audio update. CAVA shaders
-read a tiny GPU-rendered band texture. Spectrogram uses a bounded 512-column
-GPU history texture, updated only on new audio frames. Flipping away unloads the
-shader renderer and its textures.
+read a tiny GPU-rendered band texture, uploaded once per audio frame. The GPU
+interpolates previous and current levels between frames, smoothing the non-rotating
+presets without reducing fullscreen resolution or increasing audio analysis frequency.
+Spectrogram uses current levels directly and a bounded 512-column
+GPU history texture, updated only on new audio frames. Shader styles do not
+calculate unused native waveform geometry. Identical spectrum frames skip texture
+updates except for Spectrogram, which must advance its time axis. PCM samples
+are decoded only for Waveform.
 
 The helper builds automatically into `$XDG_RUNTIME_DIR/quickshell-spectrum` on
 first use and rebuilds when its source changes. It requires `cc`, `pkg-config`,

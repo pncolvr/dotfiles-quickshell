@@ -14,11 +14,51 @@ Item {
     property var audioService: AudioService
     property var mediaService: MediaService
     property bool monitorPosition: true
+    property bool preparingFullscreen: false
+    readonly property real cardInset: 1
+    readonly property real overlayRadius: Math.max(0, Theme.audioDeviceRadius - 1)
+    readonly property bool processingAllowed: monitorPosition && !MediaFullscreenService.visible
+    readonly property bool animationsEnabled: Config.animateDuringScreenShare || !AudioService.screencastActive
     property bool flipped: false
     readonly property bool flipping: flipAnimation.running
+    readonly property bool showingBack: Math.abs(flipRotation.angle) > 90
+    onAnimationsEnabledChanged: {
+        if (!animationsEnabled && flipping) flipAnimation.complete();
+    }
+    onFlippedChanged: {
+        flipAnimation.stop();
+        if (animationsEnabled) {
+            flipAnimation.to = flipped ? -180 : 0;
+            flipAnimation.restart();
+        } else flipRotation.angle = flipped ? -180 : 0;
+    }
+    Component.onCompleted: {
+        flipAnimation.stop();
+        flipRotation.angle = flipped ? -180 : 0;
+    }
+    onPlayerChanged: {
+        if (visualizer) visualizer.clear();
+    }
+    function toggleFullscreen() {
+        if (flipping || preparingFullscreen) return;
+        const screen = (root.QsWindow.window as QsWindow)?.screen ?? TooltipService.screen;
+        const origin = mapToGlobal(0, 0);
+        const sourceRect = Qt.rect(origin.x, origin.y, width, height);
+        const open = snapshot => {
+            preparingFullscreen = false;
+            MediaFullscreenService.open(player, audioService, mediaService, flipped, screen, sourceRect, snapshot);
+            TooltipService.dismiss();
+        };
+        if (!animationsEnabled || Theme.mediaFullscreenAnimationDuration <= 0) {
+            open(null);
+            return;
+        }
+        // Keep a single frozen frame so the zoom starts with the exact compact card.
+        preparingFullscreen = true;
+        if (!grabToImage(open)) open(null);
+    }
     function flip() {
         if (flipping) return;
-        effectSelector.expanded = false;
         flipped = !flipped;
     }
     readonly property bool hasPosition: !!player?.positionSupported
@@ -45,21 +85,53 @@ Item {
     readonly property real artworkSize: playbackControls.implicitWidth
     readonly property real readoutWidth: Math.max(duration.implicitWidth, app ? volumeValue.implicitWidth : 0)
     implicitHeight: contents.implicitHeight + Theme.audioDevicePadding * 2
+    // Capture and render once; each face displays the shared source beneath its content.
+    MediaVisualizer {
+        id: visualizer
+        objectName: "mediaVisualizer"
+        anchors.fill: parent
+        anchors.margins: root.cardInset
+        appId: MediaService.normalized(String(root.player?.desktopEntry || root.player?.identity || "").trim())
+        nodes: root.app?.nodes ?? []
+        playing: !!root.player?.isPlaying
+        active: !!root.app && !root.muted && !root.flipping && root.visible && root.opacity > 0
+            && root.width > 2 && root.height > 2 && root.processingAllowed
+            && (root.flipped ? Theme.mediaVisualizerBackOpacity : Theme.mediaVisualizerFrontOpacity) > 0
+            && (root.Window.window?.visible ?? false)
+    }
+    UI.ScaledTexture {
+        id: sharedVisualizerTexture
+        objectName: "mediaVisualizerTexture"
+        sourceItem: visualizer.rendering ? visualizer : null
+        live: visualizer.rendering
+        hideSource: true
+        visible: false
+    }
+    Connections {
+        target: root.player
+        function onTrackChanged() { visualizer.clear(); }
+    }
+    Connections {
+        target: MediaFullscreenService
+        function onClosed(player, flipped) {
+            if (root.player === player) root.flipped = !!root.app && flipped;
+        }
+    }
+    NumberAnimation {
+        id: flipAnimation
+        target: flipRotation
+        property: "angle"
+        duration: Theme.mediaFlipDuration
+        easing.type: Easing.InOutCubic
+    }
     Flipable {
         id: faces
         anchors.fill: parent
         transform: Rotation {
+            id: flipRotation
             origin.x: faces.width / 2
             origin.y: faces.height / 2
             axis { x: 0; y: 1; z: 0 }
-            angle: root.flipped ? -180 : 0
-            Behavior on angle {
-                NumberAnimation {
-                    id: flipAnimation
-                    duration: Theme.mediaFlipDuration
-                    easing.type: Easing.InOutCubic
-                }
-            }
         }
         front: Rectangle {
             objectName: "mediaFront"
@@ -67,37 +139,59 @@ Item {
             enabled: !root.flipped && !root.flipping
             color: Theme.alternateBackground
             radius: Theme.audioDeviceRadius
-            border.width: 1
+            border.width: root.cardInset
             border.color: Theme.empty
             MediaCardBackground {
                 anchors.fill: parent
-                anchors.margins: 1
-                visible: faces.side === Flipable.Front
+                anchors.margins: root.cardInset
+                radius: root.overlayRadius
+                visible: !root.showingBack
                 artworkSource: artwork.source
+            }
+            MediaCardVisualizer {
+                objectName: "mediaFrontVisualizer"
+                anchors.fill: parent
+                anchors.margins: root.cardInset
+                radius: root.overlayRadius
+                z: 1
+                textureSource: sharedVisualizerTexture
+                active: visualizer.rendering && !root.showingBack
+                opacity: Theme.mediaVisualizerFrontOpacity
             }
             MediaPosition {
                 id: playbackPosition
                 objectName: "mediaPositionTracker"
                 player: root.player
                 mediaService: root.mediaService
-                active: root.visible && (root.Window.window?.visible ?? false) && root.monitorPosition
+                active: root.visible && (root.Window.window?.visible ?? false) && root.processingAllowed
                     && root.hasDuration && !root.flipped && !root.flipping
             }
-            AudioButton {
-                id: frontFlip
-                objectName: "mediaFlip"
-                z: 1
+            Row {
+                id: frontActions
+                z: 3
                 anchors.top: parent.top
                 anchors.right: parent.right
                 anchors.margins: Theme.audioDevicePadding
-                glyph: Theme.mediaFlipIcon
-                hint: "Flip to audio visualizer"
-                visible: !!root.app
-                onClicked: root.flip()
+                spacing: Theme.audioSpacing
+                AudioButton {
+                    objectName: "mediaFullscreen"
+                    glyph: Theme.mediaExpandIcon
+                    hint: "Fullscreen"
+                    enabled: !root.flipping && !root.preparingFullscreen
+                    onClicked: root.toggleFullscreen()
+                }
+                AudioButton {
+                    objectName: "mediaFlip"
+                    glyph: Theme.mediaFlipIcon
+                    hint: "Flip to audio visualizer"
+                    visible: !!root.app
+                    onClicked: root.flip()
+                }
             }
             Column {
                 id: contents
-                x: Theme.audioDevicePadding
+                z: 2
+                x: (root.width - width) / 2
                 y: Theme.audioDevicePadding
                 width: root.width - Theme.audioDevicePadding * 2
                 spacing: Theme.audioSpacing
@@ -139,16 +233,22 @@ Item {
                     Item {
                         id: information
                         readonly property real volumeHeight: volumeRow.visible ? Theme.audioSpacing + volumeRow.implicitHeight : 0
-                        readonly property real detailsTop: (height - details.implicitHeight - volumeHeight) / 2
+                        readonly property real singleLineTitleSpace: volumeRow.visible && titleText.lineCount === 1
+                            ? titleText.implicitHeight : 0
+                        readonly property real detailsTop: volumeRow.visible
+                            ? height - details.implicitHeight - volumeHeight - singleLineTitleSpace
+                            : (height - details.implicitHeight) / 2
                         Layout.fillWidth: true
-                        Layout.preferredHeight: Math.max(root.artworkSize, details.implicitHeight + volumeHeight)
+                        Layout.preferredHeight: Math.max(root.artworkSize, details.implicitHeight + volumeHeight + singleLineTitleSpace)
                         Column {
                             id: details
-                            width: parent.width - (root.app ? frontFlip.width + Theme.audioSpacing : 0)
-                            y: Math.max(0, information.detailsTop - Theme.audioSpacing)
+                            width: parent.width
+                            y: Math.max(0, information.detailsTop)
                             spacing: Theme.audioSpacing / 2
                             UI.ColumnText {
+                                id: titleText
                                 objectName: "mediaTitle"
+                                font.pixelSize: Theme.fontSize
                                 color: Theme.text
                                 width: parent.width
                                 horizontalAlignment: Text.AlignHCenter
@@ -160,6 +260,7 @@ Item {
                             }
                             UI.ColumnText {
                                 objectName: "mediaDetails"
+                                font.pixelSize: Theme.fontSize
                                 width: parent.width
                                 horizontalAlignment: Text.AlignHCenter
                                 text: root.player?.trackArtist || ""
@@ -170,6 +271,7 @@ Item {
                             }
                             UI.ColumnText {
                                 objectName: "mediaApp"
+                                font.pixelSize: Theme.fontSize
                                 width: parent.width
                                 horizontalAlignment: Text.AlignHCenter
                                 text: root.player?.identity || "Media player"
@@ -182,11 +284,12 @@ Item {
                             id: volumeRow
                             visible: !!root.app
                             width: parent.width
-                            y: Math.max(information.detailsTop + details.height + Theme.audioSpacing,
-                                (information.detailsTop + details.height + parent.height - height) / 2)
+                            anchors.bottom: parent.bottom
                             spacing: Theme.audioSpacing
                             AudioButton {
                                 objectName: "mediaMute"
+                                glyphSize: Theme.fontSize
+                                implicitHeight: Theme.audioButtonHeight
                                 glyph: root.muted ? Theme.volumeMutedIcon : Theme.volumeIcons[Theme.volumeIcons.length - 1]
                                 hint: root.muted ? "Unmute" : "Mute"
                                 enabled: root.canVolume
@@ -210,6 +313,7 @@ Item {
                             UI.ColumnText {
                                 id: volumeValue
                                 objectName: "mediaVolumeValue"
+                                font.pixelSize: Theme.fontSize
                                 Layout.preferredWidth: root.readoutWidth
                                 horizontalAlignment: Text.AlignRight
                                 text: Math.round(root.volume * 100) + "%"
@@ -228,6 +332,8 @@ Item {
                         spacing: Theme.audioSpacing
                         AudioButton {
                             objectName: "mediaPrevious"
+                            glyphSize: Theme.fontSize
+                            implicitHeight: Theme.audioButtonHeight
                             glyph: Theme.mediaPreviousIcon
                             hint: "Previous"
                             enabled: !!root.player?.canGoPrevious
@@ -235,6 +341,8 @@ Item {
                         }
                         AudioButton {
                             objectName: "mediaPlayPause"
+                            glyphSize: Theme.fontSize
+                            implicitHeight: Theme.audioButtonHeight
                             glyph: root.player?.isPlaying ? Theme.pauseIcon : Theme.playIcon
                             hint: root.player?.isPlaying ? "Pause" : "Play"
                             highlightedDevice: true
@@ -248,6 +356,8 @@ Item {
                         }
                         AudioButton {
                             objectName: "mediaNext"
+                            glyphSize: Theme.fontSize
+                            implicitHeight: Theme.audioButtonHeight
                             glyph: Theme.mediaNextIcon
                             hint: "Next"
                             enabled: !!root.player?.canGoNext
@@ -255,6 +365,8 @@ Item {
                         }
                         AudioButton {
                             objectName: "mediaStop"
+                            glyphSize: Theme.fontSize
+                            implicitHeight: Theme.audioButtonHeight
                             glyph: Theme.mediaStopIcon
                             hint: "Stop playback"
                             enabled: !!root.player?.canControl
@@ -263,6 +375,7 @@ Item {
                     }
                     UI.ColumnText {
                         objectName: "mediaElapsed"
+                        font.pixelSize: Theme.fontSize
                         visible: root.hasPosition && root.hasDuration
                         text: root.hasDuration ? root.timeText(timeline.pressed ? timeline.value : root.position) : "--:--"
                         color: Theme.text
@@ -287,6 +400,7 @@ Item {
                         Layout.preferredWidth: root.readoutWidth
                         horizontalAlignment: Text.AlignRight
                         objectName: "mediaDuration"
+                        font.pixelSize: Theme.fontSize
                         visible: root.hasPosition && root.hasDuration
                         text: root.hasDuration ? root.timeText(root.player.length) : "--:--"
                         color: Theme.text
@@ -306,86 +420,61 @@ Item {
             enabled: root.flipped && !root.flipping
             color: Theme.alternateBackground
             radius: Theme.audioDeviceRadius
-            border.width: 1
+            border.width: root.cardInset
             border.color: Theme.empty
 
             MediaCardBackground {
                 anchors.fill: parent
-                anchors.margins: 1
-                visible: faces.side === Flipable.Back
+                anchors.margins: root.cardInset
+                radius: root.overlayRadius
+                visible: root.showingBack
                 artworkSource: artwork.source
             }
 
-            AudioSelector {
+            MediaCardVisualizer {
+                objectName: "mediaBackVisualizer"
+                anchors.fill: parent
+                anchors.margins: root.cardInset
+                radius: root.overlayRadius
+                z: 1
+                textureSource: sharedVisualizerTexture
+                active: visualizer.rendering && root.showingBack
+                opacity: Theme.mediaVisualizerBackOpacity
+            }
+
+            MediaEffectList {
                 id: effectSelector
                 objectName: "mediaEffectSelector"
-                toggleObjectName: "mediaEffectToggle"
-                choicesObjectName: "mediaEffectChoices"
                 anchors.top: parent.top
+                anchors.bottom: parent.bottom
                 anchors.left: parent.left
                 anchors.margins: Theme.audioDevicePadding
-                width: Math.min(180, parent.width - backFlip.width - Theme.audioDevicePadding * 2 - Theme.audioSpacing)
-                z: 2
-                compact: true
-                placeholder: "Effect"
-                hint: "Visualizer effect"
+                width: Math.min(180, parent.width - backActions.width - Theme.audioDevicePadding * 2 - Theme.audioSpacing)
+                z: 4
                 options: visualizer.effects
                 selectedName: visualizer.effect
-                onSelected: name => visualizer.effect = name
+                onSelected: name => visualizer.selectEffect(name)
             }
-            AudioButton {
-                id: backFlip
-                objectName: "mediaFlipBack"
+            Row {
+                id: backActions
+                z: 3
                 anchors.top: parent.top
                 anchors.right: parent.right
                 anchors.margins: Theme.audioDevicePadding
-                glyph: Theme.mediaFlipIcon
-                hint: "Flip to playback controls"
-                visible: !!root.app
-                onClicked: root.flip()
-            }
-            MediaVisualizer {
-                id: visualizer
-                objectName: "mediaVisualizer"
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.top: backFlip.bottom
-                anchors.bottom: visualizerCaption.top
-                anchors.margins: Theme.audioDevicePadding
-                nodes: root.app?.nodes ?? []
-                playing: !!root.player?.isPlaying
-                active: root.flipped && !root.flipping && root.visible && root.monitorPosition
-                    && (root.Window.window?.visible ?? false)
-            }
-            Connections {
-                target: root.player
-                function onTrackChanged() { visualizer.clear(); }
-            }
-            Column {
-                id: visualizerCaption
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.bottom: parent.bottom
-                anchors.margins: Theme.audioDevicePadding
                 spacing: Theme.audioSpacing
-                UI.ColumnText {
-                    width: parent.width
-                    horizontalAlignment: Text.AlignHCenter
-                    text: root.player?.trackTitle || root.player?.identity || "Media player"
-                    textFormat: Text.PlainText
-                    elide: Text.ElideRight
+                AudioButton {
+                    objectName: "mediaFullscreenBack"
+                    glyph: Theme.mediaExpandIcon
+                    hint: "Fullscreen"
+                    enabled: !root.flipping && !root.preparingFullscreen
+                    onClicked: root.toggleFullscreen()
                 }
-                UI.ColumnText {
-                    objectName: "mediaVisualizerStatus"
-                    width: parent.width
-                    horizontalAlignment: Text.AlignHCenter
-                    color: Theme.inactive
-                    text: visualizer.error ? "Audio visualizer unavailable"
-                        : !visualizer.hasStreams ? "Audio stream unavailable"
-                        : !root.player?.isPlaying ? "Playback paused"
-                        : root.muted ? "Muted" : root.player?.identity || "Playing"
-                    textFormat: Text.PlainText
-                    elide: Text.ElideRight
+                AudioButton {
+                    objectName: "mediaFlipBack"
+                    glyph: Theme.mediaFlipIcon
+                    hint: "Flip to playback controls"
+                    visible: !!root.app
+                    onClicked: root.flip()
                 }
             }
         }

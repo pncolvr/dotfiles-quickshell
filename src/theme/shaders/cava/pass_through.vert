@@ -11,6 +11,7 @@ layout(std140, binding = 0) uniform buf {
     int bars_count;
     int bar_width;
     int bar_spacing;
+    float band_blend;
 };
 
 void main() {

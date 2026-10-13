@@ -11,6 +11,7 @@ ScaledScreencopyView 1.0 components/ScaledScreencopyView.qml
 IconButton 1.0 components/IconButton.qml
 HoverTooltip 1.0 components/HoverTooltip.qml
 ActionButton 1.0 components/ActionButton.qml
+ComboSelector 1.0 components/ComboSelector.qml
 PointerFocus 1.0 components/PointerFocus.qml
 EditorActions 1.0 components/EditorActions.qml
 InputField 1.0 components/InputField.qml

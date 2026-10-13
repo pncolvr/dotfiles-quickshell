@@ -75,6 +75,7 @@ Item {
   readonly property string refreshIcon: "" // refresh
   readonly property string retryIcon: "" // arrows-rotate
   readonly property string chevronRightIcon: "" // chevron-right: collapsed
+  readonly property string chevronLeftIcon: "\uf053" // chevron-left
   readonly property string chevronDownIcon: "" // chevron-down: expanded
   readonly property string playIcon: "" // play
   readonly property string mediaPreviousIcon: "" // backward-step
@@ -82,9 +83,18 @@ Item {
   readonly property string mediaStopIcon: "" // stop
   readonly property string mediaIcon: "" // music
   readonly property string mediaFlipIcon: "" // arrows-rotate
+  readonly property string mediaExpandIcon: "\uf065" // expand
+  readonly property string mediaCollapseIcon: "\uf066" // compress
+  readonly property int mediaFullscreenEffectListHeight: 520
+  readonly property int mediaFullscreenAnimationDuration: exposeAnimationDuration
+  readonly property int mediaFullscreenSwitchDuration: 240
+  readonly property int mediaFullscreenCacheWidth: 960
+  readonly property int mediaFullscreenCacheHeight: 540
   readonly property int mediaFlipDuration: 480
   readonly property int mediaVisualizerPoints: 64
   readonly property int mediaVisualizerInterval: 33
+  readonly property real mediaVisualizerFrontOpacity: 0.45
+  readonly property real mediaVisualizerBackOpacity: 0.9
   readonly property int mediaFallbackIconSize: 32
   readonly property int mediaArtworkBlurRadius: 64
   readonly property real mediaArtworkBackgroundTint: 0.5

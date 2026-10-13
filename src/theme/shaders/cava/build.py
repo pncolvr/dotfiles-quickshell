@@ -17,6 +17,7 @@ layout(std140, binding = 0) uniform buf {
     int bars_count;
     int bar_width;
     int bar_spacing;
+    float band_blend;
 };
 layout(binding = 1) uniform sampler2D audioData;
 layout(binding = 2) uniform sampler2D inputTexture;
@@ -29,7 +30,8 @@ const vec3 gradient_colors[8] = vec3[8](
 vec2 fragCoord;
 vec4 fragColor;
 float cavaBand(int index) {
-    return texture(audioData, vec2((float(clamp(index, 0, bars_count - 1)) + 0.5) / float(bars_count), 0.5)).r;
+    vec2 levels = texture(audioData, vec2((float(clamp(index, 0, bars_count - 1)) + 0.5) / float(bars_count), 0.5)).rg;
+    return mix(levels.r, levels.g, band_blend);
 }
 '''
 footer = '''

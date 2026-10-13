@@ -94,8 +94,10 @@ Item {
     readonly property string projectDotfilesWorkTree: _internal.home
     readonly property var exposeWallpaperCommand: ["awww", "query", "--json"]
     readonly property var exposeWorkspaceIds: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-    readonly property bool exposeAnimateDuringScreenShare: false
+    // Exposé and fullscreen media transitions.
+    readonly property bool animateDuringScreenShare: false
     readonly property string pickerNamespace: "quickshell-picker"
+    readonly property string mediaFullscreenNamespace: "quickshell-media"
     readonly property int clipboardMaxItems: 1000
     readonly property int clipboardMaxTotalBytes: 500000000
     readonly property int clipboardMaxBytes: 10000000

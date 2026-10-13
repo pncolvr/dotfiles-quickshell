@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Shapes
+import QtQuick.Controls as QC
 import QtQml.Models
 import QtTest as Test
 import Quickshell
@@ -17,12 +18,14 @@ Scope {
     property int styleIndex: 0
     property bool reviewingStyle: false
     property bool checkedLastPreset: false
+    property int mutePhase: 0
     readonly property bool nativeAudio: Quickshell.env("MEDIA_VISUALIZER_NATIVE") === "1"
     // Quickshell's UntypedObjectModel metadata omits the runtime values property.
     // qmllint disable missing-property
     readonly property var streams: Pipewire.nodes.values.filter(node => node.name === "visualizer-test")
     // qmllint enable missing-property
     Test.TestEvent { id: events }
+    Test.TestResult { id: objects }
     PwObjectTracker { objects: root.nativeAudio ? root.streams : [] }
     function check(value, message) {
         if (!value) { failed = true; console.error("VISUALIZER FAIL: " + message); }
@@ -34,6 +37,27 @@ Scope {
             if (result) return result;
         }
         return null;
+    }
+    function checkRenderedLayer(name) {
+        if (Quickshell.env("MEDIA_VISUALIZER_GPU") !== "1") return;
+        const layer = root.find(card, name) as Item;
+        const snapshot = objects.grabImage(layer);
+        // QtTest's snapshot methods are not described in its qmltypes.
+        // qmllint disable missing-property
+        root.check(snapshot.alpha(Math.round(snapshot.width * 0.16), Math.round(snapshot.height * 0.4)) > 0,
+            "native visualizer produces pixels in " + name);
+        // qmllint enable missing-property
+    }
+    function checkIdle(reason) {
+        const visualizer = root.find(card, "mediaVisualizer") as MediaVisualizer;
+        const texture = root.find(card, "mediaVisualizerTexture") as ShaderEffectSource;
+        const frontLayer = root.find(card, "mediaFrontVisualizer") as MediaCardVisualizer;
+        const backLayer = root.find(card, "mediaBackVisualizer") as MediaCardVisualizer;
+        const shader = root.find(visualizer, "mediaCavaRenderer") as Loader;
+        root.check(!visualizer.rendering && !visualizer.capturing && !texture.live && !texture.sourceItem
+            && !frontLayer.active && !backLayer.active && !frontLayer.item && !backLayer.item
+            && !shader.active && !shader.item && root.find(visualizer, "mediaVisualizerPlot").outline.length === 0,
+            reason + " stops analysis, texture updates, geometry and both face renderers");
     }
     QtObject {
         id: fixturePlayer
@@ -98,12 +122,16 @@ Scope {
         repeat: true
         onTriggered: {
             const visualizer = root.find(card, "mediaVisualizer") as MediaVisualizer;
-            const selector = root.find(card, "mediaEffectSelector") as AudioSelector;
+            const selector = root.find(card, "mediaEffectSelector") as MediaEffectList;
             const flip = root.find(card, "mediaFlip") as AudioButton;
             const back = root.find(card, "mediaFlipBack") as AudioButton;
             // Wait for the rendered animation rather than assuming a fixed number of timer ticks.
             if ([2, 8, 10, 12, 14].includes(root.step) && card.flipping) return;
             if (root.step === 0) {
+                root.check(visualizer.appId === "banana", "effect preferences use the app's desktop identity");
+                fixturePlayer.desktopEntry = "BANANA.desktop";
+                fixturePlayer.dbusName = "org.mpris.MediaPlayer2.banana.instance42";
+                root.check(visualizer.appId === "banana", "case, desktop suffixes and player instance IDs keep the same preference key");
                 root.check(!flip.visible && !root.find(card, "mediaMute").visible
                     && !root.find(card, "mediaVolume").visible && !root.find(card, "mediaVolumeValue").visible,
                     "unmatched streams hide flip and all volume controls");
@@ -112,11 +140,20 @@ Scope {
                     && root.find(card, "mediaVolume").visible && root.find(card, "mediaVolumeValue").visible,
                     "matching streams reveal flip and volume controls");
                 root.cardHeight = card.implicitHeight;
-                root.check(!card.flipped && !visualizer.active && !visualizer.sampling, "front does not capture audio");
+                root.check(!card.flipped && visualizer.active && visualizer.capturing === root.nativeAudio,
+                    "matched playback face activates the shared visualizer");
+                const frontLayer = root.find(card, "mediaFrontVisualizer") as MediaCardVisualizer;
+                const backLayer = root.find(card, "mediaBackVisualizer") as MediaCardVisualizer;
+                root.check(frontLayer.active && !backLayer.active && frontLayer.textureSource === backLayer.textureSource,
+                    "both faces share one renderer, with only the visible layer active");
+                root.check(visualizer.width === card.width - 2 && visualizer.height === card.height - 2
+                    && frontLayer.width === visualizer.width && backLayer.height === visualizer.height,
+                    "visualizer fills the card inside its border on both faces");
                 root.check(flip.width === back.width && flip.height === back.height, "both flip buttons share dimensions and styling");
                 root.check(!flip.label && !back.label && !!flip.hint && !!back.hint, "flip buttons use accessible icons without text");
-                if (Quickshell.env("MEDIA_VISUALIZER_FRONT"))
-                    card.grabToImage(result => result.saveToFile(Quickshell.env("MEDIA_VISUALIZER_FRONT")));
+            } else if (root.step === 1) {
+                // Allow the action row to lay out the newly revealed Flip button before clicking it.
+                root.cardHeight = card.implicitHeight;
                 events.mouseClick(flip, flip.width / 2, flip.height / 2, Qt.LeftButton, Qt.NoModifier, 0);
                 root.check(card.flipped && card.flipping && !visualizer.active, "right-to-left flip delays monitoring until it finishes");
                 card.flip();
@@ -126,18 +163,15 @@ Scope {
                 root.check(root.find(card, "mediaBack").enabled && !root.find(card, "mediaFront").enabled, "reverse face accepts input after the flip");
                 root.check(card.implicitHeight === root.cardHeight && visualizer.height > 30, "flip preserves card size with space for the visualization");
                 root.check(visualizer.hasStreams === root.nativeAudio && visualizer.capturing === root.nativeAudio, "only the associated live stream is captured");
-                const toggle = root.find(card, "mediaEffectToggle") as Item;
-                const cursor = root.find(card, "mediaEffectToggleCursor") as MouseArea;
-                root.check(cursor.width === toggle.width && cursor.height === toggle.height
-                    && cursor.acceptedButtons === Qt.NoButton && cursor.cursorShape === Qt.PointingHandCursor,
-                    "selector cursor covers the entire button and lets clicks through");
-                root.check(root.find(visualizer, "mediaVisualizerPlot").visible, "native visualizer geometry is visible on the reverse face");
+                root.check(selector.view.visible && selector.view.clip && selector.view.count === visualizer.effects.length,
+                    "all visualizers are available in an always-visible scrolling list");
+                root.check(root.find(visualizer, "mediaVisualizerPlot").outline.length > 0
+                    && root.find(card, "mediaBackVisualizer").active, "native geometry feeds the reverse-face background");
                 if (Quickshell.env("MEDIA_VISUALIZER_GPU") === "1") {
                     const wave = root.find(visualizer, "mediaVisualizerWave") as Shape;
                     root.check(wave.rendererType === Shape.CurveRenderer, "wave rendering uses the GPU curve renderer");
                 }
                 if (!root.nativeAudio) {
-                    root.check(root.find(card, "mediaVisualizerStatus").text === "Audio stream unavailable", "missing association is explicit");
                     const bass = Array(64).fill(0); bass[10] = 0.8;
                     visualizer.bands = bass;
                     const plot = root.find(visualizer, "mediaVisualizerPlot");
@@ -154,12 +188,17 @@ Scope {
                         "native frames decode to normalized band values");
                     visualizer.bands = Array.from({length: 64}, (_, index) => Math.max(0, Math.sin(index / 4) * Math.exp(-index / 35)));
                 }
-                root.find(card, "mediaEffectToggle").clicked();
-                root.check(selector.expanded && card.implicitHeight === root.cardHeight, "effect choices overlay without resizing the card");
+                root.check(card.implicitHeight === root.cardHeight, "effect list does not resize the card");
             } else if (root.step === 3) {
                 const choices = root.find(card, "mediaEffectChoices") as ListView;
+                const option = choices.itemAtIndex(1) as QC.ItemDelegate;
+                events.mouseMove(option, 30, 10, 0, Qt.NoButton, Qt.NoModifier);
+                root.check((option.background as Rectangle).color.a === 1,
+                    "hovered combo rows have an opaque background");
                 events.mouseClick(choices.itemAtIndex(1), 30, 10, Qt.LeftButton, Qt.NoModifier, 0);
-                root.check(visualizer.effect === "bars" && !selector.expanded, "effect combo selects Bars and closes");
+                root.check(visualizer.effect === "bars" && selector.view.visible, "effect list selects Bars and stays visible");
+                root.check(PreferencesRepository.value(visualizer.effectPreferenceKey, "") === "bars",
+                    "combo selection saves the effect for this app");
             } else if (root.step === 4) {
                 selector.selected("mirror");
                 root.check(visualizer.effect === "mirror", "Mirror effect can be selected");
@@ -172,18 +211,53 @@ Scope {
                     root.check(!visualizer.error && Math.max(...bands) > 0.01, "native PipeWire audio drives cavacore frequency bands");
                     root.check(strongest < 30 && Math.max(...bands.slice(40)) < Math.max(...bands) * 0.2,
                         "matched bass stream is isolated from the unrelated treble stream on the same sink");
+                    const workers = root.find(visualizer, "mediaSpectrumWorkers") as Instantiator;
+                    const worker = workers.objectAt(0) as MediaSpectrumWorker;
+                    let frameChanges = 0;
+                    let waveformChanges = 0;
+                    const countFrame = () => frameChanges++;
+                    const countWaveform = () => waveformChanges++;
+                    worker.frameChanged.connect(countFrame);
+                    worker.waveformChanged.connect(countWaveform);
+                    worker.dataReceived(worker.frame.map(value => String(Math.round(value * 1000))).join(";")
+                        + "|" + Array(64).fill("200").join(";"));
+                    root.check(frameChanges === 0 && waveformChanges === 0,
+                        "unchanged bands do not repaint and non-waveform styles skip PCM updates");
+                    selector.selected("cava_spectrogram");
+                    worker.dataReceived(worker.frame.map(value => String(Math.round(value * 1000))).join(";")
+                        + "|" + Array(64).fill("200").join(";"));
+                    root.check(frameChanges === 1 && waveformChanges === 0,
+                        "spectrogram still advances its history for repeated frames");
+                    selector.selected("ribbon");
+                    worker.frameChanged.disconnect(countFrame);
+                    worker.waveformChanged.disconnect(countWaveform);
                 }
                 if (Quickshell.env("MEDIA_VISUALIZER_BACK"))
                     card.grabToImage(result => result.saveToFile(Quickshell.env("MEDIA_VISUALIZER_BACK")));
             } else if (root.step === 6) {
-                fixturePlayer.isPlaying = false;
-                root.check(!visualizer.capturing && !visualizer.sampling, "pause stops capture and sampling");
-                fixturePlayer.isPlaying = true;
+                const channel = root.nativeAudio ? root.streams[0].audio : mockAudio;
+                if (root.mutePhase === 0) {
+                    root.checkRenderedLayer("mediaBackVisualizer");
+                    fixturePlayer.isPlaying = false;
+                    root.checkIdle("Pausing");
+                    fixturePlayer.isPlaying = true;
+                    channel.muted = true;
+                    root.mutePhase = 1;
+                    return;
+                }
+                if (root.mutePhase === 1) {
+                    if (!card.muted) return;
+                    root.checkIdle("Muting");
+                    channel.muted = false;
+                    root.mutePhase = 2;
+                    return;
+                }
+                if (card.muted) return;
                 card.monitorPosition = false;
-                root.check(!visualizer.active && !visualizer.sampling, "cards outside the viewport stop monitoring");
+                root.checkIdle("Leaving the viewport");
                 card.monitorPosition = true;
                 preview.visible = false;
-                root.check(!visualizer.active && !visualizer.sampling, "hidden windows stop monitoring");
+                root.checkIdle("Hiding the window");
                 preview.visible = true;
                 root.check(visualizer.active, "showing the window resumes the reverse face");
                 back.clicked();
@@ -192,12 +266,19 @@ Scope {
                 if (root.nativeAudio) {
                     const workers = root.find(visualizer, "mediaSpectrumWorkers") as Instantiator;
                     root.check(workers.count === 1 && !(workers.objectAt(0) as Process).running,
-                        "native analyzer process exits after the card flips back");
+                        "native analyzer process exits during the flip animation");
                 }
             } else if (root.step === 8) {
-                root.check(!card.flipping && root.find(card, "mediaFront").enabled && !visualizer.sampling, "return finishes on the playback face");
-                root.check(!root.find(visualizer, "mediaVisualizerPlot").visible, "hidden visualizer geometry stops rendering");
+                root.check(!card.flipping && root.find(card, "mediaFront").enabled && visualizer.active
+                    && visualizer.sampling === root.nativeAudio, "return resumes visualization on the playback face");
+                root.check(root.find(visualizer, "mediaVisualizerPlot").outline.length > 0
+                    && root.find(card, "mediaFrontVisualizer").active && !root.find(card, "mediaBackVisualizer").active,
+                    "front layer renders below playback content while the reverse layer stops");
                 root.check(visualizer.effect === "ribbon" && card.implicitHeight === root.cardHeight, "effect selection and size survive the flip");
+                if (Quickshell.env("MEDIA_VISUALIZER_FRONT"))
+                    card.grabToImage(result => result.saveToFile(Quickshell.env("MEDIA_VISUALIZER_FRONT")));
+            } else if (root.step === 9) {
+                root.checkRenderedLayer("mediaFrontVisualizer");
                 card.flip();
             } else if (root.step === 10) {
                 root.check(card.flipped && !card.flipping, "visualizer can be reopened");
@@ -220,7 +301,6 @@ Scope {
                 root.check(visualizer.effects.length === 17 && visualizer.effects.filter(option => !!option.shader).length === 9,
                     "combo exposes all nine CAVA 1.0.0 shader presets, classic orientations and waveform");
                 if (!root.nativeAudio) visualizer.waveform = Array.from({length: 64}, (_, index) => Math.sin(index / 5) * 0.6);
-                root.find(card, "mediaEffectToggle").clicked();
                 const choices = root.find(card, "mediaEffectChoices") as ListView;
                 choices.positionViewAtIndex(visualizer.effects.length - 1, ListView.End);
                 choices.forceLayout();
@@ -229,8 +309,8 @@ Scope {
                     const choices = root.find(card, "mediaEffectChoices") as ListView;
                     const lastChoice = choices.itemAtIndex(visualizer.effects.length - 1);
                     events.mouseClick(lastChoice, 30, 10, Qt.LeftButton, Qt.NoModifier, 0);
-                    root.check(visualizer.effect === "cava_spectrogram" && !selector.expanded,
-                        "the last preset is reachable by scrolling and clicking the combo");
+                    root.check(visualizer.effect === "cava_spectrogram" && selector.view.visible,
+                        "the last preset is reachable by scrolling and clicking the list");
                     root.checkedLastPreset = true;
                     return;
                 }
@@ -265,8 +345,20 @@ Scope {
                 }
                 back.clicked();
             } else if (root.step === 17) {
-                root.check(!(root.find(visualizer, "mediaCavaRenderer") as Loader).active,
-                    "flipping back releases shader and feedback textures");
+                root.check((root.find(visualizer, "mediaCavaRenderer") as Loader).active
+                    && root.find(card, "mediaFrontVisualizer").active && !root.find(card, "mediaBackVisualizer").active,
+                    "selected shader renders behind the playback face after flipping back");
+                root.check(root.find(visualizer, "mediaVisualizerPlot").outline.length === 0,
+                    "shader presets do not compute unused native geometry");
+                fixturePlayer.isPlaying = false;
+                root.checkIdle("Pausing a shader preset");
+                fixturePlayer.isPlaying = true;
+                card.opacity = 0;
+                root.checkIdle("A transparent card");
+                card.opacity = 1;
+                card.visible = false;
+                root.checkIdle("Hiding a card");
+                card.visible = true;
                 console.log(root.failed ? "VISUALIZER FAIL: checks" : "PASS: media flip, effects and audio lifecycle");
                 Qt.quit();
             }

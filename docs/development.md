@@ -238,6 +238,7 @@ bash tests/audio/spectrum.sh
 bash tests/audio/media-visualizer.sh
 bash tests/audio/media-visualizer.sh --native
 bash tests/audio/media-visualizer.sh --gpu
+bash tests/audio/media-fullscreen.sh
 bash tests/audio/audio.sh --native-imports
 bash tests/audio/screencast.sh
 bash tests/audio/screencast.sh --native
@@ -251,20 +252,40 @@ preserved scroll position, stream-control visibility and safe association with a
 using isolated player fixtures without controlling desktop playback.
 `bash tests/audio/media-visualizer.sh` checks both flip directions, effect
 selection of all 17 presets, stable card sizing, independent frequency bands, PCM
-waveforms, and pause/visibility gates.
+waveforms, opaque scrolling effect rows, full-card layers on both faces, and
+pause/visibility gates. A fresh engine checks that the selected effect survives
+restart and applies to new cards from the same app, while other apps keep their
+own effects. It also checks desktop identity normalization and the previous global default.
+Idle checks verify that paused, muted, transparent, hidden and offscreen cards
+stop analysis, detach their texture source, clear native geometry and unload both
+face renderers. Shader presets skip native geometry calculations.
 `bash tests/audio/spectrum.sh` builds the native helper and feeds deterministic
 PCM into cavacore to check bass/treble separation, opposite-phase stereo, silence,
 normalized spectrum/signed-waveform frame bounds and rejection of a default-output target.
 `--native` creates a private D-Bus session and PipeWire server, disables hardware
 discovery in its WirePlumber instance, and plays separate bass and treble apps into
 one silent virtual sink. It checks that only the matched app's bands appear, and
-that its native analyzer exits and restarts with the card face. Desktop playback
+that its shared native analyzer exits during flips and resumes on either face. Desktop playback
 is unaffected. Set `MEDIA_VISUALIZER_FRONT` and `MEDIA_VISUALIZER_BACK` to PNG
 paths to save previews of each face.
 `--gpu` briefly opens the fixture on Wayland, verifies Qt Quick's GPU curve
 renderer, and cycles all styles to check the compiled CAVA shader pipelines and
 pause/unload behavior. On Hyprland it restores the previous focus and pointer
 afterward. Set `MEDIA_VISUALIZER_STYLE_DIR` to save a PNG of every preset.
+
+`bash tests/audio/media-fullscreen.sh` briefly opens a fullscreen Wayland fixture
+on the current monitor and restores focus and pointer position afterward. It
+checks opaque single-view fullscreen, scrolling effect selection, native-resolution
+live rendering without an intermediate texture, cached artwork, two-percent bottom margins, player navigation, both
+slide directions, frozen-frame cleanup, and repeated-navigation handling, plus
+shared playback and stream controls. Exit checks cover focused lists and sliders,
+entry and slide cancellation, Alt+F4, and a deliberately stalled closing animation to verify
+the cleanup deadline. It also checks pause/mute gates, saved effects, player
+removal and disabled animations. Set `MEDIA_FULLSCREEN_SCREENSHOT` to save a
+preview, or `MEDIA_FULLSCREEN_TRACE=1` for fixture phase logging.
+GPU checks also verify that fresh audio levels request a frame without an ongoing
+animation, reach the band texture, interpolate to intermediate pixels, and stop
+interpolating on pause.
 
 The original CAVA 1.0.0 shader sources, Qt ports, and compiled bundles are tracked
 under `src/theme/shaders/cava`. Rebuild all shader stages with:
