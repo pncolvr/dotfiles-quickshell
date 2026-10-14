@@ -12,8 +12,9 @@ Singleton {
     readonly property var entries: selectUsers(TwitchRepository.users, state.streams)
     readonly property var onlineUsers: entries.filter(user => user.online)
     readonly property var offlineUsers: {
-        TimeService.time // Reformat relative dates when the clock changes, including midnight.
-        return formatOfflineUsers(entries.filter(user => !user.online), Date.now())
+        // Derive the timestamp from the clock so relative dates update at midnight.
+        const now = new Date(TimeService.time).getTime()
+        return formatOfflineUsers(entries.filter(user => !user.online), Number.isFinite(now) ? now : Date.now())
     }
     readonly property var allUsers: [...onlineUsers, ...offlineUsers].sort((a, b) => a.login.localeCompare(b.login))
     readonly property bool hasOnline: onlineUsers.length > 0

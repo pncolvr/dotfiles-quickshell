@@ -9,21 +9,25 @@ import "." as AudioModels
 
 Singleton {
     id: root
+    // Native module metadata exposes these ObjectModels as opaque types.
+    readonly property var nodesModel: Pipewire.nodes
+    readonly property var linksModel: Pipewire.links
+    readonly property var linkGroupsModel: Pipewire.linkGroups
 
     PwObjectTracker {
         // Link state is unavailable until its group is bound, just like node audio.
-        objects: [root.sink, root.source, ...Pipewire.nodes.values,
-            ...Pipewire.linkGroups.values.filter(link => link.source === root.source || link.target === root.sink)]
+        objects: [root.sink, root.source, ...root.nodesModel.values,
+            ...root.linkGroupsModel.values.filter(link => link.source === root.source || link.target === root.sink)]
     }
 
     // Output
     readonly property PwNode sink: Pipewire.defaultAudioSink
     readonly property real volume: sink?.audio?.volume ?? 0
     readonly property bool muted: sink?.audio?.muted ?? false
-    readonly property bool outputMutePulse: muted && hasDeviceRequest(sink, false, audioPlaybackNodes, Pipewire.linkGroups.values)
+    readonly property bool outputMutePulse: muted && hasDeviceRequest(sink, false, audioPlaybackNodes, root.linkGroupsModel.values)
 
-    readonly property var outputs: Pipewire.nodes.values.filter(node => node.audio && !node.isStream && node.isSink)
-    readonly property var inputs: Pipewire.nodes.values.filter(node => node.audio && !node.isStream && !node.isSink)
+    readonly property var outputs: root.nodesModel.values.filter(node => node.audio && !node.isStream && node.isSink)
+    readonly property var inputs: root.nodesModel.values.filter(node => node.audio && !node.isStream && !node.isSink)
     readonly property var outputDevices: withInactiveCards(outputs, false)
     readonly property var inputDevices: withInactiveCards(inputs, true)
     readonly property var cards: devicesState.snapshot.cards
@@ -114,7 +118,7 @@ Singleton {
 
     function deviceInUse(node, input) {
         const apps = input ? micCaptureNodes : audioPlaybackNodes
-        return Pipewire.linkGroups.values.some(group =>
+        return root.linkGroupsModel.values.some(group =>
             (input ? group.source : group.target) === node
             && apps.includes(input ? group.target : group.source)
         )
@@ -147,14 +151,14 @@ Singleton {
     readonly property PwNode source: Pipewire.defaultAudioSource
     readonly property real micVolume: source?.audio?.volume ?? 0
     readonly property bool micMuted: source?.audio?.muted ?? false
-    readonly property bool micMutePulse: micMuted && hasDeviceRequest(source, true, micCaptureNodes, Pipewire.linkGroups.values)
+    readonly property bool micMutePulse: micMuted && hasDeviceRequest(source, true, micCaptureNodes, root.linkGroupsModel.values)
     readonly property bool micActivityEnabled: micMonitor.enabled
     readonly property bool micActive: micActivityEnabled && micActivityRelease.running
 
     PwNodePeakMonitor {
         id: micMonitor
         node: root.source
-        enabled: !root.micMuted && root.hasDeviceRequest(root.source, true, root.micCaptureNodes, Pipewire.linkGroups.values)
+        enabled: !root.micMuted && root.hasDeviceRequest(root.source, true, root.micCaptureNodes, root.linkGroupsModel.values)
         onEnabledChanged: {
             if (!enabled) micActivityRelease.stop()
         }
@@ -251,8 +255,8 @@ Singleton {
 
     AudioModels.ScreencastModel {
         id: screencastModel
-        nodes: Pipewire.nodes.values
-        links: Pipewire.links.values
+        nodes: root.nodesModel.values
+        links: root.linksModel.values
     }
     readonly property var screencastStreams: screencastModel.streams
     readonly property bool screencastActive: screencastStreams.length > 0
@@ -271,7 +275,7 @@ Singleton {
     }
 
     // Internal monitors must not appear as microphone users or keep mic activity enabled.
-    readonly property var micCaptureNodes: Pipewire.nodes.values.filter(node =>
+    readonly property var micCaptureNodes: root.nodesModel.values.filter(node =>
         node.properties?.["media.class"] === "Stream/Input/Audio"
         && node.properties?.["application.name"] !== "Quickshell Peak Detect"
         && node.name !== "quickshell-peak-monitor"
@@ -281,7 +285,7 @@ Singleton {
 
     readonly property var micUsers: micCaptureNodes.map(node => nodeName(node)).filter(name => !!name)
 
-    readonly property var audioPlaybackNodes: Pipewire.nodes.values.filter(node =>
+    readonly property var audioPlaybackNodes: root.nodesModel.values.filter(node =>
         node.properties?.["media.class"] === "Stream/Output/Audio" && !!nodeName(node)
     )
     readonly property var audioUsers: audioPlaybackNodes.map(node => nodeName(node))
@@ -293,8 +297,8 @@ Singleton {
             && streams.includes(input ? link.target : link.source))
     }
 
-    readonly property var micApps: appEntries(micCaptureNodes, true, Pipewire.linkGroups.values, inputs)
-    readonly property var playbackApps: appEntries(audioPlaybackNodes, false, Pipewire.linkGroups.values, outputs)
+    readonly property var micApps: appEntries(micCaptureNodes, true, root.linkGroupsModel.values, inputs)
+    readonly property var playbackApps: appEntries(audioPlaybackNodes, false, root.linkGroupsModel.values, outputs)
 
     function appEntries(nodes, input, links, targets) {
         const apps = new Map()

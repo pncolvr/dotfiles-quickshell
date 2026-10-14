@@ -57,6 +57,12 @@ executable. VS Code uses the system Qt 6 language server and QML import director
 through `.vscode/settings.json`; reload the editor window after changing these
 settings.
 
+The check keeps `--max-warnings 0` and treats unused imports as warnings.
+Standalone singletons are checked with their exporting `qmldir`; unrelated
+modules are not injected into other files. Native screen/model metadata can be
+opaque across Quickshell modules: geometry uses the existing `geometryScreen`
+boundary, and audio retains the native models through explicit model references.
+
 The QML files contain scoped lint exceptions for incomplete Quickshell type
 metadata: runtime-selected `PanelWindow` backends, the missing
 `QProcess::ExitStatus` enum, and the tray menu handle's outdated C++ type name.
@@ -250,6 +256,13 @@ folder picker keeps Manage open and restores its keyboard focus. This test
 briefly shows an isolated picker and folder dialog.
 `bash tests/launcher/providers.sh` also checks that code/GitHub dispatch to native
 IPC without a project cache file.
+Run `bash tests/launcher/azure-cache.sh` for container reuse/start/create, the
+Portkey helper path, configurable paths/environment, validated atomic cache
+replacement, failure preservation and empty subscription lists. Podman and the
+picker handler are mocked; the test never starts a real container or authenticates.
+`bash tests/launcher/launcher.sh` checks that legacy markup labels are normalized
+before search while replies preserve original labels/results and ordinary grid
+labels remain literal.
 
 ## Notifications
 

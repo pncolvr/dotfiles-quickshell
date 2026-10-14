@@ -14,9 +14,9 @@ Scope {
         property bool reloaded: false
     }
     FloatingWindow {
-        id: window
+        id: fixtureWindow
         visible: false
-        Batteries { id: icon; window: window }
+        Batteries { id: icon; window: fixtureWindow }
     }
     function find(item, name) {
         if (item.objectName === name) return item
@@ -34,6 +34,7 @@ Scope {
         running: true
         onTriggered: {
             if (++root.ticks > 200) { root.fail("timed out"); return }
+            if (!DbService.ready) return
             if (testState.reloaded) {
                 if (TooltipService.visible) root.fail("background scan opened the tooltip")
                 else if (!BatteryService.batteries.some(battery => battery.id === "solaar:reload-trackball" && battery.percentage === 20))
@@ -41,7 +42,12 @@ Scope {
                 else if (root.find(icon, "batteryBarIcon").color.toString() !== Theme.warning.toString())
                     root.fail("warning color lost across configuration reload")
                 else if (BatteryService.scanningReceivers) root.sawReloadScan = true
-                else if (!root.sawReloadScan) root.fail("background polling did not restart after reload")
+                else if (!root.sawReloadScan) {
+                    // Storage readiness and the receiver Timer resume on
+                    // separate events; wait for evidence rather than checking
+                    // only the first tick of the new root.
+                    if (root.ticks > 100) root.fail("background polling did not restart after reload")
+                }
                 else { console.log("PASS: configuration reload retains receiver readings and warning color during background rescanning without hover"); Qt.quit() }
                 return
             }

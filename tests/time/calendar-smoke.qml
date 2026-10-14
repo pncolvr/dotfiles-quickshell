@@ -3,7 +3,6 @@ import QtQuick
 import QtTest as Test
 import Quickshell
 import "../../src/services"
-import "../../src/config"
 import "../../src/theme"
 import "../../src/modules/clock"
 

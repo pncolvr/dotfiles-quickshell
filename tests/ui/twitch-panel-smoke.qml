@@ -11,7 +11,6 @@ import "../../src/modules/media"
 import "../../src/modules/system/totp"
 import "../../src/modules/system"
 import "../../src/services"
-import "../../src/theme"
 import "../../src/theme/ui" as UI
 
 Scope {
@@ -45,7 +44,9 @@ Scope {
         }
     }
     // The fixture bar reserves no desktop space; place its panels below it.
-    TooltipWindow { id: window; screen: testBar.screen; margins.top: 30 }
+    // Native Margins metadata is opaque; keep this fixture offset in one helper.
+    function offsetPanel(surface) { surface.margins.top = 30 }
+    TooltipWindow { id: window; screen: testBar.screen; Component.onCompleted: root.offsetPanel(window) }
     Connections {
         target: window
         function onLoadedContentChanged() {
@@ -54,7 +55,7 @@ Scope {
     }
     readonly property bool observedMuted: AudioService.muted
     readonly property real observedVolume: AudioService.volume
-    TotpWindow { id: totpWindow; margins.top: 30 }
+    TotpWindow { id: totpWindow; Component.onCompleted: root.offsetPanel(totpWindow) }
     readonly property TotpTooltip totpPanel: totpWindow.loadedContent as TotpTooltip
     readonly property UI.SearchField totpSearch: root.totpPanel
         ? objects.findChild(root.totpPanel, "totpSearchField") as UI.SearchField : null

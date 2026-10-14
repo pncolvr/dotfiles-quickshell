@@ -351,6 +351,13 @@ check_dmenu() {
     local label=$1 expected=$2 input=$3; shift 3
     printf '%s' "$input" | bash "$picker" --dmenu "$@" > "$test_dir/result" 2> "$test_dir/client-error" & client_pid=$!
     wait_open
+    if [[ $label == power ]]; then
+        snapshot | jq -e '[.items[].title] == ["First","Second"]
+            and [.items[].originalTitle] == ["<span>First</span>","<span>Second</span>"]
+            and [.items[].result] == ["<span>First</span>","<span>Second</span>"]' >/dev/null
+    elif [[ $label == 'literal grid' ]]; then
+        snapshot | jq -e '[.items[].title] == ["<span>First</span>","<span>Second</span>"]' >/dev/null
+    fi
     ipc call pickertest accept 1
     wait_client 0
     [[ $(<"$test_dir/result") == "$expected" ]]
@@ -360,6 +367,7 @@ check_dmenu 'projects/screenshot' second $'first\nsecond\n' -case-smart -sort -s
 check_dmenu remotes second 'first|second' -sep '|' -dmenu -case-smart -p ''
 check_dmenu recording second $'first\nsecond\n' -i -p ''
 check_dmenu power '<span>Second</span>' '<span>First</span>|<span>Second</span>' -sep '|' -markup-rows -eh 4 -dmenu -case-smart -sort -sorting-method fzf --grid -p ''
+check_dmenu 'literal grid' '<span>Second</span>' '<span>First</span>|<span>Second</span>' -sep '|' --grid -sort
 
 power_script=${PICKER_TEST_POWER_SCRIPT:-$test_dir/src/services/launcher/providers/power.sh}
 if [[ -f $power_script ]]; then

@@ -3,6 +3,7 @@ set -euo pipefail
 project_root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)
 test_dir=$(mktemp -d /tmp/quickshell-batteries-test.XXXXXX)
 mkdir -p "$test_dir/config/data"
+ln -s "$project_root/src" "$test_dir/config/src"
 entry="$test_dir/config/shell.qml"
 trap 'rm -rf -- "$test_dir"; rm -f -- "$entry"' EXIT
 mkdir -m 700 "$test_dir/runtime"
@@ -91,7 +92,7 @@ Bolt Receiver
 REPORT
 MOCK
 # PersistentProperties participates in the root reload tree, not an asynchronous Loader.
-sed "s|import \"../../src/|import \"file://$project_root/src/|g" "$project_root/tests/system/batteries-reload-smoke.qml" > "$entry"
+sed 's@"../../src@"src@g' "$project_root/tests/system/batteries-reload-smoke.qml" > "$entry"
 reload_output=$(PATH="$test_dir/bin:$PATH" QT_QPA_PLATFORM=offscreen XDG_RUNTIME_DIR="$test_dir/runtime" timeout 15 qs -p "$entry" 2>&1) || {
     printf '%s\n' "$reload_output" >&2
     exit 1

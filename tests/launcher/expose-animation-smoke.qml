@@ -23,7 +23,7 @@ Scope {
     }
     Test.TestCase { id: objects; when: false }
     QtObject {
-        id: picker
+        id: fixturePicker
         property bool visible: false
         property string layout: "expose"
         property var targetScreen: Quickshell.screens[0]
@@ -57,7 +57,7 @@ Scope {
         function moveExposeWindow(_address, _workspace) { return false }
         function accept(_custom, _copy) {}
     }
-    ExposeWindow { id: window; picker: picker; reservedMargins: [8, 30, 12, 6] }
+    ExposeWindow { id: window; picker: fixturePicker; reservedMargins: [8, 30, 12, 6] }
     Connections {
         target: window
         function onTransitionProgressChanged() {
@@ -82,7 +82,7 @@ Scope {
                         + (position.x - window.zoomRect.x - window.zoomRect.width / 2) * window.zoomFactor
                     const finalY = window.desktopRect.y + window.desktopRect.height / 2
                         + (position.y - window.zoomRect.y - window.zoomRect.height / 2) * window.zoomFactor
-                    const client = picker.items.find(entry => entry.id === "0x1").client
+                    const client = fixturePicker.items.find(entry => entry.id === "0x1").client
                     root.check(Math.abs(finalX - client.at[0] + window.monitorOrigin.x) < 1
                         && Math.abs(finalY - client.at[1] + window.monitorOrigin.y) < 1
                         && Math.abs(preview.width * window.zoomFactor - client.size[0]) < 1
@@ -101,10 +101,10 @@ Scope {
         onTriggered: {
             if (root.step === 0) {
                 root.check(!window.visible, "closed overview starts unmapped")
-                picker.visible = true
+                fixturePicker.visible = true
             } else if (root.step === 1) {
                 root.check(window.visible, "opening maps the overview surface")
-                root.check(window.transitionWorkspace === picker.exposeReturnWorkspace,
+                root.check(window.transitionWorkspace === fixturePicker.exposeReturnWorkspace,
                     "opening targets the starting workspace")
                 const fittedWidth = window.zoomRect.width * window.zoomFactor
                 const fittedHeight = window.zoomRect.height * window.zoomFactor
@@ -117,7 +117,7 @@ Scope {
                 root.check(root.openingIntermediate, "opening zooms out over multiple frames")
                 root.check(root.openingZoomed, "opening frames the starting workspace at a larger scale")
                 root.check(window.transitionProgress === 1, "opening settles at full opacity")
-                picker.visible = false
+                fixturePicker.visible = false
                 root.check(window.visible, "closing keeps the surface mapped for the zoom")
                 root.checkWorkspaceFillsDesktop()
                 root.check(window.WlrLayershell.keyboardFocus === WlrKeyboardFocus.None,
@@ -125,43 +125,43 @@ Scope {
             } else if (root.step === 6) {
                 root.check(window.visible && window.transitionProgress > 0 && window.transitionProgress < 1,
                     "closing zooms in over multiple frames")
-                picker.visible = true
+                fixturePicker.visible = true
             } else if (root.step === 11) {
                 root.check(window.visible && window.transitionProgress === 1,
                     "reopening during the zoom reverses cleanly: visible=" + window.visible + " requested=" + window.requested + " progress=" + window.transitionProgress)
-                picker.exposeWorkspace = 2
-                picker.exposeCloseTarget = {id: "0x2", result: "0x2", workspaceId: 2}
-                picker.visible = false
+                fixturePicker.exposeWorkspace = 2
+                fixturePicker.exposeCloseTarget = {id: "0x2", result: "0x2", workspaceId: 2}
+                fixturePicker.visible = false
                 root.check(window.transitionWorkspace === 2,
                     "the accepted window's workspace becomes the closing animation destination")
-                root.check(picker.focusedAddress === "", "activation waits until the overlay disappears")
+                root.check(fixturePicker.focusedAddress === "", "activation waits until the overlay disappears")
                 root.check(window.zoomFactor > 1, "accepting a centered window zooms into its workspace miniature")
                 root.checkWorkspaceFillsDesktop()
             } else if (root.step === 16) {
                 root.check(!window.visible && window.transitionProgress === 0,
                     "closing unmaps the surface after the animation")
-                root.check(picker.focusedAddress === "0x2" && picker.exposeCloseTarget === null,
+                root.check(fixturePicker.focusedAddress === "0x2" && fixturePicker.exposeCloseTarget === null,
                     "closing activates the selected destination once the overlay disappears")
                 window.animationsEnabled = false
-                picker.visible = true
+                fixturePicker.visible = true
                 root.check(window.visible && window.transitionProgress === 1, "screen sharing opens without animation")
-                picker.visible = false
+                fixturePicker.visible = false
                 root.check(!window.visible && window.transitionProgress === 0, "screen sharing closes without animation")
                 window.animationsEnabled = true
-                picker.visible = true
+                fixturePicker.visible = true
             } else if (root.step === 17) {
                 root.check(window.transitionProgress > 0 && window.transitionProgress < 1, "animations return after screen sharing")
                 window.animationsEnabled = false
                 root.check(window.transitionProgress === 1, "starting screen sharing finishes an active transition immediately")
-                picker.visible = false
+                fixturePicker.visible = false
                 root.check(!window.visible, "closing still works after disabling a running transition")
                 window.animationsEnabled = true
-                picker.exposeWorkspace = 1
-                picker.focusedAddress = "0x1"
-                picker.visible = true
+                fixturePicker.exposeWorkspace = 1
+                fixturePicker.focusedAddress = "0x1"
+                fixturePicker.visible = true
             } else if (root.step === 22) {
-                picker.exposeWorkspace = 2
-                picker.close()
+                fixturePicker.exposeWorkspace = 2
+                fixturePicker.close()
                 root.check(window.transitionWorkspace === 1,
                     "cancellation zooms into the original workspace after switching views")
                 root.check(window.zoomRect.width > 0 && window.zoomRect.height > 0,
@@ -180,35 +180,35 @@ Scope {
                     "camera moves the zoom target toward the usable desktop center below the bar")
             } else if (root.step === 27) {
                 root.check(root.cancellationZoomCompleted, "workspace cancellation remains visible through the end of its zoom")
-                root.check(!window.visible && picker.focusedAddress === "0x1",
+                root.check(!window.visible && fixturePicker.focusedAddress === "0x1",
                     "cancellation returns to the original desktop without selecting the other workspace's window")
-                picker.exposeWorkspace = 1
-                picker.visible = true
+                fixturePicker.exposeWorkspace = 1
+                fixturePicker.visible = true
             } else if (root.step === 32) {
                 const previousOriginX = window.monitorOrigin.x
                 const previousOriginY = window.monitorOrigin.y
-                const previousItems = picker.items
+                const previousItems = fixturePicker.items
                 window.monitorOrigin = Qt.point(1400, 900)
-                picker.items = previousItems.map(entry => Object.assign({}, entry, {client: Object.assign({}, entry.client, {
+                fixturePicker.items = previousItems.map(entry => Object.assign({}, entry, {client: Object.assign({}, entry.client, {
                     at: [entry.client.at[0] + window.monitorOrigin.x - previousOriginX,
                         entry.client.at[1] + window.monitorOrigin.y - previousOriginY]
                 })}))
-                picker.items = picker.items.map(entry => entry.id !== "0x1" ? entry : Object.assign({}, entry, {
+                fixturePicker.items = fixturePicker.items.map(entry => entry.id !== "0x1" ? entry : Object.assign({}, entry, {
                     client: Object.assign({}, entry.client, {at: [entry.client.at[0] - window.desktopRect.width / 4, entry.client.at[1]]})
                 }))
-                picker.exposeCloseTarget = {id: "0x1", result: "0x1", workspaceId: 1}
-                picker.visible = false
+                fixturePicker.exposeCloseTarget = {id: "0x1", result: "0x1", workspaceId: 1}
+                fixturePicker.visible = false
                 root.check(window.transitionWorkspace === 1 && window.zoomFactor > 1,
                     "accepting an off-center window zooms into its workspace layout")
                 root.checkWorkspaceFillsDesktop()
             } else if (root.step === 37) {
                 root.check(root.offCenterPlacementChecked, "off-center workspace zoom reaches its final desktop geometry")
-                root.check(!window.visible && picker.focusedAddress === "0x1",
+                root.check(!window.visible && fixturePicker.focusedAddress === "0x1",
                     "workspace zoom still activates the selected off-center window after closing")
-                picker.exposeReturnWorkspace = 3
-                picker.exposeWorkspace = 0
-                picker.query = "No match"
-                picker.visible = true
+                fixturePicker.exposeReturnWorkspace = 3
+                fixturePicker.exposeWorkspace = 0
+                fixturePicker.query = "No match"
+                fixturePicker.visible = true
             } else if (root.step === 38) {
                 root.check(window.transitionWorkspace === 3 && window.zoomFactor > 1,
                     "All view opens from the empty starting workspace even when search hides every window")
@@ -216,24 +216,24 @@ Scope {
                     && Math.abs(window.zoomRect.height * window.zoomFactor - window.desktopRect.height) < 1,
                     "empty workspace opening uses its fitted desktop miniature")
             } else if (root.step === 42) {
-                picker.close()
+                fixturePicker.close()
                 root.check(window.transitionWorkspace === 3, "filtered All view dismisses to the empty starting workspace")
                 root.checkWorkspaceFillsDesktop()
             } else if (root.step === 47) {
                 root.check(!window.visible, "empty workspace cancellation completes")
-                picker.query = ""
-                picker.items = picker.items.concat([{id: "0x3", result: "0x3", title: "Special", workspaceId: -99,
-                    client: Object.assign({}, picker.items[1].client, {address: "0x3"})}])
-                picker.exposeWorkspace = 0
-                picker.visible = true
+                fixturePicker.query = ""
+                fixturePicker.items = fixturePicker.items.concat([{id: "0x3", result: "0x3", title: "Special", workspaceId: -99,
+                    client: Object.assign({}, fixturePicker.items[1].client, {address: "0x3"})}])
+                fixturePicker.exposeWorkspace = 0
+                fixturePicker.visible = true
             } else if (root.step === 52) {
-                picker.exposeCloseTarget = picker.items.find(entry => entry.id === "0x3")
-                picker.close()
+                fixturePicker.exposeCloseTarget = fixturePicker.items.find(entry => entry.id === "0x3")
+                fixturePicker.close()
                 root.check(window.transitionWorkspace === -99 && window.zoomFactor > 1,
                     "accepting a special-workspace window targets its workspace miniature")
                 root.checkWorkspaceFillsDesktop()
             } else if (root.step === 57) {
-                root.check(!window.visible && picker.focusedAddress === "0x3",
+                root.check(!window.visible && fixturePicker.focusedAddress === "0x3",
                     "special-workspace acceptance activates only after the animation completes")
                 console.log(root.failed ? "EXPOSE FAIL: animation" : "PASS: Exposé workspace transitions, centered/off-center destinations, monitor origins, cancellation, empty and special workspaces, filtered All view, focus release and screen-sharing suppression")
                 stop()

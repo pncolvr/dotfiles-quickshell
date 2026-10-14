@@ -18,7 +18,7 @@ Scope {
     }
     Test.TestCase { id: events; when: false }
     QtObject {
-        id: picker
+        id: fixturePicker
         property bool visible: true
         property bool exposeDragging: false
         property var exposePendingMoves: ({})
@@ -48,14 +48,14 @@ Scope {
         visible: true
         implicitWidth: 1000
         implicitHeight: 800
-        ExposePanel { id: panel; anchors.fill: parent; anchors.margins: 24; picker: picker }
+        ExposePanel { id: panel; anchors.fill: parent; anchors.margins: 24; picker: fixturePicker }
     }
     Timer {
         id: rejectMove
         interval: 1000
         onTriggered: {
-            picker.exposePendingMoves = ({})
-            picker.items = picker.items.map(item => Object.assign({}, item))
+            fixturePicker.exposePendingMoves = ({})
+            fixturePicker.items = fixturePicker.items.map(item => Object.assign({}, item))
         }
     }
     Timer {
@@ -88,7 +88,7 @@ Scope {
                 "empty workspace crossfades between its placeholder and the dragged preview")
             if (root.previewEntering) {
                 root.check(tile.windows.length === 1 && tile.windows[0].address === "0x1"
-                    && !Object.keys(picker.exposePendingMoves).length,
+                    && !Object.keys(fixturePicker.exposePendingMoves).length,
                     "hovering an empty workspace previews the dragged window before dropping")
                 root.destinationPreview = events.findChild(tile, "exposeWorkspaceWindow-0x1")
             }
@@ -124,13 +124,13 @@ Scope {
                 const placeholder = events.findChild(empty, "exposeEmptyWorkspaceIcon") as Item
                 root.check(!empty.windows.length && placeholder.visible && placeholder.opacity === 1,
                     "empty workspace displays the Exposé placeholder below its name")
-                picker.selectExposeWorkspace(2)
+                fixturePicker.selectExposeWorkspace(2)
                 root.check(grid.workspaceDirection === 1 && grid.outgoingCards.length === 3,
                     "selecting a workspace on the right preserves the outgoing grid")
                 checkSlide.restart()
             } else if (root.step === 1) {
                 root.check(grid.workspaceProgress === 1 && !grid.outgoingCards.length, "workspace transition releases outgoing previews")
-                picker.selectExposeWorkspace(1)
+                fixturePicker.selectExposeWorkspace(1)
                 root.check(grid.workspaceDirection === -1 && grid.outgoingCards.length === 2,
                     "selecting a workspace on the left reverses the slide")
                 checkSlide.restart()
@@ -161,13 +161,13 @@ Scope {
                 events.mouseRelease(panel, point.x, point.y)
                 root.check(card.dropAccepted && grid.layoutCount === 2, "accepted drop keeps the optimistic layout")
             } else if (root.step === 7) {
-                root.check(!picker.exposeDragging && grid.layoutCount === 2 && picker.items[0].workspaceId === 1,
+                root.check(!fixturePicker.exposeDragging && grid.layoutCount === 2 && fixturePicker.items[0].workspaceId === 1,
                     "drag cleanup does not reopen the gap while compositor events are pending")
                 const destination = strip.itemAtIndex(2) as WorkspacePreview
                 root.check(events.findChild(destination, "exposeWorkspaceWindow-0x1") === root.destinationPreview,
                     "accepted drop preserves the destination capture while compositor data is pending")
-                picker.items = picker.items.map(item => item.id === "0x1" ? Object.assign({}, item, {workspaceId: 3}) : item)
-                picker.exposePendingMoves = ({})
+                fixturePicker.items = fixturePicker.items.map(item => item.id === "0x1" ? Object.assign({}, item, {workspaceId: 3}) : item)
+                fixturePicker.exposePendingMoves = ({})
                 const previews = events.findChild(destination, "exposeWorkspaceWindows") as Item
                 root.check(events.findChild(destination, "exposeWorkspaceWindow-0x1") === root.destinationPreview
                     && previews.opacity === 1, "confirmed move keeps its workspace preview without restarting capture")
@@ -176,8 +176,8 @@ Scope {
                     && target.y === root.survivorSlot.y && target.width === root.survivorSlot.width,
                     "confirmation preserves the already rearranged positions")
             } else if (root.step === 8) {
-                picker.items = picker.items.filter(item => item.id !== "0x1")
-                picker.failMove = true
+                fixturePicker.items = fixturePicker.items.filter(item => item.id !== "0x1")
+                fixturePicker.failMove = true
                 root.failedCard = grid.itemAtIndex(0)
                 const card = root.failedCard as ExposeWindowCard
                 events.mousePress(card, card.width / 2, card.height / 2)
@@ -191,7 +191,7 @@ Scope {
                 events.mouseRelease(panel, point.x, point.y)
                 root.check(root.failedCard.dropAccepted && grid.layoutCount === 1, "unconfirmed move stays optimistic")
             } else if (root.step === 11) {
-                root.check(grid.layoutCount === 1 && Object.keys(picker.exposePendingMoves).length === 1,
+                root.check(grid.layoutCount === 1 && Object.keys(fixturePicker.exposePendingMoves).length === 1,
                     "old compositor data cannot undo the pending layout")
             } else if (root.step === 14) {
                 const body = events.findChild(root.failedCard, "exposeDragCard") as Rectangle
@@ -214,10 +214,10 @@ Scope {
                 root.check(!root.failedCard.dropAccepted && grid.layoutCount === 2,
                     "rejected drop immediately restores room for the window")
             } else if (root.step === 17) {
-                root.check(!picker.exposeDragging && !picker.accepted && grid.layoutCount === 2,
+                root.check(!fixturePicker.exposeDragging && !fixturePicker.accepted && grid.layoutCount === 2,
                     "rejected drop finishes without activating a window")
                 panel.animationsEnabled = false
-                picker.selectExposeWorkspace(2)
+                fixturePicker.selectExposeWorkspace(2)
                 root.check(grid.workspaceProgress === 1 && !grid.outgoingCards.length,
                     "disabled animations switch workspaces immediately")
                 console.log(root.failed ? "EXPOSE FAIL: interactions"

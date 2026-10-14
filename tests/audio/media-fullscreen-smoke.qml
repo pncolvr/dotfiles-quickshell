@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Window
+import QtQuick.Controls as QC
 import QtTest as Test
 import Quickshell
 import Quickshell.Services.Mpris
@@ -14,6 +15,7 @@ Scope {
     property bool failed: false
     property int step: 0
     property var activeCard: null
+    readonly property var inputMask: fullscreen.mask
     property int styleIndex: 0
     property int shaderCheckPhase: 0
     property int renderedFrames: 0
@@ -198,7 +200,8 @@ Scope {
                 compactCard.toggleFullscreen();
             } else if (root.step === 2) {
                 root.activeCard = card;
-                root.check(!!card && card.width === fullscreen.screen.width && card.height === fullscreen.screen.height,
+                const screen = fullscreen.geometryScreen
+                root.check(!!card && card.width === screen.width && card.height === screen.height,
                     "one player fills the originating monitor");
                 root.check(!root.find(card, "mediaFlip") && !root.find(card, "mediaFlipBack"),
                     "fullscreen has one face and no flip controls");
@@ -230,7 +233,7 @@ Scope {
                     "all effects are available in a permanent scrollable list");
                 const row = effects.view.itemAtIndex(1);
                 events.mouseMove(row, row.width - 10, row.height / 2, 0, Qt.NoButton, Qt.NoModifier);
-                root.check(row.background.color.a === 1, "hovered rows remain opaque across the whole row");
+                root.check(((row as QC.ItemDelegate).background as Rectangle).color.a === 1, "hovered rows remain opaque across the whole row");
                 events.mouseClick(row, 20, row.height / 2, Qt.LeftButton, Qt.NoModifier, 0);
                 root.check(fullVisualizer.effect === "bars", "clicking the effect list saves the app effect");
                 fullVisualizer.selectEffect("cava_orion_rotate");
@@ -252,8 +255,8 @@ Scope {
                     "Left restores the first app's saved effect");
                 const effects = root.find(card, "mediaEffectSelector") as MediaEffectList;
                 const selected = effects.view.itemAtIndex(effects.view.currentIndex);
-                root.check(String(selected.background.color) === String(effects.color)
-                    && String(selected.contentItem.color) === String(Theme.accent),
+                root.check(String(((selected as QC.ItemDelegate).background as Rectangle).color) === String(effects.color)
+                    && String(((selected as QC.ItemDelegate).contentItem as Text).color) === String(Theme.accent),
                     "selection uses accent text without a colored background");
                 root.find(card, "mediaPlayPause").clicked();
                 root.check(!fixturePlayer.isPlaying, "fullscreen transport affects the same player");
@@ -338,7 +341,7 @@ Scope {
                 root.find(card, "mediaEffectSelector").view.forceActiveFocus();
                 events.keyClick(Qt.Key_Escape, Qt.NoModifier, 0);
                 root.check(!MediaFullscreenService.requested
-                    && fullscreen.WlrLayershell.keyboardFocus === WlrKeyboardFocus.None && fullscreen.mask.width === 0,
+                    && fullscreen.WlrLayershell.keyboardFocus === WlrKeyboardFocus.None && root.inputMask.width === 0,
                     "Escape from the effect list immediately releases keyboard focus and pointer capture");
             } else if (root.step === 9) {
                 root.check(!card && !MediaFullscreenService.snapshot && root.sawOpening && root.sawClosing,

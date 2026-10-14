@@ -16,7 +16,7 @@ Scope {
     function check(ok, message) { if (!ok) { failed = true; console.error("EXPOSE FAIL:", message) } }
     Test.TestCase { id: events; when: false }
     QtObject {
-        id: picker
+        id: fixturePicker
         property bool visible: true
         property string query: ""
         property int currentIndex: 0
@@ -62,10 +62,10 @@ Scope {
         id: delayedMove
         interval: 350
         onTriggered: {
-            picker.items = picker.items.map(item => item.id === picker.movedAddress
-                ? Object.assign({}, item, {workspaceId: picker.movedWorkspace}) : item)
+            fixturePicker.items = fixturePicker.items.map(item => item.id === fixturePicker.movedAddress
+                ? Object.assign({}, item, {workspaceId: fixturePicker.movedWorkspace}) : item)
                 .sort((a, b) => a.workspaceId - b.workspaceId || a.id.localeCompare(b.id))
-            picker.exposePendingMoves = ({})
+            fixturePicker.exposePendingMoves = ({})
             checkRearrangement.restart()
         }
     }
@@ -74,7 +74,7 @@ Scope {
         interval: 60
         onTriggered: {
             const grid = events.findChild(panel, "exposeWindows") as ExposeWindowGrid
-            const index = picker.filteredItems.findIndex(item => item.id === "0x2")
+            const index = fixturePicker.filteredItems.findIndex(item => item.id === "0x2")
             const card = grid.itemAtIndex(index) as ExposeWindowCard
             root.check(card === root.retainedCard, "workspace updates preserve surviving window cards")
             const target = grid.arrangement.cards[index]
@@ -85,39 +85,39 @@ Scope {
     function testWorkspaceShortcuts(search) {
         search.select(0, 3)
         for (let workspace = 1; workspace <= 10; workspace++) {
-            const before = picker.exposeWorkspace
-            const available = picker.exposeWorkspaces.some(entry => entry.id === workspace)
+            const before = fixturePicker.exposeWorkspace
+            const available = fixturePicker.exposeWorkspaces.some(entry => entry.id === workspace)
             events.keyClick(workspace === 10 ? Qt.Key_0 : Qt.Key_0 + workspace, Qt.ControlModifier)
-            check(picker.exposeWorkspace === (available ? workspace : before), "Ctrl+digit selects its numbered workspace")
+            check(fixturePicker.exposeWorkspace === (available ? workspace : before), "Ctrl+digit selects its numbered workspace")
         }
         events.keyClick(Qt.Key_2, Qt.ControlModifier)
         events.keyClick(Qt.Key_A, Qt.ControlModifier)
-        check(picker.exposeWorkspace === 0, "Ctrl+A shows all from a workspace")
+        check(fixturePicker.exposeWorkspace === 0, "Ctrl+A shows all from a workspace")
         events.keyClick(Qt.Key_A, Qt.ControlModifier)
-        check(picker.exposeWorkspace === 2, "Ctrl+A returns to the workspace where the toggle started")
+        check(fixturePicker.exposeWorkspace === 2, "Ctrl+A returns to the workspace where the toggle started")
         events.keyClick(Qt.Key_1, Qt.ControlModifier)
         events.keyClick(Qt.Key_A, Qt.ControlModifier)
         events.keyClick(Qt.Key_A, Qt.ControlModifier)
-        check(picker.exposeWorkspace === 1, "a different workspace becomes the next toggle's return view")
-        const selected = picker.currentItem.id
+        check(fixturePicker.exposeWorkspace === 1, "a different workspace becomes the next toggle's return view")
+        const selected = fixturePicker.currentItem.id
         for (let workspace = 1; workspace <= 10; workspace++) {
             const before = root.moves
-            const available = picker.exposeWorkspaces.some(entry => entry.id === workspace)
+            const available = fixturePicker.exposeWorkspaces.some(entry => entry.id === workspace)
             events.keyClick(workspace === 10 ? Qt.Key_0 : Qt.Key_0 + workspace, Qt.ControlModifier | Qt.ShiftModifier)
             check(root.moves === before + (available ? 1 : 0)
-                && (!available || (picker.movedAddress === selected && picker.movedWorkspace === workspace))
-                && picker.exposeWorkspace === 1, "Ctrl+Shift+digit moves the selected window without following it")
+                && (!available || (fixturePicker.movedAddress === selected && fixturePicker.movedWorkspace === workspace))
+                && fixturePicker.exposeWorkspace === 1, "Ctrl+Shift+digit moves the selected window without following it")
         }
         events.keyClick(Qt.Key_2, Qt.ControlModifier)
         const before = root.moves
         events.keyClick(Qt.Key_1, Qt.ControlModifier | Qt.ShiftModifier)
         check(root.moves === before, "moving from an empty filtered view is harmless")
         check(search.activeFocus && search.text === "browser" && search.selectedText === "bro"
-            && picker.visible && !picker.accepted, "shortcuts preserve search text, selection, focus and the open overview")
+            && fixturePicker.visible && !fixturePicker.accepted, "shortcuts preserve search text, selection, focus and the open overview")
         check(panel.workspaceForKey({key: Qt.Key_Exclam, nativeScanCode: 10}) === 1
             && panel.workspaceForKey({key: Qt.Key_Equal, nativeScanCode: 19}) === 10,
             "shifted number-row punctuation maps to the original workspace digits")
-        picker.selectExposeWorkspace(0)
+        fixturePicker.selectExposeWorkspace(0)
         root.moves = 0
     }
     FloatingWindow {
@@ -125,7 +125,7 @@ Scope {
         implicitWidth: Number(Quickshell.env("EXPOSE_TEST_WIDTH") || 1000)
         implicitHeight: Number(Quickshell.env("EXPOSE_TEST_HEIGHT") || 800)
         color: Theme.background
-        ExposePanel { id: panel; anchors.fill: parent; anchors.margins: 24; picker: picker }
+        ExposePanel { id: panel; anchors.fill: parent; anchors.margins: 24; picker: fixturePicker }
     }
     Timer {
         interval: 330; running: true; repeat: true
@@ -134,7 +134,7 @@ Scope {
             const grid = events.findChild(panel, "exposeWindows") as ExposeWindowGrid
             const strip = events.findChild(panel, "exposeWorkspaces") as ListView
             if (root.step === 0) {
-                root.check(grid.count === 8 && strip.count === picker.exposeWorkspaces.length && search.activeFocus, "overview displays all windows and focuses search")
+                root.check(grid.count === 8 && strip.count === fixturePicker.exposeWorkspaces.length && search.activeFocus, "overview displays all windows and focuses search")
                 const row = strip.parent
                 root.check(Math.abs(row.x + row.width / 2 - panel.width / 2) < 1, "workspace strip is centered")
                 const controls = search.parent
@@ -186,14 +186,14 @@ Scope {
                     "icon, name and miniature layout do not overlap")
                 const hovered = grid.itemAtIndex(1) as ExposeWindowCard
                 events.mouseMove(hovered, hovered.width / 2, hovered.height / 2)
-                root.check(picker.currentIndex === 1 && picker.accepted === 0 && picker.visible && search.activeFocus,
+                root.check(fixturePicker.currentIndex === 1 && fixturePicker.accepted === 0 && fixturePicker.visible && search.activeFocus,
                     "hover selects a card without activating it or taking search focus")
                 events.mouseMove(search, search.width / 2, search.height / 2)
-                picker.currentIndex = 0
+                fixturePicker.currentIndex = 0
                 events.keyClick(Qt.Key_Down)
-                root.check(picker.currentIndex === grid.columns, "Down navigates one grid row")
+                root.check(fixturePicker.currentIndex === grid.columns, "Down navigates one grid row")
                 events.keyClick(Qt.Key_Right)
-                root.check(picker.currentIndex === grid.columns + 1, "Right navigates a grid column")
+                root.check(fixturePicker.currentIndex === grid.columns + 1, "Right navigates a grid column")
                 search.text = "browser"
             } else if (root.step === 1) {
                 root.check(grid.count === 1 && search.activeFocus, "filtering retains search focus")
@@ -206,33 +206,33 @@ Scope {
                 search.text = ""
                 const workspace = strip.itemAtIndex(1) as WorkspacePreview
                 events.mouseClick(workspace.previewItem, workspace.previewItem.width / 2, workspace.previewItem.height / 2)
-                root.check(picker.activatedWorkspace === 2 && picker.exposeWorkspace === 0,
+                root.check(fixturePicker.activatedWorkspace === 2 && fixturePicker.exposeWorkspace === 0,
                     "miniature click activates the workspace without changing the overview filter")
                 events.mouseClick(workspace, workspace.width / 2, 5)
-                root.check(picker.exposeWorkspace === 2, "workspace header keeps selecting the overview filter")
-                picker.selectExposeWorkspace(0)
+                root.check(fixturePicker.exposeWorkspace === 2, "workspace header keeps selecting the overview filter")
+                fixturePicker.selectExposeWorkspace(0)
                 events.mouseClick(workspace, workspace.width / 2, workspace.height - 10)
             } else if (root.step === 2) {
-                root.check(picker.exposeWorkspace === 2 && grid.count === 4, "workspace click filters windows")
+                root.check(fixturePicker.exposeWorkspace === 2 && grid.count === 4, "workspace click filters windows")
                 const empty = strip.itemAtIndex(2) as WorkspacePreview
                 events.mouseClick(empty.previewItem, empty.previewItem.width / 2, empty.previewItem.height / 2)
-                root.check(picker.activatedWorkspace === 3 && picker.exposeWorkspace === 2,
+                root.check(fixturePicker.activatedWorkspace === 3 && fixturePicker.exposeWorkspace === 2,
                     "empty miniature also activates its workspace")
                 events.mouseClick(empty, empty.width / 2, empty.height - 10)
             } else if (root.step === 3) {
                 root.check(grid.count === 0, "empty workspace remains selectable and a drop target")
                 events.keyClick(Qt.Key_A, Qt.ControlModifier)
             } else if (root.step === 4) {
-                root.check(grid.count === 8 && picker.exposeWorkspace === 0 && search.activeFocus, "Ctrl+A restores the window grid")
-                picker.simulateDropUpdate = true
+                root.check(grid.count === 8 && fixturePicker.exposeWorkspace === 0 && search.activeFocus, "Ctrl+A restores the window grid")
+                fixturePicker.simulateDropUpdate = true
                 const card = grid.itemAtIndex(0) as ExposeWindowCard
                 events.mousePress(card, card.width / 2, card.height / 2)
                 events.mouseMove(card, card.width / 2 + 30, card.height / 2 - 20)
             } else if (root.step === 5) {
-                root.check(picker.exposeDragging, "dragging freezes window refresh")
+                root.check(fixturePicker.exposeDragging, "dragging freezes window refresh")
                 const other = grid.itemAtIndex(1) as ExposeWindowCard
                 events.mouseMove(other, other.width / 2, other.height / 2)
-                root.check(picker.currentIndex === 0, "dragging across another card keeps the dragged window selected")
+                root.check(fixturePicker.currentIndex === 0, "dragging across another card keeps the dragged window selected")
                 const workspace = strip.itemAtIndex(1) as WorkspacePreview
                 const point = workspace.mapToItem(panel, workspace.width / 2, workspace.height / 2)
                 events.mouseMove(panel, point.x, point.y)
@@ -245,33 +245,33 @@ Scope {
                 root.check(card.dragging && Math.abs(right.x - left.x - Math.min(card.width, Theme.exposeDragWidth)) < 1,
                     "dragged card shrinks without changing its grid slot")
                 const workspace = strip.itemAtIndex(1) as WorkspacePreview
-                root.check(workspace.dropHovered && workspace.color === Theme.accent && picker.exposeWorkspace === 0,
+                root.check(workspace.dropHovered && workspace.color === Theme.accent && fixturePicker.exposeWorkspace === 0,
                     "hovering a drop target highlights it without replacing the dragged grid")
                 const point = workspace.mapToItem(panel, workspace.width / 2, workspace.height / 2)
                 events.mouseRelease(panel, point.x, point.y)
                 root.check(card.dropAccepted && !body.visible, "accepted drop never snaps visibly back to its grid slot")
             } else if (root.step === 7) {
-                root.check(root.moves === 1 && picker.movedAddress === "0x1" && picker.movedWorkspace === 2
-                    && !picker.exposeDragging && picker.accepted === 0 && picker.visible, "drop moves exactly the dragged window without activating it")
+                root.check(root.moves === 1 && fixturePicker.movedAddress === "0x1" && fixturePicker.movedWorkspace === 2
+                    && !fixturePicker.exposeDragging && fixturePicker.accepted === 0 && fixturePicker.visible, "drop moves exactly the dragged window without activating it")
                 const card = grid.itemAtIndex(0) as ExposeWindowCard
                 const body = events.findChild(card, "exposeDragCard") as Rectangle
                 root.check(card.dropAccepted && !body.visible && card.entry.workspaceId === 1,
                     "accepted card stays hidden after drag cleanup while the workspace update is delayed")
             } else if (root.step === 8) {
-                const updated = grid.itemAtIndex(picker.filteredItems.findIndex(item => item.id === "0x1")) as ExposeWindowCard
+                const updated = grid.itemAtIndex(fixturePicker.filteredItems.findIndex(item => item.id === "0x1")) as ExposeWindowCard
                 const body = events.findChild(updated, "exposeDragCard") as Rectangle
                 root.check(!updated.dropAccepted && body.visible && updated.entry.workspaceId === 2,
                     "confirmed workspace update restores the card in the updated grid")
-                const index = picker.filteredItems.findIndex(item => item.id === "0x2")
+                const index = fixturePicker.filteredItems.findIndex(item => item.id === "0x2")
                 const target = grid.arrangement.cards[index]
                 root.check(Math.abs(root.retainedCard.x - target.x) < 1 && Math.abs(root.retainedCard.y - target.y) < 1,
                     "rearranged windows settle at their final grid positions")
                 events.keyClick(Qt.Key_Escape)
-                root.check(!picker.visible, "Escape dismisses the overview")
-                picker.visible = true
+                root.check(!fixturePicker.visible, "Escape dismisses the overview")
+                fixturePicker.visible = true
                 const card = grid.itemAtIndex(0) as ExposeWindowCard
                 events.mouseClick(card, card.width / 2, card.height / 2)
-                root.check(picker.accepted === 1 && !picker.visible, "click activates the selected window")
+                root.check(fixturePicker.accepted === 1 && !fixturePicker.visible, "click activates the selected window")
                 console.log(root.failed ? "EXPOSE FAIL: overview" : "PASS: Exposé centered header, proportional window geometry, single-window sizing, top captions, names, hover selection, grid navigation, filtering, empty workspaces, drag/drop, activation and Escape")
                 stop()
                 if (Quickshell.env("EXPOSE_TEST_SCREENSHOT")) {

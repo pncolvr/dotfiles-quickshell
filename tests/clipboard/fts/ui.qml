@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtTest as Test
 import Quickshell
-import Quickshell.Wayland
 import "../../../src/modules/launcher"
 import "../../../src/services"
 import "../../../src/theme"
@@ -24,7 +23,8 @@ Scope {
     readonly property bool nativeTest: Quickshell.env("CLIPBOARD_NATIVE") === "1"
     readonly property bool narrowTest: Quickshell.env("CLIPBOARD_NARROW") === "1"
     readonly property bool zeroMotion: Quickshell.env("CLIPBOARD_ZERO_MOTION") === "1"
-    readonly property var popup: nativeHost.item?.window
+    readonly property var nativeHostItem: nativeHost.item
+    readonly property var popup: nativeHostItem?.window
     readonly property var panel: nativeTest ? popup?.panel?.panel : floatingLoader.item
     function check(ok,message) { if (!ok) { failed = true; console.error("CLIPBOARD FAIL:",message) } }
     function find(item,name) {

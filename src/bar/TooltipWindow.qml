@@ -23,7 +23,7 @@ TopPanelTooltip {
     contentX: {
         const ideal = TooltipService.centered
             ? (width - contentWidth) / 2
-            : TooltipService.x - (screen?.x ?? 0) - contentWidth / 2
+            : TooltipService.x - (geometryScreen?.x ?? 0) - contentWidth / 2
         return Math.max(0, Math.min(width - contentWidth, ideal))
     }
 

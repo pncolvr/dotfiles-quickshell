@@ -11,7 +11,11 @@ Scope {
     property real highestRed: 0
     property bool phasesMatch: true
     Test.TestCase { id: test; when: false }
+    function offsetSurface(surface) { surface.margins.left = 100 }
+    // Quickshell selects the native PanelWindow backend at runtime.
+    // qmllint disable uncreatable-type
     PanelWindow {
+        // qmllint enable uncreatable-type
         id: surface
         anchors { left: true; bottom: true }
         implicitWidth: 100
@@ -33,9 +37,12 @@ Scope {
             pulsing: true
         }
     }
+    // qmllint disable uncreatable-type
     PanelWindow {
+        // qmllint enable uncreatable-type
+        id: secondSurface
         anchors { left: true; bottom: true }
-        margins.left: 100
+        Component.onCompleted: root.offsetSurface(secondSurface)
         implicitWidth: 100
         implicitHeight: 100
         exclusionMode: ExclusionMode.Ignore

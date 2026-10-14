@@ -90,8 +90,7 @@ Rectangle {
         UI.Text {
             centerVertical: false
             width: parent.width
-            // Legacy power labels contain Pango markup; normalize their grid presentation.
-            text: root.grid ? root.entry.title.replace(/<[^>]*>/g, "").trim() : root.entry.title
+            text: root.entry.title
             visible: text.length > 0
             textFormat: Text.PlainText
             horizontalAlignment: root.grid ? Text.AlignHCenter : Text.AlignLeft

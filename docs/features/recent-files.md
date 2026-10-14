@@ -63,6 +63,8 @@ Select **Recent**, **Pinned**, or a folder tab and use the **star** button besid
 its description or path to make it the default. The current default's star uses
 the accent color; other tabs show a neutral star. The choice survives closing the
 panel and restarting the shell. Existing folder defaults are preserved.
+Opening or rebuilding a panel waits for saved preferences before choosing its
+initial tab, including when storage initializes asynchronously.
 
 Click the highlighted star on Pinned or a folder to reset the default to Recent,
 or select Recent and use its star directly. Removing the default folder or the

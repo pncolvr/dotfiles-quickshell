@@ -25,9 +25,10 @@ PanelWindow {
     property bool animationsEnabled: (Config.animateDuringScreenShare || !AudioService.screencastActive)
         && Theme.mediaFullscreenAnimationDuration > 0
     readonly property bool hasSnapshot: !!MediaFullscreenService.snapshot?.url
+    readonly property var geometryScreen: screen
     readonly property rect sourceRect: MediaFullscreenService.sourceRect.width > 0
-        ? Qt.rect(MediaFullscreenService.sourceRect.x - (screen?.x ?? 0),
-            MediaFullscreenService.sourceRect.y - (screen?.y ?? 0),
+        ? Qt.rect(MediaFullscreenService.sourceRect.x - (geometryScreen?.x ?? 0),
+            MediaFullscreenService.sourceRect.y - (geometryScreen?.y ?? 0),
             MediaFullscreenService.sourceRect.width, MediaFullscreenService.sourceRect.height)
         : Qt.rect(width * 0.4, height * 0.4, width * 0.2, height * 0.2)
     readonly property rect transitionRect: Qt.rect(sourceRect.x * (1 - transitionProgress),

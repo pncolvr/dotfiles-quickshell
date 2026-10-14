@@ -20,7 +20,7 @@ Item {
             popupNamespace: popup.WlrLayershell.namespace, managerNamespace: manager.WlrLayershell.namespace,
             popupWidth: popup.width, popupHeight: popup.height,
             managerWidth: manager.width, managerHeight: manager.height,
-            screenWidth: popup.screen?.width || 0, screenHeight: popup.screen?.height || 0}
+            screenWidth: popup.targetScreen?.width || 0, screenHeight: popup.targetScreen?.height || 0}
     }
     function preview(path) {
         return manager.previewItem.grabToImage(result => result.saveToFile(path))

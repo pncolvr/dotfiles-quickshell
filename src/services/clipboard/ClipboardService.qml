@@ -96,7 +96,7 @@ Singleton {
         importer.running = true
     }
     function run(command, input, callback) {
-        const process = task.createObject(root, {command: command, input: input ?? "", callback: callback ?? null})
+        const process = task.createObject(root, {command: command, input: input ?? "", callback: callback ?? null}) as Process
         process.running = true
     }
 

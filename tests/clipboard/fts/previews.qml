@@ -5,7 +5,6 @@ import QtTest as Test
 import Quickshell
 import Quickshell.Io
 import "../../../src/modules/launcher"
-import "../../../src/theme/ui" as UI
 import "../../../src/config"
 
 Scope {

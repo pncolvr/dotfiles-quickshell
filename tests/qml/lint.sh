@@ -19,5 +19,32 @@ fi
 
 # Smoke tests create hidden entrypoints while running.
 mapfile -d '' -t qml_files < <(rg --files -0 -g '*.qml' -g '!.*')
-"$qmllint_bin" --max-warnings 0 --unused-imports warning "${qml_files[@]}"
+# Singletons can live below their exporting qmldir. Lint them with their own
+# registration, without injecting unrelated UI names into every file's scope.
+declare -A singleton_owners=()
+mapfile -d '' -t qmldirs < <(rg --files -0 -g qmldir src)
+for qmldir in "${qmldirs[@]}"; do
+    while read -r directive type_name version relative_file remainder || [[ -n ${directive:-} ]]; do
+        [[ $directive == singleton ]] || continue
+        singleton_owners["$(realpath -m -- "${qmldir%/*}/$relative_file")"]=$qmldir
+    done < "$qmldir"
+done
+regular_files=()
+singleton_files=()
+for qml_file in "${qml_files[@]}"; do
+    if rg -q '^pragma Singleton' "$qml_file"; then
+        owner=${singleton_owners["$(realpath -m -- "$qml_file")"]:-}
+        [[ -n $owner ]] || { printf 'Singleton is missing from qmldir: %s\n' "$qml_file" >&2; exit 1; }
+        singleton_files+=("$qml_file")
+    else regular_files+=("$qml_file"); fi
+done
+lint_options=(--max-warnings 0 --unused-imports warning)
+"$qmllint_bin" "${lint_options[@]}" "${regular_files[@]}"
+for qmldir in "${qmldirs[@]}"; do
+    module_files=()
+    for qml_file in "${singleton_files[@]}"; do
+        [[ ${singleton_owners["$(realpath -m -- "$qml_file")"]} != "$qmldir" ]] || module_files+=("$qml_file")
+    done
+    if ((${#module_files[@]})); then "$qmllint_bin" "${lint_options[@]}" -i "$qmldir" "${module_files[@]}"; fi
+done
 printf 'PASS: %s QML files with no lint warnings\n' "${#qml_files[@]}"

@@ -17,9 +17,9 @@ Scope {
 
     Test.TestResult { id: objects }
     FloatingWindow {
-        id: window
+        id: fixtureWindow
         visible: false
-        Batteries { id: icon; window: window }
+        Batteries { id: icon; window: fixtureWindow }
     }
 
     function reading() {
@@ -74,7 +74,7 @@ Scope {
                 root.check(root.reading()?.percentage === 20, "startup receiver reading before hover")
                 root.check(root.iconColor() === Theme.warning.toString(), "startup warning color before hover")
                 // Exercise the production timer faster without changing the configured interval.
-                const timer = objects.findChild(BatteryService, "batteryReceiverTimer")
+                const timer = objects.findChild(BatteryService, "batteryReceiverTimer") as Timer
                 root.check(!!timer, "receiver polling timer exists")
                 if (!timer) return
                 timer.interval = 250

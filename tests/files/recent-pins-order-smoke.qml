@@ -35,8 +35,10 @@ Scope {
         Qt.quit()
     }
     function fileEvent(urls) {
-        return {hasUrls: true, urls: urls, supportedActions: Qt.CopyAction, accepted: false,
-            action: Qt.IgnoreAction, accept: function(action) { this.action = action; this.accepted = true }}
+        const event = {hasUrls: true, urls: urls, supportedActions: Qt.CopyAction, accepted: false,
+            action: Qt.IgnoreAction}
+        event.accept = action => { event.action = action; event.accepted = true }
+        return event
     }
     function controlledDrag(files, originTab) {
         // Internal drags let the offscreen test keep the source active across

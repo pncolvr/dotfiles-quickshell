@@ -5,7 +5,6 @@ import QtTest as Test
 import Quickshell
 import "../../src/services"
 import "../../src/modules/launcher"
-import "../../src/theme/ui" as UI
 
 Scope {
     id: root

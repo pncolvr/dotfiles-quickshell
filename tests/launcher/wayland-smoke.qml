@@ -54,7 +54,8 @@ Scope {
                 }
                 PickerService.show()
             } else if (root.step === 2) {
-                if (!window.visible || window.width > window.screen.width || window.height > window.screen.height) {
+                const screen = window.geometryScreen
+                if (!window.visible || window.width > screen.width || window.height > screen.height) {
                     console.error("PICKER FAIL: native window geometry")
                     Qt.quit()
                     return

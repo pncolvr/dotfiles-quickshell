@@ -309,6 +309,7 @@ Flickable {
                 Component.onCompleted: Qt.callLater(() => cardDelegate.geometryReady = true)
                 objectName: "exposeWindow-" + value.id
                 entry: value
+                movePending: root.picker.exposePendingMoves?.[value.id] !== undefined
                 visible: root.transitionProgress === 1
                     || ((geometry?.y ?? 0) + content.y - root.contentY < root.height
                         && (geometry?.y ?? 0) + content.y - root.contentY + height > 0)

@@ -145,7 +145,7 @@ Column {
     }
 
     Item {
-        id: header
+        id: filesHeader
         width: parent.width
         height: Theme.controlHeight
         UI.TabBar {
@@ -306,7 +306,7 @@ Column {
         id: list
         objectName: "recentFilesList"
         width: parent.width
-        height: Math.min(contentHeight, Math.max(0, (fileDragSource.dragging ? root.dragPanelHeight : root.maxPanelHeight) - header.height - limits.height
+        height: Math.min(contentHeight, Math.max(0, (fileDragSource.dragging ? root.dragPanelHeight : root.maxPanelHeight) - filesHeader.height - limits.height
             - (renameEditor.visible ? renameEditor.height + root.spacing : 0)
             - (feedback.visible ? feedback.height + root.spacing : 0)
             - (hint.visible ? hint.height + root.spacing : 0) - root.spacing * 2))

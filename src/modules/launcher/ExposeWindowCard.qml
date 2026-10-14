@@ -18,10 +18,14 @@ Item {
     property real pressX: 0
     property real pressY: 0
     property bool dropAccepted: false
+    property bool movePending: false
     property real dragWidth: 0
     property real dragHeight: 0
     readonly property bool dragging: mouse.drag.active
-    onEntryChanged: if (dropAccepted) restoreDrop.restart()
+    onEntryChanged: if (dropAccepted && !movePending) restoreDrop.restart()
+    // A rejected move can leave the entry metadata unchanged. Observe the
+    // pending operation itself so that its original card becomes visible again.
+    onMovePendingChanged: if (dropAccepted && !movePending) restoreDrop.restart()
     function resetDrag() {
         body.parent = root
         body.x = 0

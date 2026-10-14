@@ -25,7 +25,12 @@ if [[ ${1:-} == --bridge ]]; then
             jq -ce --arg directory "$request_dir" '
                 if type != "object" or (.items | type) != "array"
                     or any(.items[]; type != "object" or (.title | type) != "string")
-                then error("Invalid picker request") else . + {requestDirectory: $directory} end
+                then error("Invalid picker request")
+                elif .markupRows == true then
+                    .items |= map(. + {originalTitle: .title, result: (.result // .title),
+                        title: (.title | gsub("<[^>]*>"; "") | gsub("^\\s+|\\s+$"; ""))})
+                    | . + {requestDirectory: $directory}
+                else . + {requestDirectory: $directory} end
             ' "$request_dir/request.json"
             ;;
         watch) exec bash "$launcher_dir/secret_prompt.sh" --check-owner "$request_dir" ;;
@@ -86,7 +91,7 @@ if [[ -n $input_file ]]; then
 else
     shift
     prompt=""; separator=$'\n'; multi=false; allow_typed=true
-    sort_results=false; custom_accept=false; layout=list; initial_query=""; selection_key=""
+    sort_results=false; custom_accept=false; layout=list; initial_query=""; selection_key=""; markup_rows=false
     while (($#)); do
         case $1 in
             -dmenu) ;;
@@ -103,7 +108,7 @@ else
             -filter) initial_query=${2-}; shift ;;
             --selection-key) selection_key=${2:?Selection key required}; shift ;;
             -theme) [[ ${2:?} == *custom-row.rasi ]] && layout=grid; shift ;;
-            -markup-rows) ;;
+            -markup-rows) markup_rows=true ;;
             -eh) shift ;;
             -show) fail 'Use launcher.sh apps or windows instead of rofi -show.' ;;
             *) fail "Unsupported picker option: $1" ;;
@@ -112,9 +117,9 @@ else
     done
     jq -Rsc --arg prompt "$prompt" --arg sep "$separator" --arg query "$initial_query" --arg layout "$layout" --arg selectionKey "$selection_key" \
         --argjson multi "$multi" --argjson typed "$allow_typed" \
-        --argjson sort "$sort_results" --argjson custom "$custom_accept" '
+        --argjson sort "$sort_results" --argjson custom "$custom_accept" --argjson markup "$markup_rows" '
         {prompt:$prompt, allowMultipleSelection:$multi, allowTyped:$typed,
-         sort:$sort, customAccept:$custom, layout:$layout, query:$query, selectionKey:$selectionKey,
+         sort:$sort, customAccept:$custom, layout:$layout, query:$query, selectionKey:$selectionKey, markupRows:$markup,
          items: (split($sep) | if .[-1] == "" then .[:-1] else . end | to_entries |
             map({id:(.key|tostring), title:.value, result:.value}))}
     ' > "$request_dir/request.json"
@@ -138,7 +143,7 @@ if [[ $status == cancelled ]]; then exit 1; fi
 [[ $status == accepted ]] || fail 'The picker could not complete the request.'
 case $output_format in
     json) printf '%s\n' "$response" ;;
-    titles) jq -r '.items[].title' <<< "$response" ;;
+    titles) jq -r '.items[] | .originalTitle // .title' <<< "$response" ;;
     results) jq -r '.items[].result | if type == "string" then . else tojson end' <<< "$response" ;;
 esac
 exit "$(jq -r '.exitCode // 0' <<< "$response")"

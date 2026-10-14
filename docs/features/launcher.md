@@ -109,7 +109,7 @@ stable while the pointer remains in the grid. Moving toward the workspace strip
 animates the remaining windows into the space the dragged window leaves; returning
 to the grid animates room for it again. Accepted drops keep that layout while the
 compositor confirms the move. Rejected or unconfirmed moves restore the original
-slot. Dragged cards hide their outline and animate shrinking around the grab point
+slot and card, including when the window's metadata is unchanged. Dragged cards hide their outline and animate shrinking around the grab point
 so the destination stays visible. A tile highlights while it is the drop target. Empty workspaces can
 receive windows without opening them first.
 
@@ -224,6 +224,21 @@ adapter or PATH override is required. `_common/` holds the shared Bash helpers;
 scripts. Projects, GitHub and directories dispatch directly to native QML services; their
 former Bash providers are removed. The other providers are named `<provider>.sh`. Browser selection,
 work/personal filtering, editor profiles and cache rebuild flags are preserved.
+
+Azure rebuilds reuse the `portkey` container, start it if stopped, or create it
+from `portkey:latest` with `~/Projects/helpers/portkey` mounted at
+`/workspaces/scripts/azure/portkey`. Subscription queries run
+`scripts/list-subs.sh` in that same container, without requesting a TTY.
+Rebuilds validate the response and replace the cache atomically; failed queries
+keep the previous cache. To customize the helper setup, set
+`AZURE_PICKER_CONTAINER`, `AZURE_PICKER_IMAGE`, `AZURE_PICKER_SOURCE`,
+`AZURE_PICKER_SCRIPT`, or `AZURE_PICKER_VOLUME`. `AZURE_PICKER_ENV_FILE` optionally
+supplies the Portkey configuration when creating a container. Existing containers
+retain their configured environment.
+
+Legacy `-markup-rows` requests are normalized by the launcher bridge before
+searching/rendering. Original labels remain available for dmenu replies and
+action results. Other requests display labels literally, including grid views.
 Shared browser/status helpers remain in Zsh, and URL cleaning remains in Qutebrowser.
 
 ### Directories

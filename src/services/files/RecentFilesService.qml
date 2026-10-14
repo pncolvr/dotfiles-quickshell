@@ -10,7 +10,7 @@ Singleton {
     id: root
     property var files: []
     readonly property string error: state.error || PinnedFilesService.error
-    readonly property bool loading: scan.running
+    readonly property bool loading: scan.running || state.pendingPanel
     readonly property bool dragging: state.dragging
     readonly property var pinnedFiles: PinnedFilesService.files
     readonly property bool showingPinned: state.showingPinned
@@ -50,23 +50,36 @@ Singleton {
         property var navigationFolders: []
         property string requestFolder: ""
         property bool addingFolder: false
+        property bool pendingPanel: false
         property var deferredSnapshot: null
     }
 
+    function initializePanel() {
+        if (!state.pendingPanel || !DbService.ready || state.panels === 0) return
+        state.navigationFolders = []
+        state.showingPinned = defaultTab === "pinned"
+        state.activeFolder = defaultTab === "folder" ? defaultFolder : ""
+        files = state.showingPinned ? pinnedFiles : []
+        state.error = ""
+        state.pendingPanel = false
+        refresh()
+    }
+    Connections {
+        target: DbService
+        // Preferences restore on the same readiness signal; apply defaults
+        // after its handlers finish, including when rebuilding a visible panel.
+        function onReadyChanged() { if (DbService.ready) Qt.callLater(root.initializePanel) }
+    }
     function beginPanel() {
-        if (state.panels === 0) {
-            state.navigationFolders = []
-            state.showingPinned = defaultTab === "pinned"
-            state.activeFolder = defaultTab === "folder" ? defaultFolder : ""
-            files = state.showingPinned ? pinnedFiles : []
-            state.error = ""
-        }
+        if (state.panels === 0) state.pendingPanel = true
         state.panels++
         PinnedFilesService.active = true
-        refresh()
+        if (state.pendingPanel) Qt.callLater(root.initializePanel)
+        else refresh()
     }
     function endPanel() {
         state.panels = Math.max(0, state.panels - 1)
+        if (state.panels === 0) state.pendingPanel = false
         PinnedFilesService.active = state.panels > 0
     }
     function beginDrag() { state.dragging = true; PinnedFilesService.beginDrag() }
@@ -98,6 +111,7 @@ Singleton {
         }
     }
     function refresh() {
+        if (state.pendingPanel || !DbService.ready) return
         PinnedFilesService.refresh()
         if (showingPinned) { files = pinnedFiles; return }
         if (scan.running || state.dragging) { state.refreshPending = true; return }

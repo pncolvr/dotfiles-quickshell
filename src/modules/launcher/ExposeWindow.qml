@@ -20,8 +20,10 @@ PanelWindow {
     property int transitionWorkspace: 0
     property real transitionProgress: 0
     property rect zoomRect: Qt.rect(0, 0, 0, 0)
-    property point monitorOrigin: Qt.point(Hyprland.monitorFor(screen)?.lastIpcObject?.x ?? screen?.x ?? 0,
-        Hyprland.monitorFor(screen)?.lastIpcObject?.y ?? screen?.y ?? 0)
+    // Quickshell's screen metadata is opaque across native module boundaries.
+    readonly property var geometryScreen: screen
+    property point monitorOrigin: Qt.point(Hyprland.monitorFor(screen)?.lastIpcObject?.x ?? geometryScreen?.x ?? 0,
+        Hyprland.monitorFor(screen)?.lastIpcObject?.y ?? geometryScreen?.y ?? 0)
     property var reservedMargins: Hyprland.monitorFor(screen)?.lastIpcObject?.reserved ?? [0, Theme.barHeight, 0, 0]
     readonly property rect desktopRect: Qt.rect(reservedMargins[0], reservedMargins[1],
         Math.max(1, width - reservedMargins[0] - reservedMargins[2]),
@@ -133,7 +135,7 @@ PanelWindow {
         opacity: root.requested ? Math.min(1, root.transitionProgress * 5) : 1
         UI.ScaledImage {
             anchors.fill: parent
-            source: root.imageUrl(root.wallpapers[root.screen?.name])
+            source: root.imageUrl(root.wallpapers[root.geometryScreen?.name])
             fillMode: Image.PreserveAspectCrop
             asynchronous: true
         }

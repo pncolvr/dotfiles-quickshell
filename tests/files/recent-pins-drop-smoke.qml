@@ -31,9 +31,10 @@ Scope {
         check(target.enabled, "pin drop target is enabled")
         // Drag.Internal has no URL MIME payload. Exercise the native-event adapter
         // with a file-manager-style payload without starting a desktop drag.
-        pendingDrop = {hasUrls: true, urls: urls, supportedActions: Qt.CopyAction,
-            accepted: false, action: Qt.IgnoreAction,
-            accept: function(action) { this.action = action; this.accepted = true }}
+        const drop = {hasUrls: true, urls: urls, supportedActions: Qt.CopyAction,
+            accepted: false, action: Qt.IgnoreAction}
+        drop.accept = action => { drop.action = action; drop.accepted = true }
+        pendingDrop = drop
         panel.acceptPinDrag(pendingDrop)
     }
     function drop() {

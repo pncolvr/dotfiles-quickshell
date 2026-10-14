@@ -17,7 +17,7 @@ Scope {
         return Array.from({length: count}, (_, index) => ({id: prefix + index,
             body: "Notification " + index, actions: [{identifier: "open", text: "Open"}]}))
     }
-    UI.BatchedListModel { id: model }
+    UI.BatchedListModel { id: fixtureModel }
     FloatingWindow {
         visible: true
         implicitWidth: 400
@@ -26,7 +26,7 @@ Scope {
             width: parent.width
             Repeater {
                 id: rows
-                model: model
+                model: fixtureModel
                 ModelRow {}
             }
         }
@@ -39,59 +39,59 @@ Scope {
     Timer {
         interval: 100; running: true
         onTriggered: {
-            model.items = root.source(3, "original-")
-            root.verify(rows.count === 3 && !model.loading, "collapsed cards available immediately")
+            fixtureModel.items = root.source(3, "original-")
+            root.verify(rows.count === 3 && !fixtureModel.loading, "collapsed cards available immediately")
             root.firstDelegate = rows.itemAt(0) as ModelRow
             root.verify(root.firstDelegate.value.actions[0].identifier === "open", "nested action data preserved")
-            model.items = root.source(25, "original-")
-            root.verify(rows.count < 25 && model.loading, "expanded list builds progressively")
+            fixtureModel.items = root.source(25, "original-")
+            root.verify(rows.count < 25 && fixtureModel.loading, "expanded list builds progressively")
             root.verify(rows.itemAt(0) === root.firstDelegate, "existing card retained on expansion")
-            root.previousCount = model.count
+            root.previousCount = fixtureModel.count
             root.phase = 1
         }
     }
     FrameAnimation {
         running: root.phase > 0 && root.phase < 4
         onTriggered: {
-            root.verify(model.count - root.previousCount <= Math.max(1, model.batchSize), "per-frame creation bounded")
-            root.verify(rows.count === model.count, "delegates follow appended rows")
-            if (!model.loading) {
+            root.verify(fixtureModel.count - root.previousCount <= Math.max(1, fixtureModel.batchSize), "per-frame creation bounded")
+            root.verify(rows.count === fixtureModel.count, "delegates follow appended rows")
+            if (!fixtureModel.loading) {
                 if (root.phase === 1) {
                     root.verify(rows.count === 25 && (rows.itemAt(24) as ModelRow).value.id === "original-24", "full list in source order")
                     root.verify(rows.itemAt(0) === root.firstDelegate, "first card retained throughout expansion")
-                    model.items = root.source(70, "pending-")
-                    root.verify(model.loading, "larger source queues work")
-                    model.items = root.source(2, "replacement-")
-                    root.verify(rows.count === 2 && !model.loading, "collapse cancels pending rows immediately")
+                    fixtureModel.items = root.source(70, "pending-")
+                    root.verify(fixtureModel.loading, "larger source queues work")
+                    fixtureModel.items = root.source(2, "replacement-")
+                    root.verify(rows.count === 2 && !fixtureModel.loading, "collapse cancels pending rows immediately")
                     root.verify(rows.itemAt(0) === root.firstDelegate && (rows.itemAt(0) as ModelRow).value.id === "replacement-0", "existing card updated without recreation")
-                    model.items = root.source(18, "stale-")
-                    model.items = root.source(10, "latest-")
+                    fixtureModel.items = root.source(18, "stale-")
+                    fixtureModel.items = root.source(10, "latest-")
                     root.phase = 2
                 } else if (root.phase === 2) {
                     root.verify(rows.count === 10, "latest source controls final count")
                     for (let index = 0; index < rows.count; index++) {
                         root.verify((rows.itemAt(index) as ModelRow).value.id === "latest-" + index, "no stale queued rows")
                     }
-                    model.items = []
-                    root.verify(rows.count === 0 && !model.loading, "empty source clears and stops builder")
-                    model.batchSize = 0
-                    model.items = root.source(7, "single-")
+                    fixtureModel.items = []
+                    root.verify(rows.count === 0 && !fixtureModel.loading, "empty source clears and stops builder")
+                    fixtureModel.batchSize = 0
+                    fixtureModel.items = root.source(7, "single-")
                     root.phase = 3
                 } else {
                     root.verify(rows.count === 7, "nonpositive batch size still completes")
-                    model.items = []
+                    fixtureModel.items = []
                     root.phase = 4
                     finish.start()
                 }
             }
-            root.previousCount = model.count
+            root.previousCount = fixtureModel.count
         }
     }
     Timer {
         id: finish
         interval: 100
         onTriggered: {
-            root.verify(rows.count === 0 && !model.builder.running, "no residual work after clearing")
+            root.verify(rows.count === 0 && !fixtureModel.builder.running, "no residual work after clearing")
             if (!root.failed) console.log("PASS: bounded per-frame creation, stable cards, collapse cancellation, source replacement and nested data")
             Qt.quit()
         }

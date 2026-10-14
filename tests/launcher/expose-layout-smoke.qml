@@ -38,7 +38,7 @@ Scope {
     }
     Test.TestCase { id: events; when: false }
     QtObject {
-        id: picker
+        id: fixturePicker
         property int exposeWorkspace: 4
         property bool exposeDragging: false
         property var exposePendingMoves: ({})
@@ -66,7 +66,7 @@ Scope {
         visible: true
         implicitWidth: 1400
         implicitHeight: 900
-        ExposePanel { id: panel; anchors.fill: parent; anchors.margins: 24; picker: picker; animationsEnabled: false }
+        ExposePanel { id: panel; anchors.fill: parent; anchors.margins: 24; picker: fixturePicker; animationsEnabled: false }
     }
     Timer {
         interval: 100
@@ -75,19 +75,19 @@ Scope {
         onTriggered: {
             const grid = events.findChild(panel, "exposeWindows") as ExposeWindowGrid
             if (root.step === 0) {
-                root.original = picker.items
+                root.original = fixturePicker.items
                 root.desktopScale = root.checkLayout(grid)
                 root.retainedCard = grid.itemAtIndex(1)
-                picker.currentIndex = 2
+                fixturePicker.currentIndex = 2
                 grid.moveVertical(1)
-                root.check(picker.filteredItems[picker.currentIndex].id === "0x3", "Down from file manager selects terminal")
+                root.check(fixturePicker.filteredItems[fixturePicker.currentIndex].id === "0x3", "Down from file manager selects terminal")
                 grid.moveVertical(-1)
-                root.check(picker.filteredItems[picker.currentIndex].id === "0x2", "Up from terminal selects file manager")
-                picker.currentIndex = 0
+                root.check(fixturePicker.filteredItems[fixturePicker.currentIndex].id === "0x2", "Up from terminal selects file manager")
+                fixturePicker.currentIndex = 0
                 grid.moveHorizontal(-1)
-                root.check(picker.filteredItems[picker.currentIndex].id === "0x1", "Left from terminal selects Code")
+                root.check(fixturePicker.filteredItems[fixturePicker.currentIndex].id === "0x1", "Left from terminal selects Code")
                 grid.moveHorizontal(1)
-                root.check(picker.filteredItems[picker.currentIndex].id === "0x2", "Right from Code selects nearest window in right column")
+                root.check(fixturePicker.filteredItems[fixturePicker.currentIndex].id === "0x2", "Right from Code selects nearest window in right column")
                 const filesX = grid.arrangement.byId["0x2"].x
                 grid.dragAddress = "0x1"
                 grid.dragVacated = true
@@ -97,12 +97,12 @@ Scope {
                 root.check(Math.abs(grid.arrangement.byId["0x2"].x - filesX) < 0.001
                     && grid.itemAtIndex(1) === root.retainedCard, "returning restores room without recreating cards")
                 grid.dragAddress = ""
-                picker.exposeWorkspace = 0
+                fixturePicker.exposeWorkspace = 0
                 const packedScale = (grid.arrangement.byId["0x1"].width - Theme.controlSpacing * 2) / 1275
                 root.check(!grid.arrangement.spatial && root.desktopScale > packedScale,
                     "desktop topology allows larger previews than the packed all-workspace layout")
-                picker.exposeWorkspace = 4
-                picker.items = [...picker.items].reverse()
+                fixturePicker.exposeWorkspace = 4
+                fixturePicker.items = [...fixturePicker.items].reverse()
             } else if (root.step === 1) {
                 root.checkLayout(grid)
                 root.check(grid.itemAtIndex(1) === root.retainedCard, "input reordering preserves the Code capture")
@@ -110,16 +110,16 @@ Scope {
                 surface.implicitHeight = 620
             } else if (root.step === 2) {
                 root.checkLayout(grid)
-                picker.items = root.original.map(entry => Object.assign({}, entry, {
+                fixturePicker.items = root.original.map(entry => Object.assign({}, entry, {
                     client: Object.assign({}, entry.client, {floating: entry.id === "0x3"})
                 }))
                 root.check(!grid.arrangement.spatial && grid.count === 3, "floating windows retain accessible packed cards")
-                picker.items = root.original.map(entry => Object.assign({}, entry, {
+                fixturePicker.items = root.original.map(entry => Object.assign({}, entry, {
                     client: Object.assign({}, entry.client, {grouped: entry.id === "0x1" ? ["0x1", "0x4"] : []})
                 }))
                 root.check(!grid.arrangement.spatial && grid.count === 3, "grouped application tabs retain packed cards")
-                picker.items = root.original
-                picker.query = "Code"
+                fixturePicker.items = root.original
+                fixturePicker.query = "Code"
             } else if (root.step === 3) {
                 const card = grid.itemAtIndex(0) as ExposeWindowCard
                 root.check(grid.count === 1 && card === root.retainedCard

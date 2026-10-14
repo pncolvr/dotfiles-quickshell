@@ -27,7 +27,7 @@ Rectangle {
     property real availableContentWidth: Theme.pickerWidth
     property real availableContentHeight: 800
     readonly property real columnWidth: fixedListWidth > 0 ? Math.min(fixedListWidth,width - Theme.tooltipPaddingHeight * 2) : width - Theme.tooltipPaddingHeight * 2
-    readonly property real normalHeight: header.height + list.implicitHeight + panelFooter.height + Theme.tooltipPaddingHeight * 2 + 12
+    readonly property real normalHeight: panelHeader.height + list.implicitHeight + panelFooter.height + Theme.tooltipPaddingHeight * 2 + 12
     property var searchKeyHandler: null
     property string footerHint: gridMode ? "Arrows to select · Enter to choose · Esc to cancel"
         : "Arrows to select · Enter to " + picker.acceptLabel.toLowerCase() + " · Esc to cancel"
@@ -111,7 +111,7 @@ Rectangle {
             event.accepted = true
         }
         Column {
-            id: header
+            id: panelHeader
             width: root.columnWidth
             spacing: Theme.controlSpacing
             UI.SearchField {
@@ -159,7 +159,7 @@ Rectangle {
             objectName: "pickerList"
             picker: root.picker
             width: root.columnWidth
-            y: header.height + Theme.controlSpacing
+            y: panelHeader.height + Theme.controlSpacing
             height: Math.max(0, panelFooter.y - y - Theme.controlSpacing) * (root.stackedPreview ? 0.4 : 1)
             // Keep the opening size while filtering or deleting entries so the
             // panel and its footer do not move under keyboard focus.
