@@ -5,8 +5,26 @@ call() { printf '%s\n' "$1" | bash "$manager" > "$test_dir/reply"; }
 call '{"action":"list"}'
 jq -e '.ok and (.entries|length)==2 and ([.entries[]|has("data") or has("notes")]|any|not)' "$test_dir/reply" >/dev/null
 call "{\"action\":\"detail\",\"id\":\"$item_id\"}"
-jq -e '.ok and .entry.data.password == "SYNTHETIC_SECRET_DO_NOT_LOG" and (.entry.data|has("totp")|not) and (.entry|has("history")|not)' "$test_dir/reply" >/dev/null
+jq -e '.ok and .entry.data.password == "SYNTHETIC_SECRET_DO_NOT_LOG" and .entry.data.totp == "SYNTHETIC_SEED" and (.entry|has("history")|not)' "$test_dir/reply" >/dev/null
 baseline=$(jq -r .baseline "$test_dir/reply")
+call "{\"action\":\"totp\",\"id\":\"$item_id\"}"
+jq -e '.ok and .token=="123456" and keys==["ok","token"]' "$test_dir/reply" >/dev/null
+jq -se --arg id "$item_id" 'any(.[]; . == ["code",$id]) and (any(.[]; any(.[]; contains("SYNTHETIC_SEED") or contains("123456")))|not)' "$test_dir/calls" >/dev/null
+for token in 01234567 234BC; do
+    printf '%s\n' "$token" > "$test_dir/token"
+    call "{\"action\":\"totp\",\"id\":\"$item_id\"}"
+    jq -e --arg expected "$token" '.ok and .token==$expected' "$test_dir/reply" >/dev/null
+done
+printf 'SYNTHETIC_SEED\n' > "$test_dir/token"
+call "{\"action\":\"totp\",\"id\":\"$item_id\"}"
+jq -e '.ok==false and .error=="Invalid TOTP token response."' "$test_dir/reply" >/dev/null
+rm "$test_dir/token"
+touch "$test_dir/protect-on-code"
+call "{\"action\":\"totp\",\"id\":\"$item_id\"}"
+jq -e '.ok==false and (has("token")|not)' "$test_dir/reply" >/dev/null
+rm "$test_dir/protect-on-code"
+jq '.entries[0].master_password_reprompt=0' "$XDG_CACHE_HOME/rbw/default:user@example.test.json" > "$test_dir/cache-next"
+mv "$test_dir/cache-next" "$XDG_CACHE_HOME/rbw/default:user@example.test.json"
 request=$(jq -nc --arg id "$item_id" --arg baseline "$baseline" '{action:"edit",id:$id,baseline:$baseline,password:"new password",notes:"new notes"}')
 call "$request"
 jq -e '.ok and .saved' "$test_dir/reply" >/dev/null
@@ -37,6 +55,10 @@ jq '.entries[0].master_password_reprompt=0' "$XDG_CACHE_HOME/rbw/default:user@ex
 mv "$test_dir/cache-next" "$XDG_CACHE_HOME/rbw/default:user@example.test.json"
 jq '.data=null | .history=[]' "$test_dir/entry.json" > "$test_dir/entry-next"
 mv "$test_dir/entry-next" "$test_dir/entry.json"
+code_calls=$(jq -s '[.[]|select(.[0]=="code")]|length' "$test_dir/calls")
+call "{\"action\":\"totp\",\"id\":\"$item_id\"}"
+jq -e '.ok==false and .error=="This entry has no TOTP secret."' "$test_dir/reply" >/dev/null
+[[ $(jq -s '[.[]|select(.[0]=="code")]|length' "$test_dir/calls") == "$code_calls" ]]
 call "{\"action\":\"detail\",\"id\":\"$item_id\"}"
 baseline=$(jq -r .baseline "$test_dir/reply")
 call "$(jq -nc --arg id "$item_id" --arg baseline "$baseline" '{action:"edit",id:$id,baseline:$baseline,password:"",notes:"updated note"}')"
@@ -52,4 +74,4 @@ jq -e '.ok==false' "$test_dir/reply" >/dev/null
 # Sensitive clipboard selections are drained before the capture helper creates files.
 QS_CLIPBOARD_DIRECTORY="$test_dir/clipboard" CLIPBOARD_STATE=sensitive bash "$project_root/src/services/clipboard/clipboard.sh" capture text/plain <<< 'SYNTHETIC_COPY_PASSWORD' > "$test_dir/capture-output"
 [[ ! -d $test_dir/clipboard && ! -s $test_dir/capture-output ]]
-printf 'PASS: manager metadata, policy gates, login creation, stdin edits, generation, deletion and sanitized failures\n'
+printf 'PASS: manager metadata, TOTP secrets/tokens, policy gates, login creation, stdin edits, generation, deletion and sanitized failures\n'

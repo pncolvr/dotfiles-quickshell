@@ -36,6 +36,7 @@ singleton AlertService 1.0 ui/AlertService.qml
 singleton TotpService 1.0 security/TotpService.qml
 singleton ClipboardRepository 1.0 storage/ClipboardRepository.qml
 singleton ClipboardService 1.0 clipboard/ClipboardService.qml
+singleton SensitiveClipboardService 1.0 clipboard/SensitiveClipboardService.qml
 singleton PickerService 1.0 launcher/PickerService.qml
 ClipboardSearchSession 1.0 launcher/ClipboardSearchSession.qml
 singleton ProjectRepository 1.0 storage/ProjectRepository.qml

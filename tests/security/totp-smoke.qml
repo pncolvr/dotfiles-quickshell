@@ -190,7 +190,7 @@ Scope {
                 break
             case 5:
                 if (TotpService.busy) return
-                if (!root.check(TotpService.copiedId === root.addedId && /^\d{6}$/.test(Quickshell.clipboardText), "copy")) return
+                if (!root.check(TotpService.copiedId === root.addedId, "sensitive copy completion")) return
                 TotpService.remove(root.addedId)
                 root.step++
                 break

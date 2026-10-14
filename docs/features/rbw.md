@@ -225,6 +225,14 @@ navigation. New sits to the right of Lock in the top row and remains visible but
 disabled while editing or confirming deletion. Edit and Delete actions are available in this same view. Copy and
 reveal remain explicit actions.
 
+Logins with TOTP configured include a **TOTP secret** detail field. It starts
+masked and uses the usual eye and copy controls. The adjacent key button,
+**Copy current TOTP token**, asks `rbw code` for a fresh token on each click;
+tokens are not stored in the entry or refreshed by a background timer. Secrets
+and tokens use the existing sensitive clipboard owner with a 30-second lifetime.
+Pending token replies are discarded if selection changes, the manager closes,
+or a vault lock invalidates the request. Entries without TOTP omit the field.
+
 **New login** accepts a title, username, password, website URLs (one
 per line), notes and an optional folder. Choose an existing folder or type a new
 name; rbw creates a missing folder when adding the login. Generation previews a
@@ -276,7 +284,9 @@ UI. This detects stale drafts but rbw exposes no atomic compare-and-swap, so
 concurrent clients can still race. Failed writes may have reached the server;
 refresh and inspect before retrying. Creation/deletion is never automatically retried.
 
-Explicit copies use a foreground `wl-copy --sensitive` owner: Quickshell's history
+Vault and standalone TOTP copies share `SensitiveClipboardService`, which owns
+the command, stdin transfer, cancellation and sanitized failure handling.
+Vault copies request a foreground `wl-copy --sensitive` owner: Quickshell's history
 capture drops sensitive selections before writing payload files. The owner expires
 after 30 seconds and exits on replacement; expiry stops only that owner rather
 than clearing a newer clipboard selection. Copy lifetime continues after closing

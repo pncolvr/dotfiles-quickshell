@@ -24,7 +24,7 @@ Column {
                     revealObjectName: "vaultEye"
                     id: valueField
                     objectName: "vaultDetailField-" + valueRow.modelData.label
-                    width: parent.width - Theme.actionButtonWidth - Theme.controlSpacing
+                    width: parent.width - (Theme.actionButtonWidth + Theme.controlSpacing) * (valueRow.modelData.totp ? 2 : 1)
                     readOnly: true
                     text: valueRow.modelData.value
                     revealed: !valueRow.modelData.secret
@@ -33,7 +33,20 @@ Column {
                         function onSelectedIdChanged() { valueField.revealed = !valueRow.modelData.secret }
                     }
                 }
-                UI.ActionButton { glyph: Theme.copyIcon; hint: "Copy " + valueRow.modelData.label; onClicked: root.copyRequested(valueRow.modelData.value) }
+                UI.ActionButton {
+                    objectName: valueRow.modelData.totp ? "vaultCopyTotpSecret" : ""
+                    glyph: Theme.copyIcon
+                    hint: "Copy " + valueRow.modelData.label
+                    onClicked: root.copyRequested(valueRow.modelData.value)
+                }
+                UI.ActionButton {
+                    objectName: valueRow.modelData.totp ? "vaultCopyTotp" : ""
+                    visible: valueRow.modelData.totp === true
+                    glyph: Theme.totpIcon
+                    hint: "Copy current TOTP token"
+                    enabled: !RbwService.busy
+                    onClicked: RbwService.copyTotp()
+                }
             }
         }
     }

@@ -34,11 +34,13 @@ Singleton {
         property real timestamp: 0
         property real expiresAt: 0
         property int period: Config.totpDefaultPeriod
+        property int generation: 0
     }
 
     ListModel { id: entriesModel }
 
     onActiveChanged: {
+        state.generation++
         if (active) {
             if (!worker.running) start()
         } else {
@@ -125,12 +127,20 @@ Singleton {
           case "edit":
             root.editorLoaded(message.id, message.name, message.token)
             break
-          case "copy":
-            ClipboardService.ignoreTextOnce(message.code)
-            Quickshell.clipboardText = message.code
-            state.copiedId = message.id
-            copiedTimer.restart()
+          case "copy": {
+            const generation = state.generation
+            const entryId = message.id
+            state.busy = true
+            SensitiveClipboardService.copy(message.code, 0, success => {
+                if (!root.active || state.stopping || generation !== state.generation) return
+                state.busy = false
+                if (success === null) return
+                if (!success) { state.error = "Could not copy the TOTP code. Check wl-copy and retry."; return }
+                state.copiedId = entryId
+                copiedTimer.restart()
+            })
             break
+          }
           case "error":
             state.error = message.message
             if (message.action === "load") state.ready = false

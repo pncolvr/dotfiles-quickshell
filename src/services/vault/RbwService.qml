@@ -11,6 +11,8 @@ Singleton {
     property bool busy: false
     property string activeAction: ""
     property string selectedId: ""
+    property int selectionGeneration: 0
+    onSelectedIdChanged: selectionGeneration++
     readonly property bool selecting: busy && activeAction === "detail"
     property bool checkingLock: false
     property bool reloadAfterPending: false
@@ -27,6 +29,7 @@ Singleton {
     signal detailsLoaded()
     signal saved()
     signal generated(string password)
+    signal copied()
     function clear() { detail = null; baseline = ""; selectedId = ""; cleared() }
     function open() {
         if (visible) { close(); return }
@@ -43,7 +46,7 @@ Singleton {
     function close() { reloadAfterPending = false; visible = false; generation++; entries = []; error = ""; clear() }
     function reload(sync) { if (busy) return; clear(); request({action: sync ? "sync" : "list"}) }
     function select(id) {
-        if (!visible || (busy && activeAction !== "detail")) return
+        if (!visible || (busy && activeAction !== "detail" && activeAction !== "totp")) return
         const wanted = id || ""
         if (selectedId === wanted && (busy || detail?.id === wanted)) return
         if (!wanted) { clear(); return }
@@ -59,12 +62,16 @@ Singleton {
     }
     function remove() { if (detail && detail.id === selectedId) request({action: "remove", id: detail.id, baseline}) }
     function generate(length) { request({action: "generate", length}) }
+    function copyTotp() {
+        if (!detail || detail.id !== selectedId || !detail.data?.totp) return
+        request({action: "totp", id: selectedId})
+    }
     function copy(value) {
         if (!value) return
-        if (clipboardOwner) { clipboardOwner.intentionalStop = true; clipboardOwner.running = false }
-        const owner = clipboardTask.createObject(root, {payload: value}) as Process
-        clipboardOwner = owner
-        owner.running = true
+        clipboardOwner = SensitiveClipboardService.copy(value, 30000, success => {
+            if (success === false) root.error = "Clipboard copy failed."
+        })
+        copied()
     }
     function lock() { if (busy) return; generation++; entries = []; clear(); request({action: "lock"}) }
     function checkLock() {
@@ -73,7 +80,7 @@ Singleton {
         startTask({action: "unlocked"})
     }
     function startTask(message) {
-        const process = task.createObject(root, {input: JSON.stringify(message) + "\n", action: message.action, entryId: message.id || "", epoch: generation}) as Process
+        const process = task.createObject(root, {input: JSON.stringify(message) + "\n", action: message.action, entryId: message.id || "", epoch: generation, selectionEpoch: selectionGeneration}) as Process
         process.running = true
     }
     function request(message) {
@@ -84,7 +91,7 @@ Singleton {
         startTask(message)
         return true
     }
-    function receive(message, action, epoch, entryId) {
+    function receive(message, action, epoch, entryId, selectionEpoch) {
         const background = action === "unlocked"
         if (background) checkingLock = false
         else { activeAction = ""; busy = false }
@@ -94,7 +101,8 @@ Singleton {
         }
         // A search may choose another entry while this read is in progress.
         // Discard its reply and load only the latest selected entry.
-        if (action === "detail" && entryId !== selectedId) {
+        if ((action === "detail" || action === "totp")
+            && (entryId !== selectedId || (action === "totp" && selectionEpoch !== selectionGeneration))) {
             if (selectedId) request({action: "detail", id: selectedId})
             return
         }
@@ -106,13 +114,21 @@ Singleton {
             }
             return
         }
+        if (action === "totp") {
+            if (typeof message.token !== "string" || !/^(?:[0-9]{1,10}|[23456789BCDFGHJKMNPQRTVWXY]{5})$/.test(message.token)) {
+                error = "Invalid TOTP token response."
+                return
+            }
+            if (detail?.id === entryId) copy(message.token)
+            return
+        }
         if (message.entries) entries = message.entries
         if (message.entry) { detail = message.entry; baseline = message.baseline; detailsLoaded() }
         if (typeof message.password === "string") generated(message.password)
         if (message.saved) { clear(); saved(); request({action: "list"}) }
         if (message.locked || message.unlocked === false) {
             generation++; reloadAfterPending = false; entries = []; clear()
-            if (clipboardOwner) { clipboardOwner.intentionalStop = true; clipboardOwner.running = false }
+            SensitiveClipboardService.stop(clipboardOwner)
             error = "Vault is locked. Refresh to unlock."
         }
     }
@@ -130,6 +146,7 @@ Singleton {
             property string action: ""
             property string entryId: ""
             property int epoch: 0
+            property int selectionEpoch: 0
             command: ["bash", Quickshell.shellPath("src/services/vault/rbw-manager.sh")]
             environment: root.workerEnvironment
             stdinEnabled: true
@@ -142,32 +159,15 @@ Singleton {
                 if (exitCode === 0 && exitStatus === 0) {
                     try { response = JSON.parse(output.text) } catch (_) {}
                 }
-                root.receive(response, action, epoch, entryId)
+                root.receive(response, action, epoch, entryId, selectionEpoch)
                 process.destroy()
             }
             // qmllint enable signal-handler-parameters
         }
     }
-    Component {
-        id: clipboardTask
-        Process {
-            id: owner
-            property string payload: ""
-            property bool intentionalStop: false
-            command: ["wl-copy", "--foreground", "--sensitive", "--type", "text/plain;charset=utf-8"]
-            stdinEnabled: true
-            onStarted: { write(payload); payload = ""; stdinEnabled = false; expiry.start() }
-            stdout: SplitParser { onRead: _data => {} }
-            stderr: SplitParser { onRead: _data => {} }
-            property Timer expiryTimer: Timer { id: expiry; objectName: "vaultCopyExpiry"; interval: 30000; onTriggered: { owner.intentionalStop = true; owner.running = false } }
-            // qmllint disable signal-handler-parameters
-            onExited: (exitCode, exitStatus) => {
-                if (root.clipboardOwner === owner) root.clipboardOwner = null
-                if (!intentionalStop && (exitCode !== 0 || exitStatus !== 0)) root.error = "Clipboard copy failed."
-                owner.destroy()
-            }
-            // qmllint enable signal-handler-parameters
-        }
+    Connections {
+        target: SensitiveClipboardService
+        function onReleased(owner: var) { if (root.clipboardOwner === owner) root.clipboardOwner = null }
     }
     IpcHandler { target: "vault"; function toggle(): void { root.open() } }
 }

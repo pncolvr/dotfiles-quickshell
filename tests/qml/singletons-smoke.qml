@@ -2,6 +2,7 @@ import QtQuick
 import Quickshell
 import "../../src/services" as Services
 import "../../src/services/storage" as Storage
+import "../../src/services/clipboard" as Clipboard
 import "../../src/services/audio" as Audio
 import "../../src/theme/ui" as UI
 import "../../src/theme/ui/components" as Components
@@ -30,7 +31,8 @@ Scope {
                 ["NotificationEmitterRepository",Services.NotificationEmitterRepository,Storage.NotificationEmitterRepository],
                 ["TwitchRepository",Services.TwitchRepository,Storage.TwitchRepository],
                 ["TextureSettings",UI.TextureSettings,Components.TextureSettings],
-                ["ImageCropCache",UI.ImageCropCache,Components.ImageCropCache]
+                ["ImageCropCache",UI.ImageCropCache,Components.ImageCropCache],
+                ["SensitiveClipboardService",Services.SensitiveClipboardService,Clipboard.SensitiveClipboardService]
             ]
             for (const pair of pairs) root.check(pair[1] === pair[2],pair[0] + " resolves to one shared instance")
             root.check(Services.PreferencesRepository.setValue("singleton-metadata-test",{value:73}),"write private fixture preference")

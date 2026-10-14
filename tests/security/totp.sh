@@ -62,6 +62,13 @@ case $1 in
 esac
 MOCK
 chmod +x "$sandbox_dir/bin/secret-tool"
+cat > "$sandbox_dir/bin/wl-copy" <<'MOCK'
+#!/usr/bin/env bash
+set -euo pipefail
+jq -nc '$ARGS.positional' --args -- "$@" > "$TOTP_TEST_STORE/copy-args"
+cat > "$TOTP_TEST_STORE/copied-code"
+MOCK
+chmod +x "$sandbox_dir/bin/wl-copy"
 secret_tool=$sandbox_dir/bin/secret-tool
 attributes=(application quickshell type totp vault default)
 entries='[]'
@@ -110,8 +117,14 @@ printf 'PASS: 18 RFC vectors, URI validation, CRUD, errors, and worker protocol\
 
 if [[ ${1:-} == --qml-smoke ]]; then
     mkdir -m 700 "$sandbox_dir/runtime"
-    # Keep Quickshell's import scanner rooted in the real project.
-    smoke_entry=$(mktemp "$project_root/.totp-smoke.XXXXXX.qml")
+    # Preserve relative imports while keeping storage and clipboard monitoring
+    # away from the live shell, vault and clipboard.
+    tar -C "$project_root" --exclude='*.json' --exclude='*.env' -cf - src | tar -C "$sandbox_dir" -xf -
+    sed -i 's/clipboardMonitorEnabled: true/clipboardMonitorEnabled: false/' "$sandbox_dir/src/config/Config.qml"
+    mkdir -p "$sandbox_dir/tests/security" "$sandbox_dir/data" "$sandbox_dir/cache"
+    cp "$project_root/tests/security/totp-smoke.qml" "$project_root/tests/security/totp-animation-smoke.qml" "$sandbox_dir/tests/security/"
+    export XDG_DATA_HOME="$sandbox_dir/data" XDG_CACHE_HOME="$sandbox_dir/cache"
+    smoke_entry=$sandbox_dir/shell.qml
     cat > "$smoke_entry" <<'QML'
 import QtQuick
 import Quickshell
@@ -140,6 +153,9 @@ QML
     }
     printf '%s\n' "$smoke_output"
     [[ $smoke_output == *'PASS: QML inline add/edit'* && $smoke_output != *'TOTP SMOKE FAIL:'* ]]
+    jq -e '. == ["--sensitive","--type","text/plain;charset=utf-8"]' "$TOTP_TEST_STORE/copy-args" >/dev/null
+    rg -q '^[0-9]{6}$' "$TOTP_TEST_STORE/copied-code"
+    printf 'PASS: TOTP copy uses sensitive wl-copy with the code supplied only on stdin\n'
     if [[ ${2:-} == --native-imports ]]; then
         # Compile the complete bar with its Wayland backend, without creating it.
         cat > "$smoke_entry" <<'QML'

@@ -40,6 +40,8 @@ Scope {
             const detailScroll = objects.findChild(panel,"vaultDetailScroll") as Flickable
             const detailActions = objects.findChild(panel,"vaultDetailActions") as Item
             const detailPassword = root.findVisual(panel,"vaultDetailField-password") as UI.SecretField
+            const detailTotp = root.findVisual(panel,"vaultDetailField-TOTP secret") as UI.SecretField
+            const totpCopy = root.findVisual(panel,"vaultCopyTotp") as UI.ActionButton
             const edit = objects.findChild(panel,"vaultEdit") as UI.ActionButton
             const remove = objects.findChild(panel,"vaultDelete") as UI.ActionButton
             const toggle = objects.findChild(panel, "vaultFolderToggle") as QC.Button
@@ -70,6 +72,9 @@ Scope {
                 details:!!RbwService.detail,editing:panel.editing,adding:panel.adding,deleting:panel.deleting,
                 detailScrollHeight:detailScroll.height,detailActionsVisible:detailActions.visible,
                 detailMasked:!detailPassword || detailPassword.echoMode===TextInput.Password,
+                totpPresent:!!detailTotp && detailTotp.text.length>0,
+                totpMasked:!detailTotp || detailTotp.echoMode===TextInput.Password,
+                totpCopyEnabled:!!totpCopy?.enabled,
                 detailEnabled:!!detailPassword?.enabled,detailActionsEnabled:edit.enabled || remove.enabled,
                 detailId:RbwService.detail?.id ?? "",selectionMatches:!!RbwService.detail && RbwService.detail.id === panel.selectedEntryId,
                 draftEmpty:field.text.length===0,masked:field.echoMode===TextInput.Password,
@@ -118,6 +123,13 @@ Scope {
             const button = objects.findChild(field,"vaultEye") as UI.ActionButton
             events.mouseClick(button,button.width/2,button.height/2,Qt.LeftButton,Qt.NoModifier,0)
         }
+        function revealTotp(): void {
+            const field = root.findVisual(panel,"vaultDetailField-TOTP secret") as UI.SecretField
+            const button = objects.findChild(field,"vaultEye") as UI.ActionButton
+            button.clicked()
+        }
+        function copyTotp(): void { (root.findVisual(panel,"vaultCopyTotp") as UI.ActionButton).clicked() }
+        function copyTotpSecret(): void { (root.findVisual(panel,"vaultCopyTotpSecret") as UI.ActionButton).clicked() }
         function searchMissing(): void { (objects.findChild(panel,"vaultSearch") as UI.InputField).text="no such entry" }
         function moveDown(): void {
             (objects.findChild(panel,"vaultSearch") as UI.InputField).forceActiveFocus()
@@ -166,7 +178,7 @@ Scope {
         function confirmDelete(): void { RbwService.remove() }
         function back(): void { panel.forceActiveFocus(); events.keyClick(Qt.Key_Escape,Qt.NoModifier,0) }
         function copy(): void { RbwService.copy("SYNTHETIC_COPY_PASSWORD") }
-        function expireCopy(): void { const timer=objects.findChild(RbwService.clipboardOwner,"vaultCopyExpiry") as Timer; timer.interval=40; timer.restart() }
+        function expireCopy(): void { const timer=RbwService.clipboardOwner.expiryTimer as Timer; timer.interval=40; timer.restart() }
         function lock(): void { RbwService.lock() }
     }
 }

@@ -62,8 +62,18 @@ case $action in
         ;;
     detail)
         selected
-        # Discard TOTP seeds and history. All remaining data fields use masked detail rows.
-        printf '%s' "$entry" | jq -c --arg baseline "$baseline" '{ok:true,entry:{id,name,folder,notes,data:(if (.data|type)=="object" then (.data|del(.totp)) else null end),fields},baseline:$baseline}'
+        # The private details view masks secrets, including TOTP configuration.
+        # Password history remains omitted.
+        printf '%s' "$entry" | jq -c --arg baseline "$baseline" '{ok:true,entry:{id,name,folder,notes,data,fields},baseline:$baseline}'
+        ;;
+    totp)
+        selected
+        printf '%s' "$entry" | jq -e '.data.totp | type == "string" and length > 0' >/dev/null || fail 'This entry has no TOTP secret.'
+        rbw_read code "$id"
+        [[ $result =~ ^[0-9]{1,10}$ || $result =~ ^[23456789BCDFGHJKMNPQRTVWXY]{5}$ ]] || fail 'Invalid TOTP token response.'
+        token=$result
+        policy
+        printf '%s' "$token" | jq -Rs '{ok:true,token:.}'
         ;;
     add)
         notes_valid

@@ -23,6 +23,14 @@ case $1 in
         fi
         ;;
     add|edit) cat > "$RBW_TEST_ROOT/write-input" ;;
+    code)
+        [[ ! -f $RBW_TEST_ROOT/slow-code ]] || sleep 0.6
+        if [[ -f $RBW_TEST_ROOT/protect-on-code ]]; then
+            jq '.entries[0].master_password_reprompt = 1' "$XDG_CACHE_HOME/rbw/default:user@example.test.json" > "$RBW_TEST_ROOT/cache-next"
+            mv "$RBW_TEST_ROOT/cache-next" "$XDG_CACHE_HOME/rbw/default:user@example.test.json"
+        fi
+        if [[ -f $RBW_TEST_ROOT/token ]]; then cat "$RBW_TEST_ROOT/token"; else printf '123456\n'; fi
+        ;;
     remove|sync) : ;;
     generate) printf 'SYNTHETIC_GENERATED_PASSWORD\n' ;;
     *) exit 1 ;;

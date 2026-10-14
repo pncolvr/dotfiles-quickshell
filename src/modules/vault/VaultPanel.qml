@@ -35,8 +35,10 @@ Item {
         const entry = RbwService.detail
         if (!entry) return []
         const fields = (entry.data?.uris ?? []).map(uri => ({label: "Website", value: uri.uri, secret: false}))
-        fields.push(...Object.entries(entry.data ?? {}).filter(([key, value]) => value !== null && key !== "uris")
-            .map(([key, value]) => ({label: key.replace(/_/g, " "), value: String(value), secret: key !== "username"})))
+        fields.push(...Object.entries(entry.data ?? {}).filter(([key, value]) => value !== null && key !== "uris"
+                && (key !== "totp" || (typeof value === "string" && value.length > 0)))
+            .map(([key, value]) => ({label: key === "totp" ? "TOTP secret" : key.replace(/_/g, " "),
+                value: String(value), secret: key !== "username", totp: key === "totp"})))
         if (entry.notes) fields.push({label: "Notes", value: entry.notes, secret: true})
         for (const field of entry.fields ?? []) if (field.value != null) fields.push({label: field.name || "Custom field", value: field.value, secret: true})
         return fields
@@ -65,7 +67,7 @@ Item {
     }
     function copy(value) {
         if (!value) return
-        RbwService.copy(value); notice = "Copied; expires after 30 seconds."
+        RbwService.copy(value)
     }
     function back() { if (editing || deleting) { discard(); focusSearch() } else RbwService.close() }
     Component.onDestruction: discard()
@@ -77,6 +79,7 @@ Item {
         function onCleared() { root.discard() }
         function onSaved() { root.discard(); root.notice = "Saved." }
         function onGenerated(value) { if (root.editing) editor.setPassword(value) }
+        function onCopied() { root.notice = "Copied; clipboard expires after 30 seconds." }
         function onSelectingChanged() {
             root.detailBusyShown = false
             if (RbwService.selecting) detailBusyDelay.restart()
@@ -196,7 +199,7 @@ Item {
                         VaultEntryDetails {
                             width: parent.width
                             visible: !root.editing && !root.deleting
-                            enabled: root.detailReady && !RbwService.selecting
+                            enabled: root.detailReady && !RbwService.busy
                             fields: root.detailRows
                             onCopyRequested: value => root.copy(value)
                         }
