@@ -70,15 +70,15 @@ export function prepareRows(rows) {
         const title = String(row.title ?? "");
         const search = row.search ? String(row.search) : "";
         return {index, title, search, titleFolded: title.toLowerCase(),
-            searchFolded: search === title ? "" : search.toLowerCase(), pinned: row.pinned === true};
+            searchFolded: search === title ? "" : search.toLowerCase(), pinned: row.pinned === true, kind: row.kind};
     });
 }
 
-export function filterPrepared(rows, candidates, pattern, fuzzy, pinnedOnly) {
+export function filterPrepared(rows, candidates, pattern, fuzzy, pinnedOnly, kind) {
     const matches = [];
     for (const index of candidates) {
         const row = rows[index];
-        if (pinnedOnly && !row.pinned) continue;
+        if ((pinnedOnly && !row.pinned) || (kind && row.kind !== kind)) continue;
         const value = Math.min(score(row.title, pattern, fuzzy, row.titleFolded),
             row.search && row.search !== row.title ? score(row.search, pattern, fuzzy, row.searchFolded) + 12 : Infinity);
         if (value !== Infinity) matches.push({index, score: value});

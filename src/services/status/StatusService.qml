@@ -23,6 +23,7 @@ Singleton {
     readonly property bool timecardLoading: reportProcess.running
     readonly property var detectionMatches: _internal.detectionMatches
     readonly property string detectionError: _internal.detectionError
+    readonly property bool detectionStale: _internal.detectionStale
     readonly property bool detectionLoading: detectionProcess.running
     
     QtObject {
@@ -44,6 +45,8 @@ Singleton {
         property var detectionMatches: []
         property string detectionError: ""
         property bool detectionPending: false
+        property bool detectionStale: false
+        property bool hasDetectionSnapshot: false
     }
     function reload() {
         reloadTimer.restart()
@@ -146,7 +149,9 @@ Singleton {
                     && Array.isArray(match.methods) && match.methods.every(method => typeof method === "string")
                     && Array.isArray(match.paths) && match.paths.every(path => typeof path === "string"))
                 && Array.isArray(report?.errors) && report.errors.every(error => typeof error === "string")
-            const matches = valid ? report.matches : []
+            const matches = valid ? report.matches : _internal.detectionMatches
+            _internal.detectionStale = !valid && _internal.hasDetectionSnapshot
+            if (valid) _internal.hasDetectionSnapshot = true
             if (JSON.stringify(matches) !== JSON.stringify(_internal.detectionMatches)) _internal.detectionMatches = matches
             _internal.detectionError = valid ? report.errors.join("\n") : "Could not read automatic detection."
             if (_internal.detectionPending) Qt.callLater(root.refreshDetection)

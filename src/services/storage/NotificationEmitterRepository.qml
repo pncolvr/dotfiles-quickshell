@@ -61,5 +61,6 @@ Singleton {
         return reload()
     }
 
+    Connections { target: DbService; function onReadyChanged() { if (DbService.ready) root.reload() } }
     Component.onCompleted: reload()
 }

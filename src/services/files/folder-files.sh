@@ -71,15 +71,14 @@ while IFS= read -r -d '' path; do
 done < "$work_dir/paths"
 jq -L "$helper_dir" -Rs --arg folder "$folder" '
     include "natural-sort";
+    include "file-records";
     split("\u0000")[:-1] as $fields |
     [range(0; $fields | length; 5) as $i |
-        $fields[$i] as $path | ($path | split("/")) as $parts |
         ($fields[$i + 1] | tonumber) as $modified |
         ($fields[$i + 2] | tonumber) as $created |
         ($created > 0 and $created > $modified) as $useCreated |
-        {path: $path, name: $parts[-1], directory: ($parts[:-1] | join("/") | if . == "" then "/" else . end),
-         uri: ("file://" + ($parts | map(@uri) | join("/"))),
-         modifiedAt: $modified, createdAt: $created,
+        ($fields[$i] | file_record) +
+        {modifiedAt: $modified, createdAt: $created,
          usedAt: (if $useCreated then $created else $modified end),
          timeKind: (if $useCreated then "created" else "modified" end), icon: $fields[$i + 3],
          isDirectory: ($fields[$i + 4] == "true")}] |

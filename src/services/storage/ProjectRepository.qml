@@ -77,5 +77,6 @@ Singleton {
         })) { error = DbService.error; return false }
         return reload()
     }
+    Connections { target: DbService; function onReadyChanged() { if (DbService.ready) root.reload() } }
     Component.onCompleted: reload()
 }

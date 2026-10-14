@@ -27,6 +27,7 @@ export PYTHONDONTWRITEBYTECODE=1 RBW_PROFILE=''
 copy_shell() {
     tar -C "$project_root" --exclude='*.json' --exclude='*.env' --exclude='__pycache__' -cf - src | tar -C "$test_dir" -xf -
     sed -i 's/clipboardMonitorEnabled: true/clipboardMonitorEnabled: false/' "$test_dir/src/config/Config.qml"
+    sed -i 's@readonly property var hyprlandHideApplicationsCommand:.*@readonly property var hyprlandHideApplicationsCommand: (active) => ["true"]@' "$test_dir/src/config/Config.qml"
 }
 ipc() { timeout 4 qs ipc -p "$test_dir" call rbwtest "$1"; }
 snapshot() { ipc snapshot; }

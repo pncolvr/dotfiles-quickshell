@@ -29,7 +29,7 @@ Scope {
     IpcHandler {
         target: "rbwtest"
         function snapshot(): string {
-            const field = objects.findChild(panel, "vaultPassword") as VaultSecretField
+            const field = objects.findChild(panel, "vaultPassword") as UI.SecretField
             const actions = objects.findChild(panel, "vaultEditorActions") as UI.EditorActions
             const hints = objects.findChild(panel, "vaultFormHints") as UI.ShortcutHints
             const notes = objects.findChild(panel, "vaultNotes") as QC.TextArea
@@ -39,7 +39,7 @@ Scope {
             const details = objects.findChild(panel, "vaultDetails") as Item
             const detailScroll = objects.findChild(panel,"vaultDetailScroll") as Flickable
             const detailActions = objects.findChild(panel,"vaultDetailActions") as Item
-            const detailPassword = root.findVisual(panel,"vaultDetailField-password") as VaultSecretField
+            const detailPassword = root.findVisual(panel,"vaultDetailField-password") as UI.SecretField
             const edit = objects.findChild(panel,"vaultEdit") as UI.ActionButton
             const remove = objects.findChild(panel,"vaultDelete") as UI.ActionButton
             const toggle = objects.findChild(panel, "vaultFolderToggle") as QC.Button
@@ -114,7 +114,7 @@ Scope {
         function search(): void { const field = objects.findChild(panel,"vaultSearch") as UI.InputField; field.text="exlg" }
         function searchSecond(): void { (objects.findChild(panel,"vaultSearch") as UI.InputField).text="zebra" }
         function revealDetail(): void {
-            const field = root.findVisual(panel,"vaultDetailField-password") as VaultSecretField
+            const field = root.findVisual(panel,"vaultDetailField-password") as UI.SecretField
             const button = objects.findChild(field,"vaultEye") as UI.ActionButton
             events.mouseClick(button,button.width/2,button.height/2,Qt.LeftButton,Qt.NoModifier,0)
         }
@@ -134,10 +134,10 @@ Scope {
         }
         function typeDraft(): void {
             (objects.findChild(panel,"vaultTitle") as UI.InputField).text="Synthetic created login";
-            (objects.findChild(panel,"vaultPassword") as VaultSecretField).text="SYNTHETIC_DRAFT_PASSWORD";
+            (objects.findChild(panel,"vaultPassword") as UI.SecretField).text="SYNTHETIC_DRAFT_PASSWORD";
         }
         function eye(): void {
-            const field = objects.findChild(panel,"vaultPassword") as VaultSecretField
+            const field = objects.findChild(panel,"vaultPassword") as UI.SecretField
             const button = objects.findChild(field,"vaultEye") as UI.ActionButton
             events.mouseClick(button,button.width/2,button.height/2,Qt.LeftButton,Qt.NoModifier,0)
         }

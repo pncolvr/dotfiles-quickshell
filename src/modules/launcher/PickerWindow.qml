@@ -18,11 +18,10 @@ TopPanelTooltip {
     screen: Quickshell.screens.includes(picker.targetScreen) ? picker.targetScreen : Quickshell.screens[0] ?? null
     visible: picker.visible && picker.layout !== "expose" && !!picker.targetScreen
         && !picker.privateWindow
-    contentWidth: Math.min(Theme.pickerWidth,
-        Math.max(0, (geometryScreen?.width || 800) - Theme.tooltipRadius * 2 - Theme.tooltipPaddingWidth * 2))
-    contentHeight: Math.min(panel?.implicitHeight ?? 0,
-        Math.max(0, (geometryScreen?.height || 1080) * 0.75 - shadowBottomPadding))
-    contentX: (width - contentWidth) / 2
+    contentWidth: behavior.boundedContentWidth
+    contentHeight: behavior.boundedContentHeight
+    implicitHeight: behavior.reservedHostHeight
+    contentX: behavior.centeredContentX
     backgroundOpacity: Theme.pickerBackgroundOpacity
     WlrLayershell.namespace: Config.pickerNamespace
     WlrLayershell.layer: WlrLayer.Overlay

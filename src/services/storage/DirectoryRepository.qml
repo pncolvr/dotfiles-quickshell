@@ -4,6 +4,7 @@ import Quickshell
 import "../"
 
 Singleton {
+    id: root
     property var directories: []
     property string error: ""
     function reload() {
@@ -26,5 +27,6 @@ Singleton {
         if (!DbService.write(tx => tx.executeSql("DELETE FROM directories WHERE path = ?",[path]))) { error = DbService.error; return false }
         return reload()
     }
+    Connections { target: DbService; function onReadyChanged() { if (DbService.ready) root.reload() } }
     Component.onCompleted: reload()
 }

@@ -107,13 +107,11 @@ done < "$work_dir/records"
 
 jq -L "$helper_dir" -Rs --argjson max "$max_items" '
     include "natural-sort";
+    include "file-records";
     split("\u0000")[:-1] as $fields |
     [range(0; $fields | length; 3) as $i |
-        $fields[$i] as $path | ($path | split("/")) as $parts |
-        {path: $path, name: $parts[-1],
-         directory: ($parts[:-1] | join("/") | if . == "" then "/" else . end),
-         uri: ("file://" + ($parts | map(@uri) | join("/"))),
-         usedAt: ($fields[$i + 1] | tonumber), icon: $fields[$i + 2]}] |
+        ($fields[$i] | file_record) +
+        {usedAt: ($fields[$i + 1] | tonumber), icon: $fields[$i + 2]}] |
     group_by(.uri) | map(max_by(.usedAt)) | sort_by([-.usedAt, (.name | natural_name_key), .path]) |
     (if $max > 0 then .[:$max] else . end) | {files: ., error: ""}
 ' "$work_dir/files" || fail 'Could not prepare the recent-file list.'

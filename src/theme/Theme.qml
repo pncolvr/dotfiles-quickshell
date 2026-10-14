@@ -70,6 +70,11 @@ Item {
   readonly property string upIcon: "" // arrow-up
   readonly property string rightIcon: "" // arrow-right
   readonly property string copyIcon: "" // copy
+  readonly property string pasteIcon: "" // paste
+  readonly property string imageIcon: "" // image
+  readonly property string searchIcon: "" // magnifying-glass
+  readonly property string filterIcon: "" // filter
+  readonly property string clearIcon: "" // broom
   readonly property string editIcon: "" // pen
   readonly property string eyeIcon: "" // eye: reveal a secret
   readonly property string eyeSlashIcon: "" // eye-slash: mask a secret
@@ -78,7 +83,7 @@ Item {
   readonly property string refreshIcon: "" // arrows-rotate: refresh / sync
   readonly property string retryIcon: "" // arrows-rotate
   readonly property string chevronRightIcon: "" // chevron-right: collapsed
-  readonly property string chevronLeftIcon: "\uf053" // chevron-left
+  readonly property string chevronLeftIcon: "" // chevron-left
   readonly property string chevronDownIcon: "" // chevron-down: expanded
   readonly property string playIcon: "" // play
   readonly property string mediaPreviousIcon: "" // backward-step
@@ -86,8 +91,8 @@ Item {
   readonly property string mediaStopIcon: "" // stop
   readonly property string mediaIcon: "" // music
   readonly property string mediaFlipIcon: "" // arrows-rotate
-  readonly property string mediaExpandIcon: "\uf065" // expand
-  readonly property string mediaCollapseIcon: "\uf066" // compress
+  readonly property string mediaExpandIcon: "" // expand
+  readonly property string mediaCollapseIcon: "" // compress
   readonly property int mediaFullscreenEffectListHeight: 520
   readonly property int mediaFullscreenAnimationDuration: exposeAnimationDuration
   readonly property int mediaFullscreenSwitchDuration: 240
@@ -102,10 +107,10 @@ Item {
   readonly property int mediaArtworkBlurRadius: 64
   readonly property real mediaArtworkBackgroundTint: 0.5
   readonly property real mediaArtworkBackgroundOpacity: 0.65
-  readonly property string pauseIcon: "\uf04c" // pause
+  readonly property string pauseIcon: "" // pause
 
   // Countdowns and elapsed timers (Font Awesome stopwatch).
-  readonly property string timersIcon: "\uf2f2"
+  readonly property string timersIcon: ""
   readonly property int timersTooltipWidth: 420
   readonly property real timersMaxHeightRatio: 0.5
 
@@ -132,6 +137,7 @@ Item {
   readonly property int exposeDragAnimationDuration: 160
   readonly property int exposeRearrangeAnimationDuration: 250
   readonly property int exposeAnimationDuration: 300
+  readonly property int clipboardLayoutDuration: exposeRearrangeAnimationDuration
   // readonly property int exposeDragAnimationDuration: 1000
   // readonly property int exposeRearrangeAnimationDuration: 2000
   // readonly property int exposeAnimationDuration: 3000

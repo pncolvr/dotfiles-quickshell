@@ -205,6 +205,10 @@ installed with its existing window rules; launch it manually for advanced edits.
 The manager calls rbw directly. The browser userscript remains responsible for
 qutebrowser autofill; the independent TOTP module is unchanged.
 
+`VaultPanel` coordinates selection and drafts, with feature-owned list, detail and
+editor components. The editor uses shared field styling and keeps notes masking
+and password reveal state local; `RbwService` continues to own all vault operations.
+
 The manager has one searchable view with folder/type filters. It opens on Logins;
 choose Notes or another supported type in the combo to browse those separately.
 Rows show the entry name and username/folder without an item-type label. Search covers entry

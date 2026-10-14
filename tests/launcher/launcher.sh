@@ -259,6 +259,7 @@ ipc call pickertest query 'no matching link'
 ipc call pickertest enter
 snapshot | jq -e '.visible and .selected == [] and (.canAccept | not)' >/dev/null
 ipc call pickertest query ''
+snapshot >/dev/null
 ipc call pickertest down
 ipc call pickertest toggleEntry
 snapshot | jq -e '.selected == ["1"] and .currentIndex == 2' >/dev/null
@@ -286,9 +287,9 @@ snapshot | jq -e '.filtered | length == 1' >/dev/null
 ipc call pickertest togglePin
 snapshot | jq -e '.query == "delete me" and .filtered[0].pinned' >/dev/null
 ipc call pickertest deleteEntry
-snapshot | jq -e '.query == "delete me" and .filtered == [] and (.items | length) == 1
-    and .items[0].result.text == "hello\nworld\n"' >/dev/null
+snapshot | jq -e '.query == "delete me" and .filtered == [] and (.items | length) == 0' >/dev/null
 ipc call pickertest query ''
+snapshot >/dev/null
 ipc call pickertest togglePin
 snapshot | jq -e '.query == "" and .items[0].pinned and .currentIndex == 0' >/dev/null
 ipc call pickertest clickControl pinClipboardEntry | jq -e '.' >/dev/null
@@ -296,7 +297,7 @@ snapshot | jq -e '(.items[0].pinned | not)' >/dev/null
 ipc call pickertest togglePin
 ipc call pickertest clipboardFixture
 ipc call pickertest togglePinnedOnly
-snapshot | jq -e '.itemCriteria.pinned and (.filtered | length) == 1 and .filtered[0].pinned and (.items | length) == 2' >/dev/null
+snapshot | jq -e '.itemCriteria.pinned and (.filtered | length) == 1 and .filtered[0].pinned and (.items | length) == 1' >/dev/null
 ipc call pickertest query 'delete me'
 snapshot | jq -e '.filtered == [] and (.canAccept | not)' >/dev/null
 ipc call pickertest togglePinnedOnly
@@ -310,6 +311,7 @@ ipc call pickertest togglePinnedOnly
 snapshot >/dev/null
 ipc call pickertest togglePin
 ipc call pickertest query ''
+snapshot >/dev/null
 ipc call pickertest clickControl clipboardPinnedOnly | jq -e '.' >/dev/null
 snapshot | jq -e '.itemCriteria.pinned and (.filtered | length) == 1 and .filtered[0].pinned' >/dev/null
 ipc call pickertest clickControl clipboardPinnedOnly | jq -e '.' >/dev/null
@@ -319,7 +321,7 @@ ipc call pickertest clipboardFixture
 snapshot | jq -e '.itemCriteria == {} and (.filtered | length) == 2' >/dev/null
 printf 'PASS: pinned-only keyboard/button toggle, combined search, unpinning while filtered, empty results and reset on reopening\n'
 ipc call pickertest clickControl clearClipboardHistory | jq -e '.' >/dev/null
-snapshot | jq -e '(.items | length) == 1 and .items[0].pinned and .items[0].result.text == "hello\nworld\n"' >/dev/null
+snapshot | jq -e '(.items | length) == 1 and .items[0].pinned and (.items[0].title|rtrimstr(" ")) == "hello world"' >/dev/null
 [[ -f $test_dir/data/clipboard/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa ]]
 ipc call pickertest deferredCopy
 for ((try=0;try<60;try++)); do

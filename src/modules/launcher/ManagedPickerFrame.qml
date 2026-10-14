@@ -1,0 +1,82 @@
+pragma ComponentBehavior: Bound
+import QtQuick
+import "../../theme"
+import "../../theme/ui" as UI
+import "../../services"
+
+// Shared outer workflow; feature services still own management and draft state.
+Item {
+    id: root
+    property var picker: PickerService
+    property bool backgroundVisible: true
+    property bool adding: false
+    required property int pickerMode
+    required property bool managing
+    required property string addSequence
+    required property string manageSequence
+    required property string showAllSequence
+    required property bool addAllowed
+    property bool nativeDialogOpen: false
+    property bool manageDuringDialog: false
+    required property Item headerItem
+    required property PickerPanelBase listItem
+    required property Item manageItem
+    required property Item footerItem
+    property var managementFocusTarget: null
+    required property UI.SearchField managementSearch
+    readonly property bool sessionActive: visible && picker.visible && picker.mode === pickerMode
+    readonly property real contentTop: headerItem.height + Theme.controlSpacing
+    readonly property real listHeight: height - contentTop
+    readonly property real manageHeight: Math.max(0, listHeight - (footerItem.visible ? footerItem.height + Theme.controlSpacing : 0))
+    implicitWidth: Theme.pickerWidth
+    implicitHeight: contentTop + (managing
+        ? manageItem.implicitHeight + (footerItem.visible ? footerItem.height + Theme.controlSpacing : 0)
+        : listItem.implicitHeight)
+    signal managementRequested(bool value)
+    signal addRequested()
+    signal showAllRequested()
+    signal escapeRequested()
+    signal sessionClosed()
+
+    function focusSearch() {
+        if (!picker.visible) return
+        const target = managing ? managementFocusTarget : listItem
+        if (!target) return
+        if (typeof target.focusInput === "function") target.focusInput()
+        else if (typeof target.focusSearch === "function") target.focusSearch()
+        else target.forceActiveFocus()
+    }
+    function management(value) { managementRequested(value); Qt.callLater(root.focusSearch) }
+    function beginAdd() { addRequested(); Qt.callLater(root.focusSearch) }
+    function handleAddKey(event, activate) {
+        if (!addShortcut.enabled || addShortcut.portableText !== "Ctrl+A" || !event.matches(StandardKey.SelectAll)) return false
+        if (activate) beginAdd()
+        return true
+    }
+    Shortcut {
+        id: addShortcut
+        sequence: root.addSequence
+        enabled: root.sessionActive && root.addAllowed
+        onActivated: root.beginAdd()
+    }
+    Shortcut {
+        sequence: root.manageSequence
+        enabled: root.sessionActive && (root.manageDuringDialog || !root.nativeDialogOpen)
+        onActivated: root.management(!root.managing)
+    }
+    Shortcut {
+        sequence: root.showAllSequence
+        enabled: root.sessionActive && !root.managing
+        onActivated: root.showAllRequested()
+    }
+    Keys.onEscapePressed: root.escapeRequested()
+    Connections {
+        target: root.picker
+        function onVisibleChanged() {
+            if (!root.picker.visible) {
+                root.sessionClosed()
+                root.managementSearch.clear()
+            }
+        }
+    }
+}

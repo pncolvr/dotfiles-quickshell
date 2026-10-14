@@ -46,5 +46,6 @@ Singleton {
 
     function setShowSeconds(value) { return setValue("clock.showSeconds", !!value) }
 
+    Connections { target: DbService; function onReadyChanged() { if (DbService.ready) root.reload() } }
     Component.onCompleted: reload()
 }

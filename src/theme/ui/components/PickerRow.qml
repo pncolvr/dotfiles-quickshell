@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Window
 import Quickshell
 import "../../"
 import "../" as UI
@@ -64,7 +65,7 @@ Rectangle {
         height: root.clipboardImage ? Theme.clipboardImagePreviewHeight : root.clipboard ? 36 : 18
         source: root.entry.image || (root.entry.icon ? Quickshell.iconPath(root.entry.icon, true) : "")
         visible: source.toString().length > 0 && !root.grid
-        sourceSize: Qt.size(Math.ceil(width), Math.ceil(height))
+        sourceSize: Qt.size(Math.ceil(width * (root.clipboardImage ? Screen.devicePixelRatio : 1)), Math.ceil(height * (root.clipboardImage ? Screen.devicePixelRatio : 1)))
         asynchronous: true
     }
     Column {

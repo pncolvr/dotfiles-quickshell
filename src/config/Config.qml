@@ -101,6 +101,7 @@ Item {
     readonly property int clipboardMaxItems: 1000
     readonly property int clipboardMaxTotalBytes: 500000000
     readonly property int clipboardMaxBytes: 10000000
+    readonly property int clipboardPreviewMaxPixels: 8388608
     readonly property string clipboardDirectory: Quickshell.shellPath("data/clipboard")
     readonly property bool clipboardMonitorEnabled: true
     readonly property var pickerBridgeCommand: ["bash", Quickshell.shellPath("src/services/launcher/launcher.sh"), "--bridge"]

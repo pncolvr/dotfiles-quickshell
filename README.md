@@ -23,7 +23,8 @@ A desktop bar for Hyprland, built with QML and Quickshell.
 
 ## Dependencies
 
-Quickshell (developed with 0.3.1), Qt 6.10+, Hyprland, Bash, coreutils and `jq`.
+Quickshell (developed with 0.3.1), Qt 6.10+, Hyprland, Bash, coreutils, `jq`, and
+`sqlite3` with FTS5 support (SQLite 3.42+).
 Fonts: Noto Sans Mono, JetBrains Mono and Font Awesome 7 Free Solid.
 
 Individual features use PipeWire, `pactl`, UPower, BlueZ, a Secret Service provider,

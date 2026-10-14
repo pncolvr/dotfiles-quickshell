@@ -73,6 +73,14 @@ TOTP names and seeds live in the desktop Secret Service; see [TOTP](features/tot
 
 ## Clipboard history
 
+Schema version 11 adds a rebuildable external-content FTS5 index. The clipboard
+table and exact payload bytes are preserved; stable-rowid UPSERT and transactional
+triggers keep search consistent with updates/deletion. Pin/recency changes avoid
+reindexing text. Indexed result pages contain short previews and metadata, while
+the optional fuzzy engine reads full searchable text. See [index maintenance,
+backup and rollback](clipboard-index.md). Database setup now prepares private
+permissions before opening; repositories reload once storage is ready.
+
 Schema version 5 adds clipboard metadata and searchable text while preserving the
 existing tables. Original payload bytes live in private, content-addressed files
 under `data/clipboard/`. Schema version 6 adds durable clipboard pins, defaulting

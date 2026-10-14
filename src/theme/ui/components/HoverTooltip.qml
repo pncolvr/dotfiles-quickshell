@@ -18,6 +18,7 @@ Item {
     signal clicked
 
     property string text: ""
+    property int textFormat: Q.Text.AutoText
     property int delay: 500
     property int cursorShape: Qt.ArrowCursor
     // Controls already handle pointer input; use their hover state without covering clicks.
@@ -45,6 +46,7 @@ Item {
 
         contentItem: Text {
             text: root.text
+            textFormat: root.textFormat
             color: Theme.accent
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSize

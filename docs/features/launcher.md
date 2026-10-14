@@ -259,6 +259,9 @@ automatic import or migration script. `FolderForm`, `ManagementActions` and
 and copy/edit/refresh/remove controls with project management. They build on
 `FolderPathField`, `ManagementRow` and the existing tabs and editor actions.
 Panels supply their own service callbacks and enable only relevant controls.
+`ManagedPickerFrame` shares the outer management layout, shortcuts, focus and
+close cleanup. Project workspace drafts and directory validation remain in their
+respective services.
 
 ### Projects
 
@@ -400,12 +403,35 @@ show a thumbtack and survive restarts, repeated copies, history clearing, and
 automatic pruning. The Pinned only button or Ctrl+Shift+P toggles a pinned-entry
 filter, highlighted with the accent color when active. Search still applies
 within the filtered entries; opening the picker again starts with all entries.
-Clipboard searches run in a background worker with cached lowercase text. As a
-query grows, the worker searches the previous matches; editing or shortening it,
-changing case rules or the pin filter, and updating history reset the candidates.
+Clipboard search defaults to case-insensitive FTS5 word/prefix matching. Terms
+must all match; punctuation separates words and typed FTS operators are literal
+words. Results arrive in pages with bounded previews. The Fuzzy button switches
+to the existing subsequence matcher, including smart case and cached candidate
+reuse. Only this option loads full searchable text. Closing the picker releases
+its search state; background captures do not hydrate a closed clipboard list.
 Rapid typing replaces queued queries, and only the latest results are displayed.
 Enter and Ctrl+C pressed during a search wait for its results before pasting or
 copying; changing the query or closing the picker cancels that pending action.
+
+**Images only** or **Ctrl+Shift+I** filters images and expands the existing picker
+across the focused monitor. The list keeps its normal width and moves left; a
+large aspect-fit preview pops in on the right. Turning the filter off reverses
+the transition. Narrow monitors use a stacked preview. Pinned only and search
+compose with this filter. Image search covers MIME metadata, without OCR.
+Normal openings start with indexed search and both filters off.
+Thumbnails and previews use shared smooth filtering and mipmaps, asynchronous
+loading and display-scale-aware source sizing. The large preview avoids image
+caching and has an eight-megapixel target budget (`Config.clipboardPreviewMaxPixels`).
+Small images remain centered at their original pixel size; only images larger
+than the viewport are scaled down to fit. A Bash helper reads local image header
+dimensions with ImageMagick before choosing decode/display sizes, so the decoder
+does not enlarge small images either. Shared filtering remains enabled.
+Viewport/display-scale changes are coalesced over 100 ms; a newly selected entry
+uses the current target immediately. This target bounds the requested preview,
+not the image codec's temporary buffers or the renderer's total memory. A small
+compressed file can still contain a very large image.
+Transitions use `Theme.clipboardLayoutDuration` and respect the existing
+`animateDuringScreenShare` setting. Repeated toggles retarget the current motion.
 Pins count toward the entry and total-size limits, but are
 never removed to satisfy those limits; if pins alone exceed a limit, they are
 kept and new unpinned entries cannot be retained. Explicitly deleting a pinned
@@ -440,9 +466,11 @@ Import reads up to 200 existing text/image entries through CopyQ's CLI without
 modifying CopyQ's source history. CopyQ must be running. No clipboard contents
 are printed to application logs.
 
-The window uses the `quickshell-picker` layer namespace. Its Hyprland layer rule
-excludes launcher and clipboard contents from screen capture independently of
-the bar's screen-sharing toggle.
+The window uses the `quickshell-picker` layer namespace. A namespace alone does
+not exclude it from screen capture: that requires an enabled compositor rule.
+The current Hyprland picker exclusion is commented out; this implementation
+preserves that capture behavior. Index migration, maintenance and rollback are
+documented in [Clipboard index maintenance](../clipboard-index.md).
 
 ## Checks
 

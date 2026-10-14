@@ -19,7 +19,7 @@ Item {
     onSelectedEntryIdChanged: Qt.callLater(root.updateSelection)
     onNoticeChanged: { if (notice) noticeExpiry.restart(); else noticeExpiry.stop() }
     Timer { id: noticeExpiry; interval: 5000; onTriggered: root.notice = "" }
-    property bool notesRevealed: false
+    property alias notesRevealed: editor.notesRevealed
     property bool detailBusyShown: false
     readonly property bool detailReady: !!RbwService.detail && RbwService.detail.id === root.selectedEntryId
     Timer { id: detailBusyDelay; interval: 200; onTriggered: root.detailBusyShown = true }
@@ -49,23 +49,19 @@ Item {
         list.currentIndex = root.rows.length ? 0 : -1
         root.updateSelection()
     }
-    function discard() { editing = false; adding = false; deleting = false; notesRevealed = false; title.clear(); username.clear(); password.clear(); password.revealed = false; urls.clear(); folder.clear(); notes.clear() }
+    function discard() { editing = false; adding = false; deleting = false; editor.clear() }
     function newLogin() {
         if (RbwService.busy || editing) return
         RbwService.clear(); discard(); editing = true; adding = true
-        Qt.callLater(() => title.forceActiveFocus())
+        Qt.callLater(editor.focusNew)
     }
     function edit() {
         if (!editable || RbwService.busy) return
         discard(); editing = true
-        password.text = RbwService.detail.data?.password ?? ""
-        notes.text = RbwService.detail.notes ?? ""
-        Qt.callLater(() => RbwService.detail.data === null ? notes.forceActiveFocus() : password.forceActiveFocus())
+        editor.loadEntry(RbwService.detail)
     }
     function save() {
-        RbwService.save({id: adding ? "" : RbwService.detail?.id, name: title.text, username: username.text,
-            password: password.text, notes: notes.text, folder: folder.text,
-            uris: urls.text.split("\n").map(value => value.trim()).filter(Boolean)})
+        RbwService.save(editor.draft(adding ? "" : RbwService.detail?.id))
     }
     function copy(value) {
         if (!value) return
@@ -80,7 +76,7 @@ Item {
         }
         function onCleared() { root.discard() }
         function onSaved() { root.discard(); root.notice = "Saved." }
-        function onGenerated(value) { if (root.editing) password.text = value }
+        function onGenerated(value) { if (root.editing) editor.setPassword(value) }
         function onSelectingChanged() {
             root.detailBusyShown = false
             if (RbwService.selecting) detailBusyDelay.restart()
@@ -156,49 +152,14 @@ Item {
             width: parent.width
             height: Math.max(100, content.height - y - footer.height - Theme.controlSpacing)
             spacing: Theme.controlSpacing * 2
-            ListView {
+            VaultEntryList {
                 id: list
-                objectName: "vaultList"
                 width: parent.width * 0.38
                 height: parent.height
-                clip: true
-                model: root.rows
+                entries: root.rows
+                busy: RbwService.busy
                 enabled: !root.editing && !root.deleting && (!RbwService.busy || RbwService.selecting)
-                currentIndex: 0
-                boundsBehavior: Flickable.StopAtBounds
-                topMargin: Theme.controlSpacing
-                bottomMargin: Theme.controlSpacing
-                QC.ScrollBar.vertical: UI.ScrollBar {}
-                Rectangle {
-                    parent: list
-                    anchors.fill: parent
-                    anchors.margins: 1
-                    z: 1
-                    color: "transparent"
-                    radius: Theme.iconButtonRadius
-                    border.width: 1
-                    border.color: Theme.empty
-                }
-                delegate: QC.ItemDelegate {
-                    id: entryRow
-                    required property var modelData
-                    required property int index
-                    width: list.width
-                    padding: Theme.pickerRowPadding
-                    leftPadding: Theme.controlFieldPadding
-                    rightPadding: Theme.controlFieldPadding + Theme.scrollbarWidth
-                    height: Math.max(Theme.controlHeight, contentItem.implicitHeight + topPadding + bottomPadding)
-                    objectName: "vaultEntry-" + modelData.id
-                    onClicked: { list.currentIndex = index; RbwService.select(modelData.id) }
-                    background: Rectangle { color: entryRow.index === list.currentIndex ? Theme.alternateBackground : "transparent"; radius: Theme.iconButtonRadius }
-                    contentItem: Column {
-                        UI.Text { centerVertical: false; width: parent.width; textFormat: Text.PlainText; text: entryRow.modelData.name; color: entryRow.index === list.currentIndex ? Theme.accent : Theme.text; elide: Text.ElideRight }
-                        UI.Text { centerVertical: false; width: parent.width; visible: text.length > 0; textFormat: Text.PlainText; text: [entryRow.modelData.user, entryRow.modelData.folder].filter(Boolean).join(" · "); color: entryRow.index === list.currentIndex ? Theme.accent : Theme.inactive; elide: Text.ElideRight }
-                    }
-                    Keys.onReturnPressed: RbwService.select(modelData.id)
-                    Keys.onEnterPressed: RbwService.select(modelData.id)
-                }
-                UI.Text { centerVertical: false; anchors.centerIn: parent; text: "No entries"; visible: !root.rows.length && !RbwService.busy }
+                onEntrySelected: entryId => RbwService.select(entryId)
             }
             Item {
                 id: detailsPane
@@ -232,38 +193,12 @@ Item {
                         spacing: Theme.controlSpacing
                         UI.Text { centerVertical: false; width: parent.width; textFormat: Text.PlainText; wrapMode: Text.Wrap; text: root.adding ? "New login" : RbwService.detail?.name ?? "Click an entry to open details." }
                         UI.Text { centerVertical: false; width: parent.width; textFormat: Text.PlainText; wrapMode: Text.Wrap; visible: !!RbwService.detail; color: Theme.inactive; text: RbwService.detail?.folder ?? "No folder" }
-                        Column {
+                        VaultEntryDetails {
                             width: parent.width
                             visible: !root.editing && !root.deleting
                             enabled: root.detailReady && !RbwService.selecting
-                            spacing: Theme.controlSpacing
-                            Repeater {
-                                model: root.detailRows
-                                Column {
-                                    id: valueRow
-                                    required property var modelData
-                                    width: parent.width
-                                    spacing: 4
-                                    UI.Text { centerVertical: false; width: parent.width; text: valueRow.modelData.label; textFormat: Text.PlainText; color: Theme.inactive }
-                                    Row {
-                                        width: parent.width
-                                        spacing: Theme.controlSpacing
-                                        VaultSecretField {
-                                            id: valueField
-                                            objectName: "vaultDetailField-" + valueRow.modelData.label
-                                            width: parent.width - Theme.actionButtonWidth - Theme.controlSpacing
-                                            readOnly: true
-                                            text: valueRow.modelData.value
-                                            revealed: !valueRow.modelData.secret
-                                            Connections {
-                                                target: RbwService
-                                                function onSelectedIdChanged() { valueField.revealed = !valueRow.modelData.secret }
-                                            }
-                                        }
-                                        UI.ActionButton { glyph: Theme.copyIcon; hint: "Copy " + valueRow.modelData.label; onClicked: root.copy(valueRow.modelData.value) }
-                                    }
-                                }
-                            }
+                            fields: root.detailRows
+                            onCopyRequested: value => root.copy(value)
                         }
                         Column {
                             width: parent.width
@@ -271,87 +206,13 @@ Item {
                             spacing: Theme.controlSpacing
                             UI.Text { centerVertical: false; width: parent.width; textFormat: Text.PlainText; wrapMode: Text.Wrap; text: "Delete “" + (RbwService.detail?.name ?? "") + "”? This removes the vault entry."; color: Theme.warning }
                         }
-                        Column {
+                        VaultEntryEditor {
+                            id: editor
                             width: parent.width
                             visible: root.editing
                             enabled: !RbwService.busy
-                            spacing: Theme.controlSpacing
-                            UI.InputField { id: title; objectName: "vaultTitle"; width: parent.width; visible: root.adding; placeholderText: "Entry title"; pauseTooltipDismissal: false }
-                            QC.TextArea { id: urls; width: parent.width; visible: root.adding; font.family: Theme.fontFamily; font.pixelSize: Theme.fontSize; font.bold: Theme.fontBold; padding: Theme.controlFieldPadding; textFormat: TextEdit.PlainText; placeholderTextColor: Theme.inactive; placeholderText: "Website URLs, one per line"; color: Theme.text; wrapMode: TextEdit.Wrap; background: Rectangle { color: Theme.alternateBackground; radius: Theme.iconButtonRadius } }
-                            UI.InputField { id: username; width: parent.width; visible: root.adding; placeholderText: "Username / email"; pauseTooltipDismissal: false }
-                            Item {
-                                width: parent.width
-                                height: Theme.controlHeight
-                                visible: password.visible
-                                UI.Text {
-                                    anchors.left: parent.left
-                                    anchors.right: length.left
-                                    anchors.rightMargin: Theme.controlSpacing
-                                    text: "Password"
-                                    color: Theme.inactive
-                                    elide: Text.ElideRight
-                                }
-                                UI.InputField {
-                                    id: length
-                                    anchors.right: passwordActions.left
-                                    anchors.rightMargin: Theme.controlSpacing
-                                    width: 60
-                                    text: "24"
-                                    placeholderText: "Length"
-                                    Accessible.name: "Generated password length"
-                                    pauseTooltipDismissal: false
-                                    validator: IntValidator { bottom: 8; top: 128 }
-                                }
-                                Row {
-                                    id: passwordActions
-                                    anchors.right: parent.right
-                                    spacing: Theme.controlSpacing
-                                    UI.ActionButton { glyph: Theme.retryIcon; hint: "Generate password"; onClicked: RbwService.generate(Number(length.text)) }
-                                    UI.ActionButton { glyph: Theme.copyIcon; hint: "Copy password"; onClicked: root.copy(password.text) }
-                                }
-                            }
-                            VaultSecretField { id: password; objectName: "vaultPassword"; width: parent.width; visible: root.adding || RbwService.detail?.data !== null; placeholderText: "Password" }
-                            UI.InputField { id: folder; width: parent.width; visible: root.adding; placeholderText: "Folder (optional, existing or new)"; pauseTooltipDismissal: false }
-                            UI.ComboSelector { width: parent.width; visible: root.adding && RbwService.folders.length > 0; compact: true; options: RbwService.folders.map(value => ({name: value, description: value})); selectedName: folder.text; placeholder: "Choose an existing folder"; onSelected: name => folder.text = name }
-                            UI.Text { centerVertical: false; text: "Notes"; color: Theme.inactive }
-                            QC.TextArea {
-                                id: notes
-                                objectName: "vaultNotes"
-                                width: parent.width
-                                implicitHeight: root.notesRevealed ? Math.max(Theme.controlHeight * 3, contentHeight + topPadding + bottomPadding) : Theme.controlHeight * 3
-                                padding: Theme.controlFieldPadding
-                                rightPadding: notesEye.width + Theme.controlFieldPadding * 2
-                                font.family: Theme.fontFamily
-                                font.pixelSize: Theme.fontSize
-                                font.bold: Theme.fontBold
-                                textFormat: TextEdit.PlainText
-                                placeholderText: root.notesRevealed ? "Notes (optional)" : ""
-                                placeholderTextColor: Theme.inactive
-                                selectionColor: Theme.accent
-                                selectedTextColor: Theme.text
-                                color: root.notesRevealed ? Theme.text : "transparent"
-                                readOnly: !root.notesRevealed
-                                wrapMode: TextEdit.Wrap
-                                inputMethodHints: Qt.ImhSensitiveData | Qt.ImhNoPredictiveText
-                                background: Rectangle { color: Theme.alternateBackground; radius: Theme.iconButtonRadius; border.width: 1; border.color: notes.activeFocus ? Theme.accent : Theme.empty }
-                                UI.Text { objectName: "vaultNotesMask"; centerVertical: false; anchors.fill: parent; anchors.margins: Theme.controlFieldPadding; anchors.rightMargin: notes.rightPadding; visible: !root.notesRevealed; text: notes.text.length ? "••••••••" : "Notes (optional)"; color: notes.text.length ? Theme.text : Theme.inactive }
-                                UI.ActionButton {
-                                    id: notesEye
-                                    objectName: "vaultNotesEye"
-                                    anchors.right: parent.right
-                                    anchors.rightMargin: Theme.controlFieldPadding
-                                    y: 2
-                                    implicitWidth: Theme.controlHeight
-                                    implicitHeight: Theme.controlHeight - 4
-                                    glyph: root.notesRevealed ? Theme.eyeSlashIcon : Theme.eyeIcon
-                                    hint: root.notesRevealed ? "Hide notes" : "Reveal notes to edit"
-                                    checkable: true
-                                    checked: root.notesRevealed
-                                    onClicked: { root.notesRevealed = !root.notesRevealed; notes.forceActiveFocus() }
-                                }
-                                Keys.onShortcutOverride: event => { if (event.matches(StandardKey.Copy) || event.matches(StandardKey.Cut)) event.accepted = true }
-                                Keys.onPressed: event => { if (event.matches(StandardKey.Copy) || event.matches(StandardKey.Cut)) event.accepted = true }
-                            }
+                            adding: root.adding
+                            onCopyRequested: value => root.copy(value)
                         }
                     }
                 }
@@ -379,7 +240,7 @@ Item {
                         cancelObjectName: "vaultCancel"
                         submitGlyph: root.adding ? Theme.addIcon : Theme.checkIcon
                         submitHint: root.adding ? "Create login" : "Save changes"
-                        submitEnabled: !RbwService.busy && (!root.adding || title.text.trim().length > 0)
+                        submitEnabled: !RbwService.busy && (!root.adding || editor.validTitle)
                         cancelEnabled: !RbwService.busy
                         onSubmitted: root.save()
                         onCancelled: { root.discard(); root.focusSearch() }

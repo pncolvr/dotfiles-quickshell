@@ -23,7 +23,7 @@ Singleton {
     function initialize() {
         if (initialized || initializing) return
         enabled = Config.clipboardMonitorEnabled
-        const entries = ClipboardRepository.readEntries()
+        const entries = ClipboardRepository.ids()
         if (entries === null) { error = DbService.error; retry.restart(); return }
         // Capture files are durable; remove leftovers only while no watcher is running.
         initializing = true
@@ -51,8 +51,7 @@ Singleton {
         try { entry = JSON.parse(line) } catch (_) { error = "Invalid response from the clipboard helper."; return }
         if ((paused && !imported) || entry.id === ignoredId) return
         if (ignoredText && entry.kind === "text" && entry.text === ignoredText) {
-            const entries = ClipboardRepository.readEntries()
-            if (entries !== null && !entries.some(row => row.id === entry.id)) run(Config.clipboardCommand.concat(["delete", entry.id]))
+            if (DbService.ready && !ClipboardRepository.contains(entry.id)) run(Config.clipboardCommand.concat(["delete", entry.id]))
             return
         }
         const removed = ClipboardRepository.add(entry)
@@ -73,14 +72,14 @@ Singleton {
     }
     function ignoreTextOnce(text) { ignoredText = text; textIgnoreTimer.restart() }
     function clear() {
-        const entries = ClipboardRepository.readEntries()
+        const entries = ClipboardRepository.ids(true)
         if (entries === null) { error = DbService.error; return }
-        const ids = entries.filter(row => !row.pinned).map(row => row.id)
+        const ids = entries.map(row => row.id)
         if (!ClipboardRepository.clear()) { error = DbService.error; return }
         if (ids.length) run(Config.clipboardCommand.concat(["delete"]).concat(ids))
     }
     function restore(entry, destination, className, paste) {
-        const removed = ClipboardRepository.add(entry)
+        const removed = ClipboardRepository.touch(entry.id)
         if (removed?.length) run(Config.clipboardCommand.concat(["delete"]).concat(removed))
         ignoredId = entry.id
         ignoreTimer.restart()
@@ -103,6 +102,11 @@ Singleton {
 
     Timer { id: ignoreTimer; interval: 1000; onTriggered: root.ignoredId = "" }
     Timer { id: textIgnoreTimer; interval: 2000; onTriggered: root.ignoredText = "" }
+    Connections {
+        target: DbService
+        function onReadyChanged() { if (DbService.ready) root.initialize() }
+        function onErrorChanged() { if (!DbService.ready && DbService.error) root.error = DbService.error }
+    }
     Timer { id: retry; interval: 5000; onTriggered: root.start() }
     Process {
         id: monitor
@@ -155,7 +159,7 @@ Singleton {
         target: "clipboard"
         function togglePause(): void { root.togglePaused() }
         function importCopyq(): void { root.importCopyq() }
-        function state(): string { return JSON.stringify({count: ClipboardRepository.entries().length, monitoring: root.monitoring,
+        function state(): string { return JSON.stringify({count: ClipboardRepository.count(), monitoring: root.monitoring,
             paused: root.paused, importing: importer.running, error: root.error}) }
     }
 }

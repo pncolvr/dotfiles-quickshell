@@ -3,14 +3,16 @@ pragma Singleton
 import QtQml
 import QtQuick.LocalStorage as SQL
 import Quickshell
+import Quickshell.Io
 import "../../config"
+import "ClipboardIndex.mjs" as ClipboardIndex
 
 Singleton {
     id: root
 
     readonly property string name: Config.databaseName
     readonly property string path: Config.databasePath
-    readonly property int schemaVersion: 10
+    readonly property int schemaVersion: 11
     readonly property bool ready: state.ready
     readonly property string error: state.error
 
@@ -19,14 +21,35 @@ Singleton {
         property var database: null
         property bool ready: false
         property string error: ""
+        property bool prepared: false
     }
 
-    function reportError(error) {
-        state.error = "Local database: " + (error.message ?? String(error))
-        console.warn(state.error)
+    function reportError(error, operation = "operation") {
+        // Classify internally; SQLite messages may include clipboard text or SQL.
+        const message = String(error?.message ?? "").toLowerCase()
+        const category = message.includes("locked") || message.includes("busy") ? "busy"
+            : message.includes("readonly") || message.includes("read-only") ? "read-only"
+            : message.includes("malformed") || message.includes("corrupt") ? "integrity"
+            : message.includes("no such table") || message.includes("no such column") ? "schema"
+            : message.includes("constraint") ? "constraint"
+            : message.includes("transaction") ? "transaction"
+            : message.includes("syntax") ? "syntax"
+            : "unknown"
+        state.error = "Local database operation failed."
+        const constraint = message.match(/constraint failed: ([a-z_]+)\.([a-z_]+)/)
+        const fields = {
+            clipboard: ["id", "mime", "kind", "bytes", "text", "updated_at", "pinned"],
+            notification_emitters: ["emitter_key", "display_name", "icon", "desktop_entry"],
+            notifications: ["archive_id", "emitter_key", "summary", "body", "urgency", "received_at", "updated_at", "image", "actions_json", "action_handler"],
+            notification_live: ["live_token", "archive_id", "deadline", "duration", "popup_visible"]
+        }
+        const field = constraint && fields[constraint[1]]?.includes(constraint[2])
+            ? constraint[1] + "." + constraint[2] : ""
+        console.warn("Local database failure:", operation, category, field)
     }
 
-    function ensureOpen() {
+    function ensureOpen(preparing = false) {
+        if (!state.prepared && !preparing) return false
         if (state.database) return true
         try {
             // LocalStorage provides the native connection; all application tables live in store.
@@ -88,14 +111,16 @@ Singleton {
                 tx.executeSql("CREATE TABLE IF NOT EXISTS store.projects (source_path TEXT NOT NULL, path TEXT NOT NULL, name TEXT NOT NULL, remote_url TEXT NOT NULL DEFAULT '', PRIMARY KEY(source_path,path))")
                 tx.executeSql("CREATE TABLE IF NOT EXISTS store.project_workspaces (project_path TEXT NOT NULL, path TEXT NOT NULL, name TEXT NOT NULL, included INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(project_path,path))")
                 tx.executeSql("CREATE TABLE IF NOT EXISTS store.directories (path TEXT PRIMARY KEY, name TEXT NOT NULL, category TEXT NOT NULL CHECK(category IN ('personal','work')))")
+                ClipboardIndex.migrate(tx, version)
                 tx.executeSql("PRAGMA store.user_version = " + schemaVersion)
             })
             state.database = database
+            state.prepared = true
             state.ready = true
             state.error = ""
             return true
         } catch (error) {
-            root.reportError(error)
+            root.reportError(error, "open")
             return false
         }
     }
@@ -113,7 +138,7 @@ Singleton {
             state.error = ""
             return rows
         } catch (error) {
-            root.reportError(error)
+            root.reportError(error, "read")
             return null
         }
     }
@@ -136,10 +161,21 @@ Singleton {
             state.error = ""
             return true
         } catch (error) {
-            root.reportError(error)
+            root.reportError(error, "write")
             return false
         }
     }
 
-    Component.onCompleted: ensureOpen()
+    Process {
+        command: ["bash", decodeURIComponent(Qt.resolvedUrl("prepare-database.sh").toString().replace(/^file:\/\//,"")), root.path]
+        running: true
+        stdout: StdioCollector { waitForEnd: true }
+        stderr: StdioCollector { waitForEnd: true }
+        // qmllint disable signal-handler-parameters
+        onExited: (code, status) => {
+            if (code === 0 && status === 0) root.ensureOpen(true)
+            else root.reportError(null, "permissions")
+        }
+        // qmllint enable signal-handler-parameters
+    }
 }

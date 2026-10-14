@@ -2,6 +2,17 @@
 
 Run the following commands from the repository root.
 
+Clipboard index checks: `bash tests/clipboard/fts/run.sh` exercises migrations,
+safe literal queries, derived-index consistency, rollback, recovery and private
+storage permissions. `bash tests/clipboard/fts/ui.sh` checks indexed/fuzzy search,
+paging, composed image/pin filters, transitions and cleanup using synthetic data.
+Set `CLIPBOARD_NARROW=1` or `CLIPBOARD_ZERO_MOTION=1` for layout/motion variants;
+`CLIPBOARD_NATIVE=1` exercises the actual Wayland host. Its PNG rendering fixture
+requires ImageMagick. Native fixtures that grab focus must run sequentially.
+`bash tests/clipboard/fts/benchmark.sh` measures a synthetic 1,000-row/500 MB
+rebuild and read-only query pipeline; `FTS_BENCH_BYTES` changes bytes per row.
+These tests create temporary databases and never inspect live clipboard history.
+
 ## Layout
 
 ```text
@@ -23,6 +34,20 @@ config -> src/config  Compatibility link for existing update hooks
 Keep related QML directories together under `src/` so their relative imports
 and asset URLs remain valid. Update test imports and copied fixtures when moving
 files. Keep the root entry point and runtime data path stable.
+
+Projects and Directories use `ManagedPickerFrame` for their outer geometry,
+management shortcuts, focus restoration and close cleanup. Each feature supplies
+its own list/form, focus target and service callbacks; draft validation and
+persistence stay in those services. Ordinary and private picker hosts share their
+size calculations through `PickerWindowContent`, while each host keeps its fixed
+layer namespace.
+
+Vault UI uses feature-owned `VaultEntryList`, `VaultEntryDetails` and
+`VaultEntryEditor` components. `VaultPanel` coordinates selection and editing;
+`RbwService` owns vault operations. Inputs use the shared `UI.SecretField` and
+`UI.TextArea`; notes masking belongs to the vault editor. Recent/folder file
+helpers share local path identity and URI encoding through `file-records.jq`,
+while each helper keeps its own source metadata and sorting.
 
 ## QML lint and editor
 
@@ -155,6 +180,47 @@ Run `bash tests/status/detection.sh` for distinct process/path reporting, litera
 directory boundaries, quoted/newline paths, detector failures and read-only manager
 output. It uses mocked processes and `lsof` data; `STATUS_DETECTION_SCRIPT` and
 `STATUS_MANAGER_SCRIPT` can point to a prepared copy of the zsh manager/helper.
+Run `bash tests/status/detection-ui.sh` for keyboard/name-click disclosure,
+literal long/quoted/newline paths, refresh/removal, narrow scrolling, and
+manual/partial/empty scan presentation with synthetic reports.
+
+## Clipboard validation
+
+```sh
+bash tests/clipboard/fts/run.sh
+bash tests/clipboard/fts/contention.sh
+bash tests/clipboard/fts/ui.sh
+CLIPBOARD_NARROW=1 bash tests/clipboard/fts/ui.sh
+CLIPBOARD_ZERO_MOTION=1 bash tests/clipboard/fts/ui.sh
+CLIPBOARD_NATIVE=1 bash tests/clipboard/fts/ui.sh
+bash tests/clipboard/fts/previews.sh
+PREVIEW_NATIVE=1 bash tests/clipboard/fts/previews.sh
+```
+
+The migration fixture includes captured image JSON with empty text and repeat
+capture/pin preservation. Qt can bind a decoded empty string as SQL NULL; the
+repository normalizes that value before inserting into the non-null text column.
+The contention fixture keeps a read lock while capturing and switching search
+engines, and checks heartbeat delays, retention and FTS consistency.
+The UI fixture simulates viewport changes and animation-policy changes without
+altering real monitor or screen-capture settings; the native test checks the
+moving input mask and restores desktop focus.
+
+Preview tests use generated PNG/JPEG/WebP/GIF/BMP/TIFF files, a loopback-only delayed
+HTTP response, and isolated windows at Qt scale factors 1, 1.25 and 2. They check
+resize coalescing, loading/error feedback, stale replies, empty-source release
+and memory growth across repeated navigation. They additionally require
+ImageMagick, socat, curl, procps and Linux /proc. Native tests use the current
+Wayland/GPU backend. These scale/viewport simulations do not establish behavior
+for physical monitor unplugging or every compositor fractional-scale protocol.
+
+The 24-megapixel compressed PNG fixture reached approximately 0.8 GB peak RSS
+on the tested native renderer. Repeated navigation batches stabilized rather
+than continuing to grow. An eight-megapixel requested preview is not a total
+memory cap: codec buffers, retained images, renderer allocations and allocator
+arenas can exceed it and may remain allocated after the active source is cleared.
+The fixture measures both peak RSS and batch-to-batch growth instead of requiring
+immediate RSS reclamation.
 
 ## Projects
 

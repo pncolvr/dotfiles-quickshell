@@ -7,17 +7,32 @@ import "../../theme/ui" as UI
 import "../../services"
 import "../../config"
 
-Item {
+ManagedPickerFrame {
     id: root
     objectName: "projectPickerPanel"
-    property var picker: PickerService
-    property bool backgroundVisible: true
     property string sourceKind: "folder"
     property string sourceCategory: "personal"
-    property bool adding: false
     readonly property bool showAddForm: adding || ProjectService.sources.length === 0
     property alias folderPicker: sourceForm.folderPicker
-    readonly property bool nativeDialogOpen: sourceForm.nativeDialogOpen
+    nativeDialogOpen: sourceForm.nativeDialogOpen
+    pickerMode: PickerService.Mode.Projects
+    managing: ProjectService.managing
+    addSequence: Config.projectAddShortcut
+    manageSequence: Config.projectManageShortcut
+    showAllSequence: Config.projectShowAllShortcut
+    addAllowed: managing && !ProjectService.busy && !ProjectService.draft && !root.showAddForm && !nativeDialogOpen
+    manageDuringDialog: true
+    headerItem: header
+    listItem: list
+    manageItem: manage
+    footerItem: manageFooter
+    managementSearch: manageSearch
+    managementFocusTarget: root.showAddForm && !ProjectService.draft ? sourceForm : !ProjectService.draft ? manageSearch : null
+    onAddRequested: { ProjectService.setManaging(true); adding = true }
+    onManagementRequested: value => { if (!value) cancelAdd(); ProjectService.setManaging(value) }
+    onShowAllRequested: ProjectService.toggleShowAll()
+    onSessionClosed: { root.adding = false; sourceForm.clear() }
+
     function matchesManagement(text) {
         return !manageSearch.text.trim() || root.picker.filter([{title:text}],manageSearch.text).length > 0
     }
@@ -27,17 +42,7 @@ Item {
             : projects.filter(project => matchesManagement(project.name + " " + project.path))
     }
     readonly property var managedSources: ProjectService.sources.filter(source => matchesManagement(source.path) || projectsForSource(source).length > 0)
-    implicitWidth: Theme.pickerWidth
-    implicitHeight: header.height + Theme.controlSpacing + (ProjectService.managing
-        ? manage.implicitHeight + (manageFooter.visible ? manageFooter.height + Theme.controlSpacing : 0) : list.implicitHeight)
-    function focusSearch() {
-        if (!root.picker.visible) return
-        if (ProjectService.managing) {
-            if (root.showAddForm && !ProjectService.draft) sourceForm.focusInput()
-            else if (!ProjectService.draft) manageSearch.forceActiveFocus()
-        }
-        else list.focusSearch()
-    }
+
     function editSource(path) {
         ProjectService.editSource(path)
         if (ProjectService.draft?.previousPath) {
@@ -60,54 +65,19 @@ Item {
         if (ProjectService.saveDraft()) root.cancelAdd()
     }
     function cancelAdd() { adding = false; sourceForm.clear(); Qt.callLater(root.focusSearch) }
-    function beginAdd() { ProjectService.setManaging(true); adding = true; Qt.callLater(root.focusSearch) }
-    function handleAddKey(event, activate) {
-        if (!addShortcut.enabled || addShortcut.portableText !== "Ctrl+A" || !event.matches(StandardKey.SelectAll)) return false
-        if (activate) beginAdd()
-        return true
-    }
+
     function handlePickerKey(event, activate) {
         return ProjectService.urls && list.handleSelectionKey(event,activate)
     }
     Keys.onPressed: event => { event.accepted = !ProjectService.managing && root.handlePickerKey(event,true) }
-    function management(value) {
-        if (!value) cancelAdd()
-        ProjectService.setManaging(value)
-        Qt.callLater(root.focusSearch)
-    }
+
     Connections {
         target: ProjectService
         function onSourceAdded() { root.cancelAdd() }
         function onSourcePathResolved(path: string) { sourceForm.text = path }
     }
-    Connections {
-        target: root.picker
-        function onVisibleChanged() {
-            if (!root.picker.visible) {
-                root.adding = false
-                sourceForm.clear()
-                manageSearch.clear()
-            }
-        }
-    }
-    Shortcut {
-        id: addShortcut
-        sequence: Config.projectAddShortcut
-        enabled: root.visible && root.picker.visible && root.picker.mode === PickerService.Mode.Projects
-            && ProjectService.managing && !ProjectService.busy && !ProjectService.draft && !root.showAddForm && !root.nativeDialogOpen
-        onActivated: root.beginAdd()
-    }
-    Shortcut {
-        sequence: Config.projectShowAllShortcut
-        enabled: root.visible && root.picker.visible && root.picker.mode === PickerService.Mode.Projects && !ProjectService.managing
-        onActivated: ProjectService.toggleShowAll()
-    }
-    Shortcut {
-        sequence: Config.projectManageShortcut
-        enabled: root.visible && root.picker.visible && root.picker.mode === PickerService.Mode.Projects
-        onActivated: root.management(!ProjectService.managing)
-    }
-    Keys.onEscapePressed: {
+
+    onEscapeRequested: {
         if (ProjectService.draft) { ProjectService.cancelDraft(); root.cancelAdd() }
         else if (root.adding) root.cancelAdd()
         else root.picker.close()
@@ -140,10 +110,9 @@ Item {
     }
     PickerPanelBase {
         id: list
-        anchors.top: header.bottom
-        anchors.topMargin: Theme.controlSpacing
+        y: root.contentTop
         width: parent.width
-        height: parent.height - header.height - Theme.controlSpacing
+        height: root.listHeight
         picker: root.picker
         backgroundVisible: root.backgroundVisible
         visible: !ProjectService.managing
@@ -156,11 +125,9 @@ Item {
     }
     QC.ScrollView {
         id: manage
-        anchors.top: header.bottom
-        anchors.topMargin: Theme.controlSpacing
+        y: root.contentTop
         width: parent.width
-        height: Math.max(0,parent.height - header.height - Theme.controlSpacing
-            - (manageFooter.visible ? manageFooter.height + Theme.controlSpacing : 0))
+        height: root.manageHeight
         implicitHeight: Math.min(content.implicitHeight + Theme.projectManagePadding * 2, Theme.pickerRowHeight * Config.pickerMaxRows)
         visible: ProjectService.managing
         clip: true

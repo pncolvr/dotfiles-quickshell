@@ -13,12 +13,17 @@ full weekday followed by the date.
 Click a day with activity to expand its start/end times, category and duration.
 An ongoing session ends with “now”; hover its time range for precise timestamps.
 Long lists scroll vertically within a bounded panel using the shared scrollbar.
-Below Today's collapsible sessions, **Automatic detection** lists distinct process
-names, matching executable/work paths, and the rules that matched: configured
-processes, working directories, or open work files. Duplicate paths are removed.
-The evidence is current, rather than a history attached to earlier sessions. A
-manual override is labeled separately; its automatic matches do not set the mode.
-No active matches and detection errors are shown explicitly.
+Below Today's collapsible sessions, **Automatic detection** shows compact process
+rows with their rule labels and distinct path counts. Click a row or press
+Enter/Space while it is focused to reveal paths; one process expands at a time.
+Paths abbreviate the home directory and elide long names; hover shows their full
+values. Refresh preserves expansion for a process that remains present.
+The evidence describes the current scan, not historical sessions. A refreshing
+indicator retains the previous rows. Failed refreshes explicitly label retained
+rows as the previous successful scan, and partial errors remain visible. Manual
+override is labeled separately; automatic matches do not set the selected mode.
+The report groups methods and paths independently, so rule labels describe the
+process as a whole rather than attributing an individual path to a specific rule.
 
 The tooltip opens on Today and refreshes the timecard immediately, every minute
 while open, and after a mode reload. The refresh button reruns the status manager's

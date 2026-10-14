@@ -23,11 +23,12 @@ Scope {
         }
         return null
     }
-    function checkButton(button) {
+    function checkButton(button, persistentBorder = false) {
         button.forceActiveFocus(Qt.TabFocusReason)
         check(button.visualFocus && button.background.border.width === 1, "keyboard focus has a visible border")
         events.mouseClick(button, button.width / 2, button.height / 2, Qt.LeftButton, Qt.NoModifier, 0)
-        check(!button.visualFocus && button.background.border.width === 0, "click removes the keyboard border and leaves no persistent outline")
+        check(!button.visualFocus && button.background.border.width === (persistentBorder ? 1 : 0),
+            "click removes keyboard focus while preserving the control's normal border")
     }
     function checkSelector(combo) {
         const toggle = root.find(combo, combo.toggleObjectName) as QC.Button;
@@ -81,7 +82,8 @@ Scope {
             root.check(root.actionClicks === 2 && action.visualFocus && (action.background as Rectangle).border.width === 1,
                 "keyboard activation preserves its focus indicator")
             const toggle = root.find(selector, "selectorToggle")
-            root.checkButton(toggle)
+            // ComboSelector deliberately keeps its normal one-pixel outline.
+            root.checkButton(toggle, true)
             root.check(selector.expanded, "selector can remain open without a persistent focus border")
             selector.expanded = false
             root.checkSelector(generic)

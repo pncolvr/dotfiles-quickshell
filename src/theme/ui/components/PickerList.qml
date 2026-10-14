@@ -18,12 +18,18 @@ ListView {
     highlightMoveDuration: 0
     QC.ScrollBar.vertical: UI.ScrollBar { visible: root.orientation === ListView.Vertical && needed }
     QC.ScrollBar.horizontal: UI.ScrollBar { visible: root.orientation === ListView.Horizontal && needed }
-    onCurrentIndexChanged: if (currentIndex >= 0) positionViewAtIndex(currentIndex, ListView.Contain)
+    onCurrentIndexChanged: {
+        if (currentIndex >= 0) positionViewAtIndex(currentIndex, ListView.Contain)
+        if (picker.mode === PickerService.Mode.Clipboard && count >= 50
+            && count === picker.filteredItems.length && currentIndex >= count - 8) picker.loadMoreClipboard()
+    }
+    onContentYChanged: if (moving && picker.mode === PickerService.Mode.Clipboard && contentHeight > height
+        && contentY + height >= contentHeight - 200) picker.loadMoreClipboard()
     delegate: UI.PickerRow {
         required property var modelData
         required property int index
         entry: modelData
-        enabled: !root.picker.searchPending
+        enabled: !root.picker.searchPending && !root.picker.searchFailed
         width: grid ? Math.max(80, (root.width - Theme.controlSpacing * 4) / 5) : root.width
         current: root.currentIndex === index
         selected: root.picker.selectedIds.includes(modelData.id)

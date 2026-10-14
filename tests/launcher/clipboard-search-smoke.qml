@@ -10,6 +10,8 @@ Scope {
     property int step: 0
     property int heartbeat: 0
     property var expected: []
+    property var fixtureRows: []
+    function fixtureId(index: int): string { return (index + 1).toString(16).padStart(64,"0") }
     readonly property var cases: [
         {query: "b", reused: false},
         {query: "ba", reused: true},
@@ -28,7 +30,7 @@ Scope {
         if (!value) { failed = true; console.error("SEARCH FAIL: " + message) }
     }
     function expectCurrentQuery() {
-        const candidates = PickerService.items.filter(item => !PickerService.itemCriteria.pinned || item.pinned)
+        const candidates = fixtureRows.filter(item => !PickerService.itemCriteria.pinned || item.pinned)
         expected = PickerService.filter(candidates, PickerService.query).map(item => item.id)
     }
     function verifyResults() {
@@ -40,6 +42,7 @@ Scope {
         running: true
         repeat: true
         onTriggered: {
+            if (!DbService.ready) return
             if (root.waiting) {
                 if (PickerService.searchPending) { root.heartbeat++; return }
                 root.verifyResults()
@@ -60,7 +63,15 @@ Scope {
                     ]
                     for (let i = 4; i < 1000; i++)
                         rows.push({id:String(i), title:"Fixture", search:"z".repeat(600), pinned:false})
-                    PickerService.items = rows
+                    root.fixtureRows = rows.map((row,index) => ({id:root.fixtureId(index),title:row.search.replace(/\s+/g," ").slice(0,240),search:row.search,pinned:row.pinned}))
+                    DbService.write(tx => {
+                        for (let index = 0; index < root.fixtureRows.length; index++) {
+                            const row = root.fixtureRows[index]
+                            tx.executeSql("INSERT INTO store.clipboard(id,mime,kind,bytes,text,updated_at,pinned) VALUES(?,'text/plain','text',?,?,?,?)",[row.id,row.search.length,row.search,1000 - index,row.pinned ? 1 : 0])
+                        }
+                    })
+                    ClipboardRepository.revision++
+                    PickerService.clipboardFuzzy = true
                     PickerService.show()
                 }
                 const test = root.cases[root.step]
@@ -76,15 +87,15 @@ Scope {
                 PickerService.itemCriteria = ({})
                 PickerService.query = "zzzzzzzz"
                 PickerService.dispatchClipboardSearch()
-                PickerService.items = PickerService.items.filter(item => item.id !== "3").concat([
-                    {id:"new", title:"NeedlePhrase", search:"NeedlePhrase", pinned:false}
-                ])
+                ClipboardRepository.remove(root.fixtureId(3))
+                ClipboardRepository.add({id:root.fixtureId(1001),mime:"text/plain",kind:"text",bytes:12,text:"NeedlePhrase"})
+                root.fixtureRows = [{id:root.fixtureId(1001),title:"NeedlePhrase",search:"NeedlePhrase",pinned:false},...root.fixtureRows.filter(item => item.id !== root.fixtureId(3))]
                 PickerService.query = "does not match"
                 PickerService.query = "nph"
                 root.expectCurrentQuery()
                 root.waiting = true
             } else if (root.step === root.cases.length + 1) {
-                root.check(PickerService.currentItem?.id === "new", "history replacement invalidates cached text and row indexes")
+                root.check(PickerService.currentItem?.id === root.fixtureId(1001), "history replacement invalidates cached text and row indexes")
                 root.check(root.heartbeat > 0, "UI timers continue while the background worker searches")
                 PickerService.query = "zzzzzzzz"
                 PickerService.dispatchClipboardSearch()

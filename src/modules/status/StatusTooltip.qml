@@ -240,69 +240,10 @@ Column {
                     }
                 }
             }
-            Column {
-                objectName: "statusDetectionDetails"
+            StatusDetectionSection {
                 width: entries.width
                 visible: !root.ranged
-                spacing: Theme.controlSpacing
-                Rectangle { width: parent.width; height: 1; color: Theme.empty }
-                UI.ColumnText {
-                    width: parent.width
-                    text: "Automatic detection"
-                    color: Theme.inactive
-                }
-                UI.ColumnText {
-                    objectName: "statusDetectionManual"
-                    width: parent.width
-                    visible: root.statusService.source === "manual"
-                    text: "Manual override is active; these matches do not set the mode."
-                    textFormat: Text.PlainText
-                    wrapMode: Text.Wrap
-                    color: Theme.inactive
-                }
-                UI.ColumnText {
-                    objectName: "statusDetectionFeedback"
-                    width: parent.width
-                    visible: text.length > 0
-                    text: root.statusService.detectionError || (!(root.statusService.detectionMatches?.length ?? 0)
-                        ? root.statusService.detectionLoading ? "Checking automatic detection…" : "No active work detections." : "")
-                    textFormat: Text.PlainText
-                    wrapMode: Text.Wrap
-                    color: root.statusService.detectionError ? Theme.warning : Theme.inactive
-                }
-                Repeater {
-                    model: root.statusService.detectionMatches ?? []
-                    delegate: Column {
-                        id: match
-                        required property var modelData
-                        width: entries.width
-                        spacing: Theme.statusSessionRowSpacing
-                        UI.ColumnText {
-                            objectName: "statusDetectionProcess"
-                            width: parent.width
-                            text: match.modelData.name
-                            textFormat: Text.PlainText
-                            wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-                            color: Theme.accent
-                        }
-                        UI.ColumnText {
-                            width: parent.width
-                            text: match.modelData.methods.map(method => ({process: "Configured process",
-                                directory: "Working directory", file: "Open work files"})[method] || method).join(" · ")
-                            textFormat: Text.PlainText
-                            wrapMode: Text.Wrap
-                            color: Theme.inactive
-                        }
-                        UI.ColumnText {
-                            objectName: "statusDetectionPaths"
-                            width: parent.width
-                            text: match.modelData.paths.join("\n")
-                            visible: !!text
-                            textFormat: Text.PlainText
-                            wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-                        }
-                    }
-                }
+                statusService: root.statusService
             }
         }
         QC.ScrollBar.vertical: UI.ScrollBar {}

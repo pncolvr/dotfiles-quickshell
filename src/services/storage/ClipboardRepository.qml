@@ -9,6 +9,25 @@ Singleton {
     id: root
     property int revision: 0
 
+    function ids(unpinnedOnly = false) {
+        return DbService.read("SELECT id FROM store.clipboard" + (unpinnedOnly ? " WHERE pinned=0" : ""))
+    }
+    function count() { return DbService.read("SELECT COUNT(*) AS n FROM store.clipboard")?.[0]?.n ?? 0 }
+    function contains(id) { return DbService.read("SELECT id FROM store.clipboard WHERE id=?", [id])?.length > 0 }
+    function previews() {
+        return DbService.read("SELECT id,mime,kind,bytes,pinned,updated_at,substr(text,1,240) AS preview FROM store.clipboard ORDER BY updated_at DESC,id DESC LIMIT 50") ?? []
+    }
+    function touch(id) {
+        let removed = []
+        if (!DbService.write(tx => {
+            const stamp = tx.executeSql("SELECT MAX(updated_at) AS stamp FROM store.clipboard").rows.item(0).stamp || 0
+            tx.executeSql("UPDATE store.clipboard SET updated_at=? WHERE id=?", [Math.max(Date.now(), stamp + 1), id])
+            removed = prune(tx)
+        })) return null
+        revision++
+        return removed
+    }
+
     function entries() {
         return readEntries() ?? []
     }
@@ -43,8 +62,9 @@ Singleton {
         if (!DbService.write(tx => {
             // A monotonically increasing timestamp also orders imports and fast consecutive copies.
             const last = tx.executeSql("SELECT MAX(updated_at) AS stamp FROM store.clipboard").rows.item(0).stamp || 0
-            tx.executeSql("INSERT OR REPLACE INTO store.clipboard (id,mime,kind,bytes,text,updated_at,pinned) VALUES (?,?,?,?,?,?,COALESCE((SELECT pinned FROM store.clipboard WHERE id = ?),0))",
-                [entry.id, entry.mime, entry.kind, entry.bytes, entry.text, Math.max(Date.now(), last + 1), entry.id])
+            // Empty strings decoded from capture JSON can bind as SQL NULL in Qt.
+            tx.executeSql("INSERT INTO store.clipboard (id,mime,kind,bytes,text,updated_at) VALUES (?,?,?,?,COALESCE(?, ''),?) ON CONFLICT(id) DO UPDATE SET mime=excluded.mime,kind=excluded.kind,bytes=excluded.bytes,text=excluded.text,updated_at=excluded.updated_at",
+                [entry.id, entry.mime, entry.kind, entry.bytes, entry.text, Math.max(Date.now(), last + 1)])
             removed = prune(tx)
         })) return null
         revision++

@@ -10,6 +10,7 @@ mkdir -m 700 "$test_dir/runtime"
 mkdir "$test_dir/data" "$test_dir/cache" "$test_dir/bin"
 cp -a -- "$project_root/src" "$test_dir/src"
 export STATUS_TEST_MODE="$test_dir/mode" STATUS_TEST_SOURCE="$test_dir/source"
+export STATUS_TEST_DETECTION_FAILURE="$test_dir/detection-failure"
 export TIMETABLE_FILE="$test_dir/events.csv"
 printf personal > "$STATUS_TEST_MODE"
 printf automatic > "$STATUS_TEST_SOURCE"
@@ -19,6 +20,11 @@ case "$1" in
     --check) cat "$STATUS_TEST_MODE" ;;
     --source) cat "$STATUS_TEST_SOURCE" ;;
     --explain)
+        if [[ -f $STATUS_TEST_DETECTION_FAILURE ]]; then
+            rm -- "$STATUS_TEST_DETECTION_FAILURE"
+            printf 'invalid fixture report\n'
+            exit 1
+        fi
         jq -n --arg source "$(cat "$STATUS_TEST_SOURCE")" --arg mode "$(cat "$STATUS_TEST_MODE")" \
             '{source:$source, automaticStatus:$mode, errors:[], matches:(if $mode=="work" then
                 [{name:"dotnet", methods:["directory"], paths:["/work/gaia", "/work/hera"]}] else [] end)}' ;;

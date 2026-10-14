@@ -9,6 +9,9 @@ Item {
     id: root
     property var picker: PickerService
     property bool backgroundVisible: true
+    property real availableContentWidth: Theme.pickerWidth
+    property real availableContentHeight: 800
+    readonly property bool transitioning: panel?.transitioning ?? false
     readonly property real radius: Theme.tooltipRadius
     readonly property var panel: content.item
     readonly property bool nativeDialogOpen: panel?.nativeDialogOpen ?? false
@@ -53,7 +56,7 @@ Item {
     }
     Component {
         id: clipboardPanel
-        ClipboardPickerPanel { picker: root.picker; backgroundVisible: root.backgroundVisible }
+        ClipboardPickerPanel { picker: root.picker; backgroundVisible: root.backgroundVisible; availableContentWidth: root.availableContentWidth; availableContentHeight: root.availableContentHeight }
     }
     Component {
         id: multiSelectPanel

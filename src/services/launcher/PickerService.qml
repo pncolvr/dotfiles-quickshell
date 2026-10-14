@@ -1,7 +1,6 @@
 pragma Singleton
 
 import QtQml
-import QtQml.WorkerScript
 import "Search.mjs" as Search
 import Quickshell
 import Quickshell.Io
@@ -50,17 +49,17 @@ Singleton {
     property string error: ""
     property var targetScreen: null
     readonly property bool searchPending: mode === PickerService.Mode.Clipboard && clipboardSearch.pending
+    readonly property bool searchFailed: mode === PickerService.Mode.Clipboard && clipboardSearch.failed
     readonly property bool searchRunning: clipboardSearch.busy
     readonly property var searchStatistics: clipboardSearch.statistics
     readonly property var filteredItems: {
-        if (mode === PickerService.Mode.Clipboard && query.trim())
-            return clipboardSearch.indices.map(index => items[index]).filter(item => !!item)
+        if (mode === PickerService.Mode.Clipboard) return clipboardSearch.results
         const criteria = itemCriteria
         const keys = Object.keys(criteria)
         const matching = items.filter(item => keys.every(key => item[key] === criteria[key]))
         return filter(matching, query)
     }
-    readonly property var currentItem: searchPending ? null : filteredItems[currentIndex] ?? null
+    readonly property var currentItem: searchPending || searchFailed ? null : filteredItems[currentIndex] ?? null
     readonly property var selectedItems: items.filter(item => selectedIds.includes(item.id))
     readonly property bool selectionToggleClears: filteredItems.length > 0
         ? filteredItems.every(item => selectedIds.includes(item.id)) : selectedIds.length > 0
@@ -68,70 +67,16 @@ Singleton {
         || (allowTyped && query.trim().length > 0)
     signal opened()
 
-    QtObject {
+    property alias clipboardFuzzy: clipboardSearch.fuzzy
+    readonly property bool clipboardHasMore: clipboardSearch.hasMore
+    ClipboardSearchSession {
         id: clipboardSearch
-        property int generation: 0
-        property int request: 0
-        property bool needsRows: true
-        property bool busy: false
-        property bool dirty: false
-        property bool pending: false
-        property var indices: []
-        property var pendingAccept: null
-        property var statistics: ({})
-        readonly property bool fuzzy: Config.pickerFuzzySearch
-        readonly property bool smartCase: Config.pickerSmartCase
-        onFuzzyChanged: root.queueClipboardSearch(false)
-        onSmartCaseChanged: root.queueClipboardSearch(false)
+        owner: root
+        onPublished: rows => root.items = rows
     }
-    function queueClipboardSearch(changedRows) {
-        if (changedRows) {
-            clipboardSearch.generation++
-            clipboardSearch.needsRows = true
-            clipboardSearch.indices = []
-        }
-        clipboardSearch.request++
-        clipboardSearch.pendingAccept = null
-        clipboardSearch.pending = mode === PickerService.Mode.Clipboard && query.trim().length > 0
-        clipboardSearch.dirty = clipboardSearch.pending
-        if (clipboardSearch.pending) searchDispatch.restart()
-    }
-    function dispatchClipboardSearch() {
-        if (!clipboardSearch.dirty || clipboardSearch.busy || !searchWorker.ready) return
-        const message = {generation: clipboardSearch.generation, request: clipboardSearch.request,
-            query, fuzzy: clipboardSearch.fuzzy, smartCase: clipboardSearch.smartCase,
-            pinnedOnly: itemCriteria.pinned === true}
-        if (clipboardSearch.needsRows) {
-            // Only searchable data crosses the thread boundary; results retain the original rows.
-            message.rows = items.map(item => ({title: item.title, search: item.search, pinned: item.pinned}))
-            clipboardSearch.needsRows = false
-        }
-        clipboardSearch.busy = true
-        clipboardSearch.dirty = false
-        searchWorker.sendMessage(message)
-    }
-    Timer { id: searchDispatch; interval: 0; onTriggered: root.dispatchClipboardSearch() }
-    WorkerScript {
-        id: searchWorker
-        source: Qt.resolvedUrl("ClipboardSearch.mjs")
-        onReadyChanged: if (ready) root.dispatchClipboardSearch()
-        onMessage: message => {
-            clipboardSearch.busy = false
-            if (root.mode === PickerService.Mode.Clipboard && message.request === clipboardSearch.request
-                && message.generation === clipboardSearch.generation) {
-                clipboardSearch.indices = message.indices
-                clipboardSearch.statistics = {reused: message.reused, candidates: message.candidates, duration: message.duration}
-                clipboardSearch.pending = false
-                const deferred = clipboardSearch.pendingAccept
-                clipboardSearch.pendingAccept = null
-                if (deferred) Qt.callLater(() => {
-                    if (root.visible && root.mode === PickerService.Mode.Clipboard && deferred.request === clipboardSearch.request)
-                        root.accept(deferred.custom, deferred.copyOnly)
-                })
-            }
-            root.dispatchClipboardSearch()
-        }
-    }
+    function queueClipboardSearch(changedRows) { clipboardSearch.refresh(changedRows) }
+    function dispatchClipboardSearch() { clipboardSearch.run() }
+    function loadMoreClipboard() { clipboardSearch.more() }
 
     function searchPattern(search) {
         return Search.searchPattern(search, Config.pickerSmartCase)
@@ -159,6 +104,7 @@ Singleton {
         }
         close()
         mode = newMode; prompt = title; query = ""; items = []; selectedIds = []; currentIndex = 0
+        if (newMode === PickerService.Mode.Clipboard) clipboardSearch.fuzzy = false
         itemCriteria = ({})
         acceptLabel = newMode === PickerService.Mode.Apps ? "Open" : newMode === PickerService.Mode.Windows ? "Focus" : "Select"
         layout = "list"; multiple = false; allowTyped = false; customAccept = false
@@ -166,7 +112,7 @@ Singleton {
         forcePrompt = false; secretDescription = ""; privateRequest = false
         targetScreen = chooseScreen()
     }
-    function show() { visible = true; opened() }
+    function show() { visible = true; if (mode === PickerService.Mode.Clipboard) clipboardSearch.seed(); opened() }
     function apps() {
         begin(PickerService.Mode.Apps, "Applications")
         syncApps()
@@ -284,6 +230,8 @@ Singleton {
 
     function clipboard() {
         begin(PickerService.Mode.Clipboard, "Clipboard")
+        openingClipboard = true
+        clipboardSearch.fuzzy = false
         ClipboardService.initialize()
         syncClipboard()
         // Snapshot the destination before the picker takes keyboard focus.
@@ -292,13 +240,8 @@ Singleton {
         activeWindow.running = true
     }
     function syncClipboard() {
-        if (mode !== PickerService.Mode.Clipboard) return
-        items = ClipboardRepository.entries().map(entry => ({id: entry.id,
-            pinned: !!entry.pinned,
-            title: entry.kind === "image" ? "" : entry.text.replace(/\s+/g, " ").slice(0, 240),
-            search: entry.kind === "image" ? entry.mime + " image" : entry.text,
-            image: entry.kind === "image" ? "file://" + Config.clipboardDirectory + "/" + entry.id : "",
-            result: entry}))
+        if (mode !== PickerService.Mode.Clipboard || (!visible && !openingClipboard)) return
+        clipboardSearch.refresh()
     }
     function open(directory) {
         if (loadRequest.running) {
@@ -424,18 +367,20 @@ Singleton {
           }
         }
     }
-    onQueryChanged: { currentIndex = 0; queueClipboardSearch(false) }
-    onItemsChanged: queueClipboardSearch(true)
-    onItemCriteriaChanged: queueClipboardSearch(false)
-    onModeChanged: queueClipboardSearch(true)
+    onQueryChanged: { currentIndex = 0; clipboardSearch.refresh(false) }
+    onItemCriteriaChanged: clipboardSearch.refresh(false)
     onFilteredItemsChanged: currentIndex = Math.max(0, Math.min(currentIndex, filteredItems.length - 1))
     Connections {
         target: DesktopEntries
         function onApplicationsChanged() { if (root.mode === PickerService.Mode.Apps) root.syncApps() }
     }
     Connections {
-        target: ClipboardRepository
-        function onRevisionChanged() { root.syncClipboard() }
+        target: Quickshell
+        function onScreensChanged() {
+            if (!root.visible || Quickshell.screens.includes(root.targetScreen)) return
+            root.targetScreen = root.chooseScreen()
+            if (!root.targetScreen) root.close()
+        }
     }
     Connections {
         target: WindowService

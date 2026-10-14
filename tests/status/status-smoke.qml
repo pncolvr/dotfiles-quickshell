@@ -4,6 +4,7 @@ import QtQuick
 import QtQuick.Controls as QC
 import QtTest as Test
 import Quickshell
+import Quickshell.Io
 import "../../src/modules/status"
 import "../../src/services"
 import "../../src/theme"
@@ -14,8 +15,14 @@ Scope {
     property int ticks: 0
     property bool failed: false
     property bool capturingPreview: false
+    property bool failureRequested: false
     function check(ok, message) { if (!ok) { failed = true; console.error("STATUS FAIL:", message) } }
-    function find(name) { return mouse.findChild(panel, name) }
+    function find(name, item=panel) {
+        if (!item) return null
+        if (item.objectName === name) return item
+        for (const child of item.children ?? []) { const found = root.find(name,child); if (found) return found }
+        return null
+    }
     function clickTab(index) {
         (root.find("statusTimecardTabs") as QC.TabBar).currentIndex = index
     }
@@ -34,6 +41,7 @@ Scope {
         property var detectionMatches: []
         property string detectionError: ""
         property bool detectionLoading: false
+        property bool detectionStale: false
         property int panels: 0
         property int refreshes: 0
         property bool weeksShown: false
@@ -48,6 +56,11 @@ Scope {
         function reload() { refreshes++ }
     }
     Test.TestCase { id: mouse; when: false }
+    Process {
+        id: failDetection
+        command: ["touch",Quickshell.env("STATUS_TEST_DETECTION_FAILURE")]
+        onExited: StatusService.refreshDetection()
+    }
     FloatingWindow {
         visible: true
         implicitWidth: 800
@@ -85,9 +98,23 @@ Scope {
                     {name:"vivaldi-bin", methods:["process"], paths:["/opt/vivaldi/vivaldi-bin"]}
                 ]
                 backend.status = "work"
-                root.check(root.find("statusDetectionProcess").text === "dotnet"
-                    && root.find("statusDetectionPaths").text === "/work/gaia\n/work/hera",
+                root.step = -1
+                return
+            } else if (root.step === -1) {
+                const disclosure = root.find("statusDetectionToggle-dotnet") as QC.ItemDelegate
+                if (!disclosure) return
+                root.check(root.find("statusDetectionPaths-/work/gaia") === null, "detection paths begin collapsed")
+                mouse.mouseClick(disclosure, disclosure.width / 2, disclosure.height / 2)
+                root.step = -2
+                return
+            } else if (root.step === -2) {
+                const disclosure = root.find("statusDetectionToggle-dotnet") as QC.ItemDelegate
+                if (!root.find("statusDetectionPaths-/work/gaia")) return
+                root.check(root.find("statusDetectionProcess",disclosure).text === "dotnet"
+                    && root.find("statusDetectionPaths-/work/gaia").text === "/work/gaia",
                     "automatic detection renders process names and distinct paths")
+                backend.detectionMatches = [...backend.detectionMatches]
+                root.check(root.find("statusDetectionDetails").expandedProcess === "dotnet","refresh retains process expansion")
                 const detectionScreenshot = Quickshell.env("STATUS_TEST_DETECTION_SCREENSHOT")
                 const advance = () => {
                     const today = root.find("statusDay_" + backend.timecardDate) as MouseArea
@@ -143,6 +170,14 @@ Scope {
             } else if (root.step === 4) {
                 if (StatusService.status !== "work" || StatusService.source !== "manual") return
                 if (StatusService.detectionLoading) return
+                if (!root.failureRequested) {
+                    root.failureRequested = true
+                    failDetection.running = true
+                    return
+                }
+                if (failDetection.running || !StatusService.detectionStale) return
+                root.check(StatusService.detectionMatches.length === 1 && !!StatusService.detectionError,
+                    "failed report preserves the last snapshot with an explicit stale/error state")
                 root.check(StatusService.detectionMatches.length === 1
                     && StatusService.detectionMatches[0].paths.length === 2,
                     "mode refresh reads the manager detection report")
@@ -184,6 +219,7 @@ Scope {
                 root.check(panel.period.days.length === previousDays && panel.period.work === (now.getDate() === 1 ? 60 : 0), "Last month uses its own calendar boundaries and totals")
                 backend.timecardError = "The configured timetable file is unavailable."
                 backend.detectionError = "Could not inspect open work files."
+                backend.detectionStale = true
                 backend.todayTimecard = ""
                 root.clickTab(0)
             } else if (root.step === 9) {
@@ -191,6 +227,7 @@ Scope {
                 root.check(feedback.visible && feedback.text === backend.timecardError, "report failures remain visible")
                 root.check(root.find("statusDetectionFeedback").text === backend.detectionError,
                     "detection failures remain visible independently of timecard failures")
+                root.check(root.find("statusDetectionStale").visible,"retained evidence is explicitly labeled as a previous scan")
                 root.check(panel.height <= panel.maxPanelHeight && !backend.weeksShown && !backend.monthsShown, "error view stays bounded and returns to Today")
                 console.log(root.failed ? "STATUS FAIL: panel" : "PASS: status timecard totals, period tabs, daily expansion, scrolling, refresh, mode actions and errors")
                 Qt.quit()

@@ -15,6 +15,7 @@ ComboSelector 1.0 components/ComboSelector.qml
 PointerFocus 1.0 components/PointerFocus.qml
 EditorActions 1.0 components/EditorActions.qml
 InputField 1.0 components/InputField.qml
+TextArea 1.0 components/TextArea.qml
 SecretField 1.0 components/SecretField.qml
 FolderPathField 1.0 components/FolderPathField.qml
 ManagementRow 1.0 components/ManagementRow.qml

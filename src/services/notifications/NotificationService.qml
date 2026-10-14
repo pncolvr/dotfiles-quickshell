@@ -24,6 +24,7 @@ Singleton {
         onLiveEntriesChanged: root.scheduleExpiration()
         property var popups: []
         property var imageJobs: []
+        property var pendingNotifications: ({})
     }
 
     function initialize() {
@@ -31,6 +32,9 @@ Singleton {
         state.dnd = PreferencesRepository.value("notifications.dnd", false) === true
         // PID scopes protocol IDs across reloads; new processes never restore callbacks.
         DbService.write(tx => tx.executeSql("DELETE FROM notification_live WHERE live_token NOT LIKE ?", [Quickshell.processId + "/%"] ))
+        const pending = Object.values(state.pendingNotifications)
+        state.pendingNotifications = ({})
+        for (const item of pending) root.receive(item.notification,item.carried)
     }
     function check() {
         PreferencesRepository.reload()
@@ -65,6 +69,13 @@ Singleton {
             receivedAt: previous?.receivedAt || now, updatedAt: now}
     }
     function receive(notification, carried) {
+        // Carried notifications can arrive before private storage preparation finishes.
+        // Keep native objects, not duplicate body snapshots, until saved deadlines are readable.
+        if (!DbService.ready) {
+            state.pendingNotifications = Object.assign({},state.pendingNotifications,
+                {[notification.id]: {notification,carried}})
+            return
+        }
         const emitter = NotificationEmitterRepository.ensure(notification.desktopEntry, notification.appName, notification.appIcon)
         const savedLive = carried ? NotificationRepository.live(token(notification.id)) : null
         const saved = savedLive?.archive_id ? NotificationRepository.entry(savedLive.archive_id) : null
@@ -124,6 +135,11 @@ Singleton {
             .sort((a, b) => b.updatedAt - a.updatedAt || b.liveId - a.liveId)
     }
     function closed(id) {
+        if (state.pendingNotifications[id]) {
+            const pending = Object.assign({},state.pendingNotifications)
+            delete pending[id]
+            state.pendingNotifications = pending
+        }
         const next = Object.assign({}, state.liveEntries)
         delete next[id]
         state.liveEntries = next
@@ -248,5 +264,6 @@ Singleton {
         function reload(): void { root.check() }
         function toggle(): void { root.toggle() }
     }
-    Component.onCompleted: initialize()
+    Connections { target: DbService; function onReadyChanged() { if (DbService.ready) root.initialize() } }
+    Component.onCompleted: if (DbService.ready) initialize()
 }

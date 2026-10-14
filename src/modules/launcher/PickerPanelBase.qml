@@ -17,12 +17,23 @@ Rectangle {
     property real minimumRowHeight: 0
     property int minimumListRows: 1
     property Component actionButtons: null
+    property bool inlineFooter: false
+    property Component previewComponent: null
+    property Component searchControls: null
+    property real fixedListWidth: 0
+    property real previewOpacity: 1
+    property real previewScale: 1
+    property bool stackedPreview: false
+    property real availableContentWidth: Theme.pickerWidth
+    property real availableContentHeight: 800
+    readonly property real columnWidth: fixedListWidth > 0 ? Math.min(fixedListWidth,width - Theme.tooltipPaddingHeight * 2) : width - Theme.tooltipPaddingHeight * 2
+    readonly property real normalHeight: header.height + list.implicitHeight + panelFooter.height + Theme.tooltipPaddingHeight * 2 + 12
     property var searchKeyHandler: null
     property string footerHint: gridMode ? "Arrows to select · Enter to choose · Esc to cancel"
         : "Arrows to select · Enter to " + picker.acceptLabel.toLowerCase() + " · Esc to cancel"
     property real openedListHeight: Theme.pickerRowHeight
     implicitWidth: Theme.pickerWidth
-    implicitHeight: header.height + list.implicitHeight + footer.height + Theme.tooltipPaddingHeight * 2 + 12
+    implicitHeight: normalHeight
     function focusSearch() { search.forceActiveFocus() }
     function sizeListForOpening() {
         const count = Math.max(1, Math.min(Config.pickerMaxRows,
@@ -101,7 +112,7 @@ Rectangle {
         }
         Column {
             id: header
-            width: parent.width
+            width: root.columnWidth
             spacing: Theme.controlSpacing
             UI.SearchField {
                 id: search
@@ -123,6 +134,7 @@ Rectangle {
                         || event.key === Qt.Key_Enter || event.key === Qt.Key_Escape || event.key === Qt.Key_PageDown || event.key === Qt.Key_PageUp) event.accepted = false
                 }
             }
+            Loader { width: parent.width; height: (item as Item)?.implicitHeight ?? 0; sourceComponent: root.searchControls }
             UI.Text {
                 centerVertical: false
                 width: parent.width
@@ -146,12 +158,25 @@ Rectangle {
             id: list
             objectName: "pickerList"
             picker: root.picker
-            width: parent.width
+            width: root.columnWidth
             y: header.height + Theme.controlSpacing
-            height: Math.max(0, footer.y - y - Theme.controlSpacing)
+            height: Math.max(0, panelFooter.y - y - Theme.controlSpacing) * (root.stackedPreview ? 0.4 : 1)
             // Keep the opening size while filtering or deleting entries so the
             // panel and its footer do not move under keyboard focus.
             implicitHeight: root.gridMode ? Theme.pickerGridHeight : root.openedListHeight
+        }
+        Loader {
+            objectName: "clipboardPreviewPane"
+            x: root.stackedPreview ? 0 : root.columnWidth + Theme.controlSpacing
+            y: root.stackedPreview ? list.y + list.height + Theme.controlSpacing : 0
+            width: root.stackedPreview ? root.columnWidth : Math.max(0,parent.width - x)
+            height: Math.max(0,panelFooter.y - y - Theme.controlSpacing)
+            active: root.previewComponent !== null && root.picker.visible
+            sourceComponent: root.previewComponent
+            opacity: root.previewOpacity
+            scale: root.previewScale
+            enabled: opacity === 1 && !root.picker.searchPending
+            clip: true
         }
         UI.Text {
             centerVertical: false
@@ -160,20 +185,35 @@ Rectangle {
             text: root.picker.allowTyped && search.text.length ? "Enter to use typed input" : "No results"
             color: Theme.inactive
         }
-        Column {
-            id: footer
+        Item {
+            id: panelFooter
+            objectName: "pickerFooter"
             width: parent.width
+            readonly property bool inlineLayout: root.inlineFooter && width >= hints.implicitWidth
+                + 2 * (((actions.item as Item)?.implicitWidth ?? 0) + Theme.controlSpacing)
+            implicitHeight: inlineLayout ? Math.max(actions.height,hints.implicitHeight)
+                : actions.height + (actions.visible ? Theme.controlSpacing : 0) + hints.implicitHeight
+            height: implicitHeight
             anchors.bottom: parent.bottom
-            spacing: Theme.controlSpacing
             Loader {
-                width: parent.width
+                id: actions
+                objectName: "pickerFooterActions"
+                anchors.right: parent.right
+                width: panelFooter.inlineLayout ? (item as Item)?.implicitWidth ?? 0 : parent.width
                 height: (item as Item)?.implicitHeight ?? 0
+                y: panelFooter.inlineLayout ? (panelFooter.height - height) / 2 : 0
                 visible: sourceComponent !== null
                 sourceComponent: root.actionButtons
             }
             UI.ShortcutHints {
+                id: hints
                 objectName: "pickerFooterHint"
-                width: parent.width
+                width: panelFooter.inlineLayout ? Math.max(0,parent.width - 2 * (actions.width + Theme.controlSpacing)) : parent.width
+                anchors.horizontalCenter: parent.horizontalCenter
+                y: panelFooter.inlineLayout ? (panelFooter.height - height) / 2
+                    : actions.height + (actions.visible ? Theme.controlSpacing : 0)
+                horizontalAlignment: Text.AlignHCenter
+                textFormat: Text.PlainText
                 hints: root.footerHint
             }
         }

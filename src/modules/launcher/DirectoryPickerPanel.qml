@@ -7,37 +7,38 @@ import "../../theme/ui" as UI
 import "../../services"
 import "../../config"
 
-Item {
+ManagedPickerFrame {
     id: root
     objectName: "directoryPickerPanel"
-    property var picker: PickerService
-    property bool backgroundVisible: true
-    property bool adding: false
     property string category: "personal"
     readonly property bool editing: !!DirectoryService.draft
     readonly property bool showForm: adding || editing || DirectoryService.directories.length === 0
-    readonly property bool nativeDialogOpen: folderForm.nativeDialogOpen
+    nativeDialogOpen: folderForm.nativeDialogOpen
     property alias folderPicker: folderForm.folderPicker
     readonly property var managedDirectories: picker.filter(DirectoryService.directories.map(entry => Object.assign({title:entry.name,search:entry.name + " " + entry.path},entry)),manageSearch.text)
-    implicitWidth: Theme.pickerWidth
-    implicitHeight: header.height + Theme.controlSpacing + (DirectoryService.managing
-        ? manage.implicitHeight + footer.height + Theme.controlSpacing : list.implicitHeight)
-    function focusSearch() {
-        if (!picker.visible) return
-        if (!DirectoryService.managing) list.focusSearch()
-        else if (showForm) folderForm.focusInput()
-        else manageSearch.forceActiveFocus()
-    }
+
+    pickerMode: PickerService.Mode.Directories
+    managing: DirectoryService.managing
+    addSequence: Config.directoryAddShortcut
+    manageSequence: Config.directoryManageShortcut
+    showAllSequence: Config.directoryShowAllShortcut
+    addAllowed: managing && !root.showForm && !DirectoryService.busy && !nativeDialogOpen
+    headerItem: header
+    listItem: list
+    manageItem: manage
+    footerItem: footer
+    managementSearch: manageSearch
+    managementFocusTarget: showForm ? folderForm : manageSearch
+    onAddRequested: adding = true
+    onManagementRequested: value => { DirectoryService.setManaging(value); if (!value) resetForm() }
+    onShowAllRequested: DirectoryService.toggleShowAll()
+    onSessionClosed: { DirectoryService.cancel(); root.resetForm() }
+
     function resetForm() {
         adding = false; folderForm.clear(); category = "personal"
         Qt.callLater(root.focusSearch)
     }
-    function management(value) {
-        DirectoryService.setManaging(value)
-        if (!value) resetForm()
-        Qt.callLater(root.focusSearch)
-    }
-    function beginAdd() { adding = true; Qt.callLater(root.focusSearch) }
+
     function edit(entry) {
         DirectoryService.edit(entry)
         folderForm.text = entry.path; folderForm.displayName = entry.name; category = entry.category
@@ -45,39 +46,13 @@ Item {
     }
     function cancel() { DirectoryService.cancel(); resetForm() }
     function save() { DirectoryService.save(folderForm.text,folderForm.displayName,category) }
-    function handleAddKey(event, activate) {
-        if (!addShortcut.enabled || addShortcut.portableText !== "Ctrl+A" || !event.matches(StandardKey.SelectAll)) return false
-        if (activate) beginAdd()
-        return true
-    }
-    Shortcut {
-        sequence: Config.directoryManageShortcut
-        enabled: root.visible && root.picker.visible && root.picker.mode === PickerService.Mode.Directories && !root.nativeDialogOpen
-        onActivated: root.management(!DirectoryService.managing)
-    }
-    Shortcut {
-        id: addShortcut
-        sequence: Config.directoryAddShortcut
-        enabled: root.visible && root.picker.visible && root.picker.mode === PickerService.Mode.Directories
-            && DirectoryService.managing && !root.showForm && !DirectoryService.busy && !root.nativeDialogOpen
-        onActivated: root.beginAdd()
-    }
-    Shortcut {
-        sequence: Config.directoryShowAllShortcut
-        enabled: root.visible && root.picker.visible && root.picker.mode === PickerService.Mode.Directories && !DirectoryService.managing
-        onActivated: DirectoryService.toggleShowAll()
-    }
-    Keys.onEscapePressed: {
+
+    onEscapeRequested: {
         if (root.adding || root.editing) root.cancel()
         else root.picker.close()
     }
     Connections { target: DirectoryService; function onSaved() { root.resetForm() } }
-    Connections {
-        target: root.picker
-        function onVisibleChanged() {
-            if (!root.picker.visible) { DirectoryService.cancel(); root.resetForm(); manageSearch.clear() }
-        }
-    }
+
     UI.TabBar {
         id: header
         objectName: "directoryTabs"
@@ -88,10 +63,9 @@ Item {
     }
     PickerPanelBase {
         id: list
-        anchors.top: header.bottom
-        anchors.topMargin: Theme.controlSpacing
+        y: root.contentTop
         width: parent.width
-        height: parent.height - header.height - Theme.controlSpacing
+        height: root.listHeight
         picker: root.picker
         backgroundVisible: root.backgroundVisible
         visible: !DirectoryService.managing
@@ -102,10 +76,9 @@ Item {
     }
     QC.ScrollView {
         id: manage
-        anchors.top: header.bottom
-        anchors.topMargin: Theme.controlSpacing
+        y: root.contentTop
         width: parent.width
-        height: Math.max(0,parent.height - header.height - footer.height - Theme.controlSpacing * 2)
+        height: root.manageHeight
         implicitHeight: Math.min(content.implicitHeight + Theme.projectManagePadding * 2,Theme.pickerRowHeight * Config.pickerMaxRows)
         visible: DirectoryService.managing
         clip: true

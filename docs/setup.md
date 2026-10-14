@@ -25,6 +25,8 @@ those before running on another desktop.
 | Hyprland and `hyprctl` | Workspaces, window focus, submaps, screen sharing |
 | Bash, coreutils, findutils, `awk`, `grep`, `sed`, `jq` | Command helpers, folder files, and parsing |
 | `wl-clipboard`, `file`, util-linux (`flock`) | Background text/image clipboard capture and restoration |
+| ImageMagick (`magick`) | Read original image dimensions for clipboard previews without enlarging small images |
+| `sqlite3` with FTS5 (SQLite 3.42+) | Read-only indexed clipboard search; Qt SQLite also needs FTS5 |
 | `gtk-launch` | Desktop application launching, including terminal entries |
 | `ydotool` and its daemon | Optional paste on clipboard activation |
 | Noto Sans Mono, JetBrains Mono, Font Awesome 7 Free Solid | Text and icons configured in `src/theme/Theme.qml` |
