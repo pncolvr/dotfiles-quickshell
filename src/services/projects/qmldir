@@ -1,0 +1,2 @@
+# Local type metadata; parent exports refer to the same QML files.
+singleton ProjectService 1.0 ProjectService.qml

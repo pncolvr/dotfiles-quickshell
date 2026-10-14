@@ -1,0 +1,10 @@
+# Local metadata for standalone editor analysis; services/qmldir also exports these files.
+singleton BatteryRepository 1.0 BatteryRepository.qml
+singleton ClipboardRepository 1.0 ClipboardRepository.qml
+singleton DbService 1.0 DbService.qml
+singleton DirectoryRepository 1.0 DirectoryRepository.qml
+singleton NotificationEmitterRepository 1.0 NotificationEmitterRepository.qml
+singleton NotificationRepository 1.0 NotificationRepository.qml
+singleton PreferencesRepository 1.0 PreferencesRepository.qml
+singleton ProjectRepository 1.0 ProjectRepository.qml
+singleton TwitchRepository 1.0 TwitchRepository.qml

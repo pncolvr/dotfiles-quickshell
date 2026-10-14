@@ -1,0 +1,3 @@
+# Local type metadata; parent exports refer to the same QML files.
+NativeNotificationServer 1.0 NativeNotificationServer.qml
+singleton NotificationService 1.0 NotificationService.qml

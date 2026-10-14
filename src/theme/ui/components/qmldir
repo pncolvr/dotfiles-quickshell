@@ -1,0 +1,36 @@
+# Local type metadata; parent exports refer to the same QML files.
+ActionButton 1.0 ActionButton.qml
+BarIcon 1.0 BarIcon.qml
+BatchedListModel 1.0 BatchedListModel.qml
+ColumnText 1.0 ColumnText.qml
+ComboSelector 1.0 ComboSelector.qml
+EditorActions 1.0 EditorActions.qml
+FixedIconText 1.0 FixedIconText.qml
+FolderCategoryButton 1.0 FolderCategoryButton.qml
+FolderForm 1.0 FolderForm.qml
+FolderPathField 1.0 FolderPathField.qml
+HoverTooltip 1.0 HoverTooltip.qml
+Icon 1.0 Icon.qml
+IconButton 1.0 IconButton.qml
+InputField 1.0 InputField.qml
+ManagementActions 1.0 ManagementActions.qml
+ManagementRow 1.0 ManagementRow.qml
+PanelWindow 1.0 PanelWindow.qml
+PickerList 1.0 PickerList.qml
+PickerRow 1.0 PickerRow.qml
+PointerFocus 1.0 PointerFocus.qml
+PrivatePanelWindow 1.0 PrivatePanelWindow.qml
+Row 1.0 Row.qml
+ScaledImage 1.0 ScaledImage.qml
+ScaledScreencopyView 1.0 ScaledScreencopyView.qml
+ScaledTexture 1.0 ScaledTexture.qml
+ScrollBar 1.0 ScrollBar.qml
+SearchField 1.0 SearchField.qml
+SecretField 1.0 SecretField.qml
+ShortcutHints 1.0 ShortcutHints.qml
+TabBar 1.0 TabBar.qml
+Text 1.0 Text.qml
+TextArea 1.0 TextArea.qml
+singleton TextureSettings 1.0 TextureSettings.qml
+TooltipBackground 1.0 TooltipBackground.qml
+WrapperMouseArea 1.0 WrapperMouseArea.qml

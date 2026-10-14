@@ -1,0 +1,7 @@
+# Local type metadata; parent exports refer to the same QML files.
+singleton BatteryService 1.0 BatteryService.qml
+singleton ConfigService 1.0 ConfigService.qml
+singleton NetworkService 1.0 NetworkService.qml
+singleton PowerProfileService 1.0 PowerProfileService.qml
+singleton StatsService 1.0 StatsService.qml
+singleton UpdatesService 1.0 UpdatesService.qml

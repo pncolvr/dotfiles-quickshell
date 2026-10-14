@@ -1,0 +1,2 @@
+# Local type metadata; parent exports refer to the same QML files.
+singleton RbwService 1.0 RbwService.qml

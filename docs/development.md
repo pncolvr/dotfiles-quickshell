@@ -63,6 +63,17 @@ modules are not injected into other files. Native screen/model metadata can be
 opaque across Quickshell modules: geometry uses the existing `geometryScreen`
 boundary, and audio retains the native models through explicit model references.
 
+Singleton folders also carry local `qmldir` metadata so the language server can
+recognize standalone files without the command-line check's explicit imports.
+Parent modules continue exporting the same QML files; local and parent imports
+resolve to the same runtime singleton instances. Keep both listings synchronized
+when adding a singleton, and retain existing helper components in local listings.
+Run `bash tests/qml/singletons.sh` to check runtime identity and real language-server
+diagnostics for every singleton. It uses a private database, Bash, Node.js and
+the Qt language server (`QMLLS` can select another executable).
+If VS Code retains a warning after metadata changes, run **Qt: Restart QML language
+server** from the command palette. A full editor restart is unnecessary.
+
 The QML files contain scoped lint exceptions for incomplete Quickshell type
 metadata: runtime-selected `PanelWindow` backends, the missing
 `QProcess::ExitStatus` enum, and the tray menu handle's outdated C++ type name.
