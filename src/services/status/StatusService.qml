@@ -25,6 +25,7 @@ Singleton {
     readonly property string detectionError: _internal.detectionError
     readonly property bool detectionStale: _internal.detectionStale
     readonly property bool detectionLoading: detectionProcess.running
+    readonly property bool changingStatus: setProcess.running || toggleProcess.running || clearProcess.running
     
     QtObject {
         id: _internal
@@ -102,11 +103,18 @@ Singleton {
     }
 
     function toggle() {
-        toggleProcess.running = true
+        if (!changingStatus) toggleProcess.running = true
+    }
+
+    function setStatus(mode) {
+        if ((mode !== "work" && mode !== "personal") || changingStatus) return false
+        setProcess.command = Config.statusManagerSetCommand(mode)
+        setProcess.running = true
+        return true
     }
 
     function clear() {
-        clearProcess.running = true
+        if (!changingStatus) clearProcess.running = true
     }
 
     Process {
@@ -191,6 +199,11 @@ Singleton {
     Process {
         id: toggleProcess
         command: Config.statusManagerToggleCommand
+        onRunningChanged: if (!running) root.reload()
+    }
+
+    Process {
+        id: setProcess
         onRunningChanged: if (!running) root.reload()
     }
 

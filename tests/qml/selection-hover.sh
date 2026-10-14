@@ -59,4 +59,25 @@ for mode in volume mic profile folder type private-folder; do
     done
     printf 'PASS: %s popup rows preserve unpinned panel hover above and below, then dismiss after leaving\n' "$mode"
 done
+for mode in folder private-folder; do
+    for lower in false true; do
+        ipc begin "$mode" false >/dev/null
+        wait_state '.visible and .toggleReady'
+        ipc hoverAction "$lower" true >/dev/null
+        ipc leaveTrigger >/dev/null
+        wait_state '.cursorHovered and .cursorHintReady and .cursorHintOpened'
+        sleep 1
+        snapshot | jq -e '.visible and .hovered and .cursorHovered and .cursorHintOpened and .cursorLeaves==0' >/dev/null \
+            || fail "$mode button loses stationary hover when its hint appears (lower=$lower)"
+        for ((movement=0;movement<8;movement++)); do
+            ipc hoverAction "$lower" false >/dev/null
+            sleep 0.05
+        done
+        snapshot | jq -e '.visible and .hovered and .cursorHovered and .cursorHintOpened and .cursorLeaves==0' >/dev/null \
+            || fail "$mode button loses moving hover when its hint appears (lower=$lower)"
+        ipc leave >/dev/null
+        wait_state '(.visible|not)'
+    done
+    printf 'PASS: %s upper/lower button hints preserve stationary and moving hover without cursor churn\n' "$mode"
+done
 if rg -q 'TypeError|ReferenceError|Binding loop|WARN scene' "$test_dir/log"; then fail 'runtime diagnostics'; fi

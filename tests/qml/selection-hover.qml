@@ -19,6 +19,13 @@ Scope {
     readonly property var activeHost: privateCase ? privateHost : publicHost
     readonly property Item panel: activeHost.loadedContent as Item
     property int writes: 0
+    property var cursorControl: null
+    property int cursorLeaves: 0
+    function cursorHint(): QC.ToolTip {
+        for (const object of cursorControl?.data ?? [])
+            if (object instanceof QC.ToolTip) return object
+        return null
+    }
     QtObject {
         id: origin
         readonly property bool tooltipKeyboardFocus: true
@@ -68,6 +75,22 @@ Scope {
             function setProfile(card: var, name: string) { root.writes++ }
         }
         UI.Text { x:20; y:12; text: root.mode === "mic" ? "Microphone · Apps" : root.mode === "volume" ? "Volume · Apps" : root.mode }
+        UI.ActionButton {
+            id: topAction
+            objectName: "cursorTopButton"
+            x:560; y:0
+            glyph: Theme.refreshIcon
+            hint: "Top action hint"
+            onHoveredChanged: if (root.cursorControl === topAction && !hovered) root.cursorLeaves++
+        }
+        UI.ActionButton {
+            id: lowerAction
+            objectName: "cursorLowerButton"
+            x:560; y:180
+            glyph: Theme.lockIcon
+            hint: "Lower action hint"
+            onHoveredChanged: if (root.cursorControl === lowerAction && !hovered) root.cursorLeaves++
+        }
         AudioAppRow {
             id: app
             x:20; y:root.above ? 280 : 40; width:600
@@ -106,6 +129,8 @@ Scope {
     IpcHandler {
         target: "selectionhover"
         function begin(mode: string, above: bool): void {
+            root.cursorControl = null
+            root.cursorLeaves = 0
             TooltipService.dismiss()
             root.mode = mode
             root.above = above
@@ -122,6 +147,9 @@ Scope {
             return JSON.stringify({visible:root.activeHost.visible, expanded:selector?.expanded ?? false,
                 popupVisible:selector?.popup.visible ?? false,popupOpened:selector?.popup.opened ?? false,
                 writes:root.writes,hovered:observer?.hovered ?? false,
+                popupHovered:observer?.popupHovered ?? false,
+                cursorHovered:root.cursorControl?.hovered ?? false,cursorLeaves:root.cursorLeaves,
+                cursorHintReady:!!root.cursorHint(),cursorHintOpened:root.cursorHint()?.opened ?? false,
                 pinned:TooltipService.pinned,paused:TooltipService.typingPaused,
                 sameOverlay:!!selector && selector.popup.parent === observer?.overlayItem,
                 rowsReady:rowHover.length === 3 && rowHover.every(value => value !== undefined),rowHover,
@@ -133,6 +161,12 @@ Scope {
             const selector = root.selector()
             const toggle = objects.findChild(selector,selector.toggleObjectName) as QC.Button
             events.mouseMove(toggle,toggle.width/2,toggle.height/2,0,Qt.NoButton,Qt.NoModifier)
+        }
+        function hoverAction(lower: bool, reset: bool): void {
+            root.cursorControl = objects.findChild(root.panel,lower ? "cursorLowerButton" : "cursorTopButton") as QC.Button
+            events.mouseMove(root.cursorControl,root.cursorControl.width/2 + (reset ? 0 : 1),root.cursorControl.height/2,
+                0,Qt.NoButton,Qt.NoModifier)
+            if (reset) root.cursorLeaves = 0
         }
         function hover(index: int): void {
             const row = root.selector().choicesView.itemAtIndex(index) as QC.ItemDelegate

@@ -53,21 +53,33 @@ Column {
             UI.ActionButton {
                 id: refresh
                 objectName: "refreshTimecard"
-                anchors.right: toggle.left
+                anchors.right: modes.left
                 anchors.rightMargin: Theme.controlSpacing
                 glyph: Theme.refreshIcon
                 hint: "Recheck mode and refresh timecard"
                 enabled: !root.statusService.timecardLoading
                 onClicked: root.statusService.reload()
             }
-            UI.ActionButton {
-                id: toggle
-                objectName: "toggleStatusMode"
+            Row {
+                id: modes
                 anchors.right: reset.left
                 anchors.rightMargin: Theme.controlSpacing
-                glyph: root.statusService.status === "work" ? Theme.statusPersonalIcon : Theme.statusWorkingIcon
-                hint: "Switch to " + (root.statusService.status === "work" ? "Personal" : "Work") + " (manual)"
-                onClicked: root.statusService.toggle()
+                spacing: Theme.controlSpacing
+                Repeater {
+                    model: ["work", "personal"]
+                    UI.ActionButton {
+                        required property string modelData
+                        readonly property bool selected: root.statusService.source === "manual"
+                            && root.statusService.status === modelData
+                        objectName: "setStatusMode-" + modelData
+                        glyph: modelData === "work" ? Theme.statusWorkingIcon : Theme.statusPersonalIcon
+                        hint: "Set " + (modelData === "work" ? "Work" : "Personal") + " (manual)"
+                        foreground: selected ? Theme.accent : Theme.text
+                        fillColor: selected ? Theme.selectionSelectedBackground : Theme.alternateBackground
+                        enabled: !root.statusService.changingStatus
+                        onClicked: root.statusService.setStatus(modelData)
+                    }
+                }
             }
             UI.ActionButton {
                 id: reset
@@ -75,7 +87,7 @@ Column {
                 anchors.right: parent.right
                 glyph: Theme.cancelIcon
                 hint: "Reset to automatic detection"
-                enabled: root.statusService.source === "manual"
+                enabled: root.statusService.source === "manual" && !root.statusService.changingStatus
                 onClicked: root.statusService.clear()
             }
         }

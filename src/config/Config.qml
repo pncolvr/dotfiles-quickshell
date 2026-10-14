@@ -122,6 +122,7 @@ Item {
     readonly property var statusManagerSourceCommand: [_internal.statusManager, "--source"]
     readonly property var statusManagerDetectionCommand: [_internal.statusManager, "--explain"]
     readonly property var statusManagerToggleCommand: [_internal.statusManager, "--toggle"]
+    readonly property var statusManagerSetCommand: mode => [_internal.statusManager, "--set", mode]
     readonly property var statusManagerClearCommand:  [_internal.statusManager, "--clear"]
     readonly property string statusTimecardExecutable: `${Quickshell.env("ZDOTDIR") || `${_internal.home}/.config/zsh`}/scripts/status/bin/timecard`
     readonly property string statusTimetableFile: Quickshell.env("TIMETABLE_FILE") || `${_internal.home}/Documents/timetable.csv`

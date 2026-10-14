@@ -520,10 +520,14 @@ The native test uses synthetic entries and restores the previous focus and point
 Dropdowns animate on opening and dismiss immediately: Qt keeps popup input
 filtering active throughout an exit transition, which can swallow the next click.
 
-`TooltipPointerHandler` combines panel hover with the Qt popup overlay, so
-unpinned tooltips remain open while selecting dropdown options. Its overlay
-observer follows the native window lifetime, including repeated opens. Run
+`TooltipPointerHandler` combines panel hover with the individual items in Qt's
+popup overlay, so unpinned tooltips remain open while selecting dropdown options.
+The observers follow popup/window lifetimes. They avoid making the full overlay
+hoverable, which would steal hover and the hand cursor from buttons when their
+hints appear. Run
 `bash tests/qml/selection-hover.sh` in a Wayland session for above/below dropdown
-hover, normal dismissal, module switching and private namespace coverage.
+hover, normal dismissal, module switching and private namespace coverage. It also
+holds and moves the pointer over upper/lower action buttons while their delayed
+hints are visible, checking that button hover does not churn in either host.
 The test uses synthetic devices and entries with deterministic Qt mouse events;
 it does not change audio routing or vault data.

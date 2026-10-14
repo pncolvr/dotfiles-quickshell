@@ -11,8 +11,12 @@ Item {
     readonly property Item windowContent: tooltipWindow.contentItem
     readonly property var nativeWindow: windowContent.Window.window
     readonly property Item overlayItem: nativeWindow ? windowContent.QC.Overlay.overlay : null
-    readonly property HoverHandler popupHover: popupMonitors.count ? popupMonitors.objectAt(0) as HoverHandler : null
-    readonly property bool hovered: panelHover.hovered || (popupHover?.hovered ?? false)
+    readonly property bool popupHovered: {
+        for (let index = 0; index < popupMonitors.count; index++)
+            if ((popupMonitors.objectAt(index) as HoverHandler)?.hovered) return true
+        return false
+    }
+    readonly property bool hovered: panelHover.hovered || popupHovered
     readonly property bool pending: BarModuleService.pointerReady && tooltipWindow.visible
         && BarModuleService.pointerItem === TooltipService.source
         && tooltipWindow.screen === TooltipService.screen
@@ -31,15 +35,17 @@ Item {
         enabled: root.tooltipWindow.visible
         onPointChanged: root.observePointer(panelHover)
     }
-    // The native overlay is recreated when a Quickshell window is hidden. Keep
-    // its observer tied to that lifetime, while the panel observer stays alive.
+    // Observe actual popup areas. A handler covering the whole overlay steals
+    // frame-sync hover from underlying buttons whenever their hints appear.
+    // Popup items and the overlay are recreated as the native window is hidden.
     Instantiator {
         id: popupMonitors
-        model: root.tooltipWindow.visible && root.overlayItem ? [root.overlayItem] : []
+        model: root.tooltipWindow.visible && root.overlayItem ? Array.from(root.overlayItem.children).filter(item => item.visible) : []
         delegate: HoverHandler {
             id: handler
             required property var modelData
             parent: modelData
+            enabled: root.tooltipWindow.visible && modelData.visible
             onPointChanged: root.observePointer(handler)
         }
     }

@@ -30,8 +30,11 @@ while open, and after a mode reload. The refresh button reruns the status manage
 `--check` and `--source` commands, then reloads the timecard. In automatic mode,
 this reevaluates the configured work processes and open files. A manual override
 stays in place. Week and month reports are read when their tabs are selected.
-The mode button after Reload switches Work/Personal and sets a manual override.
-The Reset button after it clears the override and restores automatic detection.
+Separate Work and Personal buttons after Reload set that exact mode as a manual
+override, including when automatic detection already reports the same mode.
+The selected manual mode is highlighted in the accent color. Mode controls are
+disabled while a change is running. The Reset button after them clears the
+override and restores automatic detection.
 Left-clicking the bar icon pins or unpins the tooltip; the icon uses the accent
 color while pinned. Bar clicks do not change the mode.
 

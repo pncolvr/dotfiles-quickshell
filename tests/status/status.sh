@@ -10,6 +10,7 @@ mkdir -m 700 "$test_dir/runtime"
 mkdir "$test_dir/data" "$test_dir/cache" "$test_dir/bin"
 cp -a -- "$project_root/src" "$test_dir/src"
 export STATUS_TEST_MODE="$test_dir/mode" STATUS_TEST_SOURCE="$test_dir/source"
+export STATUS_TEST_SET_CALLS="$test_dir/set-calls"
 export STATUS_TEST_DETECTION_FAILURE="$test_dir/detection-failure"
 export TIMETABLE_FILE="$test_dir/events.csv"
 printf personal > "$STATUS_TEST_MODE"
@@ -32,6 +33,11 @@ case "$1" in
         if [[ $(cat "$STATUS_TEST_MODE") == work ]]; then printf personal > "$STATUS_TEST_MODE";
         else printf work > "$STATUS_TEST_MODE"; fi
         printf manual > "$STATUS_TEST_SOURCE" ;;
+    --set)
+        [[ ${2:-} == work || ${2:-} == personal ]] || exit 1
+        printf '%s' "$2" > "$STATUS_TEST_MODE"
+        printf manual > "$STATUS_TEST_SOURCE"
+        printf '%s\n' "$2" >> "$STATUS_TEST_SET_CALLS" ;;
     --clear) printf personal > "$STATUS_TEST_MODE"; printf automatic > "$STATUS_TEST_SOURCE" ;;
 esac
 BASH
@@ -55,3 +61,4 @@ for fixture in status-smoke timecard-parser; do
         && $output != *'TypeError:'* && $output != *'ReferenceError:'* ]]
 done
 [[ $(sha256sum "$TIMETABLE_FILE") == "$before" ]]
+[[ $(cat "$STATUS_TEST_SET_CALLS") == $'personal\nwork' ]]

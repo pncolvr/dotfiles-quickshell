@@ -42,16 +42,17 @@ Scope {
         property string detectionError: ""
         property bool detectionLoading: false
         property bool detectionStale: false
+        property bool changingStatus: false
         property int panels: 0
         property int refreshes: 0
         property bool weeksShown: false
         property bool monthsShown: false
-        property int toggles: 0
+        property var selections: []
         property int resets: 0
         function beginPanel() { panels++ }
         function endPanel() { panels-- }
         function showPeriod(index) { weeksShown = index === 1 || index === 2; monthsShown = index === 3 || index === 4 }
-        function toggle() { toggles++ }
+        function setStatus(mode) { selections = selections.concat([mode]); status = mode; source = "manual" }
         function clear() { resets++ }
         function reload() { refreshes++ }
     }
@@ -161,12 +162,35 @@ Scope {
                 const refresh = root.find("refreshTimecard") as QC.Button
                 mouse.mouseClick(refresh, refresh.width / 2, refresh.height / 2)
                 root.check(backend.refreshes === 1, "refresh requests a mode recheck")
-                const toggle = root.find("toggleStatusMode") as QC.Button
-                root.check(toggle.x > refresh.x + refresh.width, "mode toggle follows Reload")
-                mouse.mouseClick(toggle, toggle.width / 2, toggle.height / 2)
-                root.check(backend.toggles === 1, "tooltip button toggles the mode")
+                const work = root.find("setStatusMode-work") as QC.Button
+                const personal = root.find("setStatusMode-personal") as QC.Button
+                root.check(work.mapToItem(panel, 0, 0).x > refresh.mapToItem(panel, 0, 0).x + refresh.width
+                    && personal.x > work.x + work.width, "Work and Personal buttons follow Reload")
+                mouse.mouseClick(work, work.width / 2, work.height / 2)
+                root.check(backend.selections.join(",") === "work" && backend.status === "work" && backend.source === "manual",
+                    "Work creates an explicit override even when automatic mode already reports work")
+                root.check(root.find("setStatusMode-work").selected && !root.find("setStatusMode-personal").selected,
+                    "the selected manual mode is highlighted")
+                mouse.mouseClick(personal, personal.width / 2, personal.height / 2)
+                mouse.mouseClick(personal, personal.width / 2, personal.height / 2)
+                root.check(backend.selections.join(",") === "work,personal,personal" && backend.status === "personal"
+                    && root.find("setStatusMode-personal").selected, "Personal always selects personal without cycling")
+                backend.changingStatus = true
+                const reset = root.find("resetStatusMode") as QC.Button
+                root.check(!work.enabled && !personal.enabled && !reset.enabled, "mode controls are disabled during a change")
+                mouse.mouseClick(work, work.width / 2, work.height / 2)
+                root.check(backend.selections.length === 3, "disabled mode buttons cannot queue a conflicting change")
+                backend.changingStatus = false
                 StatusService.reload()
-                StatusService.toggle()
+                root.check(!StatusService.setStatus("unknown"), "unsupported status is rejected")
+                root.check(StatusService.setStatus("personal"), "existing automatic mode can be selected manually")
+                root.step = -3
+                return
+            } else if (root.step === -3) {
+                if (StatusService.changingStatus || StatusService.status !== "personal" || StatusService.source !== "manual") return
+                root.check(StatusService.setStatus("work"), "service selects work explicitly")
+                root.step = 4
+                return
             } else if (root.step === 4) {
                 if (StatusService.status !== "work" || StatusService.source !== "manual") return
                 if (StatusService.detectionLoading) return
@@ -193,8 +217,9 @@ Scope {
                 root.check(root.find("statusDetectionManual").visible, "manual overrides are separated from automatic matches")
                 root.clickTab(2)
                 const reset = root.find("resetStatusMode") as QC.Button
-                const toggle = root.find("toggleStatusMode") as QC.Button
-                root.check(reset.x > toggle.x + toggle.width, "Reset follows the mode toggle")
+                const personal = root.find("setStatusMode-personal") as QC.Button
+                root.check(reset.mapToItem(panel, 0, 0).x > personal.mapToItem(panel, 0, 0).x + personal.width,
+                    "Reset follows both explicit mode buttons")
                 mouse.mouseClick(reset, reset.width / 2, reset.height / 2)
                 root.check(backend.resets === 1, "Reset restores automatic detection")
                 StatusService.clear()
