@@ -165,12 +165,13 @@ Rectangle {
             id: iconColumn
             width: root.hasExtraImage ? 48 : 40
             height: width
-            UI.ScaledImage {
+            UI.CroppedImage {
                 width: 40
                 height: 40
                 source: root.iconSource
+                detectionEnabled: root.usesImageAsIcon
                 // Qt applies the screen's pixel ratio to icon-provider requests.
-                sourceSize: root.iconSource.startsWith("image://icon/") ? Qt.size(width, height) : undefined
+                sourceSize: root.iconSource.startsWith("image://icon/") ? Qt.size(width, height) : Qt.size(-1, -1)
             }
             NotificationAvatar {
                 x: root.hasExtraImage ? 8 : 0

@@ -211,14 +211,12 @@ Item {
                         Layout.preferredHeight: root.artworkSize
                         color: artwork.status === Image.Ready ? "transparent" : Theme.background
                         radius: Theme.audioDeviceRadius
-                        UI.ScaledImage {
+                        UI.CroppedImage {
                             id: artwork
                             objectName: "mediaArtwork"
                             anchors.fill: parent
                             source: root.visible ? root.player?.trackArtUrl || "" : ""
                             asynchronous: true
-                            sourceSize.width: width * Screen.devicePixelRatio
-                            sourceSize.height: height * Screen.devicePixelRatio
                         }
                         UI.ScaledImage {
                             id: appArtwork

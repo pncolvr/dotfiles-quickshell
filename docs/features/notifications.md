@@ -67,10 +67,15 @@ Extra images supplied by any app, including Discord and Signal user/group
 images, overlap the app icon with an offset down and right, leaving the app icon
 visible above and to the left. If no app icon is available, the supplied image
 occupies the left icon slot on its own. This applies to both popups and history.
-Extra images are center-cropped and masked into circles. Overlapping images with
-opaque near-black padding at all four corners receive a
-small, one-time alpha mask that removes edge-connected padding and preserves
-enclosed dark details. The title sits directly below the app name,
+Extra images are masked into circles with the shared `UI.CroppedImage` component.
+Confidently detected thin, saturated circular frames are cropped inside their
+edge; other images retain the usual center crop. The same detection applies
+when a supplied image occupies the icon slot, while ordinary app icons keep
+their original appearance. Analysis uses a small sample, runs once per cached
+source, and leaves stored images and display resolution intact. Avatar images
+with opaque near-black padding at all four corners receive an alpha mask that
+removes edge-connected padding and preserves enclosed dark details.
+The title sits directly below the app name,
 with a small gap before the body. Timestamps appear only in history and use
 `yyyy-MM-dd hh:mm:ss`, always including seconds. Markdown bodies render code
 blocks, emphasis, links, and lists; plain-text bodies keep their line breaks.

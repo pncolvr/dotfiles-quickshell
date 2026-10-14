@@ -47,6 +47,13 @@ the avatar or other details opens the displayed second channel; clicking the
 or remove the main association. Second-channel switching is silent; live/offline alerts
 remain tied to the main channel.
 
+Avatars use the shared `UI.CroppedImage` component. It trims confidently detected
+thin, saturated circular frames inside their edge, preserving the image's native
+pixels and the row's online/offline outline. Ambiguous images retain the usual
+circular center crop. Edge-connected near-black padding is masked while enclosed
+dark details remain visible. Detection runs once per cached source and is shared
+with notifications and media artwork.
+
 ## Keyboard shortcut
 
 Press **Meta+I**, then **T**, to select Twitch from the bar-module submap.

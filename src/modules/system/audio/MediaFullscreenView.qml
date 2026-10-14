@@ -100,13 +100,12 @@ Rectangle {
         height: width
         color: artwork.status === Image.Ready ? "transparent" : Theme.background
         radius: Theme.audioDeviceRadius
-        UI.ScaledImage {
+        UI.CroppedImage {
             id: artwork
             objectName: "mediaArtwork"
             anchors.fill: parent
             source: root.player?.trackArtUrl || ""
             asynchronous: true
-            sourceSize: Qt.size(width * Screen.devicePixelRatio, height * Screen.devicePixelRatio)
         }
         UI.ScaledImage {
             id: appArtwork

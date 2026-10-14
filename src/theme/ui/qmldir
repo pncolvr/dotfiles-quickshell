@@ -41,3 +41,5 @@ StatusBadge 1.0 StatusBadge.qml
 PrivatePanelWindow 1.0 components/PrivatePanelWindow.qml
 SelectionList 1.0 components/SelectionList.qml
 SelectionRow 1.0 components/SelectionRow.qml
+CroppedImage 1.0 components/CroppedImage.qml
+singleton ImageCropCache 1.0 components/ImageCropCache.qml

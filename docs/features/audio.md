@@ -15,7 +15,11 @@ has its own card in a scrollable list, ordered by app name. Playback changes kee
 that order stable. Media can grow to the available screen height, accounting for
 the bar, panel padding and shadow. The other audio tabs keep their existing height
 limit. Switching tabs preserves the Media list's scroll position.
-Artwork uses the shared `UI.ScaledImage` filtering and mipmaps.
+Artwork uses the shared `UI.CroppedImage` filtering and mipmaps. Confidently
+detected thin, saturated circular frames are trimmed inside their edge, using
+the same cached analysis as avatars and notifications. Ordinary or ambiguous
+artwork keeps its existing shape. The display retains the original raster
+resolution; SVG artwork rasterizes at device resolution, including in fullscreen.
 Wide artwork keeps its full image centered in the aligned square slot, with
 transparent space around it so the blurred card background shows through.
 Missing or failed artwork falls back to the app icon or a music glyph.
@@ -62,7 +66,7 @@ reveal its visualizer. The same button turns it back from left to right.
 A permanent scrolling list offers **17 styles**, with opaque hover backgrounds.
 The reverse face omits track details; its list spans the card height with equal
 top and bottom padding, beside the Flip and Fullscreen buttons.
-Selection changes only the text to the accent color; it adds no background tint.
+Selection uses the shared dropdown row's accent text and selected background.
 The last selected effect is saved separately for each app and restored after
 reopening the panel or restarting the shell. Cards from the same app share its
 choice, using its desktop identity rather than a temporary player or process ID.

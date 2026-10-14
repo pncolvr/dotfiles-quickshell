@@ -7,6 +7,7 @@ import Quickshell
 import Quickshell.Services.Mpris
 import Quickshell.Wayland
 import "../../src/theme"
+import "../../src/theme/ui" as UI
 import "../../src/modules/system/audio"
 import "../../src/services"
 
@@ -228,6 +229,12 @@ Scope {
                     "blurred artwork is cached rather than rendered each frame");
                 root.check(!!root.find(card, "mediaFullscreenBackgroundTexture").sourceItem,
                     "cached artwork has loaded into its background texture");
+                if (Quickshell.env("MEDIA_FULLSCREEN_RING_FIXTURE") === "1") {
+                    const image = root.find(card,"mediaArtwork");
+                    root.check(!!image.analysis?.ring && image.originalSize.width === 2048
+                        && image.decodedSize.width >= image.paintedWidth * Screen.devicePixelRatio,
+                        "fullscreen artwork trims its frame and renders vector detail at the full device resolution");
+                }
                 const effects = root.find(card, "mediaEffectSelector") as MediaEffectList;
                 root.check(effects.view.visible && effects.view.count === 17 && effects.view.clip,
                     "all effects are available in a permanent scrollable list");
@@ -254,10 +261,12 @@ Scope {
                 root.check(card.player === fixturePlayer && root.find(card, "mediaVisualizer").effect === "cava_orion_rotate",
                     "Left restores the first app's saved effect");
                 const effects = root.find(card, "mediaEffectSelector") as MediaEffectList;
-                const selected = effects.view.itemAtIndex(effects.view.currentIndex);
-                root.check(String(((selected as QC.ItemDelegate).background as Rectangle).color) === String(effects.color)
-                    && String(((selected as QC.ItemDelegate).contentItem as Text).color) === String(Theme.accent),
-                    "selection uses accent text without a colored background");
+                const selected = effects.view.itemAtIndex(effects.view.currentIndex) as UI.SelectionRow;
+                root.check(selected.selected
+                    && String((selected.contentItem.children[0] as Text).color) === String(Theme.accent)
+                    && String((selected.background as Rectangle).color) === String(selected.hovered || selected.visualFocus
+                        ? Theme.selectionHoverBackground : Theme.selectionSelectedBackground),
+                    "selection uses the shared accent text and background styles");
                 root.find(card, "mediaPlayPause").clicked();
                 root.check(!fixturePlayer.isPlaying, "fullscreen transport affects the same player");
                 root.find(card, "mediaPlayPause").clicked();
@@ -403,7 +412,7 @@ Scope {
             } else if (root.step === 24) {
                 if (MediaFullscreenService.visible) return;
                 root.check(!card && !fullscreen.visible, "Alt+F4 also exits independently of child focus");
-                if (!root.failed) console.log("PASS: fullscreen native-resolution visualizers, accent-only selection, directional slides, opaque single view, player navigation, exit during slides and stalled-animation deadline");
+                if (!root.failed) console.log("PASS: fullscreen native-resolution visualizers, shared selection styles, directional slides, opaque single view, player navigation, exit during slides and stalled-animation deadline");
                 stop(); Qt.quit();
             }
             root.step++;

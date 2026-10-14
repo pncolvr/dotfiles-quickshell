@@ -85,13 +85,39 @@ the compact `Theme.barIconWidth` slot. All bar module icons share that width, so
 their centers remain evenly spaced and state changes do not resize controls.
 
 Static images use `UI.ScaledImage` for smooth filtering and mipmaps, with aspect
-fit by default. Keep source sizing, cropping and asynchronous loading at the
-call site when needed. Live captures use `UI.ScaledScreencopyView`, which generates
+fit by default. Avatars and media artwork use `UI.CroppedImage`, which shares
+those texture settings and conservatively trims embedded, thin saturated circular
+frames. It analyzes a 128×128 sample once per source in a WorkerScript, then
+applies normalized crop geometry to the original image. Raster sources retain
+their native resolution; SVG sources rasterize at the current device size,
+including after enlarging a view. Detection metadata has a 64-source memory cache
+shared by Twitch, notifications, compact media cards and fullscreen media.
+Ambiguous images retain their usual geometry. Set `circular` for avatar masking,
+`removeBlackPadding` for edge-connected near-black padding removal, and
+`detectionEnabled: false` for ordinary app icons. Small avatars add a minimal
+inset to keep mipmap sampling inside the detected frame. Source files and stored
+notification images remain unchanged. Active views retain their metadata after
+cache eviction; closed or replaced views cancel pending analysis. There is no
+idle analysis timer. Keep asynchronous loading at the call site when needed.
+Masked display layers and their masks render at device resolution. Preserve
+fractional mask alpha with `maskThresholdMin: 0.5` and `maskSpreadAtMin: 1.0`;
+MultiEffect's sharp defaults discard the circle's antialiased edge coverage.
+Live captures use `UI.ScaledScreencopyView`, which generates
 smooth mipmaps through a source-resolution layer even during parent transforms.
 Live capture pauses when its view or containing window is hidden.
-Generated image masks use `UI.ScaledTexture`. All three components read smooth
+Generated image masks use `UI.ScaledTexture`. These components read smooth
 filtering and mipmap settings from the shared `UI.TextureSettings` singleton. Use these shared
 components for new images and captures rather than duplicating their settings.
+
+`bash tests/images/crops.sh` checks synthetic frame detection, rejection of
+ambiguous shapes, shared cache reuse, original raster resolution, vector resizing,
+source replacement, disposed requests and black-padding compatibility. It requires
+ImageMagick and Qt's QML test runner. `bash tests/images/crops.sh --wayland` also
+checks rendered GPU pixels for circular alpha, retained interior details and
+small-avatar mipmap fringes. Native fixtures must run sequentially. Set
+`CROP_TEST_SCREENSHOT` to save the synthetic composed preview. Offscreen checks
+cover geometry and lifecycle; actual GPU masks require the Wayland run.
+Set `QT_SCALE_FACTOR=2` on either command to exercise high-DPI sampling and masks.
 
 Panel-only polling runs while a panel is open and stops when its last instance
 closes. Recent files and pinned-file existence checks share that lifecycle.
@@ -404,6 +430,8 @@ entry and slide cancellation, Alt+F4, and a deliberately stalled closing animati
 the cleanup deadline. It also checks pause/mute gates, saved effects, player
 removal and disabled animations. Set `MEDIA_FULLSCREEN_SCREENSHOT` to save a
 preview, or `MEDIA_FULLSCREEN_TRACE=1` for fixture phase logging.
+Set `MEDIA_FULLSCREEN_RING_FIXTURE=1` to exercise shared frame trimming and
+device-resolution SVG rendering in the fullscreen artwork slot.
 GPU checks also verify that fresh audio levels request a frame without an ongoing
 animation, reach the band texture, interpolate to intermediate pixels, and stop
 interpolating on pause.

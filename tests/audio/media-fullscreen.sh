@@ -16,6 +16,11 @@ export XDG_DATA_HOME="$test_dir/data" XDG_CACHE_HOME="$test_dir/cache"
 cat > "$test_dir/art.svg" <<'SVG'
 <svg xmlns="http://www.w3.org/2000/svg" width="520" height="520"><defs><linearGradient id="g" x2="1" y2="1"><stop stop-color="#287ea8"/><stop offset="1" stop-color="#cb7340"/></linearGradient></defs><rect width="520" height="520" fill="url(#g)"/><circle cx="260" cy="260" r="150" fill="#152730"/><circle cx="260" cy="260" r="46" fill="#73a3c1"/></svg>
 SVG
+if [[ ${MEDIA_FULLSCREEN_RING_FIXTURE:-0} == 1 ]]; then
+cat > "$test_dir/art.svg" <<'SVG'
+<svg xmlns="http://www.w3.org/2000/svg" width="2048" height="2048"><rect width="2048" height="2048" fill="#8020c0"/><circle cx="1024" cy="1024" r="924" fill="#dd5060" stroke="#00ff00" stroke-width="56"/><rect x="900" y="840" width="248" height="160" fill="black"/></svg>
+SVG
+fi
 export MEDIA_FULLSCREEN_ART="$test_dir/art.svg"
 if [[ ${WAYLAND_DISPLAY:-} != /* ]]; then export WAYLAND_DISPLAY="$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY"; fi
 cat > "$test_dir/shell.qml" <<QML

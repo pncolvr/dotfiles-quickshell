@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Layouts
-import Qt5Compat.GraphicalEffects
 
 import "../../theme/ui" as UI
 import "../../theme"
@@ -25,26 +24,14 @@ Row {
         width: Theme.twitchAvatarSize
         height: width
 
-        UI.ScaledImage {
+        UI.CroppedImage {
             id: avatarImage
             objectName: "twitchAvatar_" + root.user.login
             anchors.fill: parent
             source: root.user.avatar || ""
             fillMode: Image.PreserveAspectCrop
-            visible: false
-        }
-
-        Rectangle {
-            id: avatarMask
-            anchors.fill: parent
-            radius: width / 2
-            visible: false
-        }
-
-        OpacityMask {
-            anchors.fill: parent
-            source: avatarImage
-            maskSource: avatarMask
+            circular: true
+            removeBlackPadding: true
         }
 
         Rectangle {
