@@ -16,13 +16,5 @@ PrivateTopPanelTooltip {
     }
     WlrLayershell.layer: WlrLayer.Top
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
-    TooltipPointerHandler { tooltipWindow: root }
-
-    HoverHandler {
-        onPointChanged: if (hovered) {
-            const pos = parent.mapToGlobal(point.position.x, point.position.y)
-            TooltipService.observePointer(pos.x, pos.y, true)
-        }
-        onHoveredChanged: if (root.visible) TooltipService.setPanelHovered(hovered)
-    }
+    TooltipPointerHandler { objectName: "tooltipPointerHandler"; tooltipWindow: root }
 }

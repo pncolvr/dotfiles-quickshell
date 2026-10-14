@@ -17,6 +17,7 @@ Scope {
     }
     function find(item, name) {
         if (item.objectName === name) return item
+        if (item instanceof UI.ComboSelector && item.choicesObjectName === name) return item.choicesView
         for (const child of item.children ?? []) {
             const found = find(child, name)
             if (found) return found
@@ -35,7 +36,7 @@ Scope {
         events.mouseMove(toggle, toggle.width / 2, toggle.height / 2, 0);
         root.check((toggle.background as Rectangle).color.a === 1, "combo toggle hover stays opaque");
         combo.expanded = true;
-        events.wait(20);
+        events.wait(150);
         const choices = root.find(combo, combo.choicesObjectName) as ListView;
         const option = choices.itemAtIndex(0) as QC.ItemDelegate;
         events.mouseMove(option, option.width / 2, option.height / 2, 0);
@@ -43,9 +44,10 @@ Scope {
         root.check(option.hovered && (option.background as Rectangle).color.a === 1,
             "generic, device and profile dropdown hover rows stay opaque");
         option.forceActiveFocus(Qt.TabFocusReason);
-        root.check(option.visualFocus && (option.background as Rectangle).color.a === 1,
+        root.check(option.activeFocus && (option.background as Rectangle).color.a === 1,
             "keyboard-focused dropdown rows stay opaque");
         combo.expanded = false;
+        events.wait(150);
     }
     QtObject {
         id: mockAudio

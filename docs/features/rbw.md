@@ -291,3 +291,8 @@ bash tests/security/rbw-manager/native.sh
 
 The native check verifies `quickshell-private` in the compositor for search,
 details and editing. All tests live in Quickshell and use Bash/QML.
+
+Folder and item-type dropdowns overlay the list and details without changing their
+layout. The existing-folder selector in New uses the same component. All dropdowns
+render inside the vault's existing `quickshell-private` window, within its content
+and input bounds; opening them creates no additional window.

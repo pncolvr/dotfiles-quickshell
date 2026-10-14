@@ -34,3 +34,5 @@ TextArea 1.0 TextArea.qml
 singleton TextureSettings 1.0 TextureSettings.qml
 TooltipBackground 1.0 TooltipBackground.qml
 WrapperMouseArea 1.0 WrapperMouseArea.qml
+SelectionList 1.0 SelectionList.qml
+SelectionRow 1.0 SelectionRow.qml

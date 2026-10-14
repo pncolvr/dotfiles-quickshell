@@ -495,3 +495,25 @@ secret writes, protected entries, stale baselines, generation, confirmations,
 draft clearing, locking, copy expiry and late results. The optional
 `bash tests/security/rbw-manager/native.sh` checks the manager's private namespace
 through the compositor without accessing the real vault or clipboard.
+
+Shared selection controls use `ComboSelector` for dropdowns and `SelectionList` /
+`SelectionRow` for persistent option lists. Dropdowns use an explicit same-window
+`Popup.Item`, constrained to the nearest `popupContentBounds` host (or the window
+overlay for standalone windows). `TopPanelSurface` supplies these bounds so
+private dropdowns stay in the existing private surface and its input mask.
+Keep `selectedName` bound to application state; `selected(name)` requests a change.
+
+Run `bash tests/qml/selection.sh` and `bash tests/qml/selection.sh --native` to
+check fixed layout, placement outside clipped lists, private window ownership,
+focus restoration, disabled options, keyboard navigation and outside clicks.
+The native test uses synthetic entries and restores the previous focus and pointer.
+Dropdowns animate on opening and dismiss immediately: Qt keeps popup input
+filtering active throughout an exit transition, which can swallow the next click.
+
+`TooltipPointerHandler` combines panel hover with the Qt popup overlay, so
+unpinned tooltips remain open while selecting dropdown options. Its overlay
+observer follows the native window lifetime, including repeated opens. Run
+`bash tests/qml/selection-hover.sh` in a Wayland session for above/below dropdown
+hover, normal dismissal, module switching and private namespace coverage.
+The test uses synthetic devices and entries with deterministic Qt mouse events;
+it does not change audio routing or vault data.

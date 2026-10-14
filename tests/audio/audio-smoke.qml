@@ -24,6 +24,7 @@ Scope {
     }
     function find(item, name) {
         if (item.objectName === name) return item
+        if (item instanceof UI.ComboSelector && item.choicesObjectName === name) return item.choicesView
         for (const child of item.children ?? []) {
             const result = find(child, name)
             if (result) return result
@@ -169,9 +170,10 @@ Scope {
         }
     }
     Timer {
+        id: audioChecks
         interval: 150
         running: true
-        repeat: true
+        repeat: false
         onTriggered: {
             if (root.step === 0) {
                 const playbackLink = {source: browser, target: output, state: PwLinkState.Active}
@@ -199,6 +201,7 @@ Scope {
                 if (screenshot && !root.screenshotTaken) {
                     root.screenshotTaken = true
                     panels.grabToImage(result => result.saveToFile(screenshot))
+                    audioChecks.restart()
                     return
                 }
                 const outputs = root.find(outputPanel, "audioDevices")
@@ -313,6 +316,7 @@ Scope {
                 let choices = root.find(selector, "selectorChoices")
                 choices.forceLayout()
                 choices.itemAtIndex(1).clicked()
+                wheelEvents.wait(150)
                 root.check(backend.playbackApps[0].deviceName === "second-output" && backend.playbackApps[1].deviceName === "output"
                     && backend.defaultOutput === output, "moving one playback app preserves other apps and default")
                 selector = root.find(root.appRow(inputPanel, "process:20"), "appDeviceSelector")
@@ -426,6 +430,7 @@ Scope {
                 Qt.quit()
             }
             root.step++
+            audioChecks.restart()
         }
     }
 }

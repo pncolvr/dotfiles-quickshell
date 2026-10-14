@@ -1,15 +1,15 @@
 pragma ComponentBehavior: Bound
-
 import QtQuick
+import QtQuick.Window
 import QtQuick.Controls as QC
 import "../../"
 import "../" as UI
 
-Column {
+Item {
     id: root
     property var options: []
     property string selectedName: ""
-    property string placeholder: "Choose a device"
+    property string placeholder: "Choose an option"
     property string labelPrefix: ""
     property string hint: ""
     property int hintDelay: 500
@@ -18,15 +18,80 @@ Column {
     property real contentPadding: Theme.controlFieldPadding
     property real optionRowHeight: compact ? controlHeight + Theme.controlSpacing : controlHeight * 2
     property int maxVisibleRows: 5
+    property real spacing: Theme.controlSpacing
     property bool expanded: false
     property string toggleObjectName: "selectorToggle"
     property string choicesObjectName: "selectorChoices"
+    property alias choicesView: choices
+    property alias popup: selectionPopup
     readonly property string selectedDescription: options.find(option => option.name === selectedName)?.description ?? placeholder
-    readonly property color hoverBackground: Qt.alpha(Qt.lighter(Theme.alternateBackground, 1.5), 1)
+    readonly property var nativeWindow: root.Window.window
+    readonly property Flickable scrollHost: findScrollHost()
     signal selected(string name)
-    spacing: Theme.controlSpacing
+    implicitHeight: selector.implicitHeight
     onEnabledChanged: if (!enabled) expanded = false
-
+    onVisibleChanged: if (!visible) expanded = false
+    onExpandedChanged: {
+        if (expanded && enabled && visible && options.length) {
+            selector.forceActiveFocus(Qt.PopupFocusReason)
+            selectionPopup.open()
+        }
+        else { expanded = false; selectionPopup.close() }
+    }
+    onOptionsChanged: if (expanded) {
+        if (!options.length) expanded = false
+        else Qt.callLater(placePopup)
+    }
+    onWidthChanged: if (expanded) placePopup()
+    onHeightChanged: if (expanded) placePopup()
+    function findScrollHost(): Flickable {
+        for (let item = root.parent; item; item = item.parent) {
+            if (item instanceof Flickable) return item as Flickable
+        }
+        return null
+    }
+    function hostBounds(item: var): Item { return item.popupContentBounds ?? null }
+    function contentBounds(): Item {
+        for (let item = root.parent; item; item = item.parent) {
+            const bounds = hostBounds(item)
+            if (bounds) return bounds
+        }
+        return selectionPopup.parent
+    }
+    function placePopup() {
+        if (!selectionPopup.parent) return
+        const bounds = contentBounds()
+        const corner = bounds.mapToItem(selectionPopup.parent, 0, 0)
+        const control = root.mapToItem(selectionPopup.parent, 0, 0)
+        const margin = Theme.selectionPopupPadding
+        const left = corner.x + margin
+        const top = corner.y + margin
+        const right = corner.x + bounds.width - margin
+        const bottom = corner.y + bounds.height - margin
+        const below = Math.max(0, bottom - control.y - root.height - root.spacing)
+        const above = Math.max(0, control.y - root.spacing - top)
+        const desired = Math.min(root.options.length, root.maxVisibleRows) * root.optionRowHeight + selectionPopup.padding * 2
+        const opensAbove = below < desired && above > below
+        selectionPopup.width = Math.max(0, Math.min(root.width, right - left))
+        selectionPopup.height = Math.min(desired, Math.max(0, opensAbove ? above : below))
+        selectionPopup.x = Math.round(Math.max(left, Math.min(control.x, right - selectionPopup.width)))
+        const idealY = opensAbove ? control.y - root.spacing - selectionPopup.height : control.y + root.height + root.spacing
+        selectionPopup.y = Math.round(Math.max(top, Math.min(idealY, bottom - selectionPopup.height)))
+        selectionPopup.transformOrigin = opensAbove ? Item.Bottom : Item.Top
+    }
+    Connections {
+        target: root.nativeWindow
+        function onVisibleChanged() { if (!root.nativeWindow.visible) root.expanded = false }
+        function onWidthChanged() { if (root.expanded) root.placePopup() }
+        function onHeightChanged() { if (root.expanded) root.placePopup() }
+    }
+    Connections {
+        target: root.scrollHost
+        ignoreUnknownSignals: true
+        function onContentXChanged() { root.expanded = false }
+        function onContentYChanged() { root.expanded = false }
+        function onMovingChanged() { if (root.scrollHost.moving) root.expanded = false }
+    }
     QC.Button {
         id: selector
         UI.PointerFocus {}
@@ -39,11 +104,14 @@ Column {
         opacity: enabled ? 1 : 0.5
         Accessible.name: root.hint || root.labelPrefix + root.selectedDescription
         onClicked: root.expanded = !root.expanded
+        Keys.onPressed: event => {
+            if (event.key === Qt.Key_Down || event.key === Qt.Key_Up) { root.expanded = true; event.accepted = true }
+        }
         background: Rectangle {
-            color: selector.hovered ? root.hoverBackground : Theme.alternateBackground
+            color: selector.hovered ? Theme.selectionHoverBackground : Theme.selectionBackground
             radius: Theme.iconButtonRadius
             border.width: 1
-            border.color: selector.visualFocus || root.expanded ? Theme.accent : Theme.empty
+            border.color: selector.visualFocus || root.expanded ? Theme.accent : Theme.selectionBorder
         }
         contentItem: Item {
             UI.ColumnText {
@@ -58,81 +126,51 @@ Column {
             UI.IconText {
                 id: arrow
                 anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
                 text: Theme.chevronDownIcon
                 rotation: root.expanded ? 180 : 0
-                color: Theme.inactive
+                color: root.expanded ? Theme.accent : Theme.inactive
             }
         }
-        UI.HoverTooltip { hoverTarget: selector; text: root.hint; delay: root.hintDelay }
-        // Cover the content and padding uniformly, while letting the button handle clicks.
-        MouseArea {
-            objectName: root.toggleObjectName + "Cursor"
-            anchors.fill: parent
-            z: 1
-            enabled: selector.enabled
-            acceptedButtons: Qt.NoButton
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-        }
+        UI.HoverTooltip { hoverTarget: selector; text: root.expanded ? "" : root.hint; delay: root.hintDelay }
+        HoverHandler { cursorShape: Qt.PointingHandCursor }
     }
-
-    ListView {
-        id: choices
-        objectName: root.choicesObjectName
-        visible: root.expanded
-        width: parent.width
-        height: Math.min(contentHeight, rowHeight * root.maxVisibleRows)
-        readonly property int rowHeight: root.optionRowHeight
-        model: root.options
-        clip: true
-        boundsBehavior: Flickable.StopAtBounds
-        delegate: QC.ItemDelegate {
-            id: option
-            HoverHandler { id: optionHover; cursorShape: Qt.PointingHandCursor }
-            UI.PointerFocus {}
-            required property var modelData
-            width: choices.width
-            height: choices.rowHeight
-            padding: root.contentPadding
-            hoverEnabled: true
-            enabled: modelData.available !== false
-            opacity: enabled ? 1 : 0.4
-            Accessible.name: modelData.description
-            onClicked: {
-                root.expanded = false
-                if (modelData.name !== root.selectedName) root.selected(modelData.name)
-            }
-            background: Rectangle {
-                radius: Theme.iconButtonRadius
-                color: optionHover.hovered || option.hovered || option.visualFocus ? root.hoverBackground : Theme.background
-            }
-            contentItem: Item {
-                UI.ColumnText {
-                    width: parent.width - mark.width - root.spacing
-                    anchors.verticalCenter: parent.verticalCenter
-                    textFormat: Text.PlainText
-                    text: option.modelData.description
-                    wrapMode: Text.Wrap
-                    maximumLineCount: 2
-                    elide: Text.ElideRight
-                    color: option.modelData.name === root.selectedName ? Theme.accent : Theme.text
-                }
-                UI.IconText {
-                    id: mark
-                    anchors.right: parent.right
-                    text: Theme.checkIcon
-                    visible: option.modelData.name === root.selectedName
-                    color: Theme.accent
-                }
-            }
-            MouseArea {
-                anchors.fill: parent
-                enabled: option.enabled
-                acceptedButtons: Qt.NoButton
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-            }
+    QC.Popup {
+        id: selectionPopup
+        parent: QC.Overlay.overlay
+        enabled: root.expanded
+        popupType: QC.Popup.Item
+        padding: Theme.selectionPopupPadding
+        modal: false
+        dim: false
+        focus: true
+        margins: 0
+        closePolicy: QC.Popup.CloseOnEscape | QC.Popup.CloseOnPressOutside
+        onAboutToShow: { root.placePopup(); choices.revealSelected() }
+        onClosed: root.expanded = false
+        enter: Transition {
+            NumberAnimation { property: "opacity"; from: 0; to: 1; duration: Theme.selectionAnimationDuration }
+            NumberAnimation { property: "scale"; from: 0.98; to: 1; duration: Theme.selectionAnimationDuration; easing.type: Easing.OutCubic }
         }
-        QC.ScrollBar.vertical: UI.ScrollBar {}
+        // Popup.Item keeps filtering input during an exit transition. Close
+        // immediately so a second click reaches the newly uncovered control.
+        exit: Transition {}
+        background: Rectangle {
+            color: Theme.selectionBackground
+            radius: Theme.iconButtonRadius
+            border.width: 1
+            border.color: Theme.selectionBorder
+        }
+        contentItem: UI.SelectionList {
+            id: choices
+            focus: true
+            objectName: root.choicesObjectName
+            options: root.options
+            selectedName: root.selectedName
+            rowHeight: root.optionRowHeight
+            contentPadding: root.contentPadding
+            wrapDescriptions: !root.compact
+            onSelected: name => { root.expanded = false; if (name !== root.selectedName) root.selected(name) }
+        }
     }
 }

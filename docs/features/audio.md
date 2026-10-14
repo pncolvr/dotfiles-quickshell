@@ -219,3 +219,9 @@ the source name or stream name, falling back to app metadata and then **Video
 capture**. Known webcam sources are excluded. The panel has no capture controls.
 
 [Documentation](../README.md)
+
+Device and profile selectors open floating, framed dropdowns without resizing
+the audio panel. Options scroll within the available panel space and open above
+the control when necessary. Arrow keys navigate available options, Enter applies,
+and Escape dismisses the dropdown. Media-effect lists share the same row styling
+and selection behavior while remaining permanently visible.

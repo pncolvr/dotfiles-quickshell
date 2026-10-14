@@ -12,6 +12,8 @@ Item {
     property alias contentX: panel.x
     property alias contentWidth: panel.width
     property alias contentHeight: panel.height
+    // Same-window popups must stay inside the panel's visible input region.
+    readonly property Item popupContentBounds: panel
     property real backgroundOpacity: 1
     readonly property int shadowBlurRadius: Math.max(2, Math.min(64, Theme.tooltipShadowBlurRadius))
     readonly property real shadowBottomPadding: Theme.tooltipShadowEnabled

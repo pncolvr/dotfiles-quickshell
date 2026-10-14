@@ -16,7 +16,7 @@ TopPanelTooltip {
         : TooltipService.source?.tooltipKeyboardFocus
         ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
     TooltipFocusHandler { id: focusHandler; tooltipWindow: root; panel: loader.item }
-    TooltipPointerHandler { tooltipWindow: root }
+    TooltipPointerHandler { objectName: "tooltipPointerHandler"; tooltipWindow: root }
 
     contentWidth: loader.implicitWidth + Theme.tooltipPaddingWidth * 2
     contentHeight: loader.implicitHeight + Theme.tooltipPaddingHeight * 2
@@ -33,13 +33,5 @@ TopPanelTooltip {
         anchors.centerIn: parent
         sourceComponent: TooltipService.content
         onLoaded: if (TooltipService.keyboardActive) focusHandler.requestFocus()
-    }
-
-    HoverHandler {
-        onPointChanged: if (hovered) {
-            const pos = parent.mapToGlobal(point.position.x, point.position.y)
-            TooltipService.observePointer(pos.x, pos.y, true)
-        }
-        onHoveredChanged: if (root.visible) TooltipService.setPanelHovered(hovered)
     }
 }

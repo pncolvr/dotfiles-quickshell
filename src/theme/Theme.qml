@@ -62,6 +62,14 @@ Item {
   readonly property int tooltipPaddingHeight: 10
   readonly property int tooltipMinWidth: 80
 
+  // Shared dropdown and selection-list surfaces.
+  readonly property color selectionBackground: "#1b1b1b"
+  readonly property color selectionHoverBackground: "#30343a"
+  readonly property color selectionSelectedBackground: "#273441"
+  readonly property color selectionBorder: "#454a50"
+  readonly property int selectionPopupPadding: 4
+  readonly property int selectionAnimationDuration: 120
+
   // Shared actions (Font Awesome).
   readonly property string addIcon: "" // plus
   readonly property string cancelIcon: "" // xmark
