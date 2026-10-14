@@ -74,7 +74,8 @@ Item {
   readonly property string eyeIcon: "" // eye: reveal a secret
   readonly property string eyeSlashIcon: "" // eye-slash: mask a secret
   readonly property string folderOpenIcon: "" // folder-open: browse for a folder
-  readonly property string refreshIcon: "" // refresh
+  readonly property string lockIcon: "" // lock: lock the vault
+  readonly property string refreshIcon: "" // arrows-rotate: refresh / sync
   readonly property string retryIcon: "" // arrows-rotate
   readonly property string chevronRightIcon: "" // chevron-right: collapsed
   readonly property string chevronLeftIcon: "\uf053" // chevron-left

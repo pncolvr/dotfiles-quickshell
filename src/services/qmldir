@@ -41,3 +41,4 @@ singleton ProjectRepository 1.0 storage/ProjectRepository.qml
 singleton ProjectService 1.0 projects/ProjectService.qml
 singleton DirectoryRepository 1.0 storage/DirectoryRepository.qml
 singleton DirectoryService 1.0 files/DirectoryService.qml
+singleton RbwService 1.0 vault/RbwService.qml

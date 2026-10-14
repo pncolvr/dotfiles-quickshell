@@ -159,6 +159,15 @@ Scope {
     }
     IpcHandler {
         target: "pickertest"
+        function launchTestApplication(): void {
+            PickerService.apps()
+            const index = PickerService.items.findIndex(item => item.result === "picker-test")
+            root.check(index >= 0, "test application is available")
+            if (index < 0) return
+            PickerService.currentIndex = index
+            PickerService.accept(false, false)
+        }
+
         function snapshot(): string { return JSON.stringify({visible:PickerService.visible,mode:PickerService.mode,
             searchPending:PickerService.searchPending,query:PickerService.query,items:PickerService.items,filtered:PickerService.filteredItems,currentIndex:PickerService.currentIndex,
             selected:PickerService.selectedIds,canAccept:PickerService.canAccept,acceptLabel:PickerService.acceptLabel,

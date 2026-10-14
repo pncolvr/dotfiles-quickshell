@@ -40,10 +40,10 @@ Column {
         Accessible.name: root.hint || root.labelPrefix + root.selectedDescription
         onClicked: root.expanded = !root.expanded
         background: Rectangle {
-            color: selector.hovered ? root.hoverBackground : Theme.background
+            color: selector.hovered ? root.hoverBackground : Theme.alternateBackground
             radius: Theme.iconButtonRadius
-            border.width: selector.visualFocus ? 1 : 0
-            border.color: Theme.accent
+            border.width: 1
+            border.color: selector.visualFocus || root.expanded ? Theme.accent : Theme.empty
         }
         contentItem: Item {
             UI.ColumnText {
@@ -58,7 +58,8 @@ Column {
             UI.IconText {
                 id: arrow
                 anchors.right: parent.right
-                text: root.expanded ? Theme.chevronDownIcon : Theme.chevronRightIcon
+                text: Theme.chevronDownIcon
+                rotation: root.expanded ? 180 : 0
                 color: Theme.inactive
             }
         }

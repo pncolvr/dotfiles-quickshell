@@ -51,7 +51,8 @@ qs ipc call launcher clipboard
 ```
 
 Applications use native desktop-entry metadata and `gtk-launch`, including terminal
-applications. Rows show only application names. Recent launches are ordered first. Window modes reuse `WindowService`;
+applications. Launches strip the IDE-only `ELECTRON_RUN_AS_NODE` variable so
+Electron applications start normally even if the shell inherited it. Rows show only application names. Recent launches are ordered first. Window modes reuse `WindowService`;
 Enter focuses a window, Ctrl+Enter focuses without dismissing, and two-window lists
 switch immediately to the previous window. Focusing a grouped window activates
 its tab using live group membership. Current-workspace mode considers tiled
@@ -472,3 +473,18 @@ timeout and client death clear the field. The Bash helpers `secret_prompt.sh` an
 jq and streamed to stdout without putting the password in command arguments.
 JSON menus can set `showPrompt: true` to always display their destination label.
 See [rbw integration](rbw.md) for setup, limitations and cross-repository tests.
+
+## Private windows and vault manager
+
+`UI.PrivatePanelWindow` owns the fixed `quickshell-private` namespace.
+`PrivateTopPanelTooltip` combines it with the shared `TopPanelSurface` layout;
+`PrivateTooltipWindow` adds tooltip placement, and `PrivatePickerWindow` uses the
+same picker content/focus behavior as `PickerWindow`. The ordinary and private
+hosts are separate because a connected Wayland surface cannot change namespace.
+Picker modes select content; JSON `private: true` routes generic menus into the
+private host. Sensitive modules use a private window directly.
+
+**Meta+W** opens the private [rbw vault manager](rbw.md#vault-manager), with a
+single searchable view, folder/type filters and New/Edit/Delete actions. A single
+click opens details; reveal/copy stay explicit. Escape discards a draft before
+closing. Background lock checks do not interrupt the controls or move the list.

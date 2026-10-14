@@ -15,6 +15,7 @@ ComboSelector 1.0 components/ComboSelector.qml
 PointerFocus 1.0 components/PointerFocus.qml
 EditorActions 1.0 components/EditorActions.qml
 InputField 1.0 components/InputField.qml
+SecretField 1.0 components/SecretField.qml
 FolderPathField 1.0 components/FolderPathField.qml
 ManagementRow 1.0 components/ManagementRow.qml
 ManagementActions 1.0 components/ManagementActions.qml
@@ -36,3 +37,4 @@ BarIcon 1.0 components/BarIcon.qml
 PulseIconText 1.0 PulseIconText.qml
 TooltipArea 1.0 TooltipArea.qml
 StatusBadge 1.0 StatusBadge.qml
+PrivatePanelWindow 1.0 components/PrivatePanelWindow.qml

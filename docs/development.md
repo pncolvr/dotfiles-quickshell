@@ -380,3 +380,12 @@ Provider checks include recording cancellation at each picker and literal shell
 characters in RDP credentials, recording paths, and audio devices.
 
 [Documentation](README.md)
+
+### rbw manager checks
+
+`bash tests/security/rbw-manager/run.sh` exercises the Bash backend and actual
+QML manager panel with synthetic rbw/clipboard processes. It covers stdin-only
+secret writes, protected entries, stale baselines, generation, confirmations,
+draft clearing, locking, copy expiry and late results. The optional
+`bash tests/security/rbw-manager/native.sh` checks the manager's private namespace
+through the compositor without accessing the real vault or clipboard.

@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Layouts
-import QtQuick.Controls as QC
 import "../../../theme"
 import "../../../theme/ui" as UI
 
@@ -20,6 +19,7 @@ RowLayout {
     signal draftChanged(string name, string token)
 
     function begin(name, token) {
+        tokenField.revealed = false
         nameField.text = name
         tokenField.text = token
         nameField.forceActiveFocus()
@@ -30,7 +30,7 @@ RowLayout {
             submitted(nameField.text, tokenField.text)
     }
 
-    function clear() { nameField.clear(); tokenField.clear() }
+    function clear() { nameField.clear(); tokenField.clear(); tokenField.revealed = false }
     Component.onDestruction: { destroying = true; clear() }
 
     UI.InputField {
@@ -47,14 +47,16 @@ RowLayout {
         Keys.onEscapePressed: root.cancelled()
     }
 
-    UI.InputField {
+    UI.SecretField {
         id: tokenField
         objectName: "totpTokenField"
         Layout.fillWidth: true
         Layout.minimumWidth: 0
         placeholderText: "secret or otpauth URI"
         maximumLength: 4096
-        echoMode: QC.TextField.Password
+        pauseTooltipDismissal: true
+        revealHint: "Show TOTP secret"
+        hideHint: "Hide TOTP secret"
         enabled: !root.busy
         Accessible.name: "TOTP secret or URI"
         onAccepted: root.submit()

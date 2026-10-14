@@ -83,6 +83,10 @@ field to masked and clears it. Secret prompts use a separate window in the
 value to stdout, without appending a newline; cancellation exits 1 and errors or
 timeouts exit 2. Secret values must never be passed in arguments.
 
+The prompt and vault manager share `UI.SecretField`: the same framed input with
+an inset eye button, including masking and reveal behavior. The multiline notes
+editor uses the same border and inset eye styling.
+
 `secret_prompt.sh` reads bounded JSON replies through a private FIFO and streams
 the decoded value through jq; secrets never enter jq arguments or shell command
 substitution. Exact UTF-8 output, including trailing newlines, is preserved.
@@ -192,4 +196,94 @@ peer checks and Qt/Quickshell IPC. Disposable profiles and artifacts stay in
 private temporary directories. Other repository locations can be selected with
 `QUTE_RBW_SCRIPTS_ROOT` and `QUTE_RBW_BROWSER_ROOT`.
 
-Vault management (add/edit/generate/delete) is a later implementation stage.
+Vault management is available through the Quickshell manager described below.
+
+## Vault manager
+
+**Meta+W** toggles the Quickshell vault manager. Bitwarden Desktop remains
+installed with its existing window rules; launch it manually for advanced edits.
+The manager calls rbw directly. The browser userscript remains responsible for
+qutebrowser autofill; the independent TOTP module is unchanged.
+
+The manager has one searchable view with folder/type filters. It opens on Logins;
+choose Notes or another supported type in the combo to browse those separately.
+Rows show the entry name and username/folder without an item-type label. Search covers entry
+names, usernames, websites and folders using the launcher matching settings.
+The first entry is selected and its masked details open when the list loads.
+Details follow the selected search result and arrow-key navigation. Empty search
+results clear the details pane; pending reads cannot restore an earlier selection.
+During an entry switch, the previous entry stays visible with its secrets masked
+and controls disabled until the new entry loads, keeping the pane and action row stable. Quick reads do not
+flash a status message; reads lasting over 200 ms show Working. Failed reads,
+locking and closing clear the displayed entry.
+Single-click another entry to open its details; Enter remains available for keyboard
+navigation. New sits to the right of Lock in the top row and remains visible but
+disabled while editing or confirming deletion. Edit and Delete actions are available in this same view. Copy and
+reveal remain explicit actions.
+
+**New login** accepts a title, username, password, website URLs (one
+per line), notes and an optional folder. Choose an existing folder or type a new
+name; rbw creates a missing folder when adding the login. Generation previews a
+password in the masked field and never saves until **Save** is pressed.
+
+Existing logins support password/notes edits; existing secure notes support content
+edits. Existing usernames, titles, URLs and folder assignments remain read-only.
+SSH keys, cards and identities expose supported fields for explicit reveal/copy;
+rbw cannot create or edit these types. Delete requires confirmation naming the
+entry. The manager never deletes/recreates an entry to emulate unsupported edits.
+Use Desktop for secure-note/SSH creation, metadata changes, folder moves and
+folder administration.
+
+Passwords and notes start hidden. Use the eye to reveal; notes must be revealed
+before editing. The form uses the shared icon actions at the bottom-right inside
+the pane, replacing Edit/Delete with Cancel/Apply while editing, with
+shortcut hints on a separate footer line. Escape discards the current draft or deletion confirmation before
+closing the manager. An in-flight write continues if the manager closes; reopening
+waits for it to finish. Closing or locking clears the UI's secret state, and late
+responses cannot restore it. The top-right **Sync / unlock** button pulls remote
+changes and opens the private pinentry when an unlock is needed, then refreshes
+the entries. **Lock** locks the shared rbw agent. The
+configured 15-minute rbw timeout still applies; the manager checks agent lock state
+while open and clears details/drafts when it detects a lock (up to three seconds).
+Background checks keep the controls enabled. Status feedback appears below the
+panes, aligned to the right, replacing shortcut hints while a message is
+shown. Longer errors wrap into the space freed by the hints; short notices clear
+after five seconds. Only normal control spacing remains below the framed Folder
+and Type dropdowns.
+
+All manager views use `PrivateTopPanelTooltip`, backed by the shared
+`UI.PrivatePanelWindow`. That component fixes `quickshell-private` at window
+construction and is also used by private tooltip/picker hosts and notification
+popups. The manager always uses a private window without requiring a request flag.
+
+Passwords/notes enter `rbw add`/`edit` through stdin, bypassing its external editor
+and plaintext temporary file. New-entry title, username, URLs and folder metadata
+are CLI arguments because rbw requires that interface; these are visible to local
+process inspection. Backend output/errors are captured privately, with fixed
+messages for failures. Master-password-protected or unverifiable entries remain
+blocked. This supports rbw 1.15.x and deliberately validates its encrypted-cache
+policy schema before/after fetching selected details.
+
+rbw's editor parser removes leading blank note lines, trailing newlines and lines
+beginning `#`, and normalizes CRLF. The manager rejects edits it cannot preserve
+exactly; use Desktop for those notes. Before edits/deletion it syncs and compares
+the fresh item against its original baseline, including fields omitted from the
+UI. This detects stale drafts but rbw exposes no atomic compare-and-swap, so
+concurrent clients can still race. Failed writes may have reached the server;
+refresh and inspect before retrying. Creation/deletion is never automatically retried.
+
+Explicit copies use a foreground `wl-copy --sensitive` owner: Quickshell's history
+capture drops sensitive selections before writing payload files. The owner expires
+after 30 seconds and exits on replacement; expiry stops only that owner rather
+than clearing a newer clipboard selection. Copy lifetime continues after closing
+the manager. Other clipboard applications control their own history policies.
+
+Manager verification uses only synthetic entries and mock writes/clipboard commands:
+
+```sh
+bash tests/security/rbw-manager/run.sh
+bash tests/security/rbw-manager/native.sh
+```
+
+The native check verifies `quickshell-private` in the compositor for search,
+details and editing. All tests live in Quickshell and use Bash/QML.

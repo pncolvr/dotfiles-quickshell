@@ -7,6 +7,7 @@ import "src"
 import "src/modules/system/notifications"
 import "src/modules/system/totp"
 import "src/modules/launcher"
+import "src/modules/vault"
 import "src/modules/system/audio"
 
 Scope {
@@ -22,7 +23,8 @@ Scope {
   NotificationManagerWindow {}
   TotpWindow {}
   PickerWindow {}
-  PickerWindow { secretWindow: true }
+  PrivatePickerWindow {}
+  VaultWindow {}
   ExposeWindow {}
   MediaFullscreenWindow {}
 }

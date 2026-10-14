@@ -16,7 +16,9 @@ in KeePassXC. Hover the key icon, click **+**, enter a name and a Base32 seed or
 `otpauth://totp/…` URI, then click **+** again. Copy a seed from Bitwarden manually;
 this module uses its own keyring entries and does not synchronize with Bitwarden.
 The pencil edits both fields, **✓** saves, and **×** cancels. Enter submits the token
-field; Escape cancels. The trash button deletes the entry immediately.
+field; Escape cancels. The secret uses the shared secure-field style, masked by
+default with an inset eye button to reveal it. Opening or clearing an editor
+resets the field to masked. The trash button deletes the entry immediately.
 Click the key icon to pin the panel open; click again to return to hover behavior.
 The icon uses the accent color while pinned.
 Press **Meta+I**, then **P**, or run `qs ipc call bar open totp`, to open

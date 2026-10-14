@@ -1,5 +1,6 @@
 import QtQuick
 import Quickshell
+import "../../src/theme/ui" as UI
 import "../../src/modules/system/totp"
 import "../../src/services"
 
@@ -34,6 +35,20 @@ Scope {
         ticker.stop()
         Qt.quit()
         return false
+    }
+
+    function checkSecret(editor) {
+        const field = root.find(editor, "totpTokenField") as UI.SecretField
+        if (!root.check(field && field.echoMode === TextInput.Password && field.passwordMaskDelay === 0,
+            "TOTP editor secret must start masked")) return false
+        const value = field.text
+        const button = root.find(field, "revealSecret") as UI.ActionButton
+        button.clicked()
+        if (!root.check(field.revealed && field.echoMode === TextInput.Normal && field.text === value,
+            "TOTP editor reveal changed the secret")) return false
+        button.clicked()
+        return root.check(!field.revealed && field.echoMode === TextInput.Password && field.text === value,
+            "TOTP editor did not mask again")
     }
 
     FloatingWindow {
@@ -98,6 +113,7 @@ Scope {
                 if (!root.receivedEditor || TotpService.busy) return
                 root.draftField = root.find(popup, "totpNameField")
                 if (!root.check(root.draftField && root.draftField.text === "Beta", "edit prefill")) return
+                if (!root.checkSecret(root.find(popup, "totpEditor"))) return
                 root.draftField.text = "Draft preserved"
                 popup.searchText = "no matching name"
                 root.find(popup, "totpList").forceLayout()
@@ -147,6 +163,7 @@ Scope {
                 const editor = root.find(popup, "totpEditor")
                 if (!editor) return
                 if (!root.check(popup.height === root.previousHeight, "add form resized popup")) return
+                if (!root.checkSecret(editor)) return
                 root.find(editor, "totpNameField").text = "Alpha test"
                 root.find(editor, "totpTokenField").text = "JBSWY3DPEHPK3PXP"
                 editor.submit()

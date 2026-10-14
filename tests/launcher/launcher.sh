@@ -22,7 +22,16 @@ cat > "$test_dir/bin/ydotool" <<'MOCK'
 #!/usr/bin/env bash
 printf '%s\n' "$*" > "$PICKER_COPY_TEST_DIR/injected"
 MOCK
-chmod +x "$test_dir/bin/wl-copy" "$test_dir/bin/ydotool"
+cat > "$test_dir/bin/gtk-launch" <<'MOCK'
+#!/usr/bin/env bash
+printf '%s\n' "$@" > "$PICKER_COPY_TEST_DIR/app-arguments"
+if [[ -v ELECTRON_RUN_AS_NODE ]]; then
+    printf 'inherited\n' > "$PICKER_COPY_TEST_DIR/app-environment"
+else
+    printf 'unset\n' > "$PICKER_COPY_TEST_DIR/app-environment"
+fi
+MOCK
+chmod +x "$test_dir/bin/wl-copy" "$test_dir/bin/ydotool" "$test_dir/bin/gtk-launch"
 export PICKER_COPY_TEST_DIR="$test_dir" PATH="$test_dir/bin:$PATH"
 mkdir -p "$test_dir/data/applications"
 cat > "$test_dir/data/applications/picker-test.desktop" <<'DESKTOP'
@@ -52,7 +61,7 @@ export QS_PICKER_CONFIG="$test_dir" QS_PICKER_TIMEOUT=4
 picker="$test_dir/src/services/launcher/launcher.sh"
 ipc() { qs ipc -p "$test_dir" "$@"; }
 start() {
-    qs -p "$test_dir" > "$test_dir/log" 2>&1 & shell_pid=$!
+    ELECTRON_RUN_AS_NODE=1 qs -p "$test_dir" > "$test_dir/log" 2>&1 & shell_pid=$!
     for ((try=0;try<80;try++)); do
         if rg -q 'PASS: picker' "$test_dir/log"; then return; fi
         if ! kill -0 "$shell_pid" 2>/dev/null; then cat "$test_dir/log"; exit 1; fi
@@ -85,6 +94,14 @@ wait_client() {
     [[ $client_exit == "$1" ]] || { cat "$test_dir/client-error"; printf 'Unexpected client exit: %s\n' "$client_exit"; exit 1; }
 }
 start
+ipc call pickertest launchTestApplication
+for ((try=0;try<100;try++)); do
+    [[ -f $test_dir/app-environment ]] && break
+    sleep 0.02
+done
+[[ $(<"$test_dir/app-environment") == unset ]]
+[[ $(<"$test_dir/app-arguments") == picker-test ]]
+printf 'PASS: application launch strips inherited Electron Node mode and preserves the desktop entry ID\n'
 history_plan=$(sqlite3 "$test_dir/data/quickshell.db" 'EXPLAIN QUERY PLAN SELECT id, mime, kind, bytes, text, updated_at, pinned FROM clipboard ORDER BY updated_at DESC, id DESC;')
 [[ $history_plan == *clipboard_updated_at* && $history_plan != *'TEMP B-TREE'* ]]
 ipc call pickertest windowFocusCommand 0x2 > "$test_dir/focus-window.lua"

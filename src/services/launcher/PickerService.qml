@@ -401,7 +401,7 @@ Singleton {
             usage[item.id] = (usage[item.id] || 0) + 1
             PreferencesRepository.setValue("launcher.usage", usage)
             close()
-            Quickshell.execDetached(["gtk-launch", item.result])
+            Quickshell.execDetached(["env", "-u", "ELECTRON_RUN_AS_NODE", "gtk-launch", item.result])
             break
           }
           case PickerService.Mode.Windows: {

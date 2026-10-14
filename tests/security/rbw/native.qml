@@ -25,7 +25,7 @@ Scope {
     }
     function fail() { console.error("FAIL: native private secret picker"); Qt.quit() }
     PickerWindow { id: ordinaryWindow }
-    PickerWindow { id: pickerWindow; secretWindow: true }
+    PrivatePickerWindow { id: pickerWindow }
     Process {
         id: client
         command: ["bash", Quickshell.shellPath("src/services/launcher/secret_prompt.sh"), "--prompt", "Synthetic rbw preview", "--description", "Testing the masked prompt; no vault access"]

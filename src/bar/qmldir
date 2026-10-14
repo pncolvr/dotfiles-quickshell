@@ -8,3 +8,5 @@ TooltipFocusHandler 1.0 TooltipFocusHandler.qml
 TooltipPointerHandler 1.0 TooltipPointerHandler.qml
 SubmapWindow 1.0 SubmapWindow.qml
 AlertWindow 1.0 AlertWindow.qml
+TopPanelSurface 1.0 TopPanelSurface.qml
+PrivateTopPanelTooltip 1.0 PrivateTopPanelTooltip.qml

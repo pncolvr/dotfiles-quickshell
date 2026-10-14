@@ -8,11 +8,10 @@ import Quickshell.Hyprland
 import Quickshell.Wayland
 import "../../../theme"
 import "../../../theme/ui" as UI
-import "../../../config"
 import "../../../services"
 
 // qmllint disable uncreatable-type
-PanelWindow {
+UI.PrivatePanelWindow {
     // qmllint enable uncreatable-type
     id: root
     property var lastScreen: null
@@ -46,7 +45,6 @@ PanelWindow {
         targetScreen?.width || 500))
     implicitHeight: Math.min(stack.height + contentPaddingTop + contentPaddingBottom,
         Math.max(1, (targetScreen?.height || 1080) - Theme.barHeight))
-    WlrLayershell.namespace: Config.screenShareHiddenNamespace
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
     mask: Region {

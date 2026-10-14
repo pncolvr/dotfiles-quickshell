@@ -8,7 +8,7 @@ Item {
     id: root
     required property var picker
     property bool backgroundVisible: false
-    property bool secretRevealed: false
+    property alias secretRevealed: secret.revealed
     readonly property bool nativeDialogOpen: false
     implicitWidth: Theme.pickerWidth
     implicitHeight: content.implicitHeight + Theme.tooltipPaddingWidth * 2
@@ -59,39 +59,13 @@ Item {
             textFormat: Text.PlainText
             wrapMode: Text.Wrap
         }
-        UI.InputField {
+        UI.SecretField {
             id: secret
             objectName: "secretInput"
             width: parent.width
-            pauseTooltipDismissal: false
-            echoMode: root.secretRevealed ? TextInput.Normal : TextInput.Password
-            rightPadding: reveal.width + Theme.controlFieldPadding * 2
-            passwordMaskDelay: 0
-            inputMethodHints: Qt.ImhSensitiveData | Qt.ImhHiddenText | Qt.ImhNoPredictiveText
+            revealHint: "Show password"
+            hideHint: "Hide password"
             Accessible.name: root.picker.prompt
-            Keys.onShortcutOverride: event => {
-                if (event.matches(StandardKey.Copy) || event.matches(StandardKey.Cut)) event.accepted = true
-            }
-            Keys.onPressed: event => {
-                if (event.matches(StandardKey.Copy) || event.matches(StandardKey.Cut)) event.accepted = true
-            }
-            UI.ActionButton {
-                id: reveal
-                objectName: "revealSecret"
-                anchors.right: parent.right
-                anchors.rightMargin: Theme.controlFieldPadding
-                anchors.verticalCenter: parent.verticalCenter
-                implicitWidth: Theme.controlHeight
-                implicitHeight: parent.height - 4
-                glyph: root.secretRevealed ? Theme.eyeSlashIcon : Theme.eyeIcon
-                hint: root.secretRevealed ? "Hide password" : "Show password"
-                checkable: true
-                checked: root.secretRevealed
-                onClicked: {
-                    root.secretRevealed = !root.secretRevealed
-                    secret.forceActiveFocus()
-                }
-            }
             Keys.onReturnPressed: root.accept()
             Keys.onEnterPressed: root.accept()
             Keys.onEscapePressed: { root.clearSecret(); root.picker.close() }
