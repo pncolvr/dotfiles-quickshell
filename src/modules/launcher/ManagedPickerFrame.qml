@@ -23,6 +23,8 @@ Item {
     required property Item manageItem
     required property Item footerItem
     property var managementFocusTarget: null
+    property var managementScroll: null
+    property var pendingScrollPositions: []
     required property UI.SearchField managementSearch
     readonly property bool sessionActive: visible && picker.visible && picker.mode === pickerMode
     readonly property real contentTop: headerItem.height + Theme.controlSpacing
@@ -42,9 +44,28 @@ Item {
         if (!picker.visible) return
         const target = managing ? managementFocusTarget : listItem
         if (!target) return
-        if (typeof target.focusInput === "function") target.focusInput()
-        else if (typeof target.focusSearch === "function") target.focusSearch()
-        else target.forceActiveFocus()
+        preserveManagementScroll(() => {
+            if (typeof target.focusInput === "function") target.focusInput()
+            else if (typeof target.focusSearch === "function") target.focusSearch()
+            else target.forceActiveFocus()
+        })
+    }
+    function preserveManagementScroll(action) {
+        preserveScroll(action, managing ? managementScroll : null)
+    }
+    function preserveScroll(action, scroll) {
+        if (scroll && !pendingScrollPositions.some(snapshot => snapshot.scroll === scroll))
+            pendingScrollPositions = pendingScrollPositions.concat([{scroll, position: scroll.contentY}])
+        action()
+        if (pendingScrollPositions.length) Qt.callLater(root.restoreScrollPositions)
+    }
+    function restoreScrollPositions() {
+        for (const snapshot of pendingScrollPositions) {
+            const scroll = snapshot.scroll
+            scroll.contentY = Math.max(scroll.originY, Math.min(snapshot.position,
+                scroll.originY + Math.max(0, scroll.contentHeight - scroll.height)))
+        }
+        pendingScrollPositions = []
     }
     function management(value) { managementRequested(value); Qt.callLater(root.focusSearch) }
     function beginAdd() { addRequested(); Qt.callLater(root.focusSearch) }

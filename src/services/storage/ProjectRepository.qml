@@ -15,15 +15,20 @@ Singleton {
         const workspaces = DbService.read("SELECT * FROM project_workspaces ORDER BY name COLLATE NOCASE,path")
         if (sourceRows === null || projectRows === null || workspaces === null) { error = DbService.error; return false }
         sources = sourceRows
-        const unique = []
-        for (const row of projectRows) {
-            if (unique.some(project => project.path === row.path)) continue
-            unique.push({path:row.path, name:row.name, category:row.category, url:row.remote_url,
-                source:row.source_path, sourcePaths:projectRows.filter(project => project.path === row.path).map(project => project.source_path),
-                workspaces:workspaces.filter(workspace => workspace.project_path === row.path)
-                    .map(workspace => ({path:workspace.path, name:workspace.name, included:workspace.included === 1}))})
+        const workspacesByProject = new Map()
+        for (const workspace of workspaces) {
+            if (!workspacesByProject.has(workspace.project_path)) workspacesByProject.set(workspace.project_path, [])
+            workspacesByProject.get(workspace.project_path).push({path:workspace.path, name:workspace.name, included:workspace.included === 1})
         }
-        projects = unique.sort((a,b) => a.name.localeCompare(b.name) || a.path.localeCompare(b.path))
+        const byPath = new Map()
+        for (const row of projectRows) {
+            // SQL orders single-folder sources first. Retain the first owner's
+            // metadata while collecting every source in that same order.
+            if (!byPath.has(row.path)) byPath.set(row.path, {path:row.path, name:row.name, category:row.category, url:row.remote_url,
+                source:row.source_path, sourcePaths:[], workspaces:workspacesByProject.get(row.path) ?? []})
+            byPath.get(row.path).sourcePaths.push(row.source_path)
+        }
+        projects = Array.from(byPath.values()).sort((a,b) => a.name.localeCompare(b.name) || a.path.localeCompare(b.path))
         error = ""
         return true
     }

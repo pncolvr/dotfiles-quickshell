@@ -298,13 +298,20 @@ by name, with dividers and hover highlighting. Added paths have edit, refresh an
 remove buttons. Edit opens the bottom form while keeping the source list, search
 and scroll position visible. It supports the folder path, native folder picker,
 folder type, category and included workspaces. Add and Edit reuse the same form.
+Manage keeps hints and actions on one footer line. Add stays visible but disabled
+while a form is open; Cancel and Apply follow it on the right.
 Changing Single folder / Repositories root rescans before saving. Repository
 subfolders have workspace edit
 buttons; their paths are derived from the configured root. Both added paths and
 repository subfolders have a copy button that copies their full folder path to
 the clipboard.
-The search field filters paths and
-repository names using the shared fuzzy matching. The refresh icon at the top
+The search field filters paths, repository names and workspace names using the
+shared fuzzy matching. Matching characters use the accent color; path and
+workspace matches are shown under the owning repository when filtering.
+Opening an editor, cancelling (including Escape), and saving preserve the list's
+scroll position, bounded by the space available if the results change.
+Toggling workspace inclusion also preserves the editor's scroll position.
+The refresh icon at the top
 right of Manage rescans all configured sources. Each added path also has a
 refresh icon to rescan only that folder; for a repositories root, it rescans its
 subfolders. Both actions preserve choices and ask about newly found workspaces.

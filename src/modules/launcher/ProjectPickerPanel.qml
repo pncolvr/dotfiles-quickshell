@@ -6,6 +6,7 @@ import "../../theme"
 import "../../theme/ui" as UI
 import "../../services"
 import "../../config"
+import "../../services/launcher/Search.mjs" as Search
 
 ManagedPickerFrame {
     id: root
@@ -27,6 +28,7 @@ ManagedPickerFrame {
     manageItem: manage
     footerItem: manageFooter
     managementSearch: manageSearch
+    managementScroll: manage.contentItem
     managementFocusTarget: root.showAddForm && !ProjectService.draft ? sourceForm : !ProjectService.draft ? manageSearch : null
     onAddRequested: { ProjectService.setManaging(true); adding = true }
     onManagementRequested: value => { if (!value) cancelAdd(); ProjectService.setManaging(value) }
@@ -36,21 +38,34 @@ ManagedPickerFrame {
     function matchesManagement(text) {
         return !manageSearch.text.trim() || root.picker.filter([{title:text}],manageSearch.text).length > 0
     }
+    function highlighted(text) {
+        return Search.highlight(text, root.picker.searchPattern(manageSearch.text), Config.pickerFuzzySearch, Theme.accent)
+    }
     function projectsForSource(source) {
         const projects = ProjectService.projects.filter(project => project.sourcePaths.includes(source.path))
         return matchesManagement(source.path) ? projects
-            : projects.filter(project => matchesManagement(project.name + " " + project.path))
+            : projects.filter(project => matchesManagement(project.name + " " + project.path + " "
+                + project.workspaces.map(workspace => workspace.name + " " + workspace.path).join(" ")))
+    }
+    function matchingWorkspaces(project) {
+        const repository = project.name + " " + project.path
+        if (!manageSearch.text.trim() || matchesManagement(repository)) return []
+        return project.workspaces.filter(workspace => matchesManagement(repository + " " + workspace.name + " " + workspace.path))
     }
     readonly property var managedSources: ProjectService.sources.filter(source => matchesManagement(source.path) || projectsForSource(source).length > 0)
 
     function editSource(path) {
-        ProjectService.editSource(path)
+        root.preserveManagementScroll(() => ProjectService.editSource(path))
         if (ProjectService.draft?.previousPath) {
             sourceForm.text = ProjectService.draft.path
             root.sourceKind = ProjectService.draft.kind
             root.sourceCategory = ProjectService.draft.category
             Qt.callLater(sourceForm.focusInput)
         }
+    }
+    function editProject(path) { root.preserveManagementScroll(() => ProjectService.editProject(path)) }
+    function setIncluded(project,workspace,included) {
+        root.preserveScroll(() => ProjectService.setIncluded(project,workspace,included),draftScroll.contentItem)
     }
     function submitForm() {
         if (ProjectService.draft) root.saveDraft()
@@ -62,9 +77,10 @@ ManagedPickerFrame {
             ProjectService.setDraftKind(root.sourceKind)
             ProjectService.setDraftCategory(root.sourceCategory)
         }
-        if (ProjectService.saveDraft()) root.cancelAdd()
+        root.preserveManagementScroll(() => { if (ProjectService.saveDraft()) root.cancelAdd() })
     }
-    function cancelAdd() { adding = false; sourceForm.clear(); Qt.callLater(root.focusSearch) }
+    function cancelAdd() { root.preserveManagementScroll(() => { adding = false; sourceForm.clear(); Qt.callLater(root.focusSearch) }) }
+    function cancelDraft() { root.preserveManagementScroll(() => { ProjectService.cancelDraft(); root.cancelAdd() }) }
 
     function handlePickerKey(event, activate) {
         return ProjectService.urls && list.handleSelectionKey(event,activate)
@@ -78,7 +94,7 @@ ManagedPickerFrame {
     }
 
     onEscapeRequested: {
-        if (ProjectService.draft) { ProjectService.cancelDraft(); root.cancelAdd() }
+        if (ProjectService.draft) root.cancelDraft()
         else if (root.adding) root.cancelAdd()
         else root.picker.close()
     }
@@ -125,6 +141,7 @@ ManagedPickerFrame {
     }
     QC.ScrollView {
         id: manage
+        objectName: "projectManageScroll"
         y: root.contentTop
         width: parent.width
         height: root.manageHeight
@@ -156,7 +173,7 @@ ManagedPickerFrame {
                     objectName: "projectManageSearch"
                     width: parent.width
                     visible: ProjectService.sources.length > 0
-                    placeholderText: "Filter paths and repositories"
+                    placeholderText: "Filter paths, repositories and workspaces"
                     pauseTooltipDismissal: false
                     resetWithTooltip: false
                     handleEscape: false
@@ -199,10 +216,13 @@ ManagedPickerFrame {
                             RowLayout {
                                 width: parent.width
                                 UI.ColumnText {
-                                    text: sourceRow.modelData.path
+                                    objectName: "managedSourcePath_" + sourceRow.modelData.path
+                                    text: root.highlighted(sourceRow.modelData.path)
+                                    textFormat: Text.StyledText
+                                    Accessible.name: sourceRow.modelData.path
                                     elide: Text.ElideMiddle
                                     Layout.fillWidth: true
-                                    UI.HoverTooltip { text: parent.text }
+                                    UI.HoverTooltip { text: sourceRow.modelData.path }
                                 }
                                 UI.ManagementActions {
                                     path: sourceRow.modelData.path
@@ -242,18 +262,51 @@ ManagedPickerFrame {
                                 wrapMode: Text.Wrap
                             }
                             Repeater {
-                                model: sourceRow.modelData.kind === "root" ? sourceRow.projects : []
+                                model: sourceRow.modelData.kind === "root" || (manageSearch.text.trim() && !root.matchesManagement(sourceRow.modelData.path)) ? sourceRow.projects : []
                                 delegate: UI.ManagementRow {
                                     id: projectRow
                                     required property var modelData
                                     objectName: "managedProject_" + modelData.path
                                     width: sourceContent.width
-                                    UI.ColumnText {
-                                        objectName: "managedProjectName_" + projectRow.modelData.path
-                                        text: projectRow.modelData.name
-                                        elide: Text.ElideMiddle
+                                    Column {
+                                        id: projectText
                                         Layout.fillWidth: true
-                                        UI.HoverTooltip { text: projectRow.modelData.path }
+                                        spacing: Theme.controlSpacing
+                                        UI.ColumnText {
+                                            objectName: "managedProjectName_" + projectRow.modelData.path
+                                            width: parent.width
+                                            text: root.highlighted(projectRow.modelData.name)
+                                            textFormat: Text.StyledText
+                                            Accessible.name: projectRow.modelData.name
+                                            elide: Text.ElideMiddle
+                                            UI.HoverTooltip { text: projectRow.modelData.path }
+                                        }
+                                        UI.ColumnText {
+                                            objectName: "managedProjectPath_" + projectRow.modelData.path
+                                            width: parent.width
+                                            visible: !!manageSearch.text.trim() && !root.matchesManagement(projectRow.modelData.name)
+                                            text: root.highlighted(projectRow.modelData.path)
+                                            textFormat: Text.StyledText
+                                            Accessible.name: projectRow.modelData.path
+                                            color: Theme.inactive
+                                            elide: Text.ElideMiddle
+                                            UI.HoverTooltip { text: projectRow.modelData.path }
+                                        }
+                                        Repeater {
+                                            model: root.matchingWorkspaces(projectRow.modelData)
+                                            delegate: UI.ColumnText {
+                                                id: matchedWorkspaceText
+                                                required property var modelData
+                                                objectName: "matchedWorkspace_" + modelData.path
+                                                width: projectText.width
+                                                text: root.highlighted(modelData.name + " · " + modelData.path)
+                                                textFormat: Text.StyledText
+                                                Accessible.name: modelData.name + " · " + modelData.path
+                                                color: Theme.inactive
+                                                elide: Text.ElideMiddle
+                                                UI.HoverTooltip { text: matchedWorkspaceText.modelData.path }
+                                            }
+                                        }
                                     }
                                     UI.ManagementActions {
                                         path: projectRow.modelData.path
@@ -263,7 +316,7 @@ ManagedPickerFrame {
                                         showEdit: projectRow.modelData.workspaces.length > 0
                                         showRemove: false
                                         editEnabled: !ProjectService.busy && !ProjectService.draft
-                                        onEditRequested: ProjectService.editProject(path)
+                                        onEditRequested: root.editProject(path)
                                     }
                                 }
                             }
@@ -286,8 +339,7 @@ ManagedPickerFrame {
         height: footerDivider.height + Theme.controlSpacing
             + (sourceForm.visible ? sourceForm.implicitHeight + Theme.controlSpacing : 0)
             + (draftScroll.visible ? draftScroll.height + Theme.controlSpacing : 0)
-            + Theme.controlHeight
-            + Theme.controlSpacing + manageHints.implicitHeight + Theme.projectManagePadding
+            + footerRow.implicitHeight + Theme.projectManagePadding
         visible: ProjectService.managing
         Rectangle {
             id: footerDivider
@@ -317,19 +369,9 @@ ManagedPickerFrame {
             onCategoryRequested: category => root.sourceCategory = category
             onAccepted: root.submitForm()
         }
-        UI.ActionButton {
-            objectName: "beginAddProjectSource"
-            y: footerDivider.height + Theme.controlSpacing
-            visible: !ProjectService.draft && !root.showAddForm
-            anchors.right: parent.right
-            anchors.rightMargin: Theme.projectManagePadding
-            glyph: Theme.addIcon
-            hint: "add folder (" + Config.projectAddShortcut + ")"
-            enabled: !ProjectService.busy
-            onClicked: root.beginAdd()
-        }
         QC.ScrollView {
             id: draftScroll
+            objectName: "projectWorkspaceScroll"
             x: Theme.projectManagePadding
             y: footerDivider.height + Theme.controlSpacing + (sourceForm.visible ? sourceForm.implicitHeight + Theme.controlSpacing : 0)
             width: parent.width - Theme.projectManagePadding * 2
@@ -358,10 +400,12 @@ ManagedPickerFrame {
                         width: draftContent.width
                         spacing: Theme.controlSpacing
                         UI.ColumnText {
-                            text: projectDraft.modelData.path
+                            text: root.highlighted(projectDraft.modelData.path)
+                            textFormat: Text.StyledText
+                            Accessible.name: projectDraft.modelData.path
                             width: parent.width
                             elide: Text.ElideMiddle
-                            UI.HoverTooltip { text: parent.text }
+                            UI.HoverTooltip { text: projectDraft.modelData.path }
                         }
                         Repeater {
                             model: projectDraft.modelData.workspaces
@@ -374,13 +418,16 @@ ManagedPickerFrame {
                                     glyph: workspaceRow.modelData.included ? Theme.checkIcon : Theme.addIcon
                                     hint: workspaceRow.modelData.included ? "exclude workspace" : "include workspace"
                                     fillColor: workspaceRow.modelData.included ? Theme.accent : Theme.alternateBackground
-                                    onClicked: ProjectService.setIncluded(projectDraft.modelData.path,workspaceRow.modelData.path,!workspaceRow.modelData.included)
+                                    onClicked: root.setIncluded(projectDraft.modelData.path,workspaceRow.modelData.path,!workspaceRow.modelData.included)
                                 }
                                 UI.ColumnText {
-                                    text: workspaceRow.modelData.name + " · " + workspaceRow.modelData.path
+                                    objectName: "managedWorkspace_" + workspaceRow.modelData.path
+                                    text: root.highlighted(workspaceRow.modelData.name + " · " + workspaceRow.modelData.path)
+                                    textFormat: Text.StyledText
+                                    Accessible.name: workspaceRow.modelData.name + " · " + workspaceRow.modelData.path
                                     Layout.fillWidth: true
                                     elide: Text.ElideMiddle
-                                    UI.HoverTooltip { text: parent.text }
+                                    UI.HoverTooltip { text: workspaceRow.modelData.path }
                                 }
                             }
                         }
@@ -388,31 +435,42 @@ ManagedPickerFrame {
                 }
             }
         }
-        UI.EditorActions {
-            y: draftScroll.y + draftScroll.height + Theme.controlSpacing
-            anchors.right: parent.right
-            anchors.rightMargin: Theme.projectManagePadding
-            visible: !!ProjectService.draft || sourceForm.visible
-            cancelObjectName: ProjectService.draft ? "cancelProjectDraft" : "cancelAddProjectSource"
-            submitObjectName: ProjectService.draft ? "saveProjectDraft" : "addProjectSource"
-            submitGlyph: ProjectService.draft ? Theme.checkIcon : Theme.addIcon
-            cancelHint: ProjectService.draft?.review ? "Cancel refresh" : "Cancel"
-            submitHint: ProjectService.draft?.review ? "Apply refresh" : ProjectService.draft ? "Save" : "scan folder before adding"
-            submitEnabled: !ProjectService.busy && (!sourceForm.visible || !!sourceForm.text.trim())
-            cancelEnabled: !ProjectService.busy
-            onCancelled: { ProjectService.cancelDraft(); root.cancelAdd() }
-            onSubmitted: root.submitForm()
-        }
-        UI.ShortcutHints {
-            id: manageHints
-            objectName: "projectManageHints"
+        RowLayout {
+            id: footerRow
             x: Theme.projectManagePadding
             width: Math.max(0,parent.width - Theme.projectManagePadding * 2)
             anchors.bottom: parent.bottom
             anchors.bottomMargin: Theme.projectManagePadding
-            hints: Config.projectManageShortcut + ": projects"
-                + (!root.showAddForm && !ProjectService.draft ? " · " + Config.projectAddShortcut + ": add folder" : "")
-                + " · Esc: " + (root.adding || ProjectService.draft ? "cancel" : "close")
+            spacing: Theme.controlSpacing
+            UI.ShortcutHints {
+                objectName: "projectManageHints"
+                Layout.fillWidth: true
+                Layout.alignment: Qt.AlignVCenter
+                wrapMode: Text.NoWrap
+                elide: Text.ElideRight
+                hints: Config.projectManageShortcut + ": projects"
+                    + (!root.showAddForm && !ProjectService.draft ? " · " + Config.projectAddShortcut + ": add folder" : "")
+                    + " · Esc: " + (root.adding || ProjectService.draft ? "cancel" : "close")
+            }
+            UI.ActionButton {
+                objectName: "beginAddProjectSource"
+                glyph: Theme.addIcon
+                hint: "add folder (" + Config.projectAddShortcut + ")"
+                enabled: root.addAllowed
+                onClicked: root.beginAdd()
+            }
+            UI.EditorActions {
+                visible: !!ProjectService.draft || sourceForm.visible
+                cancelObjectName: ProjectService.draft ? "cancelProjectDraft" : "cancelAddProjectSource"
+                submitObjectName: ProjectService.draft ? "saveProjectDraft" : "addProjectSource"
+                submitGlyph: ProjectService.draft ? Theme.checkIcon : Theme.addIcon
+                cancelHint: ProjectService.draft?.review ? "Cancel refresh" : "Cancel"
+                submitHint: ProjectService.draft?.review ? "Apply refresh" : ProjectService.draft ? "Save" : "scan folder before adding"
+                submitEnabled: !ProjectService.busy && (!sourceForm.visible || !!sourceForm.text.trim())
+                cancelEnabled: !ProjectService.busy
+                onCancelled: root.cancelDraft()
+                onSubmitted: root.submitForm()
+            }
         }
     }
 }

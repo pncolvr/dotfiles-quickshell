@@ -34,6 +34,9 @@ Sources hold canonical paths, root/single-folder kinds, explicit categories and
 scan status. Projects retain names and remote URLs per source. Workspace records
 retain both included and excluded choices per project path. Overlapping sources
 are deduplicated for display; removing one preserves projects owned by another.
+Reload groups source owners and workspaces once by project path. Single-folder
+sources retain metadata priority, every owner remains available to source editing,
+and project/workspace sorting and inclusion flags are preserved.
 Refresh replaces successful source snapshots transactionally, preserving existing
 workspace choices. Newly discovered workspaces require an inclusion checklist
 before the refreshed snapshot is saved; cancelling retains the previous snapshot.

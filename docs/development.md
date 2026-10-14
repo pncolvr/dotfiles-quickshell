@@ -228,6 +228,22 @@ Run `bash tests/projects/projects.sh` for native project sources, workspace
 selection/editing, category choices, manual refresh, failed scan preservation,
 launch profiles and restart persistence. The suite uses isolated Git/non-Git
 folders, mocked launch commands, Bash, jq, sqlite3 and an offscreen QML window.
+Run `bash tests/projects/grouping.sh` for overlapping-owner priority, source
+removal fallback, case/path sort ties, workspace inclusion, safe path keys and
+failed-read snapshot preservation.
+Run `bash tests/projects/manage.sh` for accent highlighting of repository names,
+paths and workspaces, fuzzy/substring/smart-case matching, literal markup and
+Unicode, and scroll preservation when editing, toggling workspaces, cancelling
+or saving. It uses
+an isolated synthetic database and an offscreen QML window.
+`bash tests/projects/grouping-benchmark.sh` compares the working tree's reload
+against the committed version using 2,000 synthetic projects, three owners and
+three workspaces each. It also measures the existing fuzzy search. Set
+`PROJECT_GROUPING_BENCH_COUNT=100` for a smaller dataset, or
+`PROJECT_GROUPING_BASELINE=<git-ref>` to compare against an older commit.
+Timing is reported without a fixed speed threshold; results depend on the local
+machine and Qt build. Both fixtures use isolated databases and never scan actual
+projects or launch applications.
 Run `bash tests/projects/folder-picker.sh` in a Wayland session to verify that
 Ctrl+A opens Add from focused Projects and Manage searches, and accepting or cancelling the native
 folder picker keeps Manage open and restores its keyboard focus. This test
