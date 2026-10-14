@@ -345,6 +345,9 @@ Item {
   readonly property int notificationStackPeekHeight: 6
   readonly property int notificationStackInset: 4
   readonly property int notificationSpacing: 12
+  readonly property int notificationEnterDuration: 320
+  readonly property int notificationExitDuration: 220
+  readonly property int notificationMoveDuration: 220
   readonly property color notificationBackground: Qt.rgba(33 / 255, 34 / 255, 44 / 255, 0.95)
   readonly property color notificationBorder: "#2a2d38"
   readonly property color notificationCritical: "#d32f2f"

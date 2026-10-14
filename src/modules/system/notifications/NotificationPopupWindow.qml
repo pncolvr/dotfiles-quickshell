@@ -9,6 +9,7 @@ import Quickshell.Wayland
 import "../../../theme"
 import "../../../theme/ui" as UI
 import "../../../services"
+import "../../../config"
 
 // qmllint disable uncreatable-type
 UI.PrivatePanelWindow {
@@ -16,6 +17,8 @@ UI.PrivatePanelWindow {
     id: root
     property var lastScreen: null
     property var targetScreen: null
+    property bool animationsEnabled: Config.animateDuringScreenShare || !AudioService.screencastActive
+    readonly property NotificationPopupStack popupStack: stack
     readonly property int shadowBlurRadius: 32
     readonly property int shadowVerticalOffset: 8
     // Keep cards 24 px from the bar and screen edge; reserve space for shadows.
@@ -33,7 +36,7 @@ UI.PrivatePanelWindow {
     Connections { target: Hyprland; function onFocusedMonitorChanged() { root.selectScreen() } }
     Component.onCompleted: selectScreen()
     screen: targetScreen
-    visible: NotificationService.popups.length > 0 && !!targetScreen
+    visible: stack.cards.length > 0 && !!targetScreen
     anchors.top: true
     anchors.right: true
     exclusionMode: ExclusionMode.Ignore
@@ -43,19 +46,20 @@ UI.PrivatePanelWindow {
     color: "transparent"
     implicitWidth: Math.max(1, Math.min(Theme.notificationWidth + contentPaddingLeft + contentPaddingRight - 24,
         targetScreen?.width || 500))
-    implicitHeight: Math.min(stack.height + contentPaddingTop + contentPaddingBottom,
-        Math.max(1, (targetScreen?.height || 1080) - Theme.barHeight))
+    // Keep the native surface stable: resizing it when a lower card disappears
+    // can make the compositor stretch or jump the surviving cards. Only the
+    // stack and its input region change size inside this transparent surface.
+    implicitHeight: Math.max(1, (targetScreen?.height || 1080) - Theme.barHeight)
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
     mask: Region {
         x: root.contentPaddingLeft; y: root.contentPaddingTop
         width: stack.width
-        height: Math.max(0, root.height - root.contentPaddingTop - root.contentPaddingBottom)
+        height: Math.min(stack.height, Math.max(0, root.height - root.contentPaddingTop - root.contentPaddingBottom))
     }
     Item {
-        x: root.contentPaddingLeft
         y: root.contentPaddingTop
-        width: Math.max(1, parent.width - root.contentPaddingLeft - root.contentPaddingRight)
+        width: parent.width
         height: Math.max(0, parent.height - root.contentPaddingTop - root.contentPaddingBottom)
         // Clip scrolling content first, then let its shadow fade outside the viewport.
         layer.enabled: true
@@ -74,20 +78,16 @@ UI.PrivatePanelWindow {
             contentWidth: width
             contentHeight: stack.height
             boundsBehavior: Flickable.StopAtBounds
-            QC.ScrollBar.vertical: UI.ScrollBar {}
-            Column {
+            QC.ScrollBar.vertical: UI.ScrollBar {
+                x: (parent?.width ?? 0) - root.contentPaddingRight - width
+            }
+            NotificationPopupStack {
                 id: stack
-                width: parent.width
-                spacing: Theme.notificationSpacing
-                Repeater {
-                    model: NotificationService.popups
-                    NotificationCard {
-                        required property var modelData
-                        entry: modelData
-                        popup: true
-                        width: stack.width
-                    }
-                }
+                x: root.contentPaddingLeft
+                width: Math.max(1, parent.width - root.contentPaddingLeft - root.contentPaddingRight)
+                entries: NotificationService.popups
+                animationsEnabled: root.animationsEnabled
+                edgePadding: root.contentPaddingRight
             }
         }
     }

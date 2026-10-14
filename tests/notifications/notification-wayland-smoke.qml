@@ -14,6 +14,7 @@ Item {
     NotificationManagerWindow { id: manager }
     readonly property Item managerContent: manager.previewItem
     TooltipWindow { id: regularTooltip; screen: manager.screen }
+    function popupCard(id) { return popup.popupStack.cards.find(card => card.entry.liveId === id && !card.closing) ?? null }
     function snapshot() {
         return {popupVisible: popup.visible, managerVisible: manager.visible, regularTooltipVisible: regularTooltip.visible,
             groups: manager.groups, managerTab: manager.tab,

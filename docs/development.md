@@ -280,6 +280,8 @@ labels remain literal.
 ```sh
 bash tests/notifications/notifications.sh
 bash tests/notifications/notifications.sh --wayland
+bash tests/notifications/animations.sh
+bash tests/notifications/animations.sh --wayland
 bash tests/notifications/startup.sh
 bash tests/storage/storage.sh
 bash tests/directories/directories.sh
@@ -295,6 +297,14 @@ a sample manager image to `/tmp/quickshell-notifications-preview.png`. The tests
 also send a title-only notification with `notify-send` and verify its history
 survives expiry and restart. The Bash runner uses `gdbus` for protocol calls and
 signal monitoring, `jq` for assertions, and `sqlite3` for migration fixtures.
+The animation fixture uses synthetic entries and a private D-Bus session. It
+checks right-side entrance/exit and the small settling overshoot, stable card
+identity on replacement, smooth stack movement, last-card window lifetime, rapid
+and bulk dismissal, interrupted movement, screen-sharing policy and idle rendering.
+The two-popup regression also removes the older bottom popup and checks that the
+newer card's global position and the native surface size stay fixed throughout.
+The standalone `--wayland` mode exercises the actual private popup window. These
+checks also run as part of `notifications.sh`.
 Tests also need `notify-send` and QtTest; these are test dependencies only.
 Offscreen tests verify the legacy Twitch URL request in Qt's log; `--wayland`
 also verifies that request reaches the mocked browser opener.

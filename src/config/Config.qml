@@ -94,7 +94,7 @@ Item {
     readonly property string projectDotfilesWorkTree: _internal.home
     readonly property var exposeWallpaperCommand: ["awww", "query", "--json"]
     readonly property var exposeWorkspaceIds: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-    // Exposé and fullscreen media transitions.
+    // Screen-sharing policy for UI animations, including notification popups.
     readonly property bool animateDuringScreenShare: false
     readonly property string pickerNamespace: "quickshell-picker"
     readonly property string mediaFullscreenNamespace: "quickshell-media"

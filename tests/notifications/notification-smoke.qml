@@ -26,6 +26,7 @@ Scope {
         }
         return null
     }
+    function hoverCard() { return (card.popup ? root.nativeView?.popupCard(root.cardEntry.liveId) : null) ?? card }
     Loader {
         id: nativeWindows
         active: Quickshell.env("NOTIFICATION_TEST_WAYLAND") === "1"
@@ -84,11 +85,12 @@ Scope {
             settings.visible = false
         }
         function cardHover(hovered: bool): void {
-            mouse.mouseMove(card, hovered ? card.width / 2 : card.width + 20, hovered ? card.height / 2 : card.height + 20,
+            const target = root.hoverCard()
+            mouse.mouseMove(target, hovered ? target.width / 2 : target.width + 20, hovered ? target.height / 2 : target.height + 20,
                 0, Qt.NoButton, Qt.NoModifier)
         }
         function cardHoverClose(): void {
-            const button = root.find(card, "notificationDismiss") as Item
+            const button = root.find(root.hoverCard(), "notificationDismiss") as Item
             mouse.mouseMove(button, button.width / 2, button.height / 2, 0, Qt.NoButton, Qt.NoModifier)
         }
         function prepareHistory(id: string): bool {

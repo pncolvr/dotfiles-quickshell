@@ -13,6 +13,8 @@ Rectangle {
     id: root
     required property var entry
     property bool popup: false
+    property bool closing: false
+    enabled: !closing
     property real clockNow: Date.now()
     property var hoveredEntry: null
     readonly property var timerEntry: {
@@ -24,7 +26,7 @@ Rectangle {
         ? Math.max(0, Math.min(1, (timerPaused ? -timerEntry.deadline : timerEntry.deadline - clockNow) / timerEntry.duration)) : 1
     function updateHover() {
         clockNow = Date.now()
-        const next = popup && popupHover?.hovered ? entry : null
+        const next = popup && !closing && popupHover?.hovered ? entry : null
         if (hoveredEntry?.liveId !== next?.liveId) {
             if (hoveredEntry) NotificationService.setPopupHovered(hoveredEntry, false)
             hoveredEntry = next
@@ -33,6 +35,7 @@ Rectangle {
     }
     onEntryChanged: updateHover()
     onPopupChanged: updateHover()
+    onClosingChanged: updateHover()
     Component.onDestruction: if (hoveredEntry) NotificationService.setPopupHovered(hoveredEntry, false)
     readonly property var emitter: NotificationEmitterRepository.emitters[entry.emitterKey]
     readonly property string notificationImage: root.entry.image || NotificationService.liveFor(root.entry)?.image || ""
@@ -49,6 +52,9 @@ Rectangle {
     }
     readonly property var displayActions: {
         if (!root.popup) return []
+        // Preserve the card's geometry while its closed notification slides away.
+        if (root.closing) return (root.entry.actions ?? []).filter(action => action.identifier !== "default")
+            .map(action => ({identifier: action.identifier, text: action.text, available: false}))
         const live = NotificationService.liveEntries
         return NotificationService.actions(root.entry, false)
     }
@@ -60,7 +66,7 @@ Rectangle {
 
     HoverHandler {
         id: popupHover
-        enabled: root.popup
+        enabled: root.popup && !root.closing
         onHoveredChanged: root.updateHover()
     }
     MouseArea {
@@ -145,7 +151,7 @@ Rectangle {
         }
     }
     FrameAnimation {
-        running: root.popup && root.visible && (root.Window.window?.visible ?? false)
+        running: root.popup && !root.closing && root.visible && (root.Window.window?.visible ?? false)
             && !root.timerPaused && root.timerEntry.duration > 0 && root.countdownProgress > 0
         onTriggered: root.clockNow = Date.now()
     }

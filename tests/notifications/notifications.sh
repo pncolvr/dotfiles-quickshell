@@ -4,6 +4,7 @@ project_root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)
 bash "$project_root/tests/qml/batched-model.sh"
 bash "$project_root/tests/notifications/body-format.sh"
 bash "$project_root/tests/notifications/encode-image.sh"
+bash "$project_root/tests/notifications/animations.sh" "$@"
 notification_test_display="${WAYLAND_DISPLAY:-}"
 notification_test_runtime="${XDG_RUNTIME_DIR:-}"
 test_dir=$(mktemp -d /tmp/quickshell-notifications-test.XXXXXX)

@@ -38,7 +38,25 @@ and retains existing records. Turning off DND or unmuting never replays a backlo
 
 Popups follow Hypr's focused monitor, falling back to the last connected screen
 or another available screen. Moving the stack keeps notification identities and
-deadlines. Popups use the SwayNC reference's dark background at 95% opacity, rounded
+deadlines. New popups slide in from the right with a small settling overshoot;
+disappearing popups slide back out to the right. This includes dismissal, expiry,
+application closure, DND and emitter policy changes. Remaining cards smoothly
+close the gap. Replacements update the existing card without replaying its
+entrance. Closing visuals stop accepting input immediately; protocol closure and
+history updates do not wait for the animation. The last popup keeps its window
+visible until its exit finishes.
+The transparent popup surface keeps a fixed height within its monitor, so an
+older popup leaving cannot resize or distort the newer cards. Only the occupied
+stack area accepts input; empty space passes pointer events through.
+
+Slides are disabled during screen sharing unless `Config.animateDuringScreenShare`
+is `true`. Starting sharing immediately settles ongoing movement and releases
+closing visuals; ending sharing does not replay existing popups. Entrance, exit
+and stack movement durations live in `Theme.notificationEnterDuration`,
+`Theme.notificationExitDuration` and `Theme.notificationMoveDuration` (320, 220
+and 220 ms). History and manager cards do not use these slides.
+
+Popups use the SwayNC reference's dark background at 95% opacity, rounded
 corners and bold monospace text. App icons occupy a left-hand column beside the
 content. File icons supplied through
 `notify-send`, including the custom Twitch logo, use this same left icon slot.
