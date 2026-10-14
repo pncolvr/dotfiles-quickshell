@@ -98,12 +98,41 @@ Row {
 
                 UI.ColumnText {
                     visible: root.user.online
+                    objectName: "twitchGame_" + root.mainLogin
                     text: root.user.online ? root.user.game : ""
                     color: root.user.online ? Theme.text : Theme.inactive
                     elide: Text.ElideMiddle
-                    Layout.fillWidth: true
+                    Layout.fillWidth: !root.user.usingFallback
+                    Layout.maximumWidth: root.user.usingFallback ? implicitWidth : parent.width
                     centerVertical: false
                     UI.HoverTooltip { text: parent.text }
+                }
+
+                UI.ColumnText {
+                    objectName: "twitchSecondChannelSeparator_" + root.mainLogin
+                    visible: root.user.usingFallback === true
+                    text: "·"
+                    color: Theme.inactive
+                }
+
+                UI.ColumnText {
+                    objectName: "twitchSecondChannelLabel_" + root.mainLogin
+                    visible: root.user.usingFallback === true
+                    text: "Second channel for " + root.mainLogin
+                    color: Theme.inactive
+                    elide: Text.ElideRight
+                    Layout.maximumWidth: parent.width / 2
+                    centerVertical: false
+                    UI.HoverTooltip { text: parent.text }
+                    MouseArea {
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: TwitchService.openUrl(root.mainLogin)
+                    }
+                }
+                Item {
+                    visible: root.user.usingFallback === true
+                    Layout.fillWidth: true
                 }
             }
 
@@ -132,22 +161,6 @@ Row {
                     Layout.fillWidth: true
                     centerVertical: false
                     UI.HoverTooltip { text: parent.text }
-                }
-            }
-
-            UI.ColumnText {
-                objectName: "twitchSecondChannelLabel_" + root.mainLogin
-                visible: root.user.usingFallback === true
-                text: "Second channel for " + root.mainLogin
-                color: Theme.inactive
-                elide: Text.ElideRight
-                width: parent.width
-                centerVertical: false
-                UI.HoverTooltip { text: parent.text }
-                MouseArea {
-                    anchors.fill: parent
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: TwitchService.openUrl(root.mainLogin)
                 }
             }
 

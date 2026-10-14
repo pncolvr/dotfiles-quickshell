@@ -80,6 +80,12 @@ Scope {
             check(user.title === "potato title" && user.game === "potato game" && user.avatar === TwitchRepository.avatars.potato.dataUrl, "fallback metadata and avatar displayed")
             const label = find("twitchSecondChannelLabel_banana") as UI.ColumnText
             check(label?.visible && label.text === "Second channel for banana", "fallback relationship displayed")
+            const game = find("twitchGame_banana") as UI.ColumnText
+            const separator = find("twitchSecondChannelSeparator_banana") as UI.ColumnText
+            check(separator.visible && separator.text === "·" && label.parent === game.parent
+                && separator.x >= game.x + game.width && label.x >= separator.x + separator.width
+                && game.width <= game.implicitWidth + 1,
+                "fallback relationship immediately follows activity with a center dot")
             if (phase === "fallback") {
                 check(events.mouseClick(label, label.width / 2, label.height / 2, Qt.LeftButton, Qt.NoModifier, 0), "main-channel label receives pointer click")
                 const details = find("twitchUserDetails_banana") as Item

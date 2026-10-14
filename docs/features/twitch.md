@@ -40,7 +40,8 @@ separate entry with the association. Channels already used in another associatio
 cannot be linked again, and the main cannot be its own second channel.
 
 A second channel row uses that channel's avatar, name, category, title, and viewer
-count, with a muted **Second channel for banana** label identifying its main channel. Clicking
+count, with a muted **Second channel for banana** label immediately after the
+game/activity, separated by a center dot, identifying its main channel. Clicking
 the avatar or other details opens the displayed second channel; clicking the
 **Second channel for banana** label opens banana's main channel. The row's actions always edit
 or remove the main association. Second-channel switching is silent; live/offline alerts
