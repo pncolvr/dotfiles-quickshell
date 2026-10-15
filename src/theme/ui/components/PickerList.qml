@@ -9,6 +9,7 @@ import "../" as UI
 ListView {
     id: root
     required property var picker
+    property bool showThumbnails: true
     model: picker.filteredItems
     currentIndex: picker.currentIndex
     clip: true
@@ -29,6 +30,7 @@ ListView {
         required property var modelData
         required property int index
         entry: modelData
+        showThumbnail: root.showThumbnails
         enabled: !root.picker.searchPending && !root.picker.searchFailed
         width: grid ? Math.max(80, (root.width - Theme.controlSpacing * 4) / 5) : root.width
         current: root.currentIndex === index

@@ -16,6 +16,8 @@
 Review these defaults when adapting the configuration:
 
 - `_internal.statusManager` points to `~/.config/zsh/scripts/status/manager.sh`.
+- `wallpaperDirectory` sets the wallpaper picker root, defaulting to `~/Pictures/wallpapers`.
+  An explicit directory argument overrides it for one picker session.
 - `submapParserCommand` points to `~/.config/hypr/scripts/keybinds/parser.sh`.
 - Screen-sharing commands expect `HideApplications(active)` and related Hyprland rules.
 - Update installation opens Ghostty and runs `yay`. The refresh helper is

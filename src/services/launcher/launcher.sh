@@ -57,7 +57,7 @@ case ${1:-apps} in
             directories) ipc call launcher directories; exit ;;
         esac
         case $name in
-            bookmarks|books|power|screenshot|recording) provider="$launcher_dir/providers/$name.sh" ;;
+            bookmarks|books|power|screenshot|recording|encode-qrcode|wallpaper) provider="$launcher_dir/providers/$name.sh" ;;
             webapps|azure|n8n) provider="$launcher_dir/providers/web/$name.sh" ;;
             remotes) provider="$launcher_dir/providers/remotes/pick.sh" ;;
             *) fail "Unknown provider: $name" ;;
@@ -91,7 +91,7 @@ if [[ -n $input_file ]]; then
 else
     shift
     prompt=""; separator=$'\n'; multi=false; allow_typed=true
-    sort_results=false; custom_accept=false; layout=list; initial_query=""; selection_key=""; markup_rows=false
+    sort_results=false; custom_accept=false; move_pointer=true; layout=list; initial_query=""; selection_key=""; markup_rows=false
     while (($#)); do
         case $1 in
             -dmenu) ;;
@@ -99,6 +99,7 @@ else
             -sep) separator=${2:?}; shift ;;
             -multi-select|--multi-select) multi=true ;;
             --grid) layout=grid ;;
+            --keep-pointer) move_pointer=false ;;
             -case-smart|-i) ;; # Legacy options cannot override Config.qml search settings.
             -sort) sort_results=true ;;
             -no-custom|--no-custom) allow_typed=false ;;
@@ -116,9 +117,9 @@ else
         shift
     done
     jq -Rsc --arg prompt "$prompt" --arg sep "$separator" --arg query "$initial_query" --arg layout "$layout" --arg selectionKey "$selection_key" \
-        --argjson multi "$multi" --argjson typed "$allow_typed" \
+        --argjson movePointer "$move_pointer" --argjson multi "$multi" --argjson typed "$allow_typed" \
         --argjson sort "$sort_results" --argjson custom "$custom_accept" --argjson markup "$markup_rows" '
-        {prompt:$prompt, allowMultipleSelection:$multi, allowTyped:$typed,
+        {prompt:$prompt, movePointer:$movePointer, allowMultipleSelection:$multi, allowTyped:$typed,
          sort:$sort, customAccept:$custom, layout:$layout, query:$query, selectionKey:$selectionKey, markupRows:$markup,
          items: (split($sep) | if .[-1] == "" then .[:-1] else . end | to_entries |
             map({id:(.key|tostring), title:.value, result:.value}))}

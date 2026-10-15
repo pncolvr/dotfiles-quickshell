@@ -10,9 +10,12 @@ Rectangle {
     id: root
     property var picker: PickerService
     property bool backgroundVisible: true
+    property bool showThumbnails: true
     readonly property bool gridMode: picker.layout === "grid"
+    readonly property bool inputOnly: picker.mode === PickerService.Mode.Menu && picker.allowTyped && picker.items.length === 0
+    readonly property var modulePointerTarget: search
     readonly property bool searchHasFocus: search.activeFocus
-    property string searchPlaceholder: "Search"
+    property string searchPlaceholder: inputOnly ? picker.prompt : "Search"
     property string panelError: picker.error
     property real minimumRowHeight: 0
     property int minimumListRows: 1
@@ -27,9 +30,10 @@ Rectangle {
     property real availableContentWidth: Theme.pickerWidth
     property real availableContentHeight: 800
     readonly property real columnWidth: fixedListWidth > 0 ? Math.min(fixedListWidth,width - Theme.tooltipPaddingHeight * 2) : width - Theme.tooltipPaddingHeight * 2
-    readonly property real normalHeight: panelHeader.height + list.implicitHeight + panelFooter.height + Theme.tooltipPaddingHeight * 2 + 12
+    readonly property real normalHeight: panelHeader.height + list.implicitHeight + panelFooter.height + Theme.tooltipPaddingHeight * 2 + (inputOnly ? Theme.controlSpacing : 12)
     property var searchKeyHandler: null
-    property string footerHint: gridMode ? "Arrows to select · Enter to choose · Esc to cancel"
+    property string footerHint: inputOnly ? "Enter to " + picker.acceptLabel.toLowerCase() + " · Esc to cancel"
+        : gridMode ? "Arrows to select · Enter to choose · Esc to cancel"
         : "Arrows to select · Enter to " + picker.acceptLabel.toLowerCase() + " · Esc to cancel"
     property real openedListHeight: Theme.pickerRowHeight
     implicitWidth: Theme.pickerWidth
@@ -134,7 +138,7 @@ Rectangle {
                         || event.key === Qt.Key_Enter || event.key === Qt.Key_Escape || event.key === Qt.Key_PageDown || event.key === Qt.Key_PageUp) event.accepted = false
                 }
             }
-            Loader { width: parent.width; height: (item as Item)?.implicitHeight ?? 0; sourceComponent: root.searchControls }
+            Loader { width: parent.width; height: (item as Item)?.implicitHeight ?? 0; visible: !root.inputOnly || sourceComponent !== null; sourceComponent: root.searchControls }
             UI.Text {
                 centerVertical: false
                 width: parent.width
@@ -158,12 +162,14 @@ Rectangle {
             id: list
             objectName: "pickerList"
             picker: root.picker
+            showThumbnails: root.showThumbnails
             width: root.columnWidth
             y: panelHeader.height + Theme.controlSpacing
-            height: Math.max(0, panelFooter.y - y - Theme.controlSpacing) * (root.stackedPreview ? 0.4 : 1)
+            visible: !root.inputOnly
+            height: root.inputOnly ? 0 : Math.max(0, panelFooter.y - y - Theme.controlSpacing) * (root.stackedPreview ? 0.4 : 1)
             // Keep the opening size while filtering or deleting entries so the
             // panel and its footer do not move under keyboard focus.
-            implicitHeight: root.gridMode ? Theme.pickerGridHeight : root.openedListHeight
+            implicitHeight: root.inputOnly ? 0 : root.gridMode ? Theme.pickerGridHeight : root.openedListHeight
         }
         Loader {
             objectName: "clipboardPreviewPane"
@@ -179,10 +185,12 @@ Rectangle {
             clip: true
         }
         UI.Text {
+            objectName: "pickerEmptyHint"
             centerVertical: false
             anchors.centerIn: list
-            visible: list.count === 0
-            text: root.picker.allowTyped && search.text.length ? "Enter to use typed input" : "No results"
+            visible: list.count === 0 && !root.inputOnly
+            text: root.inputOnly ? "" : root.picker.allowTyped && search.text.length ? "Enter to use typed input" : "No results"
+            textFormat: Text.PlainText
             color: Theme.inactive
         }
         Item {

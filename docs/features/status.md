@@ -61,7 +61,9 @@ In `src/config/Config.qml`:
 `statusTooltipWidth` and `statusTooltipMaxHeightRatio` in `Theme.qml` control the
 panel dimensions. Missing commands, missing logs, and malformed events appear
 as errors in the tooltip. The status manager continues to own mode changes and
-event logging.
+event logging. Work/personal changes restore the saved monitor wallpapers through
+`launcher.sh provider wallpaper restore MODE`; system events such as active and
+inactive only log their event and do not request a mode wallpaper.
 The manager's read-only `--explain` command supplies the detection report as JSON.
 The panel reads it on opening, mode refresh and each minute while visible, and
 stops the scan when closed. This command does not change mode, wallpaper or the

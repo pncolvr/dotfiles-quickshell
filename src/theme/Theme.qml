@@ -130,6 +130,8 @@ Item {
   readonly property int projectManageSectionSpacing: controlSpacing * 2
   readonly property int projectOptionButtonWidth: 160
   readonly property int pickerWidth: 560
+  readonly property int qrPreviewSize: 360
+  readonly property int imagePreviewFadeDuration: 140
   readonly property real pickerBackgroundOpacity: 0.7 // 0–1; text and controls stay opaque.
   readonly property int pickerRowHeight: 36
   readonly property int clipboardRowHeight: 52

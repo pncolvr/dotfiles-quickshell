@@ -14,6 +14,8 @@ Item {
     readonly property bool transitioning: panel?.transitioning ?? false
     readonly property real radius: Theme.tooltipRadius
     readonly property var panel: content.item
+    readonly property bool moduleFocusSearch: true
+    readonly property var modulePointerTarget: panel?.modulePointerTarget ?? panel ?? root
     readonly property bool nativeDialogOpen: panel?.nativeDialogOpen ?? false
     implicitWidth: panel?.implicitWidth ?? Theme.pickerWidth
     implicitHeight: panel?.implicitHeight ?? 0
@@ -29,7 +31,7 @@ Item {
                 case PickerService.Mode.Directories: return directoryPanel
                 case PickerService.Mode.Clipboard: return clipboardPanel
                 case PickerService.Mode.Secret: return secretPanel
-                default: return root.picker.multiple ? multiSelectPanel : standardPanel
+                default: return root.picker.imageOnly ? imageViewer : root.picker.previewImages ? imagePanel : root.picker.multiple ? multiSelectPanel : standardPanel
             }
         }
     }
@@ -45,6 +47,23 @@ Item {
     Component {
         id: directoryPanel
         DirectoryPickerPanel { picker: root.picker; backgroundVisible: root.backgroundVisible }
+    }
+    Component {
+        id: imageViewer
+        ImageViewerPanel {
+            picker: root.picker
+            backgroundVisible: root.backgroundVisible
+            availableContentHeight: root.availableContentHeight
+        }
+    }
+    Component {
+        id: imagePanel
+        ImagePickerPanel {
+            picker: root.picker
+            backgroundVisible: root.backgroundVisible
+            availableContentWidth: root.availableContentWidth
+            availableContentHeight: root.availableContentHeight
+        }
     }
     Component {
         id: standardPanel

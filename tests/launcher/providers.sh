@@ -34,6 +34,9 @@ if [[ ${6:-} == projects || ${6:-} == projectUrls || ${6:-} == directories ]]; t
 fi
 [[ ${6:-} == open ]] || exit 0
 request=$7/request.json
+if [[ ${PROVIDER_TEST_NAME:-} == screenshot || ${PROVIDER_TEST_NAME:-} == recording ]]; then
+    jq -e '.movePointer == false' "$request" >/dev/null
+fi
 cat "$request" >> "$PROVIDER_TEST_DIR/menus"
 index=0
 case ${PROVIDER_TEST_NAME:-} in

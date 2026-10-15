@@ -47,6 +47,13 @@ sed -Ei 's/readonly property int clipboardMaxItems: [0-9]+/readonly property int
 sed -Ei 's/readonly property int clipboardMaxTotalBytes: [0-9]+/readonly property int clipboardMaxTotalBytes: 24/' "$test_dir/src/config/Config.qml"
 sed -i 's/readonly property bool clipboardMonitorEnabled: true/readonly property bool clipboardMonitorEnabled: false/' "$test_dir/src/config/Config.qml"
 sed -i 's/readonly property bool pickerShowPrompt: false/readonly property bool pickerShowPrompt: true/' "$test_dir/src/config/Config.qml"
+python3 - "$test_dir/src/config/Config.qml" "$test_dir/wallpapers" <<'PYCONFIG'
+from pathlib import Path
+import json, re, sys
+config = Path(sys.argv[1])
+config.write_text(re.sub(r'readonly property string wallpaperDirectory:.*',
+    'readonly property string wallpaperDirectory: ' + json.dumps(sys.argv[2]), config.read_text()))
+PYCONFIG
 mkdir -p "$test_dir/data/clipboard"
 sqlite3 "$test_dir/data/quickshell.db" <<'SQL'
 CREATE TABLE clipboard (id TEXT PRIMARY KEY, mime TEXT NOT NULL, kind TEXT NOT NULL, bytes INTEGER NOT NULL, text TEXT NOT NULL DEFAULT '', updated_at INTEGER NOT NULL);
@@ -154,6 +161,149 @@ wait_open
 ipc call pickertest accept 1
 wait_client 0
 [[ $(<"$test_dir/result") == '{"path":"second"}' ]]
+
+# A shared request option controls pointer behavior for JSON and dmenu callers.
+for request_type in json dmenu; do
+    if [[ $request_type == json ]]; then
+        printf '%s\n' '{"movePointer":false,"items":[{"title":"Keep pointer","result":"kept"}]}' > "$test_dir/pointer-options.json"
+        bash "$picker" --json "$test_dir/pointer-options.json" > "$test_dir/result" 2> "$test_dir/client-error" & client_pid=$!
+    else
+        printf 'kept\n' | bash "$picker" --dmenu --keep-pointer > "$test_dir/result" 2> "$test_dir/client-error" & client_pid=$!
+    fi
+    wait_open
+    snapshot | jq -e '.movePointer == false' >/dev/null
+    ipc call pickertest enter
+    wait_client 0
+    [[ $(<"$test_dir/result") == kept ]]
+done
+printf 'PASS: JSON and dmenu share the pointer-preservation option\n'
+
+# QR generation opens the actual viewer and retains the clipboard after Enter or Escape.
+qr_text='literal | Olá "quoted" $value'
+for close_action in enter pressEscape; do
+    bash "$picker" provider encode-qrcode > "$test_dir/result" 2> "$test_dir/client-error" & client_pid=$!
+    wait_open
+    snapshot | jq -e '.items == [] and .query == "" and (.canAccept | not)
+        and .movePointer == true and .emptyHint == "" and (.emptyHintVisible | not) and .placeholder == "Text to encode"
+        and .listHeight == 0 and .listImplicitHeight == 0
+        and .footerHint == "Enter to generate qr code · Esc to cancel"' >/dev/null
+    ipc call pickertest query '   '
+    snapshot | jq -e '(.canAccept | not) and (.emptyHintVisible | not)' >/dev/null
+    ipc call pickertest query "$qr_text"
+    snapshot | jq -e '.canAccept and (.emptyHintVisible | not)' >/dev/null
+    ipc call pickertest enter
+    for ((try=0;try<80;try++)); do
+        if snapshot | jq -e '.imageOnly and .previewStatus == 1' >/dev/null; then break; fi
+        sleep 0.025
+    done
+    snapshot | jq -e '.imageOnly and .previewStatus == 1 and (.previewSmooth | not)
+        and (.previewMipmap | not) and .previewWidth > 0 and (.previewWidth % .sourceWidth == 0)
+        and .panelHeight <= 360 and .viewerHints == 0' >/dev/null
+    qr_path=$(snapshot | jq -r '.previewSource | ltrimstr("file://")')
+    printf '%s' "$qr_text" | qrencode --type=PNG -o "$test_dir/expected-qr.png"
+    cmp "$test_dir/expected-qr.png" "$test_dir/copied"
+    cmp "$qr_path" "$test_dir/copied"
+    ipc call pickertest "$close_action"
+    wait_client 0
+    [[ ! -f $qr_path ]]
+    cmp "$test_dir/expected-qr.png" "$test_dir/copied"
+done
+rm "$test_dir/copied"
+bash "$picker" provider encode-qrcode > "$test_dir/result" 2> "$test_dir/client-error" & client_pid=$!
+wait_open
+ipc call pickertest pressEscape
+wait_client 0
+[[ ! -f $test_dir/copied ]]
+printf 'PASS: QR input has no redundant hint, displays the copied PNG sharply and preserves clipboard content after viewer dismissal\n'
+
+# Wallpaper image previews use bounded native image loading on wide and narrow screens.
+mkdir "$test_dir/wallpapers"
+magick -size 160x90 xc:red "$test_dir/wallpapers/one.png"
+jq -n --arg image "file://$test_dir/wallpapers/one.png" '{
+    previewImages:true,allowTyped:false,items:[{title:"One",image:$image,result:"one"},{title:"Two",image:$image,result:"two"}]
+}' > "$test_dir/images.json"
+for viewport in 500 1000; do
+    ipc call pickertest imageViewport "$viewport" 400
+    bash "$picker" --json "$test_dir/images.json" > "$test_dir/result" 2> "$test_dir/client-error" & client_pid=$!
+    wait_open
+    for ((try=0;try<80;try++)); do
+        if snapshot | jq -e '.previewImages and .previewStatus == 1' >/dev/null; then break; fi
+        sleep 0.025
+    done
+    snapshot | jq -e --arg image "file://$test_dir/wallpapers/one.png" --argjson viewport "$viewport" \
+        '.previewStatus == 1 and .previewSource == $image and .stackedPreview == ($viewport < 800)
+            and (.rowImageSources | length == 2 and all(.[]; . == ""))' >/dev/null
+    ipc call pickertest query 'missing image'
+    snapshot | jq -e '.filtered == [] and .previewSource == ""' >/dev/null
+    ipc call pickertest pressEscape
+    wait_client 1
+done
+jq '.previewImages = false' "$test_dir/images.json" > "$test_dir/row-images.json"
+bash "$picker" --json "$test_dir/row-images.json" > "$test_dir/result" 2> "$test_dir/client-error" & client_pid=$!
+wait_open
+snapshot | jq -e --arg image "file://$test_dir/wallpapers/one.png" \
+    '.rowImageSources | length == 2 and all(.[]; . == $image)' >/dev/null
+ipc call pickertest pressEscape
+wait_client 1
+ipc call pickertest imageViewport 560 550
+bash "$picker" --json "$test_dir/options.json" > "$test_dir/result" 2> "$test_dir/client-error" & client_pid=$!
+wait_open
+snapshot | jq -e '.previewImages == false and .previewSource == ""' >/dev/null
+ipc call pickertest pressEscape
+wait_client 1
+printf 'PASS: image picker loads only the large preview, keeps rows free of image sources and preserves ordinary menu thumbnails\n'
+
+# Browse repeatedly; selecting mode and monitor must not lose the image or its search.
+mkdir "$test_dir/wallpaper-bin"
+cat > "$test_dir/wallpaper-bin/hyprctl" <<'MOCK'
+#!/usr/bin/env bash
+printf '%s\n' '[{"name":"DP-1","focused":false},{"name":"HDMI-A-1","focused":true}]'
+MOCK
+cat > "$test_dir/wallpaper-bin/awww" <<'MOCK'
+#!/usr/bin/env bash
+jq -nc --args '$ARGS.positional' -- "$@" >> "$PICKER_COPY_TEST_DIR/wallpaper-calls"
+MOCK
+chmod +x "$test_dir/wallpaper-bin/"*
+wait_wallpaper_step() {
+    local key=$1
+    for ((try=0;try<100;try++)); do
+        if snapshot | jq -e --arg key "$key" '.visible and (.directory|length > 0) and .selectionKey==$key' >/dev/null; then return; fi
+        sleep 0.025
+    done
+    cat "$test_dir/log" "$test_dir/client-error" >&2
+    return 1
+}
+PATH="$test_dir/wallpaper-bin:$PATH" WALLPAPER_STATE_DIRECTORY="$test_dir/saved-wallpapers" \
+    bash "$picker" provider wallpaper > "$test_dir/result" 2> "$test_dir/client-error" & client_pid=$!
+wait_wallpaper_step wallpaper.image
+ipc call pickertest query one
+ipc call pickertest enter
+wait_wallpaper_step wallpaper.mode
+snapshot | jq -e '[.items[].result]==["personal","work"]' >/dev/null
+ipc call pickertest accept 1
+wait_wallpaper_step wallpaper.monitor
+snapshot | jq -e '[.items[].result]==["HDMI-A-1","DP-1"]' >/dev/null
+ipc call pickertest accept 1
+wait_wallpaper_step wallpaper.image
+snapshot | jq -e '.query=="one" and (.filtered[.currentIndex].result|endswith("/one.png"))' >/dev/null
+[[ $(readlink "$test_dir/saved-wallpapers/wallpaper_work_1") == "$test_dir/wallpapers/one.png" ]]
+# Both child cancellations return to the same image and filter.
+ipc call pickertest enter
+wait_wallpaper_step wallpaper.mode
+ipc call pickertest pressEscape
+wait_wallpaper_step wallpaper.image
+snapshot | jq -e '.query=="one" and .filtered[.currentIndex].title=="one.png"' >/dev/null
+ipc call pickertest enter
+wait_wallpaper_step wallpaper.mode
+ipc call pickertest enter
+wait_wallpaper_step wallpaper.monitor
+ipc call pickertest pressEscape
+wait_wallpaper_step wallpaper.image
+snapshot | jq -e '.query=="one" and .filtered[.currentIndex].title=="one.png"' >/dev/null
+ipc call pickertest pressEscape
+wait_client 0
+jq -se 'length==1 and .[0][0]=="img"' "$test_dir/wallpaper-calls" >/dev/null
+printf 'PASS: wallpaper browsing preserves image/search through mode, monitor, application and child cancellation\n'
 
 # External search flags must not override the shared Config.qml settings.
 printf '%s\n' '{"fuzzy":false,"smartCase":false,"allowTyped":false,"items":[{"title":"Banana","result":"fruit"},{"title":"Potato","result":"vegetable"}]}' > "$test_dir/search.json"

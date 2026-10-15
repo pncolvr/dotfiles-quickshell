@@ -10,7 +10,8 @@ cleanup() {
 }
 trap cleanup EXIT
 mkdir -m700 "$fixture/runtime"
-ln -s "$root_dir/src" "$fixture/src"
+# Snapshot sources: checkout edits must not hot-reload a running QtTest wait.
+tar -C "$root_dir" --exclude='*.env' --exclude='src/services/launcher/providers/*.json' -cf - src | tar -C "$fixture" -xf -
 sed 's@"../../../src@"src@g' "$root_dir/tests/clipboard/fts/previews.qml" > "$fixture/shell.qml"
 magick -size 1920x1080 pattern:checkerboard "$fixture/landscape.png"
 magick -size 600x1800 gradient:red-blue "$fixture/portrait.jpg"
@@ -18,6 +19,7 @@ magick -size 8x4 xc:blue "$fixture/tiny.png"
 magick -size 800x600 xc:none -fill red -draw 'circle 400,300 400,100' "$fixture/transparent.webp"
 for extension in gif bmp tiff; do magick -size 480x320 gradient:green-blue "$fixture/sample.$extension"; done
 magick -size 6000x4000 gradient:white-black "$fixture/large.png"
+for number in {0..7}; do ln "$fixture/large.png" "$fixture/held-$number.png"; done
 printf 'invalid synthetic image' > "$fixture/corrupt.png"
 export PREVIEW_TEST_DIRECTORY="$fixture"
 cat > "$fixture/serve.sh" <<'SERVER'
@@ -44,20 +46,20 @@ fi
 for scale in "${scales[@]}"; do
     XDG_RUNTIME_DIR="$fixture/runtime" XDG_DATA_HOME="$fixture/local" XDG_CACHE_HOME="$fixture/cache" \
         QT_QPA_PLATFORM="$platform" QT_SCALE_FACTOR="$scale" WAYLAND_DISPLAY="$display" \
-        timeout 25 qs -p "$fixture" > "$fixture/log" 2>&1 & qs_pid=$!
+        timeout 45 qs -p "$fixture" > "$fixture/log" 2>&1 & qs_pid=$!
     peak=0
     while kill -0 "$qs_pid" 2>/dev/null; do
         # timeout is the parent; measure the renderer, not the wrapper.
         child=$(pgrep -P "$qs_pid" | head -n 1 || true)
         if [[ -n $child && -r /proc/$child/status ]]; then
-            rss=$(awk '$1=="VmRSS:" {print $2}' "/proc/$child/status")
+            rss=$(awk '$1=="VmRSS:" {print $2}' "/proc/$child/status" 2>/dev/null || true)
             [[ -z $rss ]] || ((rss <= peak)) || peak=$rss
         fi
         sleep 0.05
     done
     result=0; wait "$qs_pid" || result=$?; qs_pid=''
     ((result==0)) || { cat "$fixture/log"; exit 1; }
-    rg 'PASS:|PREVIEW METRICS' "$fixture/log"
+    rg 'PASS:|PREVIEW METRICS|NAVIGATION METRICS' "$fixture/log"
     if ! rg -q 'PASS: image formats' "$fixture/log" || rg -q 'PREVIEW FAIL:|FAIL!|TypeError:|ReferenceError:|Binding loop|Failed to load configuration' "$fixture/log"; then cat "$fixture/log"; exit 1; fi
     printf 'PREVIEW peak_rss_kib=%s scale=%s platform=%s\n' "$peak" "$scale" "$platform"
     # Codec working buffers/allocator arenas can exceed the requested decoded

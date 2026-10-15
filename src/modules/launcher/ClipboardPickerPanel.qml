@@ -41,6 +41,7 @@ PickerPanelBase {
     Component {
         id: imagePreview
         ClipboardImagePreview {
+            entries: root.picker.filteredItems
             entry: root.previewEntry
             searching: root.picker.searchPending
             decodeWidth: root.sideBySide ? Math.max(1,root.availableContentWidth - Theme.pickerWidth) : root.availableContentWidth

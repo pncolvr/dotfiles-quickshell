@@ -13,7 +13,8 @@ Rectangle {
     property bool selected: false
     property bool multiple: false
     property bool clipboard: false
-    readonly property bool clipboardImage: clipboard && !!entry.image
+    property bool showThumbnail: true
+    readonly property bool clipboardImage: showThumbnail && clipboard && !!entry.image
     property bool grid: false
     signal chosen(bool toggle)
     signal activated()
@@ -54,6 +55,7 @@ Rectangle {
     }
     UI.ScaledImage {
         id: thumbnail
+        objectName: "pickerRowImage"
         anchors.left: parent.left
         anchors.leftMargin: Theme.controlFieldPadding + (root.multiple ? selectionBox.width + Theme.controlSpacing : 0)
         anchors.verticalCenter: root.clipboardImage ? undefined : parent.verticalCenter
@@ -63,7 +65,7 @@ Rectangle {
             - (pinMarker.visible ? pinMarker.width + Theme.controlSpacing : 0)
             : root.clipboard ? 44 : 18
         height: root.clipboardImage ? Theme.clipboardImagePreviewHeight : root.clipboard ? 36 : 18
-        source: root.entry.image || (root.entry.icon ? Quickshell.iconPath(root.entry.icon, true) : "")
+        source: root.showThumbnail ? root.entry.image || (root.entry.icon ? Quickshell.iconPath(root.entry.icon, true) : "") : ""
         visible: source.toString().length > 0 && !root.grid
         sourceSize: Qt.size(Math.ceil(width * (root.clipboardImage ? Screen.devicePixelRatio : 1)), Math.ceil(height * (root.clipboardImage ? Screen.devicePixelRatio : 1)))
         asynchronous: true

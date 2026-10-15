@@ -17,6 +17,9 @@ Singleton {
     readonly property bool privateWindow: privateRequest || mode === PickerService.Mode.Secret
     property string prompt: ""
     property bool forcePrompt: false
+    property bool previewImages: false
+    property bool imageOnly: false
+    property bool movePointer: true
     property string secretDescription: ""
     property var secretActions: null
     property var secretCallback: null
@@ -111,7 +114,8 @@ Singleton {
         acceptLabel = newMode === PickerService.Mode.Apps ? "Open" : newMode === PickerService.Mode.Windows ? "Focus" : "Select"
         layout = "list"; multiple = false; allowTyped = false; customAccept = false
         error = ""; destination = ""; destinationClass = ""; selectionKey = ""
-        forcePrompt = false; secretDescription = ""; privateRequest = false
+        forcePrompt = false; previewImages = false; secretDescription = ""; privateRequest = false
+        imageOnly = false; movePointer = true
         targetScreen = chooseScreen()
     }
     function show() { visible = true; if (mode === PickerService.Mode.Clipboard) clipboardSearch.seed(); opened() }
@@ -347,7 +351,7 @@ Singleton {
           case PickerService.Mode.Menu: {
             if (Config.pickerRememberSelection && selectionKey && item.id !== "typed")
                 PreferencesRepository.setValue("launcher.selection." + selectionKey, item.result)
-            reply(requestDirectory, {status: "accepted", items: picked, exitCode: custom && customAccept ? 10 : 0})
+            reply(requestDirectory, {status: "accepted", items: picked, query, exitCode: custom && customAccept ? 10 : 0})
             requestDirectory = ""
             close()
             break
@@ -465,6 +469,9 @@ Singleton {
             root.requestDirectory = directory
             root.prompt = request.prompt || "Choose"
             root.forcePrompt = request.showPrompt === true
+            root.previewImages = request.previewImages === true
+            root.imageOnly = request.kind === "image"
+            root.movePointer = request.movePointer !== false
             if (request.kind === "secret") {
                 root.mode = PickerService.Mode.Secret
                 root.secretDescription = request.description || ""
@@ -483,8 +490,9 @@ Singleton {
             root.items = request.sort === true ? rows.sort((a, b) => a.title.localeCompare(b.title)) : rows
             root.query = request.query || ""
             root.selectionKey = typeof request.selectionKey === "string" ? request.selectionKey : ""
-            if (Config.pickerRememberSelection && root.selectionKey) {
-                const previous = PreferencesRepository.value("launcher.selection." + root.selectionKey, null)
+            if (request.selectedResult !== undefined || (Config.pickerRememberSelection && root.selectionKey)) {
+                const previous = request.selectedResult !== undefined ? request.selectedResult
+                    : PreferencesRepository.value("launcher.selection." + root.selectionKey, null)
                 root.currentIndex = Math.max(0, root.filteredItems.findIndex(item =>
                     JSON.stringify(item.result) === JSON.stringify(previous)))
             }
@@ -537,6 +545,7 @@ Singleton {
         function projects(): void { root.projects() }
         function directories(): void { root.directories() }
         function projectUrls(): void { root.projects(true) }
+        function wallpaperConfig(): string { return JSON.stringify({directory: Config.wallpaperDirectory}) }
         function open(directory: string): void { root.open(directory) }
         function cancel(directory: string): void { root.cancel(directory) }
         function alive(): bool { return true }

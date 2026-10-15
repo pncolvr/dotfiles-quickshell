@@ -93,6 +93,7 @@ Item {
     readonly property var projectWorkspaceExclusions: ["*/.config/Code/*"]
     readonly property string projectDotfilesGitDirectory: _internal.home + "/.cfg"
     readonly property string projectDotfilesWorkTree: _internal.home
+    readonly property string wallpaperDirectory: `${_internal.home}/Pictures/wallpapers`
     readonly property var exposeWallpaperCommand: ["awww", "query", "--json"]
     readonly property var exposeWorkspaceIds: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
     // Screen-sharing policy for UI animations, including notification popups.

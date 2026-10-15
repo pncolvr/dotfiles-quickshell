@@ -15,6 +15,8 @@ FocusScope {
         (width - Math.max(0, workspaceCount - 1) * workspaceSpacing) / Math.max(1, workspaceCount) / Theme.exposeWorkspaceWidth))
     readonly property real workspaceWidth: Math.max(1, Math.floor(Theme.exposeWorkspaceWidth * workspaceScale))
     readonly property real searchWidth: Math.min(Theme.exposeSearchWidth, Math.max(140, width * 0.18))
+    readonly property bool moduleFocusSearch: true
+    readonly property var modulePointerTarget: search
     function focusSearch() { search.forceActiveFocus() }
     function workspaceForKey(event) {
         // Use physical number-row keys when Shift changes digits into punctuation.

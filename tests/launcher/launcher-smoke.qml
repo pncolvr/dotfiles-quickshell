@@ -168,10 +168,26 @@ Scope {
             PickerService.accept(false, false)
         }
 
-        function snapshot(): string { return JSON.stringify({visible:PickerService.visible,mode:PickerService.mode,
+        function snapshot(): string {
+            const viewer = objects.findChild(panel.panel, "imageViewer") as Image
+            const image = viewer ?? objects.findChild(panel.panel, "clipboardLargeImage") as Image
+            const hint = objects.findChild(panel.panel, "pickerEmptyHint") as UI.Text
+            const search = objects.findChild(panel.panel, "pickerSearch") as UI.SearchField
+            const list = objects.findChild(panel.panel, "pickerList") as UI.PickerList
+            const rowImages = list?.contentItem.children.map(row => objects.findChild(row, "pickerRowImage") as Image).filter(image => !!image) ?? []
+            return JSON.stringify({visible:PickerService.visible,mode:PickerService.mode,
+            rowImageSources:rowImages.map(image => image.source.toString()),
+            movePointer:PickerService.movePointer,imageOnly:PickerService.imageOnly,emptyHintVisible:hint?.visible ?? false,
+            previewSmooth:image?.smooth ?? true,previewMipmap:image?.mipmap ?? true,
+            previewWidth:image?.width ?? 0,sourceWidth:image?.implicitWidth ?? 0,
+            panelHeight:panel.panel?.height ?? 0,listHeight:list?.height ?? 0,listImplicitHeight:list?.implicitHeight ?? 0,
+            viewerHints:viewer ? panel.panel.children.filter(child => child instanceof UI.ShortcutHints).length : 0,
+            emptyHint:hint?.text ?? "",placeholder:search?.placeholderText ?? "",footerHint:panel.panel?.footerHint ?? "",
+            previewImages:PickerService.previewImages,previewSource:image?.source.toString() ?? "",
+            previewStatus:image?.status ?? Image.Null,stackedPreview:panel.panel?.stackedPreview ?? false,
             searchPending:PickerService.searchPending,query:PickerService.query,items:PickerService.items,filtered:PickerService.filteredItems,currentIndex:PickerService.currentIndex,
             selected:PickerService.selectedIds,canAccept:PickerService.canAccept,acceptLabel:PickerService.acceptLabel,
-            layout:PickerService.layout,itemCriteria:PickerService.itemCriteria,
+            layout:PickerService.layout,itemCriteria:PickerService.itemCriteria,selectionKey:PickerService.selectionKey,
             directory:PickerService.requestDirectory}) }
         function clickControl(name: string): bool {
             const button = objects.findChild(panel.panel, name) as UI.ActionButton
@@ -180,6 +196,10 @@ Scope {
         function accept(index: int): void { PickerService.select(index, false); PickerService.accept(false, false) }
         function custom(index: int): void { PickerService.select(index, false); PickerService.accept(true, false) }
         function select(index: int): void { PickerService.select(index, true) }
+        function imageViewport(width: int, height: int): void {
+            window.width = width; window.height = height
+            panel.availableContentWidth = width; panel.availableContentHeight = height
+        }
         function query(text: string): void { const search = objects.findChild(panel.panel, "pickerSearch") as UI.SearchField; search.text = text }
         function close(): void { PickerService.close() }
         function pressEscape(): void { panel.focusSearch(); events.keyClick(Qt.Key_Escape, Qt.NoModifier, 0) }

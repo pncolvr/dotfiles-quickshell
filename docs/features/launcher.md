@@ -8,7 +8,15 @@ raise the bar on their monitor above fullscreen applications; closing restores
 the bar's normal layer. These modes use `Theme.pickerWidth` (clamped on small
 screens). The search field stays at the same horizontal position and
 height across picker modes. It keeps keyboard focus while the pointer moves, and closes
-with Escape or an outside click.
+with Escape or an outside click. By default, launcher windows move the pointer onto their
+search field (or image for a viewer) after the window renders, including each
+step of a multi-stage menu. The window overview does this after its opening animation.
+Clipboard text and image pickers preserve the pointer position. JSON menus can
+set `movePointer: false`; dmenu callers use `--keep-pointer`. Screenshot/recording
+menus and browser login selection use this option. Keyboard search and Escape
+remain available. `LauncherFocusHandler` shares focus requests and pointer
+placement across ordinary/private pickers and the window overview.
+Input-only prompts reserve no empty list row.
 Picker headers contain search. Prompt titles are hidden by
 default; set `Config.pickerShowPrompt` to `true` to display them below search.
 `Theme.pickerBackgroundOpacity` controls background transparency (0–1), keeping
@@ -17,7 +25,8 @@ The list keeps its opening size while filtering or deleting entries, so the
 dialog and footer stay in place.
 `PickerPanelBase` shares layout, search and navigation. `ClipboardPickerPanel`
 and `MultiSelectPickerPanel` extend it with their own shortcuts and action buttons;
-`PickerPanel` loads the appropriate panel.
+`PickerPanel` loads the appropriate panel. JSON menus with `previewImages: true`
+use `ImagePickerPanel` to preview the highlighted row's `image` URL.
 Shortcut hints keep each key and action together when wrapping. Project and
 directory hints fit one line; GitHub groups its selection shortcuts on separate lines.
 
@@ -156,7 +165,7 @@ bash "$picker" --json-response options.json
 ```
 
 JSON requests accept `prompt`, `private`, `allowTyped`, `allowMultipleSelection`, `sort`,
-`customAccept`, `query`, `selectionKey`, `layout` (`list` or `grid`), and
+`customAccept`, `movePointer`, `query`, `selectionKey`, `layout` (`list` or `grid`), and
 `items`. Each item has a `title` and a `result` (a string or JSON value), with
 optional `subtitle`, `icon`, `glyph`, and `search` strings. `icon` names a desktop
 icon; `glyph` uses the shared icon font in grid menus. `acceptLabel` optionally
@@ -217,13 +226,62 @@ bash "$picker" provider azure --pick
 Providers live together in `src/services/launcher/providers/`, reusing the existing
 Bash actions and cache locations. Available
 names are `code`, `webapps`, `github`, `azure`, `n8n`, `remotes`, `bookmarks`,
-`books`, `directories`, `media`, `power`, `screenshot`, and `recording`.
+`books`, `directories`, `media`, `power`, `screenshot`, `recording`, `encode-qrcode`, and `wallpaper`.
 Their shared JSON handler and direct menu calls invoke `launcher.sh`; no Rofi
 adapter or PATH override is required. `_common/` holds the shared Bash helpers;
 `web/` contains webapps, Azure and n8n, and `remotes/` contains the VM/RDP
 scripts. Projects, GitHub and directories dispatch directly to native QML services; their
 former Bash providers are removed. The other providers are named `<provider>.sh`. Browser selection,
 work/personal filtering, editor profiles and cache rebuild flags are preserved.
+
+`launcher.sh provider encode-qrcode` opens a text prompt in the launcher.
+Type or paste text and press Enter to generate a QR PNG, copy it to the Wayland
+clipboard and display it in a native image viewer. Enter or Escape closes the
+compact viewer and leaves the clipboard image available. The viewer has no footer
+hints and uses `Theme.qrPreviewSize` (360px by default). QR modules use sharp scaling
+without smoothing; input uses the field placeholder and footer without an extra
+empty-state label. Escape in the input cancels. Encoding uses `qrencode` with its original
+defaults: error correction L, 3-pixel modules and a 4-module margin. Text is passed
+through stdin, preserving pipes, quotes, Unicode and leading dashes. Success and
+failure use bar alerts; a failed encode leaves the clipboard untouched. Temporary
+input and image files are private, retained while the QR viewer is open, and
+removed when the provider exits.
+Hyprland's existing tools-submap **E** binding calls this provider; its former
+YAD dialog and QR-specific window positioning rules are removed.
+
+`launcher.sh provider wallpaper` opens the image picker at `Config.wallpaperDirectory`,
+which defaults to `~/Pictures/wallpapers` in `src/config/Config.qml`.
+Search and preview an image, press Enter, choose personal/work mode, then choose
+the connected monitor in a separate step. The focused monitor appears first. After
+applying, browsing resumes with the same image selected and the same search terms.
+Escape in either target step returns to image browsing; Escape in the image picker
+ends the session. Target choices use the standard picker without prompt labels.
+The wallpaper list shows filenames without thumbnails, so rows do not load or
+cache images. Only the highlighted image loads in the large preview, beside the
+list on wide screens or below it on narrow screens, using the same bounded loader
+as clipboard image previews. Application errors show an alert
+and return to browsing with the same image and search.
+Image paths containing spaces, quotes, Unicode or newlines are passed literally.
+Animated GIFs can be set with `awww`; previews show a still image. Video files
+are excluded because `awww` accepts images.
+
+The provider saves per-mode, per-output symlinks under `~/Pictures/.runtime`.
+Existing `wallpaper_personal_1`, `wallpaper_work_1` (DP-1) and `_2` (HDMI-A-1)
+choices are preserved; additional outputs use their connector name as the suffix.
+Failed application preserves the previous saved choice. `provider wallpaper restore
+[personal|work]` restores available choices on connected monitors without a picker;
+startup defaults to personal. Hyprland startup and the Zsh status manager use this
+route. The daemon still starts from Hyprland. Tools-submap **W** opens the native
+picker; the former terminal picker, setter, restore and terminal-preview scripts
+are removed, along with wallpaper-only terminal positioning. The music-player
+window rule remains.
+
+Use `provider wallpaper [pick] DIRECTORY` for another image folder, or
+`provider wallpaper set OUTPUT personal|work FILE` for a direct set. Numeric
+outputs `1` and `2` retain the legacy DP-1/HDMI-A-1 mapping. Optional
+`providers/wallpaper.env` can set `WALLPAPER_STATE_DIRECTORY` for saved choices.
+The image root comes from `Config.wallpaperDirectory` unless a directory argument
+is supplied. Direct setting and restore work without reading launcher configuration.
 
 Azure rebuilds reuse the `portkey` container, start it if stopped, or create it
 from `portkey:latest` with `~/Projects/helpers/portkey` mounted at
@@ -391,6 +449,7 @@ Private configuration lives beside its provider and stays Git-ignored:
   wildcards are passed literally.
 - `screenshot.env`: Bash `SCREENSHOT_FOLDER` setting.
 - `recording.env`: Bash `VIDEOS_FOLDER` setting.
+- `wallpaper.env`: optional Bash `WALLPAPER_STATE_DIRECTORY` setting; set the image root with `Config.wallpaperDirectory`.
 
 Recording offers no audio, desktop audio, microphone audio, or both. Audio modes
 open the relevant output and microphone pickers, with the current defaults first
@@ -459,13 +518,36 @@ caching and has an eight-megapixel target budget (`Config.clipboardPreviewMaxPix
 Small images remain centered at their original pixel size; only images larger
 than the viewport are scaled down to fit. A Bash helper reads local image header
 dimensions with ImageMagick before choosing decode/display sizes, so the decoder
-does not enlarge small images either. Shared filtering remains enabled.
-Viewport/display-scale changes are coalesced over 100 ms; a newly selected entry
-uses the current target immediately. This target bounds the requested preview,
-not the image codec's temporary buffers or the renderer's total memory. A small
-compressed file can still contain a very large image.
-Transitions use `Theme.clipboardLayoutDuration` and respect the existing
-`animateDuringScreenShare` setting. Repeated toggles retarget the current motion.
+does not enlarge small images either. Decode dimensions are capped by the actual
+preview pane in physical pixels, including when the compositor constrains a
+high-DPI window. Shared filtering remains enabled.
+The shared preview retains the previous ready image while the next one loads,
+then fades between them over `Theme.imagePreviewFadeDuration` (140ms by default).
+Wallpaper and clipboard use the same component and source-change handling.
+Opening an image or stepping through images normally starts a sharp decode
+immediately and keeps the previous sharp frame visible until it is ready. Small
+previews stay hidden during ordinary selection. Changes less than 100ms apart
+switch to 192-pixel previews for rapid browsing. When idle, the two nearest
+images in each direction are prefetched. Seven small image slots bound this
+temporary memory working set; there is no persistent thumbnail cache or list-thumbnail generation.
+Only one small decode runs at a time. Held arrow keys replace the queued selection
+without cancelling each in-flight decode; completed intermediate selections can
+still display while navigation continues. During rapid browsing, cached neighbors
+display immediately.
+After rapid browsing pauses for 150ms, the final image decodes at the pane's
+physical resolution. Small previews and fades share the same component for both
+menus. A stale completion cannot replace the final selection. The sharp incoming
+and outgoing frames are released after their fade, and all image sources are
+released when the preview closes. Missing/corrupt images show an explicit error.
+Row refreshes with the same image URL do not reload it. PNG and other codecs may
+still decompress the complete source to produce a small preview. Viewport/display-scale changes are coalesced over 100ms, and unchanged
+effective dimensions do not restart a decode. The complete decode size is set
+before loading the new file. These bounds limit the requested preview, not the
+image codec's temporary buffers or the renderer's total memory. A small compressed
+file can still contain a very large image.
+Layout transitions use `Theme.clipboardLayoutDuration`; layout and image fades
+respect the existing `animateDuringScreenShare` setting. Repeated toggles retarget
+the current motion.
 Pins count toward the entry and total-size limits, but are
 never removed to satisfy those limits; if pins alone exceed a limit, they are
 kept and new unpinned entries cannot be retained. Explicitly deleting a pinned

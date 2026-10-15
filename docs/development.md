@@ -250,16 +250,21 @@ altering real monitor or screen-capture settings; the native test checks the
 moving input mask and restores desktop focus.
 
 Preview tests use generated PNG/JPEG/WebP/GIF/BMP/TIFF files, a loopback-only delayed
-HTTP response, and isolated windows at Qt scale factors 1, 1.25 and 2. They check
-resize coalescing, loading/error feedback, stale replies, empty-source release
-and memory growth across repeated navigation. They additionally require
-ImageMagick, socat, curl, procps and Linux /proc. Native tests use the current
+HTTP response, and isolated windows at Qt scale factors 1, 1.25 and 2. Each run
+snapshots its source files so editing the checkout cannot trigger a hot reload
+inside a QtTest wait. Private provider configuration is excluded. They check
+real-pane decode sizing, resize coalescing, loading/error feedback, stale replies,
+retained frames, shared crossfades, disabled motion, unchanged-source reuse, rapid
+navigation, immediate sharp loading without pixelated frames for single steps,
+uncached frames during held-key navigation, immediate neighboring low-resolution
+previews, final refinement, release of image sources and memory growth across repeated
+navigation. They additionally require ImageMagick, socat, curl, procps and Linux /proc. Native tests use the current
 Wayland/GPU backend. These scale/viewport simulations do not establish behavior
 for physical monitor unplugging or every compositor fractional-scale protocol.
 
-The 24-megapixel compressed PNG fixture reached approximately 0.8 GB peak RSS
-on the tested native renderer. Repeated navigation batches stabilized rather
-than continuing to grow. An eight-megapixel requested preview is not a total
+The 24-megapixel compressed PNG fixture can still reach roughly 0.7–0.8 GB peak
+RSS on the tested native renderer, even with viewport-sized output. Repeated
+navigation batches stabilized rather than continuing to grow. An eight-megapixel requested preview is not a total
 memory cap: codec buffers, retained images, renderer allocations and allocator
 arenas can exceed it and may remain allocated after the active source is cleared.
 The fixture measures both peak RSS and batch-to-batch growth instead of requiring
@@ -299,7 +304,13 @@ replacement, failure preservation and empty subscription lists. Podman and the
 picker handler are mocked; the test never starts a real container or authenticates.
 `bash tests/launcher/launcher.sh` checks that legacy markup labels are normalized
 before search while replies preserve original labels/results and ordinary grid
-labels remain literal.
+labels remain literal. It also checks compact input-only prompts, the QR viewer,
+filename-only wallpaper lists and the mode/monitor selection flow.
+`bash tests/launcher/native-pointer.sh` checks automatic pointer placement and
+Escape dismissal for native list, input and image launcher windows, plus stationary
+pointer behavior with keyboard search in clipboard, capture-style and private
+login-selection menus. It uses
+synthetic entries and restores the original desktop focus and cursor position.
 
 ## Notifications
 
@@ -542,6 +553,28 @@ cover UTF-8 query/IPC locales, pacman database lock deferral,
 repository/AUR queries, yay age suffixes, atomic publication of populated
 and empty snapshots, query/write failures, interrupted runs, locking and stale
 temporary file cleanup.
+
+`bash tests/launcher/encode-qrcode.sh` checks QR generation with real `qrencode`
+and a mocked picker/clipboard: literal and multiline input, PNG MIME type,
+cancellation, encoder/copy failures, clipboard preservation and private-file cleanup.
+When `zbarimg` is installed it also decodes the generated QR PNGs to check their
+contents and verifies that the preview matches the clipboard image, survives
+until dismissal, and cleans up on preview errors. The launcher IPC suite checks
+the QR prompt and native viewer, sharp integer scaling, Enter/Escape dismissal,
+clipboard retention, compact hint-free viewer geometry, and removal of temporary
+image files.
+
+`bash tests/launcher/wallpaper.sh` checks native picker requests, literal paths,
+per-mode/output saved links, repeated application, mode/monitor cancellation,
+setting/monitor failures, custom roots, startup readiness and restoration using mocked desktop commands. The launcher IPC
+suite loads a synthetic image through the real bounded preview loader, checks
+wide/narrow layout, empty search and preview reset when ordinary menus open. It
+checks that image-picker rows have empty image sources while ordinary menu rows
+retain their thumbnails. It also checks the full image → mode → monitor flow, including preserved search and
+image selection after setting or cancelling either target step. The wallpaper
+flow uses a custom `Config.wallpaperDirectory` to verify the default provider
+reads the configured root through launcher IPC.
+
 Provider checks include recording cancellation at each picker and literal shell
 characters in RDP credentials, recording paths, and audio devices.
 

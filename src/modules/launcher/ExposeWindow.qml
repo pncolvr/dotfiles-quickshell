@@ -14,6 +14,7 @@ PanelWindow {
     // qmllint enable uncreatable-type
     id: root
     property var picker: PickerService
+    LauncherFocusHandler { host: root; panel: contentLoader.item; picker: root.picker; ready: root.requested && root.transitionProgress === 1 }
     property var wallpapers: ({})
     readonly property Item previewItem: panel
     property bool animationsEnabled: Config.animateDuringScreenShare || !AudioService.screencastActive
@@ -58,9 +59,6 @@ PanelWindow {
         } else transitionProgress = requested ? 1 : 0
     }
     onAnimationsEnabledChanged: updateTransition()
-    onTransitionProgressChanged: if (requested && transitionProgress === 1) {
-        Qt.callLater(() => (contentLoader.item as ExposePanel)?.focusSearch())
-    }
     Timer {
         id: prepareTransition
         interval: 16
@@ -89,12 +87,6 @@ PanelWindow {
             }
             wallpapers = result
         } catch (_) { wallpapers = ({}) }
-    }
-    HyprlandFocusGrab {
-        id: grab
-        windows: [root]
-        active: root.requested && root.transitionProgress === 1
-        onCleared: if (root.requested && root.transitionProgress === 1) root.picker.close()
     }
     onRequestedChanged: {
         if (requested) {
