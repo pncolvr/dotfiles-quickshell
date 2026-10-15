@@ -1,5 +1,6 @@
 pragma Singleton
 import QtQml
+import "ProjectLaunchers.mjs" as Launchers
 import Quickshell
 import Quickshell.Io
 import "../"
@@ -36,7 +37,7 @@ Singleton {
         const state = pathStates[path]
         if (state?.message) return state.message
         const missing = workspaces.filter(workspace => pathStates[workspace.path]?.status === "unavailable").length
-        return missing ? missing + (missing === 1 ? " workspace file missing or unavailable" : " workspace files missing or unavailable") : ""
+        return missing ? missing + (missing === 1 ? " project file missing or unavailable" : " project files missing or unavailable") : ""
     }
     function checkPaths() {
         if (pathCheck.running) { pathCheckPending = true; return }
@@ -88,6 +89,10 @@ Singleton {
         managing = value
         if (!value) { cancelDraft(); syncPicker(); PickerService.opened() }
     }
+    function fileLabel(file) {
+        const launcher = Launchers.forFile(file.path, Config.projectApps)
+        return launcher && !launcher.useFileNames ? (launcher.name || launcher.id) + " · " + file.name : file.name
+    }
     function syncPicker() {
         if (PickerService.mode !== PickerService.Mode.Projects) return
         const previous = PickerService.currentItem?.id
@@ -103,9 +108,7 @@ Singleton {
         } else if (projectPath) {
             const project = availableProjects.find(project => project.path === projectPath)
             if (!project) { projectPath = ""; syncPicker(); return }
-            rows.push({id:project.path,title:"Open folder",result:project.path,category:project.category})
-            for (const workspace of project.workspaces.filter(workspace => workspace.included))
-                rows.push({id:workspace.path,title:workspace.name,subtitle:workspace.path,result:workspace.path,category:project.category})
+            rows.push(...Launchers.choices(project,Config.projectApps,Config.projectDefaultApp))
             PickerService.acceptLabel = "Open"
         } else {
             for (const project of availableProjects) rows.push({id:project.path,title:project.name,subtitle:project.path,
@@ -130,36 +133,46 @@ Singleton {
         if (!projectPath) {
             const project = availableProjects.find(project => project.path === item.result)
             if (!project) return
-            if (project.workspaces.some(workspace => workspace.included)) {
+            let actions
+            try { actions = Launchers.choices(project,Config.projectApps,Config.projectDefaultApp) }
+            catch (exception) { error = exception.message; PickerService.error = error; return }
+            if (actions.length > 1) {
                 projectPath = project.path
                 PickerService.query = ""; syncPicker()
                 const remembered = Config.pickerRememberSelection ? PreferencesRepository.value("launcher.selection.projects.workspaces:" + project.path, project.path) : project.path
-                PickerService.currentIndex = Math.max(0, PickerService.items.findIndex(row => row.result === remembered))
+                PickerService.currentIndex = Math.max(0, PickerService.items.findIndex(row => row.id === remembered || row.result === remembered))
                 PickerService.opened()
                 return
             }
-            launch(project.path, project)
+            launch(actions[0].result,project,actions[0].launcherId)
         } else {
             const project = availableProjects.find(project => project.path === projectPath)
             if (!project) return
-            if (Config.pickerRememberSelection) PreferencesRepository.setValue("launcher.selection.projects.workspaces:" + project.path, item.result)
-            launch(item.result, project)
+            if (Config.pickerRememberSelection) PreferencesRepository.setValue("launcher.selection.projects.workspaces:" + project.path, item.id)
+            launch(item.result,project,item.launcherId)
         }
     }
-    function launch(path, project) {
-        const folderName = path.endsWith(".code-workspace") ? path.slice(0,path.lastIndexOf("/")).split("/").pop() : path.split("/").pop()
-        const client = WindowService.allWindows.find(client => client.class === "code" && client.title.startsWith(folderName))
+    function launch(path, project, launcherId) {
+        const launcher = Config.projectApps.find(item => item.id === launcherId)
+        let action
+        try { action = Launchers.prepare(launcher,path,project,project.category) }
+        catch (exception) { error = exception.message; PickerService.error = error; return }
+        const client = action.windowClass && action.windowTitlePrefix ? WindowService.allWindows.find(client =>
+            client.class === action.windowClass && client.title.startsWith(action.windowTitlePrefix)) : null
         PickerService.close()
         Qt.callLater(() => {
             if (client) WindowService.focusWindow(client.address)
-            else Quickshell.execDetached(Config.projectEditorCommand.concat([path,"--profile",Config.projectEditorProfiles[project.category] || project.category]))
+            else Quickshell.execDetached(action.command)
         })
     }
     function startScan(scanSources, action) {
         if (busy) return false
+        let fileExtensions
+        try { fileExtensions = Launchers.extensions(Config.projectApps) }
+        catch (exception) { error = exception.message; PickerService.error = error; return false }
         error = ""; operation = action
         scan.input = JSON.stringify({sources:scanSources,sshConfig:Config.projectSshConfig,
-            workspaceExclusions:Config.projectWorkspaceExclusions,dotfilesGitDirectory:Config.projectDotfilesGitDirectory,
+            fileExtensions,fileExclusions:Config.projectFileExclusions,dotfilesGitDirectory:Config.projectDotfilesGitDirectory,
             dotfilesWorkTree:Config.projectDotfilesWorkTree}) + "\n"
         scan.running = true
         return true

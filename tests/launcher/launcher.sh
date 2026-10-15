@@ -162,21 +162,21 @@ ipc call pickertest accept 1
 wait_client 0
 [[ $(<"$test_dir/result") == '{"path":"second"}' ]]
 
-# A shared request option controls pointer behavior for JSON and dmenu callers.
-for request_type in json dmenu; do
-    if [[ $request_type == json ]]; then
-        printf '%s\n' '{"movePointer":false,"items":[{"title":"Keep pointer","result":"kept"}]}' > "$test_dir/pointer-options.json"
+# Legacy pointer-preservation options remain accepted; all launchers preserve it.
+for request_type in json json-true dmenu; do
+    if [[ $request_type == json || $request_type == json-true ]]; then
+        jq -n --argjson oldOption "$([[ $request_type == json-true ]] && printf true || printf false)" \
+            '{movePointer:$oldOption,items:[{title:"Keep pointer",result:"kept"}]}' > "$test_dir/pointer-options.json"
         bash "$picker" --json "$test_dir/pointer-options.json" > "$test_dir/result" 2> "$test_dir/client-error" & client_pid=$!
     else
         printf 'kept\n' | bash "$picker" --dmenu --keep-pointer > "$test_dir/result" 2> "$test_dir/client-error" & client_pid=$!
     fi
     wait_open
-    snapshot | jq -e '.movePointer == false' >/dev/null
     ipc call pickertest enter
     wait_client 0
     [[ $(<"$test_dir/result") == kept ]]
 done
-printf 'PASS: JSON and dmenu share the pointer-preservation option\n'
+printf 'PASS: legacy JSON and dmenu pointer options remain compatible\n'
 
 # QR generation opens the actual viewer and retains the clipboard after Enter or Escape.
 qr_text='literal | Olá "quoted" $value'
@@ -184,7 +184,7 @@ for close_action in enter pressEscape; do
     bash "$picker" provider encode-qrcode > "$test_dir/result" 2> "$test_dir/client-error" & client_pid=$!
     wait_open
     snapshot | jq -e '.items == [] and .query == "" and (.canAccept | not)
-        and .movePointer == true and .emptyHint == "" and (.emptyHintVisible | not) and .placeholder == "Text to encode"
+        and .emptyHint == "" and (.emptyHintVisible | not) and .placeholder == "Text to encode"
         and .listHeight == 0 and .listImplicitHeight == 0
         and .footerHint == "Enter to generate qr code · Esc to cancel"' >/dev/null
     ipc call pickertest query '   '

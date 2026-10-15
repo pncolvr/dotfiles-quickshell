@@ -22,18 +22,26 @@ src/
   bar/             Module placement and shared windows
   modules/         Feature UI
   services/        Native services, repositories and Bash helpers
-  config/          Settings, intervals and update helper
-  theme/           Styling and shared UI components
+  config/          Settings, Theme.qml link and singleton metadata
+  theme/           Appearance settings, shared UI components and rendering utilities
   assets/          Images
 docs/              Setup, usage and implementation details
 tests/             Helper, QML and integration checks
 data/              Local runtime database (ignored by Git)
-config -> src/config  Compatibility link for existing update hooks
+config -> src/config  Settings-only link
 ```
 
 Keep related QML directories together under `src/` so their relative imports
 and asset URLs remain valid. Update test imports and copied fixtures when moving
 files. Keep the root entry point and runtime data path stable.
+
+The config directory contains `Config.qml`, a `Theme.qml -> ../theme/Theme.qml`
+link and singleton metadata. The root `config -> src/config` link exposes both
+settings files. The config module re-exports the canonical theme source so both
+import paths share one singleton. `Timespan.qml` lives
+under `src/services/time`, exported through both local and parent service modules.
+The update helper lives at `src/services/system/update-check.sh`; cron and pacman
+hooks must point there, rather than under `config/`.
 
 Projects and Directories use `ManagedPickerFrame` for their outer geometry,
 management shortcuts, focus restoration and close cleanup. Each feature supplies
@@ -66,7 +74,9 @@ boundary, and audio retains the native models through explicit model references.
 Singleton folders also carry local `qmldir` metadata so the language server can
 recognize standalone files without the command-line check's explicit imports.
 Parent modules continue exporting the same QML files; local and parent imports
-resolve to the same runtime singleton instances. Keep both listings synchronized
+resolve to the same runtime singleton instances. Theme's config export points at
+its canonical source, while `config/Theme.qml` is an editing link. Lint checks
+canonical sources once and prefers their local module metadata. Keep both listings synchronized
 when adding a singleton, and retain existing helper components in local listings.
 Run `bash tests/qml/singletons.sh` to check runtime identity and real language-server
 diagnostics for every singleton. It uses a private database, Bash, Node.js and
@@ -132,7 +142,7 @@ rendering while active; measure truly idle CPU with no ongoing animation.
 Pulsing text caches its glyph in a layer and blends colors in the shared
 `PulseText` shader. `UniformAnimator` runs the existing two-second sine pulse on
 the render thread, avoiding per-frame JavaScript and text-color updates. The
-shader's sine curve uses a shared elapsed-time origin, so later-starting or
+shader's sine curve uses `PulseClock`'s shared elapsed-time origin, so later-starting or
 reshown indicators join the same pulse phase. Each effect synchronizes once after
 its first rendered frame, then disconnects that signal; no per-frame global timer
 or JavaScript synchronization runs. The
@@ -272,6 +282,15 @@ immediate RSS reclamation.
 
 ## Projects
 
+`node --test tests/projects/launchers.test.mjs` checks generic extension matching,
+menu labels, literal argv expansion and invalid configuration.
+`bash tests/projects/launchers.sh` checks mixed Code/Godot/custom-editor projects,
+editor-specific arguments, app-specific profile mappings and category fallback, exclusion, direct opening of single-action projects, fallback app behavior and
+restart/selection persistence with synthetic project files and mocked editors. The custom file type
+is supplied only through the test's Config.qml rule. Scanner tests also cover
+case-insensitive suffixes, generated Godot-cache exclusions and literal paths.
+
+
 Run `bash tests/projects/projects.sh` for native project sources, workspace
 selection/editing, category choices, manual refresh, failed scan preservation,
 launch profiles and restart persistence. The suite uses isolated Git/non-Git
@@ -306,11 +325,11 @@ picker handler are mocked; the test never starts a real container or authenticat
 before search while replies preserve original labels/results and ordinary grid
 labels remain literal. It also checks compact input-only prompts, the QR viewer,
 filename-only wallpaper lists and the mode/monitor selection flow.
-`bash tests/launcher/native-pointer.sh` checks automatic pointer placement and
-Escape dismissal for native list, input and image launcher windows, plus stationary
-pointer behavior with keyboard search in clipboard, capture-style and private
-login-selection menus. It uses
-synthetic entries and restores the original desktop focus and cursor position.
+`bash tests/launcher/native-pointer.sh` checks stationary pointer behavior across
+ordinary/private menus, QR previews, clipboard pickers and the window overview.
+It opens each picker with the pointer away from the panel, verifies keyboard
+focus and search (including masked input), then closes it with Escape. Native
+checks restore the original window focus and pointer position when they finish.
 
 ## Notifications
 

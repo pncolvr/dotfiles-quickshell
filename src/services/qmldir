@@ -6,6 +6,7 @@ singleton HyprlandEventsService 1.0 hyprland/HyprlandEventsService.qml
 singleton WindowService 1.0 hyprland/WindowService.qml
 singleton SubmapService 1.0 hyprland/SubmapService.qml
 
+singleton Timespan 1.0 time/Timespan.qml
 singleton TimeService 1.0 time/TimeService.qml
 singleton CalendarService 1.0 time/CalendarService.qml
 singleton TimersService 1.0 time/timers/TimersService.qml
@@ -17,7 +18,6 @@ singleton RecentFilesService 1.0 files/RecentFilesService.qml
 singleton PinnedFilesService 1.0 files/PinnedFilesService.qml
 singleton NetworkService 1.0 system/NetworkService.qml
 singleton UpdatesService 1.0 system/UpdatesService.qml
-singleton ConfigService 1.0 system/ConfigService.qml
 
 singleton DbService 1.0 storage/DbService.qml
 singleton BackupService 1.0 storage/BackupService.qml

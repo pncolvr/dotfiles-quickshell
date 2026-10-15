@@ -172,7 +172,7 @@ Scope {
                 root.find("projectTabs").itemAt(0).clicked()
                 PickerService.currentIndex=0
                 PickerService.accept(false,false)
-                root.check(ProjectService.projectPath === project.path && PickerService.items[0].title === "Open folder" && PickerService.items[1].title === "Banana", "folder is first; only included workspace offered")
+                root.check(ProjectService.projectPath === project.path && PickerService.items[0].title === "Open in Code" && PickerService.items[1].title === "Banana", "folder is first; only included workspace offered")
                 PickerService.currentIndex=1
                 PickerService.accept(false,false)
                 PickerService.projects()

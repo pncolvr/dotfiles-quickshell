@@ -5,11 +5,58 @@
 | File | Controls |
 | --- | --- |
 | [`src/config/Config.qml`](../src/config/Config.qml) | Commands, intervals, defaults, namespaces and feature settings |
-| [`src/theme/Theme.qml`](../src/theme/Theme.qml) | Fonts, glyphs, colors, dimensions and spacing |
+| [`config/Theme.qml`](../config/Theme.qml) → [`src/theme/Theme.qml`](../src/theme/Theme.qml) | Fonts, glyphs, colors, dimensions and spacing |
 | [`src/bar/LeftModules.qml`](../src/bar/LeftModules.qml) | Workspaces and windows |
 | [`src/bar/CenterModules.qml`](../src/bar/CenterModules.qml) | Clock, package updates and recent files |
 | [`src/bar/RightModules.qml`](../src/bar/RightModules.qml) | System, Twitch, status, TOTP, batteries, notifications and tray |
 | [`shell.qml`](../shell.qml) | Entry point, startup environment and dedicated windows |
+
+The root `config/` link exposes `Config.qml` and a relative `Theme.qml` link to
+`src/theme/Theme.qml`. Editing either theme path updates the same file; both QML
+modules export the same singleton. Reusable UI components remain under `src/theme/ui`.
+
+`Config.qml` groups settings by component: shared UI/privacy and storage;
+launcher pickers, projects, directories and wallpapers; clipboard; Hyprland;
+calendar/timers; package updates; status/timecard; notifications; recent files;
+audio/media; network/statistics/power; batteries; Twitch/browser sessions; and TOTP.
+
+## Launcher defaults
+
+Project and directory pickers inherit `pickerManageShortcut`, `pickerAddShortcut`,
+`pickerShowAllShortcut` and `pickerWorkStatus` from the shared picker section.
+Changing a shared default updates both pickers. Each feature retains its own
+setting and can override the shared value:
+
+```qml
+readonly property string pickerManageShortcut: "Ctrl+M"
+readonly property string projectManageShortcut: pickerManageShortcut
+readonly property string directoryManageShortcut: "Alt+M"
+```
+
+Recent-file and qutebrowser session paths share the private `_internal.dataHome`
+helper, which honors `XDG_DATA_HOME` and falls back to `~/.local/share`. Their
+full-path settings remain individually editable. Equal durations and limits with
+different purposes remain independent.
+
+## Theme defaults
+
+`Theme.qml` groups appearance settings by component and keeps rendering state in
+shared UI utilities. Pulse timing lives in `src/theme/ui/PulseClock.qml`; calendar
+color selection belongs to the month view used by month/year calendars.
+
+Feature properties can inherit shared defaults while retaining their own names:
+
+```qml
+readonly property int tooltipWidth: 420
+readonly property int statsTooltipWidth: tooltipWidth
+```
+
+Changing `tooltipWidth` updates timers, stats and status panels together. The
+`tooltipMaxHeightRatio` and `tooltipCompactMaxHeightRatio` defaults group the 60%
+and 50% tooltip limits. `rotateIcon` supplies retry/media-flip glyphs, and the
+network up-arrow inherits `upIcon`. Calendar cell and tray icon heights default
+to their widths. Assign a literal to a feature property to override that default.
+Equal numbers with unrelated purposes remain separate settings.
 
 ## Desktop integrations
 
@@ -21,9 +68,9 @@ Review these defaults when adapting the configuration:
 - `submapParserCommand` points to `~/.config/hypr/scripts/keybinds/parser.sh`.
 - Screen-sharing commands expect `HideApplications(active)` and related Hyprland rules.
 - Update installation opens Ghostty and runs `yay`. The refresh helper is
-  `src/config/update-check.sh`. The root `config` symlink preserves the old path
-  for the installed pacman hook and any existing cron jobs. When those references
-  use the new path, the compatibility link can be removed. The helper combines
+  `src/services/system/update-check.sh`. Pacman hooks and cron jobs should invoke
+  that helper directly. The root `config` link exposes settings only; it does not
+  provide the updater. The helper combines
   `checkupdates --nocolor` (pacman-contrib) with `yay -Qua --color never`, refreshing
   repository metadata in `~/.cache/quickshell/updates.db` without sudo. Schedule
   the helper in your user crontab; remove the old root `yay -Sy` job. Running the
@@ -42,10 +89,72 @@ Review these defaults when adapting the configuration:
   profile, which starts an SSH agent and prints `Agent pid ...`. Script comments
   do not update `/etc/pacman.d/hooks/95-quickshell-updates.hook` automatically.
 - The temperature command reads `/sys/class/thermal/thermal_zone1/temp`.
-- `calendarUrl` opens Google Calendar. `mixerCommand` opens `pavucontrol`.
+- `calendarEventUrl` opens Google Calendar. `mixerCommand` opens `pavucontrol`.
 
 Helper commands resolve relative to the configuration source. Persistent data
 resolves from the shell root, so `data/quickshell.db` stays outside `src/`.
+
+## Project apps
+
+`projectApps` maps literal file extensions to app definitions in one ordered
+array. Each app has a unique `id`, display `name`, `extensions`, a `command` argv
+array and an `arguments` array. The first extension match wins, without case
+sensitivity. `projectDefaultApp` selects the fallback app for folders with no
+included matching files; it defaults to `code`.
+
+Defaults associate `.code-workspace` with Code and `.godot` with Godot:
+
+```qml
+readonly property string projectDefaultApp: "code"
+readonly property var projectApps: [
+    {id: "code", name: "Code", extensions: [".code-workspace"],
+        offerFolder: true, useFileNames: true, command: ["code"],
+        profiles: {work: "Work", personal: "Personal"},
+        arguments: ["{path}", "--profile", "{profile}"],
+        windowClass: "code", windowTitlePrefix: "{folderName}"},
+    {id: "godot", name: "Godot", extensions: [".godot"], command: ["godot"],
+        arguments: ["--editor", "{path}"],
+        folderArguments: ["--editor", "--path", "{path}"]}
+]
+```
+
+A single action opens directly. Godot-only projects open in Godot; plain folders
+open in the default app. Mixed projects show all included file actions. An app
+with `offerFolder: true` also offers **Open in App name** for the project folder
+when one of its file types is detected. Code uses this for workspace projects.
+`useFileNames: true` labels file actions with their scanned names (Code workspaces);
+other file actions use **Open in App name**, adding relative paths if needed to
+distinguish multiple files. `folderArguments`, when present, replaces `arguments`
+for folder actions. **Open in …** actions appear first, sorted alphabetically;
+named file actions follow, also sorted alphabetically.
+
+Add an app/extension rule and refresh the affected source in Manage. Command or
+name changes apply to saved files without rescanning. Removing a matching rule
+hides its file actions; the next refresh updates the saved file list. Inclusion
+choices and remembered selections survive, including existing workspace choices.
+
+| Placeholder | Value |
+| --- | --- |
+| `{path}` | Selected folder or project-file path |
+| `{project}` | Owning project folder |
+| `{directory}` | Selected folder, or the file's parent directory |
+| `{name}` | Project display name |
+| `{folderName}` | Basename of `{directory}` |
+| `{profile}` | Selected app's `profiles` entry for the project category, falling back to the category |
+
+Optional `profiles` maps project categories to app-specific profiles. Code maps
+`work` to `Work` and `personal` to `Personal`; each other app can provide its own
+mapping when using `{profile}`. Without a mapping, `{profile}` uses the category.
+
+Arguments remain separate strings, including paths containing spaces or shell
+characters; commands do not run through a shell. Optional `windowClass` and
+`windowTitlePrefix` focus an existing matching window before launching. Code
+retains its existing matching; other apps launch normally unless configured.
+
+`projectFileExclusions` applies to every type. Its defaults exclude Code
+configuration directories, generated `.godot` directories and Git metadata.
+Godot's project entry is normally `project.godot`, distinct from its generated
+`.godot` directory; see the [Godot CLI documentation](https://docs.godotengine.org/en/stable/tutorials/editor/command_line_tutorial.html#setting-the-project-path).
 
 ## Panels and search
 

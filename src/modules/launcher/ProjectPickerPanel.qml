@@ -45,12 +45,12 @@ ManagedPickerFrame {
         const projects = ProjectService.projects.filter(project => project.sourcePaths.includes(source.path))
         return matchesManagement(source.path) ? projects
             : projects.filter(project => matchesManagement(project.name + " " + project.path + " "
-                + project.workspaces.map(workspace => workspace.name + " " + workspace.path).join(" ")))
+                + project.workspaces.map(workspace => ProjectService.fileLabel(workspace) + " " + workspace.path).join(" ")))
     }
     function matchingWorkspaces(project) {
         const repository = project.name + " " + project.path
         if (!manageSearch.text.trim() || matchesManagement(repository)) return []
-        return project.workspaces.filter(workspace => matchesManagement(repository + " " + workspace.name + " " + workspace.path))
+        return project.workspaces.filter(workspace => matchesManagement(repository + " " + ProjectService.fileLabel(workspace) + " " + workspace.path))
     }
     readonly property var managedSources: ProjectService.sources.filter(source => matchesManagement(source.path) || projectsForSource(source).length > 0)
 
@@ -173,7 +173,7 @@ ManagedPickerFrame {
                     objectName: "projectManageSearch"
                     width: parent.width
                     visible: ProjectService.sources.length > 0
-                    placeholderText: "Filter paths, repositories and workspaces"
+                    placeholderText: "Filter paths, repositories and project files"
                     pauseTooltipDismissal: false
                     resetWithTooltip: false
                     handleEscape: false
@@ -229,7 +229,7 @@ ManagedPickerFrame {
                                     copyObjectName: "copySourcePath_" + path
                                     editObjectName: "editSource_" + path
                                     refreshObjectName: "refreshSource_" + path
-                                    editHint: "edit folder and workspaces"
+                                    editHint: "edit folder and project files"
                                     removeHint: "remove source"
                                     removeColor: Theme.urgent
                                     showRefresh: true
@@ -330,7 +330,7 @@ ManagedPickerFrame {
                                         path: projectRow.modelData.path
                                         copyObjectName: "copyProjectPath_" + path
                                         editObjectName: "editProject_" + path
-                                        editHint: "edit workspaces"
+                                        editHint: "edit project files"
                                         showEdit: projectRow.modelData.workspaces.length > 0
                                         showRemove: false
                                         editEnabled: !ProjectService.busy && !ProjectService.draft
@@ -406,8 +406,8 @@ ManagedPickerFrame {
                 UI.ColumnText {
                     visible: !!text
                     text: ProjectService.draft?.previousPath ? ""
-                        : ProjectService.draft?.review ? "New workspaces found. Choose which to include."
-                        : ProjectService.draft?.workspaceEdit ? "Choose workspaces to include" : "Choose workspaces before adding"
+                        : ProjectService.draft?.review ? "New project files found. Choose which to include."
+                        : ProjectService.draft?.workspaceEdit ? "Choose project files to include" : "Choose project files before adding"
                 }
                 Repeater {
                     model: ProjectService.draft?.projects ?? []
@@ -434,7 +434,7 @@ ManagedPickerFrame {
                                 UI.ActionButton {
                                     objectName: "projectWorkspace_" + workspaceRow.modelData.path
                                     glyph: workspaceRow.modelData.included ? Theme.checkIcon : Theme.addIcon
-                                    hint: workspaceRow.modelData.included ? "exclude workspace" : "include workspace"
+                                    hint: workspaceRow.modelData.included ? "exclude project file" : "include project file"
                                     fillColor: workspaceRow.modelData.included ? Theme.accent : Theme.alternateBackground
                                     onClicked: root.setIncluded(projectDraft.modelData.path,workspaceRow.modelData.path,!workspaceRow.modelData.included)
                                 }
@@ -444,9 +444,9 @@ ManagedPickerFrame {
                                     UI.ColumnText {
                                         objectName: "managedWorkspace_" + workspaceRow.modelData.path
                                         width: parent.width
-                                        text: root.highlighted(workspaceRow.modelData.name + " · " + workspaceRow.modelData.path)
+                                        text: root.highlighted(ProjectService.fileLabel(workspaceRow.modelData) + " · " + workspaceRow.modelData.path)
                                         textFormat: Text.StyledText
-                                        Accessible.name: workspaceRow.modelData.name + " · " + workspaceRow.modelData.path
+                                        Accessible.name: ProjectService.fileLabel(workspaceRow.modelData) + " · " + workspaceRow.modelData.path
                                         elide: Text.ElideMiddle
                                         UI.HoverTooltip { text: workspaceRow.modelData.path }
                                     }

@@ -26,7 +26,7 @@ sed -i 's/clipboardMonitorEnabled: true/clipboardMonitorEnabled: false/' "$fixtu
 sed 's@"../../src@"src@g' "$project_root/tests/launcher/native-pointer.qml" > "$fixture/shell.qml"
 magick -size 64x64 pattern:checkerboard "$fixture/synthetic.png"
 XDG_RUNTIME_DIR="$fixture" XDG_DATA_HOME="$fixture/data" XDG_CACHE_HOME="$fixture/cache" \
-    QT_QPA_PLATFORM=wayland WAYLAND_DISPLAY="$display" timeout 15 qs -p "$fixture" > "$fixture/log" 2>&1 & shell_pid=$!
+    QT_QPA_PLATFORM=wayland WAYLAND_DISPLAY="$display" timeout 25 qs -p "$fixture" > "$fixture/log" 2>&1 & shell_pid=$!
 status=0; wait "$shell_pid" || status=$?; shell_pid=''
 if ((status != 0)) || ! rg -q 'PASS: native launcher pointer' "$fixture/log" \
     || rg -q 'POINTER FAIL:|FAIL!|TypeError:|ReferenceError:|Failed to load configuration' "$fixture/log"; then

@@ -24,6 +24,23 @@ Item {
         property int todayYear: new Date(TimeService.time).getFullYear()
     }
 
+    function dayBackground(style) {
+        switch (style) {
+            case CalendarService.DayStyle.Today: return Theme.calendarTodayBackground
+            case CalendarService.DayStyle.ClockChangeEve: return Theme.calendarClockChangeEveBackground
+            case CalendarService.DayStyle.Holiday: return Theme.calendarHolidayBackground
+            default: return "transparent"
+        }
+    }
+
+    function dayForeground(style, weekend) {
+        switch (style) {
+            case CalendarService.DayStyle.Invalid: return "transparent"
+            case CalendarService.DayStyle.Today: return Theme.calendarTodayText
+            default: return weekend ? Theme.calendarWeekendText : Theme.calendarDayText
+        }
+    }
+
     function daysInMonth(month, year) {
         return new Date(year, month + 1, 0).getDate()
     }
@@ -138,12 +155,12 @@ Item {
                         width: Theme.calendarCellWidth
                         height: Theme.calendarCellHeight
                         radius: Theme.calendarCellRadius
-                        color: Theme.calendarBackground(style)
+                        color: root.dayBackground(style)
 
                         UI.ColumnText {
                             anchors.centerIn: parent
                             text: day.valid ? day.dayNum : ""
-                            color: Theme.calendarForeground(day.style, day.index >= 5)
+                            color: root.dayForeground(day.style, day.index >= 5)
                             horizontalAlignment: Text.AlignHCenter
                             verticalAlignment: Text.AlignVCenter
 

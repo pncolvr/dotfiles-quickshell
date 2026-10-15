@@ -79,7 +79,7 @@ Unlock or Cancel buttons. Its eye button
 toggles visibility so you can check your typing; closing or accepting resets the
 field to masked and clears it. Secret prompts use a separate window in the
 `quickshell-private` layer namespace, matching TOTP and notifications. The prompt
-takes focus and moves the pointer into the field when it opens, then lets you
+takes keyboard focus without moving the pointer when it opens, then lets you
 interact with other desktop windows without cancelling it. Click back into the
 field to paste or continue typing; Enter confirms and Escape cancels while the
 prompt has focus. Optional `--description` and `--error` provide public prompt

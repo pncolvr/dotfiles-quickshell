@@ -80,7 +80,7 @@ for mode in success age aur-only empty empty-exit-one unexpected-exit query-fail
     : > "$test_dir/queries"
     status=0
     HOME="$test_dir/home" UPDATES_TEST_MODE="$mode" bash -c 'export UPDATES_TEST_SCRIPT_PID=$$; exec bash "$1"' \
-        update-cache-test "$project_root/src/config/update-check.sh" 2> "$test_dir/error" || status=$?
+        update-cache-test "$project_root/src/services/system/update-check.sh" 2> "$test_dir/error" || status=$?
     case $mode in
         success|age|aur-only)
             [[ $status == 0 ]]
@@ -128,7 +128,7 @@ for lock_file in "$test_dir/pacman/db.lck" "$test_dir/home/.cache/quickshell/upd
     : > "$test_dir/actions"
     : > "$test_dir/queries"
     touch "$lock_file"
-    HOME="$test_dir/home" UPDATES_TEST_MODE=success bash "$project_root/src/config/update-check.sh" 2> "$test_dir/error"
+    HOME="$test_dir/home" UPDATES_TEST_MODE=success bash "$project_root/src/services/system/update-check.sh" 2> "$test_dir/error"
     [[ -f $lock_file && ! -s $test_dir/queries && ! -s $test_dir/error ]]
     [[ $(<"$UPDATES_TEST_CACHE") == "$UPDATES_TEST_PREVIOUS" ]]
     [[ $(<"$test_dir/actions") == 'ipc call updates schedule' ]]
@@ -137,7 +137,7 @@ for lock_file in "$test_dir/pacman/db.lck" "$test_dir/home/.cache/quickshell/upd
 done
 # Once pacman releases its lock, the scheduled invocation publishes normally.
 : > "$test_dir/actions"
-HOME="$test_dir/home" UPDATES_TEST_MODE=success bash "$project_root/src/config/update-check.sh"
+HOME="$test_dir/home" UPDATES_TEST_MODE=success bash "$project_root/src/services/system/update-check.sh"
 [[ $(<"$UPDATES_TEST_CACHE") == 'core x86_64_v3 linux 1 2' ]]
 [[ $(<"$test_dir/actions") == $'rename\nipc call updates reload' ]]
 
@@ -146,7 +146,7 @@ printf '%s\n' "$UPDATES_TEST_PREVIOUS" > "$UPDATES_TEST_CACHE"
 : > "$test_dir/actions"
 exec 8>"$test_dir/home/.cache/quickshell/updates.lock"
 flock -n 8
-HOME="$test_dir/home" UPDATES_TEST_MODE=success bash "$project_root/src/config/update-check.sh"
+HOME="$test_dir/home" UPDATES_TEST_MODE=success bash "$project_root/src/services/system/update-check.sh"
 [[ ! -s $test_dir/actions && $(<"$UPDATES_TEST_CACHE") == "$UPDATES_TEST_PREVIOUS" ]]
 exec 8>&-
 
@@ -154,7 +154,7 @@ exec 8>&-
 cache_dir="$test_dir/home/.cache/quickshell"
 touch "$cache_dir/updates.cache.ABC123" "$cache_dir/updates.err.ABC123" "$cache_dir/updates.cache.recent" "$cache_dir/updates.cache.backup-copy"
 touch -d '2 hours ago' "$cache_dir/updates.cache.ABC123" "$cache_dir/updates.err.ABC123" "$cache_dir/updates.cache.backup-copy"
-HOME="$test_dir/home" UPDATES_TEST_MODE=query-failure bash "$project_root/src/config/update-check.sh" 2> "$test_dir/error" && exit 1
+HOME="$test_dir/home" UPDATES_TEST_MODE=query-failure bash "$project_root/src/services/system/update-check.sh" 2> "$test_dir/error" && exit 1
 [[ ! -e $cache_dir/updates.cache.ABC123 && ! -e $cache_dir/updates.err.ABC123 ]]
 [[ -f $cache_dir/updates.cache.recent && -f $cache_dir/updates.cache.backup-copy ]]
 printf 'PASS: UTF-8 query/IPC locale, database lock deferral/retry, repository/AUR snapshots, yay age suffixes, atomic publication, failures, signals, locking and stale-file cleanup\n'

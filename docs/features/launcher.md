@@ -7,15 +7,14 @@ same curved joins and shadow as tooltips. List and power-grid launchers temporar
 raise the bar on their monitor above fullscreen applications; closing restores
 the bar's normal layer. These modes use `Theme.pickerWidth` (clamped on small
 screens). The search field stays at the same horizontal position and
-height across picker modes. It keeps keyboard focus while the pointer moves, and closes
-with Escape or an outside click. By default, launcher windows move the pointer onto their
-search field (or image for a viewer) after the window renders, including each
-step of a multi-stage menu. The window overview does this after its opening animation.
-Clipboard text and image pickers preserve the pointer position. JSON menus can
-set `movePointer: false`; dmenu callers use `--keep-pointer`. Screenshot/recording
-menus and browser login selection use this option. Keyboard search and Escape
-remain available. `LauncherFocusHandler` shares focus requests and pointer
-placement across ordinary/private pickers and the window overview.
+height across picker modes. Launchers take keyboard focus without moving the pointer,
+and close with Escape or an outside click. This includes webapps, clipboard menus,
+multi-step prompts, image viewers and the window overview. A QR/image preview focuses
+the image panel itself, so Escape and Enter work with the pointer outside the panel;
+no text field or button is needed. `LauncherFocusHandler` shares activation and
+outside-click handling across ordinary/private pickers and the overview.
+Legacy JSON `movePointer` fields are ignored and dmenu `--keep-pointer` remains
+accepted for compatibility; callers cannot enable pointer movement.
 Input-only prompts reserve no empty list row.
 Picker headers contain search. Prompt titles are hidden by
 default; set `Config.pickerShowPrompt` to `true` to display them below search.
@@ -165,7 +164,7 @@ bash "$picker" --json-response options.json
 ```
 
 JSON requests accept `prompt`, `private`, `allowTyped`, `allowMultipleSelection`, `sort`,
-`customAccept`, `movePointer`, `query`, `selectionKey`, `layout` (`list` or `grid`), and
+`customAccept`, `query`, `selectionKey`, `layout` (`list` or `grid`), and
 `items`. Each item has a `title` and a `result` (a string or JSON value), with
 optional `subtitle`, `icon`, `glyph`, and `search` strings. `icon` names a desktop
 icon; `glyph` uses the shared icon font in grid menus. `acceptLabel` optionally
@@ -366,34 +365,34 @@ form is open, Ctrl+A retains the input field's Select all behavior. Save or Canc
 collapses the form. With no sources, the form appears immediately.
 A repositories root includes each immediate
 child directory; neither kind requires Git. The add action scans the source.
-If no workspaces are found, it saves immediately without a checklist. Otherwise
-it shows the workspace choices before Save. Detected `.code-workspace` files
+If no project files are found, it saves immediately without a checklist. Otherwise
+it shows the project-file choices before Save. Detected `.code-workspace` and `.godot` project files
 start included. Deselect any, select none, or Cancel without adding the source.
-**Open folder** is always available. Paths can start with `~/` and retain spaces.
+With no included project files, the folder opens in the configured default app. Paths can start with `~/` and retain spaces.
 
 Manage groups projects under each added path. Repository roots list subfolders
 by name, with dividers and hover highlighting. Added paths have edit, refresh and
 remove buttons. Edit opens the bottom form while keeping the source list, search
 and scroll position visible. It supports the folder path, native folder picker,
-folder type, category and included workspaces. Add and Edit reuse the same form.
+folder type, category and included project files. Add and Edit reuse the same form.
 Manage keeps hints and actions on one footer line. Add stays visible but disabled
 while a form is open; Cancel and Apply follow it on the right.
 Changing Single folder / Repositories root rescans before saving. Repository
-subfolders have workspace edit
+subfolders have project-file edit
 buttons; their paths are derived from the configured root. Both added paths and
 repository subfolders have a copy button that copies their full folder path to
 the clipboard.
-The search field filters paths, repository names and workspace names using the
+The search field filters paths, repository names and project-file names using the
 shared fuzzy matching. Matching characters use the accent color; path and
-workspace matches are shown under the owning repository when filtering.
+project-file matches are shown under the owning repository when filtering.
 Opening an editor, cancelling (including Escape), and saving preserve the list's
 scroll position, bounded by the space available if the results change.
-Toggling workspace inclusion also preserves the editor's scroll position.
+Toggling project-file inclusion also preserves the editor's scroll position.
 The refresh icon at the top
 right of Manage rescans all configured sources. Each added path also has a
 refresh icon to rescan only that folder; for a repositories root, it rescans its
-subfolders. Both actions preserve choices and ask about newly found workspaces.
-Existing choices survive. When new workspaces are found, Manage opens a checklist
+subfolders. Both actions preserve choices and ask about newly found project files.
+Existing choices survive. When new project files are found, Manage opens a checklist
 of those new choices, initially checked. **Apply refresh** saves your choices and
 the refreshed list; **Cancel refresh** keeps the previous list so the next refresh
 asks again. No background scanning or scanning on picker opening occurs.
@@ -401,28 +400,37 @@ Missing or unreadable sources retain their previous results and show an error.
 Removing a source removes its listing, without modifying project files.
 
 Opening Manage also performs a read-only availability check of saved source folders,
-projects and workspace files. Missing paths have warning text in the existing rows;
-project summaries count missing workspace files, and the workspace editor identifies
+projects and project files. Missing paths have warning text in the existing rows;
+project summaries count missing project files, and the project-file editor identifies
 each affected file. This check does not scan repositories or prune records. Reopen
 Manage to recheck paths after recreating folders or mounting drives. Full-state import
 reports the same availability issues and preserves all saved entries.
 
-Projects inherit their source category. Edit saves category and workspace choices
+Projects inherit their source category. Edit saves category and project-file choices
 together. Changing a source path scans the replacement before saving; duplicate
-or unavailable paths leave the original source intact. Workspace choices follow
-matching relative paths, and newly discovered workspaces require confirmation.
+or unavailable paths leave the original source intact. Project-file choices follow
+matching relative paths, and newly discovered project files require confirmation.
 Cancel keeps the original source and choices. By default, work projects are hidden
 outside the configured work status;
 personal projects remain available. Ctrl+W can temporarily show both categories.
 Manage always shows both categories. Sources with overlapping
-projects share workspace choices; a single-folder source takes category priority.
+projects share project-file choices; a single-folder source takes category priority.
 Projects with identical names remain distinct by path.
 
-Within each project, **Open folder** stays first, followed by alphabetically
-ordered included workspaces. The last folder/workspace choice is remembered per
-project without rearranging rows. Opening focuses a matching VS Code window when
-available, otherwise launches the selected folder/workspace with its source's
-configured editor profile.
+Each project builds its actions from the included files and `Config.projectApps`.
+One action opens directly: a Godot-only project opens in Godot, while a plain
+folder opens in Code by default. With Code workspaces, **Open in Code** offers the
+folder alongside named workspace files. Godot files add **Open in Godot** to the
+same list. Multiple Godot files show their relative paths to distinguish actions.
+There is no separate **Open folder** row. The last choice is remembered per
+project without rearranging rows; previous workspace selections remain valid.
+
+App names, extensions, commands, optional folder actions and existing-window
+matching come from `projectApps`; `projectDefaultApp` controls the fallback.
+Code keeps its category profile and window reuse; Godot uses editor mode without
+Code flags. Additional apps use the same discovery, inclusion and launch path.
+See [project app configuration](../configuration.md#project-apps). Refresh a source
+in Manage to discover newly supported files in an existing project.
 
 In the GitHub picker, **Shift+Space** toggles the highlighted repository and moves
 to the next row without adding a space to search. Repeat to select repositories,
@@ -433,7 +441,8 @@ aliases and tracked folders from the bare dotfiles repository are supported.
 SSH remote hosts resolve through `HostName` in `~/.ssh/config` (the path is
 `projectSshConfig` in Config.qml). OpenSSH evaluates wildcard hosts and `Include`
 files locally, without connecting. Unmapped hosts retain their original name.
-Workspace discovery is recursive and excludes `*/.config/Code/*` by default.
+Project-file discovery is recursive. `projectFileExclusions` excludes Code
+configuration, generated Godot caches and Git metadata by default.
 
 Sources, projects and workspace choices live in SQLite. The project JSON cache,
 Zsh updater and `g` wrapper are removed. Existing JSON is not imported; the
@@ -610,8 +619,8 @@ window focus.
 bypasses search and remembered selections. It uses the `quickshell-private`
 namespace shared by TOTP and notifications. The eye button reveals the value on
 request; every new prompt starts masked. Enter confirms and Escape cancels,
-without Unlock or Cancel buttons. Secret prompts take focus and move the pointer
-into the field initially, then stay open when you use another desktop window,
+without Unlock or Cancel buttons. Secret prompts take keyboard focus without
+moving the pointer, then stay open when you use another desktop window,
 so you can copy a value elsewhere and
 click back into the field to paste it. The exact value returns through a
 private reply FIFO; only public prompt metadata is written to disk. Cancellation,

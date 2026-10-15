@@ -4,6 +4,9 @@ import "../../src/services" as Services
 import "../../src/services/storage" as Storage
 import "../../src/services/clipboard" as Clipboard
 import "../../src/services/audio" as Audio
+import "../../src/services/time" as Time
+import "../../src/config" as Settings
+import "../../src/theme" as Styling
 import "../../src/theme/ui" as UI
 import "../../src/theme/ui/components" as Components
 
@@ -22,6 +25,8 @@ Scope {
             stop()
             const pairs = [
                 ["DbService",Services.DbService,Storage.DbService],
+                ["Timespan",Services.Timespan,Time.Timespan],
+                ["Theme",Settings.Theme,Styling.Theme],
                 ["PreferencesRepository",Services.PreferencesRepository,Storage.PreferencesRepository],
                 ["ClipboardRepository",Services.ClipboardRepository,Storage.ClipboardRepository],
                 ["ProjectRepository",Services.ProjectRepository,Storage.ProjectRepository],
@@ -38,6 +43,8 @@ Scope {
             root.check(Services.PreferencesRepository.setValue("singleton-metadata-test",{value:73}),"write private fixture preference")
             root.check(Storage.PreferencesRepository.value("singleton-metadata-test",{}).value === 73,"local imports observe parent writes")
             root.check(screenModel.streams.length === 0 && localText.text === "Local component","existing local helper types remain available")
+            root.check(Settings.Config.timerTickInterval === Time.Timespan.fromMilliseconds(250),"Config imports the shared time utility")
+            root.check(Settings.Config.updatesRefreshCommand[1] === Quickshell.shellPath("src/services/system/update-check.sh"),"update helper resolves from the shell root")
             if (!root.failed) console.log("PASS: local singleton metadata preserves shared instances, storage state and helper types")
             Qt.quit()
         }

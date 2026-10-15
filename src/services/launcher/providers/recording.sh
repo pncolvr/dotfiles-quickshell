@@ -24,7 +24,7 @@ trap cleanup_recording EXIT
 pick_option() {
     local prompt=$1
     shift
-    printf '%s\n' "$@" | bash "$PICKER_LAUNCHER" --dmenu --keep-pointer -no-custom -p "$prompt"
+    printf '%s\n' "$@" | bash "$PICKER_LAUNCHER" --dmenu -no-custom -p "$prompt"
 }
 
 select_audio_device() {
@@ -45,7 +45,7 @@ select_audio_device() {
             | select(.properties."device.profile.name" != "off"))
         | {
             prompt: (if $kind == "sinks" then "Audio output" else "Microphone" end),
-            allowTyped: false, sort: false, movePointer: false,
+            allowTyped: false, sort: false,
             items: (sort_by(.name != $default) | map({
                 title: ((.description // .name) + (if .name == $default then " (default)" else "" end)),
                 result: .name
@@ -86,7 +86,7 @@ record_video() {
     case $capture_mode in
         output)
             output=$(hyprctl monitors -j | jq -r '.[].name' | sort \
-                | bash "$PICKER_LAUNCHER" --dmenu --keep-pointer -no-custom -p Output) || return 0
+                | bash "$PICKER_LAUNCHER" --dmenu -no-custom -p Output) || return 0
             [[ -n $output ]] || return 0
             command+=(--output "$output") ;;
         region)

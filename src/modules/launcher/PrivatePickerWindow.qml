@@ -24,8 +24,9 @@ PrivateTopPanelTooltip {
     backgroundOpacity: Theme.pickerBackgroundOpacity
 
     WlrLayershell.layer: WlrLayer.Overlay
+    // Activate once without a cursor warp, then allow desktop focus changes.
     WlrLayershell.keyboardFocus: panel?.nativeDialogOpen ? WlrKeyboardFocus.None
-        : behavior.secretPrompt ? WlrKeyboardFocus.OnDemand
+        : behavior.secretPrompt && !behavior.requestingKeyboardFocus ? WlrKeyboardFocus.OnDemand
         : WlrKeyboardFocus.Exclusive
 
     PickerWindowContent { id: behavior; host: root; picker: root.picker; enabled: root.picker.privateWindow; anchors.fill: parent }

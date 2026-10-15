@@ -177,7 +177,7 @@ Scope {
             const rowImages = list?.contentItem.children.map(row => objects.findChild(row, "pickerRowImage") as Image).filter(image => !!image) ?? []
             return JSON.stringify({visible:PickerService.visible,mode:PickerService.mode,
             rowImageSources:rowImages.map(image => image.source.toString()),
-            movePointer:PickerService.movePointer,imageOnly:PickerService.imageOnly,emptyHintVisible:hint?.visible ?? false,
+            imageOnly:PickerService.imageOnly,emptyHintVisible:hint?.visible ?? false,
             previewSmooth:image?.smooth ?? true,previewMipmap:image?.mipmap ?? true,
             previewWidth:image?.width ?? 0,sourceWidth:image?.implicitWidth ?? 0,
             panelHeight:panel.panel?.height ?? 0,listHeight:list?.height ?? 0,listImplicitHeight:list?.implicitHeight ?? 0,

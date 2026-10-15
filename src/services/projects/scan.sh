@@ -6,7 +6,8 @@ mode=${1:?}; shift
 # Discovery settings come from Config.qml; SSH host mappings come from its SSH config.
 request=$(cat)
 ssh_config=$(jq -r .sshConfig <<< "$request")
-exclusions=$(jq -c .workspaceExclusions <<< "$request")
+exclusions=$(jq -c '.fileExclusions // .workspaceExclusions // []' <<< "$request")
+extensions=$(jq -ce '.fileExtensions // [] | if type == "array" and all(.[]; type == "string" and test("^\\.[a-zA-Z0-9][a-zA-Z0-9._-]*$")) then . else error("Invalid project file extensions") end' <<< "$request")
 dotfiles=$(jq -r .dotfilesGitDirectory <<< "$request")
 dotfiles_tree=$(jq -r .dotfilesWorkTree <<< "$request")
 resolve_host() {
@@ -32,7 +33,7 @@ normalize_url() {
     printf '%s' "${url%.git}"
 }
 scan_project() {
-    local folder=$1 source=$2 category=$3 url='' workspace name
+    local folder=$1 source=$2 category=$3 url='' workspace name extension
     if [[ -d $folder/.git || -f $folder/.git ]]; then
         url=$(git -C "$folder" remote get-url origin 2>/dev/null || true)
     fi
@@ -45,7 +46,9 @@ scan_project() {
     [[ -z $url ]] || url=$(normalize_url "$url")
     local -a find_args=("$folder")
     while IFS= read -r pattern; do find_args+=(-path "$pattern" -prune -o); done < <(jq -r '.[]' <<< "$exclusions")
-    find_args+=(-type f -name '*.code-workspace' -print0)
+    find_args+=(-type f '(' -false)
+    while IFS= read -r extension; do find_args+=(-o -iname "*$extension"); done < <(jq -r '.[]' <<< "$extensions")
+    find_args+=(')' -print0)
     # Capture errors: a failed subtree scan must not delete a previous snapshot.
     local listing
     listing=$(mktemp)
@@ -53,7 +56,11 @@ scan_project() {
     local workspaces='[]'
     while IFS= read -r -d '' workspace; do
         workspace=$(realpath -e -- "$workspace")
-        name=$(basename -- "$workspace" .code-workspace)
+        name=$(basename -- "$workspace")
+        while IFS= read -r extension; do
+            if [[ ${name,,} == *"${extension,,}" ]]; then name=${name:0:${#name}-${#extension}}; break; fi
+        done < <(jq -r '.[]' <<< "$extensions")
+        [[ -n $name ]] || name=$(basename -- "$workspace")
         workspaces=$(jq -c --arg path "$workspace" --arg name "$name" '. + [{path:$path,name:$name}]' <<< "$workspaces")
     done < "$listing"
     rm -f "$listing"
@@ -81,7 +88,7 @@ while IFS= read -r source; do
         for folder in "${folders[@]}"; do
             if project=$(scan_project "$(realpath -e -- "$folder")" "$canonical" "$category"); then
                 projects=$(jq -c --argjson project "$project" '. + [$project]' <<< "$projects")
-            else error='Cannot read project workspaces'; break; fi
+            else error='Cannot read project files'; break; fi
         done
         path=$canonical
     fi

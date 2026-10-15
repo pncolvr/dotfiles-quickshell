@@ -19,6 +19,12 @@ fi
 
 # Smoke tests create hidden entrypoints while running.
 mapfile -d '' -t qml_files < <(rg --files -0 -g '*.qml' -g '!.*')
+# Skip editing aliases only when their canonical source is also included.
+# Links to external settings must still be linted.
+declare -A included_sources=()
+for qml_file in "${qml_files[@]}"; do
+    if [[ ! -L $qml_file ]]; then included_sources["$(realpath -m -- "$qml_file")"]=1; fi
+done
 # Singletons can live below their exporting qmldir. Lint them with their own
 # registration, without injecting unrelated UI names into every file's scope.
 declare -A singleton_owners=()
@@ -26,12 +32,17 @@ mapfile -d '' -t qmldirs < <(rg --files -0 -g qmldir src)
 for qmldir in "${qmldirs[@]}"; do
     while read -r directive type_name version relative_file remainder || [[ -n ${directive:-} ]]; do
         [[ $directive == singleton ]] || continue
-        singleton_owners["$(realpath -m -- "${qmldir%/*}/$relative_file")"]=$qmldir
+        singleton_file=$(realpath -m -- "${qmldir%/*}/$relative_file")
+        # Prefer local metadata over another module's re-export of the same file.
+        if [[ -z ${singleton_owners["$singleton_file"]:-} || ${singleton_file%/*} == "$(realpath -m -- "${qmldir%/*}")" ]]; then
+            singleton_owners["$singleton_file"]=$qmldir
+        fi
     done < "$qmldir"
 done
 regular_files=()
 singleton_files=()
 for qml_file in "${qml_files[@]}"; do
+    if [[ -L $qml_file && -n ${included_sources["$(realpath -m -- "$qml_file")"]:-} ]]; then continue; fi
     if rg -q '^pragma Singleton' "$qml_file"; then
         owner=${singleton_owners["$(realpath -m -- "$qml_file")"]:-}
         [[ -n $owner ]] || { printf 'Singleton is missing from qmldir: %s\n' "$qml_file" >&2; exit 1; }
@@ -47,4 +58,4 @@ for qmldir in "${qmldirs[@]}"; do
     done
     if ((${#module_files[@]})); then "$qmllint_bin" "${lint_options[@]}" -i "$qmldir" "${module_files[@]}"; fi
 done
-printf 'PASS: %s QML files with no lint warnings\n' "${#qml_files[@]}"
+printf 'PASS: %s QML files with no lint warnings\n' "$(( ${#regular_files[@]} + ${#singleton_files[@]} ))"

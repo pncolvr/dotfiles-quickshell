@@ -6,7 +6,7 @@ export LC_ALL=C.UTF-8
 
 # User cron (crontab -e); no root database-sync job is needed.
 # Requires pacman-contrib (checkupdates), yay and util-linux (flock).
-# 0 * * * * /home/pncolvr/.config/quickshell/src/config/update-check.sh
+# 0 * * * * /home/pncolvr/.config/quickshell/src/services/system/update-check.sh
 
 # pacman hook
 # /etc/pacman.d/hooks/95-quickshell-updates.hook
@@ -20,7 +20,7 @@ export LC_ALL=C.UTF-8
 # [Action]
 # Description = Updating Quickshell package update cache...
 # When = PostTransaction
-# Exec = /usr/bin/sudo -H -u pncolvr -- /home/pncolvr/.config/quickshell/src/config/update-check.sh
+# Exec = /usr/bin/sudo -H -u pncolvr -- /home/pncolvr/.config/quickshell/src/services/system/update-check.sh
 # Depends = sudo
 
 export PATH="/usr/local/bin:/usr/bin:/bin:$PATH"

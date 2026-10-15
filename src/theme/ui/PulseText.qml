@@ -21,7 +21,7 @@ UI.Text {
         property color baseColor: root.baseColor
         property color pulseColor: root.pulseColor
         property real phase: 0
-        property real phaseOffset: Theme.pulseOffset()
+        property real phaseOffset: PulseClock.offset(Theme.pulsingTextDuration)
         property bool active: root.pulseActive
         property bool awaitingSync: true
         onActiveChanged: if (active) awaitingSync = true
@@ -30,7 +30,7 @@ UI.Text {
             target: root.pulseActive && pulseShader.awaitingSync ? root.Window.window : null
             function onFrameSwapped() {
                 // Window exposure and texture creation can delay the first rendered frame.
-                pulseShader.phaseOffset = Theme.pulseOffset()
+                pulseShader.phaseOffset = PulseClock.offset(Theme.pulsingTextDuration)
                 pulseShader.awaitingSync = false
             }
         }

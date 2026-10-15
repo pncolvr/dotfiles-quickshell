@@ -1,3 +1,4 @@
 # Local type metadata; parent exports refer to the same QML files.
 singleton CalendarService 1.0 CalendarService.qml
 singleton TimeService 1.0 TimeService.qml
+singleton Timespan 1.0 Timespan.qml

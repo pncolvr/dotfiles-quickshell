@@ -43,3 +43,5 @@ SelectionList 1.0 components/SelectionList.qml
 SelectionRow 1.0 components/SelectionRow.qml
 CroppedImage 1.0 components/CroppedImage.qml
 singleton ImageCropCache 1.0 components/ImageCropCache.qml
+
+singleton PulseClock 1.0 PulseClock.qml

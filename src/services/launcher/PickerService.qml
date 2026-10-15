@@ -19,7 +19,6 @@ Singleton {
     property bool forcePrompt: false
     property bool previewImages: false
     property bool imageOnly: false
-    property bool movePointer: true
     property string secretDescription: ""
     property var secretActions: null
     property var secretCallback: null
@@ -115,7 +114,7 @@ Singleton {
         layout = "list"; multiple = false; allowTyped = false; customAccept = false
         error = ""; destination = ""; destinationClass = ""; selectionKey = ""
         forcePrompt = false; previewImages = false; secretDescription = ""; privateRequest = false
-        imageOnly = false; movePointer = true
+        imageOnly = false
         targetScreen = chooseScreen()
     }
     function show() { visible = true; if (mode === PickerService.Mode.Clipboard) clipboardSearch.seed(); opened() }
@@ -471,7 +470,6 @@ Singleton {
             root.forcePrompt = request.showPrompt === true
             root.previewImages = request.previewImages === true
             root.imageOnly = request.kind === "image"
-            root.movePointer = request.movePointer !== false
             if (request.kind === "secret") {
                 root.mode = PickerService.Mode.Secret
                 root.secretDescription = request.description || ""
