@@ -261,6 +261,15 @@ ManagedPickerFrame {
                                 color: Theme.urgent
                                 wrapMode: Text.Wrap
                             }
+                            UI.ColumnText {
+                                objectName: "sourcePathWarning_" + sourceRow.modelData.path
+                                width: parent.width
+                                text: ProjectService.pathWarning(sourceRow.modelData.path,
+                                    sourceRow.modelData.kind === "folder" ? sourceRow.projects.reduce((rows,project) => rows.concat(project.workspaces),[]) : [])
+                                visible: !!text
+                                color: ProjectService.pathStates[sourceRow.modelData.path]?.status === "unchecked" ? Theme.inactive : Theme.warning
+                                wrapMode: Text.Wrap
+                            }
                             Repeater {
                                 model: sourceRow.modelData.kind === "root" || (manageSearch.text.trim() && !root.matchesManagement(sourceRow.modelData.path)) ? sourceRow.projects : []
                                 delegate: UI.ManagementRow {
@@ -292,6 +301,14 @@ ManagedPickerFrame {
                                             elide: Text.ElideMiddle
                                             UI.HoverTooltip { text: projectRow.modelData.path }
                                         }
+                                        UI.ColumnText {
+                                            objectName: "projectPathWarning_" + projectRow.modelData.path
+                                            width: parent.width
+                                            text: ProjectService.pathWarning(projectRow.modelData.path,projectRow.modelData.workspaces)
+                                            visible: !!text
+                                            color: ProjectService.pathStates[projectRow.modelData.path]?.status === "unchecked" ? Theme.inactive : Theme.warning
+                                            wrapMode: Text.Wrap
+                                        }
                                         Repeater {
                                             model: root.matchingWorkspaces(projectRow.modelData)
                                             delegate: UI.ColumnText {
@@ -300,9 +317,10 @@ ManagedPickerFrame {
                                                 objectName: "matchedWorkspace_" + modelData.path
                                                 width: projectText.width
                                                 text: root.highlighted(modelData.name + " · " + modelData.path)
+                                                    + (ProjectService.pathStates[modelData.path]?.message ? " · " + ProjectService.pathStates[modelData.path].message : "")
                                                 textFormat: Text.StyledText
                                                 Accessible.name: modelData.name + " · " + modelData.path
-                                                color: Theme.inactive
+                                                color: ProjectService.pathStates[modelData.path]?.status === "unavailable" ? Theme.warning : Theme.inactive
                                                 elide: Text.ElideMiddle
                                                 UI.HoverTooltip { text: matchedWorkspaceText.modelData.path }
                                             }
@@ -420,14 +438,26 @@ ManagedPickerFrame {
                                     fillColor: workspaceRow.modelData.included ? Theme.accent : Theme.alternateBackground
                                     onClicked: root.setIncluded(projectDraft.modelData.path,workspaceRow.modelData.path,!workspaceRow.modelData.included)
                                 }
-                                UI.ColumnText {
-                                    objectName: "managedWorkspace_" + workspaceRow.modelData.path
-                                    text: root.highlighted(workspaceRow.modelData.name + " · " + workspaceRow.modelData.path)
-                                    textFormat: Text.StyledText
-                                    Accessible.name: workspaceRow.modelData.name + " · " + workspaceRow.modelData.path
+                                Column {
                                     Layout.fillWidth: true
-                                    elide: Text.ElideMiddle
-                                    UI.HoverTooltip { text: workspaceRow.modelData.path }
+                                    spacing: Theme.controlSpacing
+                                    UI.ColumnText {
+                                        objectName: "managedWorkspace_" + workspaceRow.modelData.path
+                                        width: parent.width
+                                        text: root.highlighted(workspaceRow.modelData.name + " · " + workspaceRow.modelData.path)
+                                        textFormat: Text.StyledText
+                                        Accessible.name: workspaceRow.modelData.name + " · " + workspaceRow.modelData.path
+                                        elide: Text.ElideMiddle
+                                        UI.HoverTooltip { text: workspaceRow.modelData.path }
+                                    }
+                                    UI.ColumnText {
+                                        objectName: "workspacePathWarning_" + workspaceRow.modelData.path
+                                        width: parent.width
+                                        text: ProjectService.pathStates[workspaceRow.modelData.path]?.message ?? ""
+                                        visible: !!text
+                                        color: ProjectService.pathStates[workspaceRow.modelData.path]?.status === "unavailable" ? Theme.warning : Theme.inactive
+                                        wrapMode: Text.Wrap
+                                    }
                                 }
                             }
                         }

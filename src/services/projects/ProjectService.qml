@@ -13,6 +13,9 @@ Singleton {
     property string projectPath: ""
     property string error: ""
     property var draft: null
+    property var pathStates: ({})
+    property bool pathCheckPending: false
+    readonly property bool checkingPaths: pathCheck.running
     signal sourceAdded()
     signal sourcePathResolved(string path)
     enum Operation { None, Add, Refresh, Edit, Discard }
@@ -21,11 +24,60 @@ Singleton {
     readonly property var sources: ProjectRepository.sources
     readonly property var projects: ProjectRepository.projects
     readonly property var availableProjects: projects.filter(project => showAll || StatusService.status === Config.projectWorkStatus || project.category !== "work")
+    function pathRecords() {
+        const rows = sources.map(source => ({path:source.path,kind:"directory"}))
+        for (const project of projects) {
+            rows.push({path:project.path,kind:"directory"})
+            for (const workspace of project.workspaces) rows.push({path:workspace.path,kind:"file"})
+        }
+        return Array.from(new Map(rows.map(row => [row.path,row])).values())
+    }
+    function pathWarning(path, workspaces = []) {
+        const state = pathStates[path]
+        if (state?.message) return state.message
+        const missing = workspaces.filter(workspace => pathStates[workspace.path]?.status === "unavailable").length
+        return missing ? missing + (missing === 1 ? " workspace file missing or unavailable" : " workspace files missing or unavailable") : ""
+    }
+    function checkPaths() {
+        if (pathCheck.running) { pathCheckPending = true; return }
+        pathCheckPending = false
+        pathCheck.input = JSON.stringify(pathRecords()) + "\n"
+        pathCheck.stdinEnabled = true
+        pathCheck.running = true
+    }
+    onManagingChanged: if (managing) checkPaths()
+    onSourcesChanged: if (managing) checkPaths()
+    onProjectsChanged: if (managing) checkPaths()
 
     function open(browser = false) {
         if (busy && [ProjectService.Operation.Add,ProjectService.Operation.Edit].includes(operation)) operation = ProjectService.Operation.Discard
         managing = false; urls = browser; showAll = false; projectPath = ""; draft = null; error = ""
         syncPicker()
+    }
+    Process {
+        id: pathCheck
+        property string input: ""
+        command: ["timeout", "10", ...Config.directoryResolveCommand, "--check"]
+        stdinEnabled: true
+        onStarted: { write(input); input = ""; stdinEnabled = false }
+        stdout: StdioCollector { id: pathOutput; waitForEnd: true }
+        stderr: SplitParser { onRead: _data => {} }
+        // qmllint disable signal-handler-parameters
+        onExited: (code, status) => {
+            try {
+                if (code !== 0 || status !== 0) throw new Error("check failed")
+                const rows = JSON.parse(pathOutput.text)
+                const states = {}
+                for (const row of rows) states[row.path] = row
+                root.pathStates = states
+            } catch (_) {
+                const states = {}
+                for (const row of root.pathRecords()) states[row.path] = {status:"unchecked",message:"Location not checked"}
+                root.pathStates = states
+            }
+            if (root.pathCheckPending && root.managing) Qt.callLater(root.checkPaths)
+        }
+        // qmllint enable signal-handler-parameters
     }
     function toggleShowAll() {
         showAll = !showAll

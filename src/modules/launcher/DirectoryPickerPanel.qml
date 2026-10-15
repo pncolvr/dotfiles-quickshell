@@ -36,7 +36,7 @@ ManagedPickerFrame {
 
     function resetForm() {
         adding = false; folderForm.clear(); category = "personal"
-        Qt.callLater(root.focusSearch)
+        if (root.sessionActive) Qt.callLater(root.focusSearch)
     }
 
     function edit(entry) {
@@ -131,6 +131,14 @@ ManagedPickerFrame {
                                 text: entryRow.modelData.category === "work" ? "Work" : "Personal"
                                 color: entryRow.modelData.category === "work" ? Theme.accent : Theme.active
                             }
+                        }
+                        UI.ColumnText {
+                            objectName: "directoryPathWarning_" + entryRow.modelData.path
+                            width: parent.width
+                            text: DirectoryService.pathStates[entryRow.modelData.path]?.message ?? ""
+                            visible: !!text
+                            color: DirectoryService.pathStates[entryRow.modelData.path]?.status === "unavailable" ? Theme.warning : Theme.inactive
+                            wrapMode: Text.Wrap
                         }
                     }
                     UI.ManagementActions {

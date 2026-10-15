@@ -4,6 +4,9 @@ The alert panel appears beneath the right edge of the bar whenever messages are
 present. It requires no hover, adds no bar icon and does not take keyboard focus.
 Messages appear as text rows; the panel disappears when the last message is removed.
 This panel is separate from desktop notifications and their history.
+Each bar uses its own monitor's alert surface. Alerts use the overlay layer so
+they remain visible over fullscreen applications without taking keyboard focus.
+Long messages wrap within the monitor width.
 
 ## Custom messages
 
@@ -26,6 +29,15 @@ qs ipc -p "$HOME/.config/quickshell" call alerts post example "Custom message" i
 ```
 
 ## Current callers
+
+Backups use the `backup` ID for preparation, database/clipboard processing,
+keyring access and encryption/restoration stages. Each stage replaces the prior
+message. Progress stays visible while the operation runs. Export completion says
+"Backup created:" followed by the saved archive path and lasts 15 seconds.
+Failures expire after 1 minute and can be cleared sooner by the next backup/restore
+prompt, explicit dismissal (`qs ipc call alerts dismiss backup`), or shell reload.
+The error remains available through `qs ipc call backup status`. Restore reloads the shell
+after completion and shows its result again from the saved import report.
 
 Network connectivity is checked at startup by `Config.networkCheckCommand`, which
 pings `1.1.1.1`. Failure posts the persistent error `no internet access`; success

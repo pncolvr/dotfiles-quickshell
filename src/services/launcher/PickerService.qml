@@ -18,6 +18,8 @@ Singleton {
     property string prompt: ""
     property bool forcePrompt: false
     property string secretDescription: ""
+    property var secretActions: null
+    property var secretCallback: null
     property string acceptLabel: "Select"
     property string query: ""
     property string layout: "list"
@@ -113,6 +115,13 @@ Singleton {
         targetScreen = chooseScreen()
     }
     function show() { visible = true; if (mode === PickerService.Mode.Clipboard) clipboardSearch.seed(); opened() }
+    function promptSecret(title, description, actions, callback) {
+        begin(PickerService.Mode.Secret, title)
+        secretDescription = description
+        secretActions = actions
+        secretCallback = callback
+        show()
+    }
     function apps() {
         begin(PickerService.Mode.Apps, "Applications")
         syncApps()
@@ -260,6 +269,8 @@ Singleton {
         process.running = true
     }
     function close() {
+        const secretResult = secretCallback
+        secretCallback = null
         openingClipboard = false
         exposeMoveTimeout.stop()
         exposePendingMoves = ({})
@@ -268,9 +279,11 @@ Singleton {
         if (requestDirectory) reply(requestDirectory, {status: "cancelled", items: [], exitCode: 1})
         requestDirectory = ""
         visible = false
+        secretActions = null
         if (mode === PickerService.Mode.Secret) { secretDescription = ""; error = ""; prompt = "" }
         // Keep the outgoing Exposé grid stable until its closing animation ends.
         if (layout !== "expose") { query = ""; selectedIds = [] }
+        if (secretResult) secretResult(null)
     }
     function finishExposeClose() {
         const target = exposeCloseTarget
@@ -307,7 +320,15 @@ Singleton {
         else selectVisible()
     }
     function acceptSecret(value) {
-        if (mode !== PickerService.Mode.Secret || !requestDirectory || !visible) return
+        if (mode !== PickerService.Mode.Secret || !visible) return
+        if (secretCallback) {
+            const callback = secretCallback
+            secretCallback = null
+            close()
+            callback(value)
+            return
+        }
+        if (!requestDirectory) return
         reply(requestDirectory, {status: "accepted", secret: value})
         requestDirectory = ""
         close()

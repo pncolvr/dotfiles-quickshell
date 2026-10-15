@@ -16,6 +16,9 @@ Singleton {
     property string error: ""
     property string ignoredId: ""
     property string ignoredText: ""
+    property bool maintenance: false
+    property int pendingTasks: 0
+    readonly property bool settled: !initializing && pendingTasks === 0 && !monitor.running && !importer.running
     readonly property bool monitoring: monitor.running
     readonly property var environment: ({QS_CLIPBOARD_DIRECTORY: Config.clipboardDirectory,
         QS_CLIPBOARD_MAX_BYTES: String(Config.clipboardMaxBytes)})
@@ -36,10 +39,12 @@ Singleton {
         })
     }
     function start() {
+        if (maintenance) return
         if (!initialized) { initialize(); return }
         if (enabled && !paused && !monitor.running) monitor.running = true
     }
     function togglePaused() {
+        if (maintenance) return
         const next = !paused
         if (!PreferencesRepository.setValue("clipboard.paused", next)) { error = DbService.error; return }
         paused = next
@@ -49,7 +54,7 @@ Singleton {
     function receive(line, imported) {
         let entry
         try { entry = JSON.parse(line) } catch (_) { error = "Invalid response from the clipboard helper."; return }
-        if ((paused && !imported) || entry.id === ignoredId) return
+        if ((maintenance && !imported) || (paused && !imported) || entry.id === ignoredId) return
         if (ignoredText && entry.kind === "text" && entry.text === ignoredText) {
             if (DbService.ready && !ClipboardRepository.contains(entry.id)) run(Config.clipboardCommand.concat(["delete", entry.id]))
             return
@@ -60,10 +65,12 @@ Singleton {
         error = ""
     }
     function remove(id) {
+        if (maintenance) return
         if (!ClipboardRepository.remove(id)) { error = DbService.error; return }
         run(Config.clipboardCommand.concat(["delete", id]))
     }
     function togglePin(entry) {
+        if (maintenance) return
         if (!entry) return
         const removed = ClipboardRepository.setPinned(entry.id, !entry.pinned)
         if (removed === null) { error = DbService.error; return }
@@ -72,6 +79,7 @@ Singleton {
     }
     function ignoreTextOnce(text) { ignoredText = text; textIgnoreTimer.restart() }
     function clear() {
+        if (maintenance) return
         const entries = ClipboardRepository.ids(true)
         if (entries === null) { error = DbService.error; return }
         const ids = entries.map(row => row.id)
@@ -79,6 +87,7 @@ Singleton {
         if (ids.length) run(Config.clipboardCommand.concat(["delete"]).concat(ids))
     }
     function restore(entry, destination, className, paste) {
+        if (maintenance) return
         const removed = ClipboardRepository.touch(entry.id)
         if (removed?.length) run(Config.clipboardCommand.concat(["delete"]).concat(removed))
         ignoredId = entry.id
@@ -91,14 +100,22 @@ Singleton {
         })
     }
     function importCopyq() {
-        if (importer.running) return
+        if (maintenance || importer.running) return
         error = ""
         importer.running = true
     }
     function run(command, input, callback) {
+        pendingTasks++
         const process = task.createObject(root, {command: command, input: input ?? "", callback: callback ?? null}) as Process
         process.running = true
     }
+    function beginMaintenance() {
+        maintenance = true
+        retry.stop()
+        // SIGTERM lets the watcher reap its capture process groups before exit.
+        if (monitor.running) monitor.signal(15)
+    }
+    function endMaintenance() { maintenance = false; start() }
 
     Timer { id: ignoreTimer; interval: 1000; onTriggered: root.ignoredId = "" }
     Timer { id: textIgnoreTimer; interval: 2000; onTriggered: root.ignoredText = "" }
@@ -117,7 +134,7 @@ Singleton {
         stderr: StdioCollector { waitForEnd: true }
         // qmllint disable signal-handler-parameters
         onExited: (exitCode, exitStatus) => {
-            if (root.enabled && !root.paused) {
+            if (root.enabled && !root.paused && !root.maintenance) {
                 root.error = "Clipboard monitoring stopped; retrying."
                 retry.restart()
             }
@@ -150,6 +167,7 @@ Singleton {
             // qmllint disable signal-handler-parameters
             onExited: (exitCode, exitStatus) => {
                 if (callback) callback(exitCode === 0 && exitStatus === 0)
+                root.pendingTasks--
                 process.destroy()
             }
             // qmllint enable signal-handler-parameters

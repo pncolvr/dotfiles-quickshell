@@ -12,10 +12,21 @@ Singleton {
     property string error: ""
     property var draft: null
     property int generation: 0
+    property var pathStates: ({})
+    property bool pathCheckPending: false
+    readonly property bool checkingPaths: pathCheck.running
     readonly property bool busy: resolve.running
     readonly property var directories: DirectoryRepository.directories
     readonly property var availableDirectories: directories.filter(entry => showAll || entry.category !== "work" || StatusService.status === Config.directoryWorkStatus)
     signal saved()
+    function checkPaths() {
+        if (pathCheck.running) { pathCheckPending = true; return }
+        pathCheckPending = false
+        pathCheck.input = JSON.stringify(directories.map(entry => ({path:entry.path,kind:"directory"}))) + "\n"
+        pathCheck.stdinEnabled = true
+        pathCheck.running = true
+    }
+    onManagingChanged: if (managing) checkPaths()
     function open() {
         generation++; managing = false; showAll = false; draft = null; error = ""
         if (!DirectoryRepository.reload()) error = DirectoryRepository.error
@@ -58,8 +69,36 @@ Singleton {
         PickerService.close()
         Quickshell.execDetached(Config.directoryOpenCommand.concat([items[0].result]))
     }
-    Connections { target: DirectoryRepository; function onDirectoriesChanged() { root.syncPicker() } }
+    Connections {
+        target: DirectoryRepository
+        function onDirectoriesChanged() { root.syncPicker(); if (root.managing) root.checkPaths() }
+    }
     Connections { target: StatusService; function onStatusChanged() { root.syncPicker() } }
+    Process {
+        id: pathCheck
+        property string input: ""
+        command: ["timeout", "10", ...Config.directoryResolveCommand, "--check"]
+        stdinEnabled: true
+        onStarted: { write(input); input = ""; stdinEnabled = false }
+        stdout: StdioCollector { id: pathOutput; waitForEnd: true }
+        stderr: SplitParser { onRead: _data => {} }
+        // qmllint disable signal-handler-parameters
+        onExited: (code, status) => {
+            try {
+                if (code !== 0 || status !== 0) throw new Error("check failed")
+                const rows = JSON.parse(pathOutput.text)
+                const states = {}
+                for (const row of rows) states[row.path] = row
+                root.pathStates = states
+            } catch (_) {
+                const states = {}
+                for (const entry of root.directories) states[entry.path] = {status:"unchecked",message:"Location not checked"}
+                root.pathStates = states
+            }
+            if (root.pathCheckPending && root.managing) Qt.callLater(root.checkPaths)
+        }
+        // qmllint enable signal-handler-parameters
+    }
     Process {
         id: resolve
         property string previousPath: ""

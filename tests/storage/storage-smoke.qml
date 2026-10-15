@@ -49,7 +49,7 @@ Scope {
         check(DbService.ready, "database created on first use")
         check(DbService.read("SELECT name FROM store.sqlite_master WHERE type = 'table'").length === 19, "central schema")
         check(!TimeService.showSeconds, "default clock preference")
-        check(TwitchRepository.exportUsers() === "", "fresh Twitch list is empty")
+        check(TwitchRepository.logins().join("\n") === "", "fresh Twitch list is empty")
         check(TwitchService.browserSuggestions.join() === "alice,bob", "current qutebrowser tabs suggested without history or directory pages")
         twitchModule.clicked(null)
         check(TooltipService.pinned && TooltipService.source === twitchModule, "module click pins Twitch like TOTP and notifications")
@@ -90,7 +90,7 @@ Scope {
         panel.addSuggestion("bob")
         check(!panel.adding && TwitchRepository.logins().includes("bob"), "clicking browser suggestion follows streamer and closes editor")
         check(TwitchService.browserSuggestions.length === 0, "all followed suggestions disappear")
-        check(TwitchRepository.exportUsers() === "alice\nbob", "plain sorted export")
+        check(TwitchRepository.logins().join("\n") === "alice\nbob", "sorted followed logins")
         const now = Date.now()
         check(TwitchRepository.saveSchedule("alice", now + 86400000, now), "raw schedule timestamp saved")
         TimeService.showSeconds = true
@@ -174,7 +174,7 @@ Scope {
         check(panel.adding && field.text === "bo", "individual suggestion preserves editor and search while other suggestions remain")
         field.clear()
         bulk.clicked()
-        check(!panel.adding && TwitchRepository.exportUsers() === "alice\nbob", "bulk action snapshots and adds remaining suggestions")
+        check(!panel.adding && TwitchRepository.logins().join("\n") === "alice\nbob", "bulk action snapshots and adds remaining suggestions")
         check(TwitchService.removeUser("alice") && TwitchService.removeUser("bob"), "layout fixture users removed")
         check(TwitchService.removedUsers.map(entry => entry.login).join() === "alice,bob", "all removals remain available in the undo array")
         const allUndo = objects.findChild(panel, "undoAllTwitchUsers") as UI.ActionButton
@@ -182,7 +182,7 @@ Scope {
         check(TwitchService.undoRemoveUser("alice") && TwitchService.removedUsers.map(entry => entry.login).join() === "bob", "individual Undo retains other pending removals")
         check(TwitchService.removeUser("alice") && TwitchService.removedUsers.length === 2, "a repeated removal gets a new undo entry")
         allUndo.clicked()
-        check(!TwitchService.removedUsers.length && TwitchRepository.exportUsers() === "alice\nbob", "Undo all snapshots and restores every removal")
+        check(!TwitchService.removedUsers.length && TwitchRepository.logins().join("\n") === "alice\nbob", "Undo all snapshots and restores every removal")
         check(TwitchService.removeUser("alice") && TwitchService.removeUser("bob"), "restored layout users cleaned up")
         const expiry = objects.findChild(TwitchRepository, "twitchUndoExpiry") as Timer
         check(expiry.interval > 5900 && expiry.interval <= 6000, "earliest removal expires after six seconds")
@@ -264,7 +264,7 @@ Scope {
                     root.check(!TwitchService.hasOnline && !panel.liveUsers.length, "bulk add starts with no live streamers")
                     panel.adding = true
                     panel.addAllSuggestions()
-                    root.check(TwitchRepository.exportUsers() === "alice\nbob", "bulk add stores every suggested streamer")
+                    root.check(TwitchRepository.logins().join("\n") === "alice\nbob", "bulk add stores every suggested streamer")
                 }
                 else if (root.phase === "live-restart" || root.phase === "live-new-stream") {
                     if (root.phase === "live-restart") root.check(TwitchRepository.notifiedStreams.alice?.streamId === "alice-stream-1"
@@ -278,7 +278,7 @@ Scope {
                     root.check(DbService.schemaVersion === 11
                         && DbService.read("SELECT login FROM twitch_notified_streams").length === 0, "v3 schema upgraded without losing existing data")
                     root.check(TimeService.showSeconds, "clock preference restored after process restart")
-                    root.check(TwitchRepository.exportUsers() === "alice\nbob", "Twitch users restored after process restart")
+                    root.check(TwitchRepository.logins().join("\n") === "alice\nbob", "Twitch users restored after process restart")
                     root.check(BatteryService.receiverBatteries[0]?.percentage === 17, "battery restored before new scan")
                     root.check(!!TwitchRepository.schedules.alice?.startsAt, "schedule timestamp restored")
                     root.check(TwitchRepository.avatars.alice?.dataUrl.startsWith("data:image/png;base64,"), "avatar bytes restored from database")
@@ -294,7 +294,7 @@ Scope {
                     root.check(!TwitchRepository.saveSchedule("alice", Date.now() + 1000, Date.now()), "in-flight response cannot recreate removed cache")
                     root.check(!TwitchRepository.saveAvatar("alice", "removed", "iVBORw0KGgo=", Date.now()), "in-flight avatar cannot recreate removed payload")
                     root.check(TwitchService.removeUser("bob"), "service removes remaining user")
-                    root.check(TwitchRepository.exportUsers() === "", "empty list exports empty text")
+                    root.check(TwitchRepository.logins().join("\n") === "", "empty followed list")
                     TimeService.showSeconds = false
                     root.check(BatteryRepository.saveReceiverSnapshot([]), "confirmed empty snapshot persisted")
                 } else {

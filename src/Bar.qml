@@ -45,7 +45,7 @@ Scope {
       }
 
       SubmapWindow {}
-      AlertWindow {}
+      AlertWindow { screen: panelWindow.screen }
     }
     
   }

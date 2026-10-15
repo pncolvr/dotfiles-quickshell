@@ -15,6 +15,7 @@ Singleton {
     readonly property int schemaVersion: 11
     readonly property bool ready: state.ready
     readonly property string error: state.error
+    property bool maintenance: false
 
     QtObject {
         id: state
@@ -145,6 +146,7 @@ Singleton {
 
     // Explicitly roll back callback errors, including those crossing QML function boundaries.
     function write(callback) {
+        if (maintenance) return false
         if (!ensureOpen()) return false
         try {
             state.database.transaction(tx => {

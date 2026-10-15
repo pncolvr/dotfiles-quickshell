@@ -9,7 +9,9 @@ import "../"
 Singleton {
     id: root
 
-    readonly property bool active: TooltipService.visible && TooltipService.source?.totpModule === true
+    property bool maintenance: false
+    readonly property bool stopped: !worker.running
+    readonly property bool active: !maintenance && TooltipService.visible && TooltipService.source?.totpModule === true
     readonly property bool ready: state.ready
     readonly property bool busy: state.busy
     readonly property string error: state.error

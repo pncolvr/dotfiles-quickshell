@@ -10,6 +10,7 @@ import "src/modules/system/totp"
 import "src/modules/launcher"
 import "src/modules/vault"
 import "src/modules/system/audio"
+import "src/services"
 
 Scope {
   IpcHandler {
@@ -28,4 +29,8 @@ Scope {
   VaultWindow {}
   ExposeWindow {}
   MediaFullscreenWindow {}
+  Connections {
+    target: BackupService
+    function onRestored() { Qt.callLater(() => Quickshell.reload(true)) }
+  }
 }

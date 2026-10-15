@@ -49,8 +49,8 @@ Schema version 7 adds `twitch_users.fallback_login`, defaulting existing entries
 no second channel. Main and second channels form a single followed entry; each
 channel has one owner and cannot also be followed independently. Linking an existing entry
 is explicit and atomic. Removing an association deletes both channels' unused
-caches; Undo restores the association and cached data. Plain login exports contain
-main channels only, so back up the database to preserve associations.
+caches; Undo restores the association and cached data. Full-state backups preserve
+the users, associations and caches together.
 
 Twitch schedules store absolute start times and refresh at most hourly while
 cached, or sooner once the cached start has passed. Relative labels update with
@@ -96,8 +96,110 @@ history does not need to sort the table. Existing entries, pins and payloads are
 
 ## Backups
 
-Stop the shell before copying `data/quickshell.db` so pending writes have finished.
+Use `qs ipc call backup create /absolute/path/backup.7z` to open the existing private
+secret picker. Choose a password, or use Generate, then Copy to save it elsewhere.
+The prompt has Generate and Copy buttons plus keyboard hints. Enter creates the
+archive; Escape cancels without starting the backup. The destination folder must
+already exist, be writable and owned by your user, and not itself be a symlink. Both a
+password and the TOTP collection are required; an empty collection is preserved.
+The database includes Twitch associations, preferences, projects, directories,
+notification history and clipboard metadata. Original clipboard payloads and a
+versioned `totp.json` are included, with checksums and a format/schema manifest.
+
+The Bash helper uses 7-Zip (`7z` or `7zz`), `sqlite3`, `jq`, coreutils and util-linux.
+7z data and filenames are encrypted. Passwords travel through pipes, never argv;
+TOTP JSON stays in memory and an unlinked tmpfs descriptor while archiving, never
+in a named plaintext file. The keyring helper uses the configured desktop Secret
+Service namespace. Backups do not export the rbw vault or other applications' secrets.
+Save the backup password separately. Existing destination files are never overwritten.
+
+`qs ipc call backup restore /absolute/path/backup.7z` prompts for the password,
+validates the archive layout, encrypted entries, size, checksums, database integrity
+and clipboard payloads, then replaces saved data and this TOTP namespace. Unrelated
+keyring entries are untouched. Restore accepts schema 6 through the current schema;
+startup applies existing migrations for older supported backups. The helper limits
+archives to 8 GiB of uncompressed content and 100,000 entries.
+
+Clipboard operations and database writes pause while the helper runs; in-flight
+clipboard/TOTP work finishes first. SQLite's backup API snapshots and restores the
+database without replacing its open file. A successful restore reloads the shell
+before writes resume. The `backup` bar alert shows the current stage and result;
+it appears below the bar's right edge, including over fullscreen applications.
+Successful creation shows "Backup created:" and the saved path for 15 seconds;
+errors expire after 1 minute and can be cleared sooner by dismissal, another attempt or reload.
+`qs ipc call backup status` exposes progress/errors: `busy` is true while working,
+`completed` is true after a successful operation, and `output` is the saved export
+path. A false `busy` alone does not mean success; check `completed` and `error`.
+These operation fields last until the next attempt or reload. Its `report` contains the last
+successful import's archive/recovery paths, completion time, unavailable entries,
+unchecked locations and counts, and survives reload/restart through preferences.
+The result alert is shown once after the automatic reload.
+
+Restore keeps every saved project, source, workspace and directory even when its
+path is unavailable on the current machine. A read-only batch check reports missing
+or inaccessible local folders and workspace files; remote/virtual URIs are marked
+"Location not checked". Import succeeds with warnings instead of deleting entries,
+cloning repositories, creating folders or mounting volumes. Checks that time out
+are also reported as not checked. Inspect details with:
+
+```sh
+qs ipc call backup status | jq '.report'
+```
+
+Projects and Directories Manage lists check paths when opened and after changes
+to their saved records while managing. Missing paths have a warning below their
+existing labels; workspace warnings appear in project summaries and the workspace
+editor. Reopen Manage after recreating a folder or mounting its drive to clear the
+availability warning. Edit and Remove remain available. The import report records
+the situation at import time; it does not change when paths later return.
+
+Before replacing anything, restore saves the current database and clipboard files
+under `data/backup-recovery.XXXXXXXX/`. These are private, unencrypted local recovery
+copies and do not contain TOTP JSON. Failed restores compensate keyring writes and
+restore the previous database/payloads. Secret Service has no multi-item transaction:
+keyring rollback can fail, and an abrupt kill or power loss may leave partial TOTP
+changes. Unlock the keyring and import the encrypted backup again in that case.
+A startup journal recovers interrupted database/payload changes before Qt opens
+storage. Keep recovery copies until satisfied with the restore; remove them manually
+when no longer needed.
+
+For a manual file backup, stop the shell before copying `data/quickshell.db` and
+`data/clipboard/` together so pending writes have finished. This does not include TOTP.
 Keep `data/` at the configuration root when moving or updating the source tree.
 The `src/` layout does not change the database path or require a data migration.
+
+## Manual backup and recovery test
+
+Use two encrypted backups for a real round trip. The second preserves the state
+you want to return to, including TOTP secrets; the local database/clipboard
+recovery copy alone cannot recover previous TOTP entries after a process crash.
+Keep both archive passwords somewhere you can retrieve independently of this shell.
+
+1. Reload the shell with `qs ipc call shell reload`. In the repository root, create
+   an empty test folder with `mkdir -p data/manual-backup-test/folder`. Add that folder
+   to Directories through Manage, named "Manual backup test". Note whether the clock
+   currently shows seconds.
+2. Run `qs ipc call backup create "$PWD/data/manual-before.7z"`. Enter a password
+   (or Generate and Copy), press Enter, and wait for "backup created". These example
+   filenames must be new; use different names if they already exist.
+3. Run `rmdir data/manual-backup-test/folder` and click the clock once to toggle
+   seconds. Reopen Directories Manage and check the missing-folder warning. Create
+   the return-point archive with `qs ipc call backup create "$PWD/data/manual-return.7z"`.
+   Wait for success before continuing.
+4. Run `qs ipc call backup restore "$PWD/data/manual-before.7z"` and enter its password.
+   After reload, seconds should match step 1, the directory entry should still be
+   saved with its warning, and `qs ipc call backup status | jq '.report'` should
+   include the missing test folder. The backup restores references, not the folder.
+   Check that your TOTP entries still appear.
+5. Run `qs ipc call backup restore "$PWD/data/manual-return.7z"`. After reload,
+   seconds should return to the setting captured in step 3. This exercises recovery
+   to the state saved immediately before the first restore, including its keyring data.
+6. Recreate the test folder, reopen Manage and check that the availability warning
+   clears. Remove the test entry through Manage when finished. Keep the archives
+   and `data/backup-recovery.*` copies until satisfied with the result.
+
+This tests the real encrypted backup/restore path. Crash-interruption recovery is
+tested separately with isolated data; the manual sequence does not force-kill the
+live shell or require deleting its database.
 
 [Documentation](README.md)

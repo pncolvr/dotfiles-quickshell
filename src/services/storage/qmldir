@@ -2,6 +2,7 @@
 singleton BatteryRepository 1.0 BatteryRepository.qml
 singleton ClipboardRepository 1.0 ClipboardRepository.qml
 singleton DbService 1.0 DbService.qml
+singleton BackupService 1.0 BackupService.qml
 singleton DirectoryRepository 1.0 DirectoryRepository.qml
 singleton NotificationEmitterRepository 1.0 NotificationEmitterRepository.qml
 singleton NotificationRepository 1.0 NotificationRepository.qml

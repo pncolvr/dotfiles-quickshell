@@ -106,11 +106,11 @@ Successful refreshes also announce when a previously live streamer goes offline.
 Notifications contain only login names under Live and Offline headings, with no
 view button. Both types are retained in notification history.
 Logins are stored in lowercase and duplicates are rejected. A new database starts
-with an empty list; there is no users-file import. Exported lists are ordinary text
-files of main-channel logins that you can save or share. Associations are stored
-in SQLite and retained by database backups.
+with an empty list; there is no users-file import. Users and associations are stored
+in SQLite and retained by the encrypted full-state backups. The former
+`twitch exportUsers` IPC command has been removed.
 
-See [IPC](../ipc.md) for commands and exporting logins, and
+See [IPC](../ipc.md) for commands and creating/restoring backups, and
 [storage](../storage.md) for schedule and avatar caching.
 
 [Documentation](../README.md)

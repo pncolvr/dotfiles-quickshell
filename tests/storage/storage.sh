@@ -149,11 +149,11 @@ QML
     [[ $(qs ipc -p "$entry" call twitch addUser Zeta) == true ]]
     [[ $(qs ipc -p "$entry" call twitch addUser Alice) == true ]]
     [[ $(qs ipc -p "$entry" call twitch addUser ALICE) == false ]]
-    qs ipc -p "$entry" call twitch exportUsers > "$test_dir/export.txt"
-    [[ $(cat "$test_dir/export.txt") == $'alice\nzeta' ]]
+    [[ $(sqlite3 "$database" 'SELECT login FROM twitch_users ORDER BY login;') == $'alice\nzeta' ]]
+    ! qs ipc -p "$entry" show | rg -q 'exportUsers'
     [[ $(qs ipc -p "$entry" call twitch removeUser alice) == true ]]
     [[ $(qs ipc -p "$entry" call twitch removeUser zeta) == true ]]
-    [[ -z $(qs ipc -p "$entry" call twitch exportUsers) ]]
+    [[ $(sqlite3 "$database" 'SELECT COUNT(*) FROM twitch_users;') == 0 ]]
     qs ipc -p "$entry" call twitch reload
-    printf 'PASS: Twitch IPC add, duplicate, export, remove, and reload\n'
+    printf 'PASS: Twitch IPC add, duplicate, remove, reload and retired export\n'
 fi

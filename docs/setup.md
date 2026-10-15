@@ -26,7 +26,8 @@ those before running on another desktop.
 | Bash, coreutils, findutils, `awk`, `grep`, `sed`, `jq` | Command helpers, folder files, and parsing |
 | `wl-clipboard`, `file`, util-linux (`flock`) | Background text/image clipboard capture and restoration |
 | ImageMagick (`magick`) | Read original image dimensions for clipboard previews without enlarging small images |
-| `sqlite3` with FTS5 (SQLite 3.42+) | Read-only indexed clipboard search; Qt SQLite also needs FTS5 |
+| `sqlite3` with FTS5 (SQLite 3.42+) | Indexed clipboard search and backup snapshots/restores; Qt SQLite also needs FTS5 |
+| 7-Zip (`7z` or `7zz`), `/dev/shm` tmpfs | Password-protected full-state backups, including TOTP secrets |
 | `gtk-launch` | Desktop application launching, including terminal entries |
 | `ydotool` and its daemon | Optional paste on clipboard activation |
 | Noto Sans Mono, JetBrains Mono, Font Awesome 7 Free Solid | Text and icons configured in `src/theme/Theme.qml` |

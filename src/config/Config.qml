@@ -68,6 +68,7 @@ Item {
     // The database is local to this config and ignored by Git.
     readonly property string databasePath: Quickshell.shellPath("data/quickshell.db")
     readonly property string databaseName: "quickshell"
+    readonly property var backupCommand: ["bash", Quickshell.shellPath("src/services/storage/backup.sh")]
     readonly property int pickerMaxRows: 12
     readonly property bool pickerShowPrompt: false
     readonly property bool pickerFuzzySearch: true

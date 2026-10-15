@@ -20,7 +20,9 @@ qs ipc call bar open batteries   # open panel and move pointer to icon
 qs ipc call twitch reload
 qs ipc call twitch addUser streamer_login
 qs ipc call twitch removeUser streamer_login
-qs ipc call twitch exportUsers > twitch-users.txt # one login per line
+qs ipc call backup create /absolute/path/backup.7z # private password prompt
+qs ipc call backup restore /absolute/path/backup.7z # replaces saved data and TOTP entries
+qs ipc call backup status        # progress, errors and recovery location
 qs ipc call updates reload       # reread the package update cache
 qs ipc call recentfiles reload   # reread desktop recent files
 qs ipc call launcher apps        # application picker
@@ -39,9 +41,20 @@ The submap exits after selection. Reload closes open panels and rebuilds the she
 
 See [bar alerts](features/alerts.md) for severities, replacement and expiration.
 
-Twitch exports contain lowercase main-channel logins as ordinary text; second channel
-associations remain in the database. New databases start
-with an empty list; there is no users-file import. See [Twitch](features/twitch.md).
+Backups include the database, clipboard payloads and TOTP secrets in a password-protected
+7z archive with encrypted filenames. The existing private secret picker offers
+Generate and Copy buttons when creating a backup. Enter starts the operation;
+Escape cancels the prompt. Progress uses the bar alert tooltip. Creation success
+shows the saved archive path for 15 seconds; errors expire after 1 minute and can
+be cleared sooner by dismissal or another attempt/reload. IPC returns whether
+the prompt opened; use `backup status` for completion and `.report` for the last
+import's unavailable paths and unchecked remote locations, even after reload.
+A successful restore reloads
+the shell. Existing output files are never overwritten. See [backups](storage.md#backups).
+`backup status` also returns `completed` and `output` for the current operation;
+`busy: false` can indicate either completion or failure, so check `error` too.
+`twitch exportUsers` has been removed; Twitch users and second-channel associations
+are included in the database backup.
 
 **Meta+I** enters a one-shot module submap. Selection, Escape, or an unassigned
 key exits it. `bar open` returns false for hidden or unknown modules and targets

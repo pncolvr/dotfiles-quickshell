@@ -152,6 +152,13 @@ handle() {
     action=$(json "$request" -r '.action // ""')
     id=$(json "$request" -r '.id // ""')
     case $action in
+        backup-export)
+            load_vault || return 1
+            RESPONSE=$(json "$entries" -c '{type: "backup", version: 1, entries: .}')
+            return $? ;;
+        backup-import)
+            restore_backup "$request"
+            return $? ;;
         load)
             loaded=false
             load_vault || return 1
@@ -202,6 +209,48 @@ handle() {
             entries=$(json "$entries" -c --arg id "$id" 'map(select(.id != $id))') ;;
     esac
     snapshot "$action" "$id"
+}
+
+# Validate the entire collection before touching the keyring. Compensation is
+# best-effort: Secret Service does not offer multi-item transactions.
+store_entry() {
+    local entry=$1 id payload
+    id=$(json "$entry" -r .id)
+    payload=$(json "$entry" -c '. + {version: 1}')
+    printf '%s' "$payload" | timeout --signal=KILL "$secret_timeout" "$secret_tool" store \
+        "--label=$label" "${attributes[@]}" id "$id" >/dev/null 2>&1
+}
+replace_entries() {
+    local target=$1 previous=$2 entry id
+    while IFS= read -r entry; do
+        store_entry "$entry" || return 1
+    done < <(json "$target" -c '.[]')
+    while IFS= read -r id; do
+        json "$target" -e --arg id "$id" 'any(.[]; .id == $id)' >/dev/null && continue
+        timeout --signal=KILL "$secret_timeout" "$secret_tool" clear "${attributes[@]}" id "$id" >/dev/null 2>&1 || return 1
+    done < <(json "$previous" -r '.[].id')
+}
+restore_backup() {
+    local request=$1 target previous entry token
+    target=$(json "$request" -ce 'select(.version == 1) | .entries | select(type == "array" and length <= 10000) |
+        select(all(.[]; .id | type == "string" and test("^[a-f0-9-]{36}$"))) |
+        select([.[].id] | length == (unique | length)) |
+        select(all(.[]; (.name | type == "string" and length > 0 and length <= 128 and (explode | all(. >= 32 and . != 127)))
+            and (.token | type == "string" and length <= 4096))) | map({id, name, token})') \
+        || { fail 'The TOTP backup is invalid.'; return 1; }
+    while IFS= read -r entry; do
+        token=$(json "$entry" -r .token)
+        parse_token "$token" || { fail 'The TOTP backup contains an invalid token.'; return 1; }
+    done < <(json "$target" -c '.[]')
+    load_vault || return 1
+    previous=$entries
+    if ! replace_entries "$target" "$previous"; then
+        if replace_entries "$previous" "$target"; then fail 'Could not restore TOTP entries. Previous entries were restored.'
+        else fail 'TOTP restore and rollback failed. Unlock the keyring and import the backup again.'; fi
+        return 1
+    fi
+    entries=$target
+    RESPONSE='{"type":"restored"}'
 }
 
 main() {

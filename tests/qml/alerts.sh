@@ -56,3 +56,59 @@ output=$(QT_QPA_PLATFORM=offscreen QT_NO_XDG_DESKTOP_PORTAL=1 XDG_RUNTIME_DIR="$
 printf '%s\n' "$output"
 [[ $output == *'PASS: alert replacement'* && $output != *'ALERT FAIL:'* \
     && $output != *'TypeError:'* && $output != *'ReferenceError:'* && $output != *'Failed to load configuration'* ]]
+
+if [[ ${1:-} == --native ]]; then
+    native_wayland_display=${WAYLAND_DISPLAY:-wayland-0}
+    [[ $native_wayland_display == /* ]] || native_wayland_display=${XDG_RUNTIME_DIR:?}/$native_wayland_display
+    tar -C "$project_root" --exclude='*.env' --exclude='*.json' -cf - src | tar -C "$test_dir" -xf -
+    cat > "$test_dir/shell.qml" <<'QML'
+pragma ComponentBehavior: Bound
+import QtQuick
+import Quickshell
+import Quickshell.Wayland
+import "src/bar"
+import "src/services"
+Scope {
+    id: root
+    property int step: 0
+    property bool failed: false
+    property bool captured: false
+    function check(ok, message) { if (!ok) { failed = true; console.error("ALERT FAIL:",message) } }
+    AlertWindow { id: alert; screen: Quickshell.screens[0] }
+    Component.onCompleted: AlertService.post("backup", "Backup display test: preparing", "info")
+    Timer {
+        interval: 200; running: true; repeat: true
+        onTriggered: {
+            root.step++
+            if (root.step === 1) {
+                root.check(alert.visible && alert.contentWidth > 0 && alert.contentHeight > 0,"progress surface is visible")
+                root.check(alert.screen === Quickshell.screens[0] && alert.WlrLayershell.layer === WlrLayer.Overlay
+                    && alert.WlrLayershell.keyboardFocus === WlrKeyboardFocus.None,"correct monitor/layer without taking focus")
+                AlertService.post("backup","Backup display test: encrypting archive","info")
+            } else if (root.step === 2) {
+                root.check(AlertService.messages.length === 1,"progress replaces its previous stage")
+                AlertService.post("backup","Backup display test: created /tmp/fixture/example.7z","success",15000)
+            } else if (root.step === 3) {
+                root.check(alert.contentX >= 0 && alert.contentX + alert.contentWidth <= alert.width,"message fits the monitor")
+                const path = Quickshell.env("ALERT_TEST_SCREENSHOT")
+                if (path) alert.surfaceComponent.grabToImage(result => { result.saveToFile(path); root.captured = true })
+                else root.captured = true
+            } else if (root.step >= 4 && root.captured) {
+                AlertService.dismiss("backup")
+                root.check(!alert.visible,"dismissal hides the surface")
+                if (!root.failed) console.log("PASS: native alert surface, monitor, overlay, focus, progress replacement and completion")
+                stop(); Qt.quit()
+            } else if (root.step > 20) {
+                root.check(false,"screenshot timed out"); stop(); Qt.quit()
+            }
+        }
+    }
+}
+QML
+    output=$(QT_QPA_PLATFORM=wayland WAYLAND_DISPLAY="$native_wayland_display" QT_NO_XDG_DESKTOP_PORTAL=1 XDG_RUNTIME_DIR="$test_dir/runtime" \
+        XDG_DATA_HOME="$test_dir/local" XDG_CACHE_HOME="$test_dir/cache" \
+        timeout -k 2 10 qs -p "$test_dir/shell.qml" 2>&1) || { printf '%s\n' "$output"; exit 1; }
+    printf '%s\n' "$output"
+    [[ $output == *'PASS: native alert surface'* && $output != *'ALERT FAIL:'* \
+        && $output != *'TypeError:'* && $output != *'ReferenceError:'* && $output != *'Failed to load configuration'* ]]
+fi

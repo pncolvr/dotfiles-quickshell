@@ -343,12 +343,34 @@ the real module loader, with a private D-Bus session and mocked startup commands
 ```sh
 bash tests/storage/storage.sh
 bash tests/storage/storage.sh --ipc
+bash tests/storage/backup.sh
+bash tests/storage/backup-ui.sh
 ```
 
 Run `bash tests/storage/storage.sh` to check first-run creation, dropdown actions,
 restart persistence, transaction rollback, avatar downloads, schedule caching, and midnight labels
 using an isolated database and mock Twitch/receiver commands.
-Add `--ipc` to check the real IPC commands and redirected export too.
+Add `--ipc` to check the real IPC commands and retirement of the old Twitch export.
+
+Backup checks use synthetic text/image clipboard payloads, SQLite fixtures, public
+TOTP seeds and a fake keyring. They cover encrypted content/filenames, checksums,
+replacement, pins/recency, keyring failure compensation and startup recovery.
+The UI fixture checks the shared private prompt, generate/copy, Enter/Escape,
+maintenance lifecycle, alert feedback, restoration of an open attached database
+and actual backup IPC. Missing-folder/workspace fixtures verify preserved records,
+Manage warnings, warnings clearing after paths return, unchecked remote locations
+and import-report persistence through a fresh shell start. Set
+`BACKUP_TEST_SCREENSHOT=/tmp/backup.png` for a masked prompt preview and
+`BACKUP_WARNINGS_SCREENSHOT=/tmp/path-warnings.png` for Directory Manage warnings.
+Tests require 7-Zip and local Unix sockets for IPC. The real manual round trip is
+documented in [storage](storage.md#manual-backup-and-recovery-test).
+
+`bash tests/qml/alerts.sh` checks alert replacement, validation, dismissal and
+expiration. Add `--native` in a Wayland session to briefly render labeled test
+messages and check the actual monitor, overlay layer, keyboard focus, placement
+and progress/completion surface. `ALERT_TEST_SCREENSHOT=/tmp/alerts.png` saves the
+isolated alert surface. Backup UI checks also verify keyboard-only submission,
+streamed progress, the saved-path completion message and persistent destination errors.
 
 Run `bash tests/storage/twitch-fallback.sh` for main/second-channel selection, database
 migration, explicit linking, editing, unlinking, removal and Undo, restart

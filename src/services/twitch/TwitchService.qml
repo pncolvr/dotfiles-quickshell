@@ -379,6 +379,5 @@ Singleton {
         function reload(): void { root.reload() }
         function addUser(login: string): bool { return root.addUser(login) }
         function removeUser(login: string): bool { return root.removeUser(login) }
-        function exportUsers(): string { return TwitchRepository.exportUsers() }
     }
 }

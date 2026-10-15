@@ -268,6 +268,11 @@ hover highlighting. Each row has a copy button for its full path or location URI
 Removing an entry removes only the shortcut, leaving the
 folder intact. Empty lists show the add form immediately.
 
+Manage checks local folder availability without changing saved entries. Missing or
+inaccessible folders show "Folder missing or unavailable" below the path. Remote
+and virtual URIs show "Location not checked"; no connection is attempted. Reopen
+Manage after a folder or mount returns to clear its availability warning.
+
 Entries live in SQLite. The former JSON provider is removed, and there is no
 automatic import or migration script. `FolderForm`, `ManagementActions` and
 `FolderCategoryButton` share the path/name fields, browse dialog, category colors
@@ -336,6 +341,13 @@ the refreshed list; **Cancel refresh** keeps the previous list so the next refre
 asks again. No background scanning or scanning on picker opening occurs.
 Missing or unreadable sources retain their previous results and show an error.
 Removing a source removes its listing, without modifying project files.
+
+Opening Manage also performs a read-only availability check of saved source folders,
+projects and workspace files. Missing paths have warning text in the existing rows;
+project summaries count missing workspace files, and the workspace editor identifies
+each affected file. This check does not scan repositories or prune records. Reopen
+Manage to recheck paths after recreating folders or mounting drives. Full-state import
+reports the same availability issues and preserves all saved entries.
 
 Projects inherit their source category. Edit saves category and workspace choices
 together. Changing a source path scans the replacement before saving; duplicate

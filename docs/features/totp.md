@@ -51,6 +51,9 @@ glyphs, sizes, spacing, and colors are in `src/theme/Theme.qml`. Keyring attribu
 Names and seeds are inside each item's secret payload. Secrets travel through
 pipes, never command arguments or plaintext config files. Closing the tooltip
 stops updates, clears its model, and exits the helper after any pending write.
+Full-state [backups](../storage.md#backups) include a versioned TOTP collection inside
+the encrypted 7z archive. Restore replaces only this configured TOTP namespace;
+names, UUIDs and complete token URIs retain their algorithm, digits and period.
 Codes use `SensitiveClipboardService`, shared with the vault manager, to copy
 through `wl-copy --sensitive`, with the value supplied only on
 stdin. Quickshell's clipboard history drops sensitive selections before storing

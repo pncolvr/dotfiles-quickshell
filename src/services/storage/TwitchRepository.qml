@@ -219,11 +219,6 @@ Singleton {
         return true
     }
 
-    function exportUsers() {
-        // The IPC client supplies the final newline when printing this string.
-        return root.logins().join("\n")
-    }
-
     function updateStreamSnapshot(streams) {
         const followed = logins()
         const entries = streams.filter(stream => followed.includes(stream.login) && stream.streamId)
