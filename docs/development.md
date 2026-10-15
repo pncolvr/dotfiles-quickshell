@@ -45,7 +45,7 @@ layer namespace.
 Vault UI uses feature-owned `VaultEntryList`, `VaultEntryDetails` and
 `VaultEntryEditor` components. `VaultPanel` coordinates selection and editing;
 `RbwService` owns vault operations. Inputs use the shared `UI.SecretField` and
-`UI.TextArea`; notes masking belongs to the vault editor. Recent/folder file
+`UI.TextArea`; read-only notes masking belongs to the vault details view. Recent/folder file
 helpers share local path identity and URI encoding through `file-records.jq`,
 while each helper keeps its own source metadata and sorting.
 

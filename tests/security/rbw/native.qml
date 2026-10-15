@@ -3,6 +3,7 @@ import QtQuick
 import QtTest as Test
 import Quickshell
 import Quickshell.Io
+import Quickshell.Hyprland
 import Quickshell.Wayland
 import "../../../src/services"
 import "../../../src/modules/launcher"
@@ -14,6 +15,8 @@ Scope {
     property int attempts: 0
     property int step: 0
     property bool accepted: false
+    property bool focusRoundtrip: false
+    readonly property bool helperActive: helperWindow.contentItem.Window.active
     Test.TestEvent { id: events }
     function find(item, name) {
         if (item.objectName === name) return item
@@ -23,9 +26,36 @@ Scope {
         }
         return null
     }
-    function fail() { console.error("FAIL: native private secret picker"); Qt.quit() }
+    function fail() {
+        console.error("FAIL: native private secret picker", root.step, pickerWindow.windowActive, root.helperActive)
+        Qt.quit()
+    }
     PickerWindow { id: ordinaryWindow }
     PrivatePickerWindow { id: pickerWindow }
+    FloatingWindow {
+        id: helperWindow
+        visible: false
+        title: "Quickshell synthetic focus check"
+        implicitWidth: 320
+        implicitHeight: 160
+        UI.InputField {
+            id: helperInput
+            readonly property bool moduleFocusSearch: true
+            anchors.centerIn: parent
+            width: 280
+            placeholderText: "Synthetic desktop input"
+        }
+        Connections {
+            target: helperWindow.contentItem.Window.window
+            function onFrameSwapped() {
+                if (root.step !== 6) return
+                helperInput.forceActiveFocus()
+                BarModuleService.movePointer(helperInput)
+                Hyprland.dispatch('hl.dsp.focus({ window = "title:^Quickshell synthetic focus check$" })')
+                root.step = 7
+            }
+        }
+    }
     Process {
         id: client
         command: ["bash", Quickshell.shellPath("src/services/launcher/secret_prompt.sh"), "--prompt", "Synthetic rbw preview", "--description", "Testing the masked prompt; no vault access"]
@@ -37,6 +67,7 @@ Scope {
                 root.fail(); return
             }
             root.accepted = false
+            helperWindow.visible = false
             root.step = 3
             entryClient.running = true
         }
@@ -65,7 +96,7 @@ Scope {
         repeat: true
         running: true
         onTriggered: {
-            if (++root.attempts > 16) { root.fail(); return }
+            if (++root.attempts > 32) { root.fail(); return }
             if (root.step === 5) {
                 if (!ordinaryWindow.visible || pickerWindow.visible || PickerService.privateWindow
                     || ordinaryWindow.WlrLayershell.namespace !== Config.pickerNamespace) { root.fail(); return }
@@ -100,6 +131,25 @@ Scope {
             const input = root.find(pickerWindow.previewItem, "secretInput") as UI.InputField
             const button = root.find(pickerWindow.previewItem, "revealSecret") as UI.ActionButton
             if (!input || !button || pickerWindow.contentX <= 0) { root.fail(); return }
+            if (root.step === 6) return
+            if (root.step === 7) {
+                if (!root.helperActive || pickerWindow.windowActive) return
+                events.keyClick(Qt.Key_A, Qt.NoModifier, 0)
+                events.keyClick(Qt.Key_Escape, Qt.NoModifier, 0)
+                if (helperInput.text !== "a" || !PickerService.visible || input.text !== "NATIVE_RBW_SYNTHETIC") {
+                    root.fail(); return
+                }
+                BarModuleService.movePointer(pickerWindow.panel.panel)
+                root.step = 8
+                return
+            }
+            if (root.step === 8) {
+                if (!pickerWindow.windowActive || !input.activeFocus) return
+                root.focusRoundtrip = true
+                root.step = 2
+                console.log("PASS: secret prompt survives desktop focus and keyboard input, then resumes unchanged")
+                return
+            }
             if (root.step === 1) {
                 if (input.echoMode !== TextInput.Password) { root.fail(); return }
                 input.text = "NATIVE_RBW_SYNTHETIC"
@@ -109,6 +159,14 @@ Scope {
                 }
                 console.log("Native private secret picker mapped")
                 root.step = 2
+                return
+            }
+            if (!root.focusRoundtrip) {
+                if (!pickerWindow.windowActive || pickerWindow.WlrLayershell.keyboardFocus !== WlrKeyboardFocus.OnDemand) {
+                    root.fail(); return
+                }
+                root.step = 6
+                helperWindow.visible = true
                 return
             }
             events.mouseClick(button, button.width / 2, button.height / 2, Qt.LeftButton, Qt.NoModifier, 0)

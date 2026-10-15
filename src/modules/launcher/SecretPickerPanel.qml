@@ -10,6 +10,8 @@ Item {
     property bool backgroundVisible: false
     property alias secretRevealed: secret.revealed
     readonly property bool nativeDialogOpen: false
+    readonly property bool moduleFocusSearch: true
+    readonly property var modulePointerTarget: secret
     readonly property var actions: picker.secretActions ?? null
     Keys.onEscapePressed: { root.clearSecret(); root.picker.close() }
     Shortcut {

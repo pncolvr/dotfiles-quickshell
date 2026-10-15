@@ -24,7 +24,9 @@ PrivateTopPanelTooltip {
     backgroundOpacity: Theme.pickerBackgroundOpacity
 
     WlrLayershell.layer: WlrLayer.Overlay
-    WlrLayershell.keyboardFocus: panel?.nativeDialogOpen ? WlrKeyboardFocus.None : WlrKeyboardFocus.Exclusive
+    WlrLayershell.keyboardFocus: panel?.nativeDialogOpen ? WlrKeyboardFocus.None
+        : behavior.secretPrompt ? WlrKeyboardFocus.OnDemand
+        : WlrKeyboardFocus.Exclusive
 
     PickerWindowContent { id: behavior; host: root; picker: root.picker; enabled: root.picker.privateWindow; anchors.fill: parent }
 }

@@ -76,6 +76,7 @@ case $action in
         printf '%s' "$token" | jq -Rs '{ok:true,token:.}'
         ;;
     add)
+        json -e '.notes == ""' >/dev/null || fail 'Vault notes are read-only. Use Bitwarden Desktop to change them.'
         notes_valid
         json -e '(.name|type=="string" and length>0 and length<=1024) and (.username|type=="string" and length<=1024) and (.folder|type=="string" and length<=1024) and (.uris|type=="array" and length<=32 and all(.[]; type=="string" and length>0 and length<=4096 and (test("[\u0000-\u001f\u007f]")|not)))' >/dev/null || fail 'Enter a title and valid login fields.'
         name=$(json -r '.name'); username=$(json -r '.username'); folder=$(json -r '.folder')
@@ -95,10 +96,12 @@ case $action in
         if [[ $action == remove ]]; then
             rbw_read remove "$id"
         else
-            notes_valid
             kind=$(printf '%s' "$entry" | jq -r 'if .data == null then "note" elif (.data|has("password") and has("uris")) then "login" else "other" end')
-            [[ $kind != other ]] || fail 'rbw cannot edit this item type. Use Bitwarden Desktop.'
-            if [[ $kind == login ]]; then json -j '.password + "\n\n" + .notes'; else json -j '.notes'; fi | timeout --kill-after=2 90 rbw edit "$id" >/dev/null || fail 'Save outcome is uncertain. Refresh and check before retrying.'
+            [[ $kind == login ]] || fail 'Only login passwords can be edited. Use Bitwarden Desktop to edit notes and other item types.'
+            printf '%s\n%s\n' "$request" "$entry" | jq -es 'length == 2 and .[0].notes == (.[1].notes // "")' >/dev/null \
+                || fail 'Vault notes are read-only. Use Bitwarden Desktop to change them.'
+            notes_valid
+            json -j '.password + "\n\n" + .notes' | timeout --kill-after=2 90 rbw edit "$id" >/dev/null || fail 'Save outcome is uncertain. Refresh and check before retrying.'
         fi
         printf '{"ok":true,"saved":true}\n'
         ;;

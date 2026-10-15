@@ -6,6 +6,7 @@ import Quickshell
 import Quickshell.Io
 import "../../../src/services"
 import "../../../src/modules/vault"
+import "../../../src/theme"
 import "../../../src/theme/ui" as UI
 Scope {
     id: root
@@ -32,8 +33,8 @@ Scope {
             const field = objects.findChild(panel, "vaultPassword") as UI.SecretField
             const actions = objects.findChild(panel, "vaultEditorActions") as UI.EditorActions
             const hints = objects.findChild(panel, "vaultFormHints") as UI.ShortcutHints
-            const notes = objects.findChild(panel, "vaultNotes") as QC.TextArea
-            const mask = objects.findChild(panel, "vaultNotesMask") as UI.Text
+            const notes = root.findVisual(panel, "vaultDetailNotes")
+            const mask = root.findVisual(panel, "vaultDetailNotesMask") as UI.Text
             const filters = objects.findChild(panel, "vaultFilters") as Row
             const list = objects.findChild(panel, "vaultList") as ListView
             const details = objects.findChild(panel, "vaultDetails") as Item
@@ -65,8 +66,10 @@ Scope {
                     && Math.abs(actions.x + actions.width - actions.parent.width) < 1
                     && actions.mapToItem(details,0,actions.height).y <= details.height,
                 hintsBelowActions: hints.mapToItem(panel,0,0).y >= actions.mapToItem(panel,0,0).y + actions.height,
-                notesMaskClean: notes.placeholderText === "" && mask.visible && notes.height >= field.height * 3,
-                notesRevealed: panel.notesRevealed, notesEditable: !notes.readOnly,
+                notesMaskClean: !!notes && mask.visible && notes.height >= Theme.controlHeight * 6,
+                notesRevealed: notes?.revealed ?? false, notesEditable: !!notes && !notes.readOnly,
+                notesIntact: !!notes && notes.text === RbwService.detail?.notes,
+                noteEditVisible: edit.visible, notesTall: !!notes && notes.height >= Theme.controlHeight * 6,
                 visible:RbwService.visible,busy:RbwService.busy,count:RbwService.entries.length,
                 selectedFirst:RbwService.detail?.id === panel.rows[0]?.id && (objects.findChild(panel,"vaultList") as ListView).currentIndex === 0,
                 details:!!RbwService.detail,editing:panel.editing,adding:panel.adding,deleting:panel.deleting,
@@ -154,8 +157,13 @@ Scope {
             events.mouseClick(button,button.width/2,button.height/2,Qt.LeftButton,Qt.NoModifier,0)
         }
         function notesEye(): void {
-            const button = objects.findChild(panel,"vaultNotesEye") as UI.ActionButton
-            events.mouseClick(button,button.width/2,button.height/2,Qt.LeftButton,Qt.NoModifier,0)
+            const button = root.findVisual(panel,"vaultDetailNotesEye") as UI.ActionButton
+            button.clicked()
+        }
+        function typeNotes(): void {
+            const notes = root.findVisual(panel,"vaultDetailNotes") as QC.TextArea
+            notes.forceActiveFocus()
+            events.keyClick(Qt.Key_A,Qt.NoModifier,0)
         }
         function generate(): void { RbwService.generate(24) }
         function preview(): void { panel.grabToImage(result => result.saveToFile(Quickshell.env("RBW_TEST_ROOT") + "/form.png")) }

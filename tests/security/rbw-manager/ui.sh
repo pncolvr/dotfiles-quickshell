@@ -97,7 +97,17 @@ wait_state '(.busy|not) and .selectedFirst and .totpPresent and .totpMasked'
 ipc toggleType
 wait_state '.typeExpanded and .typeChoiceReady'
 timeout 4 qs ipc -p "$test_dir" call rbwtest chooseType Note
-wait_state '(.busy|not) and .rows==1 and .typeFilter=="Note" and .noteSelected and .selectedFirst and (.totpPresent|not) and (.totpCopyEnabled|not)'
+wait_state '(.busy|not) and .rows==1 and .typeFilter=="Note" and .noteSelected and .selectedFirst and (.totpPresent|not) and (.totpCopyEnabled|not) and (.noteEditVisible|not) and .notesTall and .notesMaskClean and (.notesEditable|not)'
+ipc notesEye
+wait_state '.notesRevealed and (.notesEditable|not) and .notesTall'
+ipc typeNotes
+snapshot | jq -e '(.editing|not) and .notesRevealed and (.notesEditable|not) and .notesIntact' >/dev/null
+if [[ -n ${RBW_NOTES_PREVIEW_OUTPUT:-} ]]; then
+    ipc preview
+    for ((i=0;i<100;i++)); do [[ -s $test_dir/form.png ]] && break; sleep 0.02; done
+    cp -- "$test_dir/form.png" "$RBW_NOTES_PREVIEW_OUTPUT"
+    rm "$test_dir/form.png"
+fi
 ipc toggleType
 wait_state '.typeExpanded and .typeChoiceReady'
 timeout 4 qs ipc -p "$test_dir" call rbwtest chooseType Login
@@ -158,7 +168,7 @@ wait_state '(.checking|not) and (.busy|not) and .details and .listEnabled'
 [[ $(snapshot | jq -c '[.statusHeight,.listHeight]') == "$layout_before" ]]
 rm "$test_dir/slow-poll"
 ipc edit
-wait_state '.editing and .masked and (.draftEmpty|not) and .formActionsRight and .hintsBelowActions and .notesMaskClean and .addVisible and (.addEnabled|not)'
+wait_state '.editing and .masked and (.draftEmpty|not) and .formActionsRight and .hintsBelowActions and .addVisible and (.addEnabled|not)'
 if [[ -n ${RBW_STYLE_PREVIEW_OUTPUT:-} ]]; then
     ipc preview
     for ((i=0;i<100;i++)); do [[ -s $test_dir/form.png ]] && break; sleep 0.02; done
@@ -168,10 +178,11 @@ ipc eye
 wait_state '(.masked|not)'
 ipc generate
 wait_state '.editing and (.busy|not) and (.masked|not)'
-ipc notesEye
-wait_state '.notesRevealed and .notesEditable'
-ipc notesEye
-wait_state '(.notesRevealed|not) and (.notesEditable|not) and .notesMaskClean'
+ipc save
+wait_state '(.editing|not) and (.busy|not) and .selectedFirst'
+[[ $(<"$test_dir/write-input") == $'SYNTHETIC_GENERATED_PASSWORD\n\nOriginal notes' ]]
+ipc edit
+wait_state '.editing and .masked'
 ipc cancel
 wait_state '(.editing|not) and .draftEmpty and .masked'
 ipc newLogin
@@ -224,4 +235,4 @@ printf '[]\n' > "$test_dir/entries.json"
 ipc open
 wait_state '.visible and (.busy|not) and .count==0 and (.details|not)'
 ! rg -q 'SYNTHETIC_(SECRET|DRAFT|GENERATED|COPY|SEED|HISTORY)|123456|654321|TypeError|ReferenceError|Error:|Binding loop|Cannot assign' "$test_dir/log"
-printf 'PASS: masked TOTP details, fresh sensitive token copies, stale-token rejection, framed dropdowns, folder filtering, compact results spacing, first entry selected on load, single-click details, stable entry transitions and background polling, search and arrow selection, rapid typing and empty results, private host, drafts, masking, writes, copy lifetime, deletion, lock and stale replies\n'
+printf 'PASS: tall read-only notes, password edits preserve notes, masked TOTP details, fresh sensitive token copies, stale-token rejection, framed dropdowns, folder filtering, compact results spacing, first entry selected on load, single-click details, stable entry transitions and background polling, search and arrow selection, rapid typing and empty results, private host, drafts, masking, writes, copy lifetime, deletion, lock and stale replies\n'

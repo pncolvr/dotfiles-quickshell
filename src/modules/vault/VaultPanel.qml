@@ -19,7 +19,6 @@ Item {
     onSelectedEntryIdChanged: Qt.callLater(root.updateSelection)
     onNoticeChanged: { if (notice) noticeExpiry.restart(); else noticeExpiry.stop() }
     Timer { id: noticeExpiry; interval: 5000; onTriggered: root.notice = "" }
-    property alias notesRevealed: editor.notesRevealed
     property bool detailBusyShown: false
     readonly property bool detailReady: !!RbwService.detail && RbwService.detail.id === root.selectedEntryId
     Timer { id: detailBusyDelay; interval: 200; onTriggered: root.detailBusyShown = true }
@@ -30,7 +29,7 @@ Item {
             && (!typeFilter || row.type === typeFilter)).map(row => ({row, score: Search.score([row.name, row.user, row.folder, ...(row.uris ?? [])].filter(Boolean).join(" "), pattern, Config.pickerFuzzySearch)}))
             .filter(item => item.score !== Infinity).sort((a, b) => a.score - b.score || a.row.name.localeCompare(b.row.name)).map(item => item.row)
     }
-    readonly property bool editable: RbwService.detail && (RbwService.detail.data === null || RbwService.detail.data.hasOwnProperty("password"))
+    readonly property bool editable: !!RbwService.detail?.data?.hasOwnProperty("password")
     readonly property var detailRows: {
         const entry = RbwService.detail
         if (!entry) return []
@@ -39,7 +38,7 @@ Item {
                 && (key !== "totp" || (typeof value === "string" && value.length > 0)))
             .map(([key, value]) => ({label: key === "totp" ? "TOTP secret" : key.replace(/_/g, " "),
                 value: String(value), secret: key !== "username", totp: key === "totp"})))
-        if (entry.notes) fields.push({label: "Notes", value: entry.notes, secret: true})
+        if (entry.notes) fields.push({label: "Notes", value: entry.notes, secret: true, multiline: true})
         for (const field of entry.fields ?? []) if (field.value != null) fields.push({label: field.name || "Custom field", value: field.value, secret: true})
         return fields
     }
@@ -232,7 +231,7 @@ Item {
                         anchors.right: parent.right
                         visible: !root.editing && !root.deleting
                         spacing: Theme.controlSpacing
-                        UI.ActionButton { objectName: "vaultEdit"; glyph: Theme.editIcon; hint: "Edit entry"; enabled: root.detailReady && root.editable && !RbwService.busy; onClicked: root.edit() }
+                        UI.ActionButton { objectName: "vaultEdit"; glyph: Theme.editIcon; hint: "Edit password"; visible: root.editable; enabled: root.detailReady && root.editable && !RbwService.busy; onClicked: root.edit() }
                         UI.ActionButton { objectName: "vaultDelete"; glyph: Theme.deleteIcon; hint: "Delete entry"; fillColor: Theme.urgent; enabled: root.detailReady && !RbwService.busy; onClicked: root.deleting = true }
                     }
                     UI.EditorActions {

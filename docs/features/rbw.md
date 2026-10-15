@@ -78,8 +78,12 @@ field that is masked by default. Enter confirms and Escape cancels; there are no
 Unlock or Cancel buttons. Its eye button
 toggles visibility so you can check your typing; closing or accepting resets the
 field to masked and clears it. Secret prompts use a separate window in the
-`quickshell-private` layer namespace, matching TOTP and notifications. Optional `--description` and
-`--error` provide public prompt metadata. Success writes only the exact UTF-8
+`quickshell-private` layer namespace, matching TOTP and notifications. The prompt
+takes focus and moves the pointer into the field when it opens, then lets you
+interact with other desktop windows without cancelling it. Click back into the
+field to paste or continue typing; Enter confirms and Escape cancels while the
+prompt has focus. Optional `--description` and `--error` provide public prompt
+metadata. Success writes only the exact UTF-8
 value to stdout, without appending a newline; cancellation exits 1 and errors or
 timeouts exit 2. Secret values must never be passed in arguments.
 
@@ -190,6 +194,9 @@ malformed/oversized responses, navigation, pinentry, cancellation and cleanup.
 It never logs into or writes to a real vault and does not monitor the desktop
 clipboard. The optional real CLI smoke check uses a separate synthetic profile;
 set `RBW_TEST_EXECUTABLE` to a verified rbw executable when it is not on PATH.
+The native check also verifies that a synthetic desktop window receives input
+while the secret prompt stays open, then returns focus without losing its value.
+It restores the original window focus and pointer position when it exits.
 
 The test runner may need execution outside a restrictive sandbox to permit Unix
 peer checks and Qt/Quickshell IPC. Disposable profiles and artifacts stay in
@@ -206,8 +213,8 @@ The manager calls rbw directly. The browser userscript remains responsible for
 qutebrowser autofill; the independent TOTP module is unchanged.
 
 `VaultPanel` coordinates selection and drafts, with feature-owned list, detail and
-editor components. The editor uses shared field styling and keeps notes masking
-and password reveal state local; `RbwService` continues to own all vault operations.
+editor components. They use shared field styling and keep notes masking and
+password reveal state local; `RbwService` continues to own all vault operations.
 
 The manager has one searchable view with folder/type filters. It opens on Logins;
 choose Notes or another supported type in the combo to browse those separately.
@@ -234,20 +241,23 @@ Pending token replies are discarded if selection changes, the manager closes,
 or a vault lock invalidates the request. Entries without TOTP omit the field.
 
 **New login** accepts a title, username, password, website URLs (one
-per line), notes and an optional folder. Choose an existing folder or type a new
+per line) and an optional folder. Choose an existing folder or type a new
 name; rbw creates a missing folder when adding the login. Generation previews a
 password in the masked field and never saves until **Save** is pressed.
 
-Existing logins support password/notes edits; existing secure notes support content
-edits. Existing usernames, titles, URLs and folder assignments remain read-only.
+Existing logins support password edits. Notes attached to logins and secure-note
+contents are read-only; secure notes have no Edit action. Password edits preserve
+the existing notes, and the backend rejects requests to change them. Existing
+usernames, titles, URLs and folder assignments remain read-only.
 SSH keys, cards and identities expose supported fields for explicit reveal/copy;
 rbw cannot create or edit these types. Delete requires confirmation naming the
 entry. The manager never deletes/recreates an entry to emulate unsupported edits.
 Use Desktop for secure-note/SSH creation, metadata changes, folder moves and
 folder administration.
 
-Passwords and notes start hidden. Use the eye to reveal; notes must be revealed
-before editing. The form uses the shared icon actions at the bottom-right inside
+Passwords and notes start hidden. Use the eye to reveal; notes use a read-only,
+wrapped text area at least six control rows tall, growing to fit revealed content.
+The form uses the shared icon actions at the bottom-right inside
 the pane, replacing Edit/Delete with Cancel/Apply while editing, with
 shortcut hints on a separate footer line. Escape discards the current draft or deletion confirmation before
 closing the manager. An in-flight write continues if the manager closes; reopening

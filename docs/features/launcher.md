@@ -528,7 +528,10 @@ window focus.
 bypasses search and remembered selections. It uses the `quickshell-private`
 namespace shared by TOTP and notifications. The eye button reveals the value on
 request; every new prompt starts masked. Enter confirms and Escape cancels,
-without Unlock or Cancel buttons. The exact value returns through a
+without Unlock or Cancel buttons. Secret prompts take focus and move the pointer
+into the field initially, then stay open when you use another desktop window,
+so you can copy a value elsewhere and
+click back into the field to paste it. The exact value returns through a
 private reply FIFO; only public prompt metadata is written to disk. Cancellation,
 timeout and client death clear the field. The Bash helpers `secret_prompt.sh` and
 `pinentry-rbw` connect this UI to rbw; secret replies are decoded from stdin with
