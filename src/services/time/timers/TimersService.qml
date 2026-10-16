@@ -8,6 +8,8 @@ import "../../"
 
 Singleton {
     id: root
+    readonly property bool ready: state.restored
+    QtObject { id: state; property bool restored: false }
     property real now: Date.now()
     property var countdowns: []
     property var timers: []
@@ -23,7 +25,7 @@ Singleton {
     }
 
     function addCountdown(seconds, label = "") {
-        if (!validDuration(seconds)) return null
+        if (!ready || !validDuration(seconds)) return null
         update()
         const entry = countdownComponent.createObject(root, {durationMs: seconds * 1000, startedAt: now, label: label.trim()})
         countdowns = countdowns.concat(entry)
@@ -32,6 +34,7 @@ Singleton {
     }
 
     function addTimer(label = "") {
+        if (!ready) return null
         update()
         const entry = timerComponent.createObject(root, {startedAt: now, label: label.trim()})
         timers = timers.concat(entry)
@@ -63,7 +66,8 @@ Singleton {
     }
 
     function save() {
-        PreferencesRepository.setValue("timers.state", {
+        if (!ready) return false
+        return PreferencesRepository.setValue("timers.state", {
             countdowns: countdowns.map(entry => Object.assign(entry.snapshot(), {durationMs: entry.durationMs})),
             timers: timers.map(entry => entry.snapshot())
         })
@@ -83,6 +87,7 @@ Singleton {
     }
 
     function restore() {
+        if (ready || !PreferencesRepository.ready) return
         const saved = PreferencesRepository.value("timers.state", {})
         const savedCountdowns = Array.isArray(saved?.countdowns) ? saved.countdowns : []
         const savedTimers = Array.isArray(saved?.timers) ? saved.timers : []
@@ -97,6 +102,7 @@ Singleton {
         // Reset completed entries saved before countdowns reset automatically.
         const completed = countdowns.filter(entry => entry.finished)
         for (const entry of completed) entry.reset()
+        state.restored = true
         update()
         if (completed.length > 0) save()
     }
@@ -135,5 +141,9 @@ Singleton {
         onTriggered: root.update()
     }
 
+    Connections {
+        target: PreferencesRepository
+        function onReadyChanged() { root.restore() }
+    }
     Component.onCompleted: restore()
 }

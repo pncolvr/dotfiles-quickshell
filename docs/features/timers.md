@@ -26,7 +26,9 @@ to run the same countdown again. Each run sounds once. Elapsed timers do not sou
 an alarm.
 
 Closing the panel leaves entries running. Entries are saved in the existing
-preferences database and restored after a shell restart or config reload. Paused
+preferences database and restored after a shell restart or config reload. Controls
+remain disabled until database preparation and preference loading finish; entries
+restore once before new timers can be created or saved. Paused
 entries retain their time; running entries include time while Quickshell was
 closed. A countdown that expired while it was closed sounds once on startup and
 resets ready to start. Already reset entries restore silently. Previously finished
@@ -41,5 +43,7 @@ pause/play and delete styles. The icon is Font Awesome's free solid
 [stopwatch](https://fontawesome.com/icons/stopwatch).
 
 Run `bash tests/time/timers.sh` for offscreen timing, bar priority, controls,
-scrolling, restart persistence and alarm checks. Sounds are mocked and runtime
-data is isolated.
+scrolling, restart persistence and alarm checks. The fixture delays database
+preparation, verifies saved SQLite snapshots between processes, checks both early
+and late service initialization, and restarts again after deleting every entry.
+Sounds are mocked and runtime data is isolated.

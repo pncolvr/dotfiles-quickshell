@@ -1,10 +1,12 @@
 import QtQuick
+import "../../../services"
 import "../../../theme"
 import "../../../theme/ui" as UI
 
 Column {
     id: root
     width: Theme.timersTooltipWidth
+    enabled: TimersService.ready
     spacing: Theme.controlSpacing
     property alias countdownTab: countdowns
     property alias timersTab: timers

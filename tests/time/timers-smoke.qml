@@ -162,6 +162,8 @@ Scope {
         running: true
         repeat: true
         onTriggered: {
+            if (!TimersService.ready) return
+            root.check(root.panel.enabled, "timer controls enable after restoration")
             switch (root.step++) {
             case 0:
                 root.checkState()

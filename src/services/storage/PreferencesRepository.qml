@@ -7,11 +7,13 @@ import "../"
 Singleton {
     id: root
 
+    readonly property bool ready: state.ready
     readonly property bool showSeconds: value("clock.showSeconds", false) === true
 
     QtObject {
         id: state
         property var values: ({})
+        property bool ready: false
     }
 
     function reload() {
@@ -23,6 +25,7 @@ Singleton {
             catch (error) { console.warn("Ignoring an invalid stored preference: " + row.key) }
         }
         state.values = values
+        state.ready = true
         return true
     }
 

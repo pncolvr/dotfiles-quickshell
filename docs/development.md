@@ -193,7 +193,10 @@ Run `bash tests/time/timers.sh` for timestamp-based countdown and elapsed timer
 behavior, pause/resume, resets, reuse of completed countdowns, bar priority,
 warning colors, UI controls, scrolling and restoration across shell restarts.
 The offscreen test uses isolated runtime data and mocks `canberra-gtk-play`;
-it checks that each completed countdown sounds exactly once.
+it checks that each completed countdown sounds exactly once. Database preparation
+is deliberately delayed; tests reject early writes, verify persisted snapshots
+between restarts, cover service creation before/after preferences load and confirm
+that an overdue alarm plays once across subsequent restarts.
 Set `TIMERS_TEST_SCREENSHOT=/tmp/timers.png` to save a panel preview.
 
 ## Recent files
