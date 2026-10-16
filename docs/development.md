@@ -284,6 +284,13 @@ immediate RSS reclamation.
 
 ## Projects
 
+`bash tests/projects/choices-focus.sh` checks the real native project picker with
+79 synthetic projects and a mocked editor. It covers first-row Enter/click,
+filtered and other-row activation, Back, reopening, remembered workspace selection
+and direct single-action launch. It briefly takes keyboard focus, leaves the
+pointer in place and uses isolated storage. The native focus-grab regression
+cannot be exercised by an offscreen window.
+
 `node --test tests/projects/launchers.test.mjs` checks generic extension matching,
 menu labels, literal argv expansion and invalid configuration.
 `bash tests/projects/launchers.sh` checks mixed Code/Godot/custom-editor projects,

@@ -57,6 +57,12 @@ Item {
         if (!hostRequestedVisible || !ready || blocked || nativeDialogOpen || !panel) return
         keyboardEnabled = true
         focusPanelPending = true
+        // Subview changes need field focus, not another layer-shell activation.
+        // Re-requesting Exclusive focus cancels an established native focus grab.
+        if (windowActive && grab.active) {
+            focusPanel()
+            return
+        }
         // A newly mapped native window may briefly report active before the
         // compositor sends its keyboard enter. Keep this request until activation.
         requestingKeyboardFocus = true

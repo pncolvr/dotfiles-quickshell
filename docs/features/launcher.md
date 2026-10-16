@@ -426,6 +426,8 @@ folder alongside named workspace files. Godot files add **Open in Godot** to the
 same list. Multiple Godot files show their relative paths to distinguish actions.
 There is no separate **Open folder** row. The last choice is remembered per
 project without rearranging rows; previous workspace selections remain valid.
+Opening choices and returning to Projects retain the existing native keyboard
+focus grab; these transitions focus search without reactivating the window.
 
 App names, extensions, commands, optional folder actions and existing-window
 matching come from `projectApps`; `projectDefaultApp` controls the fallback.
