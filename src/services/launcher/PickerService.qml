@@ -126,14 +126,18 @@ Singleton {
         secretCallback = callback
         show()
     }
-    function menuRows(rows) {
-        return rows.map((item, index) => Object.assign({}, item, {id: String(index), result: item.result ?? item.title}))
+    function menuRows(rows, sorted = false) {
+        const normalized = rows.map((item, index) => Object.assign({}, item, {id: String(index), result: item.result ?? item.title}))
+        return sorted ? normalized.sort((a, b) => a.title.localeCompare(b.title)) : normalized
     }
-    function promptMenu(title, rows, callback, presentation = "list") {
+    function promptMenu(title, rows, callback, presentation = "list", options = {}) {
         begin(PickerService.Mode.Menu, title)
-        items = menuRows(rows)
+        items = menuRows(rows, options.sort === true)
         menuCallback = callback
         layout = presentation
+        multiple = options.allowMultipleSelection === true
+        allowTyped = options.allowTyped === true
+        acceptLabel = options.acceptLabel || "Select"
         show()
     }
     function apps() {
@@ -526,8 +530,7 @@ Singleton {
             root.customAccept = request.customAccept === true
             root.layout = request.layout === "grid" ? "grid" : "list"
             // Source indexes are stable even when labels or provider IDs collide.
-            const rows = root.menuRows(request.items)
-            root.items = request.sort === true ? rows.sort((a, b) => a.title.localeCompare(b.title)) : rows
+            root.items = root.menuRows(request.items, request.sort === true)
             root.query = request.query || ""
             root.selectionKey = typeof request.selectionKey === "string" ? request.selectionKey : ""
             if (request.selectedResult !== undefined || (Config.pickerRememberSelection && root.selectionKey)) {
@@ -580,6 +583,7 @@ Singleton {
         target: "launcher"
         function apps(): void { root.apps() }
         function power(): void { PowerService.open() }
+        function bookmarks(): void { BookmarkService.open() }
         function windows(scope: string): void { root.windows(scope) }
         function expose(scope: string): void { root.expose(scope) }
         function clipboard(): void { root.clipboard() }

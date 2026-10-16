@@ -44,8 +44,8 @@ directory hints fit one line; GitHub groups its selection shortcuts on separate 
 | `launcher.sh` | Synchronous dmenu/JSON request and reply protocol, validation, cancellation, provider dispatch and compatibility CLI aliases. |
 | `secret_prompt.sh` / `pinentry-rbw` | External password clients, owner tracking and pinentry protocol; secret values remain on private pipes. |
 | `provider-config.qml` and `--provider-config` | Shared Config export while the bar is running, plus the existing offline exporter needed by wallpaper restoration. |
-| `_common/utils.sh` / `handle.sh` | Shared provider configuration, menu result handling and external browser/file-manager actions. |
-| Bookmarks | Read existing bookmark files before showing a native picker. |
+| `_common/utils.sh` | Shared provider configuration, temporary directories and external file-manager actions. |
+| Bookmarks | BookmarkService reads the existing file and owns selection/opening through the shared native picker. |
 | Power | Noninteractive command execution and offline idle locking. PowerService owns the native choices and action order. |
 | Screenshot | Coordinate capture, OCR/QR decoding, annotation and file-manager tools. |
 | Recording | Prepare capture/audio choices for the detached recording worker; the native service owns toggle/session state. |
@@ -95,6 +95,29 @@ switch immediately to the previous window. Focusing a grouped window activates
 its tab using live group membership. Current-workspace mode considers tiled
 windows and falls back to all windows if fewer than two are available.
 
+## Bookmarks
+
+Meta+B dispatches `quickshell:launcher-bookmarks` to `BookmarkService`. It reads
+`Config.bookmarkFile` (`~/.config/qutebrowser/bookmarks/urls` by default) each time
+it opens, using an asynchronous FileView without generating JSON or waiting for
+shell replies. The existing shared picker supports sorted titles, search, typed
+URLs and multiple selection. A single bookmark opens directly; an empty file
+performs no action. Missing/unreadable sources show an error and still allow a
+typed URL. Cancelled or replaced menus ignore late file reads.
+
+Each accepted URL is passed as a literal argument to `Config.bookmarkBrowserCommand`,
+which inherits `projectBrowserCommand` (`["xdg-open"]`) by default. Projects and
+Bookmarks therefore use the desktop's default browser association. The configured command is
+launched directly, preserving its arguments and normal inherited environment.
+The service assumes no shell configuration directory; any additional environment
+setup belongs in the configured command. Selection closes the menu before opening
+URLs; Escape opens nothing.
+
+`launcher.sh provider bookmarks` remains a compatibility entry point that invokes
+the same native service. The former `bookmarks.sh`, `_common/handle.sh` and unused
+URL/named-temporary-file helpers are removed. External JSON/dmenu and secret
+request/reply interfaces are unchanged.
+
 ## Power menu
 
 Meta+Escape dispatches `quickshell:launcher-power` to `PowerService`. The menu
@@ -105,10 +128,12 @@ properties own those glyphs; reboot inherits `rotateIcon` and lock inherits
 Escape and outside-click cancellation use the shared picker components. There is
 no JSON request file, FIFO or shell process waiting for the choice.
 
-`PickerService.promptMenu(title, rows, callback, presentation)` is the shared
+`PickerService.promptMenu(title, rows, callback, presentation, options)` is the shared
 native-menu entry point. It normalizes rows through the same helper as external
 requests, invokes the selected-row callback after logical closure, and clears the
-callback on cancellation or replacement. A callback may open the next native step.
+callback on cancellation or replacement. Optional `allowMultipleSelection`,
+`allowTyped`, `sort` and `acceptLabel` settings reuse the same menu controls; rows
+share normalization/sorting with external requests. A callback may open the next native step.
 External JSON/dmenu requests retain their existing request/reply behavior.
 
 On acceptance, PowerService pauses tracking directly and dispatches the chosen
@@ -278,11 +303,11 @@ Providers live together in `src/services/launcher/providers/`, reusing the exist
 Bash actions and cache locations. Available
 names are `code`, `webapps`, `github`, `n8n`, `remotes`, `bookmarks`,
 `directories`, `power`, `screenshot`, `recording`, `encode-qrcode`, and `wallpaper`.
-Their shared JSON handler and direct menu calls invoke `launcher.sh`; no Rofi
-adapter or PATH override is required. `_common/` holds the shared Bash helpers.
+Remaining interactive providers call `launcher.sh`; no Rofi adapter or PATH
+override is required. `_common/` holds the retained Bash helpers.
 The unused standalone Webapps, n8n and Remotes forwarding scripts are removed;
 the public `launcher.sh` aliases remain available for shell callers.
-Projects, GitHub, directories, Webapps, Remotes, n8n and the interactive Power entry dispatch directly to native QML services; their
+Projects, GitHub, directories, Webapps, Remotes, n8n, Bookmarks and the interactive Power entry dispatch directly to native QML services; their
 former forwarding providers are removed; Power retains its noninteractive executor. The other providers are named `<provider>.sh`. Browser selection,
 work/personal filtering and editor profiles are preserved. The unused Books provider
 and its Meta+Shift+Period binding are retired.
@@ -645,8 +670,8 @@ password/pinentry clients and browser selections retain argument/result IPC; the
 requests are not routed through compositor shortcuts. Full restart/recovery stays
 external so it remains possible when the bar is not running.
 
-The native service-backed bindings and Power menu orchestration are migrated.
-Bookmarks, Screenshot/OCR/QR decoding, QR encoding, Wallpaper and recording setup still
+The native service-backed bindings, Bookmarks and Power menu orchestration are migrated.
+Screenshot/OCR/QR decoding, QR encoding, Wallpaper and recording setup still
 use their existing interactive scripts. Moving their orchestration into QML is the
 next migration stage: feature services should collect choices and pass prepared
 options to external tools/workers, avoiding a script reopening the picker through

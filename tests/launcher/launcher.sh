@@ -557,30 +557,6 @@ wait_open
 ipc call pickertest custom 0
 wait_client 10
 
-provider_handle=${PICKER_TEST_PROVIDER_HANDLE:-$test_dir/src/services/launcher/providers/_common/handle.sh}
-if [[ -f $provider_handle ]]; then
-    provider_dir="$test_dir/provider"
-    test_home="$test_dir/home"
-    mkdir -p "$provider_dir" "$test_home/.config"
-    ln -s "$test_dir" "$test_home/.config/quickshell"
-    cp "$provider_handle" "$provider_dir/handle.sh"
-    printf 'PICKER_LAUNCHER=%q\n' "$picker" > "$provider_dir/utils.sh"
-    printf 'open_url() { printf "%%s\\n" "$1" >> "${QS_PROVIDER_TEST_OUTPUT:?}"; }\n' >> "$provider_dir/utils.sh"
-    jq '. + {action:"output"}' "$test_dir/options.json" > "$test_dir/provider.json"
-    HOME="$test_home" bash "$provider_dir/handle.sh" "$test_dir/provider.json" > "$test_dir/result" 2> "$test_dir/client-error" & client_pid=$!
-    wait_open
-    ipc call pickertest accept 1
-    wait_client 0
-    [[ $(<"$test_dir/result") == '{"path":"second"}' ]]
-    jq '. + {action:"default"}' "$test_dir/options.json" > "$test_dir/provider.json"
-    HOME="$test_home" QS_PROVIDER_TEST_OUTPUT="$test_dir/browser" bash "$provider_dir/handle.sh" "$test_dir/provider.json" > "$test_dir/result" 2> "$test_dir/client-error" & client_pid=$!
-    wait_open
-    ipc call pickertest accept 0
-    wait_client 0
-    [[ $(<"$test_dir/browser") == first ]]
-    printf 'PASS: existing provider JSON output and browser actions through the migrated shared handler\n'
-fi
-
 [[ -z $(find "$test_dir/runtime/quickshell-picker" -mindepth 1 -print -quit) ]]
 ! rg -q 'PICKER FAIL|TypeError:|ReferenceError:|Binding loop detected|Failed to load configuration' "$test_dir/log"
 ipc call pickertest quit

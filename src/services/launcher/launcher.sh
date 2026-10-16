@@ -68,13 +68,14 @@ case ${1:-apps} in
         name=${2:?Provider name required}; shift 2
         case $name in
             power) if (($# == 0)); then ipc call launcher power; exit; fi ;;
+            bookmarks) ipc call launcher bookmarks; exit ;;
             code) ipc call launcher projects; exit ;;
             github) ipc call launcher projectUrls; exit ;;
             directories) ipc call launcher directories; exit ;;
             webapps) ipc call launcher webapps; exit ;;
         esac
         case $name in
-            bookmarks|power|screenshot|recording|encode-qrcode|wallpaper) provider="$launcher_dir/providers/$name.sh" ;;
+            power|screenshot|recording|encode-qrcode|wallpaper) provider="$launcher_dir/providers/$name.sh" ;;
             n8n) ipc call launcher n8n; exit ;;
             remotes) ipc call launcher remotes; exit ;;
             *) fail "Unknown provider: $name" ;;

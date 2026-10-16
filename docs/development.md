@@ -860,7 +860,7 @@ client startup. This cannot guarantee delivery of keys typed before native focus
 transfers; test immediate Meta+P typing on the live desktop as well.
 
 Run `bash tests/launcher/global-shortcuts.sh` in a Hyprland session to check all
-42 production shortcut callbacks before and after reload, covering launcher and
+43 production shortcut callbacks before and after reload, covering launcher and
 recording actions, Vault, notification DND, shell reload, all 14 module shortcuts,
 window cycling and all ten numbered window targets. It uses the actual action
 list with mock feature services and a unique native shortcut namespace; it opens
@@ -895,3 +895,19 @@ No real power/session action or native desktop input is performed.
 an empty request directory and cancellation performs no action. Provider and native
 shortcut regressions cover the alias and global entry points. Singleton smoke
 checks verify the system-local and parent exports share the same PowerService.
+
+## Native Bookmarks
+
+Run `bash tests/launcher/bookmarks.sh`. It uses the real BookmarkService, shared
+picker and asynchronous FileView with synthetic files, isolated storage and a
+mock browser. Coverage includes sorted duplicate titles, search, multiple/typed
+choices, literal URL/command arguments, Escape, cancellation or
+replacement during loading, reload of changed files, direct single-entry opening,
+empty files and missing-source errors. No real bookmarks or browser are accessed,
+and the fixture uses offscreen windows without taking desktop focus.
+
+Provider and global-shortcut suites cover compatibility IPC and native activation.
+The existing external JSON/dmenu/secret protocol regression remains unchanged apart
+from removing obsolete handle.sh adapter tests; native Bookmarks covers its former
+selection/browser behavior. Singleton smoke checks parent/local exports share one
+BookmarkService instance.

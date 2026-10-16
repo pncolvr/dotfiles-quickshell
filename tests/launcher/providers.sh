@@ -15,8 +15,6 @@ export PROVIDER_TEST_DIR="$test_dir"
 export PATH="$test_dir/bin:$PATH"
 picker="$test_dir/src/services/launcher/launcher.sh"
 providers="$test_dir/src/services/launcher/providers"
-mkdir -p "$ZDOTDIR/scripts/default-browser"
-mkdir -p "$HOME/.config/qutebrowser/bookmarks"
 mkdir -p "$HOME/Alpha" "$HOME/Beta" "$HOME/Pictures" "$HOME/Videos"
 touch "$test_dir/actions" "$test_dir/menus"
 cat > "$test_dir/bin/qs" <<'BASH'
@@ -39,7 +37,7 @@ if [[ ${5:-} == alerts ]]; then
     printf '\n' >> "$PROVIDER_TEST_DIR/actions"
     exit 0
 fi
-if [[ ${6:-} == power || ${6:-} == projects || ${6:-} == projectUrls || ${6:-} == directories || ${6:-} == webapps || ${6:-} == remotes || ${6:-} == n8n ]]; then
+if [[ ${6:-} == bookmarks || ${6:-} == power || ${6:-} == projects || ${6:-} == projectUrls || ${6:-} == directories || ${6:-} == webapps || ${6:-} == remotes || ${6:-} == n8n ]]; then
     printf 'native <%s>\n' "$6" >> "$PROVIDER_TEST_DIR/actions"
     exit 0
 fi
@@ -131,15 +129,6 @@ chmod +x "$test_dir/bin/qs" "$test_dir/bin/action"
 for command in hyprctl code xdg-open dbus-send pcmanfm-qt virsh nc sdl-freerdp3 systemctl loginctl wf-recorder hyprshot satty pactl slurp sleep pgrep pkill notify-send wl-copy tesseract zbarimg; do
     ln -s action "$test_dir/bin/$command"
 done
-cat > "$ZDOTDIR/scripts/default-browser/default-browser.sh" <<'BASH'
-#!/usr/bin/env bash
-printf 'browser <%s>\n' "$*" >> "$PROVIDER_TEST_DIR/actions"
-BASH
-chmod +x "$ZDOTDIR/scripts/default-browser/default-browser.sh"
-cat > "$HOME/.config/qutebrowser/bookmarks/urls" <<'DATA'
-https://example.test/alpha Alpha
-https://example.test/beta Beta
-DATA
 for old_config in "$providers/screenshot.env" "$providers/recording.env" "$providers/_common/utils.env"; do
     printf 'touch %q\n' "$test_dir/env-executed" > "$old_config"
 done
@@ -162,7 +151,7 @@ run_provider() {
     [[ ! -s $test_dir/error ]] || { cat "$test_dir/error" >&2; exit 1; }
     printf 'PASS: %s provider dispatch, shared helpers and selected action\n' "$name"
 }
-for provider in code github directories webapps remotes n8n power; do
+for provider in code github directories webapps remotes n8n power bookmarks; do
     : > "$test_dir/actions"; : > "$test_dir/menus"
     bash "$picker" provider "$provider"
     case $provider in
@@ -172,8 +161,7 @@ for provider in code github directories webapps remotes n8n power; do
     esac
     [[ ! -s $test_dir/menus ]]
 done
-printf 'PASS: projects, GitHub, directories, Webapps, Remotes, n8n and Power dispatch to native IPC without a JSON cache\n'
-run_provider bookmarks 'browser <https://example.test/alpha>'
+printf 'PASS: projects, GitHub, directories, Webapps, Remotes, n8n, Power and Bookmarks dispatch to native IPC without a JSON cache\n'
 run_provider screenshot 'hyprshot <--freeze> <--silent> <--clipboard-only> <--raw> <--mode> <output>'
 prepare_recording() {
     PROVIDER_TEST_NAME=recording bash "$providers/recording.sh" --prepare > "$test_dir/output" 2> "$test_dir/error"
@@ -202,14 +190,8 @@ expect_action 'recording <toggle>'
 [[ ! -s $test_dir/menus ]]
 printf 'PASS: idle lock, OCR, QR and recording-stop calls bypass selection\n'
 
-# A cancelled browser request must not execute its selected action.
-for name in bookmarks; do
-    : > "$test_dir/actions"
-    PROVIDER_TEST_CANCEL=1 PROVIDER_TEST_NAME="$name" bash "$picker" provider "$name" > "$test_dir/output" 2> "$test_dir/error" || true
-    ! rg -q '^(browser|virsh|sdl-freerdp3|loginctl|systemctl) ' "$test_dir/actions"
-done
 [[ -z $(find "$test_dir/runtime/quickshell-picker" -mindepth 1 -print -quit) ]]
-printf 'PASS: cancellation skips actions and all request directories are cleaned up\n'
+printf 'PASS: provider request directories are cleaned up\n'
 
 # Each recording picker must cancel the entire operation, including the final audio picker.
 for title in output TEST-1 60 desktop; do

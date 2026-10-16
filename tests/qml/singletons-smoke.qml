@@ -6,6 +6,7 @@ import "../../src/services/clipboard" as Clipboard
 import "../../src/services/audio" as Audio
 import "../../src/services/time" as Time
 import "../../src/services/system" as SystemServices
+import "../../src/services/launcher" as Launcher
 import "../../src/services/recording" as Recording
 import "../../src/services/n8n" as N8n
 import "../../src/config" as Settings
@@ -31,6 +32,7 @@ Scope {
                 ["Timespan",Services.Timespan,Time.Timespan],
                 ["RecordingService",Services.RecordingService,Recording.RecordingService],
                 ["PowerService",Services.PowerService,SystemServices.PowerService],
+                ["BookmarkService",Services.BookmarkService,Launcher.BookmarkService],
                 ["N8nService",Services.N8nService,N8n.N8nService],
                 ["N8nRepository",Services.N8nRepository,Storage.N8nRepository],
                 ["Theme",Settings.Theme,Styling.Theme],

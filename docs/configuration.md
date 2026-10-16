@@ -39,6 +39,14 @@ helper, which honors `XDG_DATA_HOME` and falls back to `~/.local/share`. Their
 full-path settings remain individually editable. Equal durations and limits with
 different purposes remain independent.
 
+## Bookmarks
+
+`bookmarkFile` defaults to Qutebrowser's existing `~/.config/qutebrowser/bookmarks/urls`.
+`bookmarkBrowserCommand` inherits `projectBrowserCommand`, which defaults to
+`["xdg-open"]`. Both use the desktop's default browser association. Override either
+with a literal argv array to choose another opener. These are public path/command settings; bookmark contents stay in the
+existing local file and are read when the picker opens.
+
 ## Webapp browsers
 
 `webappBrowsers` follows the configurable application pattern: each item has an

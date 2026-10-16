@@ -64,10 +64,14 @@ Item {
     readonly property string projectManageShortcut: pickerManageShortcut
     readonly property string projectAddShortcut: pickerAddShortcut
     readonly property string projectShowAllShortcut: pickerShowAllShortcut
-    readonly property var projectBrowserCommand: ["bash", _internal.home + "/.config/zsh/scripts/default-browser/default-browser.sh"]
+    readonly property var projectBrowserCommand: ["xdg-open"]
     readonly property string projectSshConfig: _internal.home + "/.ssh/config"
     readonly property string projectDotfilesGitDirectory: _internal.home + "/.cfg"
     readonly property string projectDotfilesWorkTree: _internal.home
+
+    // Launcher: bookmarks. Share the project URL opener by default.
+    readonly property string bookmarkFile: _internal.home + "/.config/qutebrowser/bookmarks/urls"
+    readonly property var bookmarkBrowserCommand: projectBrowserCommand
 
     // Launcher: directories
     readonly property string directoryManageShortcut: pickerManageShortcut

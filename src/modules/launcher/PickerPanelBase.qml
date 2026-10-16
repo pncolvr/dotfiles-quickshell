@@ -36,6 +36,7 @@ Rectangle {
         : gridMode ? "Arrows to select · Enter to choose · Esc to cancel"
         : "Arrows to select · Enter to " + picker.acceptLabel.toLowerCase() + " · Esc to cancel"
     property real openedListHeight: Theme.pickerRowHeight
+    property bool awaitingOpeningRows: false
     implicitWidth: Theme.pickerWidth
     implicitHeight: normalHeight
     function focusSearch() { search.forceActiveFocus() }
@@ -82,10 +83,20 @@ Rectangle {
         target: root.picker
         function onOpened() {
             search.text = root.picker.query
+            root.awaitingOpeningRows = root.picker.items.length === 0
             root.sizeListForOpening()
             Qt.callLater(root.focusSearch)
         }
-        function onVisibleChanged() { if (!root.picker.visible) search.resetSearch() }
+        function onItemsChanged() {
+            if (!root.awaitingOpeningRows || !root.picker.visible || !root.picker.items.length) return
+            root.awaitingOpeningRows = false
+            root.sizeListForOpening()
+        }
+        function onVisibleChanged() {
+            if (root.picker.visible) return
+            root.awaitingOpeningRows = false
+            search.resetSearch()
+        }
     }
 
     radius: Theme.tooltipRadius

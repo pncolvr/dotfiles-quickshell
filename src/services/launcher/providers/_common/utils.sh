@@ -2,19 +2,8 @@
 # Shared picker functions, reused from the former Rofi and Hyprland helpers.
 _picker_common_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 PICKER_LAUNCHER="$_picker_common_dir/../../launcher.sh"
-PICKER_HANDLER="$_picker_common_dir/handle.sh"
-ZDOTDIR=${ZDOTDIR:-$HOME/.config/zsh}
-
-function open_url() {
-    "$ZDOTDIR/scripts/default-browser/default-browser.sh" "$@"
-}
-
 function get_temp_dir() {
     printf '%s\n' "${XDG_RUNTIME_DIR:-/tmp}"
-}
-
-function get_temp_file_named() {
-    printf '%s/%s_%s\n' "$(get_temp_dir)" "$1" "$(id -u)"
 }
 
 function load_provider_config() {
