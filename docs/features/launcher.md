@@ -15,6 +15,11 @@ no text field or button is needed. `LauncherFocusHandler` shares activation and
 outside-click handling across ordinary/private pickers and the overview, using
 `UI.WindowFocusHandler`. It activates once, then returns to on-demand keyboard
 focus; returning from a native child dialog uses the same controller.
+Explicit launcher surfaces request exclusive activation from their first native map,
+and prepare the ready input synchronously. Activation returns to on-demand after
+the native handoff. Opening motion does not gate keyboard readiness, including in
+Exposé. Keys delivered to another application before the compositor transfers
+focus cannot be recovered by the launcher.
 Legacy JSON `movePointer` fields are ignored and dmenu `--keep-pointer` remains
 accepted for compatibility; callers cannot enable pointer movement.
 Input-only prompts reserve no empty list row.
@@ -30,6 +35,27 @@ and `MultiSelectPickerPanel` extend it with their own shortcuts and action butto
 use `ImagePickerPanel` to preview the highlighted row's `image` URL.
 Shortcut hints keep each key and action together when wrapping. Project and
 directory hints fit one line; GitHub groups its selection shortcuts on separate lines.
+
+## Launcher script responsibilities
+
+| Entry point | Responsibility |
+| --- | --- |
+| Native Hyprland shortcuts | Dispatch to feature services through one shared `GlobalShortcutRegistry`, without starting a shell or IPC client per keypress. |
+| `launcher.sh` | Synchronous dmenu/JSON request and reply protocol, validation, cancellation, provider dispatch and compatibility CLI aliases. |
+| `secret_prompt.sh` / `pinentry-rbw` | External password clients, owner tracking and pinentry protocol; secret values remain on private pipes. |
+| `provider-config.qml` and `--provider-config` | Shared Config export while the bar is running, plus the existing offline exporter needed by wallpaper restoration. |
+| `_common/utils.sh` / `handle.sh` | Shared provider configuration, menu result handling and external browser/file-manager actions. |
+| Bookmarks / Books | Read existing bookmark files and build/use book metadata caches before showing a native picker. |
+| Power | Choose and dispatch existing system power/session commands. |
+| Screenshot | Coordinate capture, OCR/QR decoding, annotation and file-manager tools. |
+| Recording | Prepare capture/audio choices for the detached recording worker; the native service owns toggle/session state. |
+| QR encoding | Run qrencode, copy its PNG and retain the temporary image through preview dismissal. |
+| Wallpaper | Enumerate images, coordinate mode/output choices, save assignments and restore them before the bar is available. |
+
+The detached recording worker and runtime process/database helpers are retained;
+they perform independent lifecycle work rather than only forwarding a launcher
+command. Moving these workflows into QML is a separate feature change, not required
+to remove the native launchers' forwarding overhead.
 
 ## Internal dispatch
 
@@ -226,10 +252,11 @@ bash "$picker" provider code
 Providers live together in `src/services/launcher/providers/`, reusing the existing
 Bash actions and cache locations. Available
 names are `code`, `webapps`, `github`, `n8n`, `remotes`, `bookmarks`,
-`books`, `directories`, `media`, `power`, `screenshot`, `recording`, `encode-qrcode`, and `wallpaper`.
+`books`, `directories`, `power`, `screenshot`, `recording`, `encode-qrcode`, and `wallpaper`.
 Their shared JSON handler and direct menu calls invoke `launcher.sh`; no Rofi
-adapter or PATH override is required. `_common/` holds the shared Bash helpers;
-`web/` retains direct-call aliases for Webapps and n8n, and `remotes/` retains connection aliases.
+adapter or PATH override is required. `_common/` holds the shared Bash helpers.
+The unused standalone Webapps, n8n and Remotes forwarding scripts are removed;
+the public `launcher.sh` aliases remain available for shell callers.
 Projects, GitHub, directories, Webapps, Remotes and n8n dispatch directly to native QML services; their
 former Bash providers are removed. The other providers are named `<provider>.sh`. Browser selection,
 work/personal filtering, editor profiles and cache rebuild flags are preserved.
@@ -577,18 +604,43 @@ alert instead. The finishing alert can appear in the final captured frames;
 see [recording](recording.md) for the detached lifecycle and bar indicator.
 Recordings are encoded directly to MP4; there is no separate conversion stage.
 
-Hyprland bindings call `launcher.sh provider NAME [ARGS...]`; new callers should
-use this entry point rather than reaching into the provider tree. Books supports
+Native Hyprland bindings use `hl.dsp.global("quickshell:NAME")`. One
+`GlobalShortcutRegistry` in `shell.qml` registers the actions and calls existing
+feature-service methods. The registry covers applications, Projects, project URLs,
+Directories, Webapps, Remotes, n8n, clipboard, window lists, Exposé, recording,
+Vault, notification DND, shell reload, window cycling, grouped-window selection
+and the 14 bar-module shortcuts. Module and numbered-window registrations share
+array-generated actions rather than separate registration components. Quickshell re-registers them across configuration reloads; the companion
+Hypr config retains the key combinations. This uses Hyprland's native global-shortcut
+protocol, without a per-press shell/IPC process or a desktop-portal shortcut dialog.
+The existing config-scoped IPC methods remain available to command-line callers.
+QML controls call their feature services directly. External JSON/dmenu clients,
+password/pinentry clients and browser selections retain argument/result IPC; their
+requests are not routed through compositor shortcuts. Full restart/recovery stays
+external so it remains possible when the bar is not running.
+
+This completes the native service-backed binding migration. Books, Bookmarks,
+Power, Screenshot/OCR/QR decoding, QR encoding, Wallpaper and recording setup still
+use their existing interactive scripts. Moving their orchestration into QML is the
+next migration stage: feature services should collect choices and pass prepared
+options to external tools/workers, avoiding a script reopening the picker through
+IPC. Detached recording/session lifetimes and offline wallpaper restore must remain
+available through that migration.
+
+Shell-backed workflows use
+`launcher.sh provider NAME [ARGS...]`; callers should use this entry point rather
+than reaching into the provider tree. Books supports
 `--pick` and `--rebuild-cache`. Qutebrowser's media shortcuts
 call the separate `to_mpv` userscript in
 `~/.local/share/qutebrowser/userscripts/` for direct mpv playback.
-Meta+I, then T, opens Twitch through `qs ipc call bar open twitch`; the live-streamer JSON
+Meta+I, then T, opens Twitch through the native `quickshell:bar-twitch` action; the live-streamer JSON
 export and combined Twitch/YouTube picker are removed. Run `:config-source` in an already-running
 Qutebrowser to refresh these bindings. Hypridle calls `provider power Lock`.
 
 Hyprland uses Super+D for applications and Super+V for clipboard history.
-Existing shortcuts retain their keys. Window-switching shortcuts call launcher
-IPC directly. CopyQ is no longer started automatically.
+Existing shortcuts retain their keys. Window-switching shortcuts use native global
+actions. Meta+Shift+Escape preserves its existing notification DND toggle; the
+Notifications module shortcut opens its panel. CopyQ is no longer started automatically.
 
 `bash tests/launcher/providers.sh` checks every provider with synthetic configuration
 and mocked actions. `bash tests/launcher/launcher.sh` exercises actual Bash/QML

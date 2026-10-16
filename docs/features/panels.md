@@ -45,6 +45,16 @@ The shared components are `TooltipArea` (pin gesture and color),
 (Escape fallback), and `FolderDialog` (native selection). Module-specific adapters
 declare policy; they do not implement separate pinning or dismissal mechanisms.
 
+## Keyboard entry points
+
+The companion Hypr modules submap uses native `quickshell:bar-NAME` global actions.
+All 14 registrations share the root shortcut registry and call
+`BarModuleService.open(NAME)`, preserving the existing focused-monitor, module
+availability and keyboard-session behavior. Hover remains passive. Vault uses
+`quickshell:vault-toggle`; notification DND uses
+`quickshell:notifications-toggle-dnd`. External callers can still use the existing
+IPC interfaces with arguments and results. Both entry points reuse feature services.
+
 ## Motion
 
 Top panels drop down from the bar in 150ms and roll up in 100ms. Size changes settle in 160ms, retargeting the current frame when content changes

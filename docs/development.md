@@ -842,3 +842,41 @@ network requests. No real instance, credentials or workflow execution is used.
 Backup fixtures retain multiple instances, private keys and independent caches.
 Run Webapps and Remotes Manage checks after changing the shared collection or
 browser fields, and QML lint after adding service registrations.
+
+## Launcher opening focus
+
+`bash tests/launcher/opening-policy.sh` checks the shared first-map focus policy
+offscreen: activation before lazy content readiness, synchronous search preparation,
+on-demand handoff, passive hover, blur and stale-focus cancellation.
+
+With the desktop keyboard idle, run `bash tests/launcher/opening-focus.sh`. It uses
+actual public/private picker hosts and Exposé with synthetic projects and storage,
+checks initial/repeated/rapid opening with motion on/off, and sends the first input
+as soon as the native window owns focus, before the opening animation completes.
+It verifies complete text, editing, Escape and that the previous test window receives
+no characters. The pointer stays still; original application focus is restored.
+The logged timings measure native activation after the open request, not keybind
+client startup. This cannot guarantee delivery of keys typed before native focus
+transfers; test immediate Meta+P typing on the live desktop as well.
+
+Run `bash tests/launcher/global-shortcuts.sh` in a Hyprland session to check all
+41 production shortcut callbacks before and after reload, covering launcher and
+recording actions, Vault, notification DND, shell reload, all 14 module shortcuts,
+window cycling and all ten numbered window targets. It uses the actual action
+list with mock feature services and a unique native shortcut namespace; it opens
+no windows, sends no keys and never invokes the user's real bindings or actions.
+Native shortcut app ID/name pairs must be unique across running processes, so do
+not instantiate the production registry in a second test shell under its default
+`quickshell` app ID. The fixture reports callback latency including the test client;
+this does not measure the subsequent native window-focus transfer.
+
+The installed Quickshell GlobalShortcut metadata references a private PostReloadHook
+base that qmllint cannot resolve. The lint runner keeps that import diagnostic
+visible as information for GlobalShortcutRegistry alone; other files remain strict.
+The native regression checks runtime registration and re-registration directly.
+
+The launcher Bash audit is documented in `docs/features/launcher.md`. Native
+Hyprland entries use the shared global-shortcut registry; existing config-scoped IPC
+and public shell aliases remain available. The retained aliases stay covered by
+`tests/launcher/providers.sh`. Recording and wallpaper lifecycle, offline Config
+export and external pinentry clients keep their existing regressions.

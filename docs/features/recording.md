@@ -1,6 +1,8 @@
 # Screen recording
 
-`launcher.sh provider recording` (Meta+R in the companion Hypr config) uses
+Meta+R in the companion Hypr config dispatches `quickshell:recording-toggle`
+through the shared native shortcut registry to `RecordingService.toggle()`.
+`launcher.sh provider recording` remains available for shell callers and uses
 `RecordingService` to control one detached recording worker. Capture, output or
 region, frame rate and audio use the existing pickers. `Config.recordingDirectory`
 supplies the destination through the shared provider Config bridge; `.env` files

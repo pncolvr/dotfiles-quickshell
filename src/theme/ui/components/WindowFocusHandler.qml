@@ -14,6 +14,9 @@ Item {
     property int activationGeneration: 0
     property bool ready: true
     property bool autoFocus: true
+    property bool eagerActivation: false
+    property bool activationSettled: false
+    readonly property bool openingFocus: eagerActivation && autoFocus && !passive && !activationSettled
     property bool passive: false
     property bool dismissOnOutside: true
     property bool blocked: false
@@ -28,7 +31,11 @@ Item {
     readonly property bool nativeDialogOpen: childDialogOpen || panel?.nativeDialogOpen === true
     readonly property int keyboardFocusMode: {
         switch (true) {
-        case !hostRequestedVisible || !ready || blocked || nativeDialogOpen || !keyboardEnabled:
+        case !hostRequestedVisible || blocked || nativeDialogOpen || !keyboardEnabled:
+            return WlrKeyboardFocus.None
+        case openingFocus:
+            return WlrKeyboardFocus.Exclusive
+        case !ready:
             return WlrKeyboardFocus.None
         case requestingKeyboardFocus:
             return WlrKeyboardFocus.Exclusive
@@ -43,13 +50,14 @@ Item {
 
     function release() {
         activationGeneration++
+        activationSettled = false
         focusPanelPending = false
         requestingKeyboardFocus = false
         keyboardEnabled = !passive
         grab.active = false
     }
     function focusPanel() {
-        if (!focusPanelPending || !panel) return
+        if (!ready || !focusPanelPending || !panel) return
         if (typeof panel.focusSearch === "function") panel.focusSearch()
         else panel.forceActiveFocus()
         focusPanelPending = false
@@ -67,6 +75,8 @@ Item {
         // A newly mapped native window may briefly report active before the
         // compositor sends its keyboard enter. Keep this request until activation.
         requestingKeyboardFocus = true
+        // Explicit launchers prepare their input before the first rendered frame.
+        if (eagerActivation) focusPanel()
         const generation = ++activationGeneration
         Qt.callLater(() => {
             if (generation !== root.activationGeneration || !root.hostRequestedVisible || !root.ready
@@ -110,12 +120,14 @@ Item {
         // release this grab even for persistent managers and secret prompts;
         // dismissOnOutside controls closure, not whether they can keep focus.
         grab.active = true
+        activationSettled = true
         requestingKeyboardFocus = false
     }
     function finishDialogFocus() {
         if (!restoringDialogFocus || nativeDialogOpen || !windowActive || !hostRequestedVisible || blocked) return
         restoringDialogFocus = false
         grab.active = true
+        activationSettled = true
         requestingKeyboardFocus = false
     }
     Connections {

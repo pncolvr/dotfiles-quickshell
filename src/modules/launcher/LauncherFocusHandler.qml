@@ -6,6 +6,7 @@ import "../../services"
 UI.WindowFocusHandler {
     id: root
     property var picker: PickerService
+    eagerActivation: true
     readonly property bool secretPrompt: picker.mode === PickerService.Mode.Secret
     focusSession: panel?.panel ?? panel
     ready: !!panel && (panel.focusReady ?? true)
