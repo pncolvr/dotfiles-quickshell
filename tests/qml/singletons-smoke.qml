@@ -5,6 +5,7 @@ import "../../src/services/storage" as Storage
 import "../../src/services/clipboard" as Clipboard
 import "../../src/services/audio" as Audio
 import "../../src/services/time" as Time
+import "../../src/services/recording" as Recording
 import "../../src/config" as Settings
 import "../../src/theme" as Styling
 import "../../src/theme/ui" as UI
@@ -26,6 +27,7 @@ Scope {
             const pairs = [
                 ["DbService",Services.DbService,Storage.DbService],
                 ["Timespan",Services.Timespan,Time.Timespan],
+                ["RecordingService",Services.RecordingService,Recording.RecordingService],
                 ["Theme",Settings.Theme,Styling.Theme],
                 ["PreferencesRepository",Services.PreferencesRepository,Storage.PreferencesRepository],
                 ["ClipboardRepository",Services.ClipboardRepository,Storage.ClipboardRepository],

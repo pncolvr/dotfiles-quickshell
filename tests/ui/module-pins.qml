@@ -16,6 +16,7 @@ Scope {
     id: root
     property int step: 0
     property bool failed: false
+    readonly property var recordingService: RecordingService
     function check(ok, message) { if (!ok) { failed = true; console.error("PIN FAIL:", message) } }
     Test.TestCase { id: events; when: false }
     Test.TestResult { id: objects }
@@ -27,7 +28,7 @@ Scope {
         Row {
             Repeater {
                 id: triggers
-                model: [clock, updates, files, timers, mic, volume, stats, twitch, status, totp, batteries, notifications, sharing]
+                model: [clock, updates, files, timers, mic, volume, stats, twitch, status, totp, batteries, notifications, sharing, recording]
                 Loader {
                     required property var modelData
                     width: modelData === clock ? 240 : 60
@@ -52,6 +53,7 @@ Scope {
     Component { id: batteries; System.Batteries { window: host } }
     Component { id: notifications; System.Notifications { window: host } }
     Component { id: sharing; HyprlandModule.Screencast { visible: true } }
+    Component { id: recording; HyprlandModule.Recording {} }
     Timer {
         interval: 120
         running: true
@@ -82,6 +84,22 @@ Scope {
                 return
             }
             if (root.step++ === triggers.count) {
+                const indicator = (triggers.itemAt(triggers.count - 1) as Loader).item as HyprlandModule.Recording
+                const sharingActive = AudioService.screencastActive
+                root.check(indicator.icon === Theme.recordingIcon && indicator.details[0] === root.recordingService.filename,
+                    "recording indicator shows its own icon and filename")
+                root.check(indicator.animationEnabled === UI.MotionPolicy.recordingPulseEnabled,
+                    "recording pulse uses the central motion policy")
+                for (const state of ["idle", "configuring", "starting", "recording", "stopping", "recovering", "finalizing"]) {
+                    root.recordingService.state = state
+                    root.check(indicator.visible === ["recording", "stopping", "recovering", "finalizing"].includes(state),
+                        "recording visibility follows " + state)
+                    const finishing = ["stopping", "recovering", "finalizing"].includes(state)
+                    root.check(indicator.heading === (finishing ? "Recording finishing" : "Screen recording"),
+                        "recording tooltip follows " + state)
+                }
+                root.recordingService.state = "idle"
+                root.check(AudioService.screencastActive === sharingActive, "recording remains independent from sharing")
                 root.check(UpdatesService.hasUpdates, "mock updates are loaded")
                 const notes = objects.findChild(updatesPanel, "updatesNotes") as UI.ActionButton
                 const install = objects.findChild(updatesPanel, "updatesInstall") as UI.ActionButton
@@ -91,7 +109,7 @@ Scope {
                 notes.clicked(); install.clicked()
                 return
             }
-            console.log(root.failed ? "PIN FAIL: modules" : "PASS: all 13 bar modules share left-click pinning and color; calendar mappings and updates header actions")
+            console.log(root.failed ? "PIN FAIL: modules" : "PASS: all 14 bar modules share left-click pinning and color; recording states, calendar mappings and updates header actions")
             Qt.quit()
         }
     }

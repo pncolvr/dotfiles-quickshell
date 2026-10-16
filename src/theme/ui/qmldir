@@ -38,6 +38,7 @@ PulseText 1.0 PulseText.qml
 IconText 1.0 IconText.qml
 FixedIconText 1.0 components/FixedIconText.qml
 BarIcon 1.0 components/BarIcon.qml
+ActivityIndicator 1.0 components/ActivityIndicator.qml
 PulseIconText 1.0 PulseIconText.qml
 TooltipArea 1.0 TooltipArea.qml
 StatusBadge 1.0 StatusBadge.qml

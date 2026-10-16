@@ -576,8 +576,9 @@ bash tests/ui/tooltip-hover.sh
 These offscreen checks never move the real pointer or desktop focus. They verify
 search dismissal, scoped form editing, native-child cleanup and focus restoration,
 manual pin preservation, multiple retention owners, keyboard replacement, Escape
-hierarchy, and persistent manager drafts. All 13 bar modules are clicked to check
-shared pinning/color; Calendar mappings and the Updates action buttons are also
+hierarchy, and persistent manager drafts. All 14 bar modules are clicked to check
+shared pinning/color, and the recording indicator is checked through idle, setup,
+capture and finalization without changing sharing state; Calendar mappings and the Updates action buttons are also
 checked with mocked desktop actions. Hover checks cover stationary source changes,
 late hide requests, popup options, and leaving the panel.
 
@@ -642,7 +643,18 @@ flow uses a custom `Config.wallpaperDirectory` to verify the default provider
 reads the configured root through launcher IPC.
 
 Provider checks include recording cancellation at each picker and literal shell
-characters in RDP credentials, recording paths, and audio devices.
+characters in RDP credentials, recording paths, and audio devices. Recording setup
+returns argument arrays without starting capture or loading audio loopback modules.
+
+`bash tests/recording/worker.sh` uses actual detached workers, SQLite, process
+identities and signals with synthetic recorder/audio/picker helpers. It covers
+duplicate setup, delay cancellation, one-signal stopping, repeated stops, recorder
+failure, stale identities, dead-owner recovery and audio cleanup retries. An
+offscreen production RecordingService fixture applies Config changes during capture,
+then restarts its Quickshell process and stops the same recorder. It needs Bash,
+coreutils, jq, sqlite3, Node.js and Quickshell IPC; it never captures the desktop
+or microphone. The backup regression also checks that runtime recording state is
+excluded from archives and unchanged by restore.
 
 [Documentation](README.md)
 

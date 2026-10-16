@@ -20,6 +20,7 @@ Item {
     // Status indicators have independent switches, including during screen sharing.
     readonly property bool animateIndicators: animationsEnabled || true
     readonly property bool screenSharePulseEnabled: animateIndicators
+    readonly property bool recordingPulseEnabled: animateIndicators
     readonly property bool notificationBorderAnimationEnabled: animateIndicators
     readonly property bool micPulseEnabled: animateIndicators
     readonly property bool volumePulseEnabled: animateIndicators

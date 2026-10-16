@@ -85,6 +85,9 @@ reject() {
     if run "$@" > "$fixture/rejected.log"; then printf 'FAIL: accepted %s\n' "$1"; exit 1; fi
     jq -se 'any(.[]; .type == "error")' "$fixture/rejected.log" >/dev/null
 }
+runtime_database=$fixture/data/recording-runtime.db
+sqlite3 "$runtime_database" "CREATE TABLE recording_session(id INTEGER PRIMARY KEY,payload TEXT); INSERT INTO recording_session VALUES(1,'synthetic worker identity');"
+runtime_hash=$(sha256sum "$runtime_database")
 archive=$fixture/backup.7z
 run export "$archive" > "$fixture/export.log"
 jq -se '.[-1].type == "done"' "$fixture/export.log" >/dev/null
@@ -94,6 +97,8 @@ if printf 'wrong\n' | "$actual_sevenzip" l -slt "$archive" > "$fixture/wrong-lis
 ! rg -q 'Public-fixture-passphrase|JBSWY3DPEHPK3PXP' "$fixture/7z-arguments"
 printf 'Public-fixture-passphrase\n' | "$actual_sevenzip" x -so "$archive" totp.json \
     | jq -e '.entries[0] | .name == "RFC fixture" and (.token | contains("algorithm=SHA256&digits=8&period=60"))' >/dev/null
+printf 'Public-fixture-passphrase\n' | "$actual_sevenzip" l -slt "$archive" > "$fixture/archive-list"
+! rg -q 'recording-runtime\.db' "$fixture/archive-list"
 reject export "$archive"
 printf 'PASS: encrypted archive/header, complete TOTP parameters, stdin-only password and overwrite refusal\n'
 run export "$fixture/unicode.7z" 'Public fixture é ! $() `literal`' > "$fixture/unicode.log"
@@ -127,6 +132,8 @@ printf 'PASS: missing saved paths retained; import reports folders/workspaces an
 [[ -f $fixture/data/clipboard/$text_id && -f $fixture/data/clipboard/$image_id ]]
 [[ ! -e $fixture/keyring/22222222-2222-2222-2222-222222222222.json ]]
 [[ $(stat -c %a "$database") == 600 && $(stat -c %a "$fixture/data/clipboard") == 700 ]]
+[[ $(sha256sum "$runtime_database") == "$runtime_hash" ]]
+printf 'PASS: runtime recording state is excluded from backup and preserved during restore\n'
 printf 'PASS: full restore, pins/recency/payloads/Twitch/preferences/keyring and database inode preservation\n'
 
 touch "$fixture/keyring/fail-once"

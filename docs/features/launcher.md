@@ -461,7 +461,7 @@ Private configuration lives beside its provider and stays Git-ignored:
   RDP option strings support quotes and backslash escapes; shell expressions and
   wildcards are passed literally.
 - `screenshot.env`: Bash `SCREENSHOT_FOLDER` setting.
-- `recording.env`: Bash `VIDEOS_FOLDER` setting.
+- `recording.env`: Bash `VIDEOS_FOLDER` setting. [Recording](recording.md) runs in a detached worker and survives bar/config reloads.
 - `wallpaper.env`: optional Bash `WALLPAPER_STATE_DIRECTORY` setting; set the image root with `Config.wallpaperDirectory`.
 
 Recording offers no audio, desktop audio, microphone audio, or both. Audio modes

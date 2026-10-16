@@ -2,7 +2,7 @@
 
 All bar panels use left-click to pin/unpin and accent coloring for the pinned
 icon: Calendar, Updates, Recent Files, Timers, Microphone, Volume, Stats, Twitch,
-Status, TOTP, Batteries, Notifications and Screen sharing. Hover panels use native keyboard mode None, so opening one neither takes
+Status, TOTP, Batteries, Notifications, Screen sharing and Screen recording. Hover panels use native keyboard mode None, so opening one neither takes
 keyboard focus nor activates an outside-click grab. Clicking a control enables
 keyboard interaction; the shared grab includes both panel and bar, preserving
 reliable icon clicks. Pointer leave dismisses an unpinned panel after the usual grace

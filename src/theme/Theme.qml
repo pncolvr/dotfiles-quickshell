@@ -103,6 +103,7 @@ QtObject {
     readonly property color pulsingTextBaseColor: text
     readonly property color pulsingTextPulseColor: urgent
     readonly property color screencastPulseColor: active
+    readonly property color recordingPulseColor: urgent
     readonly property int pulsingTextDuration: Timespan.fromSeconds(2)
 
     // Launcher, QR and clipboard previews
@@ -280,6 +281,8 @@ QtObject {
     // Screencasting
     readonly property string screencastIcon: ""
     readonly property int screencastTooltipWidth: 380
+    readonly property string recordingIcon: ""
+    readonly property int recordingTooltipWidth: screencastTooltipWidth
 
     // System statistics and network
     readonly property string statsIcon: ""

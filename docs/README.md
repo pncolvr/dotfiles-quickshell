@@ -14,6 +14,7 @@
 - [Notifications](features/notifications.md): history, emitters, DND, popups and actions.
 - [Twitch](features/twitch.md): following, search, browser suggestions and removal undo.
 - [TOTP](features/totp.md): keyring setup, token editing, countdown and secret handling.
+- [Screen recording](features/recording.md): detached capture, reliable stops and live config/theme reloads.
 - [Audio](features/audio.md): devices, application routing, levels and profiles.
 - [Countdowns and timers](features/timers.md): durations, pause/resume, bar priority and alarms.
 - [Batteries](features/batteries.md): discovery, warning levels and cached readings.

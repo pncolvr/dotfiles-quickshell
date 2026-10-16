@@ -202,6 +202,7 @@ continue animating with the master switch off and during screen sharing:
 | Config switch | Status animation |
 | --- | --- |
 | `screenSharePulseEnabled` | Active screen-sharing indicator |
+| `recordingPulseEnabled` | Screen-recording indicator, including finalization |
 | `notificationBorderAnimationEnabled` | Notification lifetime border |
 | `micPulseEnabled` | Muted microphone with an active audio request |
 | `volumePulseEnabled` | Muted output with an active audio request |

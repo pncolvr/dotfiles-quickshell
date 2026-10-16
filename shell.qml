@@ -13,6 +13,8 @@ import "src/modules/system/audio"
 import "src/services"
 
 Scope {
+  // Register recording IPC and reconnect to any detached recording session.
+  readonly property var recordingService: RecordingService
   IpcHandler {
     target: "shell"
     function reload(): void {

@@ -25,10 +25,11 @@ those before running on another desktop.
 | Hyprland and `hyprctl` | Workspaces, window focus, submaps, screen sharing |
 | Bash, coreutils, findutils, `awk`, `grep`, `sed`, `jq` | Command helpers, folder files, and parsing |
 | `wl-clipboard`, `file`, util-linux (`flock`) | Background text/image clipboard capture and restoration |
+| `wf-recorder`, `slurp`, NVIDIA HEVC/NVENC support | Detached screen recording with continuous capture and unchanged encoder quality settings |
 | `qrencode` | QR PNG generation through `launcher.sh provider encode-qrcode` |
 | `awww`, `awww-daemon` | Wallpaper picker, per-mode/output setting and restore |
 | ImageMagick (`magick`) | Read original image dimensions for clipboard previews without enlarging small images |
-| `sqlite3` with FTS5 (SQLite 3.42+) | Indexed clipboard search and backup snapshots/restores; Qt SQLite also needs FTS5 |
+| `sqlite3` with FTS5 (SQLite 3.42+) | Indexed clipboard search, temporary recording ownership and backup snapshots/restores; Qt SQLite also needs FTS5 |
 | 7-Zip (`7z` or `7zz`), `/dev/shm` tmpfs | Password-protected full-state backups, including TOTP secrets |
 | `gtk-launch` | Desktop application launching, including terminal entries |
 | `ydotool` and its daemon | Optional paste on clipboard activation |

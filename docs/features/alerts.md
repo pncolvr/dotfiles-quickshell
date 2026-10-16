@@ -45,12 +45,13 @@ dismisses it. Failed checks retry every `Config.networkRetryInterval` (5 seconds
 and successful checks repeat every `Config.networkAlertInterval` (1 minute).
 A failed ping does not distinguish disconnection from blocked ICMP.
 
-The recording provider uses the `recording` ID for its starting, stopped and error
-messages. Starting and stopped messages expire after 1 second; errors after
-3 seconds. The starting message is explicitly dismissed after the existing
-1.1-second delay, before `wf-recorder` starts. Completion and error messages are
-posted after the recorder exits. These messages replace Hyprland notifications;
-they are not displayed during capture by this provider. Other independently
-posted alerts remain visible and can appear in recordings.
+The [recording worker](recording.md) uses the `recording` ID for starting,
+finishing, cancelled, stopped and error messages. Starting and stopped messages
+expire after 1 second; errors after 3 seconds. The starting message is explicitly
+dismissed after the existing 1.1-second delay, before `wf-recorder` starts.
+The finishing message acknowledges the stop immediately and remains until the
+recorder has exited and audio cleanup has finished. It can appear in the final
+captured frames. Other independently posted alerts also remain visible and can
+appear in recordings.
 
 [Documentation](../README.md)

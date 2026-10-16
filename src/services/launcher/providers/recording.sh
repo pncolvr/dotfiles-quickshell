@@ -2,24 +2,13 @@
 set -eo pipefail
 
 provider_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+# Interactive calls go through the shared controller; only the detached worker prepares capture.
+if [[ ${1:-} != --prepare ]]; then
+    exec "${QS_PICKER_EXECUTABLE:-qs}" ipc -p "${QS_PICKER_CONFIG:-$provider_dir/../../../..}" call recording toggle
+fi
 source "$provider_dir/_common/utils.sh"
 # set the following variables on the .env file
 # VIDEOS_FOLDER=
-
-loopback_id=''
-
-recording_alert() {
-    "${QS_PICKER_EXECUTABLE:-qs}" ipc -p "${QS_PICKER_CONFIG:-$provider_dir/../../../..}" \
-        call alerts "$@" >/dev/null 2>&1 || true
-}
-
-cleanup_recording() {
-    if [[ -n $loopback_id ]]; then
-        pactl unload-module "$loopback_id" >/dev/null 2>&1 || true
-        loopback_id=''
-    fi
-}
-trap cleanup_recording EXIT
 
 pick_option() {
     local prompt=$1
@@ -60,6 +49,7 @@ select_audio_device() {
 configure_audio() {
     local mode=$1 output_device microphone
     audio_source=''
+    loopback=()
     if [[ $mode == desktop || $mode == both ]]; then
         output_device=$(select_audio_device sinks) || return 1
         audio_source=$(pactl --format=json list sinks | jq -er --arg device "$output_device" \
@@ -70,17 +60,16 @@ configure_audio() {
         if [[ $mode == mic ]]; then
             audio_source=$microphone
         else
-            loopback_id=$(pactl load-module module-loopback "source=$microphone" "sink=$output_device") || return 1
-            # PipeWire needs a moment to register the microphone loopback.
-            sleep 0.25
+            loopback=(module-loopback "source=$microphone" "sink=$output_device")
         fi
     fi
 }
 
-record_video() {
-    local capture_mode output='' geometry='' fps audio_mode filename recorder_status=0
+prepare_recording() {
+    local capture_mode output='' geometry='' fps audio_mode filename
     local audio_source
-    local -a command=(wf-recorder)
+    local -a loopback=()
+    local -a command=(wf-recorder --no-damage)
 
     capture_mode=$(pick_option Capture output region) || return 0
     case $capture_mode in
@@ -119,27 +108,13 @@ record_video() {
     [[ -z $audio_source ]] || command+=("--audio=$audio_source")
     command+=(-f "$filename")
 
-    recording_alert post recording "recording starting" success 1000
-    sleep 1.1
-    recording_alert dismiss recording
-    printf '%q ' "${command[@]}"; printf '\n'
-    "${command[@]}" || recorder_status=$?
-    cleanup_recording
-
-    if [[ $recorder_status != 0 || ! -s $filename ]]; then
-        recording_alert post recording "recording error" error 3000
-        return 1
-    fi
-    recording_alert post recording "recording stopped" success 1000
-    open_file_explorer "$filename"
+    jq -nc --arg filename "$filename" \
+        --argjson command "$(jq -nc '$ARGS.positional' --args -- "${command[@]}")" \
+        --argjson loopback "$(jq -nc '$ARGS.positional' --args -- "${loopback[@]}")" \
+        '{filename:$filename,command:$command,loopback:$loopback}'
 }
 
-# Stopping does not require configuration or reopen any picker.
-if pgrep -xi wf-recorder >/dev/null; then
-    pkill -SIGINT -x wf-recorder
-else
-    # recording.env contains only the destination folder.
-    source "$(get_env_file "${BASH_SOURCE[0]}")"
-    [[ -n ${VIDEOS_FOLDER:-} ]] || { printf 'VIDEOS_FOLDER is required in recording.env\n' >&2; exit 1; }
-    record_video
-fi
+# recording.env remains the destination config until the planned path migration.
+source "$(get_env_file "${BASH_SOURCE[0]}")"
+[[ -n ${VIDEOS_FOLDER:-} ]] || { printf 'VIDEOS_FOLDER is required in recording.env\n' >&2; exit 1; }
+prepare_recording

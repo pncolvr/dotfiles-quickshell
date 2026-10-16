@@ -41,6 +41,11 @@ The submap exits after selection. Reload closes open panels and rebuilds the she
 
 See [bar alerts](features/alerts.md) for severities, replacement and expiration.
 
+`qs ipc call recording toggle` starts setup, cancels the starting delay, or stops
+the current owned recorder. `qs ipc call recording status` returns its state,
+active flag and destination as JSON. The detached worker survives bar restarts
+and Config/theme reloads; see [screen recording](features/recording.md).
+
 Backups include the database, clipboard payloads and TOTP secrets in a password-protected
 7z archive with encrypted filenames. The existing private secret picker offers
 Generate and Copy buttons when creating a backup. Enter starts the operation;
