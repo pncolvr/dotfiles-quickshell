@@ -18,7 +18,7 @@ Singleton {
         pending = callback
         flush()
     }
-    function cancel() { pending = null }
+    function cancel(callback = null) { if (!callback || pending === callback) pending = null }
     IpcHandler {
         target: "capture"
         function ready(): bool { return root.ready }

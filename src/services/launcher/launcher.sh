@@ -69,6 +69,7 @@ case ${1:-apps} in
         case $name in
             power) if (($# == 0)); then ipc call launcher power; exit; fi ;;
             bookmarks) ipc call launcher bookmarks; exit ;;
+            recording) [[ $# == 0 ]] || fail "Recording setup is native"; ipc call recording toggle; exit ;;
             screenshot) [[ $# -le 1 ]] || fail "Usage: screenshot [region|output|window|ocr|qrcode]"; ipc call launcher screenshot "${1:-}"; exit ;;
             encode-qrcode) ipc call launcher encodeQr; exit ;;
             wallpaper)
@@ -84,7 +85,7 @@ case ${1:-apps} in
             webapps) ipc call launcher webapps; exit ;;
         esac
         case $name in
-            power|screenshot|recording|wallpaper) provider="$launcher_dir/providers/$name.sh" ;;
+            power|screenshot|wallpaper) provider="$launcher_dir/providers/$name.sh" ;;
             n8n) ipc call launcher n8n; exit ;;
             remotes) ipc call launcher remotes; exit ;;
             *) fail "Unknown provider: $name" ;;

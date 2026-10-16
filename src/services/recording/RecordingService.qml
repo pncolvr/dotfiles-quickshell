@@ -10,7 +10,7 @@ Singleton {
     id: root
 
     // Operational state is deliberately separate from PipeWire screen sharing/privacy.
-    readonly property string state: session.state
+    readonly property string state: setup.active || session.launching ? "configuring" : session.state
     readonly property bool active: ["recording", "stopping", "recovering"].includes(state)
     readonly property bool busy: state !== "idle"
     readonly property string filename: session.filename
@@ -22,10 +22,15 @@ Singleton {
         property string state: "idle"
         property string filename: ""
         property bool togglePending: false
+        property bool launching: false
+        property double launchDeadline: 0
+        property bool cancelAfterLaunch: false
     }
 
     function toggle() {
         if (!DbService.ready) return false
+        if (setup.active) return true
+        if (session.launching || session.state === "configuring") { session.cancelAfterLaunch = true; return true }
         session.togglePending = true
         refresh()
         return true
@@ -37,6 +42,18 @@ Singleton {
         controller.requestedToggle = action === "--toggle"
         controller.command = ["bash", workerPath, action, runtimeDatabase, Quickshell.shellDir]
         controller.running = true
+    }
+    RecordingSetup {
+        id: setup
+        onPrepared: options => {
+            session.launching = true
+            session.launchDeadline = Date.now() + 5000
+            // Prepared argument data is passed literally; the worker never reopens a picker.
+            Quickshell.execDetached({command: ["bash", root.workerPath, "--run", root.runtimeDatabase,
+                Quickshell.shellDir, JSON.stringify(options)], unbindStdout: true})
+            Qt.callLater(root.refresh)
+        }
+        onFailed: message => AlertService.post("recording-control", message, "error", 3000)
     }
     Timer {
         id: poll
@@ -54,12 +71,22 @@ Singleton {
                 try { result = JSON.parse(text) } catch (_) { return }
                 session.state = result.state
                 session.filename = result.filename
-                if (result.start) {
-                    session.state = "configuring"
-                    // The child owns its recorder and cleanup across bar/theme/config reloads.
-                    Quickshell.execDetached({command: ["bash", root.workerPath, "--run",
-                        root.runtimeDatabase, Quickshell.shellDir], unbindStdout: true})
+                if (session.launching) {
+                    switch (true) {
+                      case result.state !== "idle":
+                        session.launching = false
+                        break
+                      case Date.now() >= session.launchDeadline:
+                        session.launching = false
+                        session.cancelAfterLaunch = false
+                        AlertService.post("recording-control", "Recording could not start", "error", 3000)
+                    }
                 }
+                if (session.cancelAfterLaunch && ["starting", "recording"].includes(result.state)) {
+                    session.cancelAfterLaunch = false
+                    session.togglePending = true
+                }
+                if (result.start && !setup.active && !session.launching) setup.open()
             }
         }
         stderr: StdioCollector { waitForEnd: true }

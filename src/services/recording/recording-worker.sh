@@ -4,7 +4,6 @@ set -uo pipefail
 worker_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 action=${1:?}; database=${2:?}; config_root=${3:?}
 export QS_PICKER_CONFIG=$config_root
-provider="$worker_dir/../launcher/providers/recording.sh"
 umask 077
 # Ignore duplicate requests during registration; setup preserves its existing picker.
 trap ':' USR1
@@ -121,12 +120,14 @@ cleanup() {
 trap cleanup EXIT
 trap request_stop USR1
 
-prepared=$(bash "$provider" --prepare) || { alert post recording 'recording error' error 3000; exit 1; }
-[[ -n $prepared ]] || exit 0
+prepared=${4:-}
+[[ -n $prepared ]] || { alert post recording 'recording options missing' error 3000; exit 2; }
 jq -e '(.command | type == "array" and length > 0 and all(.[]; type == "string"))
     and (.loopback | type == "array" and all(.[]; type == "string")) and (.filename | type == "string")' \
     <<< "$prepared" >/dev/null || exit 2
 filename=$(jq -r '.filename' <<< "$prepared")
+[[ -n $filename && $filename == /* ]] || exit 2
+mkdir -p -- "${filename%/*}" || { alert post recording 'recording folder unavailable' error 3000; exit 1; }
 mapfile -d '' -t command < <(jq -j '.command[] | ., "\u0000"' <<< "$prepared")
 mapfile -d '' -t loopback < <(jq -j '.loopback[] | ., "\u0000"' <<< "$prepared")
 if ((${#loopback[@]})); then

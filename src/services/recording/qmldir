@@ -1,1 +1,2 @@
 singleton RecordingService 1.0 RecordingService.qml
+RecordingSetup 1.0 RecordingSetup.qml

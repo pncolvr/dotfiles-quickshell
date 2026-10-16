@@ -48,7 +48,7 @@ directory hints fit one line; GitHub groups its selection shortcuts on separate 
 | Bookmarks | BookmarkService reads the existing file and owns selection/opening through the shared native picker. |
 | Power | Noninteractive command execution and offline idle locking. PowerService owns the native choices and action order. |
 | Screenshot | ScreenshotService owns native choices and capture readiness. The prepared worker owns slurp/grim/hyprpicker, Portuguese OCR/QR decoding and detached Satty save/reveal. |
-| Recording | Prepare capture/audio choices for the detached recording worker; the native service owns toggle/session state. |
+| Recording | RecordingSetup owns native choices and metadata; RecordingService passes prepared arguments to the detached worker. The obsolete interactive provider is removed. |
 | QR encoding | QrEncodeService owns native input/preview; qr-encode.sh encodes and copies PNG data in memory without temporary files or picker IPC. |
 | Wallpaper | WallpaperService owns native browsing and mode/output choices. The noninteractive helper discovers files, applies/saves assignments and supports offline restore. |
 
@@ -684,7 +684,7 @@ so Enter accepts them immediately. Capture, output, framerate and audio choices
 keep their existing order and defaults; choosing no audio skips the device pickers.
 Devices belonging to cards with an off profile are excluded from both pickers.
 The [bar alert](alerts.md) for starting lasts one second and is explicitly dismissed
-after a 1.1-second wait before capture begins. The stopped alert and file-manager
+after one second; shared capture readiness then waits for its closing animation. The stopped alert and file-manager
 action follow only after the recorder exits successfully. Errors show an error
 alert instead. The finishing alert can appear in the final captured frames;
 see [recording](recording.md) for the detached lifecycle and bar indicator.
@@ -707,9 +707,11 @@ requests are not routed through compositor shortcuts. Full restart/recovery stay
 external so it remains possible when the bar is not running.
 
 The native service-backed bindings, Bookmarks, QR encoding, Power, Wallpaper and
-Screenshot/OCR/QR orchestration are migrated. Recording setup still uses its
-interactive helper and is the next migration checkpoint. Detached recording/session
-lifetimes and offline wallpaper restore remain supported.
+Screenshot/OCR/QR and Recording setup orchestration are migrated. RecordingSetup
+uses the existing native picker and passes prepared options to the detached worker;
+its former interactive provider and --prepare round trip are removed. Unfinished
+recording setup cancels on reload. Detached recording/session lifetimes and offline
+wallpaper restore remain supported.
 
 ScreenshotService presents the original five capture choices in the shared picker.
 The main screenshot shortcuts and tools-submap OCR/QR bindings call it through the

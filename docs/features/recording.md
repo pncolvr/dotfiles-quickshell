@@ -3,10 +3,13 @@
 Meta+R in the companion Hypr config dispatches `quickshell:recording-toggle`
 through the shared native shortcut registry to `RecordingService.toggle()`.
 `launcher.sh provider recording` remains available for shell callers and uses
-`RecordingService` to control one detached recording worker. Capture, output or
-region, frame rate and audio use the existing pickers. `Config.recordingDirectory`
-supplies the destination through the shared provider Config bridge; `.env` files
-are not read. Stopping does not load provider configuration.
+`RecordingService` to control one detached recording worker. RecordingSetup gathers
+Capture → Output/Region → Framerate → Audio → Devices through the shared native
+picker. Config.recordingDirectory supplies the destination directly; no provider
+script, temporary device-menu JSON or picker/Config IPC round trip is involved.
+Native services read monitor/PulseAudio metadata, and region selection waits for
+shared presentation readiness. The slurp input pipe is explicitly closed so it
+receives EOF before mapping. Stopping does not load provider configuration.
 
 The shortcut behaves according to the current phase:
 
@@ -17,6 +20,17 @@ The shortcut behaves according to the current phase:
 | Starting, before capture | Cancel the pending recording |
 | Recording | Send one SIGINT to the owned recorder and show “recording finishing” |
 | Finishing or saving | Keep waiting; repeated presses do not restart or interrupt finalization |
+
+Reloading the bar or Config/theme while still choosing options cancels unfinished
+setup. Escape or another launcher also cancels it. Once prepared options have been
+handed to the detached worker, starting, capture and saving survive reloads.
+`Config.recordingEncoderArguments` supplies codec/quality arguments, defaulting to
+the existing HEVC/NVENC settings. Framerate stays in the setup menu.
+`RecordingOptions.mjs` preserves the filename format,
+framerate defaults, default-first audio identities and off-profile filtering.
+The worker still claims its runtime row atomically and receives prepared literal
+arguments; it never reopens a picker. The old providers/recording.sh is removed;
+`launcher.sh provider recording` remains a direct native compatibility entry.
 
 Starting and stopped alerts expire after one second; errors after three seconds.
 The starting notice is marked as capture-blocking. After its one-second display,

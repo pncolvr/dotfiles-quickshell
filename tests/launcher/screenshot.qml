@@ -93,6 +93,14 @@ Scope {
         CaptureHandoffService.update(token, false)
         events.wait(20)
         check(!called && CaptureHandoffService.ready, "cancelled handoff releases callback")
+        const abandoned = () => { throw new Error("abandoned handoff ran") }
+        const replacement = () => { called = true }
+        CaptureHandoffService.update(token, true)
+        CaptureHandoffService.wait(abandoned)
+        CaptureHandoffService.wait(replacement)
+        CaptureHandoffService.cancel(abandoned)
+        CaptureHandoffService.update(token, false)
+        waitFor(() => called, "cancelling an old handoff preserves its replacement")
         AlertService.post("unrelated", "Keep this alert", "info", 0)
         waitFor(() => notice.visible && !notice.transitioning, "unrelated alert settles")
         check(CaptureHandoffService.ready, "persistent unrelated alert does not block capture")

@@ -6,6 +6,11 @@ test_dir=$(mktemp -d /tmp/quickshell-recording-test.XXXXXXXX)
 worker_pid='' other_pid='' shell_pid=''
 qs_bin=$(command -v qs)
 cleanup() {
+    result=$?
+    if ((result != 0)); then
+        [[ ! -f $test_dir/worker.log ]] || cat "$test_dir/worker.log" >&2
+        [[ ! -f $test_dir/shell.log ]] || cat "$test_dir/shell.log" >&2
+    fi
     for pid in "$worker_pid" "$other_pid" "$shell_pid"; do
         [[ -z $pid ]] || { kill -TERM "$pid" 2>/dev/null || true; wait "$pid" 2>/dev/null || true; }
     done
@@ -23,15 +28,11 @@ cp "$project_root/src/services/recording/recording-worker.sh" "$worker"
 export RECORDING_TEST="$test_dir" QS_PICKER_EXECUTABLE="$test_dir/bin/alerts"
 export PATH="$test_dir/bin:$PATH"
 database="$test_dir/data/recording-runtime.db"
-cat > "$test_dir/src/services/launcher/providers/recording.sh" <<'SH'
-#!/usr/bin/env bash
-printf 'prepare\n' >> "$RECORDING_TEST/actions"
-sleep 0.3
-[[ ${RECORDING_TEST_CANCEL:-0} == 0 ]] || exit 0
-jq -nc --arg root "$RECORDING_TEST" --arg audio "${RECORDING_TEST_AUDIO:-none}" \
-    '{filename:($root+"/result.mp4"),command:[($root+"/bin/recorder"),"--no-damage","-f",($root+"/result.mp4")],
-    loopback:(if $audio=="both" then ["module-loopback","source=test.mic","sink=test.output"] else [] end)}'
-SH
+prepared_options() {
+    jq -nc --arg root "$RECORDING_TEST" --arg audio "${RECORDING_TEST_AUDIO:-none}" \
+        '{filename:($root+"/result.mp4"),command:[($root+"/bin/recorder"),"--no-damage","-f",($root+"/result.mp4")],
+        loopback:(if $audio=="both" then ["module-loopback","source=test.mic","sink=test.output"] else [] end)}'
+}
 cat > "$test_dir/bin/recorder" <<'JS'
 #!/usr/bin/env node
 const fs = require('fs'), root = process.env.RECORDING_TEST;
@@ -80,17 +81,20 @@ wait_state() {
     cat "$test_dir/worker.log" >&2
     exit 1
 }
-start_worker() { bash "$worker" --run "$database" "$test_dir" > "$test_dir/worker.log" 2>&1 & worker_pid=$!; }
+start_worker() { bash "$worker" --run "$database" "$test_dir" "$(prepared_options)" > "$test_dir/worker.log" 2>&1 & worker_pid=$!; }
 reset_logs() { : > "$test_dir/actions"; : > "$test_dir/alerts"; : > "$test_dir/audio"; rm -f "$test_dir/recorder.pid" "$test_dir/result.mp4"; }
 
 reset_logs
 start_worker
-wait_state configuring
-bash "$worker" --run "$database" "$test_dir" & other_pid=$!
+wait_state starting
+bash "$worker" --run "$database" "$test_dir" "$(prepared_options)" & other_pid=$!
 wait "$other_pid"; other_pid=''
-control --toggle >/dev/null
 wait_state recording
-[[ $(rg -c '^prepare$' "$test_dir/actions") == 1 ]]
+for ((attempt=0;attempt<100;attempt++)); do
+    [[ ! -s $test_dir/recorder.pid ]] || break
+    sleep 0.02
+done
+[[ $(rg -c '^capture$' "$test_dir/actions") == 1 ]]
 start_ns=$(date +%s%N)
 control --toggle >/dev/null
 control --toggle >/dev/null
@@ -157,10 +161,9 @@ rg -q 'recording cancelled: capture was not ready' "$test_dir/alerts"
 printf 'PASS: unavailable readiness cancels startup within the bounded retry and releases its runtime claim\n'
 
 reset_logs
-RECORDING_TEST_CANCEL=1 start_worker
-wait "$worker_pid"; worker_pid=''
+if bash "$worker" --run "$database" "$test_dir" > "$test_dir/worker.log" 2>&1; then exit 1; fi
 [[ $(state) == idle && ! -e $test_dir/recorder.pid ]]
-printf 'PASS: cancelled setup releases the runtime claim\n'
+printf 'PASS: missing prepared options release the runtime claim without capture\n'
 
 reset_logs
 RECORDING_TEST_AUDIO=both start_worker
@@ -221,6 +224,25 @@ mkdir -p "$test_dir/src/config"
 mkdir -m 700 "$test_dir/runtime"
 cp "$project_root/src/services/recording/RecordingService.qml" "$test_dir/src/services/recording/"
 cp "$project_root/src/services/recording/qmldir" "$test_dir/src/services/recording/"
+# Setup choices have their own production-component suite. Mock only that UI here.
+cat > "$test_dir/src/services/recording/RecordingSetup.qml" <<'QML'
+import QtQml
+import Quickshell
+Scope {
+    property bool active: false
+    signal prepared(var options)
+    signal failed(string message)
+    function open() { if (!active) { active = true; submit.start() } }
+    Timer {
+        id: submit; interval: 30
+        onTriggered: {
+            active = false
+            const folder = Quickshell.env("RECORDING_TEST")
+            prepared({filename:folder+"/result.mp4",command:[folder+"/bin/recorder","--no-damage","-f",folder+"/result.mp4"],loopback:[]})
+        }
+    }
+}
+QML
 printf 'singleton RecordingService 1.0 recording/RecordingService.qml\nsingleton DbService 1.0 DbService.qml\nsingleton AlertService 1.0 AlertService.qml\n' > "$test_dir/src/services/qmldir"
 printf 'pragma Singleton\nimport QtQml\nQtObject { readonly property bool ready: true }\n' > "$test_dir/src/services/DbService.qml"
 printf 'pragma Singleton\nimport QtQml\nQtObject { function post(id, text, severity, duration) { console.log(text) } }\n' > "$test_dir/src/services/AlertService.qml"
@@ -253,6 +275,14 @@ wait_ipc() {
 reset_logs
 start_shell
 wait_ipc fixture configuration before
+ipc recording toggle >/dev/null
+wait_state starting
+ipc recording toggle >/dev/null
+wait_state idle
+[[ ! -e $test_dir/recorder.pid ]]
+wait_ipc recording status "{\"state\":\"idle\",\"active\":false,\"filename\":\"\"}"
+printf 'PASS: controller queues cancellation across worker startup before capture begins\n'
+reset_logs
 ipc recording toggle >/dev/null
 wait_state recording
 owner=$(sqlite3 "$database" "SELECT json_extract(payload,'$.pid') FROM recording_session;")

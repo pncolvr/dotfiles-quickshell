@@ -164,19 +164,7 @@ for provider in code github directories webapps remotes n8n power bookmarks enco
 done
 printf 'PASS: projects, GitHub, directories, Webapps, Remotes, n8n, Power, Bookmarks, QR encoding and Wallpaper dispatch to native IPC without a JSON cache\n'
 # Capture tools and offline prepared execution are covered by screenshot.sh.
-prepare_recording() {
-    PROVIDER_TEST_NAME=recording bash "$providers/recording.sh" --prepare > "$test_dir/output" 2> "$test_dir/error"
-}
-expect_recording_argument() {
-    jq -e --arg argument "$1" '.command | index($argument) != null' "$test_dir/output" >/dev/null
-}
-: > "$test_dir/menus"
-prepare_recording
-expect_recording_argument --no-damage
-expect_recording_argument TEST-1
-expect_recording_argument 60
-jq -se 'length == 4' "$test_dir/menus" >/dev/null
-
+# Native recording choices are covered by tests/recording/setup.sh.
 # Non-menu callers must keep working after the original scripts are removed.
 : > "$test_dir/actions"; : > "$test_dir/menus"
 bash "$picker" provider power Lock
@@ -190,63 +178,11 @@ expect_action 'recording <toggle>'
 [[ ! -s $test_dir/menus ]]
 printf 'PASS: idle lock, OCR, QR and recording-stop calls bypass selection\n'
 
-[[ -z $(find "$test_dir/runtime/quickshell-picker" -mindepth 1 -print -quit) ]]
+[[ ! -d $test_dir/runtime/quickshell-picker || -z $(find "$test_dir/runtime/quickshell-picker" -mindepth 1 -print -quit) ]]
 printf 'PASS: provider request directories are cleaned up\n'
 
-# Each recording picker must cancel the entire operation, including the final audio picker.
-for title in output TEST-1 60 desktop; do
-    : > "$test_dir/actions"
-    PROVIDER_TEST_NAME=recording PROVIDER_TEST_CANCEL_TITLE="$title" bash "$providers/recording.sh" --prepare > "$test_dir/output" 2> "$test_dir/error"
-    ! rg -q '^(wf-recorder|pactl) ' "$test_dir/actions"
-done
-printf 'PASS: recording cancellation at every picker skips capture and loopback setup\n'
-
-# Audio follows the current defaults, including output-monitor names supplied by PulseAudio.
-for audio_mode in desktop mic both; do
-    : > "$test_dir/actions"; : > "$test_dir/menus"
-    PROVIDER_TEST_NAME=recording PROVIDER_TEST_AUDIO="$audio_mode" bash "$providers/recording.sh" --prepare > "$test_dir/output" 2> "$test_dir/error"
-    if [[ $audio_mode == mic ]]; then expect_recording_argument '--audio=test.microphone'
-    else expect_recording_argument '--audio=test.output.monitor'; fi
-    if [[ $audio_mode == both ]]; then
-        jq -e '.loopback == ["module-loopback","source=test.microphone","sink=test.output"]' "$test_dir/output" >/dev/null
-    else ! rg -q '^pactl <load-module>' "$test_dir/actions"; fi
-    if [[ $audio_mode == both ]]; then expected_menus=6; else expected_menus=5; fi
-    jq -se --argjson count "$expected_menus" '
-        length == $count and all(.[] | select(.prompt == "Audio output" or .prompt == "Microphone");
-            .sort == false and (.items | length) == 2 and (.items[0].title | endswith(" (default)"))
-            and all(.items[]; (.result | startswith("off.")) | not))
-    ' "$test_dir/menus" >/dev/null
-    ! rg -q '^(wf-recorder|pactl <load-module>|notify-send|alerts)' "$test_dir/actions"
-
-done
-printf 'PASS: recording setup returns default devices and deferred loopback arguments without starting capture\n'
-
-# Audio device pickers always open and return identities rather than display labels.
-: > "$test_dir/actions"; : > "$test_dir/menus"
-PROVIDER_TEST_NAME=recording PROVIDER_TEST_AUDIO=both PROVIDER_TEST_OTHER_DEVICES=1 \
-    bash "$providers/recording.sh" --prepare > "$test_dir/output" 2> "$test_dir/error"
-expect_recording_argument '--audio=test.output2.monitor'
-jq -e '.loopback == ["module-loopback","source=test.microphone2","sink=test.output2"]' "$test_dir/output" >/dev/null
-jq -se 'length == 6 and any(.[]; .prompt == "Audio output" and .items[0].title == "Primary output (default)")' "$test_dir/menus" >/dev/null
-for title in 'Primary output (default)' 'Primary microphone (default)'; do
-    : > "$test_dir/actions"
-    PROVIDER_TEST_NAME=recording PROVIDER_TEST_AUDIO=both PROVIDER_TEST_CANCEL_TITLE="$title" \
-        bash "$providers/recording.sh" --prepare > "$test_dir/output" 2> "$test_dir/error"
-    ! rg -q '^(wf-recorder|pactl <load-module>)' "$test_dir/actions"
-done
-[[ -z $(find "$test_dir/runtime" -name 'recording-devices.*.json' -print -quit) ]]
-printf 'PASS: output/input pickers hide off profiles, keep defaults and virtual devices, and cancel cleanly\n'
-
-# Shell syntax in device names and paths must remain literal arguments.
-literal_folder="$HOME/Videos \"quoted\" \$(touch $test_dir/injected)"
-literal_audio='monitor $(touch injected) $dollar "quoted"'
-: > "$test_dir/actions"
-PROVIDER_TEST_NAME=recording PROVIDER_TEST_AUDIO=desktop PROVIDER_TEST_MONITOR="$literal_audio" PROVIDER_TEST_RECORDING_FOLDER="$literal_folder" bash "$providers/recording.sh" --prepare > "$test_dir/output" 2> "$test_dir/error"
-expect_recording_argument "--audio=$literal_audio"
-jq -e --arg folder "$literal_folder/Recording " '(.filename | startswith($folder)) and (.command[-1] == .filename)' "$test_dir/output" >/dev/null
-[[ ! -e $test_dir/injected && -d $literal_folder ]]
-printf 'PASS: recording paths and audio devices retain literal shell characters\n'
-
+# Literal recording paths/audio identities and device filtering now use the native setup suite.
+literal_folder="$HOME/Videos quoted literal"
 : > "$test_dir/actions"
 PROVIDER_TEST_SCREENSHOT_FOLDER="$literal_folder" bash "$picker" provider screenshot output
 expect_action 'native <screenshot>'

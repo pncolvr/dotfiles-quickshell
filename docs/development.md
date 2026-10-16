@@ -727,9 +727,21 @@ must not create the application database or run desktop actions. The full
 launcher regression also checks the live provider Config API and configured
 wallpaper image/state directories.
 
+`bash tests/recording/setup.sh` drives the real RecordingSetup and shared picker
+with synthetic monitor/audio/region tools. It checks original order/defaults,
+all audio modes, default-first/off-profile filtering, virtual sources, cancellation
+at each step, replacement during metadata loading, region readiness and stdin EOF,
+repeated controller shortcuts, literal prepared arguments and cancelling unfinished
+setup through an actual Config reload. It never starts a recorder or audio module.
+For the real Wayland picker, run `RECORD_SETUP_NATIVE=1 bash tests/recording/setup.sh`
+with the keyboard idle. It uses synthetic tools, restores the previous focus, and
+leaves the pointer unchanged; it never starts recording or audio capture.
+
 `bash tests/recording/worker.sh` uses actual detached workers, SQLite, process
-identities and signals with synthetic recorder/audio/picker helpers. It covers
-duplicate setup, delay cancellation, one-signal stopping, repeated stops, recorder
+identities and signals with synthetic recorder/audio helpers and prepared options.
+Only the setup component is mocked for controller lifecycle checks; the real setup
+has its own suite above. Coverage includes duplicate worker exclusion, delay and
+startup-handoff cancellation, one-signal stopping, repeated stops, recorder
 failure, stale identities, dead-owner recovery and audio cleanup retries. An
 offscreen production RecordingService fixture applies Config changes during capture,
 then restarts its Quickshell process and stops the same recorder. It needs Bash,

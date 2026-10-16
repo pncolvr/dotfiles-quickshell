@@ -26,13 +26,15 @@ Singleton {
         job = operation
         lastAttempt = {method, phase: "waiting"}
         PickerService.close()
-        CaptureHandoffService.wait(() => {
+        operation.waiter = () => {
             if (root.job !== operation) return
             const process = worker.createObject(root, {method: operation.method}) as Process
             operation.process = process
             root.lastAttempt = {method: operation.method, phase: "running"}
+            operation.waiter = null
             process.running = true
-        })
+        }
+        CaptureHandoffService.wait(operation.waiter)
     }
     function receive(process, data) {
         const operation = job
@@ -60,8 +62,8 @@ Singleton {
         }
     }
     function cancel() {
-        CaptureHandoffService.cancel()
         const operation = job
+        if (operation?.waiter) CaptureHandoffService.cancel(operation.waiter)
         job = null
         if (operation?.process?.running) operation.process.signal(15)
     }

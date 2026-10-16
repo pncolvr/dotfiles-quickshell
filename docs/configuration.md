@@ -95,6 +95,8 @@ Review these defaults when adapting the configuration:
   An explicit directory argument overrides it for one picker session.
 - `wallpaperStateDirectory` holds saved per-mode/per-monitor links, defaulting to `~/Pictures/.runtime`.
 - `screenshotDirectory` and `recordingDirectory` set capture destinations.
+- `recordingEncoderArguments` supplies literal codec/quality arguments for wf-recorder.
+  The default is HEVC/NVENC; framerate remains a separate recording-menu choice.
 - `submapParserCommand` points to `~/.config/hypr/scripts/keybinds/parser.sh`.
 - Screen-sharing commands expect `HideApplications(active, animationsEnabled)` and related Hyprland rules.
 - Update installation opens Ghostty and runs `yay`. The refresh helper is

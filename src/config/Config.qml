@@ -116,6 +116,12 @@ Item {
     // Screenshots and recording
     readonly property string screenshotDirectory: `${_internal.home}/Pictures/Screenshots`
     readonly property string recordingDirectory: `${_internal.home}/Videos/recordings`
+    readonly property var recordingEncoderArguments: [
+        "--codec", "hevc_nvenc", "--codec-param", "preset=p7", "--codec-param", "tune=hq",
+        "--codec-param", "rc=vbr", "--codec-param", "cq=21", "--codec-param", "rc-lookahead=32",
+        "--codec-param", "bf=3", "--codec-param", "spatial_aq=1", "--codec-param", "temporal_aq=1",
+        "--codec-param", "aq-strength=10"
+    ]
 
     // Explicit process environment shared by online IPC and the offline exporter.
     readonly property var providerEnvironment: ({
