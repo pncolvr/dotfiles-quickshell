@@ -45,6 +45,12 @@ dismisses it. Failed checks retry every `Config.networkRetryInterval` (5 seconds
 and successful checks repeat every `Config.networkAlertInterval` (1 minute).
 A failed ping does not distinguish disconnection from blocked ICMP.
 
+Work/personal mode changes use the `status-mode` ID with “Work mode” or
+“Personal mode” for three seconds. Manual overrides, automatic detection and Reset
+announce changes in the effective mode; selecting the same mode and restoring it
+on startup/reload stay quiet. Rapid changes replace the same alert row. Work mode
+can be disabled without emitting a mode-change alert.
+
 The [recording worker](recording.md) uses the `recording` ID for starting,
 finishing, cancelled, stopped and error messages. Starting and stopped messages
 expire after 1 second; errors after 3 seconds. The starting message is explicitly

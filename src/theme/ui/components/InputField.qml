@@ -4,6 +4,8 @@ import "../../"
 
 QC.TextField {
     id: root
+    // Focus keeps inputs usable when filtering moves the panel off the pointer.
+    property bool retainPanelWhileFocused: true
     property bool retainPanelWhileEditing: true
     implicitHeight: Theme.controlHeight
     leftPadding: Theme.controlFieldPadding

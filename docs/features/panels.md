@@ -14,8 +14,12 @@ adjusts volume and middle-click opens the mixer. Updates puts its update count
 and last-checked time on the left of a compact header, beside notes and download
 buttons for opening the Markdown list and installing updates.
 
-Typing a search does not pin or retain a panel. Editing a form protects only its
-active owner; leaving the owning window releases that protection. Native child
+A focused search keeps its panel open if filtering shrinks it away from the
+pointer. This is a temporary keyboard-focus hold, with no automatic pinning;
+hovering another module can still replace the search panel. Losing keyboard focus
+releases the hold and resumes normal hover dismissal. Explicit keyboard sessions
+also survive pointer leave, keeping Escape usable. Editing a form protects only
+its active owner; leaving the owning window releases that protection. Native child
 dialogs, requested folder additions and active drags temporarily retain the owner. Dialog acceptance,
 cancellation and owner destruction release the hold and preserve manual pins.
 

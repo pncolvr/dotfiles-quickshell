@@ -32,6 +32,9 @@ Scope {
         }
         return null;
     }
+    function modeAlert() {
+        return AlertService.messages.find(message => message.id === 'status-mode');
+    }
     function finish() {
         if (!failed)
             console.log('PASS: native status ' + phase);
@@ -125,6 +128,7 @@ Scope {
                 root.check(!category.visible && StatusService.filterHint('Ctrl+W') === '', 'category selector and filter hints hidden');
                 root.check(PreferencesRepository.value('status.rules', {}).workDirectories.join('|') === '/synthetic/work|/synthetic/second|/synthetic/third', 'private rules retained while disabled');
                 root.check(!StatusService.setStatus('work'), 'disabled mode rejects changes');
+                root.check(!root.modeAlert(), 'disabled work mode posts no mode alerts');
                 root.check(StatusRepository.sessions.some(row => row.end_ms === PreferencesRepository.value('status.testCheckpoint', 0)), 'history survives disabled restart');
                 root.finish();
                 return;
@@ -133,6 +137,7 @@ Scope {
                 if (!StatusService.tracking)
                     return;
                 root.check(StatusService.status === 'work' && StatusService.source === 'manual', 'manual mode restored from SQLite');
+                root.check(!root.modeAlert(), 'restoring saved mode after restart does not announce a change');
                 root.check(StatusService.rules.workDirectories.join('|') === '/synthetic/work|/synthetic/second|/synthetic/third', 'detection rules restored');
                 root.check(StatusRepository.sessions.some(row => row.end_ms === PreferencesRepository.value('status.testCheckpoint', 0)), 'old checkpoint unchanged after restart');
                 root.check(StatusRepository.sessions[StatusRepository.sessions.length - 1].start_ms > PreferencesRepository.value('status.testCheckpoint', 0), 'new session starts after downtime');
@@ -143,7 +148,12 @@ Scope {
             case 0:
                 if (!StatusService.tracking)
                     return;
+                root.check(!root.modeAlert(), 'startup establishes the mode silently');
                 root.check(StatusService.setStatus('work'), 'set work manual mode');
+                root.check(root.modeAlert()?.text === 'Work mode' && root.modeAlert().expiresAt > Date.now(), 'manual mode switch posts an expiring shared bar alert');
+                const expiry = root.modeAlert().expiresAt;
+                StatusService.setStatus('work');
+                root.check(root.modeAlert().expiresAt === expiry, 'selecting the same mode does not repeat its alert');
                 root.check(StatusService.status === 'work' && StatusService.source === 'manual', 'manual override takes effect');
                 root.check(!StatusService.includesCategory('work') === false, 'work mode shows work entries');
                 root.check(StatusService.saveRules({
@@ -182,10 +192,23 @@ Scope {
                     if (StatusService.detectionMatches.length !== 1)
                         return;
                     root.check(StatusService.detectionMatches[0].name === 'synthetic-work', 'automatic detection uses private stored rules');
+                    const unchangedAlert = root.modeAlert();
                     StatusService.clear();
+                    root.check(root.modeAlert() === unchangedAlert, 'Reset with unchanged effective mode does not announce a change');
                     root.check(StatusService.source === 'automatic' && StatusService.status === 'work', 'Reset resumes automatic detected mode');
                     StatusService.setStatus('personal');
+                    root.check(root.modeAlert()?.text === 'Personal mode', 'Personal mode uses the same alert slot');
                     root.check(!StatusService.includesCategory('work') && StatusService.includesCategory('personal'), 'enabled personal mode filters work entries');
+                    StatusService.setStatus('work');
+                    root.check(root.modeAlert()?.text === 'Work mode', 'returning to Work replaces the alert');
+                    const manualAlert = root.modeAlert();
+                    StatusService.automaticMode = 'personal';
+                    root.check(root.modeAlert() === manualAlert, 'automatic evidence cannot announce a change hidden by a manual override');
+                    StatusService.clear();
+                    root.check(root.modeAlert()?.text === 'Personal mode', 'Reset announces a changed effective mode');
+                    StatusService.automaticMode = 'work';
+                    root.check(root.modeAlert()?.text === 'Work mode', 'automatic mode changes are announced');
+                    root.check(AlertService.messages.filter(message => message.id === 'status-mode').length === 1, 'rapid mode changes replace rather than stack alerts');
                     StatusService.setStatus('work');
                     StatusService.heartbeat();
                     const tabs = root.find(panel, 'statusTimecardTabs') as QC.TabBar;

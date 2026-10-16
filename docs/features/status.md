@@ -4,7 +4,9 @@
 SQLite time tracking. No external status manager or timecard executable is needed.
 Hover the bar icon for reports; left-click pins or unpins the panel without
 changing mode. Work and Personal buttons select a persistent manual override;
-Reset restores automatic detection.
+Reset restores automatic detection. A change between Work and Personal shows a
+small bar alert for three seconds, for manual and automatic transitions. Restoring
+the saved mode on startup/reload and selecting the current mode stay quiet.
 
 Today shows totals and expandable sessions. Week views cover Monday–Sunday and
 month views cover complete calendar months, including days without activity.

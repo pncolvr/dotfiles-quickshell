@@ -51,6 +51,7 @@ Singleton {
     readonly property string token: Date.now() + '-' + Math.random().toString(36).slice(2)
     property string automaticMode: 'personal'
     property bool initialized: false
+    property string announcedMode: ''
     property int currentId: 0
     property string trackedMode: ''
     property real checkpoint: 0
@@ -89,9 +90,33 @@ Singleton {
             return;
         }
         initialized = true;
+        // Restoration establishes the baseline; only later changes are announced.
+        announcedMode = enabled ? status : '';
         reconcile();
         reload();
         refreshTimecard();
+    }
+    function announceModeChange() {
+        const previous = announcedMode;
+        announcedMode = enabled && ready && initialized ? status : '';
+        if (!announcedMode) {
+            AlertService.dismiss('status-mode');
+            return;
+        }
+        if (!previous || previous === announcedMode)
+            return;
+        let message;
+        switch (announcedMode) {
+        case 'work':
+            message = 'Work mode';
+            break;
+        case 'personal':
+            message = 'Personal mode';
+            break;
+        default:
+            return;
+        }
+        AlertService.post('status-mode', message, 'info', 3000);
     }
     function checkpointEnd(now = Date.now()) {
         return now < checkpoint || now - checkpoint > 30000 ? checkpoint : now;
@@ -216,8 +241,12 @@ Singleton {
             detectionDelay.stop();
         }
         reconcile();
+        announceModeChange();
     }
-    onStatusChanged: reconcile()
+    onStatusChanged: {
+        reconcile();
+        announceModeChange();
+    }
     onPausedChanged: {
         reconcile();
         if (!paused)

@@ -139,7 +139,6 @@ Singleton {
     }
 
     function setPanelHovered(hovered) {
-        if (_internal.panelHovered && !hovered) _internal.keyboardActive = false
         _internal.panelHovered = hovered
         if (hovered) cancelHide()
         else if (!_internal.triggerHovered) hide()

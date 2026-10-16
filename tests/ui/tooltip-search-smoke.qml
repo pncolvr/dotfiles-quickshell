@@ -81,14 +81,21 @@ Scope {
                     "hover must never enable native keyboard focus or a focus grab")
                 search.forceActiveFocus(); search.text = "query"; search.textEdited()
                 root.simulatedActive = true
+                behavior.requestInteraction()
                 TooltipService.setPanelHovered(false)
                 break
             case 1:
-                root.check(!TooltipService.visible && !TooltipService.interactionHeld && search.text === "",
-                    "a query does not latch the panel open; closing resets search")
-                root.open(); behavior.requestInteraction(); editor.forceActiveFocus(); editor.text = "draft"
+                root.check(TooltipService.visible && TooltipService.interactionHeld && search.text === "query" && !TooltipService.pinned,
+                    "focused search survives pointer leave without pinning")
+                root.check(!TooltipService.interactionBlocksReplacement, "focused search still permits module replacement")
+                root.simulatedActive = false
                 break
             case 2:
+                root.check(!TooltipService.visible && !TooltipService.interactionHeld && search.text === "",
+                    "losing keyboard focus releases a search hold; closing resets search")
+                root.open(); root.simulatedActive = true; behavior.requestInteraction(); editor.forceActiveFocus(); editor.text = "draft"
+                break
+            case 3:
                 root.check(TooltipService.interactionHeld && !TooltipService.pinned, "active editor retains only its owner without pinning")
                 TooltipService.show(300, null, other, false)
                 root.check(TooltipService.source === origin, "another hover cannot replace an active editor")
@@ -96,37 +103,37 @@ Scope {
                 root.simulatedActive = false
                 editor.focus = false
                 break
-            case 3:
+            case 4:
                 root.check(TooltipService.visible && TooltipService.interactionHeld && !TooltipService.pinned,
                     "native child retains its owner after keyboard focus leaves, without pinning")
                 root.check(!behavior.requestingKeyboardFocus, "parent yields keyboard focus to its native child")
                 focusScope.dialogOpen = false
                 break
-            case 4:
+            case 5:
                 root.check(!TooltipService.interactionHeld && !TooltipService.pinned && !TooltipService.visible,
                     "rejecting or accepting a native dialog releases retention and resumes hover dismissal")
                 root.open(); TooltipService.togglePin(200, null, origin, false)
                 focusScope.dialogOpen = true
                 break
-            case 5:
+            case 6:
                 root.check(TooltipService.pinned && TooltipService.interactionHeld, "native child preserves a manual pin")
                 focusScope.dialogOpen = false
                 break
-            case 6:
+            case 7:
                 root.check(TooltipService.visible && TooltipService.pinned && !TooltipService.interactionHeld,
                     "closing a native child preserves exactly the original manual pin")
                 TooltipService.togglePin(200, null, origin, false)
                 TooltipService.setTriggerHovered(origin, false)
                 break
-            case 7:
+            case 8:
                 root.check(!TooltipService.visible, "manual unpin restores pointer-leave dismissal")
                 root.open(); editor.forceActiveFocus(); root.simulatedActive = true
                 break
-            case 8:
+            case 9:
                 root.check(TooltipService.interactionHeld, "editing can retain again after reopening")
                 root.simulatedActive = false
                 break
-            case 9:
+            case 10:
                 root.check(!TooltipService.visible && !TooltipService.interactionHeld, "switching apps releases an editor hold")
                 root.open()
                 TooltipService.setInteraction(firstOwner, true, false)
@@ -140,7 +147,7 @@ Scope {
                 root.check(TooltipService.interactionHeld, "one owner cannot release another owner's hold")
                 TooltipService.setInteraction(secondOwner, false)
                 break
-            case 10:
+            case 11:
                 root.check(!TooltipService.visible, "last owner releases the panel")
                 TooltipService.show(300, null, other, false)
                 TooltipService.setPanelHovered(true)
@@ -159,38 +166,60 @@ Scope {
                     tooltipWindow: window, panel: focusScope, windowActive: true
                 })
                 break
-            case 11:
+            case 12:
                 root.check(TooltipService.interactionHeld, "temporary owner acquires an editing hold")
                 root.temporaryOwner.destroy(); root.temporaryOwner = null
                 break
-            case 12:
+            case 13:
                 root.check(!TooltipService.interactionHeld && !TooltipService.visible,
                     "destroying the owner always releases its hold")
                 manager.requestFocus()
                 manager.focusSession = other
                 break
-            case 13:
+            case 14:
                 root.check(root.focusCalls === 0, "a replaced session cancels its queued focus callback")
                 root.managerActive = true
                 manager.requestFocus()
                 root.managerActive = false
                 break
-            case 14:
+            case 15:
                 root.check(manager.requestingKeyboardFocus && root.focusCalls === 1, "initial map/deactivation does not cancel the explicit focus request")
                 root.managerActive = true
                 break
-            case 15:
+            case 16:
                 root.check(!manager.requestingKeyboardFocus, "initial activation returns to on-demand focus")
                 root.managerActive = false
                 break
-            case 16:
+            case 17:
                 root.check(!manager.requestingKeyboardFocus && root.focusCalls === 1 && manager.panel.draft === "saved draft",
                     "switching apps preserves the manager/draft and never reclaims focus")
                 root.managerActive = true
                 break
-            case 17:
+            case 18:
                 root.check(root.focusCalls === 1, "returning to manager preserves the current editor focus")
-                console.log(root.failed ? "LIFECYCLE FAIL: panels" : "PASS: scoped panel editing, native-dialog cleanup, manual pins, focus handoff, Escape hierarchy and persistent manager drafts")
+                root.managerActive = false
+                root.open(); root.simulatedActive = true
+                search.forceActiveFocus(); behavior.requestInteraction()
+                break
+            case 19:
+                root.check(TooltipService.interactionHeld && !TooltipService.interactionBlocksReplacement,
+                    "focused search acquires a nonblocking hold")
+                TooltipService.show(300, null, other, false)
+                root.check(TooltipService.source === other && !TooltipService.interactionHeld,
+                    "hovering another module replaces a focused search and releases its old hold")
+                TooltipService.dismiss(); root.simulatedActive = false
+                TooltipService.openForKeyboard(200, null, origin, false)
+                root.simulatedActive = true
+                TooltipService.setPanelHovered(true)
+                TooltipService.setPanelHovered(false)
+                break
+            case 20:
+                root.check(TooltipService.visible && TooltipService.keyboardActive && TooltipService.interactionHeld && !TooltipService.pinned,
+                    "pointer leave must not discard an explicitly opened keyboard session")
+                events.keyClick(Qt.Key_Escape)
+                root.check(!TooltipService.visible && root.dismissals === 2,
+                    "Escape still dismisses a keyboard-opened panel after pointer leave")
+                console.log(root.failed ? "LIFECYCLE FAIL: panels" : "PASS: scoped panel editing, focused-search retention/replacement/blur, native-dialog cleanup, manual pins, focus handoff, Escape hierarchy and persistent manager drafts")
                 Qt.quit()
                 break
             }

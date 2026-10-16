@@ -83,6 +83,7 @@ Column {
             else { if (oldIndex !== index) processModel.move(oldIndex, index, 1); processModel.set(index, row) }
         }
         Qt.callLater(() => {
+            if (!view) return // A closing panel can unload before this queued layout.
             view.forceLayout()
             if (preservePosition) view.contentY = Math.max(view.originY, Math.min(offset, view.originY + Math.max(0, view.contentHeight - view.height)))
             else view.positionViewAtBeginning()

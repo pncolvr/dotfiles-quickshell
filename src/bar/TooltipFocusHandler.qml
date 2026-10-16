@@ -15,9 +15,10 @@ UI.WindowFocusHandler {
     // Hover never activates a focus grab. Explicit field/control interaction can.
     dismissOnOutside: !TooltipService.pinned
     readonly property var editor: nativeWindow?.activeFocusItem
+    readonly property bool holdingFocusedControl: windowActive && keyboardEnabled && editor?.retainPanelWhileFocused === true
     readonly property bool protectingEditor: windowActive && editor?.retainPanelWhileEditing === true
     readonly property bool blocksReplacement: nativeDialogOpen || panel?.interactionPending === true || protectingEditor
-    readonly property bool holding: hostRequestedVisible && ready && (blocksReplacement
+    readonly property bool holding: hostRequestedVisible && ready && (blocksReplacement || holdingFocusedControl
         || (windowActive && TooltipService.keyboardActive))
     function syncInteraction() { TooltipService.setInteraction(root, holding, blocksReplacement) }
     onHoldingChanged: syncInteraction()

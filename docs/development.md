@@ -605,8 +605,11 @@ stale focus callbacks and outside-click policy. Launchers activate explicitly;
 Vault and secret prompts use the persistent policy: changing apps keeps the view
 alive without reclaiming focus. `UI.PanelFocusScope` provides outer Escape after
 inner editors and popups; `UI.FolderDialog` shares native folder selection.
-Search fields never retain panels; real form fields opt into
-`retainPanelWhileEditing`, released when their field or owning window loses focus.
+Focused inputs use `retainPanelWhileFocused` to retain their panel through pointer
+leave without blocking replacement by another hovered module. Searches inherit
+this temporary hold; query text alone never retains a panel after focus leaves.
+Real form fields additionally use `retainPanelWhileEditing` to protect their owner
+from replacement. Both holds end when the control or owning window loses focus.
 Temporary holds and active drags never toggle the manual pin flag. Pointer polling
 and the old global typing pause are removed.
 
@@ -616,6 +619,23 @@ storage without accessing a vault or moving the cursor. The offscreen lifecycle
 fixture also reproduces an initial map/deactivation race that must preserve the
 explicit focus request. Hover adapters keep native keyboard input disabled until
 interaction, and include their bar trigger window in an active focus grab.
+
+Run `bash tests/ui/panel-input.sh` with the desktop keyboard idle. The native
+fixture uses isolated storage and synthetic data without moving the cursor or
+accessing a keyring. With animations on and off, it clicks the actual Countdowns,
+Stats, private TOTP and Twitch fields, plus pre-focused and multiline controls.
+It checks native activation, typing, selection/deletion, caret preservation,
+repeated clicks, Tab traversal, named countdown creation, manual pins and passive
+reopening. A synthetic Twitch list is filtered down to shrink the actual panel,
+then pointer leave is simulated while typing continues past the dismissal delay. Run native focus fixtures sequentially.
+
+Text controls may consume a press before an ancestor TapHandler sees it.
+`UI.WindowFocusHandler` observes explicit mouse focus and attaches a passive
+observer to the current focused control for repeated clicks. The observer is
+recreated when Loader-owned fields change; it must not be a persistent handler
+parented to a field that can be destroyed. Activation waits until event dispatch
+has established the clicked control's focus and selection, and repeated interaction
+keeps an established native grab. Hover and programmatic field focus stay passive.
 
 Native folder portal and compositor focus behavior still require a desktop check
 on the installed compositor; offscreen tests exercise their lifetime contracts.

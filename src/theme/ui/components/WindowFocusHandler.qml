@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Window
+import QtQml.Models
 import Quickshell.Wayland
 import Quickshell.Hyprland
 
@@ -78,8 +79,25 @@ Item {
         if (!hostRequestedVisible || !ready || blocked || nativeDialogOpen) return
         keyboardEnabled = true
         focusPanelPending = false // Preserve the clicked control, rather than refocusing Search.
+        if (windowActive && grab.active) return
         requestingKeyboardFocus = true
         if (windowActive) Qt.callLater(root.settleFocus)
+    }
+    function queueInteraction() {
+        const generation = activationGeneration
+        Qt.callLater(() => {
+            if (generation === root.activationGeneration) root.requestInteraction()
+        })
+    }
+    Connections {
+        target: root.nativeWindow
+        function onActiveFocusItemChanged() {
+            // Text-control presses can bypass ancestor handlers. Mouse focus is
+            // an explicit interaction; programmatic/hover focus stays passive.
+            const control = root.nativeWindow?.activeFocusItem
+            if (root.passive && root.hostRequestedVisible && control?.focusReason === Qt.MouseFocusReason)
+                root.queueInteraction()
+        }
     }
     function settleFocus() {
         if (!windowActive || !hostRequestedVisible || !ready || blocked || nativeDialogOpen || !keyboardEnabled) return
@@ -144,7 +162,21 @@ Item {
         enabled: root.passive && root.hostRequestedVisible
         acceptedButtons: Qt.AllButtons
         gesturePolicy: TapHandler.DragThreshold
-        onPressedChanged: if (pressed) root.requestInteraction()
+        onPressedChanged: if (pressed) root.queueInteraction()
+    }
+    Instantiator {
+        // Recreate the observer with each focused control: parenting a persistent
+        // handler to a Loader's field would destroy it when that field unloads.
+        model: root.passive && root.hostRequestedVisible && root.nativeWindow?.activeFocusItem
+            ? [root.nativeWindow.activeFocusItem] : []
+        delegate: TapHandler {
+            required property var modelData
+            parent: modelData
+            target: null
+            acceptedButtons: Qt.AllButtons
+            gesturePolicy: TapHandler.DragThreshold
+            onPressedChanged: if (pressed) root.queueInteraction()
+        }
     }
     HyprlandFocusGrab {
         id: grab
