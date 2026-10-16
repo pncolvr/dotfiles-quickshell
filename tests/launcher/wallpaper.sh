@@ -13,6 +13,7 @@ cp "$project_root/src/services/launcher/launcher.sh" "$test_dir/src/services/lau
 cp "$project_root/src/services/launcher/providers/wallpaper.sh" "$test_dir/src/services/launcher/providers/"
 cp "$project_root/src/services/launcher/providers/_common/utils.sh" "$test_dir/src/services/launcher/providers/_common/"
 picker="$test_dir/src/services/launcher/launcher.sh"
+printf 'touch %q\n' "$test_dir/old-env-executed" > "$test_dir/src/services/launcher/providers/wallpaper.env"
 folder="$HOME/Pictures/wallpapers"
 state="$HOME/Pictures/.runtime"
 printf '%s\n' '[{"name":"DP-1","description":"Main monitor","focused":false},{"name":"HDMI-A-1","description":"Second monitor","focused":true},{"name":"eDP-1","description":"Laptop"}]' > "$test_dir/monitors"
@@ -21,10 +22,13 @@ cat > "$test_dir/bin/qs" <<'BASH'
 set -euo pipefail
 if [[ ${5:-} == alerts ]]; then
     jq -nc --arg message "$8" --arg kind "$9" '{message:$message,kind:$kind}' >> "$WALL_TEST_DIR/alerts"
-elif [[ ${6:-} == wallpaperConfig ]]; then
+elif [[ ${6:-} == providerConfig ]]; then
     touch "$WALL_TEST_DIR/config-read"
     [[ ${WALL_TEST_CONFIG_FAIL:-0} == 0 ]] || exit 2
-    jq -nc --arg directory "${WALL_TEST_FOLDER-$HOME/Pictures/wallpapers}" '{directory:$directory}'
+    jq -nc --arg directory "${WALL_TEST_FOLDER-$HOME/Pictures/wallpapers}" \
+        --arg state "${WALL_TEST_STATE-$HOME/Pictures/.runtime}" --arg home "$HOME" \
+        '{SCREENSHOT_FOLDER:($home+"/Pictures"),VIDEOS_FOLDER:($home+"/Videos"),
+          WALLPAPER_DIRECTORY:$directory,WALLPAPER_STATE_DIRECTORY:$state,WORKING_STATE_NAME:"work"}'
 elif [[ ${6:-} == open ]]; then
     request=$7/request.json
     if jq -e '.previewImages == true' "$request" >/dev/null; then
@@ -143,7 +147,7 @@ printf 'PASS: invalid modes, disconnected monitors and monitor query failures le
 
 reset_actions
 WALL_TEST_QUERY_FAILURES=2 bash "$picker" provider wallpaper restore personal
-[[ ! -f $test_dir/config-read ]]
+[[ -f $test_dir/config-read ]]
 jq -se --arg state "$state" 'map(select(.[0]=="img")) == [
     ["img",$state+"/wallpaper_personal_2","--outputs","HDMI-A-1","--transition-type","any","--transition-duration","0.5"],
     ["img",$state+"/wallpaper_personal_1","--outputs","DP-1","--transition-type","any","--transition-duration","0.5"]]' "$test_dir/commands" >/dev/null
@@ -186,10 +190,10 @@ if bash "$picker" provider wallpaper "$test_dir/empty" 2> "$test_dir/error"; the
 [[ ! -f $test_dir/image.json && ! -f $test_dir/commands ]]
 expect_error
 ln -s "$folder" "$test_dir/linked-images"
-WALLPAPER_STATE_DIRECTORY="$test_dir/custom-state" WALL_TEST_IMAGE="$image" \
+WALL_TEST_STATE="$test_dir/custom-state" WALL_TEST_IMAGE="$image" \
     bash "$picker" provider wallpaper "$test_dir/linked-images"
 [[ $(readlink "$test_dir/custom-state/wallpaper_personal_1") == "$image" ]]
-[[ ! -f $test_dir/config-read ]]
+[[ -f $test_dir/config-read ]]
 printf 'PASS: empty folders report an error; symlinked roots and custom storage work\n'
 
 reset_actions
@@ -210,4 +214,6 @@ for config_case in unavailable empty; do
     [[ ! -f $test_dir/image.json && ! -f $test_dir/commands ]]
     expect_error
 done
-printf 'PASS: configured wallpaper roots support literal paths; missing settings report errors; explicit roots and restore bypass config IPC\n'
+printf 'PASS: configured wallpaper roots support literal paths; missing settings report errors; all actions use the shared Config bridge\n'
+
+[[ ! -e $test_dir/old-env-executed ]]

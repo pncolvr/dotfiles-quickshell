@@ -2,8 +2,9 @@
 
 `launcher.sh provider recording` (Meta+R in the companion Hypr config) uses
 `RecordingService` to control one detached recording worker. Capture, output or
-region, frame rate and audio use the existing pickers. `recording.env` still
-supplies `VIDEOS_FOLDER`.
+region, frame rate and audio use the existing pickers. `Config.recordingDirectory`
+supplies the destination through the shared provider Config bridge; `.env` files
+are not read. Stopping does not load provider configuration.
 
 The shortcut behaves according to the current phase:
 

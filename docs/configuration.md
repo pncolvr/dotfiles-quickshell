@@ -16,7 +16,8 @@ The root `config/` link exposes `Config.qml` and a relative `Theme.qml` link to
 modules export the same singleton. Reusable UI components remain under `src/theme/ui`.
 
 `Config.qml` groups settings by component: shared UI/privacy and storage;
-launcher pickers, projects, directories and wallpapers; clipboard; Hyprland;
+launcher pickers, projects, directories and wallpapers; screenshots/recording;
+clipboard; Hyprland;
 calendar/timers; package updates; status/timecard; notifications; recent files;
 audio/media; network/statistics/power; batteries; Twitch/browser sessions; and TOTP.
 
@@ -65,6 +66,8 @@ Review these defaults when adapting the configuration:
 - `_internal.statusManager` points to `~/.config/zsh/scripts/status/manager.sh`.
 - `wallpaperDirectory` sets the wallpaper picker root, defaulting to `~/Pictures/wallpapers`.
   An explicit directory argument overrides it for one picker session.
+- `wallpaperStateDirectory` holds saved per-mode/per-monitor links, defaulting to `~/Pictures/.runtime`.
+- `screenshotDirectory` and `recordingDirectory` set capture destinations.
 - `submapParserCommand` points to `~/.config/hypr/scripts/keybinds/parser.sh`.
 - Screen-sharing commands expect `HideApplications(active, animationsEnabled)` and related Hyprland rules.
 - Update installation opens Ghostty and runs `yay`. The refresh helper is
@@ -214,6 +217,21 @@ notification expiry, input handling and data updates continue with motion disabl
 `Theme.panelOpenDuration` (150ms), `panelCloseDuration` (100ms) and
 `panelResizeDuration` (160ms) control shared top-panel motion.
 `clipboardLayoutDuration` inherits `panelResizeDuration`.
+
+## Shell provider configuration
+
+`Config.providerEnvironment` projects the component settings into one explicit
+process-environment object. `launcher.sh --provider-config` obtains it from
+launcher IPC, or runs `provider-config.qml` headlessly when the bar is offline.
+Both use the same Config definition. The launcher validates the keys and values; the common shell loader then exports
+them without evaluating shell expressions. Private FIFO
+requests are removed when the export completes or fails. No configuration cache
+or database setting is created.
+
+This preserves startup wallpaper restoration and direct screenshot commands
+before the bar is running. Edit the component properties above, rather than
+provider `.env` files or exported environment variables. Normal bar reloads apply
+Config changes online; offline exports read the current file on every invocation.
 
 ## Shared controls
 

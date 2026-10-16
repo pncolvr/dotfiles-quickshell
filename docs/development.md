@@ -641,6 +641,16 @@ reads the configured root through launcher IPC.
 Provider checks include recording cancellation at each picker and literal shell
 characters in RDP credentials, recording paths, and audio devices. Recording setup
 returns argument arrays without starting capture or loading audio loopback modules.
+Provider fixtures use the shared Config endpoint and poison obsolete `.env` files
+to verify they are never executed.
+
+`bash tests/launcher/provider-config.sh` exercises the actual headless exporter,
+shared environment handoff, fresh Config edits, offline wallpaper restoration,
+strict live-response validation and FIFO cleanup on export failure. Synthetic
+paths include spaces, quotes, newlines and shell expressions. The headless export
+must not create the application database or run desktop actions. The full
+launcher regression also checks the live provider Config API and configured
+wallpaper image/state directories.
 
 `bash tests/recording/worker.sh` uses actual detached workers, SQLite, process
 identities and signals with synthetic recorder/audio/picker helpers. It covers

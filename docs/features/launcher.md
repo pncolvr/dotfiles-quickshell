@@ -278,10 +278,10 @@ window rule remains.
 
 Use `provider wallpaper [pick] DIRECTORY` for another image folder, or
 `provider wallpaper set OUTPUT personal|work FILE` for a direct set. Numeric
-outputs `1` and `2` retain the legacy DP-1/HDMI-A-1 mapping. Optional
-`providers/wallpaper.env` can set `WALLPAPER_STATE_DIRECTORY` for saved choices.
+outputs `1` and `2` retain the legacy DP-1/HDMI-A-1 mapping. `Config.wallpaperStateDirectory` sets the folder for saved choices.
 The image root comes from `Config.wallpaperDirectory` unless a directory argument
-is supplied. Direct setting and restore work without reading launcher configuration.
+is supplied. Direct setting and restore also read Config through the shared bridge; its headless
+fallback works before the bar starts.
 
 Legacy `-markup-rows` requests are normalized by the launcher bridge before
 searching/rendering. Original labels remain available for dmenu replies and
@@ -441,16 +441,24 @@ Zsh updater and `g` wrapper are removed. Existing JSON is not imported; the
 project list starts empty until you add sources. Private paths remain in the
 local database and are not committed.
 
-Private configuration lives beside its provider and stays Git-ignored:
+Simple provider settings live in Config.qml:
 
-- `_common/utils.env`: shared category settings.
+- `screenshotDirectory` and `recordingDirectory`: capture destinations.
+- `wallpaperDirectory` and `wallpaperStateDirectory`: image browsing and saved choices.
+- `pickerWorkStatus`: the shared work category.
+
+`launcher.sh --provider-config` exports an explicit, validated JSON object. The
+common helper passes these settings as literal process environment values, using
+the live bar or the read-only `provider-config.qml` exporter when offline. It
+reuses private launcher FIFOs and saves no settings cache. Old screenshot,
+recording, wallpaper and shared-helper `.env` files are no longer read.
+
+Private collections still live beside their providers and stay Git-ignored:
+
 - `web/webapps.json` and `web/n8n.json`: JSON picker entries.
 - `remotes/hosts.json`: VM/RDP hosts; `hosts.json.sample` documents the format.
   RDP option strings support quotes and backslash escapes; shell expressions and
   wildcards are passed literally.
-- `screenshot.env`: Bash `SCREENSHOT_FOLDER` setting.
-- `recording.env`: Bash `VIDEOS_FOLDER` setting. [Recording](recording.md) runs in a detached worker and survives bar/config reloads.
-- `wallpaper.env`: optional Bash `WALLPAPER_STATE_DIRECTORY` setting; set the image root with `Config.wallpaperDirectory`.
 
 Recording offers no audio, desktop audio, microphone audio, or both. Audio modes
 open the relevant output and microphone pickers, with the current defaults first
@@ -460,7 +468,8 @@ Devices belonging to cards with an off profile are excluded from both pickers.
 The [bar alert](alerts.md) for starting lasts one second and is explicitly dismissed
 after a 1.1-second wait before capture begins. The stopped alert and file-manager
 action follow only after the recorder exits successfully. Errors show an error
-alert instead. Recording status messages therefore stay outside the capture.
+alert instead. The finishing alert can appear in the final captured frames;
+see [recording](recording.md) for the detached lifecycle and bar indicator.
 Recordings are encoded directly to MP4; there is no separate conversion stage.
 
 Hyprland bindings call `launcher.sh provider NAME [ARGS...]`; new callers should

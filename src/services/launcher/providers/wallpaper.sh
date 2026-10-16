@@ -3,14 +3,15 @@ set -euo pipefail
 
 provider_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 source "$provider_dir/_common/utils.sh"
-if [[ -f $provider_dir/wallpaper.env ]]; then source "$provider_dir/wallpaper.env"; fi
-state_folder=${WALLPAPER_STATE_DIRECTORY:-$HOME/Pictures/.runtime}
 
 alert() {
     "${QS_PICKER_EXECUTABLE:-qs}" ipc -p "${QS_PICKER_CONFIG:-$provider_dir/../../../..}" \
         call alerts post wallpaper "$1" "$2" 3000 >/dev/null 2>&1 || true
 }
 fail() { printf '%s\n' "$1" >&2; alert "$1" error; exit 2; }
+
+load_provider_config || fail "Could not read wallpaper configuration"
+state_folder=$WALLPAPER_STATE_DIRECTORY
 
 umask 077
 work_dir=$(mktemp -d "$(get_temp_dir)/wallpaper.XXXXXXXX")
@@ -75,13 +76,7 @@ restore_wallpapers() {
     done < <(jq -r '.[].name' <<< "$outputs")
 }
 show_picker() {
-    local folder=${1:-} path outputs output mode settings
-    if [[ -z $folder ]]; then
-        settings=$("${QS_PICKER_EXECUTABLE:-qs}" ipc -p "${QS_PICKER_CONFIG:-$provider_dir/../../../..}" \
-            call launcher wallpaperConfig) || fail "Could not read wallpaper configuration"
-        IFS= read -r -d '' folder < <(jq -j '.directory | select(type == "string" and length > 0) | ., "\u0000"' \
-            <<< "$settings") || fail "Wallpaper directory is missing from configuration"
-    fi
+    local folder=${1:-$WALLPAPER_DIRECTORY} path outputs output mode
     [[ -d $folder ]] || fail "Wallpaper folder is unavailable: $folder"
     IFS= read -r -d '' folder < <(realpath -ez -- "$folder") || fail "Wallpaper folder is unavailable"
     # awww accepts images (including animated GIFs), rather than video files.

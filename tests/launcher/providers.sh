@@ -22,6 +22,13 @@ touch "$test_dir/actions" "$test_dir/menus"
 cat > "$test_dir/bin/qs" <<'BASH'
 #!/usr/bin/env bash
 set -euo pipefail
+if [[ ${6:-} == providerConfig ]]; then
+    jq -nc --arg screenshots "${PROVIDER_TEST_SCREENSHOT_FOLDER:-$HOME/Pictures}" --arg videos "${PROVIDER_TEST_RECORDING_FOLDER:-$HOME/Videos}" \
+        --arg wallpapers "$HOME/Pictures/wallpapers" --arg state "$HOME/Pictures/.runtime" --arg work "${PROVIDER_TEST_WORK_STATUS:-work}" \
+        '{SCREENSHOT_FOLDER:$screenshots,VIDEOS_FOLDER:$videos,WALLPAPER_DIRECTORY:$wallpapers,
+          WALLPAPER_STATE_DIRECTORY:$state,WORKING_STATE_NAME:$work}'
+    exit 0
+fi
 if [[ ${5:-} == recording ]]; then
     printf 'recording <%s>\n' "$6" >> "$PROVIDER_TEST_DIR/actions"
     exit 0
@@ -154,8 +161,9 @@ cat > "$providers/remotes/hosts.json" <<'JSON'
     {"name":"Beta VM","enabled":true,"type":"vm"}
 ]}
 JSON
-printf 'SCREENSHOT_FOLDER=%q\n' "$HOME/Pictures" > "$providers/screenshot.env"
-printf 'VIDEOS_FOLDER=%q\n' "$HOME/Videos" > "$providers/recording.env"
+for old_config in "$providers/screenshot.env" "$providers/recording.env" "$providers/_common/utils.env"; do
+    printf 'touch %q\n' "$test_dir/env-executed" > "$old_config"
+done
 expect_action() {
     local expected=$1
     for ((attempt=0;attempt<50;attempt++)); do
@@ -275,13 +283,21 @@ printf 'PASS: output/input pickers hide off profiles, keep defaults and virtual 
 # Shell syntax in device names and paths must remain literal arguments.
 literal_folder="$HOME/Videos \"quoted\" \$(touch $test_dir/injected)"
 literal_audio='monitor $(touch injected) $dollar "quoted"'
-printf 'VIDEOS_FOLDER=%q\n' "$literal_folder" > "$providers/recording.env"
 : > "$test_dir/actions"
-PROVIDER_TEST_NAME=recording PROVIDER_TEST_AUDIO=desktop PROVIDER_TEST_MONITOR="$literal_audio" bash "$providers/recording.sh" --prepare > "$test_dir/output" 2> "$test_dir/error"
+PROVIDER_TEST_NAME=recording PROVIDER_TEST_AUDIO=desktop PROVIDER_TEST_MONITOR="$literal_audio" PROVIDER_TEST_RECORDING_FOLDER="$literal_folder" bash "$providers/recording.sh" --prepare > "$test_dir/output" 2> "$test_dir/error"
 expect_recording_argument "--audio=$literal_audio"
 jq -e --arg folder "$literal_folder/Recording " '(.filename | startswith($folder)) and (.command[-1] == .filename)' "$test_dir/output" >/dev/null
 [[ ! -e $test_dir/injected && -d $literal_folder ]]
 printf 'PASS: recording paths and audio devices retain literal shell characters\n'
+
+: > "$test_dir/actions"
+PROVIDER_TEST_SCREENSHOT_FOLDER="$literal_folder" bash "$picker" provider screenshot output
+expect_action "<--output-filename> <$literal_folder/Screenshot "
+ignored=$(bash -c 'source "$1"; get_ignored_category' bash "$providers/_common/utils.sh")
+[[ -z $ignored ]]
+ignored=$(PROVIDER_TEST_WORK_STATUS=office bash -c 'source "$1"; get_ignored_category' bash "$providers/_common/utils.sh")
+[[ $ignored == office ]]
+printf 'PASS: screenshot destinations and shared categories come from Config, including literal paths\n'
 
 # RDP credentials and quoted extra flags are data, including dollar signs and wildcards.
 source "$providers/remotes/components/options/host.sh"
@@ -316,3 +332,6 @@ kill() { [[ $1 == 12345 ]]; }
 handle_remote 'Alpha VM'
 jq -e --arg password "/p:$password" 'index($password) != null and index("/u:test;user") != null' "$test_dir/rdp-args" >/dev/null
 printf 'PASS: VM and SSH/RDP host JSON preserves delimiters, empty fields and backslashes in credentials\n'
+
+[[ ! -e $test_dir/env-executed ]]
+printf 'PASS: obsolete provider .env files are never executed\n'

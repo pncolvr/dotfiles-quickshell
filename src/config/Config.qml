@@ -79,9 +79,23 @@ Item {
     readonly property var directoryOpenCommand: ["pcmanfm-qt"]
 
     // Launcher: wallpapers and Expose
+    readonly property string wallpaperStateDirectory: `${_internal.home}/Pictures/.runtime`
     readonly property string wallpaperDirectory: `${_internal.home}/Pictures/wallpapers`
     readonly property var exposeWallpaperCommand: ["awww", "query", "--json"]
     readonly property var exposeWorkspaceIds: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+    // Screenshots and recording
+    readonly property string screenshotDirectory: `${_internal.home}/Pictures/Screenshots`
+    readonly property string recordingDirectory: `${_internal.home}/Videos/recordings`
+
+    // Explicit process environment shared by online IPC and the offline exporter.
+    readonly property var providerEnvironment: ({
+        SCREENSHOT_FOLDER: screenshotDirectory,
+        VIDEOS_FOLDER: recordingDirectory,
+        WALLPAPER_DIRECTORY: wallpaperDirectory,
+        WALLPAPER_STATE_DIRECTORY: wallpaperStateDirectory,
+        WORKING_STATE_NAME: pickerWorkStatus
+    })
 
     // Clipboard
     readonly property int clipboardMaxItems: 1000

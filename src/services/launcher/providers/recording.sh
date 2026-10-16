@@ -7,8 +7,6 @@ if [[ ${1:-} != --prepare ]]; then
     exec "${QS_PICKER_EXECUTABLE:-qs}" ipc -p "${QS_PICKER_CONFIG:-$provider_dir/../../../..}" call recording toggle
 fi
 source "$provider_dir/_common/utils.sh"
-# set the following variables on the .env file
-# VIDEOS_FOLDER=
 
 pick_option() {
     local prompt=$1
@@ -114,7 +112,5 @@ prepare_recording() {
         '{filename:$filename,command:$command,loopback:$loopback}'
 }
 
-# recording.env remains the destination config until the planned path migration.
-source "$(get_env_file "${BASH_SOURCE[0]}")"
-[[ -n ${VIDEOS_FOLDER:-} ]] || { printf 'VIDEOS_FOLDER is required in recording.env\n' >&2; exit 1; }
+load_provider_config || exit 2
 prepare_recording

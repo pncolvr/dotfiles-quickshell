@@ -9,7 +9,11 @@ Place this repository at `~/.config/quickshell`, review
 qs -p "$HOME/.config/quickshell"
 ```
 
-Keep `shell.qml` at the configuration root. It loads the QML implementation in
+Keep `shell.qml` and `provider-config.qml` at the configuration root. The latter
+exports provider settings headlessly when the bar is not running. Set capture
+destinations and wallpaper paths in Config.qml; provider `.env` files are not used.
+
+`shell.qml` loads the QML implementation in
 `src/`; the audio spectrum helper builds automatically on first use. Quickshell creates `data/quickshell.db` on first
 run. Keep that directory writable.
 

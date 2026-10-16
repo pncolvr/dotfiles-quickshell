@@ -2,9 +2,7 @@
 
 WORKSPACE=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 source "$WORKSPACE"/_common/utils.sh
-source "$(get_env_file "${BASH_SOURCE[0]:-0}")"
-# set the following variables on the .env file
-# SCREENSHOT_FOLDER=
+load_provider_config || exit 2
 
 function pick() {
     bash "$PICKER_LAUNCHER" --dmenu -sort -p ""
@@ -20,6 +18,7 @@ function screenshot() {
     local method=$1
     local filename
     local file
+    mkdir -p -- "$SCREENSHOT_FOLDER" || return 2
     file=$(date '+Screenshot %Y-%m-%d at %Hh%Mm%Ss').png
     filename="$SCREENSHOT_FOLDER/$file"
 

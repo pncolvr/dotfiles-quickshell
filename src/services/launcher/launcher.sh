@@ -45,6 +45,20 @@ if [[ ${1:-} == --secret ]]; then
     exec bash "$launcher_dir/secret_prompt.sh" "$@"
 fi
 
+validate_provider_config() {
+    jq -ce '
+        if type == "object"
+            and keys == ["SCREENSHOT_FOLDER","VIDEOS_FOLDER","WALLPAPER_DIRECTORY","WALLPAPER_STATE_DIRECTORY","WORKING_STATE_NAME"]
+            and all(.[]; type == "string" and length > 0 and (contains("\u0000") | not))
+        then . else error("Invalid provider configuration") end'
+}
+if [[ ${1:-} == --provider-config ]]; then
+    if provider_config=$(ipc call launcher providerConfig 2>/dev/null); then
+        validate_provider_config <<< "$provider_config"
+        exit
+    fi
+fi
+
 case ${1:-apps} in
     apps|clipboard|projects|directories) ipc call launcher "${1:-apps}"; exit ;;
     windows) ipc call launcher windows "${2:-all}"; exit ;;
@@ -69,7 +83,8 @@ case ${1:-apps} in
     --json) input_file=${2:?JSON file required}; output_format=results ;;
     --json-response) input_file=${2:?JSON file required}; output_format=json ;;
     --dmenu) input_file=""; output_format=titles ;;
-    *) fail 'Usage: launcher.sh apps|projects|directories|windows [all|current]|expose [all|current]|clipboard|provider NAME [ARGS...]|--json FILE|--json-response FILE|--dmenu [OPTIONS]' ;;
+    --provider-config) input_file=""; output_format=provider-config ;;
+    *) fail 'Usage: launcher.sh apps|projects|directories|windows [all|current]|expose [all|current]|clipboard|provider NAME [ARGS...]|--provider-config|--json FILE|--json-response FILE|--dmenu [OPTIONS]' ;;
 esac
 
 runtime_root=${XDG_RUNTIME_DIR:?XDG_RUNTIME_DIR is required}/quickshell-picker
@@ -78,13 +93,37 @@ mkdir -p -- "$runtime_root"
 [[ -O $runtime_root && ! -L $runtime_root && $(stat -c %a -- "$runtime_root") == 700 ]] || fail 'Picker runtime directory must be private and owned by you.'
 request_dir=$(mktemp -d "$runtime_root/request.XXXXXXXX")
 cleanup() {
-    ipc call launcher cancel "$request_dir" >/dev/null 2>&1 || true
+    if [[ -n ${config_pid:-} ]]; then
+        kill -TERM "$config_pid" 2>/dev/null || true
+        wait "$config_pid" 2>/dev/null || true
+    fi
+    if [[ $output_format != provider-config ]]; then
+        ipc call launcher cancel "$request_dir" >/dev/null 2>&1 || true
+    fi
     rm -rf -- "$request_dir"
 }
 trap cleanup EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM HUP
 mkfifo -m 600 "$request_dir/reply"
+
+if [[ $output_format == provider-config ]]; then
+    exec {reply_fd}<>"$request_dir/reply"
+    QT_QPA_PLATFORM=offscreen QT_NO_XDG_DESKTOP_PORTAL=1 QS_NO_RELOAD_POPUP=1 \
+        QS_PROVIDER_CONFIG_REQUEST="$request_dir" \
+        timeout 8 "$qs_bin" -p "${QS_PICKER_CONFIG:-$config_root}/provider-config.qml" \
+        > "$request_dir/export.log" 2>&1 & config_pid=$!
+    config_deadline=$((SECONDS + 5))
+    while ! IFS= read -r -t 0.1 provider_config <&"$reply_fd"; do
+        ((SECONDS < config_deadline)) && kill -0 "$config_pid" 2>/dev/null \
+            || fail 'Could not read offline provider configuration.'
+    done
+    wait "$config_pid" || fail 'Could not export provider configuration.'
+    config_pid=''
+    exec {reply_fd}>&-
+    validate_provider_config <<< "$provider_config"
+    exit
+fi
 
 if [[ -n $input_file ]]; then
     jq -ce 'if type == "object" and (.items | type) == "array" then . else error("Expected picker JSON") end' "$input_file" > "$request_dir/request.json"

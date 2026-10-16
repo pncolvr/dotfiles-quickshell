@@ -43,17 +43,19 @@ Terminal=false
 DESKTOP
 # Never copy private provider configuration into the test shell.
 tar -C "$project_root" --exclude='*.env' --exclude='src/services/launcher/providers/*.json' -cf - src | tar -C "$test_dir" -xf -
+cp "$project_root/provider-config.qml" "$test_dir/"
 sed -Ei 's/readonly property int clipboardMaxItems: [0-9]+/readonly property int clipboardMaxItems: 3/' "$test_dir/src/config/Config.qml"
 sed -Ei 's/readonly property int clipboardMaxTotalBytes: [0-9]+/readonly property int clipboardMaxTotalBytes: 24/' "$test_dir/src/config/Config.qml"
 sed -i 's/readonly property bool clipboardMonitorEnabled: true/readonly property bool clipboardMonitorEnabled: false/' "$test_dir/src/config/Config.qml"
 sed -i 's/readonly property bool pickerShowPrompt: false/readonly property bool pickerShowPrompt: true/' "$test_dir/src/config/Config.qml"
-python3 - "$test_dir/src/config/Config.qml" "$test_dir/wallpapers" <<'PYCONFIG'
-from pathlib import Path
-import json, re, sys
-config = Path(sys.argv[1])
-config.write_text(re.sub(r'readonly property string wallpaperDirectory:.*',
-    'readonly property string wallpaperDirectory: ' + json.dumps(sys.argv[2]), config.read_text()))
-PYCONFIG
+node - "$test_dir/src/config/Config.qml" "$test_dir/wallpapers" "$test_dir/saved-wallpapers" <<'JSCONFIG'
+const fs = require('fs'), [file, images, saved] = process.argv.slice(2);
+let source = fs.readFileSync(file,'utf8');
+for (const [name,value] of Object.entries({wallpaperDirectory:images,wallpaperStateDirectory:saved}))
+    source = source.replace(new RegExp('(readonly property string '+name+':)[^\\n]*'),
+        (_, declaration) => declaration+' '+JSON.stringify(value));
+fs.writeFileSync(file,source);
+JSCONFIG
 mkdir -p "$test_dir/data/clipboard"
 sqlite3 "$test_dir/data/quickshell.db" <<'SQL'
 CREATE TABLE clipboard (id TEXT PRIMARY KEY, mime TEXT NOT NULL, kind TEXT NOT NULL, bytes INTEGER NOT NULL, text TEXT NOT NULL DEFAULT '', updated_at INTEGER NOT NULL);
@@ -101,6 +103,9 @@ wait_client() {
     [[ $client_exit == "$1" ]] || { cat "$test_dir/client-error"; printf 'Unexpected client exit: %s\n' "$client_exit"; exit 1; }
 }
 start
+bash "$picker" --provider-config | jq -e --arg images "$test_dir/wallpapers" --arg saved "$test_dir/saved-wallpapers" \
+    '.WALLPAPER_DIRECTORY == $images and .WALLPAPER_STATE_DIRECTORY == $saved and .WORKING_STATE_NAME == "work"' >/dev/null
+printf 'PASS: live launcher exports the same shared Config settings without opening a picker\n'
 ipc call pickertest launchTestApplication
 for ((try=0;try<100;try++)); do
     [[ -f $test_dir/app-environment ]] && break
@@ -273,7 +278,7 @@ wait_wallpaper_step() {
     cat "$test_dir/log" "$test_dir/client-error" >&2
     return 1
 }
-PATH="$test_dir/wallpaper-bin:$PATH" WALLPAPER_STATE_DIRECTORY="$test_dir/saved-wallpapers" \
+PATH="$test_dir/wallpaper-bin:$PATH" \
     bash "$picker" provider wallpaper > "$test_dir/result" 2> "$test_dir/client-error" & client_pid=$!
 wait_wallpaper_step wallpaper.image
 ipc call pickertest query one

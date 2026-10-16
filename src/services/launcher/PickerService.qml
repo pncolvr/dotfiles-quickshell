@@ -543,7 +543,7 @@ Singleton {
         function projects(): void { root.projects() }
         function directories(): void { root.directories() }
         function projectUrls(): void { root.projects(true) }
-        function wallpaperConfig(): string { return JSON.stringify({directory: Config.wallpaperDirectory}) }
+        function providerConfig(): string { return JSON.stringify(Config.providerEnvironment) }
         function open(directory: string): void { root.open(directory) }
         function cancel(directory: string): void { root.cancel(directory) }
         function alive(): bool { return true }

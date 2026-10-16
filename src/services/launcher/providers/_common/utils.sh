@@ -17,14 +17,17 @@ function get_temp_file_named() {
     printf '%s/%s_%s\n' "$(get_temp_dir)" "$1" "$(id -u)"
 }
 
-function get_env_file() {
-    local path=$1 filename
-    filename=$(basename -- "$path")
-    printf '%s/%s.env\n' "$(dirname -- "$path")" "${filename%.*}"
+function load_provider_config() {
+    local settings
+    local -a assignments
+    settings=$(bash "$PICKER_LAUNCHER" --provider-config) || return 2
+    mapfile -d '' -t assignments < <(jq -j 'to_entries[] | (.key + "=" + .value), "\u0000"' <<< "$settings")
+    export -- "${assignments[@]}"
 }
 
 function get_ignored_category() {
-    local status working_state=${WORKING_STATE_NAME:-work}
+    load_provider_config || return 2
+    local status working_state=$WORKING_STATE_NAME
     status=$("$ZDOTDIR/scripts/status/manager.sh" --get)
     if [[ $status != "$working_state" ]]; then printf '%s' "$working_state"; fi
     return 0
@@ -41,5 +44,3 @@ function open_file_explorer() {
     fi
     hyprctl dispatch 'hl.dsp.focus({ window = "class:pcmanfm-qt" })'
 }
-
-if [[ -f $_picker_common_dir/utils.env ]]; then source "$_picker_common_dir/utils.env"; fi
