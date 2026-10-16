@@ -80,7 +80,7 @@ start() {
 }
 wait_open() {
     for ((try=0;try<60;try++)); do
-        if snapshot | jq -e '.visible and (.directory|length > 0)' >/dev/null; then return; fi
+        if snapshot | jq -e --arg kind "${1:-bridge}" '.visible and ($kind == "native" or (.directory|length > 0))' >/dev/null; then return; fi
         sleep 0.025
     done
     cat "$test_dir/log"; exit 1
@@ -530,13 +530,13 @@ if [[ -f $power_script ]]; then
     mkdir -p "$power_home/.config"
     ln -s "$test_dir" "$power_home/.config/quickshell"
     HOME="$power_home" bash "$power_script" > "$test_dir/result" 2> "$test_dir/client-error" & client_pid=$!
-    wait_open
-    snapshot | jq -e '.layout == "grid" and [.items[].title] == ["Reboot","Lock","Logout","Shutdown","Bios"]
+    wait_open native
+    snapshot | jq -e '.directory == "" and .layout == "grid" and [.items[].title] == ["Reboot","Lock","Logout","Shutdown","Bios"]
         and [.filtered[].title] == [.items[].title] and all(.items[]; (.glyph | length) == 1)' >/dev/null
     ipc call pickertest pressEscape
     wait_client 0
     [[ ! -s $test_dir/result ]]
-    printf 'PASS: actual power-provider order, separate icon glyphs and cancellation without executing an action\n'
+    printf 'PASS: native Power CLI entry, original order, separate icon glyphs and cancellation without a shell request\n'
 fi
 
 printf 'one\n' | bash "$picker" --dmenu > "$test_dir/result" 2> "$test_dir/client-error" & client_pid=$!

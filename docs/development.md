@@ -860,7 +860,7 @@ client startup. This cannot guarantee delivery of keys typed before native focus
 transfers; test immediate Meta+P typing on the live desktop as well.
 
 Run `bash tests/launcher/global-shortcuts.sh` in a Hyprland session to check all
-41 production shortcut callbacks before and after reload, covering launcher and
+42 production shortcut callbacks before and after reload, covering launcher and
 recording actions, Vault, notification DND, shell reload, all 14 module shortcuts,
 window cycling and all ten numbered window targets. It uses the actual action
 list with mock feature services and a unique native shortcut namespace; it opens
@@ -880,3 +880,18 @@ Hyprland entries use the shared global-shortcut registry; existing config-scoped
 and public shell aliases remain available. The retained aliases stay covered by
 `tests/launcher/providers.sh`. Recording and wallpaper lifecycle, offline Config
 export and external pinentry clients keep their existing regressions.
+
+## Native Power menu
+
+Run `bash tests/launcher/power.sh`. The fixture uses the real PowerService, picker
+and grid offscreen, with an isolated database and mocked systemctl/loginctl/hyprctl
+executables. It verifies action order/icons, filtering, Escape, all five selections,
+exactly-once execution, status-pause ordering, replacement and reentrant native
+callbacks. A failing mock IPC client proves that native execution has no callback
+into the picker/status bridge and that direct idle Lock still works without a bar.
+No real power/session action or native desktop input is performed.
+
+`tests/launcher/launcher.sh` also checks the compatibility CLI opens Power with
+an empty request directory and cancellation performs no action. Provider and native
+shortcut regressions cover the alias and global entry points. Singleton smoke
+checks verify the system-local and parent exports share the same PowerService.

@@ -22,6 +22,7 @@ Singleton {
     property string secretDescription: ""
     property var secretActions: null
     property var secretCallback: null
+    property var menuCallback: null
     property string acceptLabel: "Select"
     property string query: ""
     property string layout: "list"
@@ -123,6 +124,16 @@ Singleton {
         secretDescription = description
         secretActions = actions
         secretCallback = callback
+        show()
+    }
+    function menuRows(rows) {
+        return rows.map((item, index) => Object.assign({}, item, {id: String(index), result: item.result ?? item.title}))
+    }
+    function promptMenu(title, rows, callback, presentation = "list") {
+        begin(PickerService.Mode.Menu, title)
+        items = menuRows(rows)
+        menuCallback = callback
+        layout = presentation
         show()
     }
     function apps() {
@@ -287,6 +298,7 @@ Singleton {
         process.running = true
     }
     function close() {
+        menuCallback = null
         const secretResult = secretCallback
         secretCallback = null
         openingClipboard = false
@@ -365,9 +377,12 @@ Singleton {
           case PickerService.Mode.Menu: {
             if (Config.pickerRememberSelection && selectionKey && item.id !== "typed")
                 PreferencesRepository.setValue("launcher.selection." + selectionKey, item.result)
-            reply(requestDirectory, {status: "accepted", items: picked, query, exitCode: custom && customAccept ? 10 : 0})
+            const callback = menuCallback
+            if (!callback && requestDirectory)
+                reply(requestDirectory, {status: "accepted", items: picked, query, exitCode: custom && customAccept ? 10 : 0})
             requestDirectory = ""
             close()
+            if (callback) callback(picked)
             break
           }
           case PickerService.Mode.Projects: {
@@ -511,7 +526,7 @@ Singleton {
             root.customAccept = request.customAccept === true
             root.layout = request.layout === "grid" ? "grid" : "list"
             // Source indexes are stable even when labels or provider IDs collide.
-            const rows = request.items.map((item, index) => Object.assign({}, item, {id: String(index), result: item.result ?? item.title}))
+            const rows = root.menuRows(request.items)
             root.items = request.sort === true ? rows.sort((a, b) => a.title.localeCompare(b.title)) : rows
             root.query = request.query || ""
             root.selectionKey = typeof request.selectionKey === "string" ? request.selectionKey : ""
@@ -564,6 +579,7 @@ Singleton {
     IpcHandler {
         target: "launcher"
         function apps(): void { root.apps() }
+        function power(): void { PowerService.open() }
         function windows(scope: string): void { root.windows(scope) }
         function expose(scope: string): void { root.expose(scope) }
         function clipboard(): void { root.clipboard() }

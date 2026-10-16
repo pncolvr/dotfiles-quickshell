@@ -67,6 +67,7 @@ case ${1:-apps} in
     provider)
         name=${2:?Provider name required}; shift 2
         case $name in
+            power) if (($# == 0)); then ipc call launcher power; exit; fi ;;
             code) ipc call launcher projects; exit ;;
             github) ipc call launcher projectUrls; exit ;;
             directories) ipc call launcher directories; exit ;;

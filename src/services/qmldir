@@ -14,6 +14,7 @@ singleton TimersService 1.0 time/timers/TimersService.qml
 
 singleton StatsService 1.0 system/StatsService.qml
 singleton PowerProfileService 1.0 system/PowerProfileService.qml
+singleton PowerService 1.0 system/PowerService.qml
 singleton BatteryService 1.0 system/BatteryService.qml
 singleton RecentFilesService 1.0 files/RecentFilesService.qml
 singleton PinnedFilesService 1.0 files/PinnedFilesService.qml

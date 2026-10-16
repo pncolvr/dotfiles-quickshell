@@ -46,7 +46,7 @@ directory hints fit one line; GitHub groups its selection shortcuts on separate 
 | `provider-config.qml` and `--provider-config` | Shared Config export while the bar is running, plus the existing offline exporter needed by wallpaper restoration. |
 | `_common/utils.sh` / `handle.sh` | Shared provider configuration, menu result handling and external browser/file-manager actions. |
 | Bookmarks / Books | Read existing bookmark files and build/use book metadata caches before showing a native picker. |
-| Power | Choose and dispatch existing system power/session commands. |
+| Power | Noninteractive command execution and offline idle locking. PowerService owns the native choices and action order. |
 | Screenshot | Coordinate capture, OCR/QR decoding, annotation and file-manager tools. |
 | Recording | Prepare capture/audio choices for the detached recording worker; the native service owns toggle/session state. |
 | QR encoding | Run qrencode, copy its PNG and retain the temporary image through preview dismissal. |
@@ -79,6 +79,7 @@ directly without introducing a duplicate enum and translation layer.
 
 ```sh
 qs ipc call launcher apps
+qs ipc call launcher power
 qs ipc call launcher windows all
 qs ipc call launcher windows current
 qs ipc call launcher expose all
@@ -93,6 +94,30 @@ Enter focuses a window, Ctrl+Enter focuses without dismissing, and two-window li
 switch immediately to the previous window. Focusing a grouped window activates
 its tab using live group membership. Current-workspace mode considers tiled
 windows and falls back to all windows if fewer than two are available.
+
+## Power menu
+
+Meta+Escape dispatches `quickshell:launcher-power` to `PowerService`. The menu
+reuses the normal native picker grid, preserving Reboot, Lock, Logout, Shutdown
+and Bios in that order with their existing glyphs. The five `Theme.power*Icon`
+properties own those glyphs; reboot inherits `rotateIcon` and lock inherits
+`lockIcon`. Search, arrow/Enter navigation,
+Escape and outside-click cancellation use the shared picker components. There is
+no JSON request file, FIFO or shell process waiting for the choice.
+
+`PickerService.promptMenu(title, rows, callback, presentation)` is the shared
+native-menu entry point. It normalizes rows through the same helper as external
+requests, invokes the selected-row callback after logical closure, and clears the
+callback on cancellation or replacement. A callback may open the next native step.
+External JSON/dmenu requests retain their existing request/reply behavior.
+
+On acceptance, PowerService pauses tracking directly and dispatches the chosen
+action to the small noninteractive `providers/power.sh` executor. It never calls
+back into the picker. `launcher.sh provider power` and the no-argument provider
+script remain CLI aliases for opening the native menu. Explicit actions such as
+`launcher.sh provider power Lock` execute directly, retaining the best-effort
+status notification and working even when the bar is unavailable; Hypridle keeps
+that direct Lock path. No confirmation step or action order change is introduced.
 
 ## Exposé overview
 
@@ -257,8 +282,8 @@ Their shared JSON handler and direct menu calls invoke `launcher.sh`; no Rofi
 adapter or PATH override is required. `_common/` holds the shared Bash helpers.
 The unused standalone Webapps, n8n and Remotes forwarding scripts are removed;
 the public `launcher.sh` aliases remain available for shell callers.
-Projects, GitHub, directories, Webapps, Remotes and n8n dispatch directly to native QML services; their
-former Bash providers are removed. The other providers are named `<provider>.sh`. Browser selection,
+Projects, GitHub, directories, Webapps, Remotes, n8n and the interactive Power entry dispatch directly to native QML services; their
+former forwarding providers are removed; Power retains its noninteractive executor. The other providers are named `<provider>.sh`. Browser selection,
 work/personal filtering, editor profiles and cache rebuild flags are preserved.
 
 `launcher.sh provider encode-qrcode` opens a text prompt in the launcher.
@@ -607,7 +632,7 @@ Recordings are encoded directly to MP4; there is no separate conversion stage.
 Native Hyprland bindings use `hl.dsp.global("quickshell:NAME")`. One
 `GlobalShortcutRegistry` in `shell.qml` registers the actions and calls existing
 feature-service methods. The registry covers applications, Projects, project URLs,
-Directories, Webapps, Remotes, n8n, clipboard, window lists, Exposé, recording,
+Directories, Webapps, Remotes, n8n, Power, clipboard, window lists, Exposé, recording,
 Vault, notification DND, shell reload, window cycling, grouped-window selection
 and the 14 bar-module shortcuts. Module and numbered-window registrations share
 array-generated actions rather than separate registration components. Quickshell re-registers them across configuration reloads; the companion
@@ -619,8 +644,8 @@ password/pinentry clients and browser selections retain argument/result IPC; the
 requests are not routed through compositor shortcuts. Full restart/recovery stays
 external so it remains possible when the bar is not running.
 
-This completes the native service-backed binding migration. Books, Bookmarks,
-Power, Screenshot/OCR/QR decoding, QR encoding, Wallpaper and recording setup still
+The native service-backed bindings and Power menu orchestration are migrated.
+Books, Bookmarks, Screenshot/OCR/QR decoding, QR encoding, Wallpaper and recording setup still
 use their existing interactive scripts. Moving their orchestration into QML is the
 next migration stage: feature services should collect choices and pass prepared
 options to external tools/workers, avoiding a script reopening the picker through

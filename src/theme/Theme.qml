@@ -118,6 +118,13 @@ QtObject {
     readonly property int clipboardLayoutDuration: panelResizeDuration
     readonly property int pickerGridHeight: 52
 
+    // Power menu
+    readonly property string powerRebootIcon: rotateIcon
+    readonly property string powerLockIcon: lockIcon
+    readonly property string powerLogoutIcon: "" // sign-out
+    readonly property string powerShutdownIcon: "" // power-off
+    readonly property string powerBiosIcon: "" // shield: firmware setup
+
     // Project management
     readonly property int projectManagePadding: controlFieldPadding
     readonly property int projectManageSectionSpacing: controlSpacing * 2

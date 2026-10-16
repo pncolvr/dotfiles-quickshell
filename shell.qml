@@ -38,6 +38,7 @@ Scope {
       {name: "launcher-windows-current", description: "Switch current workspace windows", activate: () => PickerService.windows("current")},
       {name: "launcher-expose-current", description: "Open window overview", activate: () => PickerService.expose("current")},
       {name: "launcher-clipboard", description: "Open clipboard history", activate: () => PickerService.clipboard()},
+      {name: "launcher-power", description: "Open power menu", activate: () => PowerService.open()},
       {name: "recording-toggle", description: "Control screen recording", activate: () => RecordingService.toggle()},
       {name: "vault-toggle", description: "Toggle vault manager", activate: () => RbwService.open()},
       {name: "notifications-toggle-dnd", description: "Toggle notification do not disturb", activate: () => NotificationService.toggle()},

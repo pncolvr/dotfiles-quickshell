@@ -28,7 +28,7 @@ if(!match)throw new Error('Main shortcut registry not found');
 let block=match[0].replace('GlobalShortcutRegistry {','GlobalShortcutRegistry {\n    appId: "qs-test-" + Quickshell.env("SHORTCUT_TEST_ID")');
 for (const [service, mock] of Object.entries({PickerService: 'mockPicker', RecordingService: 'mockRecording',
  RbwService: 'mockVault', NotificationService: 'mockNotifications', WindowService: 'mockWindows',
- BarModuleService: 'mockBar', shellRoot: 'mockShell'})) block=block.replaceAll(service+'.',mock+'.');
+ BarModuleService: 'mockBar', PowerService: 'mockPower', shellRoot: 'mockShell'})) block=block.replaceAll(service+'.',mock+'.');
 fs.writeFileSync(fixture+'/shell.qml',`import QtQml
 import Quickshell
 import Quickshell.Io
@@ -50,6 +50,7 @@ Scope {
     function clipboard() { root.record("clipboard", []) }
   }
   QtObject { id: mockRecording; function toggle() { root.record("recording", []) } }
+  QtObject { id: mockPower; function open() { root.record("power", []) } }
   QtObject { id: mockVault; function open() { root.record("vault", []) } }
   QtObject { id: mockNotifications; function toggle() { root.record("dnd", []) } }
   QtObject { id: mockShell; function reloadShell() { root.record("shell-reload", []) } }
@@ -80,7 +81,7 @@ const expected={
  'launcher-webapps':['webapps',[]], 'launcher-remotes':['remotes',[]], 'launcher-n8n':['n8n',[]],
  'launcher-windows-all':['windows',['all']], 'launcher-windows-current':['windows',['current']],
  'launcher-expose-current':['expose',['current']], 'launcher-clipboard':['clipboard',[]],
- 'recording-toggle':['recording',[]], 'vault-toggle':['vault',[]],
+ 'launcher-power':['power',[]], 'recording-toggle':['recording',[]], 'vault-toggle':['vault',[]],
  'notifications-toggle-dnd':['dnd',[]], 'shell-reload':['shell-reload',[]],
  'windows-next':['windows-next',[]], 'windows-prev':['windows-prev',[]]
 };

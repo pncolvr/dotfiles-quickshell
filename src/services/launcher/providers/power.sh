@@ -1,40 +1,24 @@
 #!/usr/bin/env bash
-
-source "$(dirname -- "${BASH_SOURCE[0]}")/_common/utils.sh"
-
-log_inactive() {
-    "${QS_PICKER_EXECUTABLE:-qs}" ipc -p "${QS_PICKER_CONFIG:-$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../../../.." && pwd)}" call status pause >/dev/null 2>&1 || true
-}
-
-show_menu() {
-    local entries=(
-        $'' Reboot
-        $'' Lock
-        $'' Logout
-        $'' Shutdown
-        $'' Bios
-    )
-    local rows=() i
-    for ((i = 0; i < ${#entries[@]}; i += 2)); do
-        rows+=("$(jq -cn --arg glyph "${entries[i]}" --arg title "${entries[i + 1]}" \
-            '{title:$title, glyph:$glyph, result:$title}')")
-    done
-    # Keep the original action order and render glyphs with the shell's icon font.
-    bash "$PICKER_LAUNCHER" --json <(
-        printf '%s\n' "${rows[@]}" | jq -s '{allowTyped:false, sort:false, layout:"grid", items:.}'
-    )
-}
-
-chosen="${1:-}"
-if [[ -z "$chosen" ]]; then
-    chosen=$(show_menu)
+# Noninteractive command execution, including idle locking without a running bar.
+set -euo pipefail
+provider_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+config_root=$(cd -- "$provider_dir/../../../.." && pwd)
+ipc() { "${QS_PICKER_EXECUTABLE:-qs}" ipc -p "${QS_PICKER_CONFIG:-$config_root}" call "$@"; }
+if (($# == 0)); then
+    exec "${QS_PICKER_EXECUTABLE:-qs}" ipc -p "${QS_PICKER_CONFIG:-$config_root}" call launcher power
 fi
-
-case $chosen in
-    *Reboot*)   log_inactive; systemctl reboot;;
-    *Lock*)     log_inactive; loginctl lock-session;;
-    *Logout*)   log_inactive; hyprctl dispatch exit;;
-    *Shutdown*) log_inactive; systemctl poweroff;;
-    *Bios*)     log_inactive; systemctl reboot --firmware-setup;;
-    *)          exit 0;;
+native=false
+if [[ $1 == --execute ]]; then native=true; shift; fi
+(($# == 1)) || exit 2
+# The native service pauses tracking directly. External callers retain the old
+# best-effort notification, and still execute when Quickshell is unavailable.
+case $1 in
+    Reboot)   power_command=(systemctl reboot) ;;
+    Lock)     power_command=(loginctl lock-session) ;;
+    Logout)   power_command=(hyprctl dispatch exit) ;;
+    Shutdown) power_command=(systemctl poweroff) ;;
+    Bios)     power_command=(systemctl reboot --firmware-setup) ;;
+    *) exit 2 ;;
 esac
+if ! $native; then ipc status pause >/dev/null 2>&1 || true; fi
+exec "${power_command[@]}"

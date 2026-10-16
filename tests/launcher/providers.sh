@@ -39,7 +39,7 @@ if [[ ${5:-} == alerts ]]; then
     printf '\n' >> "$PROVIDER_TEST_DIR/actions"
     exit 0
 fi
-if [[ ${6:-} == projects || ${6:-} == projectUrls || ${6:-} == directories || ${6:-} == webapps || ${6:-} == remotes || ${6:-} == n8n ]]; then
+if [[ ${6:-} == power || ${6:-} == projects || ${6:-} == projectUrls || ${6:-} == directories || ${6:-} == webapps || ${6:-} == remotes || ${6:-} == n8n ]]; then
     printf 'native <%s>\n' "$6" >> "$PROVIDER_TEST_DIR/actions"
     exit 0
 fi
@@ -166,7 +166,7 @@ run_provider() {
     [[ ! -s $test_dir/error ]] || { cat "$test_dir/error" >&2; exit 1; }
     printf 'PASS: %s provider dispatch, shared helpers and selected action\n' "$name"
 }
-for provider in code github directories webapps remotes n8n; do
+for provider in code github directories webapps remotes n8n power; do
     : > "$test_dir/actions"; : > "$test_dir/menus"
     bash "$picker" provider "$provider"
     case $provider in
@@ -176,10 +176,9 @@ for provider in code github directories webapps remotes n8n; do
     esac
     [[ ! -s $test_dir/menus ]]
 done
-printf 'PASS: projects, GitHub, directories, Webapps, Remotes and n8n dispatch to native IPC without a JSON cache\n'
+printf 'PASS: projects, GitHub, directories, Webapps, Remotes, n8n and Power dispatch to native IPC without a JSON cache\n'
 run_provider bookmarks 'browser <https://example.test/alpha>'
 run_provider books "zathura <$HOME/alpha.pdf>" --pick
-run_provider power 'loginctl <lock-session>'
 run_provider screenshot 'hyprshot <--freeze> <--silent> <--clipboard-only> <--raw> <--mode> <output>'
 prepare_recording() {
     PROVIDER_TEST_NAME=recording bash "$providers/recording.sh" --prepare > "$test_dir/output" 2> "$test_dir/error"
@@ -209,7 +208,7 @@ expect_action 'recording <toggle>'
 printf 'PASS: idle lock, OCR, QR and recording-stop calls bypass selection\n'
 
 # A cancelled browser request must not execute its selected action.
-for name in bookmarks power; do
+for name in bookmarks; do
     : > "$test_dir/actions"
     PROVIDER_TEST_CANCEL=1 PROVIDER_TEST_NAME="$name" bash "$picker" provider "$name" > "$test_dir/output" 2> "$test_dir/error" || true
     ! rg -q '^(browser|virsh|sdl-freerdp3|loginctl|systemctl) ' "$test_dir/actions"
