@@ -22,6 +22,7 @@ Singleton {
     readonly property var availableEntries: entries.filter(entry => (!activeOnly || activeFilterIds.includes(entry.id)) &&
         (activeEntryIds.includes(entry.id) || (entry.enabled &&
             (showAll || entry.category !== 'work' || StatusService.status === Config.pickerWorkStatus))))
+    property var pickerItems: availableEntries.map(itemForEntry)
     signal saved()
     function open() {
         managing=false; showAll=false; activeOnly=false; draft=null; error=''
@@ -31,7 +32,7 @@ Singleton {
     function syncPicker() {
         if (PickerService.mode !== pickerMode) return
         const previous=PickerService.currentItem?.id
-        PickerService.items=availableEntries.map(itemForEntry)
+        PickerService.items=pickerItems
         PickerService.currentIndex=Math.max(0,PickerService.filteredItems.findIndex(row => row.id===previous))
         PickerService.acceptLabel=acceptLabel; PickerService.error=error
     }
@@ -48,6 +49,6 @@ Singleton {
     }
     function remove(id) { if (!repository.remove(id)) error=repository.error }
     onAcceptLabelChanged: if (PickerService.mode===pickerMode) PickerService.acceptLabel=acceptLabel
-    onAvailableEntriesChanged: syncPicker()
+    onPickerItemsChanged: syncPicker()
     onErrorChanged: syncPicker()
 }

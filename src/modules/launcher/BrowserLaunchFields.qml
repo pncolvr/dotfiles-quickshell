@@ -1,0 +1,46 @@
+pragma ComponentBehavior: Bound
+import QtQuick
+import "../../theme"
+import "../../theme/ui" as UI
+import "../../config"
+import "../../services/webapps/WebappEntries.mjs" as Entries
+
+Column {
+    id: root
+    property string objectNamePrefix: 'webapp'
+    property string browser: 'qutebrowser'
+    property string browserProfile: ''
+    property string windowMode: 'normal'
+    readonly property var configuredBrowser: Config.webappBrowsers.find(browser=>browser.id===root.browser)
+    spacing: Theme.controlSpacing
+    UI.ComboSelector {
+        objectName:root.objectNamePrefix+'BrowserSelector'
+        toggleObjectName:root.objectNamePrefix+'BrowserToggle'
+        width: parent.width; compact:true; labelPrefix:'Browser: '
+        options: Config.webappBrowsers.map(browser => ({name:browser.id,description:browser.name}))
+        selectedName: root.browser
+        onSelected: name => {
+            root.browser=name
+            const browser=Config.webappBrowsers.find(browser=>browser.id===name)
+            if (!browser?.profileArguments || !Entries.profileOptions(browser).some(profile=>profile.name===root.browserProfile)) root.browserProfile=''
+            if (root.windowMode==='app' && !browser?.appArguments) root.windowMode='normal'
+        }
+    }
+    UI.ComboSelector {
+        objectName:root.objectNamePrefix+'ProfileSelector'
+        toggleObjectName:root.objectNamePrefix+'ProfileToggle'
+        choicesObjectName:root.objectNamePrefix+'ProfileChoices'
+        width: parent.width; compact:true; labelPrefix:'Profile: '
+        visible: !!root.configuredBrowser?.profileArguments
+        options: Entries.profileOptions(root.configuredBrowser)
+        selectedName: root.browserProfile
+        placeholder: 'Profile unavailable — choose another'
+        onSelected: name => root.browserProfile=name
+    }
+    UI.ComboSelector {
+        objectName:root.objectNamePrefix+'WindowSelector'
+        width: parent.width; compact:true; labelPrefix:'Window: '
+        options: Entries.windowOptions(root.configuredBrowser)
+        selectedName:root.windowMode; onSelected: name => root.windowMode=name
+    }
+}

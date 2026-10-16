@@ -802,3 +802,22 @@ When changing QML launcher enum members, restart the running shell and exercise
 the provider IPC route on that instance. A newly added member can remain undefined
 after automatic or forced reload because QML type metadata is cached.
 `launcher alive` alone does not verify that a newly added mode can open its panel.
+
+## n8n validation
+
+```sh
+node tests/n8n/model.mjs
+dbus-run-session -- bash tests/n8n/manage.sh
+bash tests/storage/backup.sh
+```
+
+Model checks cover base paths, escaped cursors, connection validation and IDs
+shared across instances. Manage checks use isolated SQLite, an offscreen picker,
+a loopback Node API and a mocked browser. They exercise masked keys, native input,
+Ctrl+W filtering, Ctrl+R refresh, pagination, batch reconciliation, independent
+instance failure, invalid/repeated pages, redirects, authentication failures,
+timeouts, size limits, SQL rollback, stale-response rejection and restart without
+network requests. No real instance, credentials or workflow execution is used.
+Backup fixtures retain multiple instances, private keys and independent caches.
+Run Webapps and Remotes Manage checks after changing the shared collection or
+browser fields, and QML lint after adding service registrations.

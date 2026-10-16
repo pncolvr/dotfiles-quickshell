@@ -35,7 +35,7 @@ chmod +x "$fixture/bin/"*
 export PATH="$fixture/bin:$PATH"
 database=$fixture/data/quickshell.db
 sqlite3 "$database" <<'SQL'
-PRAGMA user_version=13;
+PRAGMA user_version=14;
 CREATE TABLE clipboard(id TEXT PRIMARY KEY,mime TEXT,kind TEXT,bytes INTEGER,text TEXT,updated_at INTEGER,pinned INTEGER);
 CREATE TABLE preferences(key TEXT PRIMARY KEY,value_json TEXT);
 INSERT INTO preferences VALUES('clock.showSeconds','true');
@@ -49,6 +49,12 @@ CREATE TABLE webapps(id TEXT PRIMARY KEY,name TEXT,payload_json TEXT);
 INSERT INTO webapps VALUES('webapp-test','Fixture','{"url":"https://example.test/app","browser":"vivaldi","profile":"Test Profile","arguments":["literal $(no-execution)"]}');
 CREATE TABLE remotes(id TEXT PRIMARY KEY,name TEXT,payload_json TEXT);
 INSERT INTO remotes VALUES('remote-test','Remote fixture','{"type":"remote","endpoint":"example.test","password":"private fixture $() literal","arguments":["/drive:Docs,/private fixture path"]}');
+CREATE TABLE n8n_instances(id TEXT PRIMARY KEY,name TEXT,payload_json TEXT);
+INSERT INTO n8n_instances VALUES('n8n-a','Personal instance','{"url":"https://personal.example.test/base","apiKey":"private fixture a","category":"personal"}');
+INSERT INTO n8n_instances VALUES('n8n-b','Work instance','{"url":"https://work.example.test","apiKey":"private fixture b","category":"work"}');
+CREATE TABLE n8n_workflows(instance_id TEXT,id TEXT,name TEXT,url TEXT,fetched_at INTEGER,PRIMARY KEY(instance_id,id));
+INSERT INTO n8n_workflows VALUES('n8n-a','same','Personal workflow','https://personal.example.test/base/workflow/same',123);
+INSERT INTO n8n_workflows VALUES('n8n-b','same','Work workflow','https://work.example.test/workflow/same',456);
 SQL
 mkdir "$fixture/source" "$fixture/project-present" "$fixture/project-missing" "$fixture/directory-present" "$fixture/directory-missing"
 printf '{}' > "$fixture/project-present/test.code-workspace"
@@ -82,7 +88,7 @@ totp_command=$(jq -nc --arg helper "$repo/src/services/security/totp.sh" --arg t
 request() {
     jq -nc --arg action "$1" --arg path "$2" --arg password "${3:-Public-fixture-passphrase}" \
         --arg database "$database" --arg clipboard "$fixture/data/clipboard" --argjson totp "$totp_command" \
-        '{action:$action,path:$path,password:$password,database:$database,clipboard:$clipboard,schema:13,totpCommand:$totp}'
+        '{action:$action,path:$path,password:$password,database:$database,clipboard:$clipboard,schema:14,totpCommand:$totp}'
 }
 run() { request "$@" | bash "$repo/src/services/storage/backup.sh"; }
 reject() {
@@ -115,7 +121,7 @@ printf 'PASS: spaces/quotes in paths and Unicode/literal shell characters in pas
 rm -r -- "$fixture/source" "$fixture/project-missing" "$fixture/directory-missing"
 rm -- "$fixture/project-present/test.code-workspace"
 
-sqlite3 "$database" "UPDATE preferences SET value_json='false'; DELETE FROM clipboard; DELETE FROM twitch_users; DELETE FROM webapps; DELETE FROM remotes;"
+sqlite3 "$database" "UPDATE preferences SET value_json='false'; DELETE FROM clipboard; DELETE FROM twitch_users; DELETE FROM webapps; DELETE FROM remotes; DELETE FROM n8n_instances; DELETE FROM n8n_workflows;"
 rm -- "$fixture/data/clipboard/$text_id" "$fixture/data/clipboard/$image_id"
 printf '%s' '{"version":1,"id":"22222222-2222-2222-2222-222222222222","name":"New","token":"MY"}' \
     > "$fixture/keyring/22222222-2222-2222-2222-222222222222.json"
@@ -132,7 +138,11 @@ jq -se '.[-1].type == "done" and (.[-1].recovery | length > 0)' "$fixture/import
 sqlite3 "$database" 'SELECT payload_json FROM webapps;' | jq -e '.profile=="Test Profile" and .arguments==["literal $(no-execution)"]' >/dev/null
 sqlite3 "$database" 'SELECT payload_json FROM remotes;' | jq -e '.password=="private fixture $() literal" and .arguments==["/drive:Docs,/private fixture path"]' >/dev/null
 [[ $(sha256sum "$remote_runtime_database") == "$remote_runtime_hash" ]]
-printf 'PASS: webapp and remote credentials/options survive encrypted restore; runtime connections stay outside backup\n'
+[[ $(sqlite3 "$database" 'SELECT COUNT(*) FROM n8n_instances; SELECT COUNT(*) FROM n8n_workflows;') == $'2\n2' ]]
+sqlite3 "$database" "SELECT payload_json FROM n8n_instances WHERE id='n8n-a';" | jq -e '.apiKey=="private fixture a" and .category=="personal"' >/dev/null
+sqlite3 "$database" "SELECT payload_json FROM n8n_instances WHERE id='n8n-b';" | jq -e '.apiKey=="private fixture b" and .category=="work"' >/dev/null
+[[ $(sqlite3 "$database" "SELECT url FROM n8n_workflows WHERE instance_id='n8n-a' AND id='same';") == https://personal.example.test/base/workflow/same ]]
+printf 'PASS: webapp, remote and multi-instance n8n credentials/caches survive encrypted restore; runtime connections stay outside backup\n'
 [[ $(sqlite3 "$database" "SELECT value_json FROM preferences WHERE key='clock.showSeconds';") == true ]]
 jq -se '.[-1].report | .warningCount == 5 and .counts == {directories:1,sources:1,projects:1,workspaces:1} and
     (.unchecked | length == 1 and .[0].path == "smb://server/share") and .pendingNotice' "$fixture/import.log" >/dev/null

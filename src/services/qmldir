@@ -54,3 +54,6 @@ singleton WebappService 1.0 webapps/WebappService.qml
 singleton RemoteRepository 1.0 storage/RemoteRepository.qml
 
 singleton RemoteService 1.0 remotes/RemoteService.qml
+
+singleton N8nRepository 1.0 storage/N8nRepository.qml
+singleton N8nService 1.0 n8n/N8nService.qml

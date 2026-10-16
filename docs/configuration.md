@@ -284,3 +284,12 @@ and a netcat-compatible readiness probe. Commands are literal argument arrays.
 `remoteRdpArguments` supplies initial arguments for newly created records; changing
 it does not overwrite existing records. SSH key paths belong to their managed host.
 SSH uses configured keys/agents in batch mode rather than prompting in a hidden terminal.
+
+## n8n
+
+Use n8n's Manage tab for multiple private instance connections: address, API key,
+browser/profile, enabled state and Personal/Work category. Connections and each
+instance's cached workflow list are stored in SQLite and encrypted backups.
+Browser commands and available profile choices reuse `Config.webappBrowsers`;
+work filtering reuses `pickerWorkStatus`. No API key or instance address belongs
+in public Config, provider JSON or environment files. Refresh is explicit only.

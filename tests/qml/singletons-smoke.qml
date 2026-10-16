@@ -6,6 +6,7 @@ import "../../src/services/clipboard" as Clipboard
 import "../../src/services/audio" as Audio
 import "../../src/services/time" as Time
 import "../../src/services/recording" as Recording
+import "../../src/services/n8n" as N8n
 import "../../src/config" as Settings
 import "../../src/theme" as Styling
 import "../../src/theme/ui" as UI
@@ -28,6 +29,8 @@ Scope {
                 ["DbService",Services.DbService,Storage.DbService],
                 ["Timespan",Services.Timespan,Time.Timespan],
                 ["RecordingService",Services.RecordingService,Recording.RecordingService],
+                ["N8nService",Services.N8nService,N8n.N8nService],
+                ["N8nRepository",Services.N8nRepository,Storage.N8nRepository],
                 ["Theme",Settings.Theme,Styling.Theme],
                 ["PreferencesRepository",Services.PreferencesRepository,Storage.PreferencesRepository],
                 ["ClipboardRepository",Services.ClipboardRepository,Storage.ClipboardRepository],

@@ -60,7 +60,7 @@ if [[ ${1:-} == --provider-config ]]; then
 fi
 
 case ${1:-apps} in
-    apps|clipboard|projects|directories|webapps|remotes) ipc call launcher "${1:-apps}"; exit ;;
+    apps|clipboard|projects|directories|webapps|remotes|n8n) ipc call launcher "${1:-apps}"; exit ;;
     windows) ipc call launcher windows "${2:-all}"; exit ;;
     expose) ipc call launcher expose "${2:-current}"; exit ;;
     provider)
@@ -73,7 +73,7 @@ case ${1:-apps} in
         esac
         case $name in
             bookmarks|books|power|screenshot|recording|encode-qrcode|wallpaper) provider="$launcher_dir/providers/$name.sh" ;;
-            n8n) provider="$launcher_dir/providers/web/$name.sh" ;;
+            n8n) ipc call launcher n8n; exit ;;
             remotes) ipc call launcher remotes; exit ;;
             *) fail "Unknown provider: $name" ;;
         esac

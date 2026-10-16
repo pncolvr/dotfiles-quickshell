@@ -8,6 +8,7 @@ Singleton {
     required property string tableName
     required property string entryLabel
     required property var validateEntry
+    property var removeRelated: (tx,id) => {}
     property var entries: []
     property string error: ''
     function reload() {
@@ -34,7 +35,10 @@ Singleton {
         return reload()
     }
     function remove(id) {
-        if (!DbService.write(tx=>tx.executeSql('DELETE FROM '+tableName+' WHERE id=?',[id]))) { error=DbService.error; return false }
+        if (!DbService.write(tx=>{
+            removeRelated(tx,id)
+            tx.executeSql('DELETE FROM '+tableName+' WHERE id=?',[id])
+        })) { error=DbService.error; return false }
         return reload()
     }
     Connections { target: DbService; function onReadyChanged() { if (DbService.ready) root.reload() } }

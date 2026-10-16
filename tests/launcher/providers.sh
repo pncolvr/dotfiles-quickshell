@@ -39,7 +39,7 @@ if [[ ${5:-} == alerts ]]; then
     printf '\n' >> "$PROVIDER_TEST_DIR/actions"
     exit 0
 fi
-if [[ ${6:-} == projects || ${6:-} == projectUrls || ${6:-} == directories || ${6:-} == webapps || ${6:-} == remotes ]]; then
+if [[ ${6:-} == projects || ${6:-} == projectUrls || ${6:-} == directories || ${6:-} == webapps || ${6:-} == remotes || ${6:-} == n8n ]]; then
     printf 'native <%s>\n' "$6" >> "$PROVIDER_TEST_DIR/actions"
     exit 0
 fi
@@ -145,9 +145,6 @@ cat > "$HOME/.config/qutebrowser/bookmarks/urls" <<'DATA'
 https://example.test/alpha Alpha
 https://example.test/beta Beta
 DATA
-cat > "$providers/web/n8n.json" <<'JSON'
-{"action":"default","items":[{"title":"Alpha","result":"https://example.test/workflow/alpha"},{"title":"Beta","result":"https://example.test/workflow/beta"}]}
-JSON
 jq -n --arg home "$HOME" '{action:"output",items:[
     {title:"Alpha",result:($home + "/alpha.pdf")},
     {title:"Beta",result:($home + "/beta.pdf")}
@@ -174,18 +171,17 @@ run_provider() {
     [[ ! -s $test_dir/error ]] || { cat "$test_dir/error" >&2; exit 1; }
     printf 'PASS: %s provider dispatch, shared helpers and selected action\n' "$name"
 }
-for provider in code github directories webapps remotes; do
+for provider in code github directories webapps remotes n8n; do
     : > "$test_dir/actions"; : > "$test_dir/menus"
     bash "$picker" provider "$provider"
-    if [[ $provider == code ]]; then expect_action 'native <projects>';
-    elif [[ $provider == github ]]; then expect_action 'native <projectUrls>';
-    elif [[ $provider == directories ]]; then expect_action 'native <directories>';
-    elif [[ $provider == webapps ]]; then expect_action 'native <webapps>';
-    else expect_action 'native <remotes>'; fi
+    case $provider in
+        code) expect_action 'native <projects>' ;;
+        github) expect_action 'native <projectUrls>' ;;
+        *) expect_action "native <$provider>" ;;
+    esac
     [[ ! -s $test_dir/menus ]]
 done
-printf 'PASS: projects, GitHub, directories Webapps and Remotes dispatch to native IPC without a JSON cache\n'
-run_provider n8n 'browser <https://example.test/workflow/alpha>'
+printf 'PASS: projects, GitHub, directories, Webapps, Remotes and n8n dispatch to native IPC without a JSON cache\n'
 run_provider bookmarks 'browser <https://example.test/alpha>'
 run_provider books "zathura <$HOME/alpha.pdf>" --pick
 run_provider power 'loginctl <lock-session>'

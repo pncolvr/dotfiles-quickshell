@@ -1,0 +1,34 @@
+pragma ComponentBehavior: Bound
+import QtQuick
+import "../../services"
+import "../../theme"
+import "../../theme/ui" as UI
+
+ManagedCollectionPanel {
+    id: root
+    service:N8nService
+    collectionName:'n8n'
+    pickerMode:PickerService.Mode.N8n
+    entryForm:N8nInstanceForm {}
+    Shortcut {
+        sequence:'Ctrl+R'; enabled:root.sessionActive && !root.managing
+        onActivated:N8nService.refresh()
+    }
+    listActionButtons: Component {
+        Row {
+            spacing:Theme.controlSpacing
+            UI.ActionButton {
+                id: refresh
+                objectName:'n8nRefresh'; glyph:Theme.refreshIcon; label:'Refresh'
+                enabled:!N8nService.refreshing && !!N8nService.availableEntries.length
+                hint:'Refresh workflows for the visible instances (Ctrl+R)'
+                onClicked:N8nService.refresh()
+            }
+            UI.ColumnText {
+                width:Math.max(0,parent.width-refresh.width-Theme.controlSpacing)
+                text:N8nService.refreshStatus; color:Theme.inactive
+                anchors.verticalCenter:parent.verticalCenter; elide:Text.ElideRight
+            }
+        }
+    }
+}

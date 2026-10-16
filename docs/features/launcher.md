@@ -34,7 +34,7 @@ directory hints fit one line; GitHub groups its selection shortcuts on separate 
 ## Internal dispatch
 
 `PickerService.Mode` identifies the internal modes: `None`, `Menu`, `Projects`,
-`Directories`, `Apps`, `Windows`, `Clipboard`, `Secret`, `Webapps` and `Remotes`. Acceptance and panel selection
+`Directories`, `Apps`, `Windows`, `Clipboard`, `Secret`, `Webapps`, `Remotes` and `N8n`. Acceptance and panel selection
 use switches on that enum; panels and services use the same values for their
 mode checks. `begin()` accepts an enum value. IPC command names and provider
 request/reply formats stay unchanged; enum numbers are not part of that protocol.
@@ -229,8 +229,8 @@ names are `code`, `webapps`, `github`, `n8n`, `remotes`, `bookmarks`,
 `books`, `directories`, `media`, `power`, `screenshot`, `recording`, `encode-qrcode`, and `wallpaper`.
 Their shared JSON handler and direct menu calls invoke `launcher.sh`; no Rofi
 adapter or PATH override is required. `_common/` holds the shared Bash helpers;
-`web/` contains webapps and n8n, and `remotes/` contains the VM/RDP
-scripts. Projects, GitHub and directories dispatch directly to native QML services; their
+`web/` retains direct-call aliases for Webapps and n8n, and `remotes/` retains connection aliases.
+Projects, GitHub, directories, Webapps, Remotes and n8n dispatch directly to native QML services; their
 former Bash providers are removed. The other providers are named `<provider>.sh`. Browser selection,
 work/personal filtering, editor profiles and cache rebuild flags are preserved.
 
@@ -319,6 +319,43 @@ covered by the existing encrypted backup/restore flow.
 
 Add, edit and remove entries directly in Manage. Webapps requires no provider JSON
 or browser environment file; its saved entries restore with the database backup.
+
+### n8n workflows
+
+**Meta+Shift+N**, `launcher.sh provider n8n`, `launcher.sh n8n` and
+`qs ipc call launcher n8n` open the native workflow picker. It combines cached
+workflows from every eligible instance, with the instance name on each row.
+Each instance also has an **Open instance** row, available before its first refresh.
+Search matches workflow names, instance names and editor URLs.
+
+**Ctrl+M** switches to Manage; **Ctrl+A** adds an instance there. Store each
+instance's name, address (including any base path), API key, browser/profile,
+window mode, Personal/Work category and enabled state. Browser fields are shared
+with Webapps and use `Config.webappBrowsers`. Keys use the shared masked secret
+field. Private connection settings and workflow caches live in the main SQLite
+database and its encrypted backup, with no provider JSON or Grimoire dependency.
+
+Personal instances remain available; Work instances appear while work status is
+active. **Ctrl+W** toggles all/status filtering, resetting on each opening.
+Disabled instances remain in Manage and are excluded from launching and Refresh.
+
+**Refresh** or **Ctrl+R** fetches the currently eligible instances. Opening the
+picker uses its cache immediately and makes no API requests. Refresh is explicit
+only: no periodic or stale-on-open polling. Each instance's complete paginated
+response replaces its own cache in one transaction, reconciling names, additions
+and deletions by workflow ID. Identical IDs on different instances are independent.
+Failed, incomplete, repeated, oversized or timed-out responses keep that instance's
+last good list; successful instances still update. A valid empty list removes old
+workflows while retaining the instance-home row. Changing an instance address
+hides its old-source workflows until a successful refresh.
+
+Create a key in n8n's **Settings → n8n API** and enter it in Manage. The client
+only sends GET requests to `api/v1/workflows`, follows pagination and stores names,
+IDs and editor links. It never invokes workflows. API keys travel through stdin
+in the shared bounded JSON GET component, not process arguments; redirects are
+rejected. Enterprise installations can restrict the key to `workflow:list`;
+non-Enterprise keys have broader account access according to the
+[n8n authentication documentation](https://docs.n8n.io/api/authentication/).
 
 ### Remotes
 
@@ -524,12 +561,9 @@ the live bar or the read-only `provider-config.qml` exporter when offline. It
 reuses private launcher FIFOs and saves no settings cache. Old screenshot,
 recording, wallpaper and shared-helper `.env` files are no longer read.
 
-Private collections still live beside their providers and stay Git-ignored:
-
-- `web/n8n.json`: workflow picker entries (separate discovery review pending).
-- Remotes uses its native Manage tab and SQLite; no private hosts JSON is required.
-  RDP option strings support quotes and backslash escapes; shell expressions and
-  wildcards are passed literally.
+Webapps, Remotes and n8n use native Manage tabs and SQLite; their old private JSON
+files are not read and no manual import interface is required. RDP option strings
+support quotes and backslash escapes; shell expressions and wildcards stay literal.
 
 Recording offers no audio, desktop audio, microphone audio, or both. Audio modes
 open the relevant output and microphone pickers, with the current defaults first

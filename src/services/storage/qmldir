@@ -14,3 +14,5 @@ singleton WebappRepository 1.0 WebappRepository.qml
 ManagedCollectionRepository 1.0 ManagedCollectionRepository.qml
 
 singleton RemoteRepository 1.0 RemoteRepository.qml
+
+singleton N8nRepository 1.0 N8nRepository.qml
