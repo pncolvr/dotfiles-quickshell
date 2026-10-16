@@ -45,7 +45,7 @@ directory hints fit one line; GitHub groups its selection shortcuts on separate 
 | `secret_prompt.sh` / `pinentry-rbw` | External password clients, owner tracking and pinentry protocol; secret values remain on private pipes. |
 | `provider-config.qml` and `--provider-config` | Shared Config export while the bar is running, plus the existing offline exporter needed by wallpaper restoration. |
 | `_common/utils.sh` / `handle.sh` | Shared provider configuration, menu result handling and external browser/file-manager actions. |
-| Bookmarks / Books | Read existing bookmark files and build/use book metadata caches before showing a native picker. |
+| Bookmarks | Read existing bookmark files before showing a native picker. |
 | Power | Noninteractive command execution and offline idle locking. PowerService owns the native choices and action order. |
 | Screenshot | Coordinate capture, OCR/QR decoding, annotation and file-manager tools. |
 | Recording | Prepare capture/audio choices for the detached recording worker; the native service owns toggle/session state. |
@@ -277,14 +277,15 @@ bash "$picker" provider code
 Providers live together in `src/services/launcher/providers/`, reusing the existing
 Bash actions and cache locations. Available
 names are `code`, `webapps`, `github`, `n8n`, `remotes`, `bookmarks`,
-`books`, `directories`, `power`, `screenshot`, `recording`, `encode-qrcode`, and `wallpaper`.
+`directories`, `power`, `screenshot`, `recording`, `encode-qrcode`, and `wallpaper`.
 Their shared JSON handler and direct menu calls invoke `launcher.sh`; no Rofi
 adapter or PATH override is required. `_common/` holds the shared Bash helpers.
 The unused standalone Webapps, n8n and Remotes forwarding scripts are removed;
 the public `launcher.sh` aliases remain available for shell callers.
 Projects, GitHub, directories, Webapps, Remotes, n8n and the interactive Power entry dispatch directly to native QML services; their
 former forwarding providers are removed; Power retains its noninteractive executor. The other providers are named `<provider>.sh`. Browser selection,
-work/personal filtering, editor profiles and cache rebuild flags are preserved.
+work/personal filtering and editor profiles are preserved. The unused Books provider
+and its Meta+Shift+Period binding are retired.
 
 `launcher.sh provider encode-qrcode` opens a text prompt in the launcher.
 Type or paste text and press Enter to generate a QR PNG, copy it to the Wayland
@@ -645,7 +646,7 @@ requests are not routed through compositor shortcuts. Full restart/recovery stay
 external so it remains possible when the bar is not running.
 
 The native service-backed bindings and Power menu orchestration are migrated.
-Books, Bookmarks, Screenshot/OCR/QR decoding, QR encoding, Wallpaper and recording setup still
+Bookmarks, Screenshot/OCR/QR decoding, QR encoding, Wallpaper and recording setup still
 use their existing interactive scripts. Moving their orchestration into QML is the
 next migration stage: feature services should collect choices and pass prepared
 options to external tools/workers, avoiding a script reopening the picker through
@@ -654,8 +655,7 @@ available through that migration.
 
 Shell-backed workflows use
 `launcher.sh provider NAME [ARGS...]`; callers should use this entry point rather
-than reaching into the provider tree. Books supports
-`--pick` and `--rebuild-cache`. Qutebrowser's media shortcuts
+than reaching into the provider tree. Qutebrowser's media shortcuts
 call the separate `to_mpv` userscript in
 `~/.local/share/qutebrowser/userscripts/` for direct mpv playback.
 Meta+I, then T, opens Twitch through the native `quickshell:bar-twitch` action; the live-streamer JSON

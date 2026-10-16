@@ -128,7 +128,7 @@ case $name in
 esac
 BASH
 chmod +x "$test_dir/bin/qs" "$test_dir/bin/action"
-for command in hyprctl code zathura xdg-open dbus-send pcmanfm-qt virsh nc sdl-freerdp3 systemctl loginctl wf-recorder hyprshot satty pactl slurp sleep pgrep pkill notify-send wl-copy tesseract zbarimg; do
+for command in hyprctl code xdg-open dbus-send pcmanfm-qt virsh nc sdl-freerdp3 systemctl loginctl wf-recorder hyprshot satty pactl slurp sleep pgrep pkill notify-send wl-copy tesseract zbarimg; do
     ln -s action "$test_dir/bin/$command"
 done
 cat > "$ZDOTDIR/scripts/default-browser/default-browser.sh" <<'BASH'
@@ -140,10 +140,6 @@ cat > "$HOME/.config/qutebrowser/bookmarks/urls" <<'DATA'
 https://example.test/alpha Alpha
 https://example.test/beta Beta
 DATA
-jq -n --arg home "$HOME" '{action:"output",items:[
-    {title:"Alpha",result:($home + "/alpha.pdf")},
-    {title:"Beta",result:($home + "/beta.pdf")}
-]}' > "$XDG_CACHE_HOME/books_${USER}"
 for old_config in "$providers/screenshot.env" "$providers/recording.env" "$providers/_common/utils.env"; do
     printf 'touch %q\n' "$test_dir/env-executed" > "$old_config"
 done
@@ -178,7 +174,6 @@ for provider in code github directories webapps remotes n8n power; do
 done
 printf 'PASS: projects, GitHub, directories, Webapps, Remotes, n8n and Power dispatch to native IPC without a JSON cache\n'
 run_provider bookmarks 'browser <https://example.test/alpha>'
-run_provider books "zathura <$HOME/alpha.pdf>" --pick
 run_provider screenshot 'hyprshot <--freeze> <--silent> <--clipboard-only> <--raw> <--mode> <output>'
 prepare_recording() {
     PROVIDER_TEST_NAME=recording bash "$providers/recording.sh" --prepare > "$test_dir/output" 2> "$test_dir/error"

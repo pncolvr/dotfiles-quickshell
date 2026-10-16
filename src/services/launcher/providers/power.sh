@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
-# Noninteractive command execution, including idle locking without a running bar.
+# Retained executor: PowerService owns the native menu but calls this script for actions.
+# Hypridle also reaches it through launcher.sh provider power Lock, even without the bar.
+# Keep it until both execution paths have replacements that preserve tracking pause.
 set -euo pipefail
 provider_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 config_root=$(cd -- "$provider_dir/../../../.." && pwd)
