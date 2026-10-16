@@ -356,6 +356,11 @@ bash tests/directories/directories.sh
 bash tests/qml/lint.sh
 ```
 
+The standalone avatar padding-mask test imports the production `ImageCrop.mjs`
+function directly, following the image-detector test pattern. Its five assertions
+run under `qmltestrunner` without loading Quickshell-only UI services. Runtime
+notification UI and protocol checks continue to run through `qs` below.
+
 The notification tests use a private D-Bus session and temporary databases, with
 Hypr commands mocked. They check protocol receipt, replacement, expiry and close
 reasons; source policies; action/click behavior; durable images; pagination; schema

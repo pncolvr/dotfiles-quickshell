@@ -1,11 +1,9 @@
 import QtQuick
 import QtTest
-import "../../src/modules/system/notifications" as Notifications
+import "../../src/theme/ui/components/ImageCrop.mjs" as ImageCrop
 
 TestCase {
     name: "NotificationImageMask"
-
-    Notifications.NotificationAvatar { id: avatar; source: ""; visible: false }
 
     function mask(rows) {
         const width = rows[0].length
@@ -20,7 +18,7 @@ TestCase {
                 pixels[offset + 3] = pixel === "T" ? 0 : 255
             }
         }
-        return Array.from(avatar.alphaMask(pixels, width, rows.length))
+        return Array.from(ImageCrop.paddingMask(pixels, width, rows.length))
     }
     function test_paddingPreservesEnclosedBlackDetails() {
         compare(mask(["BBBBB", "BRRRB", "BRBRB", "BRRRB", "BBBBB"]),
