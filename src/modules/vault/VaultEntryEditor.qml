@@ -29,9 +29,9 @@ Column {
             uris: urls.text.split("\n").map(value => value.trim()).filter(Boolean)}
     }
     spacing: Theme.controlSpacing
-    UI.InputField { id: title; objectName: "vaultTitle"; width: parent.width; visible: root.adding; placeholderText: "Entry title"; pauseTooltipDismissal: false }
+    UI.InputField { id: title; objectName: "vaultTitle"; width: parent.width; visible: root.adding; placeholderText: "Entry title"; retainPanelWhileEditing: false }
     UI.TextArea { id: urls; width: parent.width; visible: root.adding; placeholderText: "Website URLs, one per line" }
-    UI.InputField { id: username; width: parent.width; visible: root.adding; placeholderText: "Username / email"; pauseTooltipDismissal: false }
+    UI.InputField { id: username; width: parent.width; visible: root.adding; placeholderText: "Username / email"; retainPanelWhileEditing: false }
     Item {
         width: parent.width
         height: Theme.controlHeight
@@ -52,7 +52,7 @@ Column {
             text: "24"
             placeholderText: "Length"
             Accessible.name: "Generated password length"
-            pauseTooltipDismissal: false
+            retainPanelWhileEditing: false
             validator: IntValidator { bottom: 8; top: 128 }
         }
         Row {
@@ -64,6 +64,6 @@ Column {
         }
     }
     UI.SecretField { revealObjectName: "vaultEye"; id: password; objectName: "vaultPassword"; width: parent.width; visible: root.adding || RbwService.detail?.data !== null; placeholderText: "Password" }
-    UI.InputField { id: folder; width: parent.width; visible: root.adding; placeholderText: "Folder (optional, existing or new)"; pauseTooltipDismissal: false }
+    UI.InputField { id: folder; width: parent.width; visible: root.adding; placeholderText: "Folder (optional, existing or new)"; retainPanelWhileEditing: false }
     UI.ComboSelector { width: parent.width; visible: root.adding && RbwService.folders.length > 0; compact: true; options: RbwService.folders.map(value => ({name: value, description: value})); selectedName: folder.text; placeholder: "Choose an existing folder"; onSelected: name => folder.text = name }
 }

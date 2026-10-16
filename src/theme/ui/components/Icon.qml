@@ -3,9 +3,11 @@ import "../"
 
 Rectangle {
     id: root
+    property alias font: icon.font
     property alias text: icon.text
     property alias iconColor: icon.color
     property bool centerVertical: true
+    readonly property real glyphWidth: iconMetrics.tightBoundingRect.width
 
     IconText {
         id: icon

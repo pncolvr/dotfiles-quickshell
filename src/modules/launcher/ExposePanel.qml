@@ -118,7 +118,7 @@ FocusScope {
             anchors.bottom: parent.bottom
             width: root.searchWidth
             placeholderText: "Search windows"
-            pauseTooltipDismissal: false
+            retainPanelWhileEditing: false
             resetWithTooltip: false
             handleEscape: false
             onTextChanged: root.picker.query = text

@@ -146,8 +146,8 @@ shader's sine curve uses `PulseClock`'s shared elapsed-time origin, so later-sta
 reshown indicators join the same pulse phase. Each effect synchronizes once after
 its first rendered frame, then disconnects that signal; no per-frame global timer
 or JavaScript synchronization runs. The
-layer and animation share one gate: a requested pulse, visible text and a visible
-containing window. Hiding either stops the animation and releases the layer;
+layer and animation share one gate: a requested pulse, visible text, a visible
+containing window and the shared motion policy. Hiding either stops the animation and releases the layer;
 showing it again resumes the requested pulse. Muted mic and speaker indicators
 pulse only while an application's active PipeWire link requests their default
 device. Paused links and requests routed to another device do not keep them
@@ -156,7 +156,9 @@ remain in Theme.qml. Rendering still runs while the pulse is active.
 Default-device link groups must be bound with `PwObjectTracker` before their
 state can be used; an unbound group's state does not reflect active audio.
 Run `bash tests/qml/pulse.sh` in a Wayland session to verify rendered colors and
-stopping behavior; software/offscreen tests cannot validate this GPU effect.
+stopping behavior, including an independently enabled status pulse with the master
+off during sharing; software/offscreen tests cannot validate this GPU effect. The
+fixture uses isolated Config switches and input-transparent native surfaces.
 The shader source and compiled bundle are both tracked. After changing it, rebuild:
 
 ```sh
@@ -501,19 +503,17 @@ and description fallbacks. `--native` additionally creates two disposable video
 nodes on a private PipeWire server and checks their descriptions in the real
 tooltip. The native fixture requires `pw-cli`; it does not affect desktop captures.
 
-`bash tests/ui/twitch-panel.sh` briefly opens isolated panels on Wayland and
-restores focus and pointer afterward. It verifies Twitch and TOTP search focus,
-pointer targeting, repeated opens, editor cancellation, pins, Escape, `twi`
-typing in TOTP, hidden-module handling, and volume opening without clicking.
-It also checks panel reuse, pointer placement after bar layout changes, and
-tray expansion without an extra mouse movement, button-edge hover, and dismissal
-when the pointer leaves.
-The TOTP keyring and runtime storage are isolated.
+`bash tests/ui/twitch-panel.sh` is an optional Wayland check that briefly opens
+isolated panels and restores focus afterward. It checks explicit search activation,
+on-demand focus after activation, stationary pointer position, repeated opens,
+editor cancellation, manual pins, Escape, private TOTP, and volume without muting.
+The tray shortcut shows the same `TrayContents` used by its passive bar expansion.
+Avoid running native focus/pointer fixtures while the desktop is in use.
 
-Bar modules declare their own `moduleName`; Twitch and TOTP also set
-`moduleFocusSearch: true`. `TooltipArea` registers those modules with
-`BarModuleService`, while the tray registers its own trigger. Bar layout files
-only supply placement and window references. Capture detection lives in
+Bar modules declare `moduleName`; `TooltipArea` registers them with
+`BarModuleService` and owns their left-click pin action and pin color. The tray
+registers its own passive trigger and shares its app items with its keyboard popup.
+Bar layout files only supply placement and window references. Capture detection lives in
 `services/audio/ScreencastModel.qml`, whose stream list follows its native
 PipeWire node and link inputs.
 
@@ -538,22 +538,42 @@ The checks cover helper-role labels, table headers, count badges and separate
 network rate columns. Set `STATS_TEST_SCREENSHOT=/tmp/stats.png` to save a CPU
 tab preview, or `STATS_TEST_NETWORK_SCREENSHOT=/tmp/stats-network.png` for Network.
 
-## Panel search
+## Panel lifecycle
 
 ```sh
 python3 tests/ui/tooltip-search.py
+bash tests/ui/module-pins.sh
+bash tests/ui/tooltip-hover.sh
 ```
 
-This uses a fake compositor socket and checks typing, focus, mouse movement,
-and dismissal without moving the real mouse.
+These offscreen checks never move the real pointer or desktop focus. They verify
+search dismissal, scoped form editing, native-child cleanup and focus restoration,
+manual pin preservation, multiple retention owners, keyboard replacement, Escape
+hierarchy, and persistent manager drafts. All 13 bar modules are clicked to check
+shared pinning/color; Calendar mappings and the Updates action buttons are also
+checked with mocked desktop actions. Hover checks cover stationary source changes,
+late hide requests, popup options, and leaving the panel.
 
-Run `bash tests/ui/twitch-panel.sh` on Wayland to check Twitch open IPC,
-opening without auto-pinning, search focus and typing, on-demand focus after
-activation, pointer placement on the icon, repeated opening, add cancellation,
-manual pin preservation, Escape and mouse-click pin toggling. When a window was
-focused before the test, it also checks focusing that window while Twitch is
-manually pinned, then refocusing Twitch through IPC. It briefly opens an
-isolated panel, then restores the previous window focus and pointer position.
+`UI.WindowFocusHandler` owns activation, native-child handoff, cancellation of
+stale focus callbacks and outside-click policy. Launchers activate explicitly;
+`TooltipFocusHandler` is a thin passive-hover adapter with owner-scoped retention.
+Vault and secret prompts use the persistent policy: changing apps keeps the view
+alive without reclaiming focus. `UI.PanelFocusScope` provides outer Escape after
+inner editors and popups; `UI.FolderDialog` shares native folder selection.
+Search fields never retain panels; real form fields opt into
+`retainPanelWhileEditing`, released when their field or owning window loses focus.
+Temporary holds and active drags never toggle the manual pin flag. Pointer polling
+and the old global typing pause are removed.
+
+Run `bash tests/ui/unlock-focus.sh` for a brief native synthetic unlock check.
+It verifies password focus and typing while the manager yields, using private test
+storage without accessing a vault or moving the cursor. The offscreen lifecycle
+fixture also reproduces an initial map/deactivation race that must preserve the
+explicit focus request. Hover adapters keep native keyboard input disabled until
+interaction, and include their bar trigger window in an active focus grab.
+
+Native folder portal and compositor focus behavior still require a desktop check
+on the installed compositor; offscreen tests exercise their lifetime contracts.
 
 ## Service failure regressions
 
@@ -624,6 +644,13 @@ filtering active throughout an exit transition, which can swallow the next click
 
 `TooltipPointerHandler` combines panel hover with the individual items in Qt's
 popup overlay, so unpinned tooltips remain open while selecting dropdown options.
+Hide requests and timer expiry both respect current trigger/panel hover, pinning,
+typing protection and dragging. The observer resynchronizes hover after source,
+screen or window visibility changes, including when the pointer stays still.
+Run `bash tests/ui/tooltip-hover.sh` for offscreen regression checks covering late
+hide requests over triggers, panels and popups, stationary source changes, and
+normal dismissal after leaving. It never moves the real cursor. Run
+`python3 tests/ui/tooltip-search.py` for typing protection and pinning coverage.
 The observers follow popup/window lifetimes. They avoid making the full overlay
 hoverable, which would steal hover and the hand cursor from buttons when their
 hints appear. Run
@@ -633,3 +660,51 @@ holds and moves the pointer over upper/lower action buttons while their delayed
 hints are visible, checking that button hover does not churn in either host.
 The test uses synthetic devices and entries with deterministic Qt mouse events;
 it does not change audio routing or vault data.
+
+## Shared motion and native folder handoff
+
+Use `UI.MotionAnimation` and `UI.MotionUniformAnimator` for numeric and shader
+animations. Set `animationDuration` for their normal timing. Their shared
+`MotionGuard` settles running finite transitions when `UI.MotionPolicy.enabled`
+changes. Use `UI.MotionBehavior on property` with `motionEnabled` for bound
+properties; it snaps active behavior transitions while preserving their bindings.
+All primitives enforce the global gate even when a component enables
+its local animation option. Only `MotionPolicy` reads `animateDuringScreenShare`
+and the active sharing state. Gate decorative frame callbacks and shader loops
+with the same policy; functional model batching and expiry clocks stay active.
+
+Top-panel consumers set `requestedVisible` and `requestedScreen` on
+`TopPanelTooltip`, leaving physical `visible` to the shared presentation lifecycle.
+`TopPanelSurface` releases its input region at logical close. Focus handlers
+also observe logical visibility, so the closing visual cannot retain input.
+`PanelMotion` coalesces lazy layout, interpolates geometry, reverses interrupted
+open/close transitions, and reserves the larger native render area during resize.
+Clipboard's own interpolated geometry uses `continuousGeometry` to avoid easing
+it twice. Private hosts reuse the same implementation and private namespace.
+
+Run `bash tests/ui/panel-motion.sh` for reveal, roll-up, resize, retargeting,
+reversal, immediate input release, render-area cleanup, clipboard pass-through
+and global policy interruption. `bash tests/ui/folder-dialog.sh` checks path
+delivery before owner release, encoded paths and cancellation. The shared folder
+dialog emits `folderSelected(path)` while `nativeDialogOpen` still retains its
+owner. Focus restoration waits for a native frame before rearming outside-click
+dismissal. `PanelFocusScope.interactionPending` forwards pending owner operations
+to the hover lifetime adapter without changing pinning.
+
+Recent Files uses its existing `folderAdded` acknowledgement to select the new
+tab and enter the same alias editor as Edit, with the name fully selected.
+`bash tests/files/recent-folder-native.sh` checks the full native handoff with a
+slow folder scan, no hover hold, an unpinned panel, and keyboard replacement of
+the selected name. It uses a private database and never moves the real cursor.
+
+`bash tests/ui/panel-shadow.sh` checks real shadow pixels on the Wayland GPU
+renderer. Its temporary panel accepts no input and never moves the cursor. It
+captures only synthetic panel content, checking the fixed bar edge during
+opening, module replacement and closing. Set `PANEL_SHADOW_FRAMES` to a directory
+to retain those frames. The fixture uses private data and slower test-only timings;
+production animation timings are covered by `tests/ui/panel-motion.sh`.
+
+`bash tests/ui/panel-host.sh` checks a real native panel while switching between
+tall and short tabs with motion disabled. Its buffer and top position stay fixed;
+the visible panel and input region resize independently. The synthetic test window
+accepts no input and never moves the cursor.

@@ -1,12 +1,13 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import "../../../theme/ui" as UI
 import "../../../theme"
 
 Item {
     id: root
     property var entries: []
-    property bool animationsEnabled: true
+    property bool animationsEnabled: UI.MotionPolicy.enabled
     property real edgePadding: 24
     property var cards: []
     property bool initialized: false
@@ -95,28 +96,28 @@ Item {
                 if (root.animationsEnabled) entrance.start()
                 else slideProgress = 0
             }
-            NumberAnimation {
+            UI.MotionAnimation {
                 id: placement
                 target: card
                 property: "y"
-                duration: Theme.notificationMoveDuration
+                animationDuration: Theme.notificationMoveDuration
                 easing.type: Easing.OutCubic
             }
-            NumberAnimation {
+            UI.MotionAnimation {
                 id: entrance
                 target: card
                 property: "slideProgress"
                 to: 0
-                duration: Theme.notificationEnterDuration
+                animationDuration: Theme.notificationEnterDuration
                 easing.type: Easing.OutBack
                 easing.overshoot: 0.8
             }
-            NumberAnimation {
+            UI.MotionAnimation {
                 id: departure
                 target: card
                 property: "slideProgress"
                 to: 1
-                duration: Theme.notificationExitDuration
+                animationDuration: Theme.notificationExitDuration
                 easing.type: Easing.InCubic
                 onFinished: root.retire(card)
             }

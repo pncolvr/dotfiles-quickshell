@@ -18,10 +18,7 @@ UI.TooltipArea {
     }
     UI.BarIcon {
         text: NotificationService.dndEnabled ? Theme.notificationsDndEnabledIcon : Theme.notificationsDndDisabledIcon
-        color: TooltipService.pinned && TooltipService.source === root ? Theme.accent : Theme.text
+        color: root.moduleIconColor
     }
-    onClicked: {
-        const pos = root.mapToGlobal(root.width / 2, 0)
-        TooltipService.togglePin(pos.x, tooltip, root, false, window.screen)
-    }
+
 }

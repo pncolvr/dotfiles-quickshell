@@ -26,6 +26,10 @@ Scope {
         }
         return null
     }
+    function moveTestPointer(item) {
+        const pos = item.mapToGlobal(item.width / 2, item.height / 2)
+        Hyprland.dispatch(`hl.dsp.cursor.move({ x = ${Math.round(pos.x)}, y = ${Math.round(pos.y)} })`)
+    }
     function fail() {
         console.error("FAIL: native private secret picker", root.step, pickerWindow.windowActive, root.helperActive)
         Qt.quit()
@@ -50,7 +54,7 @@ Scope {
             function onFrameSwapped() {
                 if (root.step !== 6) return
                 helperInput.forceActiveFocus()
-                BarModuleService.movePointer(helperInput)
+                root.moveTestPointer(helperInput)
                 Hyprland.dispatch('hl.dsp.focus({ window = "title:^Quickshell synthetic focus check$" })')
                 root.step = 7
             }
@@ -139,7 +143,7 @@ Scope {
                 if (helperInput.text !== "a" || !PickerService.visible || input.text !== "NATIVE_RBW_SYNTHETIC") {
                     root.fail(); return
                 }
-                BarModuleService.movePointer(pickerWindow.panel.panel)
+                root.moveTestPointer(pickerWindow.panel.panel)
                 root.step = 8
                 return
             }

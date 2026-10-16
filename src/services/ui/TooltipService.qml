@@ -2,8 +2,6 @@ pragma Singleton
 
 import QtQml
 import Quickshell
-import Quickshell.Io
-import Quickshell.Hyprland
 import "../../config"
 
 Singleton {
@@ -19,7 +17,8 @@ Singleton {
     readonly property var source: _internal.source
     readonly property var screen: _internal.screen
     readonly property bool ownsTooltipWindow: source?.ownsTooltipWindow === true
-    readonly property bool typingPaused: _internal.typingPaused
+    readonly property bool interactionHeld: _internal.holds.length > 0
+    readonly property bool interactionBlocksReplacement: _internal.holds.some(hold => hold.blocksReplacement)
     readonly property bool dragging: _internal.dragging
 
     QtObject {
@@ -32,21 +31,19 @@ Singleton {
         property Component content: null
         property var source: null
         property var screen: null
-        property bool typingPaused: false
+        property var holds: []
         property bool dragging: false
         property bool triggerHovered: false
         property bool panelHovered: false
-        property var cursorBaseline: null
-        property var lastLocalPointer: null
     }
 
     function show(xPos: real, tooltipContent: Component, tooltipSource, screenCentered, tooltipScreen) {
         if (_internal.dragging) return
         if (_internal.pinned) return
-        if (_internal.typingPaused && _internal.source !== (tooltipSource ?? null)) return
+        if (root.interactionBlocksReplacement && _internal.source !== (tooltipSource ?? null)) return
         if (_internal.source !== (tooltipSource ?? null) || _internal.screen !== (tooltipScreen ?? null)) {
             _internal.keyboardActive = false
-            _internal.typingPaused = false
+            _internal.holds = []
             _internal.triggerHovered = false
             _internal.panelHovered = false
         }
@@ -60,12 +57,13 @@ Singleton {
     }
 
     function hide() {
-        if (_internal.pinned || _internal.typingPaused || _internal.dragging) return
+        if (_internal.pinned || root.interactionHeld || _internal.dragging) return
+        if (_internal.triggerHovered || _internal.panelHovered) return
         hideTimer.start()
     }
 
     function togglePin(xPos: real, tooltipContent: Component, tooltipSource, screenCentered, tooltipScreen) {
-        if (_internal.dragging) return
+        if (_internal.dragging || (interactionBlocksReplacement && source !== tooltipSource)) return
         _internal.keyboardActive = false
         if (_internal.pinned && _internal.source === tooltipSource) {
             _internal.pinned = false
@@ -74,27 +72,25 @@ Singleton {
             return
         }
         _internal.pinned = false
-        _internal.typingPaused = false
         show(xPos, tooltipContent, tooltipSource, screenCentered, tooltipScreen)
         _internal.pinned = true
     }
 
     function openForHover(xPos: real, tooltipContent: Component, tooltipSource, screenCentered, tooltipScreen) {
-        if (_internal.dragging) return
+        if (_internal.dragging || (interactionBlocksReplacement && source !== tooltipSource)) return
         const wasManuallyPinned = _internal.pinned && _internal.source === tooltipSource
             && _internal.screen === (tooltipScreen ?? null)
         _internal.pinned = false
-        _internal.typingPaused = false
         _internal.keyboardActive = false
         show(xPos, tooltipContent, tooltipSource, screenCentered, tooltipScreen)
         _internal.pinned = wasManuallyPinned
     }
 
     function openForKeyboard(xPos: real, tooltipContent: Component, tooltipSource, screenCentered, tooltipScreen) {
-        if (_internal.dragging) return
+        if (_internal.dragging || (interactionBlocksReplacement && source !== tooltipSource)) return
         openForHover(xPos, tooltipContent, tooltipSource, screenCentered, tooltipScreen)
         _internal.keyboardActive = true
-        pauseDismissal()
+        hideTimer.stop()
         focusRequested()
     }
 
@@ -103,11 +99,9 @@ Singleton {
         _internal.visible = false
         _internal.pinned = false
         _internal.keyboardActive = false
-        _internal.typingPaused = false
+        _internal.holds = []
         _internal.triggerHovered = false
         _internal.panelHovered = false
-        _internal.cursorBaseline = null
-        _internal.lastLocalPointer = null
         _internal.content = null
         _internal.source = null
         _internal.screen = null
@@ -127,17 +121,14 @@ Singleton {
         if (!_internal.panelHovered && !_internal.triggerHovered) hide()
     }
 
-    function pauseDismissal() {
-        if (!_internal.visible) return
-        if (!_internal.typingPaused) _internal.cursorBaseline = null
-        _internal.typingPaused = true
-        hideTimer.stop()
-    }
-
-    function resumeDismissal() {
-        if (!_internal.typingPaused) return
-        _internal.typingPaused = false
-        if (!_internal.panelHovered && !_internal.triggerHovered) hide()
+    // Each owner releases only its own hold. Replacing/closing the panel drops
+    // every hold, so delayed child callbacks cannot retain the next panel.
+    function setInteraction(owner, active, blocksReplacement = true) {
+        if (!active && !_internal.holds.some(hold => hold.owner === owner)) return
+        const remaining = _internal.holds.filter(hold => hold.owner !== owner)
+        _internal.holds = active && visible ? [...remaining, {owner, blocksReplacement}] : remaining
+        if (root.interactionHeld) hideTimer.stop()
+        else hide()
     }
 
     function setTriggerHovered(tooltipSource, hovered) {
@@ -148,49 +139,17 @@ Singleton {
     }
 
     function setPanelHovered(hovered) {
+        if (_internal.panelHovered && !hovered) _internal.keyboardActive = false
         _internal.panelHovered = hovered
         if (hovered) cancelHide()
         else if (!_internal.triggerHovered) hide()
     }
 
-    function observePointer(xPos, yPos, localEvent = false) {
-        if (!Number.isFinite(xPos) || !Number.isFinite(yPos)) return
-        const previous = localEvent ? _internal.lastLocalPointer : _internal.cursorBaseline
-        if (localEvent) _internal.lastLocalPointer = {x: xPos, y: yPos}
-        else _internal.cursorBaseline = {x: xPos, y: yPos}
-        if (previous && (previous.x !== xPos || previous.y !== yPos)) resumeDismissal()
-    }
-
-    // Hover events stop outside our windows. Query the compositor only while typing
-    // protection is active, so movement elsewhere also restores normal dismissal.
-    Timer {
-        interval: Config.tooltipPointerInterval
-        running: root.typingPaused && root.visible && cursorSocket.path.length > 0
-        repeat: true
-        triggeredOnStart: true
-        onTriggered: if (!cursorSocket.connected) cursorSocket.connected = true
-    }
-
-    Socket {
-        id: cursorSocket
-        path: Hyprland.requestSocketPath
-        onConnectedChanged: if (connected) { write("j/cursorpos"); flush() }
-        parser: SplitParser {
-            splitMarker: "}"
-            onRead: data => {
-                // Hyprland replies once per request; close before the peer does.
-                cursorSocket.connected = false
-                try {
-                    const position = JSON.parse(data + "}")
-                    root.observePointer(position.x, position.y)
-                } catch (_) { /* Ignore incomplete or unavailable compositor replies. */ }
-            }
-        }
-    }
-
     Timer {
         id: hideTimer
         interval: Config.tooltipHideDelay
-        onTriggered: root.dismiss()
+        // A queued expiry can outlive a hover, pin, interaction or drag transition.
+        onTriggered: if (!_internal.pinned && !root.interactionHeld && !_internal.dragging
+            && !_internal.triggerHovered && !_internal.panelHovered) root.dismiss()
     }
 }

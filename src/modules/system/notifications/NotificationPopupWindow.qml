@@ -17,7 +17,7 @@ UI.PrivatePanelWindow {
     id: root
     property var lastScreen: null
     property var targetScreen: null
-    property bool animationsEnabled: Config.animateDuringScreenShare || !AudioService.screencastActive
+    property bool animationsEnabled: UI.MotionPolicy.enabled
     readonly property NotificationPopupStack popupStack: stack
     readonly property int shadowBlurRadius: 32
     readonly property int shadowVerticalOffset: 8

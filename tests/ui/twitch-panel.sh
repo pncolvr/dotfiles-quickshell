@@ -79,13 +79,10 @@ wait_for() {
         sleep 0.03
     done
 }
-pointer_on_icon() {
-    local state cursor
-    state=$(snapshot) || return 1
+pointer_unchanged() {
+    local cursor
     cursor=$(hyprctl cursorpos -j) || return 1
-    jq -e --argjson cursor "$cursor" '
-        .pointerTarget != null and (.pointerTarget | with_entries(.value |= ((. + 0.5) | floor))) == $cursor
-    ' <<< "$state" >/dev/null
+    jq -e --argjson saved "$original_cursor" '. == $saved' <<< "$cursor" >/dev/null
 }
 
 wait_for 'test IPC ready' state_matches '.visible == false'
@@ -93,7 +90,7 @@ ipc bar open twitch >/dev/null
 wait_for 'IPC opens panel and focuses search' state_matches '.visible and .focused and .windowActive'
 wait_for 'keyboard focus returns to on demand after activation' state_matches '.onDemand and (.requestingFocus | not)'
 check_state '(.pinned | not) and .keyboard and .source and .screen' 'panel opens without pinning on the target screen with keyboard focus'
-wait_for 'pointer moves to the center of the Twitch icon' pointer_on_icon
+pointer_unchanged || fail 'opening Twitch moved the pointer'
 ipc twitchpaneltest type alice
 check_state '.text == "alice"' 'typing goes into search'
 ipc twitchpaneltest beginAdd
@@ -131,13 +128,8 @@ wait_for 'bar IPC preserves Twitch search behavior' state_matches '.focused and 
 [[ $(ipc bar open totp) == true ]] || fail 'registered TOTP module opens'
 totp_matches() { ipc twitchpaneltest snapshotTotp | jq -e "$1" >/dev/null; }
 wait_for 'TOTP search gets native keyboard focus' totp_matches '.visible and .focused and .windowActive and .onDemand and .source and .screen and (.pinned | not)'
-pointer_on_totp() {
-    local cursor
-    cursor=$(hyprctl cursorpos -j) || return 1
-    ipc twitchpaneltest snapshotTotp | jq -e --argjson cursor "$cursor" \
-        '(.pointerTarget | with_entries(.value |= ((. + 0.5) | floor))) == $cursor' >/dev/null
-}
-wait_for 'pointer moves to TOTP icon' pointer_on_totp
+pointer_unchanged || fail 'opening TOTP moved the pointer'
+
 ipc twitchpaneltest typeTotp twi
 totp_matches '.text == "twi" and .source and .focused' || fail 'typing twi stays in TOTP search'
 ipc twitchpaneltest beginTotpAdd
@@ -147,8 +139,8 @@ ipc twitchpaneltest pressEscape >/dev/null
 wait_for 'Escape dismisses keyboard TOTP' totp_matches '(.visible | not) and (.keyboard | not)'
 volume_before=$(ipc twitchpaneltest snapshotVolume)
 ipc bar open volume >/dev/null
-wait_for 'ordinary module opens without keyboard focus or pinning' \
-    sh -c 'timeout 3 qs ipc -p "$1" call twitchpaneltest snapshotVolume | jq -e ".visible and .source and (.keyboard | not) and (.pinned | not)" >/dev/null' sh "$entry"
+wait_for 'explicit module opening requests keyboard focus without pinning' \
+    sh -c 'timeout 3 qs ipc -p "$1" call twitchpaneltest snapshotVolume | jq -e ".visible and .source and .keyboard and (.pinned | not)" >/dev/null' sh "$entry"
 volume_after=$(ipc twitchpaneltest snapshotVolume)
 [[ $(jq -c '[.muted,.volume]' <<< "$volume_before") == "$(jq -c '[.muted,.volume]' <<< "$volume_after")" ]] || fail "opening volume must not click or alter audio: before=$volume_before after=$volume_after"
 ipc bar open volume >/dev/null
@@ -156,17 +148,11 @@ ipc bar open volume >/dev/null
 ipc twitchpaneltest showBadge
 wait_for 'layout badge appears before selection' sh -c 'timeout 3 qs ipc -p "$1" call twitchpaneltest snapshotVolume | jq -e ".badge" >/dev/null' sh "$entry"
 ipc twitchpaneltest openAfterBadge >/dev/null
-pointer_on_volume() {
-    local cursor
-    cursor=$(hyprctl cursorpos -j) || return 1
-    ipc twitchpaneltest snapshotVolume | jq -e --argjson cursor "$cursor" \
-        '.visible and .source and .hovered and ((.pointerTarget | with_entries(.value |= ((. + 0.5) | floor))) == $cursor)' >/dev/null
-}
-wait_for 'pointer follows the module after the submap badge disappears' pointer_on_volume
+pointer_unchanged || fail 'bar relayout or volume opening moved the pointer'
 ipc bar open tray >/dev/null
-wait_for 'tray expands without additional pointer movement' sh -c 'timeout 3 qs ipc -p "$1" call twitchpaneltest snapshotTray | jq -e ".expanded and .height >= 30" >/dev/null' sh "$entry"
-hyprctl dispatch 'hl.dsp.cursor.move({ x = 100, y = 100 })' >/dev/null
-wait_for 'tray collapses when the shortcut pointer leaves' sh -c 'timeout 3 qs ipc -p "$1" call twitchpaneltest snapshotTray | jq -e ".expanded | not" >/dev/null' sh "$entry"
+wait_for 'tray shortcut opens the shared tray popup without a cursor warp' sh -c 'timeout 3 qs ipc -p "$1" call twitchpaneltest snapshotTray | jq -e ".popup" >/dev/null' sh "$entry"
+pointer_unchanged || fail 'opening the tray moved the pointer'
+ipc twitchpaneltest dismiss
 [[ $(ipc twitchpaneltest hoverTrayEdge) == true ]] || fail 'tray button hover delivered'
 wait_for 'tray expands at the button edge outside its icon' sh -c 'timeout 3 qs ipc -p "$1" call twitchpaneltest snapshotTray | jq -e ".expanded" >/dev/null' sh "$entry"
 ipc twitchpaneltest leaveBar >/dev/null
@@ -175,6 +161,6 @@ wait_for 'tray collapses after normal hover leaves' sh -c 'timeout 3 qs ipc -p "
 wait_for 'module opens at the button edge outside its icon' sh -c 'timeout 3 qs ipc -p "$1" call twitchpaneltest snapshotVolume | jq -e ".visible and .source and .hovered" >/dev/null' sh "$entry"
 ipc twitchpaneltest leaveBar >/dev/null
 wait_for 'module dismisses after normal hover leaves' sh -c 'timeout 3 qs ipc -p "$1" call twitchpaneltest snapshotVolume | jq -e ".visible | not" >/dev/null' sh "$entry"
-printf 'PASS: native Twitch bar IPC without auto-pinning, target screen, search focus, on-demand focus, pointer coordinates, repeated open, add cancellation, manual pin preservation, Escape, reset and mouse-click pin toggling\n'
-printf 'PASS: bar module registration, hidden/unknown handling, TOTP focus, pointer, typing, reopen, Escape and volume without audio mutation\n'
-printf 'PASS: hovered panel reuse, pointer after bar relayout, immediate tray expansion, button-edge hover and dismissal\n'
+printf 'PASS: native Twitch bar IPC without auto-pinning, target screen, search focus, on-demand focus, stationary pointer, repeated open, add cancellation, manual pin preservation, Escape, reset and mouse-click pin toggling\n'
+printf 'PASS: bar module registration, hidden/unknown handling, TOTP focus, stationary pointer, typing, reopen, Escape and volume without audio mutation\n'
+printf 'PASS: hovered panel reuse, stationary pointer after bar relayout, keyboard tray popup, button-edge hover and dismissal\n'

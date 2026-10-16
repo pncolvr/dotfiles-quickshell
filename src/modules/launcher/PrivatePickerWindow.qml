@@ -14,20 +14,19 @@ PrivateTopPanelTooltip {
     readonly property bool restoringDialogFocus: behavior.restoringDialogFocus
     readonly property bool windowActive: contentItem.Window.active
     readonly property Item previewItem: contentItem
-    screen: Quickshell.screens.includes(picker.targetScreen) ? picker.targetScreen : Quickshell.screens[0] ?? null
-    visible: picker.visible && picker.layout !== "expose" && !!picker.targetScreen
+    requestedScreen: Quickshell.screens.includes(picker.targetScreen) ? picker.targetScreen : Quickshell.screens[0] ?? null
+    requestedVisible: picker.visible && picker.layout !== "expose" && !!picker.targetScreen
         && picker.privateWindow
     contentWidth: behavior.boundedContentWidth
     contentHeight: behavior.boundedContentHeight
-    implicitHeight: behavior.reservedHostHeight
+    continuousGeometry: panel?.transitioning ?? false
+    reservedContentHeight: behavior.reservedHostHeight - shadowBottomPadding
     contentX: behavior.centeredContentX
     backgroundOpacity: Theme.pickerBackgroundOpacity
 
     WlrLayershell.layer: WlrLayer.Overlay
     // Activate once without a cursor warp, then allow desktop focus changes.
-    WlrLayershell.keyboardFocus: panel?.nativeDialogOpen ? WlrKeyboardFocus.None
-        : behavior.secretPrompt && !behavior.requestingKeyboardFocus ? WlrKeyboardFocus.OnDemand
-        : WlrKeyboardFocus.Exclusive
+    WlrLayershell.keyboardFocus: behavior.keyboardFocusMode
 
     PickerWindowContent { id: behavior; host: root; picker: root.picker; enabled: root.picker.privateWindow; anchors.fill: parent }
 }

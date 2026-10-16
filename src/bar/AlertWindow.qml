@@ -7,7 +7,7 @@ import "../services"
 
 TopPanelTooltip {
     id: root
-    visible: AlertService.messages.length > 0
+    requestedVisible: AlertService.messages.length > 0
     // Status must remain visible over fullscreen apps without taking focus.
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None

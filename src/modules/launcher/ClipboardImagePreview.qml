@@ -5,7 +5,6 @@ import Quickshell.Io
 import "../../theme"
 import "../../theme/ui" as UI
 import "../../config"
-import "../../services"
 
 Item {
     id: root
@@ -14,7 +13,7 @@ Item {
     property bool searching: false
     required property real decodeWidth
     required property real decodeHeight
-    property bool motionEnabled: Config.animateDuringScreenShare || !AudioService.screencastActive
+    property bool motionEnabled: UI.MotionPolicy.enabled
     readonly property string selectedSource: entry?.image ?? ""
     readonly property real pixelWidth: Math.max(1, Math.min(decodeWidth, Math.max(1, width - Theme.controlSpacing * 2)) * Screen.devicePixelRatio)
     readonly property real pixelHeight: Math.max(1, Math.min(decodeHeight, Math.max(1, height - Theme.controlSpacing * 2)) * Screen.devicePixelRatio)
@@ -161,10 +160,10 @@ Item {
     }
     Timer { id: selectionDelay; interval: 150; onTriggered: root.loadMetadata() }
     Timer { id: resize; interval: 100; onTriggered: root.updateDecodeSize() }
-    NumberAnimation {
+    UI.MotionAnimation {
         id: fade
         target: root; property: "fadeProgress"; from: 0; to: 1
-        duration: Theme.imagePreviewFadeDuration
+        animationDuration: Theme.imagePreviewFadeDuration
         easing.type: Easing.OutCubic
         onFinished: root.finishTransition()
     }

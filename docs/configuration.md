@@ -158,13 +158,53 @@ Godot's project entry is normally `project.godot`, distinct from its generated
 
 ## Panels and search
 
+See the [panel behavior reference](features/panels.md) for the shared interaction rules.
+
 Search matches streamer logins, categories and stream titles as you type, and
 temporarily expands Offline to show matching results. TOTP searches token names;
 notification Emitters searches names and desktop IDs above the policy filters.
 Each search has a clear button and resets when its panel closes. Adding a streamer
 or token temporarily hides search and suspends filtering, then restores the query.
-Focusing or typing in an input pauses hover dismissal until the mouse moves.
-Manual pinning remains independent; Escape clears search and releases focus.
+Hovering any bar module opens its panel without taking keyboard focus. Left-click
+pins or unpins it, and a pinned icon uses the accent color. Leaving an unpinned
+icon, panel and its popups dismisses it after `tooltipHideDelay`; another module
+can replace it. Search text does not retain a panel. Real form fields declare
+`retainPanelWhileEditing`, protecting their owner only while the field and window
+are active. Losing focus, saving or cancelling releases that protection.
+
+Native child dialogs temporarily retain their owner and release its keyboard
+focus/grab. Accepting or cancelling releases the hold and restores the appropriate
+input, without changing manual pinning. Bar panels then re-evaluate hover;
+launchers stay open. Escape goes to an editor or popup first, then closes the
+focused panel. Unfocused hover panels never intercept another app's Escape.
+Explicit launcher or bar-shortcut invocation activates the input/root without
+moving the pointer. Pinning is always a manual action.
+
+## Animation policy
+
+Set `animationsEnabled: false` to disable decorative UI motion. It defaults to
+`true`. All UI animation decisions come from `UI.MotionPolicy`; the master switch
+settles active transitions immediately and stops decorative effects.
+`animateDuringScreenShare` defaults to `false`; enabling it allows decorative
+motion during sharing, subject to the master switch.
+
+Status indicators have independent Config switches, all enabled by default. They
+continue animating with the master switch off and during screen sharing:
+
+| Config switch | Status animation |
+| --- | --- |
+| `screenSharePulseEnabled` | Active screen-sharing indicator |
+| `notificationBorderAnimationEnabled` | Notification lifetime border |
+| `micPulseEnabled` | Muted microphone with an active audio request |
+| `volumePulseEnabled` | Muted output with an active audio request |
+
+Disable any of these individually to stop its animation. Existing visibility,
+manual pinning and audio activity conditions still apply. Functional clocks,
+notification expiry, input handling and data updates continue with motion disabled.
+
+`Theme.panelOpenDuration` (150ms), `panelCloseDuration` (100ms) and
+`panelResizeDuration` (160ms) control shared top-panel motion.
+`clipboardLayoutDuration` inherits `panelResizeDuration`.
 
 ## Shared controls
 
@@ -173,6 +213,9 @@ action glyphs such as add, cancel, delete, and check are defined once in `Theme.
 
 TOTP and the notification manager reuse `src/bar/PrivateTooltipWindow.qml` for
 their monitor selection, positioning, keyboard focus, and private layer namespace.
+`UI.WindowFocusHandler` shares activation, native-child handoff and outside-click
+policy with launchers and Vault; `UI.PanelFocusScope` supplies the outer Escape
+fallback. `UI.FolderDialog` shares native folder selection and path decoding.
 Both modules declare `ownsTooltipWindow`, so the shared tooltip window leaves
 their content to the dedicated window without checking module names.
 

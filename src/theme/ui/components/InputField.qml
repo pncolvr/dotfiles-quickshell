@@ -1,11 +1,10 @@
 import QtQuick
 import QtQuick.Controls as QC
 import "../../"
-import "../../../services"
 
 QC.TextField {
     id: root
-    property bool pauseTooltipDismissal: true
+    property bool retainPanelWhileEditing: true
     implicitHeight: Theme.controlHeight
     leftPadding: Theme.controlFieldPadding
     rightPadding: Theme.controlFieldPadding
@@ -17,8 +16,6 @@ QC.TextField {
     font.pixelSize: Theme.fontSize
     font.bold: Theme.fontBold
     selectByMouse: true
-    onActiveFocusChanged: if (activeFocus && pauseTooltipDismissal) TooltipService.pauseDismissal()
-    onTextEdited: if (pauseTooltipDismissal) TooltipService.pauseDismissal()
     background: Rectangle {
         color: Theme.alternateBackground
         radius: Theme.iconButtonRadius

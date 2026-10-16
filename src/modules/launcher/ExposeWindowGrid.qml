@@ -12,7 +12,7 @@ Flickable {
     property var entries: picker.filteredItems
     property var arrangedEntries: []
     property bool modelReady: false
-    property bool animationsEnabled: true
+    property bool animationsEnabled: UI.MotionPolicy.enabled
     property int displayedWorkspace: -1
     property int workspaceDirection: 1
     property real workspaceProgress: 1
@@ -210,13 +210,13 @@ Flickable {
     }
     onTransitionProgressChanged: if (transitionProgress !== 1) finishWorkspaceTransition()
     onAnimationsEnabledChanged: if (!animationsEnabled) finishWorkspaceTransition()
-    NumberAnimation {
+    UI.MotionAnimation {
         id: workspaceAnimation
         target: root
         property: "workspaceProgress"
         from: 0
         to: 1
-        duration: Theme.exposeRearrangeAnimationDuration
+        animationDuration: Theme.exposeRearrangeAnimationDuration
         easing.type: Easing.OutCubic
         onFinished: root.outgoingCards = []
     }
@@ -291,9 +291,9 @@ Flickable {
         height: root.arrangement.height
         y: Math.max(0, (root.height - height) / 2)
         transform: Translate { x: root.workspaceDirection * root.width * (1 - root.workspaceProgress) }
-        Behavior on y {
-            enabled: root.animateLayout
-            NumberAnimation { duration: Theme.exposeRearrangeAnimationDuration; easing.type: Easing.OutCubic }
+        UI.MotionBehavior on y {
+            motionEnabled: root.animateLayout
+            UI.MotionAnimation { animationDuration: Theme.exposeRearrangeAnimationDuration; easing.type: Easing.OutCubic }
         }
         Repeater {
             id: cards
@@ -318,21 +318,21 @@ Flickable {
                 y: slot.y
                 width: slot.width
                 height: slot.height
-                Behavior on x {
-                    enabled: cardDelegate.geometryReady && root.animateLayout
-                    NumberAnimation { duration: Theme.exposeRearrangeAnimationDuration; easing.type: Easing.OutCubic }
+                UI.MotionBehavior on x {
+                    motionEnabled: cardDelegate.geometryReady && root.animateLayout
+                    UI.MotionAnimation { animationDuration: Theme.exposeRearrangeAnimationDuration; easing.type: Easing.OutCubic }
                 }
-                Behavior on y {
-                    enabled: cardDelegate.geometryReady && root.animateLayout
-                    NumberAnimation { duration: Theme.exposeRearrangeAnimationDuration; easing.type: Easing.OutCubic }
+                UI.MotionBehavior on y {
+                    motionEnabled: cardDelegate.geometryReady && root.animateLayout
+                    UI.MotionAnimation { animationDuration: Theme.exposeRearrangeAnimationDuration; easing.type: Easing.OutCubic }
                 }
-                Behavior on width {
-                    enabled: cardDelegate.geometryReady && root.animateLayout
-                    NumberAnimation { duration: Theme.exposeRearrangeAnimationDuration; easing.type: Easing.OutCubic }
+                UI.MotionBehavior on width {
+                    motionEnabled: cardDelegate.geometryReady && root.animateLayout
+                    UI.MotionAnimation { animationDuration: Theme.exposeRearrangeAnimationDuration; easing.type: Easing.OutCubic }
                 }
-                Behavior on height {
-                    enabled: cardDelegate.geometryReady && root.animateLayout
-                    NumberAnimation { duration: Theme.exposeRearrangeAnimationDuration; easing.type: Easing.OutCubic }
+                UI.MotionBehavior on height {
+                    motionEnabled: cardDelegate.geometryReady && root.animateLayout
+                    UI.MotionAnimation { animationDuration: Theme.exposeRearrangeAnimationDuration; easing.type: Easing.OutCubic }
                 }
                 current: root.currentIndex === index
                 dragLayer: root.dragLayer

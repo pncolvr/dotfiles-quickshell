@@ -19,15 +19,20 @@ PrivateTooltipWindow {
         const revision = NotificationRepository.revision
         return NotificationRepository.groups(groupLimit + 1, 0)
     }
-    visible: TooltipService.visible && TooltipService.source?.notificationsModule === true && !!targetScreen
-    onVisibleChanged: if (!visible && settings) settings.clearSearch()
+    requestedVisible: TooltipService.visible && TooltipService.source?.notificationsModule === true && !!targetScreen
+    onRequestedVisibleChanged: {
+        if (!requestedVisible && settings) settings.clearSearch()
+        else if (requestedVisible) Qt.callLater(root.requestPanelFocus)
+    }
     contentWidth: Math.max(1, Math.min(Theme.notificationManagerWidth, targetScreen?.width || 560))
     contentHeight: Math.min(720, Math.max(1, (targetScreen?.height || 1080) - Theme.barHeight - 20),
         header.height + (tab === "History" ? history.implicitHeight : settings.implicitHeight)
             + Theme.tooltipPaddingHeight * 2 + 12)
 
-    Item {
+    focusPanel: content
+    UI.PanelFocusScope {
         id: content
+        onDismissRequested: TooltipService.dismiss()
         anchors.fill: parent
         Column {
             id: header
@@ -50,15 +55,16 @@ PrivateTooltipWindow {
                     id: actions
                     anchors.right: parent.right
                     spacing: Theme.controlSpacing
-                    NotificationButton {
-                        label: NotificationService.dndEnabled ? "DND on" : "DND off"
+                    UI.ActionButton {
+                        glyph: NotificationService.dndEnabled ? Theme.notificationsDndEnabledIcon : Theme.notificationsDndDisabledIcon
                         foreground: NotificationService.dndEnabled ? Theme.accent : Theme.text
-                        hint: "Toggle do not disturb; only whitelisted emitters bypass it"
+                        hint: NotificationService.dndEnabled ? "Disable do not disturb" : "Enable do not disturb"
                         onClicked: NotificationService.toggle()
                     }
-                    NotificationButton {
-                        label: "Clear all"
-                        hint: "Delete all saved history and dismiss current notifications; keep emitter settings and DND"
+                    UI.ActionButton {
+                        glyph: Theme.clearIcon
+                        fillColor: Theme.urgent
+                        hint: "Clear all notifications"
                         onClicked: NotificationService.clearAll()
                     }
                 }

@@ -3,6 +3,8 @@ import QtTest as Test
 import Quickshell
 import Quickshell.Wayland
 import "../../src/theme/ui" as UI
+import "../../src/config"
+import "../../src/services"
 
 Scope {
     id: root
@@ -10,6 +12,8 @@ Scope {
     property real lowestRed: 1
     property real highestRed: 0
     property bool phasesMatch: true
+    property var fakeConfig: Config
+    property var fakeAudio: AudioService
     Test.TestCase { id: test; when: false }
     function offsetSurface(surface) { surface.margins.left = 100 }
     // Quickshell selects the native PanelWindow backend at runtime.
@@ -24,6 +28,7 @@ Scope {
         WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
         WlrLayershell.namespace: "quickshell-pulse-test"
         color: "black"
+        mask: Region {}
         UI.PulseText {
             id: glyph
             anchors.fill: parent
@@ -49,8 +54,10 @@ Scope {
         WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
         WlrLayershell.namespace: "quickshell-pulse-test"
         color: "black"
+        mask: Region {}
         UI.PulseText {
             id: secondGlyph
+            animationEnabled: UI.MotionPolicy.micPulseEnabled
             anchors.fill: parent
             centerVertical: false
             horizontalAlignment: Text.AlignHCenter
@@ -107,7 +114,28 @@ Scope {
                 const firstPixel = test.grabImage(glyph).pixel(50, 50)
                 const secondPixel = test.grabImage(secondGlyph).pixel(50, 50)
                 console.log(Math.abs(firstPixel.r - secondPixel.r) < 0.08
-                    ? "PASS: resumed pulse rejoins the shared phase" : "PULSE FAIL: resumed pulse phase")
+                    ? "PASS: resumed pulse rejoins the shared phase" : "PULSE FAIL: resumed pulse phase " + firstPixel.r + " " + secondPixel.r)
+                root.fakeConfig.animationsEnabled = false
+                root.fakeAudio.screencastActive = true
+                root.lowestRed = 1
+                root.highestRed = 0
+            } else if (root.step >= 30 && root.step <= 51) {
+                const statusPixel = test.grabImage(secondGlyph).pixel(50, 50)
+                root.lowestRed = Math.min(root.lowestRed, statusPixel.r)
+                root.highestRed = Math.max(root.highestRed, statusPixel.r)
+                if (root.step === 51) {
+                    console.log(!glyph.pulseActive && secondGlyph.pulseActive
+                        && root.highestRed > 0.8 && root.lowestRed < 0.2
+                        ? "PASS: status shader keeps pulsing with master off during sharing"
+                        : "PULSE FAIL: status exception did not animate " + root.lowestRed + " " + root.highestRed)
+                    root.fakeConfig.micPulseEnabled = false
+                }
+            } else if (root.step === 52) {
+                const stoppedPixel = test.grabImage(secondGlyph).pixel(50, 50)
+                console.log(!secondGlyph.pulseActive && !secondGlyph.layer.enabled
+                    && stoppedPixel.b > 0.9 && stoppedPixel.r < 0.1
+                    ? "PASS: status switch stops the shader and releases its layer"
+                    : "PULSE FAIL: status switch")
                 Qt.quit()
             }
         }

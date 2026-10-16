@@ -12,7 +12,7 @@ PickerPanelBase {
     panelError: picker.error || ClipboardService.error
     minimumRowHeight: Theme.clipboardRowHeight
     readonly property bool imagesOnly: picker.itemCriteria.kind === "image"
-    readonly property bool motionEnabled: Config.animateDuringScreenShare || !AudioService.screencastActive
+    readonly property bool motionEnabled: UI.MotionPolicy.enabled
     property real imageProgress: 0
     property var exitPreviewEntry: null
     readonly property var previewEntry: imagesOnly && picker.filteredItems[picker.currentIndex]?.image
@@ -37,7 +37,7 @@ PickerPanelBase {
     onImagesOnlyChanged: { if (!imagesOnly) exitPreviewEntry = picker.filteredItems[picker.currentIndex] ?? null; transition() }
     onImageProgressChanged: if (imageProgress === 0) exitPreviewEntry = null
     onMotionEnabledChanged: transition()
-    NumberAnimation { id: layoutMotion; target: root; property: "imageProgress"; duration: Theme.clipboardLayoutDuration; easing.type: Easing.OutCubic }
+    UI.MotionAnimation { id: layoutMotion; target: root; property: "imageProgress"; animationDuration: Theme.clipboardLayoutDuration; easing.type: Easing.OutCubic }
     Component {
         id: imagePreview
         ClipboardImagePreview {

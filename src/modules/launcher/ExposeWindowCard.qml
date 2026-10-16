@@ -34,7 +34,7 @@ Item {
     Component.onDestruction: resetDrag()
     Timer {
         id: finishDrag
-        interval: Theme.exposeDragAnimationDuration
+        interval: UI.MotionPolicy.enabled ? Theme.exposeDragAnimationDuration : 0
         onTriggered: root.dragFinished()
     }
     Timer {
@@ -57,7 +57,7 @@ Item {
             origin.y: root.pressY
             xScale: root.dragging ? Math.min(1, Theme.exposeDragWidth / root.dragWidth) : 1
             yScale: xScale
-            Behavior on xScale { NumberAnimation { duration: Theme.exposeDragAnimationDuration; easing.type: Easing.OutCubic } }
+            UI.MotionBehavior on xScale { UI.MotionAnimation { animationDuration: Theme.exposeDragAnimationDuration; easing.type: Easing.OutCubic } }
         }
         width: root.dragging ? root.dragWidth : root.width
         height: root.dragging ? root.dragHeight : root.height

@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Controls as QC
-import QtQuick.Dialogs as Dialogs
 import Quickshell
 import "../../../config"
 import "../../../theme"
@@ -23,6 +22,8 @@ Column {
     property string selectionAnchor: ""
     property string renameFolder: ""
     readonly property var selectedFiles: fileService.files.filter(file => selectedUris.includes(file.uri))
+    readonly property bool nativeDialogOpen: picker.nativeDialogOpen
+    readonly property bool interactionPending: fileService.addingFolder === true
     property alias folderPicker: picker
     property alias dragSource: fileDragSource
     property int pinDropIndex: -1
@@ -35,8 +36,13 @@ Column {
     Component.onCompleted: { fileService.beginPanel(); syncTabs() }
     Component.onDestruction: fileService.endPanel()
     function syncTabs() {
-        tabs.currentIndex = Math.max(0, tabEntries.findIndex(tab => pinnedTab ? tab.kind === "pinned"
-            : folderTab ? tab.kind === "folder" && tab.path === fileService.activeFolder : tab.kind === "recent"))
+        tabs.currentIndex = Math.max(0, tabEntries.findIndex(tab => {
+            switch (true) {
+            case pinnedTab: return tab.kind === "pinned"
+            case folderTab: return tab.kind === "folder" && tab.path === fileService.activeFolder
+            default: return tab.kind === "recent"
+            }
+        }))
     }
     function clearSelection() { selectedUris = []; selectionAnchor = "" }
     function acceptPinDrag(drag) {
@@ -61,8 +67,16 @@ Column {
         pinDropPointerY = y
         const index = list.indexAt(1, y + list.contentY)
         const row = list.itemAtIndex(index)
-        pinDropIndex = row ? index + (y + list.contentY >= row.y + row.height / 2 ? 1 : 0)
-            : y + list.contentY <= 0 ? 0 : list.count
+        switch (true) {
+        case !!row:
+            pinDropIndex = index + (y + list.contentY >= row.y + row.height / 2 ? 1 : 0)
+            break
+        case y + list.contentY <= 0:
+            pinDropIndex = 0
+            break
+        default:
+            pinDropIndex = list.count
+        }
     }
     function reconcileSelection() {
         const available = fileService.files.map(file => file.uri)
@@ -77,14 +91,22 @@ Column {
         if (index < 0) return
         const toggle = (modifiers & Qt.ControlModifier) !== 0
         const anchor = available.indexOf(selectionAnchor)
-        if ((modifiers & Qt.ShiftModifier) && anchor >= 0) {
+        switch (true) {
+        case (modifiers & Qt.ShiftModifier) !== 0 && anchor >= 0: {
             const range = available.slice(Math.min(anchor, index), Math.max(anchor, index) + 1)
             selectedUris = toggle ? Array.from(new Set(selectedUris.concat(range))) : range
-        } else {
-            selectedUris = toggle ? (selectedUris.includes(uri)
-                ? selectedUris.filter(selected => selected !== uri) : selectedUris.concat([uri])) : [uri]
-            selectionAnchor = uri
+            return
         }
+        case !toggle:
+            selectedUris = [uri]
+            break
+        case selectedUris.includes(uri):
+            selectedUris = selectedUris.filter(selected => selected !== uri)
+            break
+        default:
+            selectedUris = selectedUris.concat([uri])
+        }
+        selectionAnchor = uri
     }
     function prepareDrag(uri, modifiers) {
         // Pressing a selected row must preserve the group until dragging begins.
@@ -104,11 +126,15 @@ Column {
         interval: 350
         onTriggered: root.fileService.selectPinnedForDrag()
     }
+    function focusSearch() {
+        if (renameFolder) { aliasInput.forceActiveFocus(); aliasInput.selectAll() }
+        else list.forceActiveFocus()
+    }
     function editFolderName(path) {
         renameFolder = path
         aliasInput.text = fileService.folderLabel(path)
         Qt.callLater(() => {
-            if (renameFolder === path) { aliasInput.forceActiveFocus(); aliasInput.selectAll() }
+            if (renameFolder === path) root.focusSearch()
         })
     }
     function saveFolderName() {
@@ -119,13 +145,7 @@ Column {
         aliasInput.clear()
         list.forceActiveFocus()
     }
-    function openFolderPicker() {
-        // Keep the source panel alive while the pointer is inside the picker.
-        if (TooltipService.visible && !TooltipService.pinned)
-            TooltipService.togglePin(TooltipService.x, TooltipService.content, TooltipService.source,
-                TooltipService.centered, TooltipService.screen)
-        picker.open()
-    }
+    function openFolderPicker() { picker.open() }
     Connections {
         target: root.fileService
         function onActiveFolderChanged() { root.clearSelection(); root.cancelFolderName(); Qt.callLater(root.syncTabs) }
@@ -136,12 +156,12 @@ Column {
             Qt.callLater(root.syncTabs)
         }
         function onFilesChanged() { root.reconcileSelection() }
+        function onFolderAdded(path) { root.editFolderName(path) }
     }
-    Dialogs.FolderDialog {
+    UI.FolderDialog {
         id: picker
         title: "Add folder tab"
-        options: Dialogs.FolderDialog.ReadOnly
-        onAccepted: root.fileService.addFolder(decodeURIComponent(selectedFolder.toString().replace(/^file:\/\/(?:localhost)?/, "")))
+        onFolderSelected: path => root.fileService.addFolder(path)
     }
 
     Item {
@@ -199,9 +219,19 @@ Column {
             anchors.rightMargin: Theme.controlSpacing
             anchors.verticalCenter: parent.verticalCenter
             color: Theme.inactive
-            text: root.pinnedTab ? "Pinned files · " + root.fileService.pinnedFiles.length
-                : root.folderTab ? root.fileService.currentFolder : [Config.recentFilesMaxDays > 0 ? "Last " + Config.recentFilesMaxDays + " days" : "All time",
-                Config.recentFilesMaxItems > 0 ? "max " + Config.recentFilesMaxItems + " files" : "all files"].join(" · ")
+            text: {
+                switch (true) {
+                case root.pinnedTab:
+                    return "Pinned files · " + root.fileService.pinnedFiles.length
+                case root.folderTab:
+                    return root.fileService.currentFolder
+                default: {
+                    const period = Config.recentFilesMaxDays > 0 ? "Last " + Config.recentFilesMaxDays + " days" : "All time"
+                    const limit = Config.recentFilesMaxItems > 0 ? "max " + Config.recentFilesMaxItems + " files" : "all files"
+                    return [period, limit].join(" · ")
+                }
+                }
+            }
             textFormat: Text.PlainText
             elide: Text.ElideMiddle
             UI.HoverTooltip {
@@ -239,8 +269,13 @@ Column {
                     && (!root.folderTab || root.fileService.defaultFolder === root.fileService.activeFolder)
                 glyph: Theme.defaultIcon
                 foreground: isDefault ? Theme.accent : Theme.text
-                hint: isDefault ? (root.fileService.activeTab === "recent" ? "Default tab" : "Use Recent as default")
-                    : "Set as default tab"
+                hint: {
+                    switch (true) {
+                    case !isDefault: return "Set as default tab"
+                    case root.fileService.activeTab === "recent": return "Default tab"
+                    default: return "Use Recent as default"
+                    }
+                }
                 onClicked: root.fileService.setDefaultTab(isDefault ? "recent" : root.fileService.activeTab,
                     root.fileService.activeFolder)
             }
@@ -297,8 +332,14 @@ Column {
         id: feedback
         width: parent.width
         visible: root.fileService.error.length > 0 || root.fileService.files.length === 0
-        text: root.fileService.error || (root.fileService.loading ? "Loading files…"
-            : root.folderTab ? "No files in this folder." : "No recent files yet.")
+        text: {
+            switch (true) {
+            case root.fileService.error.length > 0: return root.fileService.error
+            case root.fileService.loading: return "Loading files…"
+            case root.folderTab: return "No files in this folder."
+            default: return "No recent files yet."
+            }
+        }
         color: root.fileService.error ? Theme.warning : Theme.inactive
         wrapMode: Text.Wrap
     }
@@ -317,14 +358,20 @@ Column {
         onContentYChanged: if (pinnedDrop.containsDrag) root.updatePinDropPosition(root.pinDropPointerY)
         Keys.onPressed: event => {
             if (root.fileService.dragging) return
-            if (event.key === Qt.Key_A && (event.modifiers & Qt.ControlModifier)) {
+            switch (event.key) {
+            case Qt.Key_A:
+                if (!(event.modifiers & Qt.ControlModifier)) return
                 root.selectedUris = root.fileService.files.map(file => file.uri)
                 root.selectionAnchor = root.selectedUris[0] || ""
-                event.accepted = true
-            } else if (event.key === Qt.Key_Escape && root.selectedUris.length > 0) {
+                break
+            case Qt.Key_Escape:
+                if (!root.selectedUris.length) return
                 root.clearSelection()
-                event.accepted = true
+                break
+            default:
+                return
             }
+            event.accepted = true
         }
         delegate: RecentFileRow {
             required property var modelData

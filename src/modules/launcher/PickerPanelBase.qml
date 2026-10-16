@@ -123,7 +123,7 @@ Rectangle {
                 objectName: "pickerSearch"
                 width: parent.width
                 placeholderText: root.searchPlaceholder
-                pauseTooltipDismissal: false
+                retainPanelWhileEditing: false
                 resetWithTooltip: false
                 handleEscape: false
                 Keys.onShortcutOverride: event => {

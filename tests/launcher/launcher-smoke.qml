@@ -83,7 +83,7 @@ Scope {
         check(PickerService.selectedIds.join() === "1", "duplicate labels preserve item identity")
         const search = objects.findChild(panel.panel, "pickerSearch") as UI.SearchField
         search.text = "Same"
-        check(PickerService.query === "Same" && !TooltipService.typingPaused, "picker search does not pause tooltips")
+        check(PickerService.query === "Same" && !TooltipService.interactionHeld, "picker search does not pause tooltips")
         PickerService.close()
         check(search.text === "", "closing clears search")
         PickerService.begin(PickerService.Mode.Windows, "Windows")

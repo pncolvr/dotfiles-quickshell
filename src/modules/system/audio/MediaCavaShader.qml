@@ -10,7 +10,7 @@ Item {
     property bool active: false
     property bool playing: false
     readonly property bool animated: ["eye_of_phi", "orion_circle_rotate"].includes(preset)
-    readonly property bool animating: active && playing && animated && bands.some(value => value > 0)
+    readonly property bool animating: UI.MotionPolicy.enabled && active && playing && animated && bands.some(value => value > 0)
     readonly property int status: shader.status
     property var previousBands: []
     property var targetBands: []
@@ -31,7 +31,7 @@ Item {
         targetBands = next;
         blendStarted = now;
         dataTexture.scheduleUpdate();
-        if (playing && preset !== "spectrogram" && next.some((value, index) => value !== current[index])) {
+        if (UI.MotionPolicy.enabled && playing && preset !== "spectrogram" && next.some((value, index) => value !== current[index])) {
             shader.band_blend = 0;
             bandBlend.start();
         } else shader.band_blend = 1;
@@ -104,21 +104,21 @@ Item {
         vertexShader: Qt.resolvedUrl("../../../theme/shaders/cava/pass_through.vert.qsb")
         fragmentShader: Qt.resolvedUrl("../../../theme/shaders/cava/" + root.preset + ".frag.qsb")
     }
-    UniformAnimator {
+    UI.MotionUniformAnimator {
         id: bandBlend
         objectName: "mediaCavaBandBlend"
         target: shader
         uniform: "band_blend"
         from: 0
         to: 1
-        duration: Theme.mediaVisualizerInterval
+        animationDuration: Theme.mediaVisualizerInterval
     }
-    UniformAnimator {
+    UI.MotionUniformAnimator {
         target: shader
         uniform: "shader_time"
         from: 0
         to: 4096
-        duration: 4096000
+        animationDuration: 4096000
         loops: Animation.Infinite
         running: root.animating
     }

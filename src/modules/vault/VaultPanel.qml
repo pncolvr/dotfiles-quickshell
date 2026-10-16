@@ -102,7 +102,7 @@ Item {
                 anchors.left: parent.left
                 anchors.right: headerActions.left
                 anchors.rightMargin: Theme.controlSpacing
-                pauseTooltipDismissal: false
+                retainPanelWhileEditing: false
                 enabled: !root.editing && !root.deleting
                 placeholderText: "Search names, usernames and websites…"
                 onTextChanged: { root.query = text; root.selectFirst() }

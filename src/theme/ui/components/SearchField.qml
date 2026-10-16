@@ -7,9 +7,10 @@ import "../../../services"
 
 UI.InputField {
     id: root
+    retainPanelWhileEditing: false
     readonly property string query: text.trim().toLowerCase()
     property bool resetWithTooltip: true
-    property bool handleEscape: true
+    property bool handleEscape: !TooltipService.keyboardActive
     rightPadding: Theme.controlFieldPadding + (clearButton.visible ? clearButton.width : 0)
     Accessible.name: placeholderText
 
@@ -23,7 +24,6 @@ UI.InputField {
     Keys.onEscapePressed: event => {
         if (!handleEscape) { event.accepted = false; return }
         resetSearch()
-        if (pauseTooltipDismissal) TooltipService.resumeDismissal()
     }
 
     UI.ActionButton {

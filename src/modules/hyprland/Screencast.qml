@@ -4,9 +4,9 @@ import "../../services"
 import "../../theme/ui"
 
 TooltipArea {
+    id: root
     moduleName: "sharing"
     visible: AudioService.screencastActive
-    cursorShape: Qt.ArrowCursor
     tooltip: screencastTooltip
 
     Component {
@@ -31,7 +31,9 @@ TooltipArea {
 
     BarIcon {
         font.pixelSize: Theme.fontSize
-        pulsing: true
+        color: root.moduleIconColor
+        animationEnabled: MotionPolicy.screenSharePulseEnabled
+        pulsing: !root.pinned
         pulseColor: Theme.screencastPulseColor
         text: Theme.screencastIcon
     }

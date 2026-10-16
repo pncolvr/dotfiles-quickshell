@@ -79,11 +79,13 @@ Saving a blank name restores the folder's original name. Aliases survive restart
 file list, selection, or default choice. Removing a tab also removes its alias.
 
 Use the **+** at the far right to pick a
-directory and add its own tab. The picker pins the panel so it stays open while
-you choose. Select a folder and use the red **trash** button beside its path to
+directory and add its own tab. The panel stays open while choosing and loading
+the folder without changing its manual pin state. Its tab is selected and the
+existing name editor opens with the directory name focused and fully selected,
+ready to replace. Enter applies the name; Escape or Cancel keeps the original. Select a folder and use the red **trash** button beside its path to
 remove its tab; removing a tab leaves its folder and files in place. Saved folder tabs survive
 shell restarts. Picking the same folder again, including through a symlink,
-selects its existing tab.
+selects its existing tab and opens its name editor with the current label selected.
 
 Folder tabs list all readable files and directories directly inside the current
 folder, with directories first and newest-first sorting within each group.

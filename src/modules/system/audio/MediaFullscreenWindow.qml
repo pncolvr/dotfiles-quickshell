@@ -22,7 +22,7 @@ PanelWindow {
     property real playerSlideProgress: 1
     property var previousCardSnapshot: null
     property int playerSlideGeneration: 0
-    property bool animationsEnabled: (Config.animateDuringScreenShare || !AudioService.screencastActive)
+    property bool animationsEnabled: (UI.MotionPolicy.enabled)
         && Theme.mediaFullscreenAnimationDuration > 0
     readonly property bool hasSnapshot: !!MediaFullscreenService.snapshot?.url
     readonly property var geometryScreen: screen
@@ -74,14 +74,14 @@ PanelWindow {
         const ratio = card.Screen.devicePixelRatio;
         if (!card.grabToImage(captured, Qt.size(Math.ceil(card.width * ratio), Math.ceil(card.height * ratio)))) captured(null);
     }
-    NumberAnimation {
+    UI.MotionAnimation {
         id: playerSlideAnimation
         objectName: "mediaFullscreenPlayerSlide"
         target: root
         property: "playerSlideProgress"
         from: 0
         to: 1
-        duration: Theme.mediaFullscreenSwitchDuration
+        animationDuration: Theme.mediaFullscreenSwitchDuration
         easing.type: Easing.OutCubic
         onFinished: root.previousCardSnapshot = null
     }
@@ -97,12 +97,12 @@ PanelWindow {
         } else transitionProgress = requested ? 1 : 0;
         if (!requested && transitionProgress === 0) MediaFullscreenService.finishClose();
     }
-    NumberAnimation {
+    UI.MotionAnimation {
         id: transitionAnimation
         objectName: "mediaFullscreenTransition"
         target: root
         property: "transitionProgress"
-        duration: root.requested ? Theme.mediaFullscreenAnimationDuration : Math.min(300, Theme.mediaFullscreenAnimationDuration)
+        animationDuration: root.requested ? Theme.mediaFullscreenAnimationDuration : Math.min(300, Theme.mediaFullscreenAnimationDuration)
         easing.type: root.requested ? Easing.OutCubic : Easing.InCubic
     }
     Timer {

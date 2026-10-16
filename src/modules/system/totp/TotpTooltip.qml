@@ -27,10 +27,6 @@ Column {
 
     function cancelEditor() { editingId = ""; adding = false; draftName = ""; draftToken = "" }
     function focusSearch() { cancelEditor(); searchField.forceActiveFocus() }
-    Keys.onEscapePressed: event => {
-        if (TooltipService.keyboardActive) TooltipService.dismiss()
-        else event.accepted = false
-    }
     onSearchQueryChanged: {
         filteredEntries.updateFilter()
         list.positionViewAtBeginning()

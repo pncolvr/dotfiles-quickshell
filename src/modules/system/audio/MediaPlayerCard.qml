@@ -18,7 +18,7 @@ Item {
     readonly property real cardInset: 1
     readonly property real overlayRadius: Math.max(0, Theme.audioDeviceRadius - 1)
     readonly property bool processingAllowed: monitorPosition && !MediaFullscreenService.visible
-    readonly property bool animationsEnabled: Config.animateDuringScreenShare || !AudioService.screencastActive
+    readonly property bool animationsEnabled: UI.MotionPolicy.enabled
     property bool flipped: false
     readonly property bool flipping: flipAnimation.running
     readonly property bool showingBack: Math.abs(flipRotation.angle) > 90
@@ -117,11 +117,11 @@ Item {
             if (root.player === player) root.flipped = !!root.app && flipped;
         }
     }
-    NumberAnimation {
+    UI.MotionAnimation {
         id: flipAnimation
         target: flipRotation
         property: "angle"
-        duration: Theme.mediaFlipDuration
+        animationDuration: Theme.mediaFlipDuration
         easing.type: Easing.InOutCubic
     }
     QtObject {

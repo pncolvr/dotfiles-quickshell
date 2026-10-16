@@ -41,14 +41,15 @@ Column {
             objectName: "audioTabs"
             labels: root.input ? ["Apps", "Microphones"] : ["Apps", "Audio outputs", "Media"]
             anchors.left: parent.left
-            anchors.right: root.input ? micActivity.left : parent.right
-            anchors.rightMargin: root.input ? Theme.audioSpacing : 0
+            anchors.right: root.input ? micActivity.left : mute.left
+            anchors.rightMargin: Theme.audioSpacing
             height: parent.height
         }
         UI.IconText {
             id: micActivity
             objectName: "micActivity"
-            anchors.right: parent.right
+            anchors.right: mute.left
+            anchors.rightMargin: Theme.audioSpacing
             anchors.verticalCenter: parent.verticalCenter
             visible: root.input
             text: Theme.audioRecordingIcon
@@ -58,6 +59,18 @@ Column {
                 objectName: "micActivityHint"
                 text: root.audioService.micActivityEnabled ? "Mic activity enabled" : "Mic activity disabled"
             }
+        }
+        UI.ActionButton {
+            id: mute
+            objectName: "audioPanelMute"
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            readonly property bool muted: root.input ? root.audioService.micMuted : root.audioService.muted
+            glyph: root.input ? (muted ? Theme.micMutedIcon : Theme.micIcon)
+                : (muted ? Theme.volumeMutedIcon : Theme.volumeIcons[Theme.volumeIcons.length - 1])
+            foreground: muted ? Theme.warning : Theme.text
+            hint: (muted ? "Unmute " : "Mute ") + (root.input ? "microphone" : "audio")
+            onClicked: root.input ? root.audioService.toggleMicMute() : root.audioService.toggleMute()
         }
     }
 

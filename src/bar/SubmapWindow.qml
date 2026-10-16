@@ -8,7 +8,7 @@ import "../services"
 TopPanelTooltip {
     id: root
 
-    visible: SubmapService.submapActive
+    requestedVisible: SubmapService.submapActive
 
     contentX: width - contentWidth - Theme.tooltipRadius + 1
     contentWidth: Math.min(Theme.submapWindowMaxWidth, keybindsColumn.implicitWidth + Theme.tooltipPaddingWidth * 2)

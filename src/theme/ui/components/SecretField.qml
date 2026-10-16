@@ -11,7 +11,7 @@ UI.InputField {
     property string revealHint: "Show value"
     property string hideHint: "Hide value"
 
-    pauseTooltipDismissal: false
+    retainPanelWhileEditing: false
     echoMode: revealed ? TextInput.Normal : TextInput.Password
     passwordMaskDelay: 0
     inputMethodHints: Qt.ImhSensitiveData | Qt.ImhHiddenText | Qt.ImhNoPredictiveText

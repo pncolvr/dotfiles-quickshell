@@ -149,8 +149,8 @@ Item {
         onAboutToShow: { root.placePopup(); choices.revealSelected() }
         onClosed: root.expanded = false
         enter: Transition {
-            NumberAnimation { property: "opacity"; from: 0; to: 1; duration: Theme.selectionAnimationDuration }
-            NumberAnimation { property: "scale"; from: 0.98; to: 1; duration: Theme.selectionAnimationDuration; easing.type: Easing.OutCubic }
+            UI.MotionAnimation { property: "opacity"; from: 0; to: 1; animationDuration: Theme.selectionAnimationDuration }
+            UI.MotionAnimation { property: "scale"; from: 0.98; to: 1; animationDuration: Theme.selectionAnimationDuration; easing.type: Easing.OutCubic }
         }
         // Popup.Item keeps filtering input during an exit transition. Close
         // immediately so a second click reaches the newly uncovered control.

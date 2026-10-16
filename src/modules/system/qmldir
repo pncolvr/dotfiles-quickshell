@@ -12,5 +12,6 @@ MemoryTooltip 1.0 stats/MemoryTooltip.qml
 NetworkTooltip 1.0 stats/NetworkTooltip.qml
 StatsTooltip 1.0 stats/StatsTooltip.qml
 StatsBar 1.0 stats/StatsBar.qml
+MemoryBar 1.0 stats/MemoryBar.qml
 StatsOverview 1.0 stats/StatsOverview.qml
 StatsProcessRow 1.0 stats/StatsProcessRow.qml

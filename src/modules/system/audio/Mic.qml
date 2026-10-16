@@ -10,7 +10,8 @@ TooltipArea {
     moduleName: "mic"
     id: root
     acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
-    readonly property bool tooltipKeyboardFocus: true
+
+    normalIconColor: AudioService.micActive ? Theme.ok : Theme.pulsingTextBaseColor
     tooltipSource: root
     tooltip: micTooltip
 
@@ -19,16 +20,8 @@ TooltipArea {
         AudioTooltip { input: true }
     }
 
-    onClicked: (mouse) => {
-        switch (mouse.button) {
-            case Qt.LeftButton: AudioService.toggleMicMute(); break
-            case Qt.RightButton: {
-                const pos = root.mapToGlobal(root.width / 2, 0)
-                TooltipService.togglePin(pos.x, tooltip, root, centerTooltip, tooltipScreen)
-                break
-            }
-            case Qt.MiddleButton: AudioService.openMixer(); break
-        }
+    onAlternateClicked: mouse => {
+        if (mouse.button === Qt.MiddleButton) AudioService.openMixer()
     }
     onWheel: event => {
         const delta = event.angleDelta.y > 0 ? Config.audioVolumeStep : -Config.audioVolumeStep
@@ -38,7 +31,9 @@ TooltipArea {
     Row {
         BarIcon {
             font.pixelSize: Theme.fontSize
-            pulsing: AudioService.micMutePulse
+            color: root.moduleIconColor
+            animationEnabled: MotionPolicy.micPulseEnabled
+            pulsing: !root.pinned && AudioService.micMutePulse
             baseColor: AudioService.micActive ? Theme.ok : Theme.pulsingTextBaseColor
             text: AudioService.micMuted ? Theme.micMutedIcon : Theme.micIcon
         }

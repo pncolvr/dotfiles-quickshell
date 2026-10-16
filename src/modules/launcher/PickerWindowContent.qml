@@ -15,6 +15,7 @@ Item {
     readonly property real boundedContentHeight: Math.min(panel?.implicitHeight ?? 0,
         Math.max(0, (host.geometryScreen?.height || 1080) * 0.75 - host.shadowBottomPadding))
     readonly property real centeredContentX: (host.width - boundedContentWidth) / 2
+    readonly property int keyboardFocusMode: focusHandler.keyboardFocusMode
     readonly property bool requestingKeyboardFocus: focusHandler.requestingKeyboardFocus
     readonly property bool secretPrompt: focusHandler.secretPrompt
     readonly property bool restoringDialogFocus: focusHandler.restoringDialogFocus

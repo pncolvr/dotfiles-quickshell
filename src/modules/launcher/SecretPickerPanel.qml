@@ -34,10 +34,12 @@ Item {
             root.picker.error = "Enter a password without control characters."
             return
         }
-        root.picker.acceptSecret(secret.text)
+        const value = secret.text
         clearSecret()
+        root.picker.acceptSecret(value)
     }
-    Component.onDestruction: clearSecret()
+    // The component's JS methods may already be invalid during destruction.
+    Component.onDestruction: { secret.revealed = false; secret.clear(); secret.focus = false }
     Connections {
         target: root.picker
         function onVisibleChanged() { if (!root.picker.visible) root.clearSecret() }

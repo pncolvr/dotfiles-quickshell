@@ -76,17 +76,22 @@ Singleton {
         // qmllint enable signal-handler-parameters
     }
 
-    function cardForNode(node) {
-        const name = node?.cardName || devicesState.snapshot.nodes.find(device => device.name === node?.name)?.cardName
-        return cards.find(card => card.name === name) ?? null
+    function cardForNode(node, snapshot = devicesState.snapshot) {
+        const name = node?.cardName || snapshot.nodes.find(device => device.name === node?.name)?.cardName
+        return snapshot.cards.find(card => card.name === name) ?? null
     }
 
-    function withInactiveCards(nodes, input) {
-        return [...nodes, ...cards.filter(card =>
+    function withInactiveCards(nodes, input, snapshot = devicesState.snapshot) {
+        return [...nodes, ...snapshot.cards.filter(card =>
             card.profiles.some(profile => input ? profile.input : profile.output)
-            && !nodes.some(node => cardForNode(node)?.name === card.name)
+            && !nodes.some(node => cardForNode(node, snapshot)?.name === card.name)
         ).map(card => ({name: "card:" + card.name, description: card.description, cardName: card.name,
-            ready: false, audio: null}))].sort((a, b) => deviceName(a).localeCompare(deviceName(b)) || a.name.localeCompare(b.name))
+            ready: false, audio: null}))].sort((a, b) => {
+            const aOff = cardForNode(a, snapshot)?.activeProfile === "off"
+            const bOff = cardForNode(b, snapshot)?.activeProfile === "off"
+            return Number(aOff) - Number(bOff)
+                || deviceName(a).localeCompare(deviceName(b)) || a.name.localeCompare(b.name)
+        })
     }
 
     function setProfile(card, profile) {

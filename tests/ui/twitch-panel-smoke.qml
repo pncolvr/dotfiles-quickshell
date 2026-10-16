@@ -110,7 +110,7 @@ Scope {
         function openAfterBadge(): bool { root.badgeVisible = false; return BarModuleService.open("volume") }
         function snapshotTray(): string {
             const pos = tray.mapToGlobal(0, 0)
-            return JSON.stringify({expanded: tray.expanded, x: pos.x, y: pos.y, width: tray.width, height: tray.height})
+            return JSON.stringify({expanded: tray.expanded, popup: TooltipService.visible && TooltipService.source === tray, x: pos.x, y: pos.y, width: tray.width, height: tray.height})
         }
         function hoverVolumeEdge(): bool { return events.mouseMove(volume, volume.width / 2, 1, 0, Qt.NoButton, Qt.NoModifier) }
         function leaveBar(): bool { return events.mouseMove(testBar.contentItem, 1, 15, 0, Qt.NoButton, Qt.NoModifier) }

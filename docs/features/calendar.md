@@ -4,7 +4,7 @@
 
 The clock keeps its existing text color, format, width and controls. Hover opens
 the monthly calendar; right-click switches between month and year views, and
-left-click toggles seconds. The seconds preference persists in SQLite. Scrolling
+left-click pins/unpins the panel and middle-click toggles seconds. The seconds preference persists in SQLite. Scrolling
 changes the displayed month or year. The annual grid reuses twelve monthly views.
 
 All dates open the Google Calendar event editor using `Config.calendarEventUrl`.

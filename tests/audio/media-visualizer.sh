@@ -129,9 +129,11 @@ Scope {
     MediaVisualizer { id: restored; appId: "banana" }
     Component { id: visualizerFactory; MediaVisualizer {} }
     Timer {
-        interval: 1
+        interval: 20
         running: true
+        repeat: true
         onTriggered: {
+            if (!Services.DbService.ready) return
             const another = visualizerFactory.createObject(restored, {appId:"banana"});
             const otherApp = visualizerFactory.createObject(restored, {appId:"potato"});
             let passed = restored.effect === "cava_spectrogram" && another.effect === restored.effect;
@@ -172,13 +174,16 @@ cat > "$test_dir/shell.qml" <<QML
 import QtQml
 import Quickshell
 import "file://$project_root/src/modules/system/audio"
+import "file://$project_root/src/services" as Services
 Scope {
     MediaVisualizer { id: banana; appId: "banana" }
     MediaVisualizer { id: potato; appId: "potato" }
     Timer {
-        interval: 1
+        interval: 20
         running: true
+        repeat: true
         onTriggered: {
+            if (!Services.DbService.ready) return
             console.log(banana.effect === "ribbon" && potato.effect === "mirror"
                 ? "PASS: independent per-app visualizers survive restart" : "VISUALIZER FAIL: per-app restart");
             Qt.quit();

@@ -40,6 +40,8 @@ QtObject {
     readonly property int iconButtonRadius: 3
 
     // Shared actions
+    readonly property string downloadIcon: "" // download: install updates
+    readonly property string notesIcon: "" // file-lines: update notes
     readonly property string addIcon: "" // plus
     readonly property string cancelIcon: "" // xmark
     readonly property string checkIcon: "" // check: saved or selected
@@ -68,6 +70,9 @@ QtObject {
     readonly property string defaultIcon: "" // star
 
     // Tooltips
+    readonly property int panelOpenDuration: 150
+    readonly property int panelCloseDuration: 100
+    readonly property int panelResizeDuration: 160
     readonly property int tooltipWidth: 420
     readonly property real tooltipMaxHeightRatio: 0.6
     readonly property real tooltipCompactMaxHeightRatio: 0.5
@@ -109,7 +114,7 @@ QtObject {
     readonly property int clipboardRowHeight: 52
     readonly property int clipboardImagePreviewHeight: 200
     readonly property int pickerRowPadding: 4
-    readonly property int clipboardLayoutDuration: exposeRearrangeAnimationDuration
+    readonly property int clipboardLayoutDuration: panelResizeDuration
     readonly property int pickerGridHeight: 52
 
     // Project management
@@ -134,9 +139,21 @@ QtObject {
     readonly property string exposeIcon: "" // Exposé: window grid
 
     // Workspaces and submaps
-    readonly property int workspaceSpacing: 3
-    readonly property var workspaceIcons: ["", playIcon, "", "", "", "", "", "#", "", ""]
-    readonly property string workspaceUnknownIcon: "#"
+    readonly property int workspaceSpacing: 6 // Visible gap between workspace glyphs.
+    readonly property int workspaceIconSize: 13
+    readonly property var workspaceIcons: [
+        "", // 1: globe — qutebrowser
+        "", // 2: film — video / TV
+        "", // 3: comment-dots — communication
+        "", // 4: laptop-code — development
+        "", // 5: gamepad — games
+        "", // 6: screwdriver-wrench — tools
+        "", // 7: book-open — reading
+        "", // 8: cubes — game development
+        "", // 9: compass — Vivaldi
+        ""  // 10: desktop — remote desktop
+    ]
+    readonly property string workspaceUnknownIcon: "" // table-cells-large
     readonly property int submapWindowMaxWidth: 250
 
     // Calendar

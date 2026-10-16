@@ -197,9 +197,6 @@ Scope {
             case 6:
                 if (TotpService.busy) return
                 if (!root.check(TotpService.entries.count === 1, "delete")) return
-                // Moving the mouse restores hover dismissal after editing/typing.
-                TooltipService.observePointer(0, 0, true)
-                TooltipService.observePointer(1, 0, true)
                 TooltipService.hide()
                 root.step++
                 break

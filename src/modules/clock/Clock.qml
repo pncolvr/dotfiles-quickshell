@@ -8,7 +8,7 @@ import "../../theme"
 TooltipArea {
   moduleName: "clock"
   id: root
-  acceptedButtons: Qt.LeftButton | Qt.RightButton
+  acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
 
   enum View { Month, Year }
   property int viewMode: Clock.View.Month
@@ -58,12 +58,13 @@ TooltipArea {
   }
 
   Text {
+    color: root.moduleIconColor
     text: Qt.formatDateTime(TimeService.time, TimeService.showSeconds ? "yyyy-MM-dd hh:mm:ss" : "yyyy-MM-dd hh:mm")
   }
 
-  onClicked: (mouse) => {
+  onAlternateClicked: (mouse) => {
     switch (mouse.button) {
-      case Qt.LeftButton:
+      case Qt.MiddleButton:
         TimeService.showSeconds = !TimeService.showSeconds
         break
       case Qt.RightButton:

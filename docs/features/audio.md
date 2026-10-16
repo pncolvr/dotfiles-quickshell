@@ -190,10 +190,12 @@ slider shows their highest volume and sets all of them to the chosen level.
 These controls affect just that app's current streams, keeping
 other apps and the system default unchanged. Apps with several streams are
 grouped by their process. Selectors show their current device or **Multiple devices**
-when their streams use different devices. Devices are sorted by their displayed
-name.
-Left-click a bar icon to mute; scroll it to adjust its default device. Right-click
-pins its panel; middle-click opens `pavucontrol`.
+when their streams use different devices. Output and microphone lists put devices
+with an **Off** profile last, sorting each group alphabetically by displayed name.
+Left-click either bar icon to pin or unpin its panel; the pinned icon uses the
+accent color. Scroll adjusts its default device and middle-click opens
+`pavucontrol`. The top-right mute button inside each panel controls its default
+microphone or output. Device and app mute controls retain their individual scope.
 Muted bar icons pulse only while an app has an active PipeWire link to the
 corresponding default device. With no request, the muted icon stays static.
 Volume mute uses a crossed-out speaker so its state is clear without animation.

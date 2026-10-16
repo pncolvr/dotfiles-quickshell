@@ -7,23 +7,20 @@ UI.TooltipArea {
     moduleName: "timers"
     id: root
     required property var window
-    readonly property bool tooltipKeyboardFocus: true
+
     readonly property var barEntry: TimersService.barEntry
     readonly property bool roundUp: TimersService.activeCountdowns.length > 0
     tooltipSource: root
     tooltipScreen: window.screen
     tooltip: Component { TimersTooltip {} }
 
-    onClicked: {
-        const pos = root.mapToGlobal(root.width / 2, 0)
-        TooltipService.togglePin(pos.x, tooltip, root, centerTooltip, tooltipScreen)
-    }
+
 
     Row {
         spacing: Theme.moduleSpacing
         UI.BarIcon {
             text: Theme.timersIcon
-            color: TooltipService.pinned && TooltipService.source === root ? Theme.accent : Theme.text
+            color: root.moduleIconColor
         }
         UI.Text {
             objectName: "timersBarText"

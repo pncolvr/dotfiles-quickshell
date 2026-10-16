@@ -37,6 +37,7 @@ Scope {
                 ["TwitchRepository",Services.TwitchRepository,Storage.TwitchRepository],
                 ["TextureSettings",UI.TextureSettings,Components.TextureSettings],
                 ["ImageCropCache",UI.ImageCropCache,Components.ImageCropCache],
+                ["MotionPolicy",UI.MotionPolicy,Components.MotionPolicy],
                 ["SensitiveClipboardService",Services.SensitiveClipboardService,Clipboard.SensitiveClipboardService]
             ]
             for (const pair of pairs) root.check(pair[1] === pair[2],pair[0] + " resolves to one shared instance")

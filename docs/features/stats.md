@@ -9,13 +9,14 @@ not support it.
 The panel uses the shared tabs, search field, buttons and scrollbar. Its height
 is limited to 60% of the screen, with longer content scrolling inside it.
 
-- **Overview:** CPU, memory and temperature totals, download/upload rates,
+- **Overview:** CPU, RAM used/total and temperature, download/upload rates,
   connected networks and VPNs.
 - **CPU:** total and per-core usage, temperature, and processes ordered by current
   CPU usage. Process usage treats one fully occupied logical core as 100%, so a
   process can exceed 100%; the machine total is normalized across all cores.
-- **Memory:** used/total RAM, free, available and cached memory, swap, and processes
-  ordered by resident memory (RSS).
+- **Memory:** RAM and swap used/total bars at the top, compact free, available
+  and cached rows below, and
+  processes ordered by memory usage.
 - **Network:** traffic history, download/upload rates, connections and VPNs, and
   processes ordered by combined download and upload rate.
 
@@ -25,8 +26,14 @@ and Discord includes its renderers and utilities. Separate instances with the
 same app name share one total. The number beside an app is its contributing
 process count, shown as a muted badge. The compact table aligns application names,
 PID buttons and resource values; Network has separate Download and Upload columns.
-App totals are bold, with a subtle background on hover. Memory totals sum RSS,
-including shared resident pages.
+App totals are bold, with a subtle background on hover. Process memory can include
+shared pages; system RAM usage is measured independently.
+
+Overview and Memory use the same **RAM** bar: memory needed by apps and the
+kernel, with reclaimable memory excluded. It shows **used / total** usable physical
+RAM and uses the kernel estimate `MemTotal - MemAvailable` from `/proc/meminfo`.
+It does not add process memory figures together. The hover hint explains the
+meaning; see the [kernel documentation](https://docs.kernel.org/filesystems/proc.html).
 
 Click an app name or its chevron to expand its individual processes, ordered by
 their usage. Quieter, indented rows sit beside a faint vertical guide and show each

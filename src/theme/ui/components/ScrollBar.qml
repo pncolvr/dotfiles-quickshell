@@ -33,7 +33,7 @@ QC.ScrollBar {
             from: "active"
             SequentialAnimation {
                 PauseAnimation { duration: Theme.scrollbarHideDelay }
-                NumberAnimation { property: "opacity"; to: 0; duration: Theme.scrollbarFadeDuration }
+                MotionAnimation { property: "opacity"; to: 0; animationDuration: Theme.scrollbarFadeDuration }
             }
         }
     }

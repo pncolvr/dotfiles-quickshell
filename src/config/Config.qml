@@ -14,12 +14,18 @@ Item {
     }
 
     // Shared UI and privacy
-    // Screen-sharing policy for UI animations, including notification popups.
+    // Decorative motion follows both switches below.
+    readonly property bool animationsEnabled: true
     readonly property bool animateDuringScreenShare: false
+    // Status indicators have independent switches, including during screen sharing.
+    readonly property bool animateIndicators: animationsEnabled || true
+    readonly property bool screenSharePulseEnabled: animateIndicators
+    readonly property bool notificationBorderAnimationEnabled: animateIndicators
+    readonly property bool micPulseEnabled: animateIndicators
+    readonly property bool volumePulseEnabled: animateIndicators
     readonly property string screenShareHiddenNamespace: "quickshell-private"
     readonly property int debounceInterval: Timespan.fromMilliseconds(50)
     readonly property int tooltipHideDelay: Timespan.fromMilliseconds(300)
-    readonly property int tooltipPointerInterval: Timespan.fromMilliseconds(100)
 
     // Storage and backup
     // The database is local to this config and ignored by Git.

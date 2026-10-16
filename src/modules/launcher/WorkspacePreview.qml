@@ -8,7 +8,7 @@ Rectangle {
     required property var workspace
     property bool current: false
     property real sizeScale: 1
-    property bool animationsEnabled: true
+    property bool animationsEnabled: UI.MotionPolicy.enabled
     property rect desktopGeometry: Qt.rect(0, 0, 0, 0)
     readonly property Item previewItem: desktop
     readonly property rect previewRect: Qt.rect(
@@ -139,9 +139,9 @@ Rectangle {
             anchors.fill: parent
             opacity: root.windows.length ? 1 : 0
             visible: opacity > 0
-            Behavior on opacity {
-                enabled: root.previewReady && root.animationsEnabled
-                NumberAnimation { duration: Theme.exposeRearrangeAnimationDuration; easing.type: Easing.OutCubic }
+            UI.MotionBehavior on opacity {
+                motionEnabled: root.previewReady && root.animationsEnabled
+                UI.MotionAnimation { animationDuration: Theme.exposeRearrangeAnimationDuration; easing.type: Easing.OutCubic }
             }
             Connections {
                 target: root
@@ -184,21 +184,21 @@ Rectangle {
                             miniature.geometryReady = true
                         }
                     }
-                    Behavior on x {
-                        enabled: miniature.geometryReady && root.animationsEnabled
-                        NumberAnimation { duration: Theme.exposeRearrangeAnimationDuration; easing.type: Easing.OutCubic }
+                    UI.MotionBehavior on x {
+                        motionEnabled: miniature.geometryReady && root.animationsEnabled
+                        UI.MotionAnimation { animationDuration: Theme.exposeRearrangeAnimationDuration; easing.type: Easing.OutCubic }
                     }
-                    Behavior on y {
-                        enabled: miniature.geometryReady && root.animationsEnabled
-                        NumberAnimation { duration: Theme.exposeRearrangeAnimationDuration; easing.type: Easing.OutCubic }
+                    UI.MotionBehavior on y {
+                        motionEnabled: miniature.geometryReady && root.animationsEnabled
+                        UI.MotionAnimation { animationDuration: Theme.exposeRearrangeAnimationDuration; easing.type: Easing.OutCubic }
                     }
-                    Behavior on width {
-                        enabled: miniature.geometryReady && root.animationsEnabled
-                        NumberAnimation { duration: Theme.exposeRearrangeAnimationDuration; easing.type: Easing.OutCubic }
+                    UI.MotionBehavior on width {
+                        motionEnabled: miniature.geometryReady && root.animationsEnabled
+                        UI.MotionAnimation { animationDuration: Theme.exposeRearrangeAnimationDuration; easing.type: Easing.OutCubic }
                     }
-                    Behavior on height {
-                        enabled: miniature.geometryReady && root.animationsEnabled
-                        NumberAnimation { duration: Theme.exposeRearrangeAnimationDuration; easing.type: Easing.OutCubic }
+                    UI.MotionBehavior on height {
+                        motionEnabled: miniature.geometryReady && root.animationsEnabled
+                        UI.MotionAnimation { animationDuration: Theme.exposeRearrangeAnimationDuration; easing.type: Easing.OutCubic }
                     }
                 }
             }

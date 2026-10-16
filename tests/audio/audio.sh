@@ -67,8 +67,15 @@ Scope {
                 return
             }
             for (const devices of [AudioService.outputDevices, AudioService.inputDevices]) {
-                if (devices.some((node, index) => index > 0 && AudioService.deviceName(devices[index - 1]).localeCompare(AudioService.deviceName(node)) > 0)) {
-                    console.error("AUDIO NATIVE FAIL: devices not sorted by name")
+                if (devices.some((node, index) => {
+                    if (index === 0) return false
+                    const previous = devices[index - 1]
+                    const previousOff = AudioService.cardForNode(previous)?.activeProfile === "off"
+                    const currentOff = AudioService.cardForNode(node)?.activeProfile === "off"
+                    return (previousOff && !currentOff) || (previousOff === currentOff
+                        && AudioService.deviceName(previous).localeCompare(AudioService.deviceName(node)) > 0)
+                })) {
+                    console.error("AUDIO NATIVE FAIL: devices not alphabetical with Off profiles last")
                     Qt.quit()
                     return
                 }

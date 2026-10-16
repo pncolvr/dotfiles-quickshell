@@ -44,7 +44,7 @@ Scope {
         id: privateHost
         exclusionMode: ExclusionMode.Ignore
         screen: Quickshell.screens[0]
-        visible: root.privateCase && TooltipService.visible
+        requestedVisible: root.privateCase && TooltipService.visible
         readonly property var loadedContent: privateLoader.item
         contentWidth: 680
         contentHeight: 420
@@ -150,7 +150,7 @@ Scope {
                 popupHovered:observer?.popupHovered ?? false,
                 cursorHovered:root.cursorControl?.hovered ?? false,cursorLeaves:root.cursorLeaves,
                 cursorHintReady:!!root.cursorHint(),cursorHintOpened:root.cursorHint()?.opened ?? false,
-                pinned:TooltipService.pinned,paused:TooltipService.typingPaused,
+                pinned:TooltipService.pinned,paused:TooltipService.interactionHeld,
                 sameOverlay:!!selector && selector.popup.parent === observer?.overlayItem,
                 rowsReady:rowHover.length === 3 && rowHover.every(value => value !== undefined),rowHover,
                 private:root.privateCase,namespace:root.privateCase ? privateHost.WlrLayershell.namespace : publicHost.WlrLayershell.namespace,

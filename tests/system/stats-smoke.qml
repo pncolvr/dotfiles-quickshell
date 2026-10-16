@@ -78,6 +78,15 @@ Scope {
             const search = root.panel ? root.find("statsProcessSearch") as UI.SearchField : null
             if (root.step === 0) {
                 root.check(backend.active && network.active && backend.processResource === "" && !search.visible, "Overview opens without process sampling")
+                const ram = root.find("statsMemoryBar") as MemoryBar
+                root.check(ram.label === "RAM" && ram.value === "8.0 GiB / 32.0 GiB"
+                    && ram.ratio === 0.25, "Overview RAM bar shows app/kernel usage and total, excluding reclaimable cache")
+                const track = mouse.findChild(ram, "statsBarTrack") as Rectangle
+                const fill = mouse.findChild(ram, "statsBarFill") as Rectangle
+                root.check(ram.height > 0 && track.height === 4 && fill.height === 4
+                    && fill.width === ram.width * 0.25 && fill.y + fill.height <= ram.height
+                    && track.y + track.height <= ram.height && fill.color === Theme.accent,
+                    "Overview RAM bar lays out a visible colored fill proportional to usage")
                 const width = trigger.width
                 mouse.mouseMove(trigger, trigger.width / 2, trigger.height / 2)
                 root.check(trigger.width === width && Theme.statsIcon.length > 0, "bar icon keeps its fixed width on hover")
@@ -232,6 +241,22 @@ Scope {
                 root.panel.currentIndex = 2
             } else if (root.step === 19) {
                 root.check(backend.processResource === "memory" && view.count === 64 && (view.itemAtIndex(0) as StatsProcessRow)?.process.value === 64 * 1048576, "Memory shows independently sorted usage")
+                const ram = root.find("statsMemoryBar") as MemoryBar
+                root.check(ram.value === "8.0 GiB / 32.0 GiB" && ram.ratio === 0.25,
+                    "Memory shares the same single used/total RAM reading")
+                const fill = mouse.findChild(ram, "statsBarFill") as Rectangle
+                root.check(ram.height > 0 && fill.height === 4 && fill.width === ram.width * 0.25,
+                    "Memory RAM bar preserves its visible proportional fill")
+                root.check((root.find("statsMemoryFree") as UI.ColumnText).text === "12.0 GiB"
+                    && (root.find("statsMemoryAvailable") as UI.ColumnText).text === "24.0 GiB"
+                    && (root.find("statsMemoryCached") as UI.ColumnText).text === "12.0 GiB",
+                    "Memory restores free, available and cached readings beneath the shared RAM bar")
+                const swap = root.find("statsSwapBar") as StatsBar
+                const free = root.find("statsMemoryFree") as UI.ColumnText
+                root.check(swap.y >= ram.y + ram.height && free.parent.y >= swap.y + swap.height,
+                    "RAM and Swap precede all memory detail rows")
+                root.check(free.parent.height === free.implicitHeight && free.parent.height < Theme.controlHeight,
+                    "memory detail rows use compact text height")
                 search.text = "missing"
             } else if (root.step === 20) {
                 root.check(view.count === 0, "filter can hide all rows")

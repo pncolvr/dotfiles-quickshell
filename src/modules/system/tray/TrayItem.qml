@@ -7,6 +7,7 @@ import "../../../theme/ui" as UI
 UI.WrapperMouseArea {
     id: root
     required property SystemTrayItem item
+    readonly property bool nativeDialogOpen: menu.visible
     required property var window
 
     implicitWidth: Theme.trayItemWidth

@@ -8,6 +8,9 @@ EditorActions 1.0 EditorActions.qml
 FixedIconText 1.0 FixedIconText.qml
 FolderCategoryButton 1.0 FolderCategoryButton.qml
 FolderForm 1.0 FolderForm.qml
+WindowFocusHandler 1.0 WindowFocusHandler.qml
+PanelFocusScope 1.0 PanelFocusScope.qml
+FolderDialog 1.0 FolderDialog.qml
 FolderPathField 1.0 FolderPathField.qml
 HoverTooltip 1.0 HoverTooltip.qml
 Icon 1.0 Icon.qml
@@ -38,3 +41,9 @@ SelectionList 1.0 SelectionList.qml
 SelectionRow 1.0 SelectionRow.qml
 CroppedImage 1.0 CroppedImage.qml
 singleton ImageCropCache 1.0 ImageCropCache.qml
+PanelMotion 1.0 PanelMotion.qml
+singleton MotionPolicy 1.0 MotionPolicy.qml
+MotionGuard 1.0 MotionGuard.qml
+MotionAnimation 1.0 MotionAnimation.qml
+MotionUniformAnimator 1.0 MotionUniformAnimator.qml
+MotionBehavior 1.0 MotionBehavior.qml

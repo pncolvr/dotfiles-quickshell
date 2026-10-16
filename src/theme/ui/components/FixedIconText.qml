@@ -8,6 +8,7 @@ Item {
     property alias font: glyph.font
     property alias color: glyph.color
     property alias pulsing: glyph.pulsing
+    property alias animationEnabled: glyph.animationEnabled
     property alias baseColor: glyph.baseColor
     property alias pulseColor: glyph.pulseColor
     property bool centerVertical: true

@@ -174,7 +174,7 @@ ManagedPickerFrame {
                     width: parent.width
                     visible: ProjectService.sources.length > 0
                     placeholderText: "Filter paths, repositories and project files"
-                    pauseTooltipDismissal: false
+                    retainPanelWhileEditing: false
                     resetWithTooltip: false
                     handleEscape: false
                     Keys.onShortcutOverride: event => {

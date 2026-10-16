@@ -151,7 +151,7 @@ Rectangle {
         }
     }
     FrameAnimation {
-        running: root.popup && !root.closing && root.visible && (root.Window.window?.visible ?? false)
+        running: UI.MotionPolicy.notificationBorderEnabled && root.popup && !root.closing && root.visible && (root.Window.window?.visible ?? false)
             && !root.timerPaused && root.timerEntry.duration > 0 && root.countdownProgress > 0
         onTriggered: root.clockNow = Date.now()
     }

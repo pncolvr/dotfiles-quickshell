@@ -16,43 +16,45 @@ Item {
             if ((popupMonitors.objectAt(index) as HoverHandler)?.hovered) return true
         return false
     }
+    readonly property bool interactive: tooltipWindow.requestedVisible ?? tooltipWindow.visible
     readonly property bool hovered: panelHover.hovered || popupHovered
-    readonly property bool pending: BarModuleService.pointerReady && tooltipWindow.visible
-        && BarModuleService.pointerItem === TooltipService.source
-        && tooltipWindow.screen === TooltipService.screen
     visible: false
-    onPendingChanged: if (pending) nativeWindow?.update()
-    onHoveredChanged: if (tooltipWindow.visible) TooltipService.setPanelHovered(hovered)
+    onHoveredChanged: syncHover()
 
-    function observePointer(handler: HoverHandler) {
-        if (!handler.hovered) return
-        const pos = handler.parent.mapToGlobal(handler.point.position.x, handler.point.position.y)
-        TooltipService.observePointer(pos.x, pos.y, true)
+    function syncHover() {
+        if (interactive && (!TooltipService.screen || tooltipWindow.screen === TooltipService.screen))
+            TooltipService.setPanelHovered(hovered)
     }
+    // show() resets hover ownership when the source changes. The pointer can
+    // remain inside the same surface, so no new hover event is guaranteed.
+    Connections {
+        target: TooltipService
+        function onSourceChanged() { Qt.callLater(root.syncHover) }
+        function onScreenChanged() { Qt.callLater(root.syncHover) }
+    }
+    Connections {
+        target: root.tooltipWindow
+        ignoreUnknownSignals: true
+        function onVisibleChanged() { Qt.callLater(root.syncHover) }
+        function onRequestedVisibleChanged() { Qt.callLater(root.syncHover) }
+    }
+
     HoverHandler {
         id: panelHover
         parent: root.tooltipWindow.surfaceComponent.popupContentBounds
-        enabled: root.tooltipWindow.visible
-        onPointChanged: root.observePointer(panelHover)
+        enabled: root.interactive
     }
     // Observe actual popup areas. A handler covering the whole overlay steals
     // frame-sync hover from underlying buttons whenever their hints appear.
     // Popup items and the overlay are recreated as the native window is hidden.
     Instantiator {
         id: popupMonitors
-        model: root.tooltipWindow.visible && root.overlayItem ? Array.from(root.overlayItem.children).filter(item => item.visible) : []
+        model: root.interactive && root.overlayItem ? Array.from(root.overlayItem.children).filter(item => item.visible) : []
         delegate: HoverHandler {
             id: handler
             required property var modelData
             parent: modelData
-            enabled: root.tooltipWindow.visible && modelData.visible
-            onPointChanged: root.observePointer(handler)
-        }
-    }
-    Connections {
-        target: root.nativeWindow
-        function onFrameSwapped() {
-            if (root.pending) BarModuleService.finishPointerMove()
+            enabled: root.interactive && modelData.visible
         }
     }
 }

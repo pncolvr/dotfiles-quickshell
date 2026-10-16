@@ -14,10 +14,10 @@ PanelWindow {
     // qmllint enable uncreatable-type
     id: root
     property var picker: PickerService
-    LauncherFocusHandler { host: root; panel: contentLoader.item; picker: root.picker; ready: root.requested && root.transitionProgress === 1 }
+    LauncherFocusHandler { id: focusHandler; host: root; panel: contentLoader.item; picker: root.picker; ready: root.requested && root.transitionProgress === 1 }
     property var wallpapers: ({})
     readonly property Item previewItem: panel
-    property bool animationsEnabled: Config.animateDuringScreenShare || !AudioService.screencastActive
+    property bool animationsEnabled: UI.MotionPolicy.enabled
     property int transitionWorkspace: 0
     property real transitionProgress: 0
     property rect zoomRect: Qt.rect(0, 0, 0, 0)
@@ -43,11 +43,11 @@ PanelWindow {
         zoomRect = rect ? Qt.rect(contentLoader.x + rect.x, contentLoader.y + rect.y, rect.width, rect.height)
             : Qt.rect(0, 0, width, height)
     }
-    NumberAnimation {
+    UI.MotionAnimation {
         id: transitionAnimation
         target: root
         property: "transitionProgress"
-        duration: Theme.exposeAnimationDuration
+        animationDuration: Theme.exposeAnimationDuration
         easing.type: root.requested ? Easing.OutCubic : Easing.InCubic
     }
     function updateTransition() {
@@ -74,7 +74,7 @@ PanelWindow {
     color: "transparent"
     WlrLayershell.namespace: Config.pickerNamespace
     WlrLayershell.layer: WlrLayer.Overlay
-    WlrLayershell.keyboardFocus: requested ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+    WlrLayershell.keyboardFocus: focusHandler.keyboardFocusMode
     // Initialize native capture buffers before the lazy grid attaches to the scene.
     UI.ScaledScreencopyView { visible: false; captureSource: null }
     function imageUrl(path) { return path ? "file://" + path.split("/").map(part => encodeURIComponent(part)).join("/") : "" }

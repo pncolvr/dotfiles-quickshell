@@ -1,6 +1,5 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Dialogs as Dialogs
 import "../../"
 import "../" as UI
 
@@ -12,7 +11,7 @@ Row {
     property alias browseObjectName: browse.objectName
     property alias folderPicker: dialog
     property string dialogTitle: "Choose folder"
-    readonly property bool nativeDialogOpen: dialog.visible
+    readonly property bool nativeDialogOpen: dialog.nativeDialogOpen
     signal accepted()
     spacing: Theme.controlSpacing
     function focusInput() { if (visible) input.forceActiveFocus() }
@@ -20,7 +19,7 @@ Row {
     UI.InputField {
         id: input
         width: Math.max(0,root.width - browse.width - root.spacing)
-        pauseTooltipDismissal: false
+        retainPanelWhileEditing: false
         onAccepted: root.accepted()
     }
     UI.ActionButton {
@@ -29,12 +28,11 @@ Row {
         hint: "choose folder"
         onClicked: dialog.open()
     }
-    Dialogs.FolderDialog {
+    UI.FolderDialog {
         id: dialog
         title: root.dialogTitle
-        options: Dialogs.FolderDialog.ReadOnly
-        onAccepted: {
-            root.text = decodeURIComponent(selectedFolder.toString().replace(/^file:\/\/(?:localhost)?/, ""))
+        onFolderSelected: path => {
+            root.text = path
             Qt.callLater(root.focusInput)
         }
         onRejected: Qt.callLater(root.focusInput)

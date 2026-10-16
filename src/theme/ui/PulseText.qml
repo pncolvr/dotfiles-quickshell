@@ -7,9 +7,10 @@ import "./components" as UI
 UI.Text {
     id: root
     property bool pulsing: false
+    property bool animationEnabled: UI.MotionPolicy.enabled
     property color pulseColor: Theme.pulsingTextPulseColor
     property color baseColor: Theme.pulsingTextBaseColor
-    readonly property bool pulseActive: pulsing && visible && (Window.window?.visible ?? false)
+    readonly property bool pulseActive: animationEnabled && pulsing && visible && (Window.window?.visible ?? false)
 
     color: pulseActive ? "white" : baseColor
     layer.enabled: pulseActive
@@ -34,12 +35,13 @@ UI.Text {
                 pulseShader.awaitingSync = false
             }
         }
-        UniformAnimator {
+        UI.MotionUniformAnimator {
             target: pulseShader
             uniform: "phase"
             from: 0
             to: 1
-            duration: Theme.pulsingTextDuration
+            animationDuration: Theme.pulsingTextDuration
+            policyEnabled: root.animationEnabled
             running: root.pulseActive && !pulseShader.awaitingSync
             loops: Animation.Infinite
         }

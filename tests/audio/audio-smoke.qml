@@ -118,6 +118,10 @@ Scope {
         property var playbackLinks: [{source: browser, target: output}, {source: secondBrowser, target: output}, {source: player, target: output}]
         readonly property var micApps: AudioService.appEntries(recordingNodes, true, recordingLinks, inputs)
         readonly property var playbackApps: AudioService.appEntries(playbackNodes, false, playbackLinks, outputs)
+        readonly property bool muted: defaultOutput.audio.muted
+        readonly property bool micMuted: defaultInput.audio.muted
+        function toggleMute() { defaultOutput.audio.muted = !muted }
+        function toggleMicMute() { defaultInput.audio.muted = !micMuted }
         property bool micActivityEnabled: true
         property bool routingBusy: false
         property string routingError: ""
@@ -176,6 +180,30 @@ Scope {
         repeat: false
         onTriggered: {
             if (root.step === 0) {
+                const duplex = [{input: true, output: true}]
+                const deviceSnapshot = {cards: [
+                    {name: "off-a", description: "A disabled", activeProfile: "off", profiles: duplex},
+                    {name: "off-b", description: "B disabled", activeProfile: "off", profiles: duplex},
+                    {name: "off-live", description: "C disabled", activeProfile: "off", profiles: duplex},
+                    {name: "enabled-a", description: "A enabled", activeProfile: "duplex", profiles: duplex},
+                    {name: "enabled-m", description: "M enabled", activeProfile: "duplex", profiles: duplex},
+                    {name: "enabled-z", description: "Z enabled", activeProfile: "duplex", profiles: duplex}
+                ], nodes: [{name: "enabled-node", cardName: "enabled-z"}]}
+                const deviceNodes = [
+                    {name: "enabled-node", description: "Z enabled", ready: true},
+                    {name: "off-transient", description: "C disabled", cardName: "off-live", ready: true},
+                    {name: "virtual", description: "N virtual", ready: false}
+                ]
+                const expectedOrder = ["card:enabled-a", "card:enabled-m", "virtual", "enabled-node",
+                    "card:off-a", "card:off-b", "off-transient"]
+                for (const direction of [false, true]) {
+                    const ordered = AudioService.withInactiveCards(deviceNodes, direction, deviceSnapshot)
+                    root.check(JSON.stringify(ordered.map(node => node.name)) === JSON.stringify(expectedOrder),
+                        "output and microphone lists sort alphabetically within active and Off groups")
+                }
+                deviceSnapshot.cards[0].activeProfile = "duplex"
+                root.check(AudioService.withInactiveCards(deviceNodes, false, deviceSnapshot)[0].name === "card:off-a",
+                    "changing a profile from Off returns the device to alphabetical order among active devices")
                 const playbackLink = {source: browser, target: output, state: PwLinkState.Active}
                 const captureLink = {source: input, target: recorder, state: PwLinkState.Active}
                 root.check(AudioService.hasDeviceRequest(output, false, [browser], [playbackLink])
@@ -204,6 +232,15 @@ Scope {
                     audioChecks.restart()
                     return
                 }
+                const outputMute = root.find(outputPanel, "audioPanelMute")
+                const inputMute = root.find(inputPanel, "audioPanelMute")
+                outputMute.clicked()
+                root.check(output.audio.muted && !input.audio.muted && outputMute.muted,
+                    "top-right output mute controls only the default output")
+                outputMute.clicked(); inputMute.clicked()
+                root.check(!output.audio.muted && input.audio.muted && inputMute.muted,
+                    "top-right mic mute controls only the default input")
+                inputMute.clicked()
                 const outputs = root.find(outputPanel, "audioDevices")
                 const inputs = root.find(inputPanel, "audioDevices")
                 root.check(outputs.count === 2 && inputs.count === 2, "separate device lists")

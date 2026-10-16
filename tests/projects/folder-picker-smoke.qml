@@ -72,6 +72,8 @@ Scope {
                 root.check(!ProjectService.showAll && PickerService.items.length === 1,"reopening resets all-projects override for GitHub too")
                 root.step = 9
             } else if (root.step === 9) {
+                if (!popup.windowActive) return
+                root.projectPanel = root.find(popup.contentItem,"projectPickerPanel")
                 const search = root.find(popup.contentItem,"pickerSearch")
                 search.forceActiveFocus()
                 root.check(events.keyClick(Qt.Key_W,Qt.ControlModifier,0),"Ctrl+W reaches GitHub search")

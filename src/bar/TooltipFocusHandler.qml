@@ -1,64 +1,31 @@
+pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Window
+import "../theme/ui" as UI
 import "../services"
 
-Item {
+UI.WindowFocusHandler {
     id: root
     required property var tooltipWindow
-    property var panel: null
-    readonly property var nativeWindow: tooltipWindow.contentItem.Window.window
-    property bool requestingKeyboardFocus: false
-    property bool pointerPending: false
-    visible: false
-
-    function releaseFocusRequest() {
-        if (nativeWindow?.active) requestingKeyboardFocus = false
-    }
-    function requestFocus() { focusTimer.restart() }
-
-    Connections {
-        target: root.tooltipWindow
-        function onVisibleChanged() {
-            if (!root.tooltipWindow.visible) {
-                root.requestingKeyboardFocus = false
-                root.pointerPending = false
-            }
-        }
-    }
-    Connections {
-        target: root.nativeWindow
-        function onActiveChanged() {
-            if (root.nativeWindow?.active) Qt.callLater(root.releaseFocusRequest)
-        }
-        function onFrameSwapped() {
-            if (!root.pointerPending) return
-            root.pointerPending = false
-            if (root.tooltipWindow.visible && TooltipService.keyboardActive)
-                BarModuleService.movePointer(TooltipService.source)
-        }
-    }
-    Timer {
-        id: focusTimer
-        interval: 0
-        onTriggered: {
-            if (!root.tooltipWindow.visible || !TooltipService.keyboardActive) return
-            root.requestingKeyboardFocus = !root.nativeWindow?.active
-            if (root.panel && typeof root.panel.focusSearch === "function") {
-                root.panel.focusSearch()
-                root.pointerPending = true
-                root.nativeWindow?.update()
-            }
-            Qt.callLater(root.releaseFocusRequest)
-        }
-    }
+    host: tooltipWindow
+    focusSession: TooltipService.source
+    autoFocus: false
+    passive: true
+    // The trigger remains clickable while interacting with its panel.
+    interactionWindows: [host, TooltipService.source?.tooltipWindow].filter(window => !!window)
+    // Hover never activates a focus grab. Explicit field/control interaction can.
+    dismissOnOutside: !TooltipService.pinned
+    readonly property var editor: nativeWindow?.activeFocusItem
+    readonly property bool protectingEditor: windowActive && editor?.retainPanelWhileEditing === true
+    readonly property bool blocksReplacement: nativeDialogOpen || panel?.interactionPending === true || protectingEditor
+    readonly property bool holding: hostRequestedVisible && ready && (blocksReplacement
+        || (windowActive && TooltipService.keyboardActive))
+    function syncInteraction() { TooltipService.setInteraction(root, holding, blocksReplacement) }
+    onHoldingChanged: syncInteraction()
+    onBlocksReplacementChanged: syncInteraction()
+    Component.onDestruction: TooltipService.setInteraction(root, false)
+    onDismissRequested: TooltipService.dismiss()
     Connections {
         target: TooltipService
-        function onFocusRequested() { if (root.tooltipWindow.visible) root.requestFocus() }
-        function onKeyboardActiveChanged() {
-            if (!TooltipService.keyboardActive) {
-                root.requestingKeyboardFocus = false
-                root.pointerPending = false
-            }
-        }
+        function onFocusRequested() { if (root.hostRequestedVisible) root.requestFocus() }
     }
 }

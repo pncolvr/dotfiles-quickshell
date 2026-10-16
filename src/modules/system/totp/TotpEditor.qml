@@ -54,7 +54,7 @@ RowLayout {
         Layout.minimumWidth: 0
         placeholderText: "secret or otpauth URI"
         maximumLength: 4096
-        pauseTooltipDismissal: true
+        retainPanelWhileEditing: true
         revealHint: "Show TOTP secret"
         hideHint: "Hide TOTP secret"
         enabled: !root.busy

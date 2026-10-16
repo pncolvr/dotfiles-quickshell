@@ -4,10 +4,11 @@ import "../../theme"
 import "../../services"
 
 UI.TooltipArea {
+    id: root
     moduleName: "updates"
+    normalIconColor: UpdatesService.hasPriority ? Theme.warning : UpdatesService.hasUpdates ? Theme.text : Theme.empty
     cursorShape: Qt.PointingHandCursor
     tooltip: Component { UpdatesTooltip {} }
-    onClicked: UpdatesService.install()
 
     HoverHandler {
         cursorShape: Qt.PointingHandCursor
@@ -18,7 +19,7 @@ UI.TooltipArea {
 
         UI.BarIcon {
             text: Theme.updatesIcon
-            color: UpdatesService.hasPriority ? Theme.warning : UpdatesService.hasUpdates ? Theme.text : Theme.empty
+            color: root.moduleIconColor
         }
 
         UI.ColumnText {

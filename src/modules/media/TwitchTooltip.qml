@@ -79,10 +79,6 @@ Item {
         cancelEditor()
         searchField.forceActiveFocus()
     }
-    Keys.onEscapePressed: event => {
-        if (TooltipService.keyboardActive) TooltipService.dismiss()
-        else event.accepted = false
-    }
     function addUser(linkExisting = false) {
         if (linkEntry && !linkExisting) return
         const saved = editingLogin
@@ -187,7 +183,6 @@ Item {
                 height: parent.height
                 visible: !root.adding
                 placeholderText: "Search streamers…"
-                handleEscape: !TooltipService.keyboardActive
             }
 
             UI.ActionButton {

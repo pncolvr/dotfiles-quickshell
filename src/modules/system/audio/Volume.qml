@@ -11,7 +11,7 @@ TooltipArea {
     id: root
     readonly property var mediaService: MediaService
     acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
-    readonly property bool tooltipKeyboardFocus: true
+
     tooltipSource: root
     hoverEnabled: true
     tooltip: audioTooltip
@@ -21,16 +21,8 @@ TooltipArea {
         AudioTooltip { mediaService: root.mediaService }
     }
 
-    onClicked: (mouse) => {
-        switch (mouse.button) {
-            case Qt.LeftButton: AudioService.toggleMute(); break
-            case Qt.RightButton: {
-                const pos = root.mapToGlobal(root.width / 2, 0)
-                TooltipService.togglePin(pos.x, tooltip, root, centerTooltip, tooltipScreen)
-                break
-            }
-            case Qt.MiddleButton: AudioService.openMixer(); break
-        }
+    onAlternateClicked: mouse => {
+        if (mouse.button === Qt.MiddleButton) AudioService.openMixer()
     }
     onWheel: (event) => {
         if (!AudioService.sink?.audio) return
@@ -41,7 +33,9 @@ TooltipArea {
     Row {
         BarIcon {
             font.pixelSize: Theme.fontSize
-            pulsing: AudioService.outputMutePulse
+            color: root.moduleIconColor
+            animationEnabled: MotionPolicy.volumePulseEnabled
+            pulsing: !root.pinned && AudioService.outputMutePulse
             text: root.volumeIcon()
         }
 

@@ -2,11 +2,26 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Controls as QC
+import Quickshell
 import "../../"
 import "../" as UI
 
 QC.TabBar {
     id: root
+    readonly property var transitionHost: root.QsWindow.window
+    property bool transitionReady: false
+    function fadePanelContent() {
+        if (!transitionReady || !visible) return
+        const motion = transitionHost?.surfaceComponent?.motion
+        if (typeof motion?.fadeContent === "function") motion.fadeContent()
+    }
+    Component.onCompleted: transitionReady = true
+    Connections {
+        target: root
+        // Hide replacement content before layout/painting can expose a frame
+        // at the outgoing tab's geometry. Only geometry updates are deferred.
+        function onCurrentIndexChanged() { if (root.transitionReady) root.fadePanelContent() }
+    }
     property var labels: []
     property var closeableTabs: []
     property var dropEnabledTabs: []

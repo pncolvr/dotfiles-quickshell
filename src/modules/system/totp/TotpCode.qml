@@ -1,13 +1,14 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import "../../../theme/ui" as UI
 import "../../../theme"
 
 Item {
     id: root
     required property string code
     property color color: Theme.text
-    property bool animationsEnabled: true
+    property bool animationsEnabled: UI.MotionPolicy.enabled
     property font font: Qt.font({family: Theme.fontFamily, pixelSize: Theme.fontSize, bold: Theme.fontBold})
     readonly property bool spinning: spin.running
     property bool initialized: false
@@ -44,13 +45,13 @@ Item {
     TextMetrics { id: digitMetrics; font: root.font; text: "0" }
     TextMetrics { id: spaceMetrics; font: root.font; text: " " }
 
-    NumberAnimation {
+    UI.MotionAnimation {
         id: spin
         target: root
         property: "progress"
         from: 0
         to: 1
-        duration: Theme.totpCodeSpinDuration
+        animationDuration: Theme.totpCodeSpinDuration
         easing.type: Easing.OutQuad
     }
 

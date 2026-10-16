@@ -6,6 +6,8 @@ import "../../../services"
 UI.TooltipArea {
     moduleName: "batteries"
     id: root
+    normalIconColor: BatteryService.lowestLevelStatus === "normal" ? Theme.text
+        : Theme.batteryLevelColors[BatteryService.lowestLevelStatus]
     required property var window
     readonly property bool batteryModule: true
     tooltipSource: root
@@ -15,7 +17,6 @@ UI.TooltipArea {
     UI.BarIcon {
         objectName: "batteryBarIcon"
         text: Theme.batteryIcon
-        color: BatteryService.lowestLevelStatus === "normal" ? Theme.text
-            : Theme.batteryLevelColors[BatteryService.lowestLevelStatus]
+        color: root.moduleIconColor
     }
 }

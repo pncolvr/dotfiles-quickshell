@@ -41,7 +41,7 @@ Column {
             visible: root.showName
             Layout.fillWidth: true
             placeholderText: "Name (optional)"
-            pauseTooltipDismissal: false
+            retainPanelWhileEditing: false
             onAccepted: root.accepted()
         }
         UI.ActionButton {

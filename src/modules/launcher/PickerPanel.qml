@@ -11,6 +11,7 @@ Item {
     property bool backgroundVisible: true
     property real availableContentWidth: Theme.pickerWidth
     property real availableContentHeight: 800
+    readonly property bool focusReady: !!panel
     readonly property bool transitioning: panel?.transitioning ?? false
     readonly property real radius: Theme.tooltipRadius
     readonly property var panel: content.item
@@ -31,7 +32,12 @@ Item {
                 case PickerService.Mode.Directories: return directoryPanel
                 case PickerService.Mode.Clipboard: return clipboardPanel
                 case PickerService.Mode.Secret: return secretPanel
-                default: return root.picker.imageOnly ? imageViewer : root.picker.previewImages ? imagePanel : root.picker.multiple ? multiSelectPanel : standardPanel
+            }
+            switch (true) {
+                case root.picker.imageOnly: return imageViewer
+                case root.picker.previewImages: return imagePanel
+                case root.picker.multiple: return multiSelectPanel
+                default: return standardPanel
             }
         }
     }

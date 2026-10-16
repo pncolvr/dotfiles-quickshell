@@ -12,7 +12,9 @@ and close with Escape or an outside click. This includes webapps, clipboard menu
 multi-step prompts, image viewers and the window overview. A QR/image preview focuses
 the image panel itself, so Escape and Enter work with the pointer outside the panel;
 no text field or button is needed. `LauncherFocusHandler` shares activation and
-outside-click handling across ordinary/private pickers and the overview.
+outside-click handling across ordinary/private pickers and the overview, using
+`UI.WindowFocusHandler`. It activates once, then returns to on-demand keyboard
+focus; returning from a native child dialog uses the same controller.
 Legacy JSON `movePointer` fields are ignored and dmenu `--keep-pointer` remains
 accepted for compatibility; callers cannot enable pointer movement.
 Input-only prompts reserve no empty list row.
@@ -554,8 +556,9 @@ effective dimensions do not restart a decode. The complete decode size is set
 before loading the new file. These bounds limit the requested preview, not the
 image codec's temporary buffers or the renderer's total memory. A small compressed
 file can still contain a very large image.
-Layout transitions use `Theme.clipboardLayoutDuration`; layout and image fades
-respect the existing `animateDuringScreenShare` setting. Repeated toggles retarget
+Layout transitions use `Theme.clipboardLayoutDuration` (160ms by default); layout
+and image fades use the shared `UI.MotionPolicy.enabled` gate for
+`animateDuringScreenShare` and active sharing. Repeated toggles retarget
 the current motion.
 Pins count toward the entry and total-size limits, but are
 never removed to satisfy those limits; if pins alone exceed a limit, they are
@@ -642,5 +645,7 @@ private host. Sensitive modules use a private window directly.
 
 **Meta+W** opens the private [rbw vault manager](rbw.md#vault-manager), with a
 single searchable view, folder/type filters and New/Edit/Delete actions. A single
-click opens details; reveal/copy stay explicit. Escape discards a draft before
+click opens details; reveal/copy stay explicit. Explicit opening focuses Search;
+switching to another app releases focus while keeping the manager and draft open.
+Returning does not refocus Search over an editor. Escape discards a draft before
 closing. Background lock checks do not interrupt the controls or move the list.

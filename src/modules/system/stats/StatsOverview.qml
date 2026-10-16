@@ -16,7 +16,7 @@ Column {
         width: parent.width
         spacing: Theme.controlSpacing
         Repeater {
-            model: ["CPU", "Memory", "Temperature"]
+            model: ["CPU", "RAM", "Temperature"]
             Column {
                 required property string modelData
                 width: (root.width - Theme.controlSpacing * 2) / 3
@@ -26,19 +26,20 @@ Column {
                     width: parent.width
                     horizontalAlignment: Text.AlignHCenter
                     font.pixelSize: Theme.fontSize * 1.4
-                    text: parent.modelData === "CPU" ? root.statsService.cpu + "%"
-                        : parent.modelData === "Memory" ? (root.statsService.memoryUsed / 1024).toFixed(1) + " GiB"
-                        : Number.isFinite(root.statsService.temperature) ? Math.round(root.statsService.temperature) + "°C" : "—"
+                    text: {
+                        switch (parent.modelData) {
+                        case "CPU": return root.statsService.cpu + "%"
+                        case "RAM": return (root.statsService.memoryUsed / 1024).toFixed(1) + " GiB"
+                        case "Temperature": return Number.isFinite(root.statsService.temperature)
+                            ? Math.round(root.statsService.temperature) + "°C" : "—"
+                        default: return ""
+                        }
+                    }
                 }
             }
         }
     }
-    StatsBar {
-        width: parent.width
-        label: "RAM"
-        value: (root.statsService.memoryUsed / 1024).toFixed(1) + " / " + (root.statsService.memoryTotal / 1024).toFixed(1) + " GiB"
-        ratio: root.statsService.memoryTotal > 0 ? root.statsService.memoryUsed / root.statsService.memoryTotal : 0
-    }
+    MemoryBar { width: parent.width; statsService: root.statsService }
     Row {
         width: parent.width
         spacing: Theme.controlSpacing

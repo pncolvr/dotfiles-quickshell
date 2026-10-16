@@ -9,8 +9,9 @@ UI.TooltipArea {
     id: root
     acceptedButtons: Qt.LeftButton
     hoverEnabled: true
+    normalIconColor: StatusService.source === "manual" ? Theme.warning : Theme.text
     tooltipSource: root
-    readonly property bool tooltipKeyboardFocus: true
+
     tooltip: Component { StatusTooltip {} }
     function statusToIcon(status) {
         switch (status) {
@@ -21,14 +22,9 @@ UI.TooltipArea {
     }
 
     UI.BarIcon {
-        color: TooltipService.pinned && TooltipService.source === root ? Theme.accent
-            : StatusService.source === "manual" ? Theme.warning : Theme.text
+        color: root.moduleIconColor
         text: root.statusToIcon(StatusService.status)
     }
 
-    onClicked: mouse => {
-        if (mouse.button !== Qt.LeftButton) return
-        const pos = root.mapToGlobal(root.width / 2, 0)
-        TooltipService.togglePin(pos.x, tooltip, root, centerTooltip, tooltipScreen)
-    }
+
 }

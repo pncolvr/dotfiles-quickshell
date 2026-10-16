@@ -28,49 +28,52 @@ Column {
             color: Theme.warning
         }
 
-        UI.ColumnText {
-            visible: UpdatesService.hasUpdates
-            text: `${UpdatesService.count} updates available`
+        Item {
             width: parent.width
-            horizontalAlignment: Text.AlignHCenter
-            color: Theme.text
-
-            UI.HoverTooltip {
-                cursorShape: Qt.PointingHandCursor
-                text: "open all updates"
-                onClicked: UpdatesService.openMarkdown()
+            height: Math.max(summary.implicitHeight, actions.implicitHeight)
+            Column {
+                id: summary
+                anchors.left: parent.left
+                anchors.right: actions.left
+                anchors.rightMargin: Theme.controlSpacing
+                spacing: 0
+                UI.ColumnText {
+                    width: parent.width
+                    text: UpdatesService.hasUpdates ? `${UpdatesService.count} updates available` : "no updates available"
+                    color: UpdatesService.hasUpdates ? Theme.text : Theme.inactive
+                }
+                UI.ColumnText {
+                    width: parent.width
+                    text: `last checked ${Qt.formatTime(UpdatesService.lastChecked, "HH:mm")}`
+                    color: Theme.inactive
+                }
+            }
+            Row {
+                id: actions
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: Theme.controlSpacing
+                UI.ActionButton {
+                    objectName: "updatesNotes"
+                    glyph: Theme.notesIcon
+                    hint: "Open all update notes"
+                    enabled: UpdatesService.hasUpdates
+                    onClicked: UpdatesService.openMarkdown()
+                }
+                UI.ActionButton {
+                    objectName: "updatesInstall"
+                    glyph: Theme.downloadIcon
+                    hint: "Install updates"
+                    enabled: UpdatesService.hasUpdates
+                    onClicked: UpdatesService.install()
+                }
             }
         }
-
-        UI.ColumnText {
-            visible: UpdatesService.hasUpdates
-            text: `last checked ${Qt.formatTime(UpdatesService.lastChecked, "HH:mm")}`
-            width: parent.width
-            horizontalAlignment: Text.AlignHCenter
-            color: Theme.inactive
-        }
-
         Rectangle {
             visible: UpdatesService.hasUpdates
             width: parent.width
             height: 1
             color: Theme.empty
-        }
-
-        UI.ColumnText {
-            visible: !UpdatesService.hasUpdates && !UpdatesService.error
-            text: "no updates available"
-            width: parent.width
-            horizontalAlignment: Text.AlignHCenter
-            color: Theme.inactive
-        }
-
-        UI.ColumnText {
-            visible: !UpdatesService.hasUpdates
-            text: `last checked ${Qt.formatTime(UpdatesService.lastChecked, "HH:mm")}`
-            width: parent.width
-            horizontalAlignment: Text.AlignHCenter
-            color: Theme.inactive
         }
     }
 

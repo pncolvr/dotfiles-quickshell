@@ -10,9 +10,17 @@ WrapperMouseArea {
     property Component tooltip: null
     property var tooltipSource: moduleName ? root : null
     property string moduleName: ""
-    property bool moduleFocusSearch: false
-    property bool pointerHovered: false
-    readonly property bool tooltipHovered: triggerHover.hovered || pointerHovered
+    readonly property bool tooltipHovered: triggerHover.hovered
+    readonly property bool pinned: TooltipService.pinned && TooltipService.source === tooltipSource
+    property color normalIconColor: Theme.text
+    readonly property color moduleIconColor: pinned ? Theme.accent : normalIconColor
+    signal alternateClicked(var mouse)
+    onClicked: mouse => {
+        if (mouse.button === Qt.LeftButton && moduleName && tooltip) {
+            const pos = root.mapToGlobal(root.width / 2, 0)
+            TooltipService.togglePin(pos.x, tooltip, tooltipSource, centerTooltip, tooltipScreen)
+        } else alternateClicked(mouse)
+    }
     Component.onCompleted: if (moduleName) BarModuleService.register(root)
     Component.onDestruction: if (moduleName) BarModuleService.unregister(root)
     property bool centerTooltip: false
@@ -41,13 +49,9 @@ WrapperMouseArea {
         id: triggerHover
         parent: root
         target: root
+        cursorShape: root.cursorShape
         enabled: root.enabled && root.hoverEnabled && !!root.tooltip
         // Enter within the target; tolerate small edge movements after entry.
         margin: hovered ? Theme.tooltipHoverTolerance : 0
-        onPointChanged: if (hovered) {
-            const pos = root.mapToGlobal(point.position.x, point.position.y)
-            TooltipService.observePointer(pos.x, pos.y, true)
-        }
-        onHoveredChanged: if (hovered) BarModuleService.releasePointerHover(root)
     }
 }

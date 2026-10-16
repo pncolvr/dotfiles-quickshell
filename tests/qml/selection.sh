@@ -29,7 +29,7 @@ import Quickshell.Wayland
 import "file://$project_root/src/bar"
 Scope { PrivateTopPanelTooltip {
     id: host
-    visible: true
+    requestedVisible: true
     screen: Quickshell.screens[0]
     contentWidth: 520
     contentHeight: 560

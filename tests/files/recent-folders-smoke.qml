@@ -98,6 +98,10 @@ Scope {
                         "folder lists all files and directories and its tab is highlighted")
                     root.check(RecentFilesService.files[0]?.isDirectory && RecentFilesService.files[1]?.name === "item24.txt",
                         "directories precede files and the newest file comes first in its group")
+                    const input = root.child("folderAliasInput") as QC.TextField
+                    root.check(root.panel.renameFolder === root.folder && input.visible
+                        && input.text === "folder one" && input.activeFocus && input.selectedText === input.text,
+                        "adding selects its tab and focuses the shared alias editor with the whole directory name selected")
                     root.check(root.panel.height <= root.panel.maxPanelHeight, "folder controls leave a bounded list")
                     const close = mouse.findChild(tabs.itemAt(1), "tabCloseButton") as QC.Button
                     root.check(!close.visible, "folder tab has no close button")

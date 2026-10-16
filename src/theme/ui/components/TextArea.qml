@@ -4,6 +4,7 @@ import "../../"
 
 QC.TextArea {
     id: root
+    property bool retainPanelWhileEditing: true
     property bool focusBorder: false
     font.family: Theme.fontFamily
     font.pixelSize: Theme.fontSize

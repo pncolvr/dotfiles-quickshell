@@ -103,7 +103,7 @@ ManagedPickerFrame {
                 width: parent.width
                 placeholderText: "Filter directories"
                 visible: DirectoryService.directories.length > 0
-                pauseTooltipDismissal: false
+                retainPanelWhileEditing: false
                 Keys.onShortcutOverride: event => { if (root.handleAddKey(event,false)) event.accepted = true }
                 Keys.onPressed: event => { if (root.handleAddKey(event,true)) event.accepted = true }
             }

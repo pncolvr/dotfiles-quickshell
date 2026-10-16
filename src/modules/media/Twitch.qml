@@ -6,19 +6,15 @@ import "../../services"
 UI.TooltipArea {
     id: root
     moduleName: "twitch"
-    moduleFocusSearch: true
-    readonly property bool tooltipKeyboardFocus: true
+
+    normalIconColor: TwitchService.hasOnline ? Theme.twitchColor : Theme.inactive
     tooltipSource: root
     visible: TwitchService.available
     tooltip: Component { TwitchTooltip {} }
     acceptedButtons: Qt.LeftButton
-    onClicked: {
-        const pos = root.mapToGlobal(root.width / 2, 0)
-        TooltipService.togglePin(pos.x, tooltip, root, centerTooltip, tooltipScreen)
-    }
+
     UI.BarIcon {
         text: Theme.twitchIcon
-        color: TooltipService.pinned && TooltipService.source === root ? Theme.accent
-            : TwitchService.hasOnline ? Theme.twitchColor : Theme.inactive
+        color: root.moduleIconColor
     }
 }

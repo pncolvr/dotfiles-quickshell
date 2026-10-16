@@ -11,6 +11,7 @@ Singleton {
     property var files: []
     readonly property string error: state.error || PinnedFilesService.error
     readonly property bool loading: scan.running || state.pendingPanel
+    readonly property bool addingFolder: scan.running === true && state.addingFolder === true
     readonly property bool dragging: state.dragging
     readonly property var pinnedFiles: PinnedFilesService.files
     readonly property bool showingPinned: state.showingPinned
