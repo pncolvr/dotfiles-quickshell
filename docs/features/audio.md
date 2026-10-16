@@ -224,6 +224,22 @@ shows **Screen sharing** and one description per PipeWire video capture. It uses
 the source name or stream name, falling back to app metadata and then **Video
 capture**. Known webcam sources are excluded. The panel has no capture controls.
 
+Compositor capture synchronization waits for PipeWire's initial sync and tracked
+node readiness. Starting or restarting the bar, or losing the PipeWire connection,
+does not publish an incomplete graph as "not sharing". The combined state stays
+active until the final capture ends.
+
+Quickshell applies `Config.hyprlandAnimationsEnabled` and the current capture state
+directly: compositor animations run only when the setting is enabled and no share
+is active. Config edits are honored on bar reload/restart. The final share restores
+the current configured value; application-hiding refreshes and Hypr reloads apply
+the same rule. This is separate from UI animation controls in Config and MotionPolicy.
+
+The Hypr **Meta+X** binding is removed. There is no stored preference override,
+animation IPC control or separate state file. During Hypr configuration loading,
+animations stay disabled and private capture rules stay enabled until Quickshell
+reconciles them after capture discovery is ready.
+
 [Documentation](../README.md)
 
 Device and profile selectors open floating, framed dropdowns without resizing

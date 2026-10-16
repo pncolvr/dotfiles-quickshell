@@ -8,7 +8,13 @@ cleanup() {
     rm -rf -- "$test_dir"
 }
 trap cleanup EXIT
-QT_QPA_PLATFORM=offscreen /usr/lib/qt6/bin/qmltestrunner -input "$project_root/tests/audio/tst-screencast.qml" -o -,txt
+# Import only the production model: its directory also registers shell-only
+# singletons that ordinary qmltestrunner cannot load.
+mkdir "$test_dir/model"
+cp "$project_root/src/services/audio/ScreencastModel.qml" "$test_dir/model/"
+sed 's|import "../../src/services/audio"|import "."|' \
+    "$project_root/tests/audio/tst-screencast.qml" > "$test_dir/model/tst-screencast.qml"
+QT_QPA_PLATFORM=offscreen /usr/lib/qt6/bin/qmltestrunner -input "$test_dir/model/tst-screencast.qml" -o -,txt
 
 if [[ ${1:-} == --native ]]; then
     # A private server prevents these disposable nodes from reaching the desktop.

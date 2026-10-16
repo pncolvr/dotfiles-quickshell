@@ -514,9 +514,21 @@ python3 src/theme/shaders/cava/build.py
 Add `--native-imports` to check the complete bar, real device/profile mapping,
 sorted lists, and system default bindings without changing your audio settings.
 The screencast checks use Qt 6 tests for independent captures, webcam exclusion,
-and description fallbacks. `--native` additionally creates two disposable video
+and description fallbacks. The runner isolates the production ScreencastModel
+from shell-only singleton registrations without duplicating model logic.
+`--native` additionally creates two disposable video
 nodes on a private PipeWire server and checks their descriptions in the real
 tooltip. The native fixture requires `pw-cli`; it does not affect desktop captures.
+
+`bash tests/hyprland/capture-sync.sh` exercises the production coordinator without
+any database service. Four isolated processes reload edited fixture Config.qml
+values, while synthetic capture/compositor services and a slow command recorder
+check capture readiness, Config changes while a command is busy, multiple captures,
+compositor reload, disconnect/reconnect and the last share ending. Config changes
+during sharing are honored when sharing ends. It uses isolated runtime/data
+directories and private D-Bus sessions; no command reaches the desktop compositor.
+No persisted animation preferences, animation IPC controls or Lua state owner are
+involved.
 
 `bash tests/ui/twitch-panel.sh` is an optional Wayland check that briefly opens
 isolated panels and restores focus afterward. It checks explicit search activation,

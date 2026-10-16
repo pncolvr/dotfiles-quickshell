@@ -18,6 +18,10 @@ TestCase {
         compare(streams[0].id, 2)
         compare(streams[1].id, 3)
         compare(streams[0].description, "Monitor 1")
+        captures.nodes = [second, audio, source]
+        captures.links = [{source, target: second}]
+        compare(captures.streams.length, 1)
+        compare(captures.streams[0].id, 3)
         captures.links = []
         compare(captures.streams[0].description, "Browser")
         captures.nodes = []

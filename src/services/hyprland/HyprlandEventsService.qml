@@ -18,20 +18,26 @@ Singleton {
         if (value != root.submapName) root.submapName = value
     }
 
+    readonly property bool animationsEnabled: Config.hyprlandAnimationsEnabled && !AudioService.screencastActive
+    onAnimationsEnabledChanged: synchronizeCapture()
+
     function synchronizeCapture() { captureSyncTimer.restart() }
 
     Timer {
         id: captureSyncTimer
         interval: 50
         onTriggered: {
+            if (!AudioService.screencastReady) return
             if (hideApplicationsProcess.running) { restart(); return }
-            hideApplicationsProcess.command = Config.hyprlandHideApplicationsCommand(AudioService.screencastActive)
+            hideApplicationsProcess.command = Config.hyprlandSynchronizeCaptureCommand(
+                AudioService.screencastActive, root.animationsEnabled)
             hideApplicationsProcess.running = true
         }
     }
 
     Connections {
         target: AudioService
+        function onScreencastReadyChanged() { root.synchronizeCapture() }
         function onScreencastActiveChanged() {
             root.synchronizeCapture()
             WindowService.buildWindows()

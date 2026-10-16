@@ -264,6 +264,8 @@ Singleton {
         links: root.linksModel.values
     }
     readonly property var screencastStreams: screencastModel.streams
+    // Initial registry sync alone may precede tracked node properties.
+    readonly property bool screencastReady: Pipewire.ready && root.nodesModel.values.every(node => node.ready)
     readonly property bool screencastActive: screencastStreams.length > 0
     onScreencastActiveChanged: {
         const sound = screencastActive ? Config.screencastStartSound : Config.screencastStopSound

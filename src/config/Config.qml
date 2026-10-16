@@ -102,10 +102,13 @@ Item {
     ]
     readonly property string submapParserCommand: _internal.home +  "/.config/hypr/scripts/keybinds/parser.sh"
     readonly property var hyprlandGetWindowsCommand: ["hyprctl", "clients", "-j"]
+    // Authoritative compositor setting; sharing temporarily suppresses animations.
+    readonly property bool hyprlandAnimationsEnabled: true
     readonly property var hyprlandGetNoWarpsCommand: ["bash", "-c", "hyprctl getoption cursor:no_warps -j | jq -r '.bool'"]
     readonly property var hyprlandSetNoWarpsCommand: (value) => ["hyprctl", "eval", `hl.config({ cursor = { no_warps = ${value} } })`]
     readonly property var hyprlandGetActiveWindowHiddenCommand: ["bash", "-c", "hyprctl getprop activewindow no_screen_share"]
-    readonly property var hyprlandHideApplicationsCommand: (active) => ["hyprctl", "eval", `HideApplications(${active})`]
+    readonly property var hyprlandSynchronizeCaptureCommand: (active, animationsEnabled) => ["hyprctl", "eval",
+        `HideApplications(${active}, ${animationsEnabled})`]
     // Resolve live group membership when dispatched; cached group indexes can change.
     readonly property var hyprlandFocusWindowByAddress: (address) => `function()
         for _, window in ipairs(hl.get_windows()) do

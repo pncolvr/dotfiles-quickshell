@@ -66,7 +66,7 @@ Review these defaults when adapting the configuration:
 - `wallpaperDirectory` sets the wallpaper picker root, defaulting to `~/Pictures/wallpapers`.
   An explicit directory argument overrides it for one picker session.
 - `submapParserCommand` points to `~/.config/hypr/scripts/keybinds/parser.sh`.
-- Screen-sharing commands expect `HideApplications(active)` and related Hyprland rules.
+- Screen-sharing commands expect `HideApplications(active, animationsEnabled)` and related Hyprland rules.
 - Update installation opens Ghostty and runs `yay`. The refresh helper is
   `src/services/system/update-check.sh`. Pacman hooks and cron jobs should invoke
   that helper directly. The root `config` link exposes settings only; it does not
@@ -187,6 +187,14 @@ Set `animationsEnabled: false` to disable decorative UI motion. It defaults to
 settles active transitions immediately and stops decorative effects.
 `animateDuringScreenShare` defaults to `false`; enabling it allows decorative
 motion during sharing, subject to the master switch.
+
+Compositor animations are owned by `HyprlandEventsService`, independently of UI
+motion. `hyprlandAnimationsEnabled` is authoritative: animations run only when it
+is `true` and no screen share is active. Changing it in Config.qml applies on bar
+reload/restart; ending a share restores the current configured value. Capture
+discovery must be ready before synchronization. There is no SQLite override,
+animation IPC setter or separate state file. The companion Hypr configuration
+has no Meta+X animation binding.
 
 Status indicators have independent Config switches, all enabled by default. They
 continue animating with the master switch off and during screen sharing:

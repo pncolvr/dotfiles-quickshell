@@ -25,7 +25,7 @@ Scope {
         repeat: true
         onTriggered: {
             const labels = root.texts(panel.item)
-            if (indicator.visible && AudioService.screencastStreams.length === 2
+            if (AudioService.screencastReady && indicator.visible && AudioService.screencastStreams.length === 2
                 && labels.includes("Screen sharing") && labels.includes("banana") && labels.includes("potato")) {
                 console.log("PASS: native capture descriptions and live tooltip")
                 Qt.quit()
