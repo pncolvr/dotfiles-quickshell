@@ -671,16 +671,32 @@ bytes remain available. No desktop focus, input or real clipboard
 is used. The launcher IPC suite also checks the immediate-return compatibility alias,
 sharp integer scaling and compact hint-free geometry through the actual picker.
 
-`bash tests/launcher/wallpaper.sh` checks native picker requests, literal paths,
-per-mode/output saved links, repeated application, mode/monitor cancellation,
-setting/monitor failures, custom roots, startup readiness and restoration using mocked desktop commands. The launcher IPC
+`bash tests/launcher/wallpaper.sh` runs the real native service and shared panels
+offscreen with synthetic images and mocked desktop tools. It covers asynchronous
+recursive discovery, literal/reserved-character/newline paths and preview loading,
+focus, saved choices, per-session search/selection with history disabled, optional
+work mode, separate mode/monitor steps, cancellation/replacement during reads and
+application, errors/native alerts, custom/symlinked roots and native restore without
+picker/config IPC. Separate retained-executor checks cover per-mode/output links,
+legacy numeric slots, application failure, daemon readiness, custom Config storage
+and offline restoration. The fixture isolates capture-state policy from live audio. It selects a non-first
+row beyond the initial viewport and checks the rendered highlight/scroll position,
+as well as continuously visible image → mode → monitor steps.
+With the keyboard idle, run `WALLPAPER_TEST_NATIVE=1 bash tests/launcher/wallpaper.sh`
+for the actual PickerWindow Enter/click handoffs with a delayed monitor read.
+It uses synthetic images and mocked setters, restores original focus, never moves
+the pointer and does not change the desktop wallpaper. The launcher IPC
 suite loads a synthetic image through the real bounded preview loader, checks
-wide/narrow layout, empty search and preview reset when ordinary menus open. It
+wide/narrow layout, empty search and preview reset when ordinary menus open.
+Rendered landscape, portrait and panoramic samples switch inside one session
+and verify filled previews with preserved aspect ratio and screen limits. They
+also verify stable placement footprint, search/list widths and list viewport
+height, so changing preview dimensions cannot recenter or resize the column. It
 checks that image-picker rows have empty image sources while ordinary menu rows
 retain their thumbnails. It also checks the full image → mode → monitor flow, including preserved search and
 image selection after setting or cancelling either target step. The wallpaper
-flow uses a custom `Config.wallpaperDirectory` to verify the default provider
-reads the configured root through launcher IPC.
+flow uses a custom `Config.wallpaperDirectory` and verifies that the compatibility
+alias returns immediately while all choices stay native.
 
 Provider checks include recording cancellation at each picker and literal shell
 characters in RDP credentials, recording paths, and audio devices. Recording setup
@@ -863,7 +879,7 @@ client startup. This cannot guarantee delivery of keys typed before native focus
 transfers; test immediate Meta+P typing on the live desktop as well.
 
 Run `bash tests/launcher/global-shortcuts.sh` in a Hyprland session to check all
-44 production shortcut callbacks before and after reload, covering launcher and
+45 production shortcut callbacks before and after reload, covering launcher and
 recording actions, Vault, notification DND, shell reload, all 14 module shortcuts,
 window cycling and all ten numbered window targets. It loads the unmodified
 registry component with fixture-only feature services, captures reload through

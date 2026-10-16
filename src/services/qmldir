@@ -43,6 +43,7 @@ singleton SensitiveClipboardService 1.0 clipboard/SensitiveClipboardService.qml
 singleton PickerService 1.0 launcher/PickerService.qml
 singleton BookmarkService 1.0 launcher/BookmarkService.qml
 singleton QrEncodeService 1.0 launcher/QrEncodeService.qml
+singleton WallpaperService 1.0 launcher/WallpaperService.qml
 ClipboardSearchSession 1.0 launcher/ClipboardSearchSession.qml
 singleton ProjectRepository 1.0 storage/ProjectRepository.qml
 singleton ProjectService 1.0 projects/ProjectService.qml

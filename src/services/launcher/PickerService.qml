@@ -24,6 +24,7 @@ Singleton {
     property var secretCallback: null
     property var menuCallback: null
     property var menuClosedCallback: null
+    property bool menuKeepOpen: false
     property string acceptLabel: "Select"
     property string query: ""
     property string layout: "list"
@@ -103,13 +104,13 @@ Singleton {
     function chooseScreen() {
         return Quickshell.screens.find(screen => screen.name === Hyprland.focusedMonitor?.name) ?? Quickshell.screens[0] ?? null
     }
-    function begin(newMode, title) {
+    function begin(newMode, title, keepVisible = false) {
         exposeCloseTarget = null
         if (pendingDirectory) {
             reply(pendingDirectory, {status: "cancelled", items: [], exitCode: 1})
             pendingDirectory = ""
         }
-        close()
+        close("replaced", keepVisible)
         mode = newMode; prompt = title; query = ""; items = []; selectedIds = []; currentIndex = 0
         if (newMode === PickerService.Mode.Clipboard) clipboardSearch.fuzzy = false
         itemCriteria = ({})
@@ -133,16 +134,28 @@ Singleton {
         return sorted ? normalized.sort((a, b) => a.title.localeCompare(b.title)) : normalized
     }
     function promptMenu(title, rows, callback, presentation = "list", options = {}) {
-        begin(PickerService.Mode.Menu, title)
+        begin(PickerService.Mode.Menu, title, options.keepOpen === true)
+        menuKeepOpen = options.keepOpen === true
         items = menuRows(rows, options.sort === true)
         menuCallback = callback
         menuClosedCallback = options.onClosed || null
         imageOnly = options.imageOnly === true
+        previewImages = options.previewImages === true
         layout = presentation
         multiple = options.allowMultipleSelection === true
         allowTyped = options.allowTyped === true
         acceptLabel = options.acceptLabel || "Select"
+        restoreMenuSelection(options)
         show()
+    }
+    function restoreMenuSelection(options) {
+        query = options.query || ""
+        selectionKey = typeof options.selectionKey === "string" ? options.selectionKey : ""
+        if (options.selectedResult === undefined && !(Config.pickerRememberSelection && selectionKey)) return
+        const previous = options.selectedResult !== undefined ? options.selectedResult
+            : PreferencesRepository.value("launcher.selection." + selectionKey, null)
+        currentIndex = Math.max(0, filteredItems.findIndex(item =>
+            JSON.stringify(item.result) === JSON.stringify(previous)))
     }
     function apps() {
         begin(PickerService.Mode.Apps, "Applications")
@@ -305,10 +318,11 @@ Singleton {
             input: JSON.stringify(response) + "\n"})
         process.running = true
     }
-    function close() {
+    function close(reason = "cancelled", keepVisible = false) {
         const menuClosed = menuClosedCallback
         menuClosedCallback = null
         menuCallback = null
+        menuKeepOpen = false
         const secretResult = secretCallback
         secretCallback = null
         openingClipboard = false
@@ -318,14 +332,14 @@ Singleton {
         if (mode === PickerService.Mode.Clipboard && activeWindow.running) activeWindow.running = false
         if (requestDirectory) reply(requestDirectory, {status: "cancelled", items: [], exitCode: 1})
         requestDirectory = ""
-        visible = false
+        if (!keepVisible) visible = false
         if (imageOnly) items = []
         secretActions = null
         if (mode === PickerService.Mode.Secret) { secretDescription = ""; error = ""; prompt = "" }
         // Keep the outgoing Exposé grid stable until its closing animation ends.
         if (layout !== "expose") { query = ""; selectedIds = [] }
         if (secretResult) secretResult(null)
-        if (menuClosed) menuClosed()
+        if (menuClosed) menuClosed(reason)
     }
     function finishExposeClose() {
         const target = exposeCloseTarget
@@ -390,11 +404,16 @@ Singleton {
             if (Config.pickerRememberSelection && selectionKey && item.id !== "typed")
                 PreferencesRepository.setValue("launcher.selection." + selectionKey, item.result)
             const callback = menuCallback
+            const keepOpen = menuKeepOpen
+            const state = {query}
             if (!callback && requestDirectory)
                 reply(requestDirectory, {status: "accepted", items: picked, query, exitCode: custom && customAccept ? 10 : 0})
             requestDirectory = ""
-            close()
-            if (callback) callback(picked)
+            close("accepted", keepOpen)
+            if (callback) callback(picked, state)
+            // A synchronous next step keeps the same native surface and focus.
+            // Final actions still close when their callback opens no next menu.
+            if (keepOpen && !menuCallback) close()
             break
           }
           case PickerService.Mode.Projects: {
@@ -539,14 +558,7 @@ Singleton {
             root.layout = request.layout === "grid" ? "grid" : "list"
             // Source indexes are stable even when labels or provider IDs collide.
             root.items = root.menuRows(request.items, request.sort === true)
-            root.query = request.query || ""
-            root.selectionKey = typeof request.selectionKey === "string" ? request.selectionKey : ""
-            if (request.selectedResult !== undefined || (Config.pickerRememberSelection && root.selectionKey)) {
-                const previous = request.selectedResult !== undefined ? request.selectedResult
-                    : PreferencesRepository.value("launcher.selection." + root.selectionKey, null)
-                root.currentIndex = Math.max(0, root.filteredItems.findIndex(item =>
-                    JSON.stringify(item.result) === JSON.stringify(previous)))
-            }
+            root.restoreMenuSelection(request)
             root.show()
         }
         // qmllint enable signal-handler-parameters
@@ -593,6 +605,7 @@ Singleton {
         function power(): void { PowerService.open() }
         function bookmarks(): void { BookmarkService.open() }
         function encodeQr(): void { QrEncodeService.open() }
+        function wallpaper(directory: string): void { WallpaperService.open(directory) }
         function windows(scope: string): void { root.windows(scope) }
         function expose(scope: string): void { root.expose(scope) }
         function clipboard(): void { root.clipboard() }

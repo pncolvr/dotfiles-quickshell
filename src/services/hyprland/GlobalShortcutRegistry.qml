@@ -22,6 +22,7 @@ Scope {
         {name: "launcher-windows-current", description: "Switch current workspace windows", activate: () => PickerService.windows("current")},
         {name: "launcher-expose-current", description: "Open window overview", activate: () => PickerService.expose("current")},
         {name: "launcher-clipboard", description: "Open clipboard history", activate: () => PickerService.clipboard()},
+        {name: "launcher-wallpaper", description: "Choose wallpaper", activate: () => WallpaperService.open()},
         {name: "launcher-encode-qr", description: "Encode QR code", activate: () => QrEncodeService.open()},
         {name: "launcher-bookmarks", description: "Open bookmarks", activate: () => BookmarkService.open()},
         {name: "launcher-power", description: "Open power menu", activate: () => PowerService.open()},

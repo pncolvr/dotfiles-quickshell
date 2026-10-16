@@ -25,6 +25,8 @@ Item {
     property Item interactionTarget: host.surfaceComponent?.popupContentBounds ?? host.contentItem
     readonly property var nativeWindow: host.contentItem.Window.window
     property bool windowActive: nativeWindow?.active ?? false
+    readonly property bool retainingNativeFocus: hostRequestedVisible && windowActive && grab.active
+        && !blocked && !nativeDialogOpen
     property bool keyboardEnabled: !passive
     property bool focusPanelPending: false
     readonly property bool hostRequestedVisible: host.requestedVisible ?? host.visible
@@ -35,7 +37,7 @@ Item {
             return WlrKeyboardFocus.None
         case openingFocus:
             return WlrKeyboardFocus.Exclusive
-        case !ready:
+        case !ready && !retainingNativeFocus:
             return WlrKeyboardFocus.None
         case requestingKeyboardFocus:
             return WlrKeyboardFocus.Exclusive
@@ -144,8 +146,13 @@ Item {
         if (hostRequestedVisible) activate()
         else { restoringDialogFocus = false; release() }
     }
-    onFocusSessionChanged: { release(); activate() }
-    onReadyChanged: { if (ready) activate(); else { restoringDialogFocus = false; release() } }
+    // Loader content can change inside the same focused native surface.
+    // Keep its established grab while the replacement control is constructed.
+    onFocusSessionChanged: { if (!retainingNativeFocus) release(); activate() }
+    onReadyChanged: {
+        if (ready) activate()
+        else if (!retainingNativeFocus) { restoringDialogFocus = false; release() }
+    }
     onBlockedChanged: if (blocked) release()
 
     onWindowActiveChanged: {

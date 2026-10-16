@@ -14,7 +14,8 @@ Item {
         Math.max(0, (host.geometryScreen?.width || 800) - Theme.tooltipRadius * 2 - Theme.tooltipPaddingWidth * 2))
     readonly property real boundedContentHeight: Math.min(panel?.implicitHeight ?? 0,
         Math.max(0, (host.geometryScreen?.height || 1080) * 0.75 - host.shadowBottomPadding))
-    readonly property real centeredContentX: (host.width - boundedContentWidth) / 2
+    // A fitted preview can resize inside a stable placement footprint.
+    readonly property real centeredContentX: (host.width - Math.min(panel?.placementWidth ?? boundedContentWidth, availableContentWidth)) / 2
     readonly property int keyboardFocusMode: focusHandler.keyboardFocusMode
     readonly property bool requestingKeyboardFocus: focusHandler.requestingKeyboardFocus
     readonly property bool secretPrompt: focusHandler.secretPrompt

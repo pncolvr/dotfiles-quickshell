@@ -70,6 +70,13 @@ case ${1:-apps} in
             power) if (($# == 0)); then ipc call launcher power; exit; fi ;;
             bookmarks) ipc call launcher bookmarks; exit ;;
             encode-qrcode) ipc call launcher encodeQr; exit ;;
+            wallpaper)
+                case ${1:-pick} in
+                    set|restore) ;;
+                    pick) [[ $# -le 2 ]] || fail 'Usage: wallpaper [pick] [DIRECTORY]'; ipc call launcher wallpaper "${2:-}"; exit ;;
+                    *) [[ $# == 1 ]] || fail 'Usage: wallpaper [pick] [DIRECTORY]'; ipc call launcher wallpaper "$1"; exit ;;
+                esac
+                ;;
             code) ipc call launcher projects; exit ;;
             github) ipc call launcher projectUrls; exit ;;
             directories) ipc call launcher directories; exit ;;

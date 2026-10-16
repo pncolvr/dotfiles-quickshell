@@ -34,6 +34,7 @@ Scope {
                 ["PowerService",Services.PowerService,SystemServices.PowerService],
                 ["BookmarkService",Services.BookmarkService,Launcher.BookmarkService],
                 ["QrEncodeService",Services.QrEncodeService,Launcher.QrEncodeService],
+                ["WallpaperService",Services.WallpaperService,Launcher.WallpaperService],
                 ["N8nService",Services.N8nService,N8n.N8nService],
                 ["N8nRepository",Services.N8nRepository,Storage.N8nRepository],
                 ["Theme",Settings.Theme,Styling.Theme],

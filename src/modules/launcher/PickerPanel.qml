@@ -18,6 +18,7 @@ Item {
     readonly property bool moduleFocusSearch: true
     readonly property var modulePointerTarget: panel?.modulePointerTarget ?? panel ?? root
     readonly property bool nativeDialogOpen: panel?.nativeDialogOpen ?? false
+    readonly property real placementWidth: panel?.placementWidth ?? implicitWidth
     implicitWidth: panel?.implicitWidth ?? Theme.pickerWidth
     implicitHeight: panel?.implicitHeight ?? 0
 

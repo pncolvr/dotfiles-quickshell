@@ -10,6 +10,7 @@ Rectangle {
     id: root
     property var picker: PickerService
     property bool backgroundVisible: true
+    property real placementWidth: implicitWidth
     property bool showThumbnails: true
     readonly property bool gridMode: picker.layout === "grid"
     readonly property bool inputOnly: picker.mode === PickerService.Mode.Menu && picker.allowTyped && picker.items.length === 0
@@ -22,6 +23,8 @@ Rectangle {
     property Component actionButtons: null
     property bool inlineFooter: false
     property Component previewComponent: null
+    property real maximumPreviewHeight: 0
+    readonly property real previewVerticalPadding: Theme.tooltipPaddingHeight * 2 + panelFooter.height + Theme.controlSpacing
     property Component searchControls: null
     property real fixedListWidth: 0
     property real previewOpacity: 1
@@ -187,7 +190,8 @@ Rectangle {
             x: root.stackedPreview ? 0 : root.columnWidth + Theme.controlSpacing
             y: root.stackedPreview ? list.y + list.height + Theme.controlSpacing : 0
             width: root.stackedPreview ? root.columnWidth : Math.max(0,parent.width - x)
-            height: Math.max(0,panelFooter.y - y - Theme.controlSpacing)
+            height: Math.min(Math.max(0,panelFooter.y - y - Theme.controlSpacing),
+                root.maximumPreviewHeight > 0 ? root.maximumPreviewHeight : Infinity)
             active: root.previewComponent !== null && root.picker.visible
             sourceComponent: root.previewComponent
             opacity: root.previewOpacity

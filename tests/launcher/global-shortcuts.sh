@@ -38,6 +38,7 @@ const services={
  ],
  RecordingService:['function toggle() { Calls.record("recording", []) }'],
  QrEncodeService:['function open() { Calls.record("encode-qr", []) }'],
+ WallpaperService:['function open() { Calls.record("wallpaper", []) }'],
  BookmarkService:['function open() { Calls.record("bookmarks", []) }'],
  PowerService:['function open() { Calls.record("power", []) }'],
  RbwService:['function open() { Calls.record("vault", []) }'],
@@ -80,7 +81,7 @@ const expected={
  'launcher-webapps':['webapps',[]], 'launcher-remotes':['remotes',[]], 'launcher-n8n':['n8n',[]],
  'launcher-windows-all':['windows',['all']], 'launcher-windows-current':['windows',['current']],
  'launcher-expose-current':['expose',['current']], 'launcher-clipboard':['clipboard',[]],
- 'launcher-encode-qr':['encode-qr',[]], 'launcher-bookmarks':['bookmarks',[]], 'launcher-power':['power',[]], 'recording-toggle':['recording',[]], 'vault-toggle':['vault',[]],
+ 'launcher-wallpaper':['wallpaper',[]], 'launcher-encode-qr':['encode-qr',[]], 'launcher-bookmarks':['bookmarks',[]], 'launcher-power':['power',[]], 'recording-toggle':['recording',[]], 'vault-toggle':['vault',[]],
  'notifications-toggle-dnd':['dnd',[]], 'shell-reload':['shell-reload',[]],
  'windows-next':['windows-next',[]], 'windows-prev':['windows-prev',[]]
 };

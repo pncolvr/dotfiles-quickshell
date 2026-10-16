@@ -1,16 +1,34 @@
 #!/usr/bin/env bash
+# Filesystem/awww boundary only. Native choices live in WallpaperService.
 set -euo pipefail
 
 provider_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 source "$provider_dir/_common/utils.sh"
 
 alert() {
+    [[ $configured == false ]] || return 0
     "${QS_PICKER_EXECUTABLE:-qs}" ipc -p "${QS_PICKER_CONFIG:-$provider_dir/../../../..}" \
         call alerts post wallpaper "$1" "$2" 3000 >/dev/null 2>&1 || true
 }
 fail() { printf '%s\n' "$1" >&2; alert "$1" error; exit 2; }
 
-load_provider_config || fail "Could not read wallpaper configuration"
+configured=false
+if [[ ${1:-} == list ]]; then
+    [[ $# == 2 && -d $2 ]] || { printf 'Wallpaper folder is unavailable\n' >&2; exit 2; }
+    IFS= read -r -d '' folder < <(realpath -ez -- "$2") || exit 2
+    printf '%s\0' "$folder"
+    # Exec makes discovery cancellable as one owned process. Preserve literal paths.
+    exec find -L "$folder" -type f \( -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' \
+        -o -iname '*.webp' -o -iname '*.bmp' -o -iname '*.gif' -o -iname '*.tif' -o -iname '*.tiff' \) -print0
+fi
+if [[ ${1:-} == --configured ]]; then
+    configured=true
+    shift
+    [[ -n ${WALLPAPER_STATE_DIRECTORY:-} && ( ${WORK_MODE_ENABLED:-} == true || ${WORK_MODE_ENABLED:-} == false ) ]] \
+        || fail "Could not read wallpaper configuration"
+else
+    load_provider_config || fail "Could not read wallpaper configuration"
+fi
 state_folder=$WALLPAPER_STATE_DIRECTORY
 
 umask 077
@@ -31,11 +49,6 @@ monitors() {
     hyprctl monitors -j | jq -ce 'if type == "array" and length > 0
         and all(.[]; (.name | type == "string" and length > 0))
         then sort_by(.focused != true) else error("No connected monitors") end'
-}
-pick() {
-    local status=0
-    response=$(bash "$PICKER_LAUNCHER" --json-response "$1") || status=$?
-    case $status in 0) ;; 1) return 1 ;; *) fail "Could not open wallpaper picker" ;; esac
 }
 set_wallpaper() {
     local output=$1 mode=$2 path=$3 target
@@ -77,54 +90,8 @@ restore_wallpapers() {
             || fail "Could not restore wallpaper on $output"
     done < <(jq -r '.[].name' <<< "$outputs")
 }
-show_picker() {
-    local folder=${1:-$WALLPAPER_DIRECTORY} path outputs output mode
-    [[ -d $folder ]] || fail "Wallpaper folder is unavailable: $folder"
-    IFS= read -r -d '' folder < <(realpath -ez -- "$folder") || fail "Wallpaper folder is unavailable"
-    # awww accepts images (including animated GIFs), rather than video files.
-    find -L "$folder" -type f \( -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' \
-        -o -iname '*.webp' -o -iname '*.bmp' -o -iname '*.gif' -o -iname '*.tif' -o -iname '*.tiff' \) -print0 \
-        | sort -z | jq -Rs --arg root "$folder/" '{prompt:"Choose wallpaper",
-            allowTyped:false, previewImages:true, acceptLabel:"Choose", selectionKey:"wallpaper.image",
-            items:(split("\u0000")[:-1] | map(. as $path | {
-                title:($path | ltrimstr($root)),
-                image:("file://" + ($path | split("/") | map(@uri) | join("/"))), result:$path}))}' \
-        > "$work_dir/images.json" || fail "Could not list wallpapers"
-    jq -e '.items | length > 0' "$work_dir/images.json" >/dev/null || fail "No wallpaper images found"
-    cat > "$work_dir/mode.json" <<'JSON'
-{
-    "prompt": "Wallpaper mode", "allowTyped": false,
-    "selectionKey": "wallpaper.mode", "acceptLabel": "Choose mode",
-    "items": [{"title":"Personal","result":"personal"},{"title":"Work","result":"work"}]
-}
-JSON
-    while true; do
-        pick "$work_dir/images.json" || return 0
-        IFS= read -r -d '' path < <(jq -j '.items[0].result, "\u0000"' <<< "$response")
-        # Restore this browsing session even when global selection history is disabled.
-        jq --argjson reply "$response" '.query = ($reply.query // "")
-            | .selectedResult = $reply.items[0].result' "$work_dir/images.json" > "$work_dir/next-images.json"
-        mv -- "$work_dir/next-images.json" "$work_dir/images.json"
-        mode=personal
-        if [[ $WORK_MODE_ENABLED == true ]]; then
-            pick "$work_dir/mode.json" || continue
-            mode=$(jq -er '.items[0].result' <<< "$response")
-        fi
-        outputs=$(monitors) || fail "Could not read connected monitors"
-        jq '{prompt:"Wallpaper monitor", allowTyped:false,
-            selectionKey:"wallpaper.monitor", acceptLabel:"Set wallpaper",
-            items:map({title:.name, subtitle:(.description // .name), result:.name})}' \
-            <<< "$outputs" > "$work_dir/monitor.json"
-        pick "$work_dir/monitor.json" || continue
-        output=$(jq -er '.items[0].result' <<< "$response")
-        # Reuse the direct setter in a separate process so an apply error leaves browsing available.
-        bash "$PICKER_LAUNCHER" provider wallpaper set "$output" "$mode" "$path" || true
-    done
-}
-
-case ${1:-pick} in
+case ${1:-} in
     set) [[ $# == 4 ]] || fail "Usage: wallpaper set OUTPUT personal|work FILE"; set_wallpaper "$2" "$3" "$4" ;;
     restore) [[ $# -le 2 ]] || fail "Usage: wallpaper restore [personal|work]"; restore_wallpapers "${2:-personal}" ;;
-    pick) [[ $# -le 2 ]] || fail "Usage: wallpaper [pick] [DIRECTORY]"; show_picker "${2:-}" ;;
-    *) [[ $# == 1 ]] || fail "Usage: wallpaper [pick] [DIRECTORY]"; show_picker "$1" ;;
+    *) fail "Usage: wallpaper list DIRECTORY | set OUTPUT personal|work FILE | restore [personal|work]" ;;
 esac

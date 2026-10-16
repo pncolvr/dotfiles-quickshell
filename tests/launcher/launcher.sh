@@ -223,7 +223,7 @@ printf 'PASS: QR input has no redundant hint, displays the copied PNG sharply an
 
 # Wallpaper image previews use bounded native image loading on wide and narrow screens.
 mkdir "$test_dir/wallpapers"
-magick -size 160x90 xc:red "$test_dir/wallpapers/one.png"
+magick -size 1600x900 xc:red "$test_dir/wallpapers/one.png"
 jq -n --arg image "file://$test_dir/wallpapers/one.png" '{
     previewImages:true,allowTyped:false,items:[{title:"One",image:$image,result:"one"},{title:"Two",image:$image,result:"two"}]
 }' > "$test_dir/images.json"
@@ -243,6 +243,40 @@ for viewport in 500 1000; do
     ipc call pickertest pressEscape
     wait_client 1
 done
+# Fit different image aspects in one session without moving the search/list column.
+mkdir "$test_dir/preview-samples"
+for sample in landscape portrait panorama; do
+    case $sample in landscape) dimensions=1600x900 ;; portrait) dimensions=900x1600 ;; panorama) dimensions=2400x400 ;; esac
+    magick -size "$dimensions" xc:blue "$test_dir/preview-samples/$sample.png"
+done
+jq -n --arg folder "$test_dir/preview-samples" '{previewImages:true,allowTyped:false,
+    items:(["landscape","portrait","panorama"]|map({title:.,image:("file://"+$folder+"/"+.+".png")}))}' > "$test_dir/preview-sample.json"
+ipc call pickertest imageViewport 1000 400
+bash "$picker" --json "$test_dir/preview-sample.json" > "$test_dir/result" 2> "$test_dir/client-error" & client_pid=$!
+wait_open
+baseline=''
+index=0
+for sample in landscape portrait panorama; do
+    ipc call pickertest select "$index"
+    for ((try=0;try<100;try++)); do
+        if snapshot | jq -e --arg sample "$sample.png" '.previewStatus==1 and (.previewSource|endswith($sample))
+            and ((.previewPaintedWidth-.previewContentWidth)|fabs)<1 and ((.previewPaintedHeight-.previewContentHeight)|fabs)<1' >/dev/null; then break; fi
+        sleep 0.025
+    done
+    rendered=$(snapshot)
+    jq -e '.previewStatus==1 and .panelWidth<=1000 and .panelHeight<=400
+        and ((.previewPaintedWidth-.previewContentWidth)|fabs)<1
+        and ((.previewPaintedHeight-.previewContentHeight)|fabs)<1
+        and ((.searchWidth-.listWidth)|fabs)<1' <<< "$rendered" >/dev/null
+    geometry=$(jq -c '[.placementWidth,.searchWidth,.listWidth,.listHeight]' <<< "$rendered")
+    if [[ -z $baseline ]]; then baseline=$geometry; else [[ $geometry == "$baseline" ]]; fi
+    case $sample in portrait) jq -e '.panelWidth<1000' <<< "$rendered" >/dev/null ;; esac
+    index=$((index+1))
+done
+ipc call pickertest pressEscape
+wait_client 1
+printf 'PASS: fitted landscape/portrait/panoramic previews retain search/list placement, width and viewport height across selections\n'
+
 jq '.previewImages = false' "$test_dir/images.json" > "$test_dir/row-images.json"
 bash "$picker" --json "$test_dir/row-images.json" > "$test_dir/result" 2> "$test_dir/client-error" & client_pid=$!
 wait_open
@@ -259,27 +293,26 @@ wait_client 1
 printf 'PASS: image picker loads only the large preview, keeps rows free of image sources and preserves ordinary menu thumbnails\n'
 
 # Browse repeatedly; selecting mode and monitor must not lose the image or its search.
-mkdir "$test_dir/wallpaper-bin"
-cat > "$test_dir/wallpaper-bin/hyprctl" <<'MOCK'
+cat > "$test_dir/bin/hyprctl" <<'MOCK'
 #!/usr/bin/env bash
 printf '%s\n' '[{"name":"DP-1","focused":false},{"name":"HDMI-A-1","focused":true}]'
 MOCK
-cat > "$test_dir/wallpaper-bin/awww" <<'MOCK'
+cat > "$test_dir/bin/awww" <<'MOCK'
 #!/usr/bin/env bash
 jq -nc --args '$ARGS.positional' -- "$@" >> "$PICKER_COPY_TEST_DIR/wallpaper-calls"
 MOCK
-chmod +x "$test_dir/wallpaper-bin/"*
+chmod +x "$test_dir/bin/"*
 wait_wallpaper_step() {
     local key=$1
     for ((try=0;try<100;try++)); do
-        if snapshot | jq -e --arg key "$key" '.visible and (.directory|length > 0) and .selectionKey==$key' >/dev/null; then return; fi
+        if snapshot | jq -e --arg key "$key" '.visible and (.directory|length == 0) and .selectionKey==$key and (.items|length > 0)' >/dev/null; then return; fi
         sleep 0.025
     done
     cat "$test_dir/log" "$test_dir/client-error" >&2
     return 1
 }
-PATH="$test_dir/wallpaper-bin:$PATH" \
-    bash "$picker" provider wallpaper > "$test_dir/result" 2> "$test_dir/client-error" & client_pid=$!
+bash "$picker" provider wallpaper > "$test_dir/result" 2> "$test_dir/client-error" & client_pid=$!
+wait_client 0
 wait_wallpaper_step wallpaper.image
 ipc call pickertest query one
 ipc call pickertest enter
@@ -306,7 +339,6 @@ ipc call pickertest pressEscape
 wait_wallpaper_step wallpaper.image
 snapshot | jq -e '.query=="one" and .filtered[.currentIndex].title=="one.png"' >/dev/null
 ipc call pickertest pressEscape
-wait_client 0
 jq -se 'length==1 and .[0][0]=="img"' "$test_dir/wallpaper-calls" >/dev/null
 printf 'PASS: wallpaper browsing preserves image/search through mode, monitor, application and child cancellation\n'
 

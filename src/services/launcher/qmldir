@@ -3,5 +3,6 @@ ClipboardSearchSession 1.0 ClipboardSearchSession.qml
 singleton PickerService 1.0 PickerService.qml
 singleton BookmarkService 1.0 BookmarkService.qml
 singleton QrEncodeService 1.0 QrEncodeService.qml
+singleton WallpaperService 1.0 WallpaperService.qml
 
 ManagedCollectionService 1.0 ManagedCollectionService.qml

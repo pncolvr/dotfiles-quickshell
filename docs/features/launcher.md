@@ -50,7 +50,7 @@ directory hints fit one line; GitHub groups its selection shortcuts on separate 
 | Screenshot | Coordinate capture, OCR/QR decoding, annotation and file-manager tools. |
 | Recording | Prepare capture/audio choices for the detached recording worker; the native service owns toggle/session state. |
 | QR encoding | QrEncodeService owns native input/preview; qr-encode.sh encodes and copies PNG data in memory without temporary files or picker IPC. |
-| Wallpaper | Enumerate images, coordinate mode/output choices, save assignments and restore them before the bar is available. |
+| Wallpaper | WallpaperService owns native browsing and mode/output choices. The noninteractive helper discovers files, applies/saves assignments and supports offline restore. |
 
 The detached recording worker and runtime process/database helpers are retained;
 they perform independent lifecycle work rather than only forwarding a launcher
@@ -133,9 +133,15 @@ native-menu entry point. It normalizes rows through the same helper as external
 requests, invokes the selected-row callback after logical closure, and clears the
 callback on cancellation or replacement. Optional `allowMultipleSelection`,
 `allowTyped`, `sort` and `acceptLabel` settings reuse the same menu controls; rows
-share normalization/sorting with external requests. `imageOnly` uses the shared compact
-viewer. `onClosed` runs once on acceptance, cancellation or replacement, after its
-reference is cleared, for resource cleanup. A callback may open the next native step.
+share normalization/sorting with external requests. `previewImages` reuses the image
+picker, and `imageOnly` uses the shared compact viewer. `query`, `selectedResult`
+and `selectionKey` restore search/selection through the same helper as external requests.
+The selected-row callback also receives a second argument, `{query}`, captured before closure.
+`onClosed(reason)` runs once with `accepted`, `cancelled` or `replaced`, after its reference
+is cleared. Workflows can return from a cancelled child step without reopening after
+replacement by another launcher. A callback may open the next native step.
+Optional `keepOpen` preserves the mapped surface for that synchronous handoff;
+if the callback opens no next menu, the picker closes normally.
 External JSON/dmenu requests retain their existing request/reply behavior.
 
 On acceptance, PowerService pauses tracking directly and dispatches the chosen
@@ -338,8 +344,14 @@ so a late completion cannot replace the new menu. Image-load failures report an
 error through the shared preview signal. The interactive `providers/encode-qrcode.sh`
 is removed; its former YAD positioning rules remain removed.
 
-`launcher.sh provider wallpaper` opens the image picker at `Config.wallpaperDirectory`,
-which defaults to `~/Pictures/wallpapers` in `src/config/Config.qml`.
+Tools-submap **W** activates `quickshell:launcher-wallpaper` through the shared
+native registry. `WallpaperService` opens the existing image picker immediately and
+loads image paths asynchronously from `Config.wallpaperDirectory`, which defaults
+to `~/Pictures/wallpapers` in `src/config/Config.qml`. The compatibility command
+`launcher.sh provider wallpaper` forwards to the same service and returns immediately.
+No JSON request files or shell process wait for choices. Image → mode → monitor
+keeps the native surface open and preserves its established focus through content
+changes, so a delayed grab-clear event cannot dismiss the next step.
 Search and preview an image, press Enter, choose personal/work mode, then choose
 the connected monitor in a separate step. The focused monitor appears first. After
 applying, browsing resumes with the same image selected and the same search terms.
@@ -348,7 +360,13 @@ ends the session. Target choices use the standard picker without prompt labels.
 The wallpaper list shows filenames without thumbnails, so rows do not load or
 cache images. Only the highlighted image loads in the large preview, beside the
 list on wide screens or below it on narrow screens, using the same bounded loader
-as clipboard image previews. Application errors show an alert
+as clipboard image previews. On wide screens the popup and preview pane fit the
+selected image’s aspect ratio within the available width/height, preserving the
+whole image without cropping or stretching. The popup uses a fixed placement
+footprint and list viewport height while browsing, so the search/list column
+stays in place as previews change shape; only the preview-side width/height adapts. This reuses header dimensions from the existing loader;
+the last known aspect is retained while the next image loads.
+Application errors show an alert
 and return to browsing with the same image and search.
 Image paths containing spaces, quotes, Unicode or newlines are passed literally.
 Animated GIFs can be set with `awww`; previews show a still image. Video files
@@ -359,9 +377,10 @@ Existing `wallpaper_personal_1`, `wallpaper_work_1` (DP-1) and `_2` (HDMI-A-1)
 choices are preserved; additional outputs use their connector name as the suffix.
 Failed application preserves the previous saved choice. `provider wallpaper restore
 [personal|work]` restores available choices on connected monitors without a picker;
-startup defaults to personal. Hyprland startup and the Zsh status manager use this
-route. The daemon still starts from Hyprland. Tools-submap **W** opens the native
-picker; the former terminal picker, setter, restore and terminal-preview scripts
+startup defaults to personal. Hyprland startup uses this offline-capable route;
+the native Status service calls `WallpaperService.restore()` directly. The daemon
+still starts from Hyprland. The native workflow reuses shared focus, preview and
+motion components; the former terminal picker, setter, restore and terminal-preview scripts
 are removed, along with wallpaper-only terminal positioning. The music-player
 window rule remains.
 
@@ -370,7 +389,12 @@ Use `provider wallpaper [pick] DIRECTORY` for another image folder, or
 outputs `1` and `2` retain the legacy DP-1/HDMI-A-1 mapping. `Config.wallpaperStateDirectory` sets the folder for saved choices.
 The image root comes from `Config.wallpaperDirectory` unless a directory argument
 is supplied. Direct setting and restore also read Config through the shared bridge; its headless
-fallback works before the bar starts.
+fallback works before the bar starts. Native set/restore instead pass Config values
+directly to the helper's `--configured` execution path, with native alerts and no
+worker-to-picker IPC. Native restores run sequentially and retain the latest requested
+mode while a previous restore finishes. Discovery and target cancellation end the
+owned pending read; late results cannot replace a newer launcher. An accepted apply
+may finish after replacement, without reopening browsing.
 
 Legacy `-markup-rows` requests are normalized by the launcher bridge before
 searching/rendering. Original labels remain available for dmenu replies and

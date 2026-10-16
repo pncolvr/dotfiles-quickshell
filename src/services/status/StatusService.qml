@@ -294,22 +294,8 @@ Singleton {
         id: wallpaperDelay
         interval: 100
         onTriggered: {
-            if (wallpaper.running) {
-                restart();
-                return;
-            }
             root.appliedWallpaperMode = root.wallpaperMode;
-            wallpaper.command = ['bash', Quickshell.shellPath('src/services/launcher/launcher.sh'), 'provider', 'wallpaper', 'restore', root.wallpaperMode];
-            wallpaper.running = true;
-        }
-    }
-    Process {
-        id: wallpaper
-        stdout: StdioCollector {
-            waitForEnd: true
-        }
-        stderr: StdioCollector {
-            waitForEnd: true
+            WallpaperService.restore(root.wallpaperMode);
         }
     }
     Process {
