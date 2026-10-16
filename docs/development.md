@@ -660,6 +660,21 @@ repository/AUR queries, yay age suffixes, atomic publication of populated
 and empty snapshots, query/write failures, interrupted runs, locking and stale
 temporary file cleanup.
 
+`bash tests/launcher/screenshot.sh` uses synthetic capture, editor, clipboard and
+file-manager tools to test region/output/window geometry, Portuguese OCR, QR text,
+cancellation, timeout/failure, literal data, repeated QProcess-backed region/output
+selection with explicit EOF, unique saves, editor cleanup, owned
+process-group termination, invalid internal handoffs and offline Config. A separate
+windowless fixture verifies that the prepared annotation worker survives an actual
+Quickshell reload and reveals the saved file; unrelated clipboard WorkerScripts are
+excluded from that fixture. The offscreen QML handoff fixture runs the
+production native menu/service and panel motion: capture waits for both picker and
+submap closing, other panels stay open, replacement cancels queued work, and native
+alerts report results. With the keyboard idle,
+`SCREENSHOT_TEST_NATIVE=1 bash tests/launcher/screenshot.sh` runs the same handoff
+against the real public/private picker and SubmapWindow, without real capture,
+pointer movement or clipboard access, then restores the previously focused window.
+
 `bash tests/launcher/encode-qrcode.sh` exercises the real native QR service,
 shared prompt/viewer and `qrencode`, with synthetic input and a mocked clipboard.
 It compares PNG bytes with the original encoder defaults, including Unicode,

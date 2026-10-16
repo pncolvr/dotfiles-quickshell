@@ -58,3 +58,5 @@ MotionBehavior 1.0 components/MotionBehavior.qml
 LabeledField 1.0 components/LabeledField.qml
 
 LineListField 1.0 components/LineListField.qml
+
+CaptureOverlay 1.0 components/CaptureOverlay.qml

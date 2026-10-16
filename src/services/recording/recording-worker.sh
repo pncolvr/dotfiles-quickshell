@@ -137,11 +137,25 @@ if ((${#loopback[@]})); then
 fi
 state=starting
 publish
-alert post recording 'recording starting' success 1000
-sleep 1.1 & delay_pid=$!
+alert postCapture recording 'recording starting' success 1000
+sleep 1 & delay_pid=$!
 wait "$delay_pid" || true
 delay_pid=0
 alert dismiss recording
+# The detached worker queries shared presentation readiness, not an animation duration.
+# Retry through a bar reload, but never assume a missing IPC response means ready.
+ready_deadline=$((SECONDS + 10))
+while ! $cancelled; do
+    if ((SECONDS >= ready_deadline)); then
+        alert post recording 'recording cancelled: capture was not ready' error 3000
+        exit 1
+    fi
+    capture_ready=$(timeout --kill-after=0.1 1 "${QS_PICKER_EXECUTABLE:-qs}" ipc -p "$config_root" call capture ready 2>/dev/null) || capture_ready=''
+    [[ $capture_ready != true ]] || break
+    sleep 0.05 & delay_pid=$!
+    wait "$delay_pid" || true
+    delay_pid=0
+done
 if $cancelled; then alert post recording 'recording cancelled' info 1000; exit 0; fi
 
 "${command[@]}" & recorder_pid=$!

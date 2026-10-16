@@ -21,6 +21,12 @@ Scope {
         check(!AlertService.post("", "empty", "info", 0), "reject empty ID")
         check(!AlertService.post("bad", "text", "unknown", 0), "reject unknown severity")
         check(!AlertService.post("bad", "text", "info", -1), "reject negative duration")
+        check(AlertService.messages[0].captureBlocking === false, "ordinary alerts do not block capture")
+        AlertService.post("capture", "starting", "success", 0, true)
+        check(AlertService.messages[1].captureBlocking === true, "capture notice is explicitly marked")
+        AlertService.post("capture", "finished", "info", 0)
+        check(AlertService.messages[1].captureBlocking === false, "ordinary replacement releases capture blocking")
+        AlertService.dismiss("capture")
         AlertService.post("recording", "starting", "success", 40)
         AlertService.post("recording", "stopped", "info", 400)
         check(AlertService.messages.length === 2 && AlertService.messages[1].text === "stopped",

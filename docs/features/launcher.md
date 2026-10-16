@@ -47,7 +47,7 @@ directory hints fit one line; GitHub groups its selection shortcuts on separate 
 | `_common/utils.sh` | Shared provider configuration, temporary directories and external file-manager actions. |
 | Bookmarks | BookmarkService reads the existing file and owns selection/opening through the shared native picker. |
 | Power | Noninteractive command execution and offline idle locking. PowerService owns the native choices and action order. |
-| Screenshot | Coordinate capture, OCR/QR decoding, annotation and file-manager tools. |
+| Screenshot | ScreenshotService owns native choices and capture readiness. The prepared worker owns slurp/grim/hyprpicker, Portuguese OCR/QR decoding and detached Satty save/reveal. |
 | Recording | Prepare capture/audio choices for the detached recording worker; the native service owns toggle/session state. |
 | QR encoding | QrEncodeService owns native input/preview; qr-encode.sh encodes and copies PNG data in memory without temporary files or picker IPC. |
 | Wallpaper | WallpaperService owns native browsing and mode/output choices. The noninteractive helper discovers files, applies/saves assignments and supports offline restore. |
@@ -706,13 +706,37 @@ password/pinentry clients and browser selections retain argument/result IPC; the
 requests are not routed through compositor shortcuts. Full restart/recovery stays
 external so it remains possible when the bar is not running.
 
-The native service-backed bindings, Bookmarks, QR encoding and Power menu orchestration are migrated.
-Screenshot/OCR/QR decoding, Wallpaper and recording setup still
-use their existing interactive scripts. Moving their orchestration into QML is the
-next migration stage: feature services should collect choices and pass prepared
-options to external tools/workers, avoiding a script reopening the picker through
-IPC. Detached recording/session lifetimes and offline wallpaper restore must remain
-available through that migration.
+The native service-backed bindings, Bookmarks, QR encoding, Power, Wallpaper and
+Screenshot/OCR/QR orchestration are migrated. Recording setup still uses its
+interactive helper and is the next migration checkpoint. Detached recording/session
+lifetimes and offline wallpaper restore remain supported.
+
+ScreenshotService presents the original five capture choices in the shared picker.
+The main screenshot shortcuts and tools-submap OCR/QR bindings call it through the
+native registry. `launcher.sh provider screenshot [METHOD]` is a compatibility IPC
+entry. The prepared executor `providers/screenshot.sh METHOD` remains available for
+explicit noninteractive/offline use through the shared Config exporter.
+
+Capture waits for explicitly marked capture notices and participating picker, private-picker, Exposé and submap surfaces
+to finish closing through CaptureOverlay/CaptureHandoffService. Unrelated panels
+are preserved. There is no fixed picker-dismissal delay; the existing short
+hyprpicker freeze-initialization delay is separate. The worker bounds selection and
+capture to 30 seconds, validates geometry, accounts for monitor scale/rotation when
+clipping windows, and stops only its own process groups. Escape cancels quietly;
+selection/capture/tool failures produce native bar alerts without starting later
+stages. hyprshot and global pgrep/pkill cleanup are no longer used.
+Region/output selectors receive explicit empty stdin: slurp reads optional rectangle
+input before mapping, so inheriting an open QProcess pipe would stall selection.
+Window selection instead receives the prepared rectangle file.
+
+OCR keeps Portuguese Tesseract and QR decoding keeps zbarimg. Successful text is
+copied unchanged and shown through native alerts; empty results and errors have
+separate messages. Completed screenshots go to Satty in a detached worker so an
+annotation draft survives bar/theme reloads. Saved images use unique names under
+Config.screenshotDirectory and retain file-manager reveal/focus; closing Satty
+without saving removes the empty filename reservation and temporary capture. The
+annotation worker uses only the existing alert IPC endpoint for feedback, never a
+picker or Config round trip.
 
 Shell-backed workflows use
 `launcher.sh provider NAME [ARGS...]`; callers should use this entry point rather

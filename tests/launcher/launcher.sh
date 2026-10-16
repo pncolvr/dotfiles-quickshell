@@ -2,8 +2,9 @@
 set -euo pipefail
 project_root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)
 placement_display=${WAYLAND_DISPLAY:-}
+placement_runtime=${XDG_RUNTIME_DIR:-}
 if [[ -n $placement_display && $placement_display != /* ]]; then placement_display="${XDG_RUNTIME_DIR:?}/$placement_display"; fi
-test_dir=$(mktemp -d /tmp/quickshell-picker-test.XXXXXXXX)
+test_dir=$(mktemp -d /tmp/qsp.XXXXXX)
 shell_pid=""; client_pid=""
 cleanup() {
     [[ -z $client_pid ]] || kill "$client_pid" 2>/dev/null || true
@@ -295,7 +296,11 @@ printf 'PASS: image picker loads only the large preview, keeps rows free of imag
 # Browse repeatedly; selecting mode and monitor must not lose the image or its search.
 cat > "$test_dir/bin/hyprctl" <<'MOCK'
 #!/usr/bin/env bash
-printf '%s\n' '[{"name":"DP-1","focused":false},{"name":"HDMI-A-1","focused":true}]'
+case " $* " in
+    *" clients "*) printf '[]\n' ;;
+    *" activewindow "*) printf '{"hidden":false}\n' ;;
+    *) printf '%s\n' '[{"name":"DP-1","focused":false},{"name":"HDMI-A-1","focused":true}]' ;;
+esac
 MOCK
 cat > "$test_dir/bin/awww" <<'MOCK'
 #!/usr/bin/env bash
@@ -606,6 +611,7 @@ printf 'PASS: remembered launcher choice survives shell restart\n'
 ipc call pickertest quit
 wait "$shell_pid"; shell_pid=""
 if [[ -n $placement_display ]]; then
+    ln -s "$placement_runtime/hypr" "$test_dir/runtime/hypr"
     sed 's@"../../src@"src@g' "$project_root/tests/launcher/placement-smoke.qml" > "$test_dir/placement.qml"
     # Load the native PanelWindow backend but keep every surface hidden. No
     # keyboard grab, desktop clipboard monitoring or compositor dispatch occurs.

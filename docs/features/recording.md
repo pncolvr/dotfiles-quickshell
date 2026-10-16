@@ -19,7 +19,15 @@ The shortcut behaves according to the current phase:
 | Finishing or saving | Keep waiting; repeated presses do not restart or interrupt finalization |
 
 Starting and stopped alerts expire after one second; errors after three seconds.
-The existing 1.1-second starting delay keeps the starting alert outside capture.
+The starting notice is marked as capture-blocking. After its one-second display,
+the worker waits for the same CaptureHandoffService readiness used by screenshots:
+picker/submap closing and the notice's closing animation must finish before the
+recorder starts. Other persistent alerts and panels remain open without blocking.
+This follows the centralized motion policy automatically, including when animations
+are disabled. The detached worker retries missing readiness replies through a bar
+restart for up to ten seconds; a repeated shortcut cancels during this wait. If
+readiness does not return, startup is cancelled and its runtime/audio state is
+cleaned up. No animation-duration guess is used to start capture.
 The finishing alert stays until completion and can appear in the last captured
 frames. Completion opens the saved file location only after a successful recorder
 exit and a nonempty output file. Encoder quality parameters remain unchanged.

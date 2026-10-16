@@ -51,6 +51,11 @@ JS
 cat > "$test_dir/bin/alerts" <<'SH'
 #!/usr/bin/env bash
 printf '%s\n' "$*" >> "$RECORDING_TEST/alerts"
+if [[ ${5:-} == capture && ${6:-} == ready ]]; then
+    printf 'readiness\n' >> "$RECORDING_TEST/actions"
+    [[ ! -e $RECORDING_TEST/readiness-unavailable ]] || exit 2
+    if [[ -e $RECORDING_TEST/readiness-held ]]; then printf 'false\n'; else printf 'true\n'; fi
+fi
 SH
 cat > "$test_dir/bin/pactl" <<'SH'
 #!/usr/bin/env bash
@@ -106,6 +111,50 @@ wait "$worker_pid"; worker_pid=''
 [[ $(state) == idle && ! -e $test_dir/recorder.pid ]]
 rg -q 'recording cancelled' "$test_dir/alerts"
 printf 'PASS: starting-delay shortcut cancels capture\n'
+
+reset_logs
+touch "$test_dir/readiness-held" "$test_dir/readiness-unavailable"
+start_worker
+wait_state starting
+for ((attempt=0;attempt<100;attempt++)); do
+    if rg -q '^readiness$' "$test_dir/actions"; then break; fi
+    sleep 0.03
+done
+[[ $(state) == starting && ! -e $test_dir/recorder.pid ]]
+rm "$test_dir/readiness-unavailable"
+sleep 0.15
+[[ $(state) == starting && ! -e $test_dir/recorder.pid ]]
+rm "$test_dir/readiness-held"
+wait_state recording
+control --toggle >/dev/null
+wait "$worker_pid"; worker_pid=''
+rg -q 'postCapture recording recording starting' "$test_dir/alerts"
+printf 'PASS: missing readiness retries through bar reconnect, closing overlays block capture, and readiness releases the same worker\n'
+
+reset_logs
+touch "$test_dir/readiness-held"
+start_worker
+wait_state starting
+for ((attempt=0;attempt<100;attempt++)); do
+    if rg -q '^readiness$' "$test_dir/actions"; then break; fi
+    sleep 0.03
+done
+control --toggle >/dev/null
+wait "$worker_pid"; worker_pid=''
+rm "$test_dir/readiness-held"
+[[ $(state) == idle && ! -e $test_dir/recorder.pid ]]
+rg -q 'recording cancelled' "$test_dir/alerts"
+printf 'PASS: recording shortcut cancels during shared-readiness waiting without starting a recorder\n'
+
+reset_logs
+touch "$test_dir/readiness-unavailable"
+start_worker
+if wait "$worker_pid"; then exit 1; fi
+worker_pid=''
+rm "$test_dir/readiness-unavailable"
+[[ $(state) == idle && ! -e $test_dir/recorder.pid ]]
+rg -q 'recording cancelled: capture was not ready' "$test_dir/alerts"
+printf 'PASS: unavailable readiness cancels startup within the bounded retry and releases its runtime claim\n'
 
 reset_logs
 RECORDING_TEST_CANCEL=1 start_worker

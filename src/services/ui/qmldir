@@ -2,3 +2,5 @@
 singleton AlertService 1.0 AlertService.qml
 singleton BarModuleService 1.0 BarModuleService.qml
 singleton TooltipService 1.0 TooltipService.qml
+
+singleton CaptureHandoffService 1.0 CaptureHandoffService.qml

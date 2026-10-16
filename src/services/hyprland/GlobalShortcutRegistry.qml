@@ -26,6 +26,11 @@ Scope {
         {name: "launcher-encode-qr", description: "Encode QR code", activate: () => QrEncodeService.open()},
         {name: "launcher-bookmarks", description: "Open bookmarks", activate: () => BookmarkService.open()},
         {name: "launcher-power", description: "Open power menu", activate: () => PowerService.open()},
+        {name: "launcher-screenshot", description: "Choose screenshot capture", activate: () => ScreenshotService.open()},
+        ...["region", "output", "window", "ocr", "qrcode"].map(method => ({
+            name: "screenshot-" + method, description: "Capture " + method,
+            activate: () => ScreenshotService.open(method)
+        })),
         {name: "recording-toggle", description: "Control screen recording", activate: () => RecordingService.toggle()},
         {name: "vault-toggle", description: "Toggle vault manager", activate: () => RbwService.open()},
         {name: "notifications-toggle-dnd", description: "Toggle notification do not disturb", activate: () => NotificationService.toggle()},

@@ -37,7 +37,7 @@ if [[ ${5:-} == alerts ]]; then
     printf '\n' >> "$PROVIDER_TEST_DIR/actions"
     exit 0
 fi
-if [[ ${6:-} == wallpaper || ${6:-} == encodeQr || ${6:-} == bookmarks || ${6:-} == power || ${6:-} == projects || ${6:-} == projectUrls || ${6:-} == directories || ${6:-} == webapps || ${6:-} == remotes || ${6:-} == n8n ]]; then
+if [[ ${6:-} == screenshot || ${6:-} == wallpaper || ${6:-} == encodeQr || ${6:-} == bookmarks || ${6:-} == power || ${6:-} == projects || ${6:-} == projectUrls || ${6:-} == directories || ${6:-} == webapps || ${6:-} == remotes || ${6:-} == n8n ]]; then
     printf 'native <%s>\n' "$6" >> "$PROVIDER_TEST_DIR/actions"
     exit 0
 fi
@@ -151,7 +151,7 @@ run_provider() {
     [[ ! -s $test_dir/error ]] || { cat "$test_dir/error" >&2; exit 1; }
     printf 'PASS: %s provider dispatch, shared helpers and selected action\n' "$name"
 }
-for provider in code github directories webapps remotes n8n power bookmarks encode-qrcode wallpaper; do
+for provider in code github directories webapps remotes n8n power bookmarks encode-qrcode wallpaper screenshot; do
     : > "$test_dir/actions"; : > "$test_dir/menus"
     bash "$picker" provider "$provider"
     case $provider in
@@ -163,7 +163,7 @@ for provider in code github directories webapps remotes n8n power bookmarks enco
     [[ ! -s $test_dir/menus ]]
 done
 printf 'PASS: projects, GitHub, directories, Webapps, Remotes, n8n, Power, Bookmarks, QR encoding and Wallpaper dispatch to native IPC without a JSON cache\n'
-run_provider screenshot 'hyprshot <--freeze> <--silent> <--clipboard-only> <--raw> <--mode> <output>'
+# Capture tools and offline prepared execution are covered by screenshot.sh.
 prepare_recording() {
     PROVIDER_TEST_NAME=recording bash "$providers/recording.sh" --prepare > "$test_dir/output" 2> "$test_dir/error"
 }
@@ -184,8 +184,7 @@ bash "$picker" provider screenshot ocr >/dev/null
 bash "$picker" provider screenshot qrcode >/dev/null
 PROVIDER_TEST_RECORDING=1 bash "$picker" provider recording
 expect_action 'loginctl <lock-session>'
-expect_action 'tesseract <stdin> <stdout> <-l> <por>'
-expect_action 'zbarimg <--raw> <-q> <->'
+expect_action 'native <screenshot>'
 expect_action 'recording <toggle>'
 ! rg -q '^notify-send |^hyprctl <notify>' "$test_dir/actions"
 [[ ! -s $test_dir/menus ]]
@@ -250,8 +249,8 @@ printf 'PASS: recording paths and audio devices retain literal shell characters\
 
 : > "$test_dir/actions"
 PROVIDER_TEST_SCREENSHOT_FOLDER="$literal_folder" bash "$picker" provider screenshot output
-expect_action "<--output-filename> <$literal_folder/Screenshot "
-printf 'PASS: screenshot destinations come from Config, including literal paths\n'
+expect_action 'native <screenshot>'
+printf 'PASS: screenshot CLI routes directly to the native capture service\n'
 
 [[ ! -e $test_dir/env-executed ]]
 printf 'PASS: obsolete provider .env files are never executed\n'

@@ -14,10 +14,10 @@ Singleton {
         property var messages: []
     }
 
-    function post(id, text, severity = "error", duration = 0) {
+    function post(id, text, severity = "error", duration = 0, captureBlocking = false) {
         if (!id.trim() || !text.trim() || !["info", "success", "warning", "error"].includes(severity)
             || !Number.isFinite(duration) || duration < 0) return false
-        const message = {id, text, severity, expiresAt: duration > 0 ? Date.now() + duration : 0}
+        const message = {id, text, severity, captureBlocking, expiresAt: duration > 0 ? Date.now() + duration : 0}
         const idx = _internal.messages.findIndex(m => m.id === id)
         if (idx >= 0) {
             const updated = [..._internal.messages]
@@ -50,6 +50,9 @@ Singleton {
         target: "alerts"
         function post(id: string, text: string, severity: string, duration: int): bool {
             return root.post(id, text, severity, duration)
+        }
+        function postCapture(id: string, text: string, severity: string, duration: int): bool {
+            return root.post(id, text, severity, duration, true)
         }
         function dismiss(id: string): void { root.dismiss(id) }
     }

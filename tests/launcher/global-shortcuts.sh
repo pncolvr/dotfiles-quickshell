@@ -37,6 +37,7 @@ const services={
   'function clipboard() { Calls.record("clipboard", []) }'
  ],
  RecordingService:['function toggle() { Calls.record("recording", []) }'],
+ ScreenshotService:['function open(method = "") { Calls.record("screenshot", [method]) }'],
  QrEncodeService:['function open() { Calls.record("encode-qr", []) }'],
  WallpaperService:['function open() { Calls.record("wallpaper", []) }'],
  BookmarkService:['function open() { Calls.record("bookmarks", []) }'],
@@ -85,6 +86,8 @@ const expected={
  'notifications-toggle-dnd':['dnd',[]], 'shell-reload':['shell-reload',[]],
  'windows-next':['windows-next',[]], 'windows-prev':['windows-prev',[]]
 };
+expected['launcher-screenshot']=['screenshot',['']];
+for (const method of ['region','output','window','ocr','qrcode']) expected['screenshot-'+method]=['screenshot',[method]];
 for (const name of ['updates','clock','files','timers','mic','volume','stats','twitch',
  'status','totp','batteries','notifications','tray','sharing']) expected['bar-'+name]=['bar',[name]];
 for(let key=0;key<10;key++) expected['windows-focus-'+key]=['windows-focus',[String(key)]];

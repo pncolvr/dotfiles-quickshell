@@ -69,6 +69,7 @@ case ${1:-apps} in
         case $name in
             power) if (($# == 0)); then ipc call launcher power; exit; fi ;;
             bookmarks) ipc call launcher bookmarks; exit ;;
+            screenshot) [[ $# -le 1 ]] || fail "Usage: screenshot [region|output|window|ocr|qrcode]"; ipc call launcher screenshot "${1:-}"; exit ;;
             encode-qrcode) ipc call launcher encodeQr; exit ;;
             wallpaper)
                 case ${1:-pick} in

@@ -2,6 +2,7 @@ import QtQuick
 import Quickshell
 import "../../src/services" as Services
 import "../../src/services/storage" as Storage
+import "../../src/services/ui" as ServicesUi
 import "../../src/services/clipboard" as Clipboard
 import "../../src/services/audio" as Audio
 import "../../src/services/time" as Time
@@ -33,6 +34,8 @@ Scope {
                 ["RecordingService",Services.RecordingService,Recording.RecordingService],
                 ["PowerService",Services.PowerService,SystemServices.PowerService],
                 ["BookmarkService",Services.BookmarkService,Launcher.BookmarkService],
+                ["CaptureHandoffService",Services.CaptureHandoffService,ServicesUi.CaptureHandoffService],
+                ["ScreenshotService",Services.ScreenshotService,Launcher.ScreenshotService],
                 ["QrEncodeService",Services.QrEncodeService,Launcher.QrEncodeService],
                 ["WallpaperService",Services.WallpaperService,Launcher.WallpaperService],
                 ["N8nService",Services.N8nService,N8n.N8nService],

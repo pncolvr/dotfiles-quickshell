@@ -7,6 +7,7 @@ import "../services"
 
 TopPanelTooltip {
     id: root
+    UI.CaptureOverlay { host: root; requested: root.requestedVisible }
 
     requestedVisible: SubmapService.submapActive
 

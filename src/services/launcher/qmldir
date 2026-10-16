@@ -6,3 +6,5 @@ singleton QrEncodeService 1.0 QrEncodeService.qml
 singleton WallpaperService 1.0 WallpaperService.qml
 
 ManagedCollectionService 1.0 ManagedCollectionService.qml
+
+singleton ScreenshotService 1.0 ScreenshotService.qml

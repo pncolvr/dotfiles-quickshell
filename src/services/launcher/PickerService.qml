@@ -604,6 +604,8 @@ Singleton {
         function apps(): void { root.apps() }
         function power(): void { PowerService.open() }
         function bookmarks(): void { BookmarkService.open() }
+        function screenshot(method: string): void { ScreenshotService.open(method) }
+        function screenshotStatus(): string { return ScreenshotService.snapshot() }
         function encodeQr(): void { QrEncodeService.open() }
         function wallpaper(directory: string): void { WallpaperService.open(directory) }
         function windows(scope: string): void { root.windows(scope) }

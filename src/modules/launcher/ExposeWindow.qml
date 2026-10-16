@@ -13,6 +13,7 @@ import "../../config"
 PanelWindow {
     // qmllint enable uncreatable-type
     id: root
+    UI.CaptureOverlay { host: root; requested: root.requested }
     property var picker: PickerService
     LauncherFocusHandler { id: focusHandler; host: root; panel: contentLoader.item; picker: root.picker; ready: root.requested && !!contentLoader.item }
     property var wallpapers: ({})

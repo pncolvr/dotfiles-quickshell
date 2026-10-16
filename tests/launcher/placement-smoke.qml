@@ -15,6 +15,9 @@ Scope {
     property real firstSearchWidth: -1
     readonly property var modes: ["menu", "grid", "clipboard", "multiple"]
     PickerWindow { id: popup; visible: false }
+    // Inspect hidden content without requesting a native surface or focus.
+    // Production correctly disables this subtree when no picker is requested.
+    Component.onCompleted: popup.surfaceComponent.popupContentBounds.enabled = true
 
     function find(item: Item, name: string): Item {
         if (item.objectName === name) return item
@@ -38,7 +41,7 @@ Scope {
         const search = find(popup.contentItem, "pickerSearch") as UI.SearchField
         check(!!search, "picker search exists")
         if (!search) return
-        const position = search.mapToItem(popup.contentItem, 0, 0)
+        const position = search.mapToItem(popup.surfaceComponent.popupContentBounds, 0, 0)
         if (firstSearchX < 0) {
             firstSearchX = position.x
             firstSearchWidth = search.width
