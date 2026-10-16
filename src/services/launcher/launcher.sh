@@ -58,7 +58,7 @@ case ${1:-apps} in
         esac
         case $name in
             bookmarks|books|power|screenshot|recording|encode-qrcode|wallpaper) provider="$launcher_dir/providers/$name.sh" ;;
-            webapps|azure|n8n) provider="$launcher_dir/providers/web/$name.sh" ;;
+            webapps|n8n) provider="$launcher_dir/providers/web/$name.sh" ;;
             remotes) provider="$launcher_dir/providers/remotes/pick.sh" ;;
             *) fail "Unknown provider: $name" ;;
         esac

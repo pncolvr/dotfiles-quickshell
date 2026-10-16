@@ -329,10 +329,6 @@ folder picker keeps Manage open and restores its keyboard focus. This test
 briefly shows an isolated picker and folder dialog.
 `bash tests/launcher/providers.sh` also checks that code/GitHub dispatch to native
 IPC without a project cache file.
-Run `bash tests/launcher/azure-cache.sh` for container reuse/start/create, the
-Portkey helper path, configurable paths/environment, validated atomic cache
-replacement, failure preservation and empty subscription lists. Podman and the
-picker handler are mocked; the test never starts a real container or authenticates.
 `bash tests/launcher/launcher.sh` checks that legacy markup labels are normalized
 before search while replies preserve original labels/results and ordinary grid
 labels remain literal. It also checks compact input-only prompts, the QR viewer,

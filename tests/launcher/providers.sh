@@ -144,7 +144,6 @@ JSON
 cat > "$providers/web/n8n.json" <<'JSON'
 {"action":"default","items":[{"title":"Alpha","result":"https://example.test/workflow/alpha"},{"title":"Beta","result":"https://example.test/workflow/beta"}]}
 JSON
-cp "$providers/web/n8n.json" "$XDG_CACHE_HOME/azure_${USER}"
 jq -n --arg home "$HOME" '{action:"output",items:[
     {title:"Alpha",result:($home + "/alpha.pdf")},
     {title:"Beta",result:($home + "/beta.pdf")}
@@ -186,7 +185,6 @@ for provider in code github directories; do
 done
 printf 'PASS: projects, GitHub and directories dispatch to native IPC without a JSON cache\n'
 run_provider webapps 'browser <https://example.test/app>'
-run_provider azure 'browser <https://example.test/workflow/alpha>' --pick
 run_provider n8n 'browser <https://example.test/workflow/alpha>'
 run_provider remotes 'virsh <-c> <qemu:///system> <start> <alpha-test>'
 expect_action 'sdl-freerdp3'

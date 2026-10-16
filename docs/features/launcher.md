@@ -221,16 +221,15 @@ blocks while a Bash client waits.
 ```sh
 bash "$picker" provider bookmarks
 bash "$picker" provider code
-bash "$picker" provider azure --pick
 ```
 
 Providers live together in `src/services/launcher/providers/`, reusing the existing
 Bash actions and cache locations. Available
-names are `code`, `webapps`, `github`, `azure`, `n8n`, `remotes`, `bookmarks`,
+names are `code`, `webapps`, `github`, `n8n`, `remotes`, `bookmarks`,
 `books`, `directories`, `media`, `power`, `screenshot`, `recording`, `encode-qrcode`, and `wallpaper`.
 Their shared JSON handler and direct menu calls invoke `launcher.sh`; no Rofi
 adapter or PATH override is required. `_common/` holds the shared Bash helpers;
-`web/` contains webapps, Azure and n8n, and `remotes/` contains the VM/RDP
+`web/` contains webapps and n8n, and `remotes/` contains the VM/RDP
 scripts. Projects, GitHub and directories dispatch directly to native QML services; their
 former Bash providers are removed. The other providers are named `<provider>.sh`. Browser selection,
 work/personal filtering, editor profiles and cache rebuild flags are preserved.
@@ -283,17 +282,6 @@ outputs `1` and `2` retain the legacy DP-1/HDMI-A-1 mapping. Optional
 `providers/wallpaper.env` can set `WALLPAPER_STATE_DIRECTORY` for saved choices.
 The image root comes from `Config.wallpaperDirectory` unless a directory argument
 is supplied. Direct setting and restore work without reading launcher configuration.
-
-Azure rebuilds reuse the `portkey` container, start it if stopped, or create it
-from `portkey:latest` with `~/Projects/helpers/portkey` mounted at
-`/workspaces/scripts/azure/portkey`. Subscription queries run
-`scripts/list-subs.sh` in that same container, without requesting a TTY.
-Rebuilds validate the response and replace the cache atomically; failed queries
-keep the previous cache. To customize the helper setup, set
-`AZURE_PICKER_CONTAINER`, `AZURE_PICKER_IMAGE`, `AZURE_PICKER_SOURCE`,
-`AZURE_PICKER_SCRIPT`, or `AZURE_PICKER_VOLUME`. `AZURE_PICKER_ENV_FILE` optionally
-supplies the Portkey configuration when creating a container. Existing containers
-retain their configured environment.
 
 Legacy `-markup-rows` requests are normalized by the launcher bridge before
 searching/rendering. Original labels remain available for dmenu replies and
@@ -476,8 +464,8 @@ alert instead. Recording status messages therefore stay outside the capture.
 Recordings are encoded directly to MP4; there is no separate conversion stage.
 
 Hyprland bindings call `launcher.sh provider NAME [ARGS...]`; new callers should
-use this entry point rather than reaching into the provider tree. Books and Azure
-use `--pick`; both also support `--rebuild-cache`. Qutebrowser's media shortcuts
+use this entry point rather than reaching into the provider tree. Books supports
+`--pick` and `--rebuild-cache`. Qutebrowser's media shortcuts
 call the separate `to_mpv` userscript in
 `~/.local/share/qutebrowser/userscripts/` for direct mpv playback.
 Meta+I, then T, opens Twitch through `qs ipc call bar open twitch`; the live-streamer JSON
