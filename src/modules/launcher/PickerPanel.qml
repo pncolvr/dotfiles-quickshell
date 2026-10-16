@@ -30,6 +30,7 @@ Item {
             switch (root.picker.mode) {
                 case PickerService.Mode.Projects: return projectPanel
                 case PickerService.Mode.Webapps: return webappPanel
+                case PickerService.Mode.Remotes: return remotePanel
                 case PickerService.Mode.Directories: return directoryPanel
                 case PickerService.Mode.Clipboard: return clipboardPanel
                 case PickerService.Mode.Secret: return secretPanel
@@ -41,6 +42,10 @@ Item {
                 default: return standardPanel
             }
         }
+    }
+    Component {
+        id: remotePanel
+        RemotePickerPanel { picker: root.picker; backgroundVisible: root.backgroundVisible }
     }
     Component {
         id: webappPanel

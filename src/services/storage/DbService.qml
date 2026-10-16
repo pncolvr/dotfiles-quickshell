@@ -12,7 +12,7 @@ Singleton {
 
     readonly property string name: Config.databaseName
     readonly property string path: Config.databasePath
-    readonly property int schemaVersion: 12
+    readonly property int schemaVersion: 13
     readonly property bool ready: state.ready
     readonly property string error: state.error
     property bool maintenance: false
@@ -113,6 +113,7 @@ Singleton {
                 tx.executeSql("CREATE TABLE IF NOT EXISTS store.project_workspaces (project_path TEXT NOT NULL, path TEXT NOT NULL, name TEXT NOT NULL, included INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(project_path,path))")
                 tx.executeSql("CREATE TABLE IF NOT EXISTS store.directories (path TEXT PRIMARY KEY, name TEXT NOT NULL, category TEXT NOT NULL CHECK(category IN ('personal','work')))")
                 tx.executeSql("CREATE TABLE IF NOT EXISTS store.webapps (id TEXT PRIMARY KEY, name TEXT NOT NULL COLLATE NOCASE UNIQUE, payload_json TEXT NOT NULL)")
+                tx.executeSql("CREATE TABLE IF NOT EXISTS store.remotes (id TEXT PRIMARY KEY, name TEXT NOT NULL COLLATE NOCASE UNIQUE, payload_json TEXT NOT NULL)")
                 ClipboardIndex.migrate(tx, version)
                 tx.executeSql("PRAGMA store.user_version = " + schemaVersion)
             })

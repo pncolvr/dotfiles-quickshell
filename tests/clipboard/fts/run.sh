@@ -25,7 +25,7 @@ UPDATE clipboard SET text='legacy alpha',pinned=1;
 PRAGMA user_version=10;
 SQL
 FTS_EXPECT_LEGACY=1 run
-[[ $(sqlite3 "$db" 'PRAGMA user_version; PRAGMA integrity_check; SELECT pinned FROM clipboard;') == $'12\nok\n1' ]]
+[[ $(sqlite3 "$db" 'PRAGMA user_version; PRAGMA integrity_check; SELECT pinned FROM clipboard;') == $'13\nok\n1' ]]
 query() { jq -nc --arg query "$1" --arg engine "${2:-indexed}" '{query:$query,engine:$engine,kind:"",pinned:false,limit:51,offset:0}' | bash "$root_dir/src/services/clipboard/query.sh" "$db"; }
 query bet | jq -e '.error=="" and (.rows|length)==1 and (.rows[0]|has("search")|not) and (.rows[0]|has("text")|not)' >/dev/null
 query alpha | jq -e '.rows==[]' >/dev/null
@@ -61,6 +61,7 @@ query '' fuzzy | jq -e '(.rows|length)==1004' >/dev/null
 # Delete and rollback update the actual index, not just external-content SELECTs.
 sqlite3 "$db" "BEGIN; DELETE FROM clipboard; ROLLBACK; INSERT INTO clipboard_fts(clipboard_fts,rank) VALUES('integrity-check',1); DELETE FROM clipboard;"
 query beta | jq -e '.rows==[]' >/dev/null
+retained_tables=$(sqlite3 "$db" "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'clipboard_fts%' ORDER BY name;")
 sqlite3 "$db" <<'SQL'
 INSERT INTO clipboard VALUES(printf('%064x',90000),'text/plain','text',8,'rollback',1,1);
 BEGIN IMMEDIATE;
@@ -72,5 +73,6 @@ DROP INDEX clipboard_kind_time;
 PRAGMA user_version=10;
 COMMIT;
 SQL
-[[ $(sqlite3 "$db" "PRAGMA user_version; PRAGMA integrity_check; SELECT text,pinned FROM clipboard; SELECT count(*) FROM sqlite_master WHERE type='table';") == $'10\nok\nrollback|1\n14' ]]
+[[ $(sqlite3 "$db" "PRAGMA user_version; PRAGMA integrity_check; SELECT text,pinned FROM clipboard;") == $'10\nok\nrollback|1' ]]
+[[ $(sqlite3 "$db" "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'clipboard_fts%' ORDER BY name;") == "$retained_tables" ]]
 printf 'PASS: FTS migration, pins, update/touch/rollback, deletion, literal queries, metadata-only reads, permissions and index recovery\n'

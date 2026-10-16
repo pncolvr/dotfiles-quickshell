@@ -773,3 +773,32 @@ production animation timings are covered by `tests/ui/panel-motion.sh`.
 tall and short tabs with motion disabled. Its buffer and top position stay fixed;
 the visible panel and input region resize independently. The synthetic test window
 accepts no input and never moves the cursor.
+
+## Remotes validation
+
+```sh
+node tests/remotes/model.mjs
+bash tests/remotes/worker.sh
+dbus-run-session -- bash tests/remotes/manage.sh
+```
+
+The model checks endpoint/port/type validation, literal credential handling and
+argument boundaries. Worker tests use private SQLite files and mock SSH, FreeRDP,
+libvirt and network probes; they cover concurrent connections, duplicate exclusion,
+stdin-only passwords, targeted disconnect, dead-owner recovery, stale PID protection,
+cancellation and VM readiness failure. Manage tests use offscreen UI and the same
+mock commands to check input focus, masked passwords, CRUD/rollback, disabled entries,
+selected-VM shutdown and detached connections recovered after a shell restart.
+They also cover Ctrl+R Running-only filtering composed with search, per-opening
+filter reset, dynamic Connect/Disconnect hints, rapid Enter disconnects while a
+controller request is in flight, and cancelling a connecting VM without launching
+an RDP client. Disconnecting rows leave the running view immediately while the
+picker stays open, including after its final connection stops.
+No real server, VM, SSH configuration, credentials, pointer or desktop window is used.
+Run Webapps Manage tests after shared collection changes, recording worker tests after
+shared process-identity changes, and encrypted backup tests for schema/storage changes.
+
+When changing QML launcher enum members, restart the running shell and exercise
+the provider IPC route on that instance. A newly added member can remain undefined
+after automatic or forced reload because QML type metadata is cached.
+`launcher alive` alone does not verify that a newly added mode can open its panel.

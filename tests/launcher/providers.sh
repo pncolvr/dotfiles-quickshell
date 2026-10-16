@@ -39,7 +39,7 @@ if [[ ${5:-} == alerts ]]; then
     printf '\n' >> "$PROVIDER_TEST_DIR/actions"
     exit 0
 fi
-if [[ ${6:-} == projects || ${6:-} == projectUrls || ${6:-} == directories || ${6:-} == webapps ]]; then
+if [[ ${6:-} == projects || ${6:-} == projectUrls || ${6:-} == directories || ${6:-} == webapps || ${6:-} == remotes ]]; then
     printf 'native <%s>\n' "$6" >> "$PROVIDER_TEST_DIR/actions"
     exit 0
 fi
@@ -152,12 +152,6 @@ jq -n --arg home "$HOME" '{action:"output",items:[
     {title:"Alpha",result:($home + "/alpha.pdf")},
     {title:"Beta",result:($home + "/beta.pdf")}
 ]}' > "$XDG_CACHE_HOME/books_${USER}"
-cat > "$providers/remotes/hosts.json" <<'JSON'
-{"baseRDPParams":"/cert:ignore","hosts":[
-    {"name":"Alpha VM","enabled":true,"type":"vm","endpoint":"127.0.0.1","port":3389,"vmName":"alpha-test","username":"test","password":"","displayName":"Test VM"},
-    {"name":"Beta VM","enabled":true,"type":"vm"}
-]}
-JSON
 for old_config in "$providers/screenshot.env" "$providers/recording.env" "$providers/_common/utils.env"; do
     printf 'touch %q\n' "$test_dir/env-executed" > "$old_config"
 done
@@ -180,19 +174,18 @@ run_provider() {
     [[ ! -s $test_dir/error ]] || { cat "$test_dir/error" >&2; exit 1; }
     printf 'PASS: %s provider dispatch, shared helpers and selected action\n' "$name"
 }
-for provider in code github directories webapps; do
+for provider in code github directories webapps remotes; do
     : > "$test_dir/actions"; : > "$test_dir/menus"
     bash "$picker" provider "$provider"
     if [[ $provider == code ]]; then expect_action 'native <projects>';
     elif [[ $provider == github ]]; then expect_action 'native <projectUrls>';
     elif [[ $provider == directories ]]; then expect_action 'native <directories>';
-    else expect_action 'native <webapps>'; fi
+    elif [[ $provider == webapps ]]; then expect_action 'native <webapps>';
+    else expect_action 'native <remotes>'; fi
     [[ ! -s $test_dir/menus ]]
 done
-printf 'PASS: projects, GitHub, directories and Webapps dispatch to native IPC without a JSON cache\n'
+printf 'PASS: projects, GitHub, directories Webapps and Remotes dispatch to native IPC without a JSON cache\n'
 run_provider n8n 'browser <https://example.test/workflow/alpha>'
-run_provider remotes 'virsh <-c> <qemu:///system> <start> <alpha-test>'
-expect_action 'sdl-freerdp3'
 run_provider bookmarks 'browser <https://example.test/alpha>'
 run_provider books "zathura <$HOME/alpha.pdf>" --pick
 run_provider power 'loginctl <lock-session>'
@@ -225,7 +218,7 @@ expect_action 'recording <toggle>'
 printf 'PASS: idle lock, OCR, QR and recording-stop calls bypass selection\n'
 
 # A cancelled browser request must not execute its selected action.
-for name in bookmarks remotes power; do
+for name in bookmarks power; do
     : > "$test_dir/actions"
     PROVIDER_TEST_CANCEL=1 PROVIDER_TEST_NAME="$name" bash "$picker" provider "$name" > "$test_dir/output" 2> "$test_dir/error" || true
     ! rg -q '^(browser|virsh|sdl-freerdp3|loginctl|systemctl) ' "$test_dir/actions"
@@ -295,40 +288,6 @@ ignored=$(bash -c 'source "$1"; get_ignored_category' bash "$providers/_common/u
 ignored=$(PROVIDER_TEST_WORK_STATUS=office bash -c 'source "$1"; get_ignored_category' bash "$providers/_common/utils.sh")
 [[ $ignored == office ]]
 printf 'PASS: screenshot destinations and shared categories come from Config, including literal paths\n'
-
-# RDP credentials and quoted extra flags are data, including dollar signs and wildcards.
-source "$providers/remotes/components/options/host.sh"
-sdl-freerdp3() { printf '%s\n' "$@" | jq -Rsc 'split("\n")[:-1]' > "$test_dir/rdp-args"; }
-password='pa$$word "quote" $(touch injected) `literal` \\ end'
-rdp example.test 3389 'domain name' 'test user' "$password" 'Test "connection" $title' '/cert:ignore /drive:"Docs,/some path" /literal:*'
-jq -e --arg password "/p:$password" '. == ["/t:Test \"connection\" $title", "/v:example.test:3389", "/u:test user@domain name", $password, "/cert:ignore", "/drive:Docs,/some path", "/literal:*"]' "$test_dir/rdp-args" >/dev/null
-rm "$test_dir/rdp-args"
-if rdp example.test 3389 '' user '' '' '/drive:"unterminated' 2>/dev/null; then exit 1; fi
-[[ ! -f $test_dir/rdp-args ]]
-rdp example.test 3389 '' user '' '' '/drive:"Windows,C:\Users\Public" /quoted:"say \"hi\""'
-jq -e '.[-2:] == ["/drive:Windows,C:\\Users\\Public", "/quoted:say \"hi\""]' "$test_dir/rdp-args" >/dev/null
-printf 'PASS: RDP passes literal credentials and quoted flags and rejects invalid quoting\n'
-
-# Verify literal credentials also survive extraction from the host JSON.
-password='pa;$$word\backslash "quoted"'
-jq --arg password "$password" '.hosts[0].password = $password | .hosts[0].username = "test;user"' "$providers/remotes/hosts.json" > "$test_dir/hosts.json"
-mv "$test_dir/hosts.json" "$providers/remotes/hosts.json"
-: > "$test_dir/actions"
-PROVIDER_TEST_NAME=remotes bash "$picker" provider remotes > "$test_dir/output" 2> "$test_dir/error"
-expect_action "</p:$password>"
-expect_action '</u:test;user>'
-
-WORKSPACE="$providers/remotes"
-HOSTS_FILE="$providers/remotes/hosts.json"
-LOCALHOST_SSH=localhost
-source "$providers/remotes/components/hosts/remote.sh"
-get_random_port() { printf '5555'; }
-dns() { printf '%s' "$1"; }
-connect_ssh() { printf '12345'; }
-kill() { [[ $1 == 12345 ]]; }
-handle_remote 'Alpha VM'
-jq -e --arg password "/p:$password" 'index($password) != null and index("/u:test;user") != null' "$test_dir/rdp-args" >/dev/null
-printf 'PASS: VM and SSH/RDP host JSON preserves delimiters, empty fields and backslashes in credentials\n'
 
 [[ ! -e $test_dir/env-executed ]]
 printf 'PASS: obsolete provider .env files are never executed\n'

@@ -11,6 +11,8 @@ ManagedPickerFrame {
     id: root
     required property var service
     required property string collectionName
+    property Component listActionButtons: null
+    property var canRemoveEntry: entry => true
     required property var entryForm
     readonly property bool showForm: !!service.draft
     readonly property var managedEntries: picker.filter(service.entries.map(entry =>
@@ -60,8 +62,9 @@ ManagedPickerFrame {
         picker: root.picker
         backgroundVisible: root.backgroundVisible
         visible: !root.managing
+        actionButtons: root.listActionButtons
         searchPlaceholder: 'Search ' + root.collectionName.toLowerCase()
-        footerHint: Config.pickerManageShortcut + ': manage · ' + Config.pickerShowAllShortcut + ': all/status · Enter: open · Esc: close'
+        footerHint: Config.pickerManageShortcut + ': manage · ' + Config.pickerShowAllShortcut + ': all/status · Enter: ' + root.picker.acceptLabel.toLowerCase() + ' · Esc: close'
     }
     QC.ScrollView {
         id: manage
@@ -116,7 +119,7 @@ ManagedPickerFrame {
                         UI.ActionButton { glyph: Theme.editIcon; hint: 'edit entry'; enabled: !root.service.busy; onClicked: root.edit(row.modelData) }
                         UI.ActionButton {
                             glyph: Theme.deleteIcon; hint: 'remove entry'; fillColor: Theme.urgent
-                            enabled: !root.service.busy; onClicked: root.service.remove(row.modelData.id)
+                            enabled: !root.service.busy && root.canRemoveEntry(row.modelData); onClicked: root.service.remove(row.modelData.id)
                         }
                     }
                 }

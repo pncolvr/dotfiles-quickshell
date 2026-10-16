@@ -35,7 +35,7 @@ chmod +x "$fixture/bin/"*
 export PATH="$fixture/bin:$PATH"
 database=$fixture/data/quickshell.db
 sqlite3 "$database" <<'SQL'
-PRAGMA user_version=12;
+PRAGMA user_version=13;
 CREATE TABLE clipboard(id TEXT PRIMARY KEY,mime TEXT,kind TEXT,bytes INTEGER,text TEXT,updated_at INTEGER,pinned INTEGER);
 CREATE TABLE preferences(key TEXT PRIMARY KEY,value_json TEXT);
 INSERT INTO preferences VALUES('clock.showSeconds','true');
@@ -47,6 +47,8 @@ CREATE TABLE project_workspaces(project_path TEXT,path TEXT,name TEXT,included I
 CREATE TABLE directories(path TEXT PRIMARY KEY,name TEXT,category TEXT);
 CREATE TABLE webapps(id TEXT PRIMARY KEY,name TEXT,payload_json TEXT);
 INSERT INTO webapps VALUES('webapp-test','Fixture','{"url":"https://example.test/app","browser":"vivaldi","profile":"Test Profile","arguments":["literal $(no-execution)"]}');
+CREATE TABLE remotes(id TEXT PRIMARY KEY,name TEXT,payload_json TEXT);
+INSERT INTO remotes VALUES('remote-test','Remote fixture','{"type":"remote","endpoint":"example.test","password":"private fixture $() literal","arguments":["/drive:Docs,/private fixture path"]}');
 SQL
 mkdir "$fixture/source" "$fixture/project-present" "$fixture/project-missing" "$fixture/directory-present" "$fixture/directory-missing"
 printf '{}' > "$fixture/project-present/test.code-workspace"
@@ -80,7 +82,7 @@ totp_command=$(jq -nc --arg helper "$repo/src/services/security/totp.sh" --arg t
 request() {
     jq -nc --arg action "$1" --arg path "$2" --arg password "${3:-Public-fixture-passphrase}" \
         --arg database "$database" --arg clipboard "$fixture/data/clipboard" --argjson totp "$totp_command" \
-        '{action:$action,path:$path,password:$password,database:$database,clipboard:$clipboard,schema:12,totpCommand:$totp}'
+        '{action:$action,path:$path,password:$password,database:$database,clipboard:$clipboard,schema:13,totpCommand:$totp}'
 }
 run() { request "$@" | bash "$repo/src/services/storage/backup.sh"; }
 reject() {
@@ -89,6 +91,9 @@ reject() {
 }
 runtime_database=$fixture/data/recording-runtime.db
 sqlite3 "$runtime_database" "CREATE TABLE recording_session(id INTEGER PRIMARY KEY,payload TEXT); INSERT INTO recording_session VALUES(1,'synthetic worker identity');"
+remote_runtime_database=$fixture/data/remotes-runtime.db
+sqlite3 "$remote_runtime_database" "CREATE TABLE remote_sessions(id TEXT PRIMARY KEY,payload TEXT); INSERT INTO remote_sessions VALUES('fixture','synthetic remote process identity');"
+remote_runtime_hash=$(sha256sum "$remote_runtime_database")
 runtime_hash=$(sha256sum "$runtime_database")
 archive=$fixture/backup.7z
 run export "$archive" > "$fixture/export.log"
@@ -100,7 +105,7 @@ if printf 'wrong\n' | "$actual_sevenzip" l -slt "$archive" > "$fixture/wrong-lis
 printf 'Public-fixture-passphrase\n' | "$actual_sevenzip" x -so "$archive" totp.json \
     | jq -e '.entries[0] | .name == "RFC fixture" and (.token | contains("algorithm=SHA256&digits=8&period=60"))' >/dev/null
 printf 'Public-fixture-passphrase\n' | "$actual_sevenzip" l -slt "$archive" > "$fixture/archive-list"
-! rg -q 'recording-runtime\.db' "$fixture/archive-list"
+! rg -q '(recording|remotes)-runtime\.db' "$fixture/archive-list"
 reject export "$archive"
 printf 'PASS: encrypted archive/header, complete TOTP parameters, stdin-only password and overwrite refusal\n'
 run export "$fixture/unicode.7z" 'Public fixture é ! $() `literal`' > "$fixture/unicode.log"
@@ -110,7 +115,7 @@ printf 'PASS: spaces/quotes in paths and Unicode/literal shell characters in pas
 rm -r -- "$fixture/source" "$fixture/project-missing" "$fixture/directory-missing"
 rm -- "$fixture/project-present/test.code-workspace"
 
-sqlite3 "$database" "UPDATE preferences SET value_json='false'; DELETE FROM clipboard; DELETE FROM twitch_users; DELETE FROM webapps;"
+sqlite3 "$database" "UPDATE preferences SET value_json='false'; DELETE FROM clipboard; DELETE FROM twitch_users; DELETE FROM webapps; DELETE FROM remotes;"
 rm -- "$fixture/data/clipboard/$text_id" "$fixture/data/clipboard/$image_id"
 printf '%s' '{"version":1,"id":"22222222-2222-2222-2222-222222222222","name":"New","token":"MY"}' \
     > "$fixture/keyring/22222222-2222-2222-2222-222222222222.json"
@@ -125,7 +130,9 @@ jq -se '.[-1].type == "done" and (.[-1].recovery | length > 0)' "$fixture/import
 [[ $(sqlite3 "$database" "SELECT pinned||':'||updated_at FROM clipboard WHERE id='$text_id';") == 1:101 ]]
 [[ $(sqlite3 "$database" 'SELECT fallback_login FROM twitch_users;') == second ]]
 sqlite3 "$database" 'SELECT payload_json FROM webapps;' | jq -e '.profile=="Test Profile" and .arguments==["literal $(no-execution)"]' >/dev/null
-printf 'PASS: webapp launch data survive encrypted restore\n'
+sqlite3 "$database" 'SELECT payload_json FROM remotes;' | jq -e '.password=="private fixture $() literal" and .arguments==["/drive:Docs,/private fixture path"]' >/dev/null
+[[ $(sha256sum "$remote_runtime_database") == "$remote_runtime_hash" ]]
+printf 'PASS: webapp and remote credentials/options survive encrypted restore; runtime connections stay outside backup\n'
 [[ $(sqlite3 "$database" "SELECT value_json FROM preferences WHERE key='clock.showSeconds';") == true ]]
 jq -se '.[-1].report | .warningCount == 5 and .counts == {directories:1,sources:1,projects:1,workspaces:1} and
     (.unchecked | length == 1 and .[0].path == "smb://server/share") and .pendingNotice' "$fixture/import.log" >/dev/null

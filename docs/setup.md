@@ -33,7 +33,7 @@ those before running on another desktop.
 | `qrencode` | QR PNG generation through `launcher.sh provider encode-qrcode` |
 | `awww`, `awww-daemon` | Wallpaper picker, per-mode/output setting and restore |
 | ImageMagick (`magick`) | Read original image dimensions for clipboard previews without enlarging small images |
-| `sqlite3` with FTS5 (SQLite 3.42+) | Indexed clipboard search, temporary recording ownership and backup snapshots/restores; Qt SQLite also needs FTS5 |
+| `sqlite3` with FTS5 (SQLite 3.42+) | Indexed clipboard search, temporary recording/remote ownership and backup snapshots/restores; Qt SQLite also needs FTS5 |
 | 7-Zip (`7z` or `7zz`), `/dev/shm` tmpfs | Password-protected full-state backups, including TOTP secrets |
 | `gtk-launch` | Desktop application launching, including terminal entries |
 | `ydotool` and its daemon | Optional paste on clipboard activation |
@@ -64,6 +64,16 @@ Add Webapps entries in its Manage tab. Entries and browser profile choices live
 in the local database and restore through the existing encrypted backup. No
 provider JSON or browser environment file is required. Browser executable/argument
 defaults live in `Config.webappBrowsers`.
+
+## Remotes
+
+Open Remotes and use Manage to add SSH-tunnel/RDP hosts or local libvirt VMs.
+The optional dependencies are OpenSSH, FreeRDP 3 with `sdl-freerdp3`, netcat
+(with `-z -w` support), `getent` from libc, and libvirt's `virsh` for VM connections. Configure
+command defaults in Config.qml. SSH keys/agents must already allow noninteractive
+access. VM management uses the configured libvirt connection (system by default).
+Credentials and private connection options are restored with the encrypted database
+backup; runtime process records are deliberately excluded. No hosts JSON is required.
 
 ## Screen sharing
 

@@ -34,7 +34,7 @@ directory hints fit one line; GitHub groups its selection shortcuts on separate 
 ## Internal dispatch
 
 `PickerService.Mode` identifies the internal modes: `None`, `Menu`, `Projects`,
-`Directories`, `Apps`, `Windows`, `Clipboard` and `Secret`. Acceptance and panel selection
+`Directories`, `Apps`, `Windows`, `Clipboard`, `Secret`, `Webapps` and `Remotes`. Acceptance and panel selection
 use switches on that enum; panels and services use the same values for their
 mode checks. `begin()` accepts an enum value. IPC command names and provider
 request/reply formats stay unchanged; enum numbers are not part of that protocol.
@@ -320,6 +320,45 @@ covered by the existing encrypted backup/restore flow.
 Add, edit and remove entries directly in Manage. Webapps requires no provider JSON
 or browser environment file; its saved entries restore with the database backup.
 
+### Remotes
+
+`launcher.sh remotes`, `launcher.sh provider remotes` and
+`qs ipc call launcher remotes` open the native Remotes/Manage picker.
+It reuses the Webapps collection controller, repository and UI components.
+Ctrl+M switches Manage, Ctrl+A adds a record while managing, and Ctrl+W toggles
+the work-status filter. Disabled records remain editable in Manage.
+
+Choose RDP through an SSH tunnel or a local libvirt VM. The form masks passwords;
+Category is a Personal/Work combo, and Advanced contains domain, window title
+and literal RDP arguments. Quoted arguments are parsed without shell evaluation.
+Shared legacy arguments are migrated into each record, including private paths.
+
+A detached worker owns each managed connection across bar/theme/config reloads.
+Enter or clicking a row connects an idle host and disconnects an active one.
+The Enter hint follows the selected row. **Running only** (Ctrl+R) filters to
+running and connecting sessions, alongside the search query. It starts off each
+time Remotes opens. Disconnecting rows leave this view immediately so repeated
+Enter presses can disconnect several in a row. The picker stays open after
+disconnecting, including when the running list becomes empty. Pending control
+requests are queued individually. **Disconnect** also stops only the selected
+managed RDP connection and its own SSH tunnel; it leaves a VM running.
+**Shut down VM** requests shutdown for the selected VM. Active entries
+cannot be deleted until disconnected. Active connections remain listed for control
+even if their entry is disabled or the work-status filter changes; this does not
+allow another connection to a disabled host. Other SSH/RDP processes are untouched.
+The list distinguishes Connecting, RDP running and Disconnecting; RDP running
+means the client process is alive, without claiming remote authentication succeeded.
+SSH resolves target names locally when possible, then falls back to jump-host DNS.
+Absolute and `~/` SSH key paths are supported. Failures post a generic alert without logging credentials or private host details.
+
+The main database stores hosts and credentials and is included in encrypted backups.
+Temporary ownership records live in `remotes-runtime.db` beside it, excluded from
+backup and restore. Boot IDs and process start times protect against reused PIDs;
+dead owners trigger cleanup of their own surviving children. FreeRDP receives its
+arguments through stdin rather than exposing passwords in its process command line.
+The compatibility provider is only a native IPC entrypoint; there are no host JSON
+readers, import controls, global process-kill actions or hardcoded VM names.
+
 ### Directories
 
 `launcher.sh directories`, `launcher.sh provider directories` and
@@ -488,7 +527,7 @@ recording, wallpaper and shared-helper `.env` files are no longer read.
 Private collections still live beside their providers and stay Git-ignored:
 
 - `web/n8n.json`: workflow picker entries (separate discovery review pending).
-- `remotes/hosts.json`: VM/RDP hosts; `hosts.json.sample` documents the format.
+- Remotes uses its native Manage tab and SQLite; no private hosts JSON is required.
   RDP option strings support quotes and backslash escapes; shell expressions and
   wildcards are passed literally.
 

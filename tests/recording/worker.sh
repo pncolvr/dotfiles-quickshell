@@ -16,6 +16,8 @@ cleanup() {
 }
 trap cleanup EXIT
 mkdir -p "$test_dir/src/services/recording" "$test_dir/src/services/launcher/providers/_common" "$test_dir/bin" "$test_dir/data"
+mkdir -p "$test_dir/src/services/processes"
+cp "$project_root/src/services/processes/process-identity.sh" "$test_dir/src/services/processes/"
 worker="$test_dir/src/services/recording/recording-worker.sh"
 cp "$project_root/src/services/recording/recording-worker.sh" "$worker"
 export RECORDING_TEST="$test_dir" QS_PICKER_EXECUTABLE="$test_dir/bin/alerts"

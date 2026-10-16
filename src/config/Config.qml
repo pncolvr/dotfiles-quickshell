@@ -96,6 +96,14 @@ Item {
         {id: "default", name: "System default", command: ["xdg-open"]}
     ]
 
+    // Launcher: remotes. Managed hosts/credentials stay in the backed-up database.
+    readonly property var remoteRdpCommand: ["sdl-freerdp3"]
+    readonly property var remoteSshCommand: ["ssh"]
+    readonly property var remoteVmCommand: ["virsh", "-c", "qemu:///system"]
+    readonly property var remoteProbeCommand: ["nc"]
+    readonly property int remoteVmWaitSeconds: 60
+    readonly property var remoteRdpArguments: []
+
     // Launcher: wallpapers and Expose
     readonly property string wallpaperStateDirectory: `${_internal.home}/Pictures/.runtime`
     readonly property string wallpaperDirectory: `${_internal.home}/Pictures/wallpapers`

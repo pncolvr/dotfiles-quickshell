@@ -50,3 +50,7 @@ singleton RecordingService 1.0 recording/RecordingService.qml
 
 singleton WebappRepository 1.0 storage/WebappRepository.qml
 singleton WebappService 1.0 webapps/WebappService.qml
+
+singleton RemoteRepository 1.0 storage/RemoteRepository.qml
+
+singleton RemoteService 1.0 remotes/RemoteService.qml

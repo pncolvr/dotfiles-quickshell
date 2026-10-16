@@ -11,7 +11,7 @@ import "../../config"
 Singleton {
     id: root
     property bool visible: false
-    enum Mode { None, Menu, Projects, Directories, Apps, Windows, Clipboard, Secret, Webapps }
+    enum Mode { None, Menu, Projects, Directories, Apps, Windows, Clipboard, Secret, Webapps, Remotes }
     property int mode: PickerService.Mode.None
     property bool privateRequest: false
     readonly property bool privateWindow: privateRequest || mode === PickerService.Mode.Secret
@@ -138,6 +138,11 @@ Singleton {
     function directories() {
         begin(PickerService.Mode.Directories, "Directories")
         DirectoryService.open()
+        show()
+    }
+    function remotes() {
+        begin(PickerService.Mode.Remotes, "Remotes")
+        RemoteService.open()
         show()
     }
     function webapps() {
@@ -368,6 +373,10 @@ Singleton {
             DirectoryService.accept(picked)
             break
           }
+          case PickerService.Mode.Remotes: {
+            RemoteService.accept(picked)
+            return
+          }
           case PickerService.Mode.Webapps: {
             WebappService.accept(picked)
             break
@@ -551,6 +560,7 @@ Singleton {
         function clipboard(): void { root.clipboard() }
         function projects(): void { root.projects() }
         function directories(): void { root.directories() }
+        function remotes(): void { root.remotes() }
         function webapps(): void { root.webapps() }
         function projectUrls(): void { root.projects(true) }
         function providerConfig(): string { return JSON.stringify(Config.providerEnvironment) }

@@ -272,3 +272,15 @@ Mode detection, timetable commands, and reports are described in
 [status and timecard](features/status.md).
 
 [Documentation](README.md)
+
+## Remotes
+
+Managed host names, endpoints, credentials, categories and literal RDP arguments
+live in SQLite and are covered by encrypted backups. There is no hosts JSON file.
+`remoteRdpCommand` selects the FreeRDP 3 client; it must support `/args-from:stdin`.
+`remoteSshCommand`, `remoteVmCommand` and `remoteProbeCommand` select SSH, libvirt
+and a netcat-compatible readiness probe. Commands are literal argument arrays.
+`remoteVmWaitSeconds` bounds VM readiness waiting (1–300 seconds).
+`remoteRdpArguments` supplies initial arguments for newly created records; changing
+it does not overwrite existing records. SSH key paths belong to their managed host.
+SSH uses configured keys/agents in batch mode rather than prompting in a hidden terminal.

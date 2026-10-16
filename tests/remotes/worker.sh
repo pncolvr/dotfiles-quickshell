@@ -1,0 +1,86 @@
+#!/usr/bin/env bash
+# Detached owners and real SQLite/signals; all SSH/RDP/VM/network actions are mocked.
+set -euo pipefail
+repo=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)
+fixture=$(mktemp -d /tmp/quickshell-remotes-worker.XXXXXXXX)
+workers=() foreign_pid=''
+cleanup() {
+    for pid in "${workers[@]}"; do kill -TERM "$pid" 2>/dev/null || true; done
+    if [[ -f $fixture/runtime.db ]]; then
+        for id in alpha beta; do bash "$repo/src/services/remotes/remote-worker.sh" --disconnect "$fixture/runtime.db" "$id" >/dev/null 2>&1 || true; done
+    fi
+    [[ -z $foreign_pid ]] || kill -TERM "$foreign_pid" 2>/dev/null || true
+    for pid in "${workers[@]}"; do wait "$pid" 2>/dev/null || true; done
+    rm -rf -- "$fixture"
+}
+trap cleanup EXIT
+mkdir "$fixture/bin" "$fixture/home"
+export HOME="$fixture/home"
+export REMOTE_TEST_DIR="$fixture" QS_PICKER_EXECUTABLE="$fixture/bin/alerts"
+export PATH="$fixture/bin:$PATH"
+cp "$repo/tests/remotes/mock-command.mjs" "$fixture/bin/mock"
+chmod +x "$fixture/bin/mock"
+for command in ssh rdp virsh probe alerts getent; do ln -s mock "$fixture/bin/$command"; done
+node - "$fixture" <<'JS'
+const {DatabaseSync}=require('node:sqlite'),fs=require('node:fs'),dir=process.argv[2];const db=new DatabaseSync(dir+'/main.db');db.exec('CREATE TABLE remotes(id TEXT PRIMARY KEY,payload_json TEXT)');
+for(const [id,type] of [['alpha','remote'],['beta','vm']]) db.prepare('INSERT INTO remotes VALUES(?,?)').run(id,JSON.stringify({id,name:id,type,enabled:true,endpoint:'test.example',port:3389,displayName:'Test "title"',username:'user;literal',password:'pa$$ \\ "quoted" $(no-execution)',domain:'domain name',hopHost:'jump.example',hopUsername:'test',sshKeyPath:'~/key path/key',vmName:'fixture-vm',arguments:['/drive:Docs,/some path','/cert:ignore']}));db.close()
+JS
+options=$(jq -nc --arg dir "$fixture/bin" '{rdp:[$dir+"/rdp"],ssh:[$dir+"/ssh"],virsh:[$dir+"/virsh"],probe:[$dir+"/probe"],waitSeconds:1}')
+worker="$repo/src/services/remotes/remote-worker.sh"
+start() { bash "$worker" --run "$fixture/runtime.db" "$1" "$fixture/main.db" "$fixture" "$options" > "$fixture/log-$1" 2>&1 & workers+=("$!"); }
+status() { bash "$worker" --status "$fixture/runtime.db"; }
+wait_count() {
+    for ((attempt=0;attempt<80;attempt++)); do
+        if status | jq -e --argjson count "$1" 'length==$count and all(.[];.state=="running")' >/dev/null; then return; fi
+        sleep 0.05
+    done
+    cat "$fixture"/log-* >&2; printf 'Timed out waiting for %s sessions\n' "$1" >&2; exit 1
+}
+start alpha
+wait_count 1
+start alpha
+wait "${workers[1]}"
+[[ $(jq -s '[.[]|select(.program=="ssh")]|length' "$fixture/actions") == 1 ]]
+start beta
+wait_count 2
+jq -se --arg key "$HOME/key path/key" 'any(.program=="ssh" and (.args|index($key))!=null) and any(.program=="ssh" and any(.args[]; contains(":192.0.2.5:3389"))) and any(.program=="virsh" and .args==["start","--","fixture-vm"]) and all(.[]; .args | all(.[]; contains("pa$$")|not))' "$fixture/actions" >/dev/null
+node - "$fixture" <<'JS'
+const fs=require('node:fs'),assert=require('node:assert/strict'),dir=process.argv[2];for(const file of fs.readdirSync(dir).filter(f=>f.startsWith('rdp-'))){const args=fs.readFileSync(dir+'/'+file,'utf8').trimEnd().split('\n');assert(args.includes('/p:pa$$ \\ "quoted" $(no-execution)'));assert(args.includes('/u:user;literal@domain name'));assert(args.includes('/drive:Docs,/some path'));}assert.equal(fs.readdirSync(dir).filter(f=>f.startsWith('rdp-')).length,2)
+JS
+bash "$worker" --disconnect "$fixture/runtime.db" alpha
+wait_count 1
+status | jq -e '.[0].id=="beta"' >/dev/null
+printf 'PASS: separate owned connections, duplicate prevention, literal stdin-only credentials and targeted disconnect\n'
+# A controller restart reads the worker record; no UI process owns the children.
+status | jq -e '.[0].id=="beta" and .[0].state=="running"' >/dev/null
+kill -KILL "${workers[2]}"
+wait "${workers[2]}" 2>/dev/null || true
+wait_count 0
+printf 'PASS: status recovers an orphaned RDP child after its owner crashes\n'
+# A stale identity must never signal an unrelated process, even when its PID matches.
+"$fixture/bin/ssh" foreign >/dev/null 2>&1 & foreign_pid=$!
+source "$repo/src/services/processes/process-identity.sh"
+foreign_start=$(process_identity "$foreign_pid")
+row=$(jq -nc --argjson pid "$foreign_pid" --arg start "$foreign_start-wrong" --arg boot "$PROCESS_BOOT_ID" '{token:"stale",pid:$pid,start:$start,boot:$boot,state:"running",rdp:{pid:$pid,start:$start},tunnel:{pid:0,start:""}}')
+row_hex=$(printf '%s' "$row" | od -An -v -tx1 | tr -d ' \n')
+sqlite3 "$fixture/runtime.db" "INSERT INTO remote_sessions VALUES('stale','stale',CAST(X'$row_hex' AS TEXT));"
+wait_count 0
+kill -0 "$foreign_pid"
+printf 'PASS: stale PID identity is cleaned without signalling an unrelated process\n'
+touch "$fixture/not-ready"
+start beta
+sleep 0.25
+bash "$worker" --disconnect "$fixture/runtime.db" beta
+wait_count 0
+printf 'PASS: disconnect cancels VM readiness wait\n'
+start beta
+if wait "${workers[4]}"; then printf 'Expected VM timeout\n' >&2; exit 1; fi
+wait_count 0
+printf 'PASS: failed VM readiness prevents RDP dispatch and clears session\n'
+
+rm "$fixture/not-ready"
+touch "$fixture/ssh-fail"
+start alpha
+if wait "${workers[5]}"; then printf 'Expected SSH failure\n' >&2; exit 1; fi
+wait_count 0
+printf 'PASS: SSH failure prevents RDP dispatch and cleans the session\n'

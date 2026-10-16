@@ -14,23 +14,10 @@ sql() { sqlite3 -batch -cmd '.timeout 5000' "$database" "$1"; }
 hex() { printf '%s' "$1" | od -An -v -tx1 | tr -d ' \n'; }
 sql 'CREATE TABLE IF NOT EXISTS recording_session (id INTEGER PRIMARY KEY CHECK(id=1), token TEXT NOT NULL, payload TEXT NOT NULL);' || exit 2
 chmod 600 -- "$database" || exit 2
-boot=$(cat /proc/sys/kernel/random/boot_id) || exit 2
-
-identity() {
-    local pid=$1 stat rest
-    local -a fields
-    [[ $pid =~ ^[1-9][0-9]*$ && -O /proc/$pid ]] || return 1
-    stat=$(cat "/proc/$pid/stat" 2>/dev/null) || return 1
-    rest=${stat##*) }
-    # After removing pid/comm, field 20 is the kernel's process start time.
-    read -r -a fields <<< "$rest"
-    [[ ${fields[0]} != Z && ${fields[0]} != X ]] || return 1
-    printf '%s' "${fields[19]}"
-}
-alive() {
-    [[ $1 =~ ^[1-9][0-9]*$ && -n $2 && $boot == "$3" ]] || return 1
-    [[ $(identity "$1") == "$2" ]]
-}
+source "$worker_dir/../processes/process-identity.sh" || exit 2
+boot=$PROCESS_BOOT_ID
+identity() { process_identity "$@"; }
+alive() { process_alive "$@"; }
 alert() {
     "${QS_PICKER_EXECUTABLE:-qs}" ipc -p "$config_root" call alerts "$@" >/dev/null 2>&1 || true
 }

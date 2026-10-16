@@ -10,3 +10,7 @@ singleton PreferencesRepository 1.0 PreferencesRepository.qml
 singleton ProjectRepository 1.0 ProjectRepository.qml
 singleton TwitchRepository 1.0 TwitchRepository.qml
 singleton WebappRepository 1.0 WebappRepository.qml
+
+ManagedCollectionRepository 1.0 ManagedCollectionRepository.qml
+
+singleton RemoteRepository 1.0 RemoteRepository.qml
