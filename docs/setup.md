@@ -58,6 +58,13 @@ those before running on another desktop.
 A Secret Service provider can be GNOME Keyring or KeePassXC with Secret Service
 support enabled. Test-only dependencies are listed in [development](development.md).
 
+## Webapps
+
+Add Webapps entries in its Manage tab. Entries and browser profile choices live
+in the local database and restore through the existing encrypted backup. No
+provider JSON or browser environment file is required. Browser executable/argument
+defaults live in `Config.webappBrowsers`.
+
 ## Screen sharing
 
 Notification popups, the notification manager, and the TOTP tooltip share the

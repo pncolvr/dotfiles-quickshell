@@ -4,6 +4,7 @@ import QtQuick.Controls as QC
 import QtTest as Test
 import Quickshell
 import "../../src/theme/ui" as UI
+import "../../src/theme"
 import "../../src/modules/system/audio"
 import "../../src/modules/media"
 
@@ -63,6 +64,7 @@ Scope {
             anchors.fill: parent
             spacing: 8
             UI.ActionButton { id: action; glyph: "x"; hint: "Action"; onClicked: root.actionClicks++ }
+            UI.ActionButton { id: labeled; label: "Advanced options"; glyph: Theme.chevronDownIcon }
             AudioButton { id: audio; glyph: "x"; hint: "Audio"; onClicked: root.audioClicks++ }
             AudioSelector { id: selector; width: 350; options: [{name: "banana", description: "Banana", available: true}]; selectedName: "banana" }
             UI.ComboSelector { id: generic; width: 350; options: [{name: "banana", description: "Banana"}]; selectedName: "banana" }
@@ -76,6 +78,12 @@ Scope {
         interval: 150
         running: true
         onTriggered: {
+            root.check(action.width===Theme.actionButtonWidth,'icon-only buttons preserve their fixed width')
+            root.check(labeled.width>=labeled.implicitContentWidth && labeled.width>action.width,'labeled actions size themselves to fit text and glyph')
+            const labeledWidth=labeled.implicitWidth
+            labeled.visible=false
+            root.check(labeled.implicitWidth===labeledWidth,'hiding a labeled control preserves its width for the next opening')
+            labeled.visible=true
             root.checkButton(action)
             root.checkButton(audio)
             root.check(root.actionClicks === 1 && root.audioClicks === 1, "focus handling preserves mouse activation")

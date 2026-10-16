@@ -339,6 +339,26 @@ It opens each picker with the pointer away from the panel, verifies keyboard
 focus and search (including masked input), then closes it with Escape. Native
 checks restore the original window focus and pointer position when they finish.
 
+## Webapps
+
+`node tests/webapps/model.mjs` checks browser profiles/window modes, literal
+argument quoting and invalid entry rejection. `bash tests/webapps/manage.sh`
+uses offscreen controls, a private database and mocked browsers. It checks shared
+form keyboard input, configured profile combos, browser changes, main-form category
+selection/persistence, CRUD, duplicate
+rejection, disabled entries, hook failures,
+browser argv (including Qutebrowser profile-window reuse and Vivaldi app-mode
+isolation) and restart without legacy files. Shared button sizing checks verify
+text actions fit their labels while icon-only actions retain their existing width. It verifies Manage has no import
+controls and never reads real entries or launches a real browser. The storage
+backup regression verifies webapp payloads survive encrypted restore.
+
+`dbus-run-session -- bash tests/webapps/qutebrowser.sh` verifies actual
+Qutebrowser profile/window behavior using offscreen browser instances, private
+profiles and about:blank only. It checks repeated launches create tabs in one
+window, different profiles stay separate, and explicit New window still works.
+Its WebEngine sandbox override is test-only and never used by launcher commands.
+
 ## Notifications
 
 ```sh

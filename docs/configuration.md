@@ -39,6 +39,24 @@ helper, which honors `XDG_DATA_HOME` and falls back to `~/.local/share`. Their
 full-path settings remain individually editable. Equal durations and limits with
 different purposes remain independent.
 
+## Webapp browsers
+
+`webappBrowsers` follows the configurable application pattern: each item has an
+`id`, visible `name`, and argv `command`. Each browser's `profiles` array defines
+its profile choices as `{id: "profile-directory", name: "Visible label"}`. Manage
+shows these profiles in a combo, alongside Browser default. The stable profile
+ID is saved per entry; the configured label is only for display.
+
+Browser definitions also accept optional `profileArguments`,
+`reuseArguments`, `windowArguments` and `appArguments`. The normal window mode
+uses `reuseArguments` when configured; Qutebrowser sets `--target tab`, retaining
+its profile directory so launches open tabs in that profile. Vivaldi has no reuse
+override. Templates accept `{profile}` and `{url}`
+as literal values. App-window arguments include the URL; other modes append it.
+Private entry URLs, selected profile IDs and launch hooks are managed in Webapps and
+saved in SQLite rather than Config. Webapps has no legacy-file reader or import
+settings; add and edit entries through Manage.
+
 ## Theme defaults
 
 `Theme.qml` groups appearance settings by component and keeps rendering state in

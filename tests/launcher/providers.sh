@@ -39,7 +39,7 @@ if [[ ${5:-} == alerts ]]; then
     printf '\n' >> "$PROVIDER_TEST_DIR/actions"
     exit 0
 fi
-if [[ ${6:-} == projects || ${6:-} == projectUrls || ${6:-} == directories ]]; then
+if [[ ${6:-} == projects || ${6:-} == projectUrls || ${6:-} == directories || ${6:-} == webapps ]]; then
     printf 'native <%s>\n' "$6" >> "$PROVIDER_TEST_DIR/actions"
     exit 0
 fi
@@ -145,9 +145,6 @@ cat > "$HOME/.config/qutebrowser/bookmarks/urls" <<'DATA'
 https://example.test/alpha Alpha
 https://example.test/beta Beta
 DATA
-cat > "$providers/web/webapps.json" <<'JSON'
-{"action":"output","items":[{"title":"Alpha","result":{"action":"browser","url":"https://example.test/app"}},{"title":"Beta","result":{"action":"browser","url":"https://example.test/beta"}}]}
-JSON
 cat > "$providers/web/n8n.json" <<'JSON'
 {"action":"default","items":[{"title":"Alpha","result":"https://example.test/workflow/alpha"},{"title":"Beta","result":"https://example.test/workflow/beta"}]}
 JSON
@@ -183,16 +180,16 @@ run_provider() {
     [[ ! -s $test_dir/error ]] || { cat "$test_dir/error" >&2; exit 1; }
     printf 'PASS: %s provider dispatch, shared helpers and selected action\n' "$name"
 }
-for provider in code github directories; do
+for provider in code github directories webapps; do
     : > "$test_dir/actions"; : > "$test_dir/menus"
     bash "$picker" provider "$provider"
     if [[ $provider == code ]]; then expect_action 'native <projects>';
     elif [[ $provider == github ]]; then expect_action 'native <projectUrls>';
-    else expect_action 'native <directories>'; fi
+    elif [[ $provider == directories ]]; then expect_action 'native <directories>';
+    else expect_action 'native <webapps>'; fi
     [[ ! -s $test_dir/menus ]]
 done
-printf 'PASS: projects, GitHub and directories dispatch to native IPC without a JSON cache\n'
-run_provider webapps 'browser <https://example.test/app>'
+printf 'PASS: projects, GitHub, directories and Webapps dispatch to native IPC without a JSON cache\n'
 run_provider n8n 'browser <https://example.test/workflow/alpha>'
 run_provider remotes 'virsh <-c> <qemu:///system> <start> <alpha-test>'
 expect_action 'sdl-freerdp3'

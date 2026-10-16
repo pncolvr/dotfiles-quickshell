@@ -12,7 +12,7 @@ QC.Button {
     property color fillColor: Theme.alternateBackground
     property color foreground: Theme.text
 
-    implicitWidth: Theme.actionButtonWidth
+    implicitWidth: label.length ? Math.max(Theme.actionButtonWidth, implicitContentWidth) : Theme.actionButtonWidth
     implicitHeight: Theme.controlHeight
     padding: 0
     hoverEnabled: true
@@ -28,10 +28,10 @@ QC.Button {
     }
 
     contentItem: Item {
-        implicitWidth: codeLabel.visible
+        implicitWidth: root.label.length > 0
             ? codeLabel.implicitWidth + (icon.implicitWidth + Theme.controlSpacing + Theme.controlFieldPadding) * 2
             : icon.implicitWidth + Theme.controlFieldPadding * 2
-        implicitHeight: Math.max(icon.implicitHeight, codeLabel.visible ? codeLabel.implicitHeight : 0)
+        implicitHeight: Math.max(icon.implicitHeight, root.label.length > 0 ? codeLabel.implicitHeight : 0)
 
         Q.Text {
             id: codeLabel
@@ -50,7 +50,7 @@ QC.Button {
         Q.Text {
             id: icon
             // Center the visible glyph rather than the font's advance and line box.
-            x: (codeLabel.visible
+            x: (root.label.length > 0
                 ? parent.width - Theme.controlFieldPadding - iconMetrics.tightBoundingRect.width
                 : (parent.width - iconMetrics.tightBoundingRect.width) / 2) - iconMetrics.tightBoundingRect.x
             y: (parent.height - iconMetrics.tightBoundingRect.height) / 2

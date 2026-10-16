@@ -48,3 +48,4 @@ MotionGuard 1.0 MotionGuard.qml
 MotionAnimation 1.0 MotionAnimation.qml
 MotionUniformAnimator 1.0 MotionUniformAnimator.qml
 MotionBehavior 1.0 MotionBehavior.qml
+LabeledField 1.0 LabeledField.qml

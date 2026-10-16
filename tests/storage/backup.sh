@@ -35,7 +35,7 @@ chmod +x "$fixture/bin/"*
 export PATH="$fixture/bin:$PATH"
 database=$fixture/data/quickshell.db
 sqlite3 "$database" <<'SQL'
-PRAGMA user_version=11;
+PRAGMA user_version=12;
 CREATE TABLE clipboard(id TEXT PRIMARY KEY,mime TEXT,kind TEXT,bytes INTEGER,text TEXT,updated_at INTEGER,pinned INTEGER);
 CREATE TABLE preferences(key TEXT PRIMARY KEY,value_json TEXT);
 INSERT INTO preferences VALUES('clock.showSeconds','true');
@@ -45,6 +45,8 @@ CREATE TABLE project_sources(path TEXT PRIMARY KEY,kind TEXT,category TEXT);
 CREATE TABLE projects(source_path TEXT,path TEXT,name TEXT,remote_url TEXT);
 CREATE TABLE project_workspaces(project_path TEXT,path TEXT,name TEXT,included INTEGER);
 CREATE TABLE directories(path TEXT PRIMARY KEY,name TEXT,category TEXT);
+CREATE TABLE webapps(id TEXT PRIMARY KEY,name TEXT,payload_json TEXT);
+INSERT INTO webapps VALUES('webapp-test','Fixture','{"url":"https://example.test/app","browser":"vivaldi","profile":"Test Profile","arguments":["literal $(no-execution)"]}');
 SQL
 mkdir "$fixture/source" "$fixture/project-present" "$fixture/project-missing" "$fixture/directory-present" "$fixture/directory-missing"
 printf '{}' > "$fixture/project-present/test.code-workspace"
@@ -78,7 +80,7 @@ totp_command=$(jq -nc --arg helper "$repo/src/services/security/totp.sh" --arg t
 request() {
     jq -nc --arg action "$1" --arg path "$2" --arg password "${3:-Public-fixture-passphrase}" \
         --arg database "$database" --arg clipboard "$fixture/data/clipboard" --argjson totp "$totp_command" \
-        '{action:$action,path:$path,password:$password,database:$database,clipboard:$clipboard,schema:11,totpCommand:$totp}'
+        '{action:$action,path:$path,password:$password,database:$database,clipboard:$clipboard,schema:12,totpCommand:$totp}'
 }
 run() { request "$@" | bash "$repo/src/services/storage/backup.sh"; }
 reject() {
@@ -108,7 +110,7 @@ printf 'PASS: spaces/quotes in paths and Unicode/literal shell characters in pas
 rm -r -- "$fixture/source" "$fixture/project-missing" "$fixture/directory-missing"
 rm -- "$fixture/project-present/test.code-workspace"
 
-sqlite3 "$database" "UPDATE preferences SET value_json='false'; DELETE FROM clipboard; DELETE FROM twitch_users;"
+sqlite3 "$database" "UPDATE preferences SET value_json='false'; DELETE FROM clipboard; DELETE FROM twitch_users; DELETE FROM webapps;"
 rm -- "$fixture/data/clipboard/$text_id" "$fixture/data/clipboard/$image_id"
 printf '%s' '{"version":1,"id":"22222222-2222-2222-2222-222222222222","name":"New","token":"MY"}' \
     > "$fixture/keyring/22222222-2222-2222-2222-222222222222.json"
@@ -122,6 +124,8 @@ jq -se '.[-1].type == "done" and (.[-1].recovery | length > 0)' "$fixture/import
 [[ $(sqlite3 "$database" 'SELECT COUNT(*) FROM clipboard;') == 2 ]]
 [[ $(sqlite3 "$database" "SELECT pinned||':'||updated_at FROM clipboard WHERE id='$text_id';") == 1:101 ]]
 [[ $(sqlite3 "$database" 'SELECT fallback_login FROM twitch_users;') == second ]]
+sqlite3 "$database" 'SELECT payload_json FROM webapps;' | jq -e '.profile=="Test Profile" and .arguments==["literal $(no-execution)"]' >/dev/null
+printf 'PASS: webapp launch data survive encrypted restore\n'
 [[ $(sqlite3 "$database" "SELECT value_json FROM preferences WHERE key='clock.showSeconds';") == true ]]
 jq -se '.[-1].report | .warningCount == 5 and .counts == {directories:1,sources:1,projects:1,workspaces:1} and
     (.unchecked | length == 1 and .[0].path == "smb://server/share") and .pendingNotice' "$fixture/import.log" >/dev/null

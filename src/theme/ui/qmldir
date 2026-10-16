@@ -55,3 +55,4 @@ MotionGuard 1.0 components/MotionGuard.qml
 MotionAnimation 1.0 components/MotionAnimation.qml
 MotionUniformAnimator 1.0 components/MotionUniformAnimator.qml
 MotionBehavior 1.0 components/MotionBehavior.qml
+LabeledField 1.0 components/LabeledField.qml

@@ -288,6 +288,38 @@ searching/rendering. Original labels remain available for dmenu replies and
 action results. Other requests display labels literally, including grid views.
 Shared browser/status helpers remain in Zsh, and URL cleaning remains in Qutebrowser.
 
+### Webapps
+
+Open with `launcher.sh provider webapps` (or `launcher.sh webapps`). The existing
+binding opens the native Webapps picker. **Ctrl+M** switches to **Manage**;
+**Ctrl+A** adds an entry while managing. Manage lists disabled entries too.
+Editing, search, Escape and focus reuse the shared managed-picker components.
+
+Entries have a name, HTTP(S) URL, browser, optional browser profile, window mode
+and enabled state. Category is a Personal/Work dropdown in the main form; Work
+follows the current work-status filter. Advanced options expose literal browser arguments,
+and optional before/after commands. Quote arguments containing spaces; variables,
+command substitutions and shell operators are never evaluated. The before command
+must succeed before the browser is dispatched; after means after dispatch, without
+waiting for the browser window to close. Browsers run detached from the bar.
+
+`Config.webappBrowsers` defines browser commands, argument templates and profile
+choices (`profiles: [{id, name}]`). Manage selects a profile from the browser's
+combo rather than entering a profile name. Browser default uses no explicit
+profile arguments. A removed profile is reported as unavailable until another
+configured profile is chosen; saved selections are not silently replaced. Qutebrowser
+supports isolated named profiles. Its default **Reuse profile window** opens a
+new tab in the profile's existing window, creating a window when none is running;
+**New window** remains an explicit per-entry choice. If a profile already has
+several windows, Qutebrowser chooses its target window using its own settings;
+existing windows are not merged. Vivaldi retains its existing profile/app-window
+behavior. System default delegates to `xdg-open`. Entry values live in the
+local SQLite database, including profile choices and command arguments, and are
+covered by the existing encrypted backup/restore flow.
+
+Add, edit and remove entries directly in Manage. Webapps requires no provider JSON
+or browser environment file; its saved entries restore with the database backup.
+
 ### Directories
 
 `launcher.sh directories`, `launcher.sh provider directories` and
@@ -455,7 +487,7 @@ recording, wallpaper and shared-helper `.env` files are no longer read.
 
 Private collections still live beside their providers and stay Git-ignored:
 
-- `web/webapps.json` and `web/n8n.json`: JSON picker entries.
+- `web/n8n.json`: workflow picker entries (separate discovery review pending).
 - `remotes/hosts.json`: VM/RDP hosts; `hosts.json.sample` documents the format.
   RDP option strings support quotes and backslash escapes; shell expressions and
   wildcards are passed literally.

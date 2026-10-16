@@ -78,6 +78,24 @@ Item {
     readonly property var directoryResolveCommand: ["bash", Quickshell.shellPath("src/services/files/resolve-folder.sh")]
     readonly property var directoryOpenCommand: ["pcmanfm-qt"]
 
+    // Launcher: managed webapps. Browser commands are literal argv templates.
+    readonly property var webappBrowsers: [
+        {id: "qutebrowser", name: "Qutebrowser", command: ["qutebrowser"],
+            profiles: [
+                {id: "qutebrowser-webapp", name: "Webapps"}
+            ],
+            profileArguments: ["--desktop-file-name", "{profile}", "-C", _internal.home + "/.config/qutebrowser/config.py", "-B", _internal.dataHome + "/{profile}"],
+            reuseArguments: ["--target", "tab"], windowArguments: ["--target", "window"]},
+        {id: "vivaldi", name: "Vivaldi", command: ["vivaldi"],
+            profiles: [
+                {id: "inbox", name: "inbox"},
+                {id: "lt", name: "lt"},
+                {id: "storage", name: "storage"}
+            ],
+            profileArguments: ["--profile-directory={profile}"], windowArguments: ["--new-window"], appArguments: ["--app={url}"]},
+        {id: "default", name: "System default", command: ["xdg-open"]}
+    ]
+
     // Launcher: wallpapers and Expose
     readonly property string wallpaperStateDirectory: `${_internal.home}/Pictures/.runtime`
     readonly property string wallpaperDirectory: `${_internal.home}/Pictures/wallpapers`

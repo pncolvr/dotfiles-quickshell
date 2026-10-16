@@ -29,6 +29,7 @@ Item {
         sourceComponent: {
             switch (root.picker.mode) {
                 case PickerService.Mode.Projects: return projectPanel
+                case PickerService.Mode.Webapps: return webappPanel
                 case PickerService.Mode.Directories: return directoryPanel
                 case PickerService.Mode.Clipboard: return clipboardPanel
                 case PickerService.Mode.Secret: return secretPanel
@@ -40,6 +41,10 @@ Item {
                 default: return standardPanel
             }
         }
+    }
+    Component {
+        id: webappPanel
+        WebappPickerPanel { picker: root.picker; backgroundVisible: root.backgroundVisible }
     }
     Component {
         id: secretPanel

@@ -47,3 +47,6 @@ singleton DirectoryService 1.0 files/DirectoryService.qml
 singleton RbwService 1.0 vault/RbwService.qml
 
 singleton RecordingService 1.0 recording/RecordingService.qml
+
+singleton WebappRepository 1.0 storage/WebappRepository.qml
+singleton WebappService 1.0 webapps/WebappService.qml
