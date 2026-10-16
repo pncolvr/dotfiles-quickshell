@@ -46,6 +46,7 @@ Rectangle {
             mipmap: false
             cache: false
             asynchronous: true
+            onStatusChanged: if (status === Image.Error && root.picker.visible) root.picker.imagePreviewFailed()
             Accessible.role: Accessible.Graphic
             Accessible.name: root.picker.currentItem?.title ?? "Image"
         }

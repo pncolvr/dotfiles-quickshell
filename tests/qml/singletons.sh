@@ -5,17 +5,37 @@ qmlls_bin=${QMLLS:-/usr/lib/qt6/bin/qmlls}
 command -v node >/dev/null
 [[ -x $qmlls_bin ]] || { printf 'Qt QML language server is required; set QMLLS.\n' >&2; exit 1; }
 fixture=$(mktemp -d /tmp/quickshell-singletons.XXXXXXXX)
-trap 'rm -rf -- "$fixture"' EXIT
+fixture_pid=''
+cleanup() {
+    if [[ -n $fixture_pid ]]; then kill "$fixture_pid" 2>/dev/null || true; wait "$fixture_pid" 2>/dev/null || true; fi
+    rm -rf -- "$fixture"
+}
+trap cleanup EXIT
 mkdir -m700 "$fixture/runtime"
 tar -C "$repo_dir" --exclude='*.env' --exclude='src/services/launcher/providers/*.json' -cf - src | tar -C "$fixture" -xf -
 sed -i 's/readonly property bool clipboardMonitorEnabled: true/readonly property bool clipboardMonitorEnabled: false/' "$fixture/src/config/Config.qml"
+# Metadata/identity checks do not need a live audio server. Keep motion policy passive.
+cat > "$fixture/src/services/audio/AudioService.qml" <<'QML'
+pragma Singleton
+import QtQml
+QtObject { readonly property bool screencastActive: false }
+QML
 sed 's@"../../src@"src@g' "$repo_dir/tests/qml/singletons-smoke.qml" > "$fixture/shell.qml"
 QT_QPA_PLATFORM=offscreen PIPEWIRE_REMOTE=quickshell-singleton-test XDG_RUNTIME_DIR="$fixture/runtime" \
     XDG_DATA_HOME="$fixture/local" XDG_CACHE_HOME="$fixture/cache" \
-    timeout 15 qs -p "$fixture" > "$fixture/runtime.log" 2>&1 || { cat "$fixture/runtime.log"; exit 1; }
+    qs -p "$fixture" > "$fixture/runtime.log" 2>&1 & fixture_pid=$!
+# The harness owns this windowless host; do not depend on QML's quit signal.
+for ((attempt=0;attempt<200;attempt++)); do
+    if rg -q 'PASS: local singleton metadata|SINGLETON FAIL:' "$fixture/runtime.log"; then break; fi
+    kill -0 "$fixture_pid" 2>/dev/null || { cat "$fixture/runtime.log"; exit 1; }
+    sleep 0.05
+done
 rg 'PASS:|SINGLETON FAIL:' "$fixture/runtime.log"
 if ! rg -q 'PASS: local singleton metadata' "$fixture/runtime.log" \
     || rg -q 'SINGLETON FAIL:|TypeError:|ReferenceError:|Binding loop|Failed to load configuration' "$fixture/runtime.log"; then cat "$fixture/runtime.log"; exit 1; fi
+kill -TERM "$fixture_pid" 2>/dev/null || true
+wait "$fixture_pid" || true
+fixture_pid=''
 node - "$repo_dir" "$qmlls_bin" <<'JS'
 const fs=require('node:fs'), path=require('node:path'), {spawn}=require('node:child_process'), {pathToFileURL}=require('node:url');
 const [repo,executable]=process.argv.slice(2), files=[];

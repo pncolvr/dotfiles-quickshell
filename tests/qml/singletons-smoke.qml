@@ -24,7 +24,7 @@ Scope {
     Timer {
         interval: 25; running: true; repeat: true
         onTriggered: {
-            if (++root.ticks > 200) { root.check(false,"storage readiness timed out"); stop(); Qt.quit(); return }
+            if (++root.ticks > 200) { root.check(false,"storage readiness timed out"); stop(); return }
             if (!Services.DbService.ready) return
             stop()
             const pairs = [
@@ -33,6 +33,7 @@ Scope {
                 ["RecordingService",Services.RecordingService,Recording.RecordingService],
                 ["PowerService",Services.PowerService,SystemServices.PowerService],
                 ["BookmarkService",Services.BookmarkService,Launcher.BookmarkService],
+                ["QrEncodeService",Services.QrEncodeService,Launcher.QrEncodeService],
                 ["N8nService",Services.N8nService,N8n.N8nService],
                 ["N8nRepository",Services.N8nRepository,Storage.N8nRepository],
                 ["Theme",Settings.Theme,Styling.Theme],
@@ -57,7 +58,6 @@ Scope {
             root.check(Settings.Config.timerTickInterval === Time.Timespan.fromMilliseconds(250),"Config imports the shared time utility")
             root.check(Settings.Config.updatesRefreshCommand[1] === Quickshell.shellPath("src/services/system/update-check.sh"),"update helper resolves from the shell root")
             if (!root.failed) console.log("PASS: local singleton metadata preserves shared instances, storage state and helper types")
-            Qt.quit()
         }
     }
 }

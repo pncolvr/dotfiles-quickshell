@@ -23,6 +23,7 @@ Singleton {
     property var secretActions: null
     property var secretCallback: null
     property var menuCallback: null
+    property var menuClosedCallback: null
     property string acceptLabel: "Select"
     property string query: ""
     property string layout: "list"
@@ -71,6 +72,7 @@ Singleton {
     readonly property bool canAccept: !!currentItem || (multiple && selectedItems.length > 0)
         || (allowTyped && query.trim().length > 0)
     signal opened()
+    signal imagePreviewFailed()
 
     property alias clipboardFuzzy: clipboardSearch.fuzzy
     readonly property bool clipboardHasMore: clipboardSearch.hasMore
@@ -134,6 +136,8 @@ Singleton {
         begin(PickerService.Mode.Menu, title)
         items = menuRows(rows, options.sort === true)
         menuCallback = callback
+        menuClosedCallback = options.onClosed || null
+        imageOnly = options.imageOnly === true
         layout = presentation
         multiple = options.allowMultipleSelection === true
         allowTyped = options.allowTyped === true
@@ -302,6 +306,8 @@ Singleton {
         process.running = true
     }
     function close() {
+        const menuClosed = menuClosedCallback
+        menuClosedCallback = null
         menuCallback = null
         const secretResult = secretCallback
         secretCallback = null
@@ -313,11 +319,13 @@ Singleton {
         if (requestDirectory) reply(requestDirectory, {status: "cancelled", items: [], exitCode: 1})
         requestDirectory = ""
         visible = false
+        if (imageOnly) items = []
         secretActions = null
         if (mode === PickerService.Mode.Secret) { secretDescription = ""; error = ""; prompt = "" }
         // Keep the outgoing Exposé grid stable until its closing animation ends.
         if (layout !== "expose") { query = ""; selectedIds = [] }
         if (secretResult) secretResult(null)
+        if (menuClosed) menuClosed()
     }
     function finishExposeClose() {
         const target = exposeCloseTarget
@@ -584,6 +592,7 @@ Singleton {
         function apps(): void { root.apps() }
         function power(): void { PowerService.open() }
         function bookmarks(): void { BookmarkService.open() }
+        function encodeQr(): void { QrEncodeService.open() }
         function windows(scope: string): void { root.windows(scope) }
         function expose(scope: string): void { root.expose(scope) }
         function clipboard(): void { root.clipboard() }

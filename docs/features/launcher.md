@@ -49,7 +49,7 @@ directory hints fit one line; GitHub groups its selection shortcuts on separate 
 | Power | Noninteractive command execution and offline idle locking. PowerService owns the native choices and action order. |
 | Screenshot | Coordinate capture, OCR/QR decoding, annotation and file-manager tools. |
 | Recording | Prepare capture/audio choices for the detached recording worker; the native service owns toggle/session state. |
-| QR encoding | Run qrencode, copy its PNG and retain the temporary image through preview dismissal. |
+| QR encoding | QrEncodeService owns native input/preview; qr-encode.sh encodes and copies PNG data in memory without temporary files or picker IPC. |
 | Wallpaper | Enumerate images, coordinate mode/output choices, save assignments and restore them before the bar is available. |
 
 The detached recording worker and runtime process/database helpers are retained;
@@ -133,7 +133,9 @@ native-menu entry point. It normalizes rows through the same helper as external
 requests, invokes the selected-row callback after logical closure, and clears the
 callback on cancellation or replacement. Optional `allowMultipleSelection`,
 `allowTyped`, `sort` and `acceptLabel` settings reuse the same menu controls; rows
-share normalization/sorting with external requests. A callback may open the next native step.
+share normalization/sorting with external requests. `imageOnly` uses the shared compact
+viewer. `onClosed` runs once on acceptance, cancellation or replacement, after its
+reference is cleared, for resource cleanup. A callback may open the next native step.
 External JSON/dmenu requests retain their existing request/reply behavior.
 
 On acceptance, PowerService pauses tracking directly and dispatches the chosen
@@ -307,12 +309,14 @@ Remaining interactive providers call `launcher.sh`; no Rofi adapter or PATH
 override is required. `_common/` holds the retained Bash helpers.
 The unused standalone Webapps, n8n and Remotes forwarding scripts are removed;
 the public `launcher.sh` aliases remain available for shell callers.
-Projects, GitHub, directories, Webapps, Remotes, n8n, Bookmarks and the interactive Power entry dispatch directly to native QML services; their
+Projects, GitHub, directories, Webapps, Remotes, n8n, Bookmarks, QR encoding and the interactive Power entry dispatch directly to native QML services; their
 former forwarding providers are removed; Power retains its noninteractive executor. The other providers are named `<provider>.sh`. Browser selection,
 work/personal filtering and editor profiles are preserved. The unused Books provider
 and its Meta+Shift+Period binding are retired.
 
-`launcher.sh provider encode-qrcode` opens a text prompt in the launcher.
+The tools-submap **E** binding dispatches `quickshell:launcher-encode-qr` to
+`QrEncodeService`. `launcher.sh provider encode-qrcode` remains a compatibility
+entry that opens the same native text prompt and returns immediately.
 Type or paste text and press Enter to generate a QR PNG, copy it to the Wayland
 clipboard and display it in a native image viewer. Enter or Escape closes the
 compact viewer and leaves the clipboard image available. The viewer has no footer
@@ -321,11 +325,18 @@ without smoothing; input uses the field placeholder and footer without an extra
 empty-state label. Escape in the input cancels. Encoding uses `qrencode` with its original
 defaults: error correction L, 3-pixel modules and a 4-module margin. Text is passed
 through stdin, preserving pipes, quotes, Unicode and leading dashes. Success and
-failure use bar alerts; a failed encode leaves the clipboard untouched. Temporary
-input and image files are private, retained while the QR viewer is open, and
-removed when the provider exits.
-Hyprland's existing tools-submap **E** binding calls this provider; its former
-YAD dialog and QR-specific window positioning rules are removed.
+failure use native bar alerts; a failed encode leaves the clipboard untouched.
+The service sends literal text through a private stdin pipe to the noninteractive
+`qr-encode.sh` worker. The worker encodes into a PNG in memory, copies those bytes
+and returns a PNG data URI to the shared viewer. No input, request or temporary
+image files are created. Each tool pipeline has an owned process group for
+cancellation. Enter, Escape, replacement and config reload release the preview
+without changing the copied image. The shared image viewer clears its image rows
+on close to release the data.
+Opening another picker or restarting QR input cancels pending encoding/copy work
+so a late completion cannot replace the new menu. Image-load failures report an
+error through the shared preview signal. The interactive `providers/encode-qrcode.sh`
+is removed; its former YAD positioning rules remain removed.
 
 `launcher.sh provider wallpaper` opens the image picker at `Config.wallpaperDirectory`,
 which defaults to `~/Pictures/wallpapers` in `src/config/Config.qml`.
@@ -656,9 +667,10 @@ see [recording](recording.md) for the detached lifecycle and bar indicator.
 Recordings are encoded directly to MP4; there is no separate conversion stage.
 
 Native Hyprland bindings use `hl.dsp.global("quickshell:NAME")`. One
-`GlobalShortcutRegistry` in `shell.qml` registers the actions and calls existing
-feature-service methods. The registry covers applications, Projects, project URLs,
-Directories, Webapps, Remotes, n8n, Power, clipboard, window lists, Exposé, recording,
+`GlobalShortcutRegistry` owns the action list and registers it; `shell.qml` creates
+one instance. Its callbacks call existing feature-service methods, and its reload
+method is shared by the shortcut, shell IPC and backup-restore callback. The registry covers applications, Projects, project URLs,
+Directories, Webapps, Remotes, n8n, Bookmarks, QR encoding, Power, clipboard, window lists, Exposé, recording,
 Vault, notification DND, shell reload, window cycling, grouped-window selection
 and the 14 bar-module shortcuts. Module and numbered-window registrations share
 array-generated actions rather than separate registration components. Quickshell re-registers them across configuration reloads; the companion
@@ -670,8 +682,8 @@ password/pinentry clients and browser selections retain argument/result IPC; the
 requests are not routed through compositor shortcuts. Full restart/recovery stays
 external so it remains possible when the bar is not running.
 
-The native service-backed bindings, Bookmarks and Power menu orchestration are migrated.
-Screenshot/OCR/QR decoding, QR encoding, Wallpaper and recording setup still
+The native service-backed bindings, Bookmarks, QR encoding and Power menu orchestration are migrated.
+Screenshot/OCR/QR decoding, Wallpaper and recording setup still
 use their existing interactive scripts. Moving their orchestration into QML is the
 next migration stage: feature services should collect choices and pass prepared
 options to external tools/workers, avoiding a script reopening the picker through

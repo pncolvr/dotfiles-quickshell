@@ -1,133 +1,130 @@
 #!/usr/bin/env bash
-# Real QR encoding with isolated picker, alerts and clipboard; no desktop actions.
+# Native input/preview with real QR encoding and isolated clipboard/tool processes.
 set -euo pipefail
-project_root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)
-test_dir=$(mktemp -d /tmp/quickshell-encode-test.XXXXXXXX)
-trap 'rm -rf -- "$test_dir"' EXIT
-mkdir -m 700 "$test_dir/runtime"
-mkdir -p "$test_dir/bin" "$test_dir/src/services/launcher/providers/_common"
-export QR_TEST_ENCODER=$(command -v qrencode)
-export QR_TEST_DIR="$test_dir" XDG_RUNTIME_DIR="$test_dir/runtime"
-export QS_PICKER_EXECUTABLE="$test_dir/bin/qs" QS_PICKER_CONFIG="$test_dir" QS_PICKER_TIMEOUT=4
-export PATH="$test_dir/bin:$PATH"
-cp "$project_root/src/services/launcher/launcher.sh" "$test_dir/src/services/launcher/"
-cp "$project_root/src/services/launcher/providers/encode-qrcode.sh" "$test_dir/src/services/launcher/providers/"
-cp "$project_root/src/services/launcher/providers/_common/utils.sh" "$test_dir/src/services/launcher/providers/_common/"
-picker="$test_dir/src/services/launcher/launcher.sh"
-
-cat > "$test_dir/bin/qs" <<'BASH'
-#!/usr/bin/env bash
-set -euo pipefail
-if [[ ${5:-} == alerts ]]; then
-    jq -nc --arg message "$8" --arg kind "$9" '{message:$message,kind:$kind}' >> "$QR_TEST_DIR/alerts"
-elif [[ ${6:-} == open ]]; then
-    [[ ${QR_TEST_IPC_FAIL:-0} == 0 ]] || exit 9
-    if jq -e '.kind == "image"' "$7/request.json" >/dev/null; then
-        cp "$7/request.json" "$QR_TEST_DIR/preview.json"
-        path=$(jq -r '.items[0].image | ltrimstr("file://")' "$7/request.json")
-        [[ -s $path ]]
-        cmp "$path" "$QR_TEST_DIR/clipboard"
-        cp "$path" "$QR_TEST_DIR/preview.png"
-        [[ ${QR_TEST_PREVIEW_FAIL:-0} == 0 ]] || exit 9
-        printf '%s\n' '{"status":"cancelled"}' > "$7/reply"
-        exit
-    fi
-    cp "$7/request.json" "$QR_TEST_DIR/menu.json"
-    if [[ ${QR_TEST_CANCEL:-0} == 1 ]]; then
-        printf '%s\n' '{"status":"cancelled"}' > "$7/reply"
-    else
-        jq -Rsc '{status:"accepted",items:[{title:.,result:.}],exitCode:0}' \
-            "$QR_TEST_DIR/text" > "$7/reply"
-    fi
-fi
-BASH
-cat > "$test_dir/bin/qrencode" <<'BASH'
+repo_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)
+qs_bin=$(command -v qs)
+fixture=$(mktemp -d /tmp/qs-qr.XXXXXX)
+reload_pid=''
+cleanup() {
+    if [[ -n $reload_pid ]]; then kill "$reload_pid" 2>/dev/null || true; wait "$reload_pid" 2>/dev/null || true; fi
+    rm -rf -- "$fixture"
+}
+trap cleanup EXIT
+mkdir -m700 "$fixture/r" "$fixture/home" "$fixture/bin"
+tar -C "$repo_dir" --exclude='*.env' --exclude='src/services/launcher/providers/*.json' -cf - src | tar -C "$fixture" -xf -
+sed -i 's/clipboardMonitorEnabled: true/clipboardMonitorEnabled: false/;s/workModeEnabled: true/workModeEnabled: false/' "$fixture/src/config/Config.qml"
+export QR_TEST_ENCODER=$(command -v qrencode) QR_TEST_DIR="$fixture"
+cat > "$fixture/bin/qrencode" <<'MOCK'
 #!/usr/bin/env bash
 printf '%s\n' "$@" > "$QR_TEST_DIR/encoder-args"
+printf '%s\n' "$$" > "$QR_TEST_DIR/encoder-pid"
+case ${QR_TEST_MODE:-} in encodeSlow|reopen) exec sleep 10 ;; esac
 exec "$QR_TEST_ENCODER" "$@"
-BASH
-cat > "$test_dir/bin/wl-copy" <<'BASH'
+MOCK
+cat > "$fixture/bin/wl-copy" <<'MOCK'
 #!/usr/bin/env bash
 printf '%s\n' "$@" > "$QR_TEST_DIR/copy-args"
-[[ ${QR_TEST_COPY_FAIL:-0} == 0 ]] || exit 1
+[[ ${QR_TEST_MODE:-} != copySlow ]] || exec sleep 10
+[[ ${QR_TEST_MODE:-} != copyFail ]] || exit 1
 cat > "$QR_TEST_DIR/clipboard"
-BASH
-chmod +x "$test_dir/bin/qs" "$test_dir/bin/qrencode" "$test_dir/bin/wl-copy"
-
-reset_actions() {
-    rm -f "$test_dir/encoder-args" "$test_dir/copy-args" "$test_dir/alerts" "$test_dir/menu.json" "$test_dir/preview.json" "$test_dir/preview.png"
+MOCK
+cat > "$fixture/bin/qs" <<'MOCK'
+#!/usr/bin/env bash
+printf 'unexpected QR IPC\n' >> "$QR_TEST_DIR/ipc"
+exit 1
+MOCK
+cat > "$fixture/bin/hyprctl" <<'MOCK'
+#!/usr/bin/env bash
+printf '[]\n'
+MOCK
+chmod +x "$fixture/bin/"*
+sed 's@"../../src@"src@g' "$repo_dir/tests/launcher/encode-qrcode.qml" > "$fixture/shell.qml"
+export PATH="$fixture/bin:$PATH" HOME="$fixture/home"
+export XDG_RUNTIME_DIR="$fixture/r" XDG_DATA_HOME="$fixture/data" XDG_CACHE_HOME="$fixture/cache"
+run_fixture() {
+    rm -f -- "$fixture/encoder-args" "$fixture/copy-args" "$fixture/encoder-pid"
+    env -u WAYLAND_DISPLAY QT_QPA_PLATFORM=offscreen QT_QUICK_BACKEND=software \
+        timeout -k 1 12 "$qs_bin" -p "$fixture/shell.qml" > "$fixture/log" 2>&1 || { cat "$fixture/log"; exit 1; }
+    if ! rg -q 'PASS: native QR' "$fixture/log" || rg -q 'QR FAIL:|TypeError:|ReferenceError:|Binding loop|Failed to load configuration' "$fixture/log"; then
+        cat "$fixture/log"; exit 1
+    fi
+    for ((attempt=0;attempt<80;attempt++)); do
+        [[ -n $(find "$fixture/r" -maxdepth 1 -name 'encode-qrcode.*' -print -quit) ]] || break
+        sleep 0.025
+    done
+    [[ -z $(find "$fixture/r" -maxdepth 1 -name 'encode-qrcode.*' -print -quit) && ! -e $fixture/ipc ]]
+    rg 'PASS:' "$fixture/log"
 }
-check_cleanup() {
-    [[ -z $(find "$test_dir/runtime" -mindepth 1 -type f -print -quit) ]]
-    [[ -z $(find "$test_dir/runtime" -name 'encode-qrcode.*' -print -quit) ]]
-}
-expect_error() {
-    jq -se 'length == 1 and .[0].kind == "error"' "$test_dir/alerts" >/dev/null
-    check_cleanup
-}
-
 for text in 'https://example.test/qr?a=1&b=2' '-option | Olá 日本語 "quoted" $dollar $(touch injected) `literal` \\' $'line one\nline two\n\n'; do
-    reset_actions
-    printf '%s' "$text" > "$test_dir/text"
-    bash "$picker" provider encode-qrcode
-    jq -e '.allowTyped and .acceptLabel == "Generate QR code" and .items == []' "$test_dir/menu.json" >/dev/null
-    [[ $(cat "$test_dir/copy-args") == $'--type\nimage/png' ]]
-    "$QR_TEST_ENCODER" -o "$test_dir/expected.png" -- "$text"
-    cmp "$test_dir/expected.png" "$test_dir/clipboard"
-    cmp "$test_dir/expected.png" "$test_dir/preview.png"
-    jq -e '.kind == "image" and .allowTyped == false' "$test_dir/preview.json" >/dev/null
-    if command -v zbarimg >/dev/null; then
-        printf '%s\n' "$text" > "$test_dir/expected-text"
-        zbarimg --raw -q "$test_dir/clipboard" > "$test_dir/decoded" 2>/dev/null
-        cmp "$test_dir/expected-text" "$test_dir/decoded"
-    fi
-    jq -se 'length == 1 and .[0].kind == "success" and .[0].message == "QR code copied to clipboard"' "$test_dir/alerts" >/dev/null
-    check_cleanup
+    QR_TEST_MODE=successEnter QR_TEST_TEXT="$text" run_fixture
+    printf '%s' "$text" | "$QR_TEST_ENCODER" --type=PNG -o "$fixture/expected.png"
+    cmp "$fixture/expected.png" "$fixture/clipboard"
+    [[ $(cat "$fixture/copy-args") == $'--type\nimage/png' ]]
 done
-printf 'PASS: QR PNGs retain original encoding, preserve literal text and match the displayed image while clipboard content survives closing\n'
-
-cp "$test_dir/clipboard" "$test_dir/saved-clipboard"
-for mode in cancel empty; do
-    reset_actions
-    : > "$test_dir/text"
-    if [[ $mode == cancel ]]; then
-        QR_TEST_CANCEL=1 bash "$picker" provider encode-qrcode
-    else
-        bash "$picker" provider encode-qrcode
-    fi
-    [[ ! -f $test_dir/encoder-args && ! -f $test_dir/copy-args && ! -f $test_dir/alerts && ! -f $test_dir/preview.json ]]
-    cmp "$test_dir/saved-clipboard" "$test_dir/clipboard"
-    check_cleanup
+QR_TEST_MODE=successEscape QR_TEST_TEXT='Escape keeps clipboard' run_fixture
+QR_TEST_MODE=replacePreview QR_TEST_TEXT='Replacement keeps clipboard' run_fixture
+cp "$fixture/clipboard" "$fixture/saved-clipboard"
+for mode in cancelInput emptyInput encodeSlow copySlow reopen; do
+    QR_TEST_MODE="$mode" QR_TEST_TEXT='cancel pending' run_fixture
+    cmp "$fixture/saved-clipboard" "$fixture/clipboard"
 done
-printf 'PASS: cancellation and empty input leave the clipboard untouched without alerts\n'
+QR_TEST_MODE=oversize QR_TEST_TEXT=$(printf '%10000s' 'too long') run_fixture
+[[ ! -e $fixture/copy-args ]]
+cmp "$fixture/saved-clipboard" "$fixture/clipboard"
+QR_TEST_MODE=copyFail QR_TEST_TEXT='copy failure' run_fixture
+cmp "$fixture/saved-clipboard" "$fixture/clipboard"
+QR_TEST_MODE=previewFail QR_TEST_TEXT='preview unavailable' run_fixture
+printf '%s' 'preview unavailable' | "$QR_TEST_ENCODER" --type=PNG -o "$fixture/expected.png"
+cmp "$fixture/expected.png" "$fixture/clipboard"
+printf 'PASS: original QR PNG bytes, literal/trailing-newline input, clipboard ordering, cancellation and no temporary image files or picker IPC\n'
 
-reset_actions
-if QR_TEST_IPC_FAIL=1 bash "$picker" provider encode-qrcode 2> "$test_dir/error"; then exit 1; fi
-[[ ! -f $test_dir/encoder-args && ! -f $test_dir/copy-args ]]
-expect_error
-printf 'PASS: failed picker IPC reports an error and skips encoding\n'
-
-# A genuine over-capacity encode must never start wl-copy with an empty PNG.
-reset_actions
-printf '%10000s' 'too long' > "$test_dir/text"
-if bash "$picker" provider encode-qrcode 2> "$test_dir/error"; then exit 1; fi
-[[ -f $test_dir/encoder-args && ! -f $test_dir/copy-args ]]
-cmp "$test_dir/saved-clipboard" "$test_dir/clipboard"
-expect_error
-printf 'PASS: encoder failure reports an error and preserves the previous clipboard\n'
-
-reset_actions
-printf '%s' 'copy failure' > "$test_dir/text"
-if QR_TEST_COPY_FAIL=1 bash "$picker" provider encode-qrcode 2> "$test_dir/error"; then exit 1; fi
-cmp "$test_dir/saved-clipboard" "$test_dir/clipboard"
-expect_error
-printf 'PASS: clipboard failure reports an error without claiming success\n'
-
-reset_actions
-printf '%s' 'preview unavailable' > "$test_dir/text"
-if QR_TEST_PREVIEW_FAIL=1 bash "$picker" provider encode-qrcode 2> "$test_dir/error"; then exit 1; fi
-jq -se 'length == 2 and .[0].kind == "success" and .[1].kind == "error"
-    and .[1].message == "Could not display QR code"' "$test_dir/alerts" >/dev/null
-cmp "$test_dir/preview.png" "$test_dir/clipboard"
-check_cleanup
-printf 'PASS: preview failure reports an error and keeps the generated clipboard image\n'
+# Config reload clears an in-memory preview while the clipboard retains its own PNG.
+cat > "$fixture/reload.qml" <<'QML'
+import QtQml
+import Quickshell
+import Quickshell.Io
+import "src/services"
+Scope {
+    FileView {
+        id: state
+        path: Quickshell.env("QR_TEST_DIR") + "/reload-state"
+        preload: false; blockLoading: true; blockWrites: true; printErrors: false
+    }
+    Component.onCompleted: if (!state.text()) QrEncodeService.encode("reload cleanup")
+    Connections {
+        target: PickerService
+        function onOpened() {
+            if (PickerService.imageOnly) state.setText(String(PickerService.currentItem.image))
+        }
+    }
+    IpcHandler {
+        target: "qrtest"
+        function idle(): bool { return QrEncodeService.job === null }
+        function reload(): void { Qt.callLater(() => Quickshell.reload(true)) }
+    }
+}
+QML
+QT_QPA_PLATFORM=offscreen QS_NO_RELOAD_POPUP=1 QR_TEST_MODE=reload "$qs_bin" -p "$fixture/reload.qml" > "$fixture/reload-log" 2>&1 & reload_pid=$!
+for ((attempt=0;attempt<100;attempt++)); do
+    [[ ! -s $fixture/reload-state ]] || break
+    sleep 0.025
+done
+[[ -s $fixture/reload-state ]] || { cat "$fixture/reload-log"; exit 1; }
+node - "$fixture/reload-state" <<'NODEDATA'
+const fs=require('node:fs'),image=fs.readFileSync(process.argv[2],'utf8');
+if(!image.startsWith('data:image/png;base64,'))throw Error('Preview must stay in memory');
+NODEDATA
+"$qs_bin" ipc -p "$fixture/reload.qml" call qrtest reload
+for ((attempt=0;attempt<100;attempt++)); do
+    if [[ $("$qs_bin" ipc -p "$fixture/reload.qml" call qrtest idle 2>/dev/null) == true ]]; then break; fi
+    sleep 0.025
+done
+[[ $("$qs_bin" ipc -p "$fixture/reload.qml" call qrtest idle) == true ]]
+[[ -z $(find "$fixture/r" -maxdepth 1 -name 'encode-qrcode.*' -print -quit) ]]
+printf '%s' 'reload cleanup' | "$QR_TEST_ENCODER" --type=PNG -o "$fixture/expected.png"
+cmp "$fixture/expected.png" "$fixture/clipboard"
+kill -TERM "$reload_pid"
+wait "$reload_pid" || true
+reload_pid=''
+! rg -q 'TypeError:|ReferenceError:|Binding loop|Failed to load configuration' "$fixture/reload-log"
+printf 'PASS: config reload clears the in-memory preview while preserving copied bytes\n'

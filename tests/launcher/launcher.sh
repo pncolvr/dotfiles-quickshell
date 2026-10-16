@@ -187,7 +187,8 @@ printf 'PASS: legacy JSON and dmenu pointer options remain compatible\n'
 qr_text='literal | Olá "quoted" $value'
 for close_action in enter pressEscape; do
     bash "$picker" provider encode-qrcode > "$test_dir/result" 2> "$test_dir/client-error" & client_pid=$!
-    wait_open
+    wait_open native
+    wait_client 0
     snapshot | jq -e '.items == [] and .query == "" and (.canAccept | not)
         and .emptyHint == "" and (.emptyHintVisible | not) and .placeholder == "Text to encode"
         and .listHeight == 0 and .listImplicitHeight == 0
@@ -204,20 +205,19 @@ for close_action in enter pressEscape; do
     snapshot | jq -e '.imageOnly and .previewStatus == 1 and (.previewSmooth | not)
         and (.previewMipmap | not) and .previewWidth > 0 and (.previewWidth % .sourceWidth == 0)
         and .panelHeight <= 360 and .viewerHints == 0' >/dev/null
-    qr_path=$(snapshot | jq -r '.previewSource | ltrimstr("file://")')
+    snapshot | jq -r '.previewSource' | node -e 'let data="";process.stdin.on("data",chunk=>data+=chunk);process.stdin.on("end",()=>process.stdout.write(Buffer.from(data.trim().split(",")[1],"base64")));' > "$test_dir/preview-qr.png"
     printf '%s' "$qr_text" | qrencode --type=PNG -o "$test_dir/expected-qr.png"
     cmp "$test_dir/expected-qr.png" "$test_dir/copied"
-    cmp "$qr_path" "$test_dir/copied"
+    cmp "$test_dir/preview-qr.png" "$test_dir/copied"
     ipc call pickertest "$close_action"
-    wait_client 0
-    [[ ! -f $qr_path ]]
+    snapshot | jq -e '.items == []' >/dev/null
     cmp "$test_dir/expected-qr.png" "$test_dir/copied"
 done
 rm "$test_dir/copied"
 bash "$picker" provider encode-qrcode > "$test_dir/result" 2> "$test_dir/client-error" & client_pid=$!
-wait_open
-ipc call pickertest pressEscape
+wait_open native
 wait_client 0
+ipc call pickertest pressEscape
 [[ ! -f $test_dir/copied ]]
 printf 'PASS: QR input has no redundant hint, displays the copied PNG sharply and preserves clipboard content after viewer dismissal\n'
 

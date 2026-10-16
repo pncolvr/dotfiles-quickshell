@@ -80,7 +80,9 @@ canonical sources once and prefers their local module metadata. Keep both listin
 when adding a singleton, and retain existing helper components in local listings.
 Run `bash tests/qml/singletons.sh` to check runtime identity and real language-server
 diagnostics for every singleton. It uses a private database, Bash, Node.js and
-the Qt language server (`QMLLS` can select another executable).
+the Qt language server (`QMLLS` can select another executable). The offscreen runtime
+fixture uses a passive audio stub and the harness stops its host after assertions,
+so metadata checks require neither a live audio server nor QML quit handling.
 If VS Code retains a warning after metadata changes, run **Qt: Restart QML language
 server** from the command palette. A full editor restart is unnecessary.
 
@@ -658,15 +660,16 @@ repository/AUR queries, yay age suffixes, atomic publication of populated
 and empty snapshots, query/write failures, interrupted runs, locking and stale
 temporary file cleanup.
 
-`bash tests/launcher/encode-qrcode.sh` checks QR generation with real `qrencode`
-and a mocked picker/clipboard: literal and multiline input, PNG MIME type,
-cancellation, encoder/copy failures, clipboard preservation and private-file cleanup.
-When `zbarimg` is installed it also decodes the generated QR PNGs to check their
-contents and verifies that the preview matches the clipboard image, survives
-until dismissal, and cleans up on preview errors. The launcher IPC suite checks
-the QR prompt and native viewer, sharp integer scaling, Enter/Escape dismissal,
-clipboard retention, compact hint-free viewer geometry, and removal of temporary
-image files.
+`bash tests/launcher/encode-qrcode.sh` exercises the real native QR service,
+shared prompt/viewer and `qrencode`, with synthetic input and a mocked clipboard.
+It compares PNG bytes with the original encoder defaults, including Unicode,
+shell punctuation and trailing newlines. Checks cover blank/cancelled input,
+Enter/Escape/replacement, cancellation during encoding/copy, reopening, encoder/copy/
+image-load failures, native alerts and absence of temporary image files. A windowless
+reload fixture verifies that the in-memory preview is released while copied PNG
+bytes remain available. No desktop focus, input or real clipboard
+is used. The launcher IPC suite also checks the immediate-return compatibility alias,
+sharp integer scaling and compact hint-free geometry through the actual picker.
 
 `bash tests/launcher/wallpaper.sh` checks native picker requests, literal paths,
 per-mode/output saved links, repeated application, mode/monitor cancellation,
@@ -860,10 +863,11 @@ client startup. This cannot guarantee delivery of keys typed before native focus
 transfers; test immediate Meta+P typing on the live desktop as well.
 
 Run `bash tests/launcher/global-shortcuts.sh` in a Hyprland session to check all
-43 production shortcut callbacks before and after reload, covering launcher and
+44 production shortcut callbacks before and after reload, covering launcher and
 recording actions, Vault, notification DND, shell reload, all 14 module shortcuts,
-window cycling and all ten numbered window targets. It uses the actual action
-list with mock feature services and a unique native shortcut namespace; it opens
+window cycling and all ten numbered window targets. It loads the unmodified
+registry component with fixture-only feature services, captures reload through
+a test override and uses a unique native shortcut namespace; it opens
 no windows, sends no keys and never invokes the user's real bindings or actions.
 Native shortcut app ID/name pairs must be unique across running processes, so do
 not instantiate the production registry in a second test shell under its default

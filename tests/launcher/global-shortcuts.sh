@@ -16,60 +16,58 @@ cleanup() {
 }
 trap cleanup EXIT
 mkdir -m700 "$fixture/r"
-ln -s "$repo_dir/src" "$fixture/src"
+mkdir -p "$fixture/src/services/hyprland"
+cp "$repo_dir/src/services/hyprland/GlobalShortcutRegistry.qml" "$fixture/src/services/hyprland/"
 ln -s "${XDG_RUNTIME_DIR:?}/hypr" "$fixture/r/hypr"
 display=$WAYLAND_DISPLAY
 [[ $display == /* ]] || display=$XDG_RUNTIME_DIR/$display
 node - "$repo_dir" "$fixture" <<'NODE'
 const fs=require('fs');const [repo,fixture]=process.argv.slice(2);
-const source=fs.readFileSync(repo+'/shell.qml','utf8');
-const match=/  GlobalShortcutRegistry \{\n    actions: \[[\s\S]*?\n  \}/.exec(source);
-if(!match)throw new Error('Main shortcut registry not found');
-let block=match[0].replace('GlobalShortcutRegistry {','GlobalShortcutRegistry {\n    appId: "qs-test-" + Quickshell.env("SHORTCUT_TEST_ID")');
-for (const [service, mock] of Object.entries({PickerService: 'mockPicker', RecordingService: 'mockRecording',
- RbwService: 'mockVault', NotificationService: 'mockNotifications', WindowService: 'mockWindows',
- BarModuleService: 'mockBar', PowerService: 'mockPower', BookmarkService: 'mockBookmarks', shellRoot: 'mockShell'})) block=block.replaceAll(service+'.',mock+'.');
-fs.writeFileSync(fixture+'/shell.qml',`import QtQml
-import Quickshell
-import Quickshell.Io
-import "src/services"
-Scope {
-  id: root
-  property var calls: []
-  function record(method, args) { calls = calls.concat([{method, args, at: Date.now()}]) }
-  QtObject {
-    id: mockPicker
-    function apps() { root.record("apps", []) }
-    function projects(urls = false) { root.record("projects", [urls]) }
-    function directories() { root.record("directories", []) }
-    function webapps() { root.record("webapps", []) }
-    function remotes() { root.record("remotes", []) }
-    function n8n() { root.record("n8n", []) }
-    function windows(scope) { root.record("windows", [scope]) }
-    function expose(scope) { root.record("expose", [scope]) }
-    function clipboard() { root.record("clipboard", []) }
-  }
-  QtObject { id: mockRecording; function toggle() { root.record("recording", []) } }
-  QtObject { id: mockBookmarks; function open() { root.record("bookmarks", []) } }
-  QtObject { id: mockPower; function open() { root.record("power", []) } }
-  QtObject { id: mockVault; function open() { root.record("vault", []) } }
-  QtObject { id: mockNotifications; function toggle() { root.record("dnd", []) } }
-  QtObject { id: mockShell; function reloadShell() { root.record("shell-reload", []) } }
-  QtObject {
-    id: mockWindows
-    function cycleNext() { root.record("windows-next", []) }
-    function cyclePrev() { root.record("windows-prev", []) }
-    function focusIndex(key) { root.record("windows-focus", [key]) }
-  }
-  QtObject { id: mockBar; function open(name) { root.record("bar", [name]) } }
-${block}
-  IpcHandler {
-    target: "shortcuttest"
-    function snapshot(): string { return JSON.stringify(root.calls) }
-    function reload(): void { Qt.callLater(() => Quickshell.reload(true)) }
-  }
+// The unmodified component owns its actions; mock only the feature services it imports.
+const services={
+ PickerService: [
+  'function apps() { Calls.record("apps", []) }',
+  'function projects(urls = false) { Calls.record("projects", [urls]) }',
+  'function directories() { Calls.record("directories", []) }',
+  'function webapps() { Calls.record("webapps", []) }',
+  'function remotes() { Calls.record("remotes", []) }',
+  'function n8n() { Calls.record("n8n", []) }',
+  'function windows(scope) { Calls.record("windows", [scope]) }',
+  'function expose(scope) { Calls.record("expose", [scope]) }',
+  'function clipboard() { Calls.record("clipboard", []) }'
+ ],
+ RecordingService:['function toggle() { Calls.record("recording", []) }'],
+ QrEncodeService:['function open() { Calls.record("encode-qr", []) }'],
+ BookmarkService:['function open() { Calls.record("bookmarks", []) }'],
+ PowerService:['function open() { Calls.record("power", []) }'],
+ RbwService:['function open() { Calls.record("vault", []) }'],
+ NotificationService:['function toggle() { Calls.record("dnd", []) }'],
+ WindowService:[
+  'function cycleNext() { Calls.record("windows-next", []) }',
+  'function cyclePrev() { Calls.record("windows-prev", []) }',
+  'function focusIndex(key) { Calls.record("windows-focus", [key]) }'
+ ],
+ BarModuleService:['function open(name) { Calls.record("bar", [name]) }']
+};
+let metadata='GlobalShortcutRegistry 1.0 hyprland/GlobalShortcutRegistry.qml\nsingleton Calls 1.0 Calls.qml\n';
+fs.writeFileSync(fixture+'/src/services/Calls.qml', 'pragma Singleton\nimport QtQml\nQtObject {\n'
+ +'property var calls: []\nfunction record(method, args) { calls = calls.concat([{method, args, at: Date.now()}]) }\n}\n');
+for(const [name,methods]of Object.entries(services)) {
+ metadata+='singleton '+name+' 1.0 '+name+'.qml\n';
+ fs.writeFileSync(fixture+'/src/services/'+name+'.qml','pragma Singleton\nimport QtQml\nimport "."\nQtObject {\n'+methods.join('\n')+'\n}\n');
 }
-`);
+fs.writeFileSync(fixture+'/src/services/qmldir',metadata);
+fs.writeFileSync(fixture+'/shell.qml',
+ 'import QtQml\nimport Quickshell\nimport Quickshell.Io\nimport "src/services"\nScope {\n'
+ +'  GlobalShortcutRegistry {\n'
+ +'    appId: "qs-test-" + Quickshell.env("SHORTCUT_TEST_ID")\n'
+ +'    function reloadShell() { Calls.record("shell-reload", []) }\n'
+ +'  }\n'
+ +'  IpcHandler {\n'
+ +'    target: "shortcuttest"\n'
+ +'    function snapshot(): string { return JSON.stringify(Calls.calls) }\n'
+ +'    function reload(): void { Qt.callLater(() => Quickshell.reload(true)) }\n'
+ +'  }\n}\n');
 NODE
 SHORTCUT_TEST_ID=${fixture##*/} QT_QPA_PLATFORM=wayland WAYLAND_DISPLAY="$display" XDG_RUNTIME_DIR="$fixture/r" \
     XDG_DATA_HOME="$fixture/data" XDG_CACHE_HOME="$fixture/cache" \
@@ -82,7 +80,7 @@ const expected={
  'launcher-webapps':['webapps',[]], 'launcher-remotes':['remotes',[]], 'launcher-n8n':['n8n',[]],
  'launcher-windows-all':['windows',['all']], 'launcher-windows-current':['windows',['current']],
  'launcher-expose-current':['expose',['current']], 'launcher-clipboard':['clipboard',[]],
- 'launcher-bookmarks':['bookmarks',[]], 'launcher-power':['power',[]], 'recording-toggle':['recording',[]], 'vault-toggle':['vault',[]],
+ 'launcher-encode-qr':['encode-qr',[]], 'launcher-bookmarks':['bookmarks',[]], 'launcher-power':['power',[]], 'recording-toggle':['recording',[]], 'vault-toggle':['vault',[]],
  'notifications-toggle-dnd':['dnd',[]], 'shell-reload':['shell-reload',[]],
  'windows-next':['windows-next',[]], 'windows-prev':['windows-prev',[]]
 };
