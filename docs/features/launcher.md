@@ -753,3 +753,7 @@ click opens details; reveal/copy stay explicit. Explicit opening focuses Search;
 switching to another app releases focus while keeping the manager and draft open.
 Returning does not refocus Search over an editor. Escape discards a draft before
 closing. Background lock checks do not interrupt the controls or move the list.
+
+With `Config.workModeEnabled: false`, category controls and status-filter shortcuts
+are hidden across native pickers. All categories remain visible; explicit saved
+browser profiles are preserved. Wallpaper skips mode selection and uses Personal.

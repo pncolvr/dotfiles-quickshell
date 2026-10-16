@@ -1,6 +1,5 @@
 import Quickshell
 import "../"
-import "../../config"
 
 // Common collection/draft lifecycle. Each feature owns dispatch and record validation.
 Singleton {
@@ -21,7 +20,7 @@ Singleton {
     readonly property var entries: repository.entries
     readonly property var availableEntries: entries.filter(entry => (!activeOnly || activeFilterIds.includes(entry.id)) &&
         (activeEntryIds.includes(entry.id) || (entry.enabled &&
-            (showAll || entry.category !== 'work' || StatusService.status === Config.pickerWorkStatus))))
+            StatusService.includesCategory(entry.category,showAll))))
     property var pickerItems: availableEntries.map(itemForEntry)
     signal saved()
     function open() {

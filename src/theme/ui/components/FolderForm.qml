@@ -17,6 +17,7 @@ Column {
     property alias dialogTitle: pathField.dialogTitle
     property alias folderPicker: pathField.folderPicker
     readonly property bool nativeDialogOpen: pathField.nativeDialogOpen
+    property bool showCategory: true
     property bool showName: false
     property bool showKind: false
     property string category: "personal"
@@ -54,6 +55,7 @@ Column {
         }
         UI.FolderCategoryButton {
             id: categoryButton
+            visible: root.showCategory
             category: root.category
             Layout.preferredWidth: Theme.projectOptionButtonWidth
             onCategoryRequested: category => root.categoryRequested(category)

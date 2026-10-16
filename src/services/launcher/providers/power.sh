@@ -3,7 +3,7 @@
 source "$(dirname -- "${BASH_SOURCE[0]}")/_common/utils.sh"
 
 log_inactive() {
-    "$ZDOTDIR/scripts/status/manager.sh" --log-system-event inactive
+    "${QS_PICKER_EXECUTABLE:-qs}" ipc -p "${QS_PICKER_CONFIG:-$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../../../.." && pwd)}" call status pause >/dev/null 2>&1 || true
 }
 
 show_menu() {

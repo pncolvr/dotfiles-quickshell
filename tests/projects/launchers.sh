@@ -8,11 +8,10 @@ mkdir -m700 "$fixture/runtime"
 mkdir -p "$fixture/bin" "$fixture/Game \$literal; folder" "$fixture/data" "$fixture/Standalone" "$fixture/Plain"
 tar -C "$root_dir" --exclude='*.env' --exclude='src/services/launcher/providers/*.json' -cf - src | tar -C "$fixture" -xf -
 sed -i 's/clipboardMonitorEnabled: true/clipboardMonitorEnabled: false/' "$fixture/src/config/Config.qml"
-python3 - "$fixture/src/config/Config.qml" <<'PYCONFIG'
-from pathlib import Path
-import sys
-p=Path(sys.argv[1]);s=p.read_text().replace('{id: "godot", name:', '{id: "custom", name: "Custom editor", extensions: [".sampleproj"], command: ["custom-editor"], profiles: {personal: "Custom personal"}, arguments: ["--open", "{path}", "--root", "{project}", "--profile", "{profile}"]},\n        {id: "godot", name:');p.write_text(s)
-PYCONFIG
+node - "$fixture/src/config/Config.qml" <<'JSCONFIG'
+const fs=require('node:fs'),file=process.argv[2];
+fs.writeFileSync(file,fs.readFileSync(file,'utf8').replace('{id: "godot", name:', '{id: "custom", name: "Custom editor", extensions: [".sampleproj"], command: ["custom-editor"], profiles: {personal: "Custom personal"}, arguments: ["--open", "{path}", "--root", "{project}"], profileArguments:["--profile","{profile}"]},\n        {id: "godot", name:'));
+JSCONFIG
 sed 's@"../../src@"src@g' "$root_dir/tests/projects/launchers.qml" > "$fixture/shell.qml"
 printf '{}' > "$fixture/Standalone/project.godot"
 for name in project.godot Mixed.code-workspace Game.sampleproj; do printf '{}' > "$fixture/Game \$literal; folder/$name"; done

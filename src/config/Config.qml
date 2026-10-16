@@ -10,7 +10,6 @@ Item {
         readonly property string home: Quickshell.env("HOME")
         readonly property string dataHome: Quickshell.env("XDG_DATA_HOME") || `${home}/.local/share`
         readonly property string runtimeDirectory: Quickshell.env("XDG_RUNTIME_DIR")
-        readonly property string statusManager: `${home}/.config/zsh/scripts/status/manager.sh`
     }
 
     // Shared UI and privacy
@@ -55,7 +54,7 @@ Item {
     readonly property var projectApps: [
         {id: "code", name: "Code", offerFolder: true, useFileNames: true, extensions: [".code-workspace"],
             command: ["code"], profiles: {work: "Work", personal: "Personal"},
-            arguments: ["{path}", "--profile", "{profile}"], windowClass: "code", windowTitlePrefix: "{folderName}"},
+            arguments: ["{path}"], profileArguments: ["--profile", "{profile}"], windowClass: "code", windowTitlePrefix: "{folderName}"},
         {id: "godot", name: "Godot", extensions: [".godot"], command: ["godot"],
             arguments: ["--editor", "{path}"], folderArguments: ["--editor", "--path", "{path}"]}
     ]
@@ -120,7 +119,8 @@ Item {
         VIDEOS_FOLDER: recordingDirectory,
         WALLPAPER_DIRECTORY: wallpaperDirectory,
         WALLPAPER_STATE_DIRECTORY: wallpaperStateDirectory,
-        WORKING_STATE_NAME: pickerWorkStatus
+        WORKING_STATE_NAME: pickerWorkStatus,
+        WORK_MODE_ENABLED: workModeEnabled ? "true" : "false"
     })
 
     // Clipboard
@@ -220,21 +220,8 @@ Item {
     readonly property var updatesRefreshCommand: ["bash", Quickshell.shellPath("src/services/system/update-check.sh")]
     readonly property var updatesInstallCommand: ["setsid", "ghostty", "-e", "yay"]
 
-    // Status and timecard
-    readonly property var statusManagerCheckCommand:  [_internal.statusManager, "--check"]
-    readonly property var statusManagerSourceCommand: [_internal.statusManager, "--source"]
-    readonly property var statusManagerDetectionCommand: [_internal.statusManager, "--explain"]
-    readonly property var statusManagerToggleCommand: [_internal.statusManager, "--toggle"]
-    readonly property var statusManagerSetCommand: mode => [_internal.statusManager, "--set", mode]
-    readonly property var statusManagerClearCommand:  [_internal.statusManager, "--clear"]
-    readonly property string statusTimecardExecutable: `${Quickshell.env("ZDOTDIR") || `${_internal.home}/.config/zsh`}/scripts/status/bin/timecard`
-    readonly property string statusTimetableFile: Quickshell.env("TIMETABLE_FILE") || `${_internal.home}/Documents/timetable.csv`
-    readonly property int statusTimecardRefreshInterval: Timespan.fromMinutes(1)
-    readonly property var statusTimecardCommand: (includeWeeks, includeMonths) => [
-        "bash", Qt.resolvedUrl("../services/status/timecard.sh").toString().replace("file://", ""),
-        "--executable", statusTimecardExecutable, "--file", statusTimetableFile,
-        "--date", Qt.formatDateTime(new Date(), "yyyy-MM-dd")
-    ].concat(includeWeeks ? ["--weeks"] : [], includeMonths ? ["--months"] : [])
+    // Optional work mode; private detection rules and tracking live in SQLite.
+    readonly property bool workModeEnabled: true
 
     // Notifications
     readonly property int notificationLowTimeout: 2000

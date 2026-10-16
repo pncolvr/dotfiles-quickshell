@@ -134,8 +134,7 @@ ManagedPickerFrame {
         visible: !ProjectService.managing
         searchPlaceholder: ProjectService.urls ? "Search repository URLs" : "Search projects"
         searchKeyHandler: root.handlePickerKey
-        footerHint: (ProjectService.showAll ? "All projects" : "By status") + " · " + Config.projectShowAllShortcut
-            + (ProjectService.showAll ? ": status" : ": all") + " · " + Config.projectManageShortcut + ": manage"
+        footerHint: StatusService.filterHint(Config.projectShowAllShortcut,ProjectService.showAll) + Config.projectManageShortcut + ": manage"
             + (ProjectService.urls ? " · Esc: close\n" + root.picker.selectedIds.length + " selected · Shift+Space: toggle + next\nCtrl+A: all / clear · Enter: open"
                 : " · Enter: open · Esc: close")
     }
@@ -249,6 +248,7 @@ ManagedPickerFrame {
                                     color: Theme.inactive
                                 }
                                 UI.ColumnText {
+                                    visible: StatusService.enabled
                                     text: sourceRow.modelData.category === "work" ? "Work" : "Personal"
                                     color: sourceRow.modelData.category === "work" ? Theme.accent : Theme.active
                                     Layout.fillWidth: true
@@ -367,6 +367,7 @@ ManagedPickerFrame {
             color: Theme.empty
         }
         UI.FolderForm {
+            showCategory: StatusService.enabled
             id: sourceForm
             objectName: "projectAddForm"
             x: Theme.projectManagePadding

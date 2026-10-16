@@ -14,10 +14,19 @@ Column {
     readonly property var monitor: TooltipService.screen ?? (root.QsWindow.window as QsWindow)?.screen
     readonly property real maxPanelHeight: Math.max(0, Math.min((monitor?.height ?? 1080) * Theme.statusTooltipMaxHeightRatio,
         (monitor?.height ?? 1080) - Theme.barHeight - Theme.tooltipPaddingHeight * 2))
-    readonly property string selectedReport: tabs.currentIndex === 0 ? statusService.todayTimecard
-        : tabs.currentIndex === 1 ? statusService.currentWeekTimecard
-        : tabs.currentIndex === 2 ? statusService.lastWeekTimecard
-        : tabs.currentIndex === 3 ? statusService.currentMonthTimecard : statusService.lastMonthTimecard
+    readonly property bool managing: tabs.currentIndex === 5
+    readonly property bool nativeDialogOpen: rulesEditor.nativeDialogOpen
+    readonly property bool interactionPending: managing && rulesEditor.dirty
+    readonly property string selectedReport: {
+        switch(tabs.currentIndex) {
+            case 0:return statusService.todayTimecard
+            case 1:return statusService.currentWeekTimecard
+            case 2:return statusService.lastWeekTimecard
+            case 3:return statusService.currentMonthTimecard
+            case 4:return statusService.lastMonthTimecard
+            default:return ''
+        }
+    }
     readonly property var period: Timecard.parse(selectedReport)
     readonly property bool ranged: tabs.currentIndex > 0
     readonly property bool weekly: tabs.currentIndex === 1 || tabs.currentIndex === 2
@@ -97,7 +106,7 @@ Column {
             objectName: "statusTimecardTabs"
             width: parent.width
             tabPadding: Theme.controlFieldPadding
-            labels: ["Today", "This week", "Last week", "This month", "Last month"]
+            labels: ["Today", "This week", "Last week", "This month", "Last month", "Manage"]
             onCurrentIndexChanged: {
                 root.expandedDay = ""
                 root.statusService.showPeriod(currentIndex)
@@ -106,11 +115,13 @@ Column {
         }
         UI.ColumnText {
             width: parent.width
+            visible: !root.managing
             text: root.ranged ? root.period.range : Qt.formatDate(new Date(root.statusService.timecardDate + "T12:00:00"), "dddd yyyy-MM-dd")
             color: Theme.inactive
             horizontalAlignment: Text.AlignHCenter
         }
         Row {
+            visible: !root.managing
             width: parent.width
             spacing: Theme.controlSpacing
             Repeater {
@@ -148,8 +159,11 @@ Column {
         Rectangle { width: parent.width; height: 1; color: Theme.empty }
     }
 
+    StatusRulesEditor { id:rulesEditor; width:parent.width; visible:root.managing; statusService:root.statusService }
+    UI.ColumnText { width:parent.width; text:root.statusService.pauseReason ?? ""; visible:!!text; color:Theme.inactive; wrapMode:Text.Wrap }
     Flickable {
         id: timecard
+        visible: !root.managing
         objectName: "statusTimecardView"
         width: parent.width
         height: Math.min(contentHeight, Math.max(0, root.maxPanelHeight - heading.height - root.spacing))

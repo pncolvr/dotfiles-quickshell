@@ -1,73 +1,55 @@
-# Work/personal status and timecard
+# Work/personal status and time tracking
 
-Hover the work/personal icon to see the current mode and whether it is automatic
-or manually set. Work and Personal totals follow the selected period.
+`Config.workModeEnabled` enables automatic work/personal detection and native
+SQLite time tracking. No external status manager or timecard executable is needed.
+Hover the bar icon for reports; left-click pins or unpins the panel without
+changing mode. Work and Personal buttons select a persistent manual override;
+Reset restores automatic detection.
 
-**Today** opens with a compact daily summary and hides session details until
-expanded. **This week** and **Last week** cover Monday–Sunday; **This month** and
-**Last month** cover full calendar months. Each period shows daily work/personal
-totals and a proportional color bar, including days without activity. Dates keep
-chronological order. Week views show the full weekday; hover its name for the
-`yyyy-MM-dd` date. Month views show only `yyyy-MM-dd`, while Today shows the
-full weekday followed by the date.
-Click a day with activity to expand its start/end times, category and duration.
-An ongoing session ends with “now”; hover its time range for precise timestamps.
-Long lists scroll vertically within a bounded panel using the shared scrollbar.
-Below Today's collapsible sessions, **Automatic detection** shows compact process
-rows with their rule labels and distinct path counts. Click a row or press
-Enter/Space while it is focused to reveal paths; one process expands at a time.
-Paths abbreviate the home directory and elide long names; hover shows their full
-values. Refresh preserves expansion for a process that remains present.
-The evidence describes the current scan, not historical sessions. A refreshing
-indicator retains the previous rows. Failed refreshes explicitly label retained
-rows as the previous successful scan, and partial errors remain visible. Manual
-override is labeled separately; automatic matches do not set the selected mode.
-The report groups methods and paths independently, so rule labels describe the
-process as a whole rather than attributing an individual path to a specific rule.
+Today shows totals and expandable sessions. Week views cover Monday–Sunday and
+month views cover complete calendar months, including days without activity.
+Intervals split at local midnight and use elapsed time across daylight-saving
+changes. The current session ends with “now”. Long reports scroll within the
+panel. Automatic detection evidence appears on Today, separately from history.
 
-The tooltip opens on Today and refreshes the timecard immediately, every minute
-while open, and after a mode reload. The refresh button reruns the status manager's
-`--check` and `--source` commands, then reloads the timecard. In automatic mode,
-this reevaluates the configured work processes and open files. A manual override
-stays in place. Week and month reports are read when their tabs are selected.
-Separate Work and Personal buttons after Reload set that exact mode as a manual
-override, including when automatic detection already reports the same mode.
-The selected manual mode is highlighted in the accent color. Mode controls are
-disabled while a change is running. The Reset button after them clears the
-override and restores automatic detection.
-Left-clicking the bar icon pins or unpins the tooltip; the icon uses the accent
-color while pinned. Bar clicks do not change the mode.
+Manage edits work folders and process patterns, each with one entry per line.
+The folder button appends the chosen folder to the list; existing entries remain.
+Duplicate folders are ignored. Remove a folder by deleting its line. Patterns match full process names with `pgrep` regular
+expressions. Processes whose working directory or open files are inside any configured
+work folder also count as work. Open files are inspected once per scan, regardless
+of the number of folders. Rules and the manual override are private database
+preferences covered by encrypted backups. Refresh reevaluates detection; a
+failed or partial scan retains the previous successful evidence and shows an
+error. A manual override remains in effect until Reset.
 
-## Commands and configuration
+Tracking pauses while the screen is locked, the desktop session is inactive,
+the machine is suspended, or work mode is disabled. Unknown session state also
+pauses tracking. The session monitor uses logind signals and checks logind and
+Hyprland lock state every five seconds as a fallback. Native power actions pause
+immediately before requesting lock, logout or shutdown.
 
-The integration calls the existing native `timecard` executable directly; it
-does not launch Conky or an interactive zsh session. Its Bash helper only reads
-a snapshot of the timetable. Durations and blocks come from the existing
-timecard implementation, including its treatment of offline periods. A day
-without records shows zero work/personal totals and the normal empty report,
-avoiding the existing brief command's no-records exception.
+Sessions are checkpointed every ten seconds and on mode/lifecycle changes.
+Restart starts a new session without filling the gap when the bar was absent.
+An abrupt process termination can lose the last ten seconds; a delayed heartbeat
+never counts a long sleep or stopped process as activity. Tracking therefore
+requires the bar to be running. History is retained for a rolling twelve calendar
+months: startup and hourly maintenance delete expired sessions and trim any
+session crossing the cutoff. History and detection rules use the existing
+SQLite backup/restore flow.
 
-In `src/config/Config.qml`:
+When work mode is disabled:
 
-- `_internal.statusManager`: the existing mode manager at
-  `~/.config/zsh/scripts/status/manager.sh`.
-- `statusTimecardExecutable`: `$ZDOTDIR/scripts/status/bin/timecard`, falling back
-  to `~/.config/zsh/scripts/status/bin/timecard`.
-- `statusTimetableFile`: exported `$TIMETABLE_FILE`, falling back to
-  `~/Documents/timetable.csv`, matching the current zsh/Conky setup.
-- `statusTimecardRefreshInterval`: one minute by default.
-- `statusTimecardCommand`: the report helper's arguments, including today's date.
+- The Status icon, category selectors and status-filter shortcuts/hints are hidden.
+- Projects, Directories, Webapps, Remotes and n8n show every category.
+- Project apps launch without their `profileArguments`, using their default profile.
+- Explicit saved Webapps/n8n browser profiles remain unchanged.
+- Wallpaper selection skips the mode step and uses the saved Personal wallpaper.
+- Detection and session monitoring stop. Existing categories, rules and retained
+  history remain saved; enabling work mode starts a new interval.
 
-`statusTooltipWidth` and `statusTooltipMaxHeightRatio` in `Theme.qml` control the
-panel dimensions. Missing commands, missing logs, and malformed events appear
-as errors in the tooltip. The status manager continues to own mode changes and
-event logging. Work/personal changes restore the saved monitor wallpapers through
-`launcher.sh provider wallpaper restore MODE`; system events such as active and
-inactive only log their event and do not request a mode wallpaper.
-The manager's read-only `--explain` command supplies the detection report as JSON.
-The panel reads it on opening, mode refresh and each minute while visible, and
-stops the scan when closed. This command does not change mode, wallpaper or the
-timetable. The report requires `jq` and uses the manager's existing process and
-work-directory configuration.
+`statusTooltipWidth` and `statusTooltipMaxHeightRatio` in Theme control the panel
+size. Detection needs `pgrep`, `readlink`, `jq` and `lsof`; session monitoring needs
+`gdbus`, `busctl` and `hyprctl`. The compositor's lock state and logind's session
+properties are read only.
 
 [Development checks](../development.md#status-and-timecard)

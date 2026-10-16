@@ -25,14 +25,6 @@ function load_provider_config() {
     export -- "${assignments[@]}"
 }
 
-function get_ignored_category() {
-    load_provider_config || return 2
-    local status working_state=$WORKING_STATE_NAME
-    status=$("$ZDOTDIR/scripts/status/manager.sh" --get)
-    if [[ $status != "$working_state" ]]; then printf '%s' "$working_state"; fi
-    return 0
-}
-
 function open_file_explorer() {
     local file=$1
     if [[ -f $file ]]; then

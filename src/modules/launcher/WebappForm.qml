@@ -34,12 +34,11 @@ Column {
     UI.LabeledField { onAccepted: root.accepted(); id: name; inputObjectName:'webappName'; width: parent.width; label:'Name' }
     UI.LabeledField { onAccepted: root.accepted(); id: url; inputObjectName:'webappUrl'; width: parent.width; label:'URL'; placeholderText:'https://example.com' }
     BrowserLaunchFields { id:browserFields; width:parent.width }
-    UI.ComboSelector {
+    EntryCategorySelector {
         objectName:'webappCategorySelector'
         toggleObjectName:'webappCategoryToggle'
         choicesObjectName:'webappCategoryChoices'
-        width: parent.width; compact:true; labelPrefix:'Category: '
-        options:[{name:'personal',description:'Personal'},{name:'work',description:'Work'}]
+        width: parent.width
         selectedName:root.entryCategory
         onSelected: name => root.entryCategory=name
     }

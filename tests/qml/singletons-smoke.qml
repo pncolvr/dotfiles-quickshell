@@ -32,6 +32,7 @@ Scope {
                 ["N8nService",Services.N8nService,N8n.N8nService],
                 ["N8nRepository",Services.N8nRepository,Storage.N8nRepository],
                 ["Theme",Settings.Theme,Styling.Theme],
+                ["StatusRepository",Services.StatusRepository,Storage.StatusRepository],
                 ["PreferencesRepository",Services.PreferencesRepository,Storage.PreferencesRepository],
                 ["ClipboardRepository",Services.ClipboardRepository,Storage.ClipboardRepository],
                 ["ProjectRepository",Services.ProjectRepository,Storage.ProjectRepository],

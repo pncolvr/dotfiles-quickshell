@@ -87,7 +87,7 @@ Item {
     }
     Shortcut {
         sequence: root.showAllSequence
-        enabled: root.sessionActive && !root.managing
+        enabled: root.sessionActive && !root.managing && StatusService.enabled
         onActivated: root.showAllRequested()
     }
     Keys.onEscapePressed: root.escapeRequested()

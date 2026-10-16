@@ -38,9 +38,8 @@ Column {
         options:[{name:'remote',description:'RDP through SSH tunnel'},{name:'vm',description:'Virtual machine'}]
         selectedName:root.connectionType; onSelected:name=>root.connectionType=name
     }
-    UI.ComboSelector {
-        objectName:'remoteCategorySelector'; width:parent.width; compact:true; labelPrefix:'Category: '
-        options:[{name:'personal',description:'Personal'},{name:'work',description:'Work'}]
+    EntryCategorySelector {
+        objectName:'remoteCategorySelector'; width:parent.width
         selectedName:root.entryCategory; onSelected:name=>root.entryCategory=name
     }
     UI.LabeledField { id:endpoint; inputObjectName:'remoteEndpoint'; width:parent.width; label:'RDP host'; onAccepted:root.accepted() }

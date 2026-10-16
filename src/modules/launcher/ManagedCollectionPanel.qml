@@ -5,6 +5,7 @@ import QtQuick.Controls as QC
 import "../../theme"
 import "../../theme/ui" as UI
 import "../../config"
+import "../../services"
 
 // Collection list/Manage lifecycle; feature forms and launch semantics stay feature-owned.
 ManagedPickerFrame {
@@ -64,7 +65,7 @@ ManagedPickerFrame {
         visible: !root.managing
         actionButtons: root.listActionButtons
         searchPlaceholder: 'Search ' + root.collectionName.toLowerCase()
-        footerHint: Config.pickerManageShortcut + ': manage · ' + Config.pickerShowAllShortcut + ': all/status · Enter: ' + root.picker.acceptLabel.toLowerCase() + ' · Esc: close'
+        footerHint: StatusService.filterHint(Config.pickerShowAllShortcut,root.service.showAll) + Config.pickerManageShortcut + ': manage · Enter: ' + root.picker.acceptLabel.toLowerCase() + ' · Esc: close'
     }
     QC.ScrollView {
         id: manage

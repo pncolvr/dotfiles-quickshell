@@ -42,12 +42,13 @@ export function choices(project, launchers, defaultApp) {
         || left.id.localeCompare(right.id);
     return appRows.sort(alphabetical).concat(fileRows.sort(alphabetical));
 }
-export function prepare(launcher, path, project, category) {
+export function prepare(launcher, path, project, category, workModeEnabled=true) {
     if (!launcher || !Array.isArray(launcher.command) || !launcher.command.length
         || launcher.command.some(value => typeof value !== "string" || !value))
         throw new Error("Configure a command for this project launcher");
-    const args = (path === project.path ? launcher.folderArguments : undefined) ?? launcher.arguments ?? [];
+    let args = (path === project.path ? launcher.folderArguments : undefined) ?? launcher.arguments ?? [];
     if (!Array.isArray(args)) throw new Error("Project launcher arguments must be an array");
+    if (workModeEnabled) args=args.concat(launcher.profileArguments??[]);
     const directory = path === project.path ? path : path.slice(0, path.lastIndexOf("/")) || "/";
     const profile = launcher.profiles?.[category] || category;
     const values = {path, project:project.path, directory, name:project.name,

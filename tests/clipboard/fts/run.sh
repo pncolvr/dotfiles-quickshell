@@ -25,7 +25,7 @@ UPDATE clipboard SET text='legacy alpha',pinned=1;
 PRAGMA user_version=10;
 SQL
 FTS_EXPECT_LEGACY=1 run
-[[ $(sqlite3 "$db" 'PRAGMA user_version; PRAGMA integrity_check; SELECT pinned FROM clipboard;') == $'14\nok\n1' ]]
+[[ $(sqlite3 "$db" 'PRAGMA user_version; PRAGMA integrity_check; SELECT pinned FROM clipboard;') == $'15\nok\n1' ]]
 query() { jq -nc --arg query "$1" --arg engine "${2:-indexed}" '{query:$query,engine:$engine,kind:"",pinned:false,limit:51,offset:0}' | bash "$root_dir/src/services/clipboard/query.sh" "$db"; }
 query bet | jq -e '.error=="" and (.rows|length)==1 and (.rows[0]|has("search")|not) and (.rows[0]|has("text")|not)' >/dev/null
 query alpha | jq -e '.rows==[]' >/dev/null

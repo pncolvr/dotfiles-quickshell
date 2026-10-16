@@ -49,3 +49,5 @@ MotionAnimation 1.0 MotionAnimation.qml
 MotionUniformAnimator 1.0 MotionUniformAnimator.qml
 MotionBehavior 1.0 MotionBehavior.qml
 LabeledField 1.0 LabeledField.qml
+
+LineListField 1.0 LineListField.qml

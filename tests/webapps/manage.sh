@@ -43,5 +43,5 @@ for phase in setup restart; do
 done
 jq -se 'length==6 and any(.program=="qutebrowser" and (.args|index("--target"))!=null and (.args|index("tab"))!=null and (.args|index("window"))==null and .args[-1]=="https://example.test/window?x=1&y=2") and any(.program=="vivaldi" and .args==["--profile-directory=Test Profile","--app=https://example.test/app"])' "$fixture/actions" >/dev/null
 jq -se 'any(.program=="beforetest" and .args==["literal $(not-executed)"]) and any(.program=="aftertest" and .args==["literal;argument"]) and all(.[]; all(.args[]; .!="https://example.test/must-not-open"))' "$fixture/actions" >/dev/null
-[[ $(sqlite3 "$fixture/data/quickshell.db" 'PRAGMA user_version;') == 14 ]]
+[[ $(sqlite3 "$fixture/data/quickshell.db" 'PRAGMA user_version;') == 15 ]]
 printf 'PASS: native browser argv and persistent webapps launch without old JSON/env files\n'

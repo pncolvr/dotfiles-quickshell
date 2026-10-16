@@ -1,0 +1,215 @@
+pragma ComponentBehavior: Bound
+import QtQuick
+import QtQuick.Controls as QC
+import Quickshell
+import "../../src/services"
+import "../../src/config"
+import "../../src/modules/status"
+import "../../src/modules/launcher"
+import "../../src/services/status/TimeTracking.mjs" as Tracking
+
+Scope {
+    id: root
+    readonly property string phase: Quickshell.env('STATUS_TEST_PHASE')
+    property int ticks: 0
+    property int step: 0
+    property bool failed: false
+    property int oldId: 0
+    property real beforePause: 0
+    function check(ok, message) {
+        if (!ok) {
+            failed = true;
+            console.error('STATUS FAIL:', message);
+        }
+    }
+    function find(item, name) {
+        if (item.objectName === name)
+            return item;
+        for (const child of item.children ?? []) {
+            const result = find(child, name);
+            if (result)
+                return result;
+        }
+        return null;
+    }
+    function finish() {
+        if (!failed)
+            console.log('PASS: native status ' + phase);
+        timer.stop();
+        Qt.quit();
+    }
+    QtObject {
+        id: session
+        property bool ready: true
+        property bool active: true
+        property bool locked: false
+        property bool sleeping: false
+        readonly property bool canTrack: ready && active && !locked && !sleeping
+    }
+    Component.onCompleted: StatusService.sessionState = session
+    FloatingWindow {
+        visible: true
+        implicitWidth: 900
+        implicitHeight: 900
+        StatusTooltip {
+            id: panel
+            x: 10
+            y: 10
+        }
+        EntryCategorySelector {
+            id: category
+            y: 850
+            width: 200
+        }
+    }
+    Timer {
+        id: timer
+        interval: 50
+        running: true
+        repeat: true
+        onTriggered: {
+            if (++root.ticks > 180 || root.failed) {
+                root.check(false, 'timeout/failure in ' + root.phase + ' step ' + root.step);
+                root.finish();
+                return;
+            }
+            if (!StatusService.ready || !StatusService.initialized)
+                return;
+            if (root.phase === 'repository') {
+                StatusService.pause();
+                root.check(StatusRepository.claim('first'), 'claim tracking writer');
+                const now = Date.now(), boundary = Tracking.cutoff(now);
+                root.check(DbService.write(tx => {
+                    tx.executeSql('DELETE FROM status_sessions');
+                    tx.executeSql('INSERT INTO status_sessions(start_ms,end_ms,mode) VALUES(?,?,?)', [boundary - 2000, boundary - 1000, 'work']);
+                    tx.executeSql('INSERT INTO status_sessions(start_ms,end_ms,mode) VALUES(?,?,?)', [boundary - 1000, boundary + 1000, 'personal']);
+                }), 'seed retention intervals');
+                root.check(StatusRepository.prune(now) && StatusRepository.sessions.length === 1, 'delete expired history');
+                root.check(StatusRepository.sessions[0].start_ms === boundary && StatusRepository.sessions[0].end_ms === boundary + 1000, 'trim crossing interval without losing retained seconds');
+                root.check(StatusRepository.transition('first', 'work', now) > 0, 'start session');
+                const id = StatusRepository.sessions[StatusRepository.sessions.length - 1].id;
+                root.check(StatusRepository.touch('first', id, now + 1000), 'durable checkpoint');
+                root.check(StatusRepository.claim('second'), 'new process claims ownership');
+                root.check(!StatusRepository.touch('first', id, now + 100000), 'stale writer cannot extend old session');
+                root.check(StatusRepository.transition('first', 'personal', now + 2000) === null, 'stale transition rejected');
+                root.check(StatusRepository.transition('second', 'personal', now + 2000) > 0, 'new process starts after gap');
+                const next = StatusRepository.sessions[StatusRepository.sessions.length - 1];
+                root.check(next.start_ms === now + 2000 && StatusRepository.sessions.find(row => row.id === id).end_ms === now + 1000, 'restart never fills gap');
+                root.check(StatusRepository.transition('second', 'invalid', now + 3000) === null, 'invalid transition rolls back');
+                root.check(StatusRepository.sessions[StatusRepository.sessions.length - 1].end_ms === now + 2000, 'failed transition did not close current session');
+                StatusRepository.transition('second', '', now + 4000);
+                PreferencesRepository.setValue('status.testCheckpoint', now + 4000);
+                root.finish();
+                return;
+            }
+            if (root.phase === 'disabled') {
+                const entries = ['personal', 'work'].map(category => ({
+                            id: category,
+                            name: category,
+                            category,
+                            enabled: true,
+                            path: '/synthetic/' + category,
+                            workspaces: [],
+                            url: 'https://example.test',
+                            endpoint: 'example.test'
+                        }));
+                ProjectRepository.projects = entries;
+                DirectoryRepository.directories = entries;
+                WebappRepository.entries = entries;
+                RemoteRepository.entries = entries;
+                N8nRepository.entries = entries;
+                root.check(ProjectService.availableProjects.length === 2 && DirectoryService.availableDirectories.length === 2, 'disabled Projects and Directories include both categories');
+                root.check(WebappService.availableEntries.length === 2 && RemoteService.availableEntries.length === 2 && N8nService.availableEntries.length === 2, 'disabled managed pickers include both categories');
+                root.check(!Config.workModeEnabled && !StatusService.enabled && !StatusService.tracking, 'disabled feature does not track');
+                root.check(StatusService.includesCategory('work') && StatusService.includesCategory('personal'), 'disabled shows both categories');
+                root.check(!category.visible && StatusService.filterHint('Ctrl+W') === '', 'category selector and filter hints hidden');
+                root.check(PreferencesRepository.value('status.rules', {}).workDirectories.join('|') === '/synthetic/work|/synthetic/second|/synthetic/third', 'private rules retained while disabled');
+                root.check(!StatusService.setStatus('work'), 'disabled mode rejects changes');
+                root.check(StatusRepository.sessions.some(row => row.end_ms === PreferencesRepository.value('status.testCheckpoint', 0)), 'history survives disabled restart');
+                root.finish();
+                return;
+            }
+            if (root.phase === 'restore') {
+                if (!StatusService.tracking)
+                    return;
+                root.check(StatusService.status === 'work' && StatusService.source === 'manual', 'manual mode restored from SQLite');
+                root.check(StatusService.rules.workDirectories.join('|') === '/synthetic/work|/synthetic/second|/synthetic/third', 'detection rules restored');
+                root.check(StatusRepository.sessions.some(row => row.end_ms === PreferencesRepository.value('status.testCheckpoint', 0)), 'old checkpoint unchanged after restart');
+                root.check(StatusRepository.sessions[StatusRepository.sessions.length - 1].start_ms > PreferencesRepository.value('status.testCheckpoint', 0), 'new session starts after downtime');
+                root.finish();
+                return;
+            }
+            switch (root.step) {
+            case 0:
+                if (!StatusService.tracking)
+                    return;
+                root.check(StatusService.setStatus('work'), 'set work manual mode');
+                root.check(StatusService.status === 'work' && StatusService.source === 'manual', 'manual override takes effect');
+                root.check(!StatusService.includesCategory('work') === false, 'work mode shows work entries');
+                root.check(StatusService.saveRules({
+                    workDirectories: ['/synthetic/work', '/synthetic/second'],
+                    processes: ['synthetic-work']
+                }), 'rules saved privately');
+                root.oldId = StatusService.currentId;
+                StatusService.heartbeat();
+                root.beforePause = StatusRepository.sessions.find(row => row.id === root.oldId).end_ms;
+                session.locked = true;
+                root.check(!StatusService.tracking && !!StatusService.pauseReason, 'locking pauses recording immediately');
+                break;
+            case 1:
+                root.check(!StatusService.tracking && StatusRepository.sessions.find(row => row.id === root.oldId).end_ms >= root.beforePause, 'locked interval remains closed');
+                root.beforePause = StatusRepository.sessions.find(row => row.id === root.oldId).end_ms;
+                break;
+            case 2:
+                root.check(StatusRepository.sessions.find(row => row.id === root.oldId).end_ms === root.beforePause, 'no work time recorded while locked');
+                session.locked = false;
+                root.check(StatusService.tracking && StatusService.currentId !== root.oldId, 'unlock starts a separate session');
+                session.sleeping = true;
+                root.check(!StatusService.tracking, 'suspend pauses');
+                session.sleeping = false;
+                root.check(StatusService.tracking, 'resume starts tracking');
+                const before = StatusService.currentId;
+                DbService.maintenance = true;
+                StatusService.heartbeat();
+                DbService.maintenance = false;
+                root.check(StatusService.currentId === before && StatusService.tracking, 'backup maintenance does not stop tracking');
+                session.active = false;
+                root.check(!StatusService.tracking, 'inactive desktop pauses');
+                session.active = true;
+                break;
+            case 3:
+                {
+                    if (StatusService.detectionMatches.length !== 1)
+                        return;
+                    root.check(StatusService.detectionMatches[0].name === 'synthetic-work', 'automatic detection uses private stored rules');
+                    StatusService.clear();
+                    root.check(StatusService.source === 'automatic' && StatusService.status === 'work', 'Reset resumes automatic detected mode');
+                    StatusService.setStatus('personal');
+                    root.check(!StatusService.includesCategory('work') && StatusService.includesCategory('personal'), 'enabled personal mode filters work entries');
+                    StatusService.setStatus('work');
+                    StatusService.heartbeat();
+                    const tabs = root.find(panel, 'statusTimecardTabs') as QC.TabBar;
+                    root.check(panel.period.days.length > 0 && panel.height > 0, 'Today report renders');
+                    tabs.currentIndex = 1;
+                    root.check(panel.period.days.length === 7, 'week includes all days');
+                    tabs.currentIndex = 3;
+                    root.check(panel.period.days.length >= 28, 'month includes all days');
+                    tabs.currentIndex = 5;
+                    root.check(panel.managing && root.find(panel, 'statusWorkDirectories').visible, 'Manage opens multiline work folders');
+                    const field = root.find(panel, 'statusWorkFoldersList');
+                    root.check(field.text === '/synthetic/work\n/synthetic/second', 'all saved work folders are shown one per line');
+                    field.folderPicker.folderSelected('/synthetic/third');
+                    field.folderPicker.folderSelected('/synthetic/third');
+                    root.check(field.text === '/synthetic/work\n/synthetic/second\n/synthetic/third', 'picker appends a folder and ignores duplicates');
+                    root.find(panel, 'statusRulesActions').submitted();
+                    root.check(StatusService.rules.workDirectories.length === 3 && !panel.interactionPending, 'Save persists every folder and clears dirty state');
+                    StatusService.pause();
+                    PreferencesRepository.setValue('status.testCheckpoint', StatusRepository.sessions[StatusRepository.sessions.length - 1].end_ms);
+                    root.finish();
+                    return;
+                }
+            }
+            root.step++;
+        }
+    }
+}

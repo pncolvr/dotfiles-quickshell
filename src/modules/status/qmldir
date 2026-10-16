@@ -2,3 +2,4 @@ Status 1.0 Status.qml
 StatusTooltip 1.0 StatusTooltip.qml
 StatusDetectionSection 1.0 StatusDetectionSection.qml
 singleton Timecard 1.0 Timecard.qml
+StatusRulesEditor 1.0 StatusRulesEditor.qml

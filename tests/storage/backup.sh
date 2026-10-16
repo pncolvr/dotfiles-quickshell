@@ -35,10 +35,15 @@ chmod +x "$fixture/bin/"*
 export PATH="$fixture/bin:$PATH"
 database=$fixture/data/quickshell.db
 sqlite3 "$database" <<'SQL'
-PRAGMA user_version=14;
+PRAGMA user_version=15;
 CREATE TABLE clipboard(id TEXT PRIMARY KEY,mime TEXT,kind TEXT,bytes INTEGER,text TEXT,updated_at INTEGER,pinned INTEGER);
 CREATE TABLE preferences(key TEXT PRIMARY KEY,value_json TEXT);
 INSERT INTO preferences VALUES('clock.showSeconds','true');
+INSERT INTO preferences VALUES('status.rules','{"workDirectories":["/synthetic/work","/synthetic/second"],"processes":["fixture-work"]}');
+CREATE TABLE status_sessions(id INTEGER PRIMARY KEY,start_ms INTEGER,end_ms INTEGER,mode TEXT);
+INSERT INTO status_sessions VALUES(1,1000,2000,'work');
+CREATE TABLE status_writer(id INTEGER PRIMARY KEY,token TEXT,session_id INTEGER);
+INSERT INTO status_writer VALUES(1,'stale-fixture-writer',1);
 CREATE TABLE twitch_users(login TEXT PRIMARY KEY,fallback_login TEXT);
 INSERT INTO twitch_users VALUES('fixture','second');
 CREATE TABLE project_sources(path TEXT PRIMARY KEY,kind TEXT,category TEXT);
@@ -88,7 +93,7 @@ totp_command=$(jq -nc --arg helper "$repo/src/services/security/totp.sh" --arg t
 request() {
     jq -nc --arg action "$1" --arg path "$2" --arg password "${3:-Public-fixture-passphrase}" \
         --arg database "$database" --arg clipboard "$fixture/data/clipboard" --argjson totp "$totp_command" \
-        '{action:$action,path:$path,password:$password,database:$database,clipboard:$clipboard,schema:14,totpCommand:$totp}'
+        '{action:$action,path:$path,password:$password,database:$database,clipboard:$clipboard,schema:15,totpCommand:$totp}'
 }
 run() { request "$@" | bash "$repo/src/services/storage/backup.sh"; }
 reject() {
@@ -121,7 +126,7 @@ printf 'PASS: spaces/quotes in paths and Unicode/literal shell characters in pas
 rm -r -- "$fixture/source" "$fixture/project-missing" "$fixture/directory-missing"
 rm -- "$fixture/project-present/test.code-workspace"
 
-sqlite3 "$database" "UPDATE preferences SET value_json='false'; DELETE FROM clipboard; DELETE FROM twitch_users; DELETE FROM webapps; DELETE FROM remotes; DELETE FROM n8n_instances; DELETE FROM n8n_workflows;"
+sqlite3 "$database" "UPDATE preferences SET value_json='false'; DELETE FROM clipboard; DELETE FROM twitch_users; DELETE FROM webapps; DELETE FROM remotes; DELETE FROM n8n_instances; DELETE FROM n8n_workflows; DELETE FROM status_sessions;"
 rm -- "$fixture/data/clipboard/$text_id" "$fixture/data/clipboard/$image_id"
 printf '%s' '{"version":1,"id":"22222222-2222-2222-2222-222222222222","name":"New","token":"MY"}' \
     > "$fixture/keyring/22222222-2222-2222-2222-222222222222.json"
@@ -142,6 +147,9 @@ sqlite3 "$database" 'SELECT payload_json FROM remotes;' | jq -e '.password=="pri
 sqlite3 "$database" "SELECT payload_json FROM n8n_instances WHERE id='n8n-a';" | jq -e '.apiKey=="private fixture a" and .category=="personal"' >/dev/null
 sqlite3 "$database" "SELECT payload_json FROM n8n_instances WHERE id='n8n-b';" | jq -e '.apiKey=="private fixture b" and .category=="work"' >/dev/null
 [[ $(sqlite3 "$database" "SELECT url FROM n8n_workflows WHERE instance_id='n8n-a' AND id='same';") == https://personal.example.test/base/workflow/same ]]
+[[ $(sqlite3 "$database" "SELECT start_ms||':'||end_ms||':'||mode FROM status_sessions;") == 1000:2000:work ]]
+sqlite3 "$database" "SELECT value_json FROM preferences WHERE key='status.rules';" | jq -e '.workDirectories==["/synthetic/work","/synthetic/second"] and .processes==["fixture-work"]' >/dev/null
+printf 'PASS: tracking sessions and private detection rules survive encrypted restore\n'
 printf 'PASS: webapp, remote and multi-instance n8n credentials/caches survive encrypted restore; runtime connections stay outside backup\n'
 [[ $(sqlite3 "$database" "SELECT value_json FROM preferences WHERE key='clock.showSeconds';") == true ]]
 jq -se '.[-1].report | .warningCount == 5 and .counts == {directories:1,sources:1,projects:1,workspaces:1} and

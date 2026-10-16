@@ -227,20 +227,21 @@ cannot transfer a native drag between applications.
 
 ## Status and timecard
 
-Run `bash tests/status/status.sh` to check the existing timecard executable against
-isolated logs, today's summary and blocks, current/last week boundaries, empty days, malformed
-events, source preservation, module imports, scrolling, refresh, and mode actions.
-The status manager is mocked, so the tests do not change the desktop mode,
-wallpaper, or activity log. `TIMECARD_TEST_EXECUTABLE` can point to another build.
-Set `STATUS_TEST_SCREENSHOT=/tmp/status-timecard.png` to save a tooltip preview.
-`STATUS_TEST_DETECTION_SCREENSHOT` saves Today's automatic detection section.
-Run `bash tests/status/detection.sh` for distinct process/path reporting, literal
-directory boundaries, quoted/newline paths, detector failures and read-only manager
-output. It uses mocked processes and `lsof` data; `STATUS_DETECTION_SCRIPT` and
-`STATUS_MANAGER_SCRIPT` can point to a prepared copy of the zsh manager/helper.
+Run `bash tests/status/status.sh` for native SQLite sessions, stale-writer
+protection, restart gaps, lock/suspend/inactive pauses, rolling twelve-month
+retention, disabled mode and Today/week/month reports. The suite also checks
+local-midnight/DST boundaries, app profiles and read-only desktop-state handling.
+It uses isolated databases and mocked desktop commands.
+Run `bash tests/status/reload.sh` to upgrade an already-loaded editor to the current
+shared folder/process list component, exercise folder append/save, and verify
+both explicit and component-file automatic reloads. This catches hot-reload type
+failures that a fresh process cannot detect.
+Run `bash tests/status/detection.sh` for stdin rules, distinct process/path
+reporting, literal directory boundaries, quoted/newline paths and partial errors.
 Run `bash tests/status/detection-ui.sh` for keyboard/name-click disclosure,
-literal long/quoted/newline paths, refresh/removal, narrow scrolling, and
-manual/partial/empty scan presentation with synthetic reports.
+refresh/removal, narrow scrolling and manual/partial/empty presentation.
+`bash tests/storage/backup.sh` covers encrypted restoration of sessions and
+private detection rules alongside the other saved data.
 
 ## Clipboard validation
 

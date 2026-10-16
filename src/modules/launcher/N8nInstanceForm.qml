@@ -25,9 +25,8 @@ Column {
     UI.ColumnText { text:'API key'; color:Theme.inactive }
     UI.SecretField { id:key; width:parent.width; objectName:'n8nApiKey'; onAccepted:root.accepted() }
     BrowserLaunchFields { id:browser; width:parent.width; objectNamePrefix:'n8n' }
-    UI.ComboSelector {
-        objectName:'n8nCategorySelector'; width:parent.width; compact:true; labelPrefix:'Category: '
-        options:[{name:'personal',description:'Personal'},{name:'work',description:'Work'}]
+    EntryCategorySelector {
+        objectName:'n8nCategorySelector'; width:parent.width
         selectedName:root.category; onSelected: name => root.category=name
     }
     UI.ActionButton {

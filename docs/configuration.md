@@ -81,7 +81,8 @@ Equal numbers with unrelated purposes remain separate settings.
 
 Review these defaults when adapting the configuration:
 
-- `_internal.statusManager` points to `~/.config/zsh/scripts/status/manager.sh`.
+- `workModeEnabled` controls native work/personal detection, tracking and shared category UI.
+  Rules and manual mode are saved privately in SQLite through Status → Manage.
 - `wallpaperDirectory` sets the wallpaper picker root, defaulting to `~/Pictures/wallpapers`.
   An explicit directory argument overrides it for one picker session.
 - `wallpaperStateDirectory` holds saved per-mode/per-monitor links, defaulting to `~/Pictures/.runtime`.
@@ -131,7 +132,7 @@ readonly property var projectApps: [
     {id: "code", name: "Code", extensions: [".code-workspace"],
         offerFolder: true, useFileNames: true, command: ["code"],
         profiles: {work: "Work", personal: "Personal"},
-        arguments: ["{path}", "--profile", "{profile}"],
+        arguments: ["{path}"], profileArguments: ["--profile", "{profile}"],
         windowClass: "code", windowTitlePrefix: "{folderName}"},
     {id: "godot", name: "Godot", extensions: [".godot"], command: ["godot"],
         arguments: ["--editor", "{path}"],
@@ -146,7 +147,8 @@ when one of its file types is detected. Code uses this for workspace projects.
 `useFileNames: true` labels file actions with their scanned names (Code workspaces);
 other file actions use **Open in App name**, adding relative paths if needed to
 distinguish multiple files. `folderArguments`, when present, replaces `arguments`
-for folder actions. **Open in …** actions appear first, sorted alphabetically;
+for folder actions. `profileArguments` are appended only while work mode is enabled;
+keep profile selection flags there so disabling work mode uses the app default. **Open in …** actions appear first, sorted alphabetically;
 named file actions follow, also sorted alphabetically.
 
 Add an app/extension rule and refresh the affected source in Manage. Command or

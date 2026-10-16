@@ -20,7 +20,7 @@ const expected = {
     SCREENSHOT_FOLDER: root + '/screenshots "quoted" $(touch ' + root + '/injected)\nnext line',
     VIDEOS_FOLDER: root + '/recordings with spaces',
     WALLPAPER_DIRECTORY: root + '/images', WALLPAPER_STATE_DIRECTORY: root + '/saved images',
-    WORKING_STATE_NAME: 'fixture-work'
+    WORKING_STATE_NAME: 'fixture-work', WORK_MODE_ENABLED:'true'
 };
 const mapping = {screenshotDirectory:'SCREENSHOT_FOLDER',recordingDirectory:'VIDEOS_FOLDER',
     wallpaperDirectory:'WALLPAPER_DIRECTORY',wallpaperStateDirectory:'WALLPAPER_STATE_DIRECTORY',pickerWorkStatus:'WORKING_STATE_NAME'};
@@ -41,7 +41,7 @@ printf 'PASS: offline QML export reads Config directly, preserves literal paths 
 SCREENSHOT_FOLDER=obsolete bash -c '
     source "$1/src/services/launcher/providers/_common/utils.sh"
     load_provider_config
-    printf "%s\0" "$SCREENSHOT_FOLDER" "$VIDEOS_FOLDER" "$WALLPAPER_DIRECTORY" "$WALLPAPER_STATE_DIRECTORY" "$WORKING_STATE_NAME"
+    printf "%s\0" "$SCREENSHOT_FOLDER" "$VIDEOS_FOLDER" "$WALLPAPER_DIRECTORY" "$WALLPAPER_STATE_DIRECTORY" "$WORKING_STATE_NAME" "$WORK_MODE_ENABLED"
 ' bash "$fixture" > "$fixture/environment"
 node - "$fixture" <<'JS'
 const fs = require('fs'), root = process.argv[2], expected = JSON.parse(fs.readFileSync(root + '/expected.json'));

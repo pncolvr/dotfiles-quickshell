@@ -70,8 +70,7 @@ ManagedPickerFrame {
         backgroundVisible: root.backgroundVisible
         visible: !DirectoryService.managing
         searchPlaceholder: "Search directories"
-        footerHint: (DirectoryService.showAll ? "All directories" : "By status") + " · " + Config.directoryShowAllShortcut
-            + (DirectoryService.showAll ? ": status" : ": all") + " · " + Config.directoryManageShortcut
+        footerHint: StatusService.filterHint(Config.directoryShowAllShortcut,DirectoryService.showAll) + Config.directoryManageShortcut
             + ": manage · Enter: open · Esc: close"
     }
     QC.ScrollView {
@@ -128,7 +127,8 @@ ManagedPickerFrame {
                                 UI.HoverTooltip { text: entryRow.modelData.path }
                             }
                             UI.ColumnText {
-                                text: entryRow.modelData.category === "work" ? "Work" : "Personal"
+                                visible: StatusService.enabled
+                                    text: entryRow.modelData.category === "work" ? "Work" : "Personal"
                                 color: entryRow.modelData.category === "work" ? Theme.accent : Theme.active
                             }
                         }
@@ -178,6 +178,7 @@ ManagedPickerFrame {
             visible: root.showForm
             spacing: Theme.controlSpacing
             UI.FolderForm {
+            showCategory: StatusService.enabled
                 id: folderForm
                 width: parent.width
                 inputObjectName: "directoryPath"

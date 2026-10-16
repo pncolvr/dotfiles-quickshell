@@ -7,6 +7,7 @@ import "../../services"
 UI.TooltipArea {
     moduleName: "status"
     id: root
+    visible: StatusService.enabled
     acceptedButtons: Qt.LeftButton
     hoverEnabled: true
     normalIconColor: StatusService.source === "manual" ? Theme.warning : Theme.text

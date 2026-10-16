@@ -15,7 +15,7 @@ export PROVIDER_TEST_DIR="$test_dir"
 export PATH="$test_dir/bin:$PATH"
 picker="$test_dir/src/services/launcher/launcher.sh"
 providers="$test_dir/src/services/launcher/providers"
-mkdir -p "$ZDOTDIR/scripts/status" "$ZDOTDIR/scripts/default-browser"
+mkdir -p "$ZDOTDIR/scripts/default-browser"
 mkdir -p "$HOME/.config/qutebrowser/bookmarks"
 mkdir -p "$HOME/Alpha" "$HOME/Beta" "$HOME/Pictures" "$HOME/Videos"
 touch "$test_dir/actions" "$test_dir/menus"
@@ -26,7 +26,7 @@ if [[ ${6:-} == providerConfig ]]; then
     jq -nc --arg screenshots "${PROVIDER_TEST_SCREENSHOT_FOLDER:-$HOME/Pictures}" --arg videos "${PROVIDER_TEST_RECORDING_FOLDER:-$HOME/Videos}" \
         --arg wallpapers "$HOME/Pictures/wallpapers" --arg state "$HOME/Pictures/.runtime" --arg work "${PROVIDER_TEST_WORK_STATUS:-work}" \
         '{SCREENSHOT_FOLDER:$screenshots,VIDEOS_FOLDER:$videos,WALLPAPER_DIRECTORY:$wallpapers,
-          WALLPAPER_STATE_DIRECTORY:$state,WORKING_STATE_NAME:$work}'
+          WALLPAPER_STATE_DIRECTORY:$state,WORKING_STATE_NAME:$work,WORK_MODE_ENABLED:"true"}'
     exit 0
 fi
 if [[ ${5:-} == recording ]]; then
@@ -131,16 +131,11 @@ chmod +x "$test_dir/bin/qs" "$test_dir/bin/action"
 for command in hyprctl code zathura xdg-open dbus-send pcmanfm-qt virsh nc sdl-freerdp3 systemctl loginctl wf-recorder hyprshot satty pactl slurp sleep pgrep pkill notify-send wl-copy tesseract zbarimg; do
     ln -s action "$test_dir/bin/$command"
 done
-cat > "$ZDOTDIR/scripts/status/manager.sh" <<'BASH'
-#!/usr/bin/env bash
-if [[ $1 == --get ]]; then printf '%s\n' work
-else printf 'status <%s> <%s>\n' "$1" "${2:-}" >> "$PROVIDER_TEST_DIR/actions"; fi
-BASH
 cat > "$ZDOTDIR/scripts/default-browser/default-browser.sh" <<'BASH'
 #!/usr/bin/env bash
 printf 'browser <%s>\n' "$*" >> "$PROVIDER_TEST_DIR/actions"
 BASH
-chmod +x "$ZDOTDIR/scripts/status/manager.sh" "$ZDOTDIR/scripts/default-browser/default-browser.sh"
+chmod +x "$ZDOTDIR/scripts/default-browser/default-browser.sh"
 cat > "$HOME/.config/qutebrowser/bookmarks/urls" <<'DATA'
 https://example.test/alpha Alpha
 https://example.test/beta Beta
@@ -279,11 +274,7 @@ printf 'PASS: recording paths and audio devices retain literal shell characters\
 : > "$test_dir/actions"
 PROVIDER_TEST_SCREENSHOT_FOLDER="$literal_folder" bash "$picker" provider screenshot output
 expect_action "<--output-filename> <$literal_folder/Screenshot "
-ignored=$(bash -c 'source "$1"; get_ignored_category' bash "$providers/_common/utils.sh")
-[[ -z $ignored ]]
-ignored=$(PROVIDER_TEST_WORK_STATUS=office bash -c 'source "$1"; get_ignored_category' bash "$providers/_common/utils.sh")
-[[ $ignored == office ]]
-printf 'PASS: screenshot destinations and shared categories come from Config, including literal paths\n'
+printf 'PASS: screenshot destinations come from Config, including literal paths\n'
 
 [[ ! -e $test_dir/env-executed ]]
 printf 'PASS: obsolete provider .env files are never executed\n'

@@ -48,7 +48,8 @@ fi
 validate_provider_config() {
     jq -ce '
         if type == "object"
-            and keys == ["SCREENSHOT_FOLDER","VIDEOS_FOLDER","WALLPAPER_DIRECTORY","WALLPAPER_STATE_DIRECTORY","WORKING_STATE_NAME"]
+            and keys == ["SCREENSHOT_FOLDER","VIDEOS_FOLDER","WALLPAPER_DIRECTORY","WALLPAPER_STATE_DIRECTORY","WORKING_STATE_NAME","WORK_MODE_ENABLED"]
+            and (.WORK_MODE_ENABLED == "true" or .WORK_MODE_ENABLED == "false")
             and all(.[]; type == "string" and length > 0 and (contains("\u0000") | not))
         then . else error("Invalid provider configuration") end'
 }

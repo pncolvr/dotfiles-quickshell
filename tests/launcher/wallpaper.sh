@@ -28,7 +28,7 @@ elif [[ ${6:-} == providerConfig ]]; then
     jq -nc --arg directory "${WALL_TEST_FOLDER-$HOME/Pictures/wallpapers}" \
         --arg state "${WALL_TEST_STATE-$HOME/Pictures/.runtime}" --arg home "$HOME" \
         '{SCREENSHOT_FOLDER:($home+"/Pictures"),VIDEOS_FOLDER:($home+"/Videos"),
-          WALLPAPER_DIRECTORY:$directory,WALLPAPER_STATE_DIRECTORY:$state,WORKING_STATE_NAME:"work"}'
+          WALLPAPER_DIRECTORY:$directory,WALLPAPER_STATE_DIRECTORY:$state,WORKING_STATE_NAME:"work",WORK_MODE_ENABLED:env.WALL_TEST_WORK_MODE // "true"}'
 elif [[ ${6:-} == open ]]; then
     request=$7/request.json
     if jq -e '.previewImages == true' "$request" >/dev/null; then
@@ -217,3 +217,11 @@ done
 printf 'PASS: configured wallpaper roots support literal paths; missing settings report errors; all actions use the shared Config bridge\n'
 
 [[ ! -e $test_dir/old-env-executed ]]
+
+# Disabled work mode keeps browsing and monitor selection but skips category UI.
+reset_actions
+WALL_TEST_WORK_MODE=false WALL_TEST_IMAGE="$image" WALL_TEST_MODE=work bash "$picker" provider wallpaper "$folder"
+[[ $(cat "$test_dir/steps") == $'image\nmonitor\nimage' ]]
+[[ $(readlink "$state/wallpaper_personal_1") == "$image" ]]
+check_cleanup
+printf 'PASS: disabled work mode skips mode selection and uses Personal wallpaper\n'

@@ -12,7 +12,7 @@ Singleton {
 
     readonly property string name: Config.databaseName
     readonly property string path: Config.databasePath
-    readonly property int schemaVersion: 14
+    readonly property int schemaVersion: 15
     readonly property bool ready: state.ready
     readonly property string error: state.error
     property bool maintenance: false
@@ -116,6 +116,9 @@ Singleton {
                 tx.executeSql("CREATE TABLE IF NOT EXISTS store.remotes (id TEXT PRIMARY KEY, name TEXT NOT NULL COLLATE NOCASE UNIQUE, payload_json TEXT NOT NULL)")
                 tx.executeSql("CREATE TABLE IF NOT EXISTS store.n8n_instances (id TEXT PRIMARY KEY, name TEXT NOT NULL COLLATE NOCASE UNIQUE, payload_json TEXT NOT NULL)")
                 tx.executeSql("CREATE TABLE IF NOT EXISTS store.n8n_workflows (instance_id TEXT NOT NULL, id TEXT NOT NULL, name TEXT NOT NULL, url TEXT NOT NULL, fetched_at INTEGER NOT NULL, PRIMARY KEY(instance_id,id))")
+                tx.executeSql("CREATE TABLE IF NOT EXISTS store.status_sessions (id INTEGER PRIMARY KEY, start_ms INTEGER NOT NULL, end_ms INTEGER NOT NULL CHECK(end_ms>=start_ms), mode TEXT NOT NULL CHECK(mode IN ('work','personal')))")
+                tx.executeSql("CREATE INDEX IF NOT EXISTS store.status_sessions_time ON status_sessions(start_ms,end_ms)")
+                tx.executeSql("CREATE TABLE IF NOT EXISTS store.status_writer (id INTEGER PRIMARY KEY CHECK(id=1), token TEXT NOT NULL, session_id INTEGER)")
                 ClipboardIndex.migrate(tx, version)
                 tx.executeSql("PRAGMA store.user_version = " + schemaVersion)
             })

@@ -40,5 +40,5 @@ for phase in setup restart connecting; do
     rg 'PASS: remotes' "$fixture/log"
 done
 jq -se 'any(.program=="virsh" and .args==["shutdown","--","fixture-vm"]) and ([.[]|select(.program=="rdp")]|length)==2' "$fixture/actions" >/dev/null
-[[ $(sqlite3 "$fixture/data/quickshell.db" 'PRAGMA user_version;') == 14 ]]
+[[ $(sqlite3 "$fixture/data/quickshell.db" 'PRAGMA user_version;') == 15 ]]
 printf 'PASS: only selected VM is shut down; detached clients across restart and sequential Enter disconnects; connecting cancellation launches no RDP\n'

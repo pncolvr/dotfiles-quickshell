@@ -1,64 +1,65 @@
 #!/usr/bin/env bash
+# Native reports and lifecycle against private synthetic databases; no desktop actions.
 set -euo pipefail
 project_root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)
-executable=${TIMECARD_TEST_EXECUTABLE:-${ZDOTDIR:-$HOME/.config/zsh}/scripts/status/bin/timecard}
-test_dir=$(mktemp -d /tmp/quickshell-status-test.XXXXXX)
-trap 'rm -rf -- "$test_dir"' EXIT
+fixture=$(mktemp -d /tmp/quickshell-status-test.XXXXXXXX)
+trap 'rm -rf -- "$fixture"' EXIT
 export TZ=Europe/Lisbon
-bash "$project_root/tests/status/timecard-helper.sh"
-mkdir -m 700 "$test_dir/runtime"
-mkdir "$test_dir/data" "$test_dir/cache" "$test_dir/bin"
-cp -a -- "$project_root/src" "$test_dir/src"
-export STATUS_TEST_MODE="$test_dir/mode" STATUS_TEST_SOURCE="$test_dir/source"
-export STATUS_TEST_SET_CALLS="$test_dir/set-calls"
-export STATUS_TEST_DETECTION_FAILURE="$test_dir/detection-failure"
-export TIMETABLE_FILE="$test_dir/events.csv"
-printf personal > "$STATUS_TEST_MODE"
-printf automatic > "$STATUS_TEST_SOURCE"
-cat > "$test_dir/bin/manager" <<'BASH'
+node "$project_root/tests/status/model.mjs"
+mkdir -m700 "$fixture/runtime"
+mkdir -p "$fixture/bin" "$fixture/home"
+tar -C "$project_root" --exclude='*.env' --exclude='src/services/launcher/providers/*.json' -cf - src | tar -C "$fixture" -xf -
+# External effects are replaced before starting any Quickshell instance.
+printf 'exit 0\n' > "$fixture/src/services/launcher/providers/wallpaper.sh"
+cat > "$fixture/bin/busctl" <<'MOCK'
 #!/usr/bin/env bash
-case "$1" in
-    --check) cat "$STATUS_TEST_MODE" ;;
-    --source) cat "$STATUS_TEST_SOURCE" ;;
-    --explain)
-        if [[ -f $STATUS_TEST_DETECTION_FAILURE ]]; then
-            rm -- "$STATUS_TEST_DETECTION_FAILURE"
-            printf 'invalid fixture report\n'
-            exit 1
-        fi
-        jq -n --arg source "$(cat "$STATUS_TEST_SOURCE")" --arg mode "$(cat "$STATUS_TEST_MODE")" \
-            '{source:$source, automaticStatus:$mode, errors:[], matches:(if $mode=="work" then
-                [{name:"dotnet", methods:["directory"], paths:["/work/gaia", "/work/hera"]}] else [] end)}' ;;
-    --toggle)
-        if [[ $(cat "$STATUS_TEST_MODE") == work ]]; then printf personal > "$STATUS_TEST_MODE";
-        else printf work > "$STATUS_TEST_MODE"; fi
-        printf manual > "$STATUS_TEST_SOURCE" ;;
-    --set)
-        [[ ${2:-} == work || ${2:-} == personal ]] || exit 1
-        printf '%s' "$2" > "$STATUS_TEST_MODE"
-        printf manual > "$STATUS_TEST_SOURCE"
-        printf '%s\n' "$2" >> "$STATUS_TEST_SET_CALLS" ;;
-    --clear) printf personal > "$STATUS_TEST_MODE"; printf automatic > "$STATUS_TEST_SOURCE" ;;
-esac
-BASH
-chmod +x "$test_dir/bin/manager"
-sed -i "s@readonly property string statusManager:.*@readonly property string statusManager: \"$test_dir/bin/manager\"@" "$test_dir/src/config/Config.qml"
-sed -i "s@readonly property string statusTimecardExecutable:.*@readonly property string statusTimecardExecutable: \"$executable\"@" "$test_dir/src/config/Config.qml"
-today_start=$(date -d 'today 00:00:00' +%s)
-yesterday_start=$(date -d 'yesterday 00:00:00' +%s)
-printf '%s;work\n%s;personal\n%s;inactive\n%s;active\n%s;work\n%s;personal\n%s;inactive\n' \
-    "$yesterday_start" "$((yesterday_start+60))" "$((yesterday_start+120))" \
-    "$today_start" "$today_start" "$((today_start+60))" "$((today_start+120))" > "$TIMETABLE_FILE"
-before=$(sha256sum "$TIMETABLE_FILE")
-for fixture in status-smoke timecard-parser; do
-    sed 's@"../../src@"src@g' "$project_root/tests/status/$fixture.qml" > "$test_dir/shell.qml"
-    output=$(QT_QPA_PLATFORM=offscreen QT_QUICK_BACKEND=software XDG_RUNTIME_DIR="$test_dir/runtime" \
-        XDG_CACHE_HOME="$test_dir/cache" XDG_DATA_HOME="$test_dir/data" \
-        timeout 15 qs -p "$test_dir/shell.qml" 2>&1) || { printf '%s\n' "$output" >&2; exit 1; }
+exit 1
+MOCK
+cp "$fixture/bin/busctl" "$fixture/bin/hyprctl"
+cat > "$fixture/bin/gdbus" <<'MOCK'
+#!/usr/bin/env bash
+sleep 30
+MOCK
+cat > "$fixture/bin/pgrep" <<'MOCK'
+#!/usr/bin/env bash
+[[ ${!#} == synthetic-work ]] || exit 1
+printf '10 synthetic-work\n'
+MOCK
+cat > "$fixture/bin/lsof" <<'MOCK'
+#!/usr/bin/env bash
+exit 1
+MOCK
+chmod +x "$fixture/bin/"*
+export HOME="$fixture/home" XDG_RUNTIME_DIR="$fixture/runtime" XDG_DATA_HOME="$fixture/data" XDG_CACHE_HOME="$fixture/cache"
+export PATH="$fixture/bin:$PATH" QT_QPA_PLATFORM=offscreen QT_QUICK_BACKEND=software
+unset WAYLAND_DISPLAY HYPRLAND_INSTANCE_SIGNATURE
+run() {
+    output=$(STATUS_TEST_PHASE="$1" timeout -k 2 15 qs -p "$fixture" 2>&1) || { printf '%s\n' "$output"; exit 1; }
     printf '%s\n' "$output"
-    [[ $output == *'PASS:'* && $output != *'STATUS FAIL:'* \
-        && $output != *'Failed to load configuration'* && $output != *'Binding loop detected'* \
-        && $output != *'TypeError:'* && $output != *'ReferenceError:'* ]]
-done
-[[ $(sha256sum "$TIMETABLE_FILE") == "$before" ]]
-[[ $(cat "$STATUS_TEST_SET_CALLS") == $'personal\nwork' ]]
+    [[ $output == *"PASS: $2"* ]]
+    [[ $output != *'STATUS FAIL:'* && $output != *'TypeError:'* && $output != *'ReferenceError:'* && $output != *'Binding loop'* && $output != *'Failed to load configuration'* ]]
+}
+sed 's@"../../src@"src@g' "$project_root/tests/status/native.qml" > "$fixture/shell.qml"
+run repository 'native status repository'
+# Repository tests deliberately use future timestamps; start the service with fresh sessions.
+sqlite3 "$fixture/data/quickshell.db" 'DELETE FROM status_sessions; DELETE FROM status_writer;'
+run seed 'native status seed'
+sleep 0.1
+run restore 'native status restore'
+sed -i 's/workModeEnabled:true/workModeEnabled:false/;s/workModeEnabled: true/workModeEnabled: false/' "$fixture/src/config/Config.qml"
+run disabled 'native status disabled'
+sed 's@"../../src@"src@g' "$project_root/tests/status/timecard-parser.qml" > "$fixture/shell.qml"
+run parser 'timecard parser'
+cat > "$fixture/bin/busctl" <<'MOCK'
+#!/usr/bin/env bash
+if [[ $* == *GetSession* ]]; then printf '%s\n' '{"data":["/org/freedesktop/login1/session/fixture"]}';
+else printf '%s\n' '{"data":[{"Active":{"data":true},"LockedHint":{"data":false},"State":{"data":"active"}}]}'; fi
+MOCK
+cat > "$fixture/bin/hyprctl" <<'MOCK'
+#!/usr/bin/env bash
+printf '%s\n' '{"locked":false}'
+MOCK
+sed 's@"../../src@"src@g' "$project_root/tests/status/desktop-session.qml" > "$fixture/shell.qml"
+run lifecycle 'desktop session snapshots'
+[[ $(sqlite3 "$fixture/data/quickshell.db" 'PRAGMA integrity_check;') == ok ]]
+printf 'PASS: native time tracking, persistence, retention and optional mode\n'

@@ -24,7 +24,7 @@ Singleton {
     readonly property bool busy: scan.running
     readonly property var sources: ProjectRepository.sources
     readonly property var projects: ProjectRepository.projects
-    readonly property var availableProjects: projects.filter(project => showAll || StatusService.status === Config.projectWorkStatus || project.category !== "work")
+    readonly property var availableProjects: projects.filter(project => StatusService.includesCategory(project.category,showAll,Config.projectWorkStatus))
     function pathRecords() {
         const rows = sources.map(source => ({path:source.path,kind:"directory"}))
         for (const project of projects) {
@@ -155,9 +155,9 @@ Singleton {
     function launch(path, project, launcherId) {
         const launcher = Config.projectApps.find(item => item.id === launcherId)
         let action
-        try { action = Launchers.prepare(launcher,path,project,project.category) }
+        try { action = Launchers.prepare(launcher,path,project,project.category,StatusService.enabled) }
         catch (exception) { error = exception.message; PickerService.error = error; return }
-        const client = action.windowClass && action.windowTitlePrefix ? WindowService.allWindows.find(client =>
+        const client = (StatusService.enabled || !launcher.profileArguments?.length) && action.windowClass && action.windowTitlePrefix ? WindowService.allWindows.find(client =>
             client.class === action.windowClass && client.title.startsWith(action.windowTitlePrefix)) : null
         PickerService.close()
         Qt.callLater(() => {

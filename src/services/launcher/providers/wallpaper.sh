@@ -41,6 +41,7 @@ set_wallpaper() {
     local output=$1 mode=$2 path=$3 target
     # Numeric output arguments remain available to existing command-line callers.
     case $output in 1) output=DP-1 ;; 2) output=HDMI-A-1 ;; esac
+    [[ $WORK_MODE_ENABLED == true ]] || mode=personal
     validate_target "$output" "$mode"
     [[ -f $path && -r $path ]] || fail "Wallpaper file is unavailable"
     IFS= read -r -d '' path < <(realpath -ez -- "$path") || fail "Wallpaper file is unavailable"
@@ -59,6 +60,7 @@ set_wallpaper() {
 }
 restore_wallpapers() {
     local mode=${1:-personal} outputs output target ready=false
+    [[ $WORK_MODE_ENABLED == true ]] || mode=personal
     [[ $mode == personal || $mode == work ]] || fail "Wallpaper mode must be personal or work"
     outputs=$(monitors) || fail "Could not read connected monitors"
     # Hyprland starts awww-daemon separately; allow its socket to become ready.
@@ -103,8 +105,11 @@ JSON
         jq --argjson reply "$response" '.query = ($reply.query // "")
             | .selectedResult = $reply.items[0].result' "$work_dir/images.json" > "$work_dir/next-images.json"
         mv -- "$work_dir/next-images.json" "$work_dir/images.json"
-        pick "$work_dir/mode.json" || continue
-        mode=$(jq -er '.items[0].result' <<< "$response")
+        mode=personal
+        if [[ $WORK_MODE_ENABLED == true ]]; then
+            pick "$work_dir/mode.json" || continue
+            mode=$(jq -er '.items[0].result' <<< "$response")
+        fi
         outputs=$(monitors) || fail "Could not read connected monitors"
         jq '{prompt:"Wallpaper monitor", allowTyped:false,
             selectionKey:"wallpaper.monitor", acceptLabel:"Set wallpaper",

@@ -48,8 +48,6 @@ text = text[:end] + '''
   }
 ''' + text[end:]
 entry.write_text(text)
-settings = config / 'src/config/Config.qml'
-settings.write_text(settings.read_text().replace('`${home}/.config/zsh/scripts/status/manager.sh`', '"/usr/bin/false"'))
 PY
 
 cat > "$startup_test_dir/bin/hyprctl" <<'MOCK'

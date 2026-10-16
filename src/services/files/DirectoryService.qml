@@ -17,7 +17,7 @@ Singleton {
     readonly property bool checkingPaths: pathCheck.running
     readonly property bool busy: resolve.running
     readonly property var directories: DirectoryRepository.directories
-    readonly property var availableDirectories: directories.filter(entry => showAll || entry.category !== "work" || StatusService.status === Config.directoryWorkStatus)
+    readonly property var availableDirectories: directories.filter(entry => StatusService.includesCategory(entry.category,showAll,Config.directoryWorkStatus))
     signal saved()
     function checkPaths() {
         if (pathCheck.running) { pathCheckPending = true; return }
