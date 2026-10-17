@@ -20,13 +20,7 @@ touch "$test_dir/actions" "$test_dir/menus"
 cat > "$test_dir/bin/qs" <<'BASH'
 #!/usr/bin/env bash
 set -euo pipefail
-if [[ ${6:-} == providerConfig ]]; then
-    jq -nc --arg screenshots "${PROVIDER_TEST_SCREENSHOT_FOLDER:-$HOME/Pictures}" --arg videos "${PROVIDER_TEST_RECORDING_FOLDER:-$HOME/Videos}" \
-        --arg wallpapers "$HOME/Pictures/wallpapers" --arg state "$HOME/Pictures/.runtime" --arg work "${PROVIDER_TEST_WORK_STATUS:-work}" \
-        '{SCREENSHOT_FOLDER:$screenshots,VIDEOS_FOLDER:$videos,WALLPAPER_DIRECTORY:$wallpapers,
-          WALLPAPER_STATE_DIRECTORY:$state,WORKING_STATE_NAME:$work,WORK_MODE_ENABLED:"true"}'
-    exit 0
-fi
+if [[ ${5:-} == status && ${6:-} == pause ]]; then exit 0; fi
 if [[ ${5:-} == recording ]]; then
     printf 'recording <%s>\n' "$6" >> "$PROVIDER_TEST_DIR/actions"
     exit 0
@@ -41,92 +35,19 @@ if [[ ${6:-} == screenshot || ${6:-} == wallpaper || ${6:-} == encodeQr || ${6:-
     printf 'native <%s>\n' "$6" >> "$PROVIDER_TEST_DIR/actions"
     exit 0
 fi
-[[ ${6:-} == open ]] || exit 0
-request=$7/request.json
-cat "$request" >> "$PROVIDER_TEST_DIR/menus"
-index=0
-case ${PROVIDER_TEST_NAME:-} in
-    power|screenshot) index=1 ;;
-esac
-if [[ -n ${PROVIDER_TEST_AUDIO:-} ]] && jq -e 'any(.items[]; .title == "desktop")' "$request" >/dev/null; then
-    index=$(jq --arg title "$PROVIDER_TEST_AUDIO" '.items | map(.title) | index($title)' "$request")
-fi
-if [[ ${PROVIDER_TEST_OTHER_DEVICES:-0} == 1 ]] && jq -e '.prompt == "Audio output" or .prompt == "Microphone"' "$request" >/dev/null; then
-    index=1
-fi
-if [[ ${PROVIDER_TEST_CANCEL:-0} == 1 ]] || {
-    [[ -n ${PROVIDER_TEST_CANCEL_TITLE:-} ]] && jq -e --arg title "$PROVIDER_TEST_CANCEL_TITLE" 'any(.items[]; .title == $title)' "$request" >/dev/null
-}; then
-    printf '%s\n' '{"status":"cancelled"}' > "$7/reply"
-else
-    jq -c --argjson index "$index" --arg multiple "${PROVIDER_TEST_NAME:-}" '
-        {status:"accepted", exitCode:0, items:
-            (if $multiple == "github" then .items else [.items[$index]] end)}
-    ' "$request" > "$7/reply"
-fi
+# Any return to the removed interactive provider path is a regression.
+printf 'unexpected IPC %s\n' "$*" >> "$PROVIDER_TEST_DIR/menus"
+exit 2
 BASH
 cat > "$test_dir/bin/action" <<'BASH'
 #!/usr/bin/env bash
 name=${0##*/}
 printf -v action_args ' <%s>' "$@"
 printf '%s%s\n' "$name" "$action_args" >> "$PROVIDER_TEST_DIR/actions"
-case $name in
-    hyprctl)
-        case ${1:-} in
-            monitors) printf '%s\n' '[{"name":"TEST-1"},{"name":"TEST-2"}]' ;;
-        esac ;;
-    pgrep) [[ ${PROVIDER_TEST_RECORDING:-0} == 1 ]] ;;
-    pactl)
-        case ${1:-} in
-            get-default-sink) printf '%s\n' "${PROVIDER_TEST_OUTPUT:-test.output}" ;;
-            get-default-source) printf '%s\n' "${PROVIDER_TEST_INPUT:-test.microphone}" ;;
-            --format=json)
-                if [[ $3 == cards ]]; then
-                    jq -n '[
-                        {index:1,active_profile:"off"},
-                        {index:2,active_profile:"off",properties:{"object.id":"102"}},
-                        {index:3,active_profile:"on",properties:{"object.id":"103"}}
-                    ]'
-                elif [[ $3 == sinks ]]; then
-                    jq -n --arg name "${PROVIDER_TEST_OUTPUT:-test.output}" \
-                        --arg monitor "${PROVIDER_TEST_MONITOR:-test.output.monitor}" '[
-                        {name:"test.output2", description:"Other output", monitor_source:"test.output2.monitor"},
-                        {name:$name, description:"Primary output", monitor_source:$monitor, properties:{"device.id":"103"}},
-                        {name:"off.output", description:"Disabled output", card:1},
-                        {name:"off.pipewire.output", description:"Disabled PipeWire output", properties:{"device.id":"102"}},
-                        {name:"off.profile.output", description:"Disabled profile output", properties:{"device.profile.name":"off"}}
-                    ]'
-                else
-                    jq -n --arg name "${PROVIDER_TEST_INPUT:-test.microphone}" '[
-                        {name:"test.microphone2", description:"Other microphone"},
-                        {name:$name, description:"Primary microphone", properties:{"device.id":"103"}},
-                        {name:"off.microphone", description:"Disabled microphone", card:1},
-                        {name:"off.pipewire.microphone", description:"Disabled PipeWire microphone", properties:{"device.id":"102"}},
-                        {name:"off.profile.microphone", description:"Disabled profile microphone", properties:{"device.profile.name":"off"}}
-                    ]'
-                fi ;;
-            load-module) printf '99\n' ;;
-        esac ;;
-    wf-recorder)
-        [[ ${PROVIDER_TEST_RECORDER_EXIT:-0} == 0 ]] || exit "$PROVIDER_TEST_RECORDER_EXIT"
-        while (($#)); do
-            if [[ $1 == -f ]]; then printf 'synthetic video\n' > "$2"; break; fi
-            shift
-        done
-        printf 'wf-recorder-finished\n' >> "$PROVIDER_TEST_DIR/actions" ;;
-    satty)
-        cat >/dev/null
-        while (($#)); do
-            if [[ $1 == --output-filename ]]; then touch "$2"; break; fi
-            shift
-        done ;;
-    wl-copy) cat >/dev/null ;;
-    tesseract) printf '%s\n' 'Test OCR' ;;
-    zbarimg) printf '%s\n' 'https://example.test/qr' ;;
-esac
+jq -nc --arg tool "$name" --args '{tool:$tool,args:$ARGS.positional}' -- "$@" >> "$PROVIDER_TEST_DIR/action-arguments"
 BASH
 chmod +x "$test_dir/bin/qs" "$test_dir/bin/action"
-for command in hyprctl code xdg-open dbus-send pcmanfm-qt virsh nc sdl-freerdp3 systemctl loginctl wf-recorder hyprshot satty pactl slurp sleep pgrep pkill notify-send wl-copy tesseract zbarimg; do
+for command in hyprctl xdg-open dbus-send pcmanfm-qt systemctl loginctl; do
     ln -s action "$test_dir/bin/$command"
 done
 for old_config in "$providers/screenshot.env" "$providers/recording.env" "$providers/_common/utils.env"; do
@@ -141,15 +62,6 @@ expect_action() {
     printf 'Missing action: %s\n' "$expected" >&2
     cat "$test_dir/error" >&2
     exit 1
-}
-run_provider() {
-    local name=$1 expected=$2; shift 2
-    : > "$test_dir/actions"; : > "$test_dir/menus"
-    PROVIDER_TEST_NAME="$name" bash "$picker" provider "$name" "$@" > "$test_dir/output" 2> "$test_dir/error"
-    expect_action "$expected"
-    jq -se 'length > 0 and all(.[]; (.items | length) > 1)' "$test_dir/menus" >/dev/null
-    [[ ! -s $test_dir/error ]] || { cat "$test_dir/error" >&2; exit 1; }
-    printf 'PASS: %s provider dispatch, shared helpers and selected action\n' "$name"
 }
 for provider in code github directories webapps remotes n8n power bookmarks encode-qrcode wallpaper screenshot; do
     : > "$test_dir/actions"; : > "$test_dir/menus"
@@ -170,7 +82,7 @@ printf 'PASS: projects, GitHub, directories, Webapps, Remotes, n8n, Power, Bookm
 bash "$picker" provider power Lock
 bash "$picker" provider screenshot ocr >/dev/null
 bash "$picker" provider screenshot qrcode >/dev/null
-PROVIDER_TEST_RECORDING=1 bash "$picker" provider recording
+bash "$picker" provider recording
 expect_action 'loginctl <lock-session>'
 expect_action 'native <screenshot>'
 expect_action 'recording <toggle>'
@@ -181,12 +93,36 @@ printf 'PASS: idle lock, OCR, QR and recording-stop calls bypass selection\n'
 [[ ! -d $test_dir/runtime/quickshell-picker || -z $(find "$test_dir/runtime/quickshell-picker" -mindepth 1 -print -quit) ]]
 printf 'PASS: provider request directories are cleaned up\n'
 
-# Literal recording paths/audio identities and device filtering now use the native setup suite.
-literal_folder="$HOME/Videos quoted literal"
-: > "$test_dir/actions"
-PROVIDER_TEST_SCREENSHOT_FOLDER="$literal_folder" bash "$picker" provider screenshot output
-expect_action 'native <screenshot>'
-printf 'PASS: screenshot CLI routes directly to the native capture service\n'
-
 [[ ! -e $test_dir/env-executed ]]
 printf 'PASS: obsolete provider .env files are never executed\n'
+
+# Exercise the same reveal helper used by detached screenshots and recordings.
+node - "$project_root" "$test_dir" <<'JS'
+const fs=require('fs'),cp=require('child_process'),assert=require('node:assert/strict');
+const {fileURLToPath}=require('node:url');
+const [repo,fixture]=process.argv.slice(2), log=fixture+'/action-arguments';
+const focus={tool:'hyprctl',args:['dispatch','hl.dsp.focus({ window = "class:pcmanfm-qt" })']};
+function reveal(path) {
+    fs.writeFileSync(log,'');
+    const result=cp.spawnSync('bash',['-euc','source "$1"; open_file_explorer "$2"','bash',repo+'/src/services/launcher/providers/_common/utils.sh',path],{encoding:'utf8'});
+    assert.equal(result.status,0,result.stderr);assert.equal(result.stderr,'');
+    return fs.readFileSync(log,'utf8').trim().split('\n').map(line=>JSON.parse(line));
+}
+for(const name of ['Screenshot #1 100% ?,comma "quote".png','Recording Olá 日本語\nnext line.mp4']) {
+    const path=fixture+'/'+name;fs.writeFileSync(path,'saved');
+    const calls=reveal(path);
+    assert.equal(calls.length,2);
+    assert.equal(calls[0].tool,'dbus-send');
+    const args=calls[0].args;
+    assert.ok(args.includes('org.freedesktop.FileManager1.ShowItems'));
+    const uri=args.find(value=>value.startsWith('array:string:')).slice('array:string:'.length);
+    assert.equal(fileURLToPath(uri),path);
+    assert.ok(!/[ #?,"\n]/.test(uri),'file URI is safe as a single D-Bus array entry');
+    assert.deepEqual(calls[1],focus,'focus happens after revealing the file');
+}
+const directory=fixture+'/folder #100%';fs.mkdirSync(directory);
+assert.deepEqual(reveal(directory),[{tool:'xdg-open',args:[directory]},focus]);
+const missing=fixture+'/missing literal #file';
+assert.deepEqual(reveal(missing),[{tool:'pcmanfm-qt',args:[missing]},focus]);
+console.log('PASS: shared screenshot/recording reveal encodes special-character paths and preserves directory opening and focus order');
+JS

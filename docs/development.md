@@ -713,11 +713,13 @@ image selection after setting or cancelling either target step. The wallpaper
 flow uses a custom `Config.wallpaperDirectory` and verifies that the compatibility
 alias returns immediately while all choices stay native.
 
-Provider checks include recording cancellation at each picker and literal shell
-characters in RDP credentials, recording paths, and audio devices. Recording setup
-returns argument arrays without starting capture or loading audio loopback modules.
-Provider fixtures use the shared Config endpoint and poison obsolete `.env` files
-to verify they are never executed.
+`bash tests/launcher/providers.sh` checks native provider dispatch, offline idle Lock,
+and isolation from obsolete `.env` files. It also exercises the shared screenshot/
+recording file-reveal helper with mocked desktop tools: spaces, reserved URI characters,
+commas, quotes, Unicode and newlines remain one encoded file URI, followed by the
+existing file-manager focus request. Directory opening and missing-path fallback
+keep their original commands. Obsolete interactive menu/audio mocks are removed;
+recording setup and detached capture have their own suites below.
 
 `bash tests/launcher/provider-config.sh` exercises the actual headless exporter,
 shared environment handoff, fresh Config edits, offline wallpaper restoration,

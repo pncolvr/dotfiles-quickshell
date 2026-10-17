@@ -32,7 +32,7 @@ fi
 state_folder=$WALLPAPER_STATE_DIRECTORY
 
 umask 077
-work_dir=$(mktemp -d "$(get_temp_dir)/wallpaper.XXXXXXXX")
+work_dir=$(mktemp -d "${XDG_RUNTIME_DIR:-/tmp}/wallpaper.XXXXXXXX")
 trap 'rm -rf -- "$work_dir"' EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM HUP

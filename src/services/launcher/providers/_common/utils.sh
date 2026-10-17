@@ -1,11 +1,7 @@
 #!/usr/bin/env bash
-# Shared picker functions, reused from the former Rofi and Hyprland helpers.
+# Shared provider Config export and completed-file reveal helpers.
 _picker_common_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 PICKER_LAUNCHER="$_picker_common_dir/../../launcher.sh"
-function get_temp_dir() {
-    printf '%s\n' "${XDG_RUNTIME_DIR:-/tmp}"
-}
-
 function load_provider_config() {
     local settings
     local -a assignments
@@ -15,9 +11,11 @@ function load_provider_config() {
 }
 
 function open_file_explorer() {
-    local file=$1
+    local file=$1 uri
     if [[ -f $file ]]; then
-        dbus-send --type=method_call --dest=org.freedesktop.FileManager1 /org/freedesktop/FileManager1 org.freedesktop.FileManager1.ShowItems array:string:"file://$file" string:""
+        # Encode path segments, retaining separators; commas also delimit dbus-send arrays.
+        uri=$(jq -nr --arg path "$file" '"file://" + ($path | split("/") | map(@uri) | join("/"))') || return
+        dbus-send --type=method_call --dest=org.freedesktop.FileManager1 /org/freedesktop/FileManager1 org.freedesktop.FileManager1.ShowItems array:string:"$uri" string:""
     elif [[ -d $file ]]; then
         xdg-open "$file"
     else
