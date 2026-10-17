@@ -69,7 +69,8 @@ A red-pulsing **** bar indicator appears beside screen sharing during capture
 and stays visible through finalization. Hover shows the saved-file destination
 and changes the heading to “Recording finishing” while stopping. Left-click
 pins/unpins it using the shared bar behavior. Recording and sharing reuse
-`UI.ActivityIndicator`; pulse animation goes through `MotionPolicy` and
+`UI.ActivityIndicator`, which opts into visible-glyph vertical centering in the
+shared icon component without changing bar height. Pulse animation goes through `MotionPolicy` and
 `Config.recordingPulseEnabled`, which defaults to `animateIndicators`.
 
 Runtime SQLite state is excluded from backups and untouched by restores.

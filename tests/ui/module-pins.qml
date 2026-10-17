@@ -23,6 +23,7 @@ Scope {
     FloatingWindow {
         id: host
         visible: true
+        color: "black"
         implicitWidth: 1200
         implicitHeight: 400
         Row {
@@ -32,7 +33,7 @@ Scope {
                 Loader {
                     required property var modelData
                     width: modelData === clock ? 240 : 60
-                    height: 35
+                    height: Theme.barHeight
                     sourceComponent: modelData
                 }
             }
@@ -68,6 +69,23 @@ Scope {
                 root.check(TooltipService.pinned && TooltipService.source === trigger && trigger.pinned,
                     trigger.moduleName + " left-click pins")
                 root.check(trigger.moduleIconColor.toString() === Theme.accent.toString(), trigger.moduleName + " uses the shared pin color")
+                if (["sharing", "recording"].includes(trigger.moduleName)) {
+                    events.wait(30)
+                    const image = events.grabImage(trigger)
+                    let first = image.height, last = -1
+                    for (let y = 0; y < image.height; y++) {
+                        for (let x = 0; x < image.width; x++) {
+                            const pixel = image.pixel(x, y)
+                            if (pixel.r + pixel.g + pixel.b > 0.3) {
+                                first = Math.min(first, y)
+                                last = Math.max(last, y)
+                            }
+                        }
+                    }
+                    root.check(last >= first && Math.abs((first + last) / 2 - (image.height - 1) / 2) <= 0.6,
+                        trigger.moduleName + " visible glyph is vertically centered: " + first + ".." + last)
+                    root.check(trigger.height === Theme.barHeight, trigger.moduleName + " preserves bar height")
+                }
                 root.check(oldMuted === AudioService.muted && oldMicMuted === AudioService.micMuted, "pinning does not mute audio")
                 events.mouseClick(trigger, trigger.width / 2, trigger.height / 2, Qt.LeftButton)
                 root.check(!TooltipService.pinned && !trigger.pinned, trigger.moduleName + " left-click unpins")

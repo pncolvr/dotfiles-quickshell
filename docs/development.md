@@ -596,7 +596,8 @@ These offscreen checks never move the real pointer or desktop focus. They verify
 search dismissal, scoped form editing, native-child cleanup and focus restoration,
 manual pin preservation, multiple retention owners, keyboard replacement, Escape
 hierarchy, and persistent manager drafts. All 14 bar modules are clicked to check
-shared pinning/color, and the recording indicator is checked through idle, setup,
+shared pinning/color. Pixel-bound checks verify the visible sharing/recording glyphs
+are vertically centered at Theme.barHeight; the recording indicator is checked through idle, setup,
 capture and finalization without changing sharing state; Calendar mappings and the Updates action buttons are also
 checked with mocked desktop actions. Hover checks cover stationary source changes,
 late hide requests, popup options, and leaving the panel.
