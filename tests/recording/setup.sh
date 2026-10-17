@@ -65,7 +65,8 @@ export PATH="$fixture/bin:$PATH"
 printf '{}' > "$fixture/control"
 tar -C "$repo_dir" --exclude='*.env' --exclude='src/services/launcher/providers/*.json' -cf - src | tar -C "$fixture" -xf -
 sed -i 's/clipboardMonitorEnabled: true/clipboardMonitorEnabled: false/;s/workModeEnabled: true/workModeEnabled: false/' "$fixture/src/config/Config.qml"
-sed 's@"../../src@"src@g' "$repo_dir/tests/recording/setup.qml" > "$fixture/shell.qml"
+sed 's@"../../src@"src@g;s@"../launcher"@"."@g' "$repo_dir/tests/recording/setup.qml" > "$fixture/shell.qml"
+cp "$repo_dir/tests/launcher/NativeFocusDriver.qml" "$fixture/NativeFocusDriver.qml"
 platform=offscreen
 if [[ ${RECORD_SETUP_NATIVE:-0} == 1 ]]; then
     previous_window=$(XDG_RUNTIME_DIR="$original_runtime" /usr/bin/hyprctl activewindow -j | jq -r '.address // empty')

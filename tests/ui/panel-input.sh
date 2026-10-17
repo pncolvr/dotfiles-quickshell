@@ -16,7 +16,8 @@ ln -s "$desktop_runtime/hypr" "$fixture/runtime/hypr"
 tar -C "$repo_dir" --exclude='*.env' --exclude='src/services/launcher/providers/*.json' -cf - src | tar -C "$fixture" -xf -
 # Disable unrelated desktop integrations. Both motion modes use the real policy.
 sed -i 's/clipboardMonitorEnabled: true/clipboardMonitorEnabled: false/;s/workModeEnabled: true/workModeEnabled: false/;s/animationsEnabled: true/animationsEnabled: Quickshell.env("PANEL_INPUT_ANIMATIONS") === "true"/' "$fixture/src/config/Config.qml"
-sed 's@"../../src@"src@g' "$repo_dir/tests/ui/panel-input.qml" > "$fixture/shell.qml"
+sed 's@"../../src@"src@g;s@"../launcher"@"."@g' "$repo_dir/tests/ui/panel-input.qml" > "$fixture/shell.qml"
+cp "$repo_dir/tests/launcher/NativeFocusDriver.qml" "$fixture/NativeFocusDriver.qml"
 for animations in false true; do
     QT_QPA_PLATFORM=wayland WAYLAND_DISPLAY="$display" XDG_RUNTIME_DIR="$fixture/runtime" \
         HOME="$fixture/home" XDG_DATA_HOME="$fixture/data" XDG_CACHE_HOME="$fixture/cache" \

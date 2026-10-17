@@ -26,7 +26,8 @@ cat > "$fixture/bin/code" <<'MOCK'
 printf '%s\n' "$1" >> "$PROJECT_CHOICES_TEST_DIR/actions"
 MOCK
 chmod +x "$fixture/bin/code"
-sed 's@"../../src@"src@g' "$repo_dir/tests/projects/choices-focus.qml" > "$fixture/shell.qml"
+sed 's@"../../src@"src@g;s@"../launcher"@"."@g' "$repo_dir/tests/projects/choices-focus.qml" > "$fixture/shell.qml"
+cp "$repo_dir/tests/launcher/NativeFocusDriver.qml" "$fixture/NativeFocusDriver.qml"
 QT_QPA_PLATFORM=wayland WAYLAND_DISPLAY="$display" XDG_RUNTIME_DIR="$fixture/r" \
     XDG_DATA_HOME="$fixture/data" XDG_CACHE_HOME="$fixture/cache" PROJECT_CHOICES_TEST_DIR="$fixture" \
     PATH="$fixture/bin:$PATH" timeout 12 qs -p "$fixture" > "$fixture/log" 2>&1 || { cat "$fixture/log"; exit 1; }

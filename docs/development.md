@@ -28,6 +28,12 @@ or stop, so you know when the keyboard and mouse are available again. Notificati
 require `notify-send` and a desktop session bus; terminal status remains available.
 Set `TEST_TIMEOUT=300` to change the default 180-second limit per suite.
 
+Native opening, Wallpaper, Projects choices, Recording setup, Screenshot and panel
+input fixtures share `tests/launcher/NativeFocusDriver.qml`. Queue actions and
+readiness predicates through this driver instead of calling QtTest waits inside
+surface transitions. Its timer pauses during each action to prevent synthetic
+input from reentering the same step.
+
 ## Individual checks
 
 `bash tests/system/optional-integrations.sh` checks both

@@ -168,6 +168,7 @@ CLIPBOARD_SEARCH_MOCK
 sed -i 's/clipboardMonitorEnabled: true/clipboardMonitorEnabled: false/;s/workModeEnabled: true/workModeEnabled: false/;s/readonly property bool animationsEnabled:.*/readonly property bool animationsEnabled: true/' "$fixture/src/config/Config.qml"
 sed -i 's/readonly property bool screencastActive:.*/property bool screencastActive: false/' "$fixture/src/services/audio/AudioService.qml"
 sed 's@"../../src@"src@g' "$repo_dir/tests/launcher/screenshot.qml" > "$fixture/shell.qml"
+cp "$repo_dir/tests/launcher/NativeFocusDriver.qml" "$fixture/NativeFocusDriver.qml"
 platform=offscreen
 if [[ ${SCREENSHOT_TEST_NATIVE:-0} == 1 ]]; then
     ln -s "$original_runtime/hypr" "$fixture/r/hypr"

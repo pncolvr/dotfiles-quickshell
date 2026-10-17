@@ -19,6 +19,11 @@ Item {
     Test.TestEvent { id: events }
 
     function check(ok, message) { if (!ok) throw new Error(message) }
+    function add(name, action) { steps.push({name, run: action}) }
+    function waitFor(name, predicate, action = null) { steps.push({name, ready: predicate, run: action}) }
+    function pause(milliseconds) {
+        waitFor("settle for " + milliseconds + "ms", () => Date.now() - root.started >= milliseconds)
+    }
     function key(value, modifiers = Qt.NoModifier) {
         check(events.keyClick(value, modifiers, 0), "no active native window for key " + value)
     }
