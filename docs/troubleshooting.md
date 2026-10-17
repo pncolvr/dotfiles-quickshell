@@ -45,7 +45,7 @@ The switch does not remove privacy rules installed separately by your desktop.
 ## No notifications
 
 Check ownership with `busctl --user status org.freedesktop.Notifications` and
-send a sample with `notify-send`. See [setup](setup.md#notification-ownership)
-when switching from SwayNC.
+send a sample with `notify-send`. See [notifications](features/notifications.md)
+for manager controls and source policies.
 
 [Documentation](README.md)

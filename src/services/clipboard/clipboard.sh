@@ -137,17 +137,5 @@ case ${1:-} in
             if ! jq -e --arg id "$id" 'index($id) != null' <<< "$keep" >/dev/null; then rm -f -- "$payload"; fi
         done
         ;;
-    import-copyq)
-        initialize
-        count=$(copyq size)
-        [[ $count =~ ^[0-9]+$ ]] || exit 2
-        count=$((count < 200 ? count : 200))
-        # Oldest first lets normal repository insertion retain newest-first order.
-        for ((row=count-1; row>=0; row--)); do
-            mime=$(copyq eval 'var item = getItem(Number(str(arguments[1]))); var formats = ["image/png", "image/jpeg", "image/webp", "image/bmp", "image/tiff", "image/gif", "text/plain"]; for (var i = 0; i < formats.length; ++i) { if (formats[i] in item) { print(formats[i]); break; } }' "$row")
-            case $mime in image/png|image/jpeg|image/webp|image/bmp|image/tiff|image/gif|text/plain) ;; "") continue ;; *) exit 2 ;; esac
-            copyq read "$mime" "$row" | CLIPBOARD_STATE=data CLIPBOARD_TYPE="$mime" bash "${BASH_SOURCE[0]}" capture
-        done
-        ;;
-    *) printf 'Usage: clipboard.sh watch|capture|copy-image PATH|restore ID MIME|paste ID MIME ADDRESS CLASS|delete ID...|prune|import-copyq\n' >&2; exit 2 ;;
+    *) printf 'Usage: clipboard.sh watch|capture|copy-image PATH|restore ID MIME|paste ID MIME ADDRESS CLASS|delete ID...|prune\n' >&2; exit 2 ;;
 esac

@@ -869,7 +869,7 @@ Qutebrowser to refresh these bindings. Hypridle calls `provider power Lock`.
 Hyprland uses Super+D for applications and Super+V for clipboard history.
 Existing shortcuts retain their keys. Window-switching shortcuts use native global
 actions. Meta+Shift+Escape preserves its existing notification DND toggle; the
-Notifications module shortcut opens its panel. CopyQ is no longer started automatically.
+Notifications module shortcut opens its panel.
 
 `bash tests/launcher/providers.sh` checks native compatibility dispatch, offline idle
 Lock and shared file reveal with mocked actions. Feature-specific suites cover the
@@ -996,13 +996,8 @@ rich text and alternate formats are not retained together.
 
 ```sh
 qs ipc call clipboard togglePause
-qs ipc call clipboard importCopyq
 qs ipc call clipboard state
 ```
-
-Import reads up to 200 existing text/image entries through CopyQ's CLI without
-modifying CopyQ's source history. CopyQ must be running. No clipboard contents
-are printed to application logs.
 
 The window uses the `quickshell-picker` layer namespace. A namespace alone does
 not exclude it from screen capture: that requires an enabled compositor rule.

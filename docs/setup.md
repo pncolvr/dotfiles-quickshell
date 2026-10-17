@@ -244,31 +244,13 @@ and Manage panels remain visible.
 
 ## Notification ownership
 
-For a deliberate switch, stop the existing Quickshell instance, stop/mask SwayNC,
-make the namespace edit, reload Hypr, then start the shell:
+Quickshell's native server owns `org.freedesktop.Notifications` while it is
+running. Only one notification server can own that interface at a time. Check
+the current owner with `busctl --user status org.freedesktop.Notifications`,
+stop any competing server, then restart Quickshell and verify with a sample:
 
 ```sh
-systemctl --user mask --now swaync.service
-qs -p "$HOME/.config/quickshell"
+notify-send "Quickshell test" "Notifications are working"
 ```
-
-Verify ownership with `busctl --user status org.freedesktop.Notifications` and send
-a sample with `notify-send`. SwayNC's installed D-Bus activation files can start
-its systemd unit on demand, so disabling it alone does not block activation.
-
-To restore SwayNC, stop Quickshell, restore `swaync-notification-window` in the
-Hypr rule, reload Hypr, and unmask/start SwayNC:
-
-```sh
-systemctl --user unmask swaync.service
-systemctl --user start swaync.service
-```
-
-Use a Quickshell configuration without the native notification server before
-starting Quickshell alongside SwayNC. The new history database can be retained.
-Only one handler should own the notification interface. Live screen-sharing
-checks remain part of this manual handover.
-
-See [notifications](features/notifications.md) for manager controls and source policies.
 
 [Documentation](README.md)

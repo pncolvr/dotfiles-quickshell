@@ -96,6 +96,8 @@ Item {
                         spacing: Theme.controlSpacing
                         UI.Text {
                             Layout.fillWidth: true
+                            Layout.alignment: Qt.AlignVCenter
+                            centerVertical: false
                             text: row.modelData.name
                             elide: Text.ElideRight
                             textFormat: Text.PlainText

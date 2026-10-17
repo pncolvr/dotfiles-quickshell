@@ -247,7 +247,6 @@
   "clipboard.actions.pinHint": "Fixar entrada",
   "clipboard.actions.unpinHint": "Desafixar entrada",
   "clipboard.errors.cleanup": "Não foi possível limpar os dados da área de transferência; a tentar novamente.",
-  "clipboard.errors.copyqImport": "Não foi possível importar o histórico do CopyQ. Verifique se está em execução.",
   "clipboard.errors.invalidResponse": "Resposta inválida do auxiliar da área de transferência.",
   "clipboard.errors.monitoring": "A monitorização da área de transferência parou; a tentar novamente.",
   "clipboard.errors.originalWindow": "Janela original indisponível. Use Copiar e depois cole manualmente.",

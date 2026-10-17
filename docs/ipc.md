@@ -33,7 +33,6 @@ qs ipc call launcher windows all # searchable window picker
 qs ipc call launcher windows current # tiled windows on the current workspace
 qs ipc call launcher clipboard   # text/image history with copy and paste
 qs ipc call clipboard togglePause # pause/resume history capture
-qs ipc call clipboard importCopyq # import text/image history without changing CopyQ
 ```
 
 **Meta+Period**, then **R**, reloads Quickshell from Hyprland's tools submap.

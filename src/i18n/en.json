@@ -247,7 +247,6 @@
   "clipboard.actions.pinHint": "Pin entry",
   "clipboard.actions.unpinHint": "Unpin entry",
   "clipboard.errors.cleanup": "Could not clean up clipboard payloads; retrying.",
-  "clipboard.errors.copyqImport": "Could not import CopyQ history. Ensure CopyQ is running.",
   "clipboard.errors.invalidResponse": "Invalid response from the clipboard helper.",
   "clipboard.errors.monitoring": "Clipboard monitoring stopped; retrying.",
   "clipboard.errors.originalWindow": "Original window unavailable. Use Copy, then paste manually.",

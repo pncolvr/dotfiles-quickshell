@@ -155,7 +155,7 @@ if [[ ${NOTIFICATION_TEST_WAYLAND:-0} == 1 ]]; then
 fi
 toggle
 check_state '.dnd and (.popups | length) == 0'
-blocked=$(notify 'Critical blocked' urgency 2 extra ", 'SWAYNC_BYPASS_DND': <true>")
+blocked=$(notify 'Critical blocked' urgency 2 extra ", 'x-test-bypass-dnd': <true>")
 check_state '(.popups | length) == 0' 'sender cannot bypass DND'
 preference allowDuringDnd true
 check_state '(.popups | length) == 0' 'whitelisting does not replay'

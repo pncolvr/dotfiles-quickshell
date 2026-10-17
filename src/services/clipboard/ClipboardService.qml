@@ -19,7 +19,7 @@ Singleton {
     property string ignoredText: ""
     property bool maintenance: false
     property int pendingTasks: 0
-    readonly property bool settled: !initializing && pendingTasks === 0 && !monitor.running && !importer.running
+    readonly property bool settled: !initializing && pendingTasks === 0 && !monitor.running
     readonly property bool monitoring: monitor.running
     readonly property var environment: ({QS_CLIPBOARD_DIRECTORY: Config.clipboardDirectory,
         QS_CLIPBOARD_MAX_BYTES: String(Config.clipboardMaxBytes)})
@@ -52,10 +52,10 @@ Singleton {
         if (paused) monitor.running = false
         else start()
     }
-    function receive(line, imported) {
+    function receive(line) {
         let entry
         try { entry = JSON.parse(line) } catch (_) { error = Translations.text("clipboard.errors.invalidResponse"); return }
-        if ((maintenance && !imported) || (paused && !imported) || entry.id === ignoredId) return
+        if (maintenance || paused || entry.id === ignoredId) return
         if (ignoredText && entry.kind === "text" && entry.text === ignoredText) {
             if (DbService.ready && !ClipboardRepository.contains(entry.id)) run(Config.clipboardCommand.concat(["delete", entry.id]))
             return
@@ -108,11 +108,6 @@ Singleton {
             if (!success) error = Translations.text("images.errors.copy")
         })
     }
-    function importCopyq() {
-        if (maintenance || importer.running) return
-        error = ""
-        importer.running = true
-    }
     function run(command, input, callback) {
         pendingTasks++
         const process = task.createObject(root, {command: command, input: input ?? "", callback: callback ?? null}) as Process
@@ -150,18 +145,6 @@ Singleton {
         }
         // qmllint enable signal-handler-parameters
     }
-    Process {
-        id: importer
-        command: Config.clipboardCommand.concat(["import-copyq"])
-        environment: root.environment
-        stdout: SplitParser { onRead: line => root.receive(line, true) }
-        stderr: StdioCollector { waitForEnd: true }
-        // qmllint disable signal-handler-parameters
-        onExited: (exitCode, exitStatus) => {
-            if (exitCode !== 0 || exitStatus !== 0) root.error = Translations.text("clipboard.errors.copyqImport")
-        }
-        // qmllint enable signal-handler-parameters
-    }
     Component {
         id: task
         Process {
@@ -185,8 +168,7 @@ Singleton {
     IpcHandler {
         target: "clipboard"
         function togglePause(): void { root.togglePaused() }
-        function importCopyq(): void { root.importCopyq() }
         function state(): string { return JSON.stringify({count: ClipboardRepository.count(), monitoring: root.monitoring,
-            paused: root.paused, importing: importer.running, error: root.error}) }
+            paused: root.paused, error: root.error}) }
     }
 }

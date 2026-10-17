@@ -60,8 +60,8 @@ and stack movement durations live in `Theme.notificationEnterDuration`,
 `Theme.notificationExitDuration` and `Theme.notificationMoveDuration` (320, 220
 and 220 ms). History and manager cards do not use these slides.
 
-Popups use the SwayNC reference's dark background at 95% opacity, rounded
-corners and bold monospace text. App icons occupy a left-hand column beside the
+Popups use a dark background at 95% opacity, rounded corners and bold monospace
+text. App icons occupy a left-hand column beside the
 content. File icons supplied through
 `notify-send`, including the custom Twitch logo, use this same left icon slot.
 Twitch sends normal-urgency, nontransient notifications under its own emitter name,
