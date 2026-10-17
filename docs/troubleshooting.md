@@ -26,6 +26,22 @@ It requires an upstream fix; this QML configuration cannot change its polling.
 Outline trimming uses Qt 6.10 or newer's
 [ShapePath trim](https://doc.qt.io/qt-6/qml-qtquick-shapes-shapepath.html#trim-prop).
 
+## Configuration save did not reload
+
+The installed Quickshell 0.3.2 watcher can miss atomic file replacement. An in-place
+save works; otherwise request a manual reload:
+
+```sh
+qs ipc -p "$HOME/.config/quickshell" call shell reload
+```
+
+## Custom HideApplications function is missing
+
+Set `Config.hyprlandHideApplicationsEnabled: false` to skip that custom Hypr Lua
+helper while retaining animation synchronization. To use it, install/adapt the
+[sample capture privacy code](setup.md#screen-sharing) in your own Hypr config.
+The switch does not remove privacy rules installed separately by your desktop.
+
 ## No notifications
 
 Check ownership with `busctl --user status org.freedesktop.Notifications` and

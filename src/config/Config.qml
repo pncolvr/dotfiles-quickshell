@@ -15,6 +15,21 @@ Item {
     // Display language: system, en or pt (European Portuguese). Unsupported locales use English.
     readonly property string language: "system"
 
+    // Optional modules and integrations. Configure these before first launch.
+    readonly property bool bookmarksEnabled: true
+    readonly property bool clipboardMonitorEnabled: true
+    readonly property bool workModeEnabled: true
+    readonly property bool statsNetworkEnabled: true
+    readonly property bool batteriesEnabled: true
+    readonly property bool twitchEnabled: true
+    readonly property bool twitchQutebrowserEnabled: true
+    // Calls the custom Hypr Lua helper; compositor animations also work without it.
+    readonly property bool hyprlandHideApplicationsEnabled: true
+    // Password prompts and browser autofill remain independent of the manager.
+    readonly property bool vaultEnabled: true
+    // Full-state backups still include TOTP tokens when the module is disabled.
+    readonly property bool totpEnabled: true
+
     // Shared UI and privacy
     // Decorative motion follows both switches below.
     readonly property bool animationsEnabled: true
@@ -200,7 +215,6 @@ Item {
     readonly property string projectDotfilesWorkTree: _internal.home
 
     // Launcher: bookmarks. Share the project URL opener by default.
-    readonly property bool bookmarksEnabled: true
     readonly property string bookmarkFile: _internal.home + "/.config/qutebrowser/bookmarks/urls"
     readonly property var bookmarkBrowserCommand: projectBrowserCommand
 
@@ -299,7 +313,6 @@ Item {
     readonly property int clipboardMaxBytes: 10000000
     readonly property int clipboardPreviewMaxPixels: 8388608
     readonly property string clipboardDirectory: Quickshell.shellPath("data/clipboard")
-    readonly property bool clipboardMonitorEnabled: true
     readonly property var clipboardCommand: ["bash", Quickshell.shellPath("src/services/clipboard/clipboard.sh")]
 
     // Hyprland: workspaces and windows
@@ -320,7 +333,9 @@ Item {
     readonly property var hyprlandSetNoWarpsCommand: (value) => ["hyprctl", "eval", `hl.config({ cursor = { no_warps = ${value} } })`]
     readonly property var hyprlandGetActiveWindowHiddenCommand: ["bash", "-c", "hyprctl getprop activewindow no_screen_share"]
     readonly property var hyprlandSynchronizeCaptureCommand: (active, animationsEnabled) => ["hyprctl", "eval",
-        `HideApplications(${active}, ${animationsEnabled})`]
+        hyprlandHideApplicationsEnabled
+            ? `HideApplications(${active}, ${animationsEnabled})`
+            : `hl.config({ animations = { enabled = ${animationsEnabled} } })`]
     // Resolve live group membership when dispatched; cached group indexes can change.
     readonly property var hyprlandFocusWindowByAddress: (address) => `function()
         for _, window in ipairs(hl.get_windows()) do
@@ -396,7 +411,6 @@ Item {
     readonly property var updatesInstallCommand: ["setsid", "ghostty", "-e", "yay"]
 
     // Optional work mode; private detection rules and tracking live in SQLite.
-    readonly property bool workModeEnabled: true
     readonly property int workHistoryRetentionMonths: 36
 
     // Notifications
@@ -458,7 +472,6 @@ Item {
     readonly property int networkAlertInterval: Timespan.fromMinutes(1)
 
     // System statistics and power
-    readonly property bool statsNetworkEnabled: true
     readonly property string statsProcRoot: "/proc"
     readonly property string statsTemperaturePath: "/sys/class/thermal/thermal_zone1/temp"
     readonly property var statsProcessesCommand: resource => [
@@ -469,7 +482,6 @@ Item {
     readonly property var powerProfiles: ["power-saver", "balanced", "performance"]
 
     // Batteries
-    readonly property bool batteriesEnabled: true
     readonly property int batteryReceiverInterval: Timespan.fromMinutes(1)
     readonly property int batteryLowThreshold: 20
     readonly property int batteryCriticalThreshold: 10
@@ -478,8 +490,6 @@ Item {
     ]
 
     // Twitch and browser sessions
-    readonly property bool twitchEnabled: true
-    readonly property bool twitchQutebrowserEnabled: true
     // Whole minutes, aligned to the minute of the hour (:00, :05, :10, ...).
     readonly property int twitchInterval: Timespan.fromMinutes(5)
     readonly property int twitchUndoDuration: Timespan.fromSeconds(6)
@@ -491,11 +501,7 @@ Item {
         `${qutebrowserSessionsDirectory}/default.yml`
     ]
 
-    // Vault manager. Password prompts and browser autofill remain independent.
-    readonly property bool vaultEnabled: true
-
     // TOTP
-    readonly property bool totpEnabled: true
     // TOTP secrets live in the desktop Secret Service, never in this config.
     readonly property string totpVault: "default"
     readonly property string totpVaultLabel: "Quickshell TOTP"

@@ -20,6 +20,8 @@ Singleton {
 
     readonly property bool animationsEnabled: Config.hyprlandAnimationsEnabled && !AudioService.screencastActive
     onAnimationsEnabledChanged: synchronizeCapture()
+    readonly property bool hideApplicationsEnabled: Config.hyprlandHideApplicationsEnabled
+    onHideApplicationsEnabledChanged: synchronizeCapture()
 
     function synchronizeCapture() { captureSyncTimer.restart() }
 

@@ -13,10 +13,13 @@ Scope {
     id: root
     property bool failed: false
     readonly property var settings: Config
+    readonly property var audio: AudioService
+    readonly property var captureController: HyprlandEventsService
     Test.TestCase { id: events; when: false }
     Test.TestResult { id: objects }
     FileView { id: runs; path: Quickshell.shellPath("runs"); preload: false; blockAllReads: true }
     function count(kind) { runs.reload(); return runs.text().split("\n").filter(line => line === kind).length }
+    function captured(code) { return count("capture:" + code) > 0 }
     function check(ok, message) { if (!ok) { failed = true; console.error("OPTIONAL FAIL:",message) } }
     function waitUntil(predicate, message) {
         for (let i = 0; i < 120 && !predicate(); i++) events.wait(25)
@@ -35,6 +38,32 @@ Scope {
         interval: 100
         running: true
         onTriggered: {
+            for (const enabled of [false, true]) {
+                root.settings.hyprlandHideApplicationsEnabled = enabled
+                for (const active of [false, true]) {
+                    for (const animated of [false, true]) {
+                        const command = Config.hyprlandSynchronizeCaptureCommand(active, animated)
+                        const expected = enabled ? `HideApplications(${active}, ${animated})`
+                            : `hl.config({ animations = { enabled = ${animated} } })`
+                        root.check(command.length === 3 && command[0] === "hyprctl"
+                            && command[1] === "eval" && command[2] === expected,
+                            "capture helper opt-out retains compositor animation synchronization")
+                    }
+                }
+            }
+            root.settings.hyprlandHideApplicationsEnabled = false
+            root.waitUntil(() => root.captured("hl.config({ animations = { enabled = true } })"),
+                "disabled privacy integration reaches the compositor through the real service")
+            root.audio.screencastActive = true
+            root.waitUntil(() => root.captured("hl.config({ animations = { enabled = false } })"),
+                "sharing still disables animations while custom helper is disabled")
+            root.settings.hyprlandHideApplicationsEnabled = true
+            root.waitUntil(() => root.captured("HideApplications(true, false)"),
+                "enabling privacy integration resynchronizes the real service")
+            const previousEndCount = root.count("capture:HideApplications(false, true)")
+            root.audio.screencastActive = false
+            root.waitUntil(() => root.count("capture:HideApplications(false, true)") > previousEndCount,
+                "ending sharing invokes the enabled helper and restores animations")
             root.waitUntil(() => DbService.ready,"isolated database ready")
             const receiverTimer = objects.findChild(BatteryService,"batteryReceiverTimer") as Timer
             const browserTimer = objects.findChild(twitch,"twitchBrowserSuggestionsTimer") as Timer

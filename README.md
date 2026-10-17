@@ -23,13 +23,18 @@ A desktop bar for Hyprland, built with QML and Quickshell.
 
 ## Dependencies
 
-Quickshell (developed with 0.3.1), Qt 6.10+, Hyprland, Bash, coreutils, `jq`, and
+Quickshell (currently checked with 0.3.2), Qt 6.10+, Hyprland with its Lua API, Bash, coreutils, `jq`, and
 `sqlite3` with FTS5 support (SQLite 3.42+).
 Fonts: Noto Sans Mono, JetBrains Mono and Font Awesome 7 Free Solid.
 
 Individual features use PipeWire, `pactl`, UPower, BlueZ, a Secret Service provider,
 `secret-tool`, `oathtool`, the Twitch CLI and other desktop tools.
 See [setup](docs/setup.md) for the full dependency list and optional integrations.
+Start with the [Arch installation guide](docs/install-arch.md) and the
+[first-run checklist](docs/setup.md#first-run-checklist). Installation instructions
+currently cover Arch only.
+Optional switches are grouped at the top of `config/Config.qml`; the tracked
+configuration currently enables them, so review that block before first launch.
 
 ## Running
 
@@ -40,7 +45,8 @@ Place the repository at `~/.config/quickshell`, review the
 qs -p "$HOME/.config/quickshell"
 ```
 
-No build step is required. This configuration includes a native notification
+No manual QML build step is required; the optional audio spectrum helper compiles
+on first use. This configuration includes a native notification
 server; see [setup](docs/setup.md#notification-ownership) if another server is running.
 
 ## Checks

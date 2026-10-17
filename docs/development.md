@@ -2,6 +2,11 @@
 
 Run the following commands from the repository root.
 
+`bash tests/system/optional-integrations.sh` checks both
+branches of `hyprlandHideApplicationsEnabled` for sharing on/off and animations
+on/off. It exercises the capture-sync service with a mock hyprctl; it never
+changes compositor settings.
+
 Clipboard index checks: `bash tests/clipboard/fts/run.sh` exercises migrations,
 safe literal queries, derived-index consistency, rollback, recovery and private
 storage permissions. `bash tests/clipboard/fts/ui.sh` checks indexed/fuzzy search,
@@ -103,8 +108,6 @@ wide layouts, font changes, complete keybinds and centered final-row sizing.
 The shell releases `TooltipService` ownership references before the old root
 is destroyed on reload. `bash tests/ui/reload-warnings.sh` exercises twenty
 isolated generations and checks for undefined assignments during teardown.
-This check does not cover native Wayland input-surface warnings or establish a
-fix for the separately reported picker-height binding loop.
 Work rules reuse `LineListField.headerActions` without changing their stacked
 layout or width. Run `bash tests/launcher/manage-layout.sh` for selection, filters,
 draft context, form rendering, Work dirty-state controls and motion/sharing

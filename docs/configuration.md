@@ -22,6 +22,31 @@ clipboard; Hyprland;
 calendar/timers; package updates; status/timecard; notifications; recent files;
 audio/media; network/statistics/power; batteries; Twitch/browser sessions; and TOTP.
 
+## Optional modules and integrations
+
+The switches are grouped immediately below `language` at the top of
+`config/Config.qml`. The tracked configuration currently enables all ten; review
+this block before first launch. Personal overrides and different clone defaults
+have not been introduced.
+
+| Setting | When false |
+| --- | --- |
+| `bookmarksEnabled` | Hide/disable the Bookmarks picker and skip bookmark-file reads |
+| `clipboardMonitorEnabled` | Stop automatic history collection; existing history remains available |
+| `workModeEnabled` | Stop work detection/tracking and remove category filters; retain saved data |
+| `statsNetworkEnabled` | Hide Stats Network and stop bandwhich sampling; retain Overview totals, CPU and Memory |
+| `batteriesEnabled` | Hide Batteries and stop collection/receiver scans; retain cached readings |
+| `twitchEnabled` | Disable Twitch UI and module work; retain saved channels/cache |
+| `twitchQutebrowserEnabled` | Skip Twitch browser-session suggestions; other Twitch features remain available |
+| `hyprlandHideApplicationsEnabled` | Skip the custom `HideApplications(...)` helper; still synchronize compositor animations |
+| `vaultEnabled` | Disable Vault management; password prompts and explicitly installed browser autofill remain independent |
+| `totpEnabled` | Disable TOTP UI/module work; full-state backup/restore still includes tokens and needs the TOTP tools |
+
+Without the custom capture helper, this configuration does not install or toggle
+compositor privacy rules. Review the [sample Hypr Lua code](setup.md#screen-sharing)
+before enabling it. Screenshot/recording control closure uses the separate
+per-panel `hideForCapture` policy; this switch does not change that policy.
+
 ## Display language
 
 Set `Config.language` in `config/Config.qml` to `"system"` (default), `"en"` or
