@@ -784,8 +784,18 @@ offscreen production RecordingService fixture applies Config changes during capt
 then restarts its Quickshell process and stops the same recorder. The edit writes
 in place to preserve the watched inode. On the installed Quickshell 0.3.2, an
 isolated probe misses `sed -i` atomic replacement while an in-place write triggers
-reload; this is a file-watcher limitation, separate from recording ownership. The
-regression still waits for automatic reload, without an explicit reload request. It needs Bash,
+reload; this is a file-watcher limitation, separate from recording ownership. A
+Qt watcher probe reproduced the event-order race: `directoryChanged` can arrive
+before `fileChanged`, so the native handler checks its replaced-file list before
+the path is added. Rechecking that list immediately when a file watch is removed
+resolved all 20 runs of the probe; the original handler missed 10 of 20 changes.
+This isolated-handler result is not yet validation of a patched Quickshell binary.
+The relevant code is [EngineGeneration::onFileChanged/onDirectoryChanged](https://github.com/quickshell-mirror/quickshell/blob/v0.3.2/src/core/generation.cpp).
+The agreed fallback is manual reload through the existing shell-reload action or
+`qs -p ~/.config/quickshell ipc call shell reload` when an atomic save is missed.
+Keep the packaged Quickshell build and its native watcher; no second watcher or
+local engine patch is maintained. The regression still waits for automatic reload,
+without an explicit reload request. It needs Bash,
 coreutils, jq, sqlite3, Node.js and Quickshell IPC; it never captures the desktop
 or microphone. The backup regression also checks that runtime recording state is
 excluded from archives and unchanged by restore.
