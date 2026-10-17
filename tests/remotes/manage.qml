@@ -7,7 +7,7 @@ import Quickshell.Io
 import "../../src/config"
 import "../../src/services"
 import "../../src/modules/launcher"
-import "../../src/theme/ui" as UI
+import "../../src/ui" as UI
 import "../../src/services/remotes/RemoteEntries.mjs" as Entries
 Scope {
     id:root

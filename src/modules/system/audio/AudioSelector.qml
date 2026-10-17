@@ -1,5 +1,5 @@
 import "../../../theme"
-import "../../../theme/ui" as UI
+import "../../../ui" as UI
 
 // Audio dropdowns share the project-wide selector, preserving their existing dimensions.
 UI.ComboSelector {

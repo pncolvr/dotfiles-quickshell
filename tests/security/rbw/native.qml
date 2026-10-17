@@ -8,7 +8,7 @@ import Quickshell.Wayland
 import "../../../src/services"
 import "../../../src/modules/launcher"
 import "../../../src/config"
-import "../../../src/theme/ui" as UI
+import "../../../src/ui" as UI
 
 Scope {
     id: root

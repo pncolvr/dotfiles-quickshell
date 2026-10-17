@@ -11,7 +11,7 @@ import "../../src/modules/media"
 import "../../src/modules/system/totp"
 import "../../src/modules/system"
 import "../../src/services"
-import "../../src/theme/ui" as UI
+import "../../src/ui" as UI
 
 Scope {
     id: root

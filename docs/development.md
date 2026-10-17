@@ -40,7 +40,8 @@ src/
   modules/         Feature UI
   services/        Native services, repositories and Bash helpers
   config/          Settings, Theme.qml link and singleton metadata
-  theme/           Appearance settings, shared UI components and rendering utilities
+  theme/           Appearance settings and palettes
+  ui/              Shared UI components, interaction/rendering utilities and shaders
   assets/          Images
 docs/              Setup, usage and implementation details
 tests/             Helper, QML and integration checks
@@ -89,6 +90,35 @@ Vault UI uses feature-owned `VaultEntryList`, `VaultEntryDetails` and
 `UI.TextArea`; read-only notes masking belongs to the vault details view. Recent/folder file
 helpers share local path identity and URI encoding through `file-records.jq`,
 while each helper keeps its own source metadata and sorting.
+
+## Shared UI foundations
+
+Reusable UI lives in `src/ui/`, with controls under `components/` and shader
+sources/bundles under `shaders/`. `src/theme/` contains appearance settings and
+palettes. Import the UI module with an `as UI` alias; both the root and local
+component metadata export the same types and singleton instances.
+
+`UI.SelectableRow` owns pointer cursors, hover/selection backgrounds, foreground
+colors, pointer activation and Enter activation. Picker, Manage, Vault and
+selection rows reuse it while retaining their own content and sizing. Picker
+rows retain Ctrl-click selection and Clipboard's select-on-click/open-on-double-click
+behavior through `chosen`, `activated` and `activateOnClick`. Other rows use
+`activated` for entry selection. Put common interaction changes in this base.
+
+Display text uses `UI.TextBase` for rendering/font defaults with explicit
+positioning, `UI.Text`/`UI.ColumnText` for standard styled labels, and
+`UI.GlyphText` for glyphs with plain font metrics. Existing bar icon components
+retain their styled font and slot sizing. Custom button ink centering and TOTP
+rolling positions remain at their call sites. Prefer these components over raw
+Qt Text objects. TextField and TextArea have different Qt bases; their shared
+input wrappers continue reading the same Theme rendering/hinting settings.
+Changing those settings still requires one Theme edit.
+
+Run `bash tests/ui/rows.sh` for isolated pointer/keyboard activation, Ctrl-click,
+Clipboard double-click, disabled/editing guards, native-equivalent focus, row
+sizing and shared text defaults. No live pointer, focus, clipboard or credentials
+are used. Existing Manage, Vault, button-focus, theme, keybind and TOTP fixtures
+cover the specialized layouts and interactions.
 
 ## QML lint and editor
 
@@ -205,10 +235,10 @@ The shader source and compiled bundle are both tracked. After changing it, rebui
 
 ```sh
 /usr/lib/qt6/bin/qsb --glsl '100 es,120,150' --hlsl 50 --msl 12 \
-  -o src/theme/shaders/pulse.frag.qsb src/theme/shaders/pulse.frag
+  -o src/ui/shaders/pulse.frag.qsb src/ui/shaders/pulse.frag
 ```
 
-Scrollable modules use `UI.ScrollBar` from `src/theme/ui/components/ScrollBar.qml`.
+Scrollable modules use `UI.ScrollBar` from `src/ui/components/ScrollBar.qml`.
 It overlays the content with an accent-colored thumb during scrolling or hover,
 then fades away. Keep content and row widths equal to the viewport width; do not
 reserve a gutter or change panel dimensions when a scrollbar appears. The shared
@@ -643,10 +673,10 @@ animation, reach the band texture, interpolate to intermediate pixels, and stop
 interpolating on pause.
 
 The original CAVA 1.0.0 shader sources, Qt ports, and compiled bundles are tracked
-under `src/theme/shaders/cava`. Rebuild all shader stages with:
+under `src/ui/shaders/cava`. Rebuild all shader stages with:
 
 ```sh
-python3 src/theme/shaders/cava/build.py
+python3 src/ui/shaders/cava/build.py
 ```
 Add `--native-imports` to check the complete bar, real device/profile mapping,
 sorted lists, and system default bindings without changing your audio settings.

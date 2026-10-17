@@ -1,6 +1,6 @@
 import QtQuick
 import "../../../theme"
-import "../../../theme/ui" as UI
+import "../../../ui" as UI
 
 UI.ActionButton {
     id: root
@@ -34,16 +34,11 @@ UI.ActionButton {
                 font.pixelSize: root.glyphSize
                 font.bold: false
             }
-            Text {
-                renderType: Theme.textRenderType
-                font.hintingPreference: Theme.fontHintingPreference
+            UI.TextBase {
                 anchors.verticalCenter: parent.verticalCenter
                 text: root.label
                 visible: text.length > 0
                 color: root.foreground
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontSize
-                font.bold: Theme.fontBold
             }
         }
     }

@@ -4,7 +4,7 @@ import "../../i18n"
 import QtQuick
 import QtQuick.Controls as QC
 import "../../theme"
-import "../../theme/ui" as UI
+import "../../ui" as UI
 import "../../services"
 
 Item {
@@ -370,10 +370,9 @@ Item {
             onSelected: login => TwitchService.undoRemoveUser(login)
         }
 
-        Text {
+        UI.TextBase {
             id: errorText
-            renderType: Theme.textRenderType
-            font.hintingPreference: Theme.fontHintingPreference
+            font.bold: false
             width: root.width
             height: Math.min(implicitHeight, root.maximumHeight * 0.2)
             visible: text.length > 0
@@ -383,8 +382,6 @@ Item {
             maximumLineCount: 3
             elide: Text.ElideRight
             clip: true
-            font.family: Theme.fontFamily
-            font.pixelSize: Theme.fontSize
             UI.HoverTooltip { text: TwitchService.error }
         }
     }

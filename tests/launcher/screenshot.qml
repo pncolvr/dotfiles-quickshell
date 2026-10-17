@@ -4,7 +4,7 @@ import QtTest as Test
 import Quickshell
 import Quickshell.Io
 import "../../src/services"
-import "../../src/theme/ui" as UI
+import "../../src/ui" as UI
 import "../../src/bar"
 
 Scope {

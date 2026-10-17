@@ -7,7 +7,7 @@ import QtQml.Models
 import Quickshell
 import "../../../config"
 import "../../../theme"
-import "../../../theme/ui" as UI
+import "../../../ui" as UI
 import "../../../services"
 
 Column {

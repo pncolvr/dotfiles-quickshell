@@ -6,7 +6,7 @@ import Quickshell
 import Quickshell.Wayland
 import "../../../services"
 import "../../../theme"
-import "../../../theme/ui" as UI
+import "../../../ui" as UI
 import "../../../config"
 
 // qmllint disable uncreatable-type

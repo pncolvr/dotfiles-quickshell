@@ -25,8 +25,8 @@ Item {
 }
 QML
 # The type must also be discoverable when added to a previously loaded UI module.
-rm -f "$fixture/src/theme/ui/components/LineListField.qml"
-sed -i '/^LineListField 1.0 /d' "$fixture/src/theme/ui/qmldir" "$fixture/src/theme/ui/components/qmldir"
+rm -f "$fixture/src/ui/components/LineListField.qml"
+sed -i '/^LineListField 1.0 /d' "$fixture/src/ui/qmldir" "$fixture/src/ui/components/qmldir"
 export HOME="$fixture/home" XDG_RUNTIME_DIR="$fixture/runtime" XDG_DATA_HOME="$fixture/data" XDG_CACHE_HOME="$fixture/cache"
 export QT_QPA_PLATFORM=offscreen QT_QUICK_BACKEND=software QT_NO_XDG_DESKTOP_PORTAL=1
 unset WAYLAND_DISPLAY HYPRLAND_INSTANCE_SIGNATURE
@@ -46,9 +46,9 @@ wait_state() {
     return 1
 }
 wait_state '.loaded and (.multiple|not)'
-cp "$project_root/src/theme/ui/components/LineListField.qml" "$fixture/src/theme/ui/components/"
-cp "$project_root/src/theme/ui/qmldir" "$fixture/src/theme/ui/qmldir"
-cp "$project_root/src/theme/ui/components/qmldir" "$fixture/src/theme/ui/components/qmldir"
+cp "$project_root/src/ui/components/LineListField.qml" "$fixture/src/ui/components/"
+cp "$project_root/src/ui/qmldir" "$fixture/src/ui/qmldir"
+cp "$project_root/src/ui/components/qmldir" "$fixture/src/ui/components/qmldir"
 sleep 1.1
 cp "${STATUS_RELOAD_EDITOR:-$project_root/src/modules/status/StatusRulesEditor.qml}" "$fixture/src/modules/status/StatusRulesEditor.qml"
 # Verify the actual current panel, rather than merely checking the process or IPC target.
@@ -60,7 +60,7 @@ ipc reload >/dev/null
 # Successful explicit reload creates a new root and loads the new list component.
 wait_state ".loaded and .multiple and .generation!=\"$generation\""
 generation=$(jq -r .generation <<< "$snapshot")
-printf '\n// Exercise automatic reload of the shared field.\n' >> "$fixture/src/theme/ui/components/LineListField.qml"
+printf '\n// Exercise automatic reload of the shared field.\n' >> "$fixture/src/ui/components/LineListField.qml"
 wait_state ".loaded and .multiple and .generation!=\"$generation\""
 ipc exercise | jq -e '.folders==["/synthetic/first","/synthetic/second"] and (.dirty|not)' >/dev/null
 ! rg -q 'Failed to load configuration|TypeError:|ReferenceError:|Binding loop' "$fixture/log"

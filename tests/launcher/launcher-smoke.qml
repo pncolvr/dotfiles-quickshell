@@ -6,7 +6,7 @@ import Quickshell
 import Quickshell.Io
 import "../../src/services"
 import "../../src/modules/launcher"
-import "../../src/theme/ui" as UI
+import "../../src/ui" as UI
 import "../../src/config"
 import "../../src/theme"
 

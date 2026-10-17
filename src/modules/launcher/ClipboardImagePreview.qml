@@ -4,7 +4,7 @@ import QtQuick
 import QtQuick.Window
 import Quickshell.Io
 import "../../theme"
-import "../../theme/ui" as UI
+import "../../ui" as UI
 import "../../config"
 
 Item {

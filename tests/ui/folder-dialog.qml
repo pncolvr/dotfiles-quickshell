@@ -3,7 +3,7 @@ import QtQuick
 import QtQuick.Dialogs as Dialogs
 import QtTest as Test
 import Quickshell
-import "../../src/theme/ui" as UI
+import "../../src/ui" as UI
 import "../../src/bar"
 import "../../src/services"
 

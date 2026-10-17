@@ -1,6 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import "../../src/theme/ui" as UI
+import "../../src/ui" as UI
 import QtTest as Test
 import Quickshell
 import "../../src/services"

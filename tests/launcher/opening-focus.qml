@@ -5,7 +5,7 @@ import Quickshell
 import Quickshell.Wayland
 import "../../src/services"
 import "../../src/modules/launcher"
-import "../../src/theme/ui" as UI
+import "../../src/ui" as UI
 
 // Actual native launcher hosts, synthetic projects/input, isolated storage.
 Scope {

@@ -4,7 +4,7 @@ import "../../i18n"
 import QtQuick
 import QtQuick.Layouts
 
-import "../../theme/ui" as UI
+import "../../ui" as UI
 import "../../theme"
 import "../../services"
 

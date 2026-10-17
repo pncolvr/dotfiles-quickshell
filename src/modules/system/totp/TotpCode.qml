@@ -1,7 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import "../../../theme/ui" as UI
+import "../../../ui" as UI
 import "../../../theme"
 
 Item {
@@ -76,9 +76,8 @@ Item {
                 height: root.height
                 clip: true
 
-                Text {
+                UI.TextBase {
                     id: currentDigit
-                    renderType: Theme.textRenderType
                     objectName: "totpDigit_" + reel.index
                     x: reel.gap
                     y: -(reel.position - reel.offset) * reel.height
@@ -90,8 +89,7 @@ Item {
                     font: root.font
                     color: root.color
                 }
-                Text {
-                    renderType: Theme.textRenderType
+                UI.TextBase {
                     x: reel.gap
                     y: currentDigit.y + reel.height
                     width: digitMetrics.advanceWidth

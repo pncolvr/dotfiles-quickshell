@@ -1,6 +1,6 @@
 import QtQuick
 import QtTest
-import "../../src/theme/ui/components/ImageCrop.mjs" as ImageCrop
+import "../../src/ui/components/ImageCrop.mjs" as ImageCrop
 
 TestCase {
     name: "NotificationImageMask"

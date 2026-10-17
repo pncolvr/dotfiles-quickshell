@@ -8,7 +8,7 @@ import Quickshell.Io
 import "../../src/modules/system/files"
 import "../../src/services"
 import "../../src/theme"
-import "../../src/theme/ui" as UI
+import "../../src/ui" as UI
 
 Scope {
     id: root

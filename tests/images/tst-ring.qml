@@ -1,6 +1,6 @@
 import QtQuick
 import QtTest
-import "../../src/theme/ui/components/ImageCrop.mjs" as Crop
+import "../../src/ui/components/ImageCrop.mjs" as Crop
 
 TestCase {
     name: "ImageRingDetection"

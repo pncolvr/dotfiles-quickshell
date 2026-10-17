@@ -1,5 +1,5 @@
-import "../../../theme/ui" as UI
-import "../../../theme/ui/components/ImageCrop.mjs" as ImageCrop
+import "../../../ui" as UI
+import "../../../ui/components/ImageCrop.mjs" as ImageCrop
 
 UI.CroppedImage {
     circular: true

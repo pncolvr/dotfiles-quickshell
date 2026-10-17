@@ -1,7 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls as QC
-import "../../src/theme/ui" as UI
+import "../../src/ui" as UI
 import QtTest as Test
 import Quickshell
 import "../../src/modules/system"

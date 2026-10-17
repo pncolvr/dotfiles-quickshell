@@ -1,6 +1,6 @@
 import QtQuick
 import "../../theme"
-import "../../theme/ui"
+import "../../ui"
 import "../../services"
 
 StatusBadge {

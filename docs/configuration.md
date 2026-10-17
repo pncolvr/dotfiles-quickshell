@@ -14,7 +14,7 @@
 
 The root `config/` link exposes `Config.qml` and relative links to `Theme.qml`
 and `ThemePalette.qml` under `src/theme/`. Editing either path updates the same file; both QML
-modules export the same singleton. Reusable UI components remain under `src/theme/ui`.
+modules export the same singleton. Reusable UI components remain under `src/ui`.
 
 `Config.qml` groups settings by component: shared UI/privacy and storage;
 launcher pickers, projects, directories and wallpapers; screenshots/recording;
@@ -170,7 +170,7 @@ black/white used by QR images, image masks and shader inputs stays independent.
 
 
 `Theme.qml` groups appearance settings by component and keeps rendering state in
-shared UI utilities. Pulse timing lives in `src/theme/ui/PulseClock.qml`; calendar
+shared UI utilities. Pulse timing lives in `src/ui/PulseClock.qml`; calendar
 color selection belongs to the month view used by month/year calendars.
 
 Feature properties can inherit shared defaults while retaining their own names:

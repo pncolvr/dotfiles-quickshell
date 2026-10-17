@@ -4,7 +4,7 @@ import QtQuick
 import QtQuick.Window
 import Quickshell.Io
 import "../../theme"
-import "../../theme/ui" as UI
+import "../../ui" as UI
 
 // A small, bounded working set shared by wallpaper and clipboard navigation.
 // Decode one image at a time. Key repeat replaces the queued selection rather

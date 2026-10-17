@@ -2,7 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Effects
 import "../../theme"
-import "../../theme/ui" as UI
+import "../../ui" as UI
 
 // Shared floating geometry, content lifetime and motion; the native host stays thin.
 Item {

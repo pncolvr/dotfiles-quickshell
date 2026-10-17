@@ -8,7 +8,7 @@ import "../../src/modules/updates" as UpdatesModule
 import "../../src/modules/status" as StatusModule
 import "../../src/modules/media" as MediaModule
 import "../../src/modules/hyprland" as HyprlandModule
-import "../../src/theme/ui" as UI
+import "../../src/ui" as UI
 import "../../src/theme"
 import "../../src/services"
 

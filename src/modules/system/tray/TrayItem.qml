@@ -2,7 +2,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Services.SystemTray
 import "../../../theme/"
-import "../../../theme/ui" as UI
+import "../../../ui" as UI
 
 UI.WrapperMouseArea {
     id: root

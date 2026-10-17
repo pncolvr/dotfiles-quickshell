@@ -5,7 +5,7 @@ import QtQuick
 import QtQuick.Controls as QC
 import Quickshell
 import "../../../theme"
-import "../../../theme/ui" as UI
+import "../../../ui" as UI
 import "../../../services"
 
 Column {

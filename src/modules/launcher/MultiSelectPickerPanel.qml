@@ -3,7 +3,7 @@ pragma ComponentBehavior: Bound
 import "../../i18n"
 import QtQuick
 import "../../theme"
-import "../../theme/ui" as UI
+import "../../ui" as UI
 
 PickerPanelBase {
     id: root

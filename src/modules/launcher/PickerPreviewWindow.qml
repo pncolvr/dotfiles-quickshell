@@ -4,7 +4,7 @@ import Quickshell
 import Quickshell.Wayland
 import "../../config"
 import "../../theme"
-import "../../theme/ui" as UI
+import "../../ui" as UI
 
 // A non-activating companion window; the list owns keyboard navigation/focus.
 UI.PanelWindow {

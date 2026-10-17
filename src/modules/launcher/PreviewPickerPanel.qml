@@ -2,7 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import "../../i18n"
 import "../../config"
-import "../../theme/ui" as UI
+import "../../ui" as UI
 
 // One preview toggle/default policy; presentation is owned by the companion window.
 PickerPanelBase {

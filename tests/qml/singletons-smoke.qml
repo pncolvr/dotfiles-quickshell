@@ -12,8 +12,8 @@ import "../../src/services/recording" as Recording
 import "../../src/services/n8n" as N8n
 import "../../src/config" as Settings
 import "../../src/theme" as Styling
-import "../../src/theme/ui" as UI
-import "../../src/theme/ui/components" as Components
+import "../../src/ui" as UI
+import "../../src/ui/components" as Components
 
 Scope {
     id: root

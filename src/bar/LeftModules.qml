@@ -1,7 +1,7 @@
 import QtQuick
 import "../modules/hyprland"
 import "../theme"
-import "../theme/ui"
+import "../ui"
 
 Row {
     height: parent.height

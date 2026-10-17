@@ -3,7 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import "../../../services"
 import "../../../theme"
-import "../../../theme/ui"
+import "../../../ui"
 import "../../../config"
 
 TooltipArea {

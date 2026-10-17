@@ -4,7 +4,7 @@ import QtQuick.Controls as QC
 import QtTest as Test
 import Quickshell
 import "../../src/modules/status"
-import "../../src/theme/ui" as UI
+import "../../src/ui" as UI
 
 Scope {
     id: root

@@ -5,7 +5,7 @@ import Quickshell
 import Quickshell.Wayland
 import "../../src/config"
 import "../../src/bar"
-import "../../src/theme/ui" as UI
+import "../../src/ui" as UI
 import "../../src/services"
 import "../../src/modules/system/timers"
 import "../../src/modules/system/stats"

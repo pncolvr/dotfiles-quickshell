@@ -4,7 +4,7 @@ import "../../../i18n"
 import QtQuick
 import QtQuick.Layouts
 import "../../../theme"
-import "../../../theme/ui" as UI
+import "../../../ui" as UI
 import "../../../services"
 
 Item {
@@ -71,18 +71,14 @@ Item {
                     color: copyButton.foreground
                     animationsEnabled: root.codeAnimationEnabled
                 }
-                Text {
+                UI.GlyphText {
                     id: copyIcon
-                    renderType: Theme.textRenderType
-                    font.hintingPreference: Theme.fontHintingPreference
                     x: parent.width - Theme.controlFieldPadding - iconMetrics.tightBoundingRect.width
                         - iconMetrics.tightBoundingRect.x
                     y: (parent.height - iconMetrics.tightBoundingRect.height) / 2
                         - baselineOffset - iconMetrics.tightBoundingRect.y
                     text: copyButton.glyph
                     color: copyButton.foreground
-                    font.family: Theme.fontFamilyIcons
-                    font.pixelSize: Theme.fontSize
                 }
                 TextMetrics { id: iconMetrics; font: copyIcon.font; text: copyIcon.text }
             }

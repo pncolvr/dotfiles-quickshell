@@ -3,7 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell.Hyprland
 import "../../theme"
-import "../../theme/ui" as UI
+import "../../ui" as UI
 
 UI.Row {
     id: root

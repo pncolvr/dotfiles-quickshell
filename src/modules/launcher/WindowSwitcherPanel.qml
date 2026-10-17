@@ -1,7 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import "../../i18n"
-import "../../theme/ui" as UI
+import "../../ui" as UI
 
 PreviewPickerPanel {
     id: root

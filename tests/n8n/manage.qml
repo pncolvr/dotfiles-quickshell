@@ -5,7 +5,7 @@ import Quickshell
 import Quickshell.Io
 import "../../src/services"
 import "../../src/modules/launcher"
-import "../../src/theme/ui" as UI
+import "../../src/ui" as UI
 import "../../src/services/network" as Network
 import "../../src/services/n8n/N8nEntries.mjs" as Entries
 

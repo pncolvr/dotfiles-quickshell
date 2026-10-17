@@ -1,7 +1,7 @@
 import "../../i18n"
 import "../../theme"
 import "../../services"
-import "../../theme/ui"
+import "../../ui"
 
 ActivityIndicator {
     moduleName: "recording"

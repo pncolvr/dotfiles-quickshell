@@ -19,7 +19,7 @@ The implementation lives in:
 - `src/services/time/TimeService.qml`: existing system clock and seconds preference.
 - `src/modules/clock/Clock.qml`: bar controls and the shared previous-day notice.
 - `src/modules/clock/MonthTooltip.qml`: clock calendar using shared `UI.MonthCalendar`.
-- `src/theme/ui/components/MonthCalendar.qml`: shared month layout, date cells and
+- `src/ui/components/MonthCalendar.qml`: shared month layout, date cells and
   optional whole-week selection, reused by the Work report period picker.
 - `src/services/time/CalendarDates.mjs`: local week/month arithmetic and ISO week numbers.
 - `src/modules/clock/YearTooltip.qml`: annual grid.

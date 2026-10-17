@@ -2,7 +2,7 @@ import QtQuick
 import QtTest as Test
 import Quickshell
 import Quickshell.Wayland
-import "../../src/theme/ui" as UI
+import "../../src/ui" as UI
 import "../../src/config"
 import "../../src/services"
 

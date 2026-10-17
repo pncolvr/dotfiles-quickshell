@@ -4,7 +4,7 @@ import QtQuick
 import QtQuick.Shapes
 import QtQml.Models
 import Quickshell.Services.Pipewire
-import "../../../theme/ui" as UI
+import "../../../ui" as UI
 import "../../../theme"
 import "../../../services"
 

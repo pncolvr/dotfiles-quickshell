@@ -1,7 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import "../../theme"
-import "../../theme/ui" as UI
+import "../../ui" as UI
 import "../../services"
 
 // Shared outer workflow; feature services still own management and draft state.

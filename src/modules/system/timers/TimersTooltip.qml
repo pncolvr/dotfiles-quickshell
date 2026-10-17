@@ -2,7 +2,7 @@ import "../../../i18n"
 import QtQuick
 import "../../../services"
 import "../../../theme"
-import "../../../theme/ui" as UI
+import "../../../ui" as UI
 
 Column {
     id: root

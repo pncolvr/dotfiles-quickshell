@@ -8,7 +8,7 @@ import Quickshell.Wayland
 import "../../src/bar"
 import "../../src/services"
 import "../../src/theme"
-import "../../src/theme/ui" as UI
+import "../../src/ui" as UI
 import "../../src/modules/system/audio"
 
 Scope {

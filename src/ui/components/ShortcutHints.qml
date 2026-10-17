@@ -1,0 +1,17 @@
+import QtQuick
+import "../../theme"
+import ".." as UI
+
+UI.Text {
+    property string hints: ""
+    centerVertical: false
+    height: Math.max(Theme.controlHeight, implicitHeight)
+    verticalAlignment: Text.AlignVCenter
+    font.pixelSize: Theme.fontSize - 1
+    horizontalAlignment: Text.AlignHCenter
+    wrapMode: Text.WordWrap
+    color: Theme.inactive
+    // Wrap between actions, keeping each shortcut and its description together.
+    text: hints.split("\n").map(line => line.split(" · ")
+        .map(action => action.replace(/ /g,"\u00a0")).join(" · ")).join("\n")
+}

@@ -4,7 +4,7 @@ import Quickshell
 import Quickshell.Wayland
 import "../../bar"
 import "../../services"
-import "../../theme/ui" as UI
+import "../../ui" as UI
 import "../../theme"
 PrivateTopPanelTooltip {
     id: root

@@ -5,7 +5,7 @@ import QtQuick
 import QtQuick.Controls as QC
 import "../../../bar"
 import "../../../theme"
-import "../../../theme/ui" as UI
+import "../../../ui" as UI
 import "../../../config"
 import "../../../services"
 

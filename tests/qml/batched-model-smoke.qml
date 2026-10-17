@@ -2,7 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import Quickshell
-import "../../src/theme/ui" as UI
+import "../../src/ui" as UI
 
 Scope {
     id: root

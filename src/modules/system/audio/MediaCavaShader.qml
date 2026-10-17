@@ -1,7 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import "../../../theme"
-import "../../../theme/ui" as UI
+import "../../../ui" as UI
 
 Item {
     id: root
@@ -101,8 +101,8 @@ Item {
         property real band_blend: 1
         property var audioData: dataTexture
         property var inputTexture: history
-        vertexShader: Qt.resolvedUrl("../../../theme/shaders/cava/pass_through.vert.qsb")
-        fragmentShader: Qt.resolvedUrl("../../../theme/shaders/cava/" + root.preset + ".frag.qsb")
+        vertexShader: Qt.resolvedUrl("../../../ui/shaders/cava/pass_through.vert.qsb")
+        fragmentShader: Qt.resolvedUrl("../../../ui/shaders/cava/" + root.preset + ".frag.qsb")
     }
     UI.MotionUniformAnimator {
         id: bandBlend

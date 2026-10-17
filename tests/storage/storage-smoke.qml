@@ -5,7 +5,7 @@ import Quickshell
 import Quickshell.Io
 import "../../src/services"
 import "../../src/modules/media"
-import "../../src/theme/ui" as UI
+import "../../src/ui" as UI
 
 Scope {
     id: root

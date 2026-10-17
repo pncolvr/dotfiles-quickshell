@@ -5,7 +5,7 @@ import QtTest as Test
 import Quickshell.Wayland
 import "../../src/bar"
 import "../../src/theme"
-import "../../src/theme/ui" as UI
+import "../../src/ui" as UI
 Scope {
     id: root
     property int stage: 0

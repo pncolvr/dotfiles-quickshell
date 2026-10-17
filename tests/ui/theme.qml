@@ -4,7 +4,7 @@ import QtTest as Test
 import Quickshell
 import "../../src/theme"
 import "../../src/config" as Settings
-import "../../src/theme/ui" as UI
+import "../../src/ui" as UI
 import "../../src/modules/clock"
 
 Scope {

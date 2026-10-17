@@ -7,7 +7,7 @@ import Quickshell
 import "../../src/bar"
 import "../../src/modules/system/files"
 import "../../src/services"
-import "../../src/theme/ui" as UI
+import "../../src/ui" as UI
 
 Scope {
     id: root

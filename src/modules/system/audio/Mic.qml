@@ -1,7 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import "../../../theme/ui"
+import "../../../ui"
 import "../../../theme"
 import "../../../services"
 import "../../../config"

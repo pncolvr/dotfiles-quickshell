@@ -7,7 +7,7 @@ import "../../src/i18n"
 import "../../src/modules/clock"
 import "../../src/modules/system/stats"
 import "../../src/services"
-import "../../src/theme/ui" as UI
+import "../../src/ui" as UI
 
 Scope {
     id: root

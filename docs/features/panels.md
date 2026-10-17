@@ -135,3 +135,8 @@ Capture waits for the panel's visual closing motion and native unmap, then for
 the compositor's configured layer/fade-out animation and a display refresh.
 CaptureCloseTiming resolves inherited active Hypr animation settings; disabled
 animations add no animation wait. No synthetic transparent frame is rendered.
+
+Shared UI components and panel motion helpers live in `src/ui/`, with shader
+assets in `src/ui/shaders/`. Theme holds styling settings and palettes. Picker,
+Manage, Vault and selection rows share `UI.SelectableRow` for interaction and
+selection styling while retaining their specialized contents and sizing.

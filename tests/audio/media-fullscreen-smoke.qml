@@ -7,7 +7,7 @@ import Quickshell
 import Quickshell.Services.Mpris
 import Quickshell.Wayland
 import "../../src/theme"
-import "../../src/theme/ui" as UI
+import "../../src/ui" as UI
 import "../../src/modules/system/audio"
 import "../../src/services"
 

@@ -3,7 +3,7 @@ import QtQuick
 import QtTest as Test
 import Quickshell
 import "../../src/modules/launcher"
-import "../../src/theme/ui" as UI
+import "../../src/ui" as UI
 import "../../src/theme"
 
 Scope {

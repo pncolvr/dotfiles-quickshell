@@ -5,7 +5,7 @@ import Quickshell
 import Quickshell.Wayland
 import "../../src/modules/vault"
 import "../../src/modules/launcher"
-import "../../src/theme/ui" as UI
+import "../../src/ui" as UI
 import "../../src/services"
 
 Scope {

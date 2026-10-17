@@ -3,7 +3,7 @@ import QtTest as Test
 import Quickshell
 import Quickshell.Io
 import "../../src/modules/updates" as Updates
-import "../../src/theme/ui" as UI
+import "../../src/ui" as UI
 import "../../src/theme"
 import "../../src/config"
 import "../../src/services"

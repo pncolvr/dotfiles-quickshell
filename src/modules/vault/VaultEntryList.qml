@@ -3,7 +3,7 @@ import "../../i18n"
 import QtQuick
 import QtQuick.Controls as QC
 import "../../theme"
-import "../../theme/ui" as UI
+import "../../ui" as UI
 
 ListView {
     id: list
@@ -28,25 +28,18 @@ ListView {
         border.width: 1
         border.color: Theme.empty
     }
-    delegate: QC.ItemDelegate {
+    delegate: UI.SelectableRow {
         id: entryRow
         required property var modelData
         required property int index
         width: list.width
-        padding: Theme.pickerRowPadding
-        leftPadding: Theme.controlFieldPadding
-        rightPadding: Theme.controlFieldPadding + Theme.scrollbarWidth
-        height: Math.max(Theme.controlHeight, contentItem.implicitHeight + topPadding + bottomPadding)
         objectName: "vaultEntry-" + modelData.id
-        HoverHandler { cursorShape: Qt.PointingHandCursor }
-        onClicked: { list.currentIndex = index; list.entrySelected(modelData.id) }
-        background: Rectangle { color: entryRow.index === list.currentIndex ? Theme.alternateBackground : "transparent"; radius: Theme.iconButtonRadius }
+        current: index === list.currentIndex
+        onActivated: { list.currentIndex = index; list.entrySelected(modelData.id) }
         contentItem: Column {
-            UI.Text { centerVertical: false; width: parent.width; textFormat: Text.PlainText; text: entryRow.modelData.name; color: entryRow.index === list.currentIndex ? Theme.accent : Theme.text; elide: Text.ElideRight }
-            UI.Text { centerVertical: false; width: parent.width; visible: text.length > 0; textFormat: Text.PlainText; text: [entryRow.modelData.user, entryRow.modelData.folder].filter(Boolean).join(" · "); color: entryRow.index === list.currentIndex ? Theme.accent : Theme.inactive; elide: Text.ElideRight }
+            UI.Text { centerVertical: false; width: parent.width; textFormat: Text.PlainText; text: entryRow.modelData.name; color: entryRow.foreground; elide: Text.ElideRight }
+            UI.Text { centerVertical: false; width: parent.width; visible: text.length > 0; textFormat: Text.PlainText; text: [entryRow.modelData.user, entryRow.modelData.folder].filter(Boolean).join(" · "); color: entryRow.secondaryForeground; elide: Text.ElideRight }
         }
-        Keys.onReturnPressed: list.entrySelected(modelData.id)
-        Keys.onEnterPressed: list.entrySelected(modelData.id)
     }
     UI.Text { centerVertical: false; anchors.centerIn: parent; text: Translations.text("vault.empty.entries"); visible: !list.entries.length && !list.busy }
 }

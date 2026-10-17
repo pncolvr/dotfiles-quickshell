@@ -4,7 +4,7 @@ import "../../../i18n"
 import QtQuick
 import Quickshell
 import "../../../theme"
-import "../../../theme/ui" as UI
+import "../../../ui" as UI
 import "../../../services"
 
 Rectangle {

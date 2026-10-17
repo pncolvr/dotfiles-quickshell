@@ -4,7 +4,7 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls as QC
 import "../../theme"
-import "../../theme/ui" as UI
+import "../../ui" as UI
 import "../../services"
 import "../../config"
 import "../../services/launcher/Search.mjs" as Search

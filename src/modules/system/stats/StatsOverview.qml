@@ -3,7 +3,7 @@ import "../../../i18n"
 import QtQuick
 import "../../../theme"
 import ".."
-import "../../../theme/ui" as UI
+import "../../../ui" as UI
 import "../../../services"
 import "../../../config"
 

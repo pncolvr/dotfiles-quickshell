@@ -9,7 +9,7 @@ import "../../src/modules/status"
 import "../../src/modules/launcher"
 import "../../src/services/status/TimeTracking.mjs" as Tracking
 import "../../src/services/time/CalendarDates.mjs" as Dates
-import "../../src/theme/ui" as UI
+import "../../src/ui" as UI
 import "../../src/theme"
 
 Scope {

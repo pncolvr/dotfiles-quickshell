@@ -2,7 +2,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Wayland
 import "theme"
-import "theme/ui" as UI
+import "ui" as UI
 import "bar"
 import "services"
 import "modules/system/notifications"

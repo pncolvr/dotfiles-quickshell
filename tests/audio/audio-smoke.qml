@@ -8,7 +8,7 @@ import Quickshell.Services.Pipewire
 import "../../src/modules/system/audio"
 import "../../src/services"
 import "../../src/theme"
-import "../../src/theme/ui" as UI
+import "../../src/ui" as UI
 import "../../src/config"
 
 Scope {

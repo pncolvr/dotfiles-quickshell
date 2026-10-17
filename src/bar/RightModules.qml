@@ -4,7 +4,7 @@ import "../modules/media"
 import "../modules/status"
 import "../modules/hyprland"
 import "../theme"
-import "../theme/ui"
+import "../ui"
 
 Row {
     id: root

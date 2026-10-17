@@ -5,7 +5,7 @@ import Quickshell
 import "../../src/config"
 import "../../src/services"
 import "../../src/theme"
-import "../../src/theme/ui" as UI
+import "../../src/ui" as UI
 import "../../src/modules/launcher"
 
 Scope {
@@ -123,6 +123,7 @@ Scope {
         root.check(find(popup.contentItem,"clipboardPreviewPane") === null, "list contains no embedded preview")
     }
     Timer {
+        id: driver
         interval: 40; running: true; repeat: true
         onTriggered: {
             if (root.failed || ++root.ticks > 300) { console.error("FLOATING FAIL: stopped at",root.step); Qt.quit(); return }
@@ -156,6 +157,7 @@ Scope {
                 if (!image || image.status !== Image.Ready || !image.source.toString().endsWith("portrait.png")) return
                 root.layout()
                 root.check(!root.panel.previewShortcut && !root.panel.footerHint.includes(UI.Keybinds.sequence("preview")),"wallpaper has no preview toggle or hint")
+                driver.stop()
                 listHost.contentItem.Window.window.requestActivate()
                 events.wait(30)
                 root.panel.focusSearch()
@@ -164,7 +166,7 @@ Scope {
                 const beforeCopy = root.clipboardTasks
                 events.keyClick(Qt.Key_C, Qt.ControlModifier)
                 root.check(root.clipboardTasks > beforeCopy,"Ctrl+C dispatches image copy from search focus")
-                root.step++; break
+                root.step++; driver.start(); break
             }
             case 3:
                 if (ClipboardService.pendingTasks) return

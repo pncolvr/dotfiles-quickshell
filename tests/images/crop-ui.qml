@@ -2,7 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Window
 import Quickshell
-import "../../src/theme/ui" as UI
+import "../../src/ui" as UI
 import "../../src/modules/system/notifications"
 import "../../src/modules/media"
 import "../../src/modules/system/audio"

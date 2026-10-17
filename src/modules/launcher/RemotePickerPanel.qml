@@ -3,7 +3,7 @@ import "../../i18n"
 import QtQuick
 import "../../services"
 import "../../theme"
-import "../../theme/ui" as UI
+import "../../ui" as UI
 
 ManagedCollectionPanel {
     managementTypes: [{name:'ssh',description:Translations.text("remotes.type.sshTerminal")},{name:'remote',description:Translations.text("remotes.type.sshTunnel")},{name:'vm',description:Translations.text("remotes.type.virtualMachine")}]

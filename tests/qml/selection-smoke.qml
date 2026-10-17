@@ -6,7 +6,7 @@ import QtTest as Test
 import Quickshell
 import Quickshell.Wayland
 import "../../src/theme"
-import "../../src/theme/ui" as UI
+import "../../src/ui" as UI
 import "../../src/modules/system/audio"
 
 Item {
