@@ -21,6 +21,7 @@ Singleton {
     readonly property bool hasPriority: _internal.hasPriority
     readonly property date lastChecked: _internal.lastChecked
     readonly property string error: _internal.error
+    readonly property bool checking: refreshScriptProcess.running
 
     QtObject {
         id: _internal
@@ -89,6 +90,15 @@ Singleton {
     function refresh() {
         if (updatesProcess.running) return
         updatesProcess.running = true
+    }
+
+    function checkNow() {
+        scheduleTimer.stop()
+        if (!checking) refreshScriptProcess.running = true
+    }
+
+    function schedule() {
+        scheduleTimer.restart()
     }
 
     function isPriority(line) {
@@ -167,7 +177,7 @@ Singleton {
     IpcHandler {
         target: "updates"
         function reload(): void { root.refresh() }
-        function schedule(): void { scheduleTimer.restart() }
+        function schedule(): void { root.schedule() }
     }
 
     Component.onCompleted: {

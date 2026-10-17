@@ -157,6 +157,12 @@ Review these defaults when adapting the configuration:
   by default), including when the helper is invoked by a post-transaction hook.
   Locks are checked again after queries and before publication. The helper uses
   `C.UTF-8` for English package fields and Qt IPC without locale warnings.
+  The panel's refresh button, immediately left of Install updates, offers
+  “Check now”. It clears the pending retry
+  timer and starts the configured refresh helper immediately, even if the cached
+  connectivity status is offline. The button is disabled while a check runs;
+  repeated service requests reuse that check. A new failure or package-database
+  lock can still schedule the normal retry afterward.
   See the helper's comments for cron and pacman hook examples.
   In the installed hook's `Exec`, use `sudo -H -u pncolvr --` instead of
   `sudo -u pncolvr -i`: `-H` sets the user's home without loading the zsh login

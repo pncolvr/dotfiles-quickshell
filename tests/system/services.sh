@@ -87,3 +87,32 @@ case $count in
 esac
 MOCK
 run_qml "$updates" tests/system/updates-smoke.qml
+
+updates_refresh="$test_dir/updates-refresh"
+fixture_directory "$updates_refresh"
+cat > "$updates_refresh/src/services/system/NetworkService.qml" <<'QML'
+pragma Singleton
+import QtQml
+QtObject { property bool online: true }
+QML
+sed -i 's/readonly property string language:/property string language:/' "$updates_refresh/src/config/Config.qml"
+override_config "$updates_refresh" updatesScheduleDelay 600
+override_config "$updates_refresh" updatesCheckCommand '["cat", Quickshell.shellPath("snapshot")]'
+override_config "$updates_refresh" updatesRefreshCommand '["bash", Quickshell.shellPath("refresh.sh")]'
+: > "$updates_refresh/snapshot"
+: > "$updates_refresh/runs"
+cat > "$updates_refresh/refresh.sh" <<'MOCK'
+#!/usr/bin/env bash
+set -euo pipefail
+directory=$(dirname "$0")
+printf 'check\n' >> "$directory/runs"
+count=$(wc -l < "$directory/runs")
+sleep 0.15
+case $count in
+    1|4) : > "$directory/snapshot" ;;
+    3) exit 1 ;;
+    *) printf 'core x86_64 linux 1 2\n' > "$directory/snapshot" ;;
+esac
+MOCK
+run_qml "$updates_refresh" tests/system/updates-refresh.qml
+[[ $(wc -l < "$updates_refresh/runs") -eq 5 ]]

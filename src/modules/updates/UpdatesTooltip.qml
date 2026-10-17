@@ -62,6 +62,13 @@ Column {
                     onClicked: UpdatesService.openMarkdown()
                 }
                 UI.ActionButton {
+                    objectName: "updatesCheckNow"
+                    glyph: Theme.refreshIcon
+                    hint: Translations.text("updates.actions.checkNowHint")
+                    enabled: !UpdatesService.checking
+                    onClicked: UpdatesService.checkNow()
+                }
+                UI.ActionButton {
                     objectName: "updatesInstall"
                     glyph: Theme.downloadIcon
                     hint: Translations.text("updates.actions.installHint")

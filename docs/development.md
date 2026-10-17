@@ -13,6 +13,11 @@ requires ImageMagick. Native fixtures that grab focus must run sequentially.
 rebuild and read-only query pipeline; `FTS_BENCH_BYTES` changes bytes per row.
 These tests create temporary databases and never inspect live clipboard history.
 
+`bash tests/system/services.sh` includes the Updates manual-check regression.
+It uses a mock refresh helper and synthetic snapshots to verify the real button,
+both languages, pending-timer cancellation, active-check reuse, later scheduling,
+failure preservation, empty results and manual checks with cached offline status.
+
 ## Theme palette checks
 
 Run `bash tests/ui/theme.sh` to render both palettes in an isolated offscreen
