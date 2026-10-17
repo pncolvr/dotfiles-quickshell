@@ -18,12 +18,13 @@ Scope {
     property int layoutTicks: 0
     property int streamResponses: 0
     Test.TestResult { id: objects }
+    Test.TestCase { id: events; when: false }
     Connections {
         target: objects.findChild(TwitchService, "twitchStreamsQuery") as Process
         function onExited() { root.streamResponses++ }
     }
     FloatingWindow {
-        visible: root.phase === "layout" || root.phase.startsWith("live-")
+        visible: root.phase === "seed" || root.phase === "layout" || root.phase.startsWith("live-")
         implicitWidth: panel.implicitWidth
         implicitHeight: panel.implicitHeight
         TwitchTooltip { id: panel; width: implicitWidth; height: implicitHeight }
@@ -47,15 +48,20 @@ Scope {
 
     function seed() {
         check(DbService.ready, "database created on first use")
-        check(DbService.read("SELECT name FROM store.sqlite_master WHERE type = 'table'").length === 19, "central schema")
+        const tables = DbService.read("SELECT name FROM store.sqlite_master WHERE type = 'table'").map(row => row.name)
+        const requiredTables = ["twitch_users", "twitch_schedules", "twitch_avatars", "twitch_notified_streams",
+            "battery_receivers", "preferences", "clipboard", "notification_emitters", "notifications", "notification_live",
+            "project_sources", "projects", "project_workspaces", "directories", "webapps", "remotes",
+            "n8n_instances", "n8n_workflows", "status_sessions", "status_writer"]
+        check(requiredTables.every(name => tables.includes(name)), "central schema contains all required tables")
         check(!TimeService.showSeconds, "default clock preference")
         check(TwitchRepository.logins().join("\n") === "", "fresh Twitch list is empty")
         check(TwitchService.browserSuggestions.join() === "alice,bob", "current qutebrowser tabs suggested without history or directory pages")
-        twitchModule.clicked(null)
+        events.mouseClick(twitchModule, twitchModule.width / 2, twitchModule.height / 2, Qt.LeftButton)
         check(TooltipService.pinned && TooltipService.source === twitchModule, "module click pins Twitch like TOTP and notifications")
         TooltipService.hide()
         check(TooltipService.pinned, "pinned Twitch panel ignores hover exit")
-        twitchModule.clicked(null)
+        events.mouseClick(twitchModule, twitchModule.width / 2, twitchModule.height / 2, Qt.LeftButton)
         check(!TooltipService.pinned, "module click unpins Twitch")
         const field = objects.findChild(panel, "twitchLoginField") as UI.InputField
         const add = objects.findChild(panel, "addTwitchUser") as UI.ActionButton

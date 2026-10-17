@@ -439,6 +439,9 @@ bash tests/storage/backup.sh
 bash tests/storage/backup-ui.sh
 ```
 
+The storage smoke test checks required table names instead of an exact table
+count, and exercises module pinning with Qt mouse events in an offscreen window.
+
 Run `bash tests/storage/storage.sh` to check first-run creation, dropdown actions,
 restart persistence, transaction rollback, avatar downloads, schedule caching, and midnight labels
 using an isolated database and mock Twitch/receiver commands.
@@ -778,7 +781,11 @@ has its own suite above. Coverage includes duplicate worker exclusion, delay and
 startup-handoff cancellation, one-signal stopping, repeated stops, recorder
 failure, stale identities, dead-owner recovery and audio cleanup retries. An
 offscreen production RecordingService fixture applies Config changes during capture,
-then restarts its Quickshell process and stops the same recorder. It needs Bash,
+then restarts its Quickshell process and stops the same recorder. The edit writes
+in place to preserve the watched inode. On the installed Quickshell 0.3.2, an
+isolated probe misses `sed -i` atomic replacement while an in-place write triggers
+reload; this is a file-watcher limitation, separate from recording ownership. The
+regression still waits for automatic reload, without an explicit reload request. It needs Bash,
 coreutils, jq, sqlite3, Node.js and Quickshell IPC; it never captures the desktop
 or microphone. The backup regression also checks that runtime recording state is
 excluded from archives and unchanged by restore.

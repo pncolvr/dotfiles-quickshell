@@ -294,7 +294,9 @@ for ((attempt=0;attempt<100;attempt++)); do
 done
 recorder=$(cat "$test_dir/recorder.pid")
 wait_ipc recording status "{\"state\":\"recording\",\"active\":true,\"filename\":\"$test_dir/result.mp4\"}"
-sed -i 's/"before"/"after"/' "$test_dir/src/config/Config.qml"
+# Preserve the watched inode: Quickshell 0.3.2 can miss sed -i replacement events.
+sed 's/"before"/"after"/' "$test_dir/src/config/Config.qml" > "$test_dir/config-updated.qml"
+cat "$test_dir/config-updated.qml" > "$test_dir/src/config/Config.qml"
 wait_ipc fixture configuration after
 [[ $(sqlite3 "$database" "SELECT json_extract(payload,'$.pid') FROM recording_session;") == "$owner" ]]
 kill -0 "$recorder"
