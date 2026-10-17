@@ -7,6 +7,7 @@ import Quickshell
 import "../../theme"
 import "../../theme/ui" as UI
 import "../../services"
+import "../../services/time/CalendarDates.mjs" as Dates
 
 Column {
     id: root
@@ -15,28 +16,66 @@ Column {
     readonly property var monitor: TooltipService.screen ?? (root.QsWindow.window as QsWindow)?.screen
     readonly property real maxPanelHeight: Math.max(0, Math.min((monitor?.height ?? 1080) * Theme.statusTooltipMaxHeightRatio,
         (monitor?.height ?? 1080) - Theme.barHeight - Theme.tooltipPaddingHeight * 2))
-    readonly property bool managing: tabs.currentIndex === 5
+    readonly property bool managing: tabs.currentIndex === 3
+    readonly property bool history: tabs.currentIndex === 2
+    property string historyKind: "week"
+    property date historyAnchor: Dates.shift(new Date(), "week", -1)
+    readonly property date historyDate: Dates.start(historyAnchor, historyKind)
+    readonly property var historyPeriods: statusService.recordedPeriods[historyKind]
+    readonly property bool hasHistory: historyPeriods.length > 0
+    property bool pickerExpanded: false
+    readonly property date reportNow: new Date(TimeService.time)
+    readonly property date earliest: new Date((statusService.recordedPeriods.first || Dates.key(reportNow)) + "T00:00:00")
+    readonly property bool partialHistory: history && Dates.start(historyDate, historyKind) < earliest
     readonly property bool nativeDialogOpen: rulesEditor.nativeDialogOpen
     readonly property bool interactionPending: managing && rulesEditor.dirty
     readonly property string selectedReport: {
         switch(tabs.currentIndex) {
             case 0:return statusService.todayTimecard
             case 1:return statusService.currentWeekTimecard
-            case 2:return statusService.lastWeekTimecard
-            case 3:return statusService.currentMonthTimecard
-            case 4:return statusService.lastMonthTimecard
+            case 2:return statusService.periodReport(historyKind, historyDate)
             default:return ''
         }
     }
     readonly property var period: Timecard.parse(selectedReport)
     readonly property bool ranged: tabs.currentIndex > 0
-    readonly property bool weekly: tabs.currentIndex === 1 || tabs.currentIndex === 2
+    readonly property bool weekly: tabs.currentIndex === 1 || (history && historyKind === "week")
     readonly property color modeColor: statusService.status === "work" ? Theme.accent : statusService.status === "personal" ? Theme.active : Theme.inactive
     width: Math.min(Theme.statusTooltipWidth, (monitor?.width ?? Theme.statusTooltipWidth + Theme.tooltipPaddingWidth * 2)
         - Theme.tooltipPaddingWidth * 2)
     spacing: Theme.controlSpacing
-    Component.onCompleted: statusService.beginPanel()
+    Component.onCompleted: { statusService.beginPanel(); ensureHistorySelection() }
     Component.onDestruction: statusService.endPanel()
+    function canMovePeriod(delta) {
+        return !!adjacentPeriod(delta)
+    }
+    function adjacentPeriod(delta) {
+        return Dates.adjacent(historyPeriods,Dates.key(historyDate),delta)
+    }
+    function movePeriod(delta) {
+        const next = adjacentPeriod(delta)
+        if (next) selectPeriod(new Date(next + "T12:00:00"))
+    }
+    function ensureHistorySelection() {
+        if (!hasHistory) { pickerExpanded = false; return }
+        if (!historyPeriods.includes(Dates.key(historyDate)))
+            selectPeriod(new Date(historyPeriods[historyPeriods.length - 1] + "T12:00:00"))
+    }
+    function selectPeriod(date) {
+        const key = Dates.key(Dates.start(date,historyKind))
+        if (!historyPeriods.includes(key)) return
+        const recorded = statusService.recordedPeriods.dates.find(day => Dates.key(Dates.start(new Date(day + "T12:00:00"),historyKind)) === key)
+        historyAnchor = new Date(recorded + "T12:00:00")
+        if (pickerExpanded) choosePeriod.forceActiveFocus(Qt.OtherFocusReason)
+        pickerExpanded = false
+        expandedDay = ""
+        timecard.contentY = 0
+    }
+    onHistoryKindChanged: {
+        ensureHistorySelection()
+        periodPicker.revealSelection()
+    }
+    onHistoryPeriodsChanged: Qt.callLater(root.ensureHistorySelection)
 
     Column {
         id: heading
@@ -107,16 +146,79 @@ Column {
             objectName: "statusTimecardTabs"
             width: parent.width
             tabPadding: Theme.controlFieldPadding
-            labels: [Translations.text("calendar.relative.today"), Translations.text("status.tabs.thisWeek"), Translations.text("status.tabs.lastWeek"), Translations.text("status.tabs.thisMonth"), Translations.text("status.tabs.lastMonth"), Translations.text("common.tabs.manage")]
+            labels: [Translations.text("calendar.relative.today"), Translations.text("status.tabs.thisWeek"), Translations.text("status.tabs.history"), Translations.text("common.tabs.manage")]
             onCurrentIndexChanged: {
                 root.expandedDay = ""
+                root.pickerExpanded = false
                 root.statusService.showPeriod(currentIndex)
                 timecard.contentY = 0
             }
         }
+        Row {
+            visible: root.history
+            width: parent.width
+            spacing: Theme.controlSpacing
+            UI.ComboSelector {
+                objectName: "statusHistoryKind"
+                width: Theme.controlHeight * 3
+                compact: true
+                options: [{name:"week",description:Translations.text("status.history.week")},
+                    {name:"month",description:Translations.text("status.history.month")}]
+                selectedName: root.historyKind
+                enabled: root.hasHistory
+                onSelected: name => root.historyKind = name
+            }
+            UI.ActionButton {
+                objectName: "statusHistoryPrevious"
+                glyph: Theme.chevronLeftIcon
+                hint: Translations.text("common.actions.previous")
+                enabled: root.canMovePeriod(-1)
+                onClicked: root.movePeriod(-1)
+            }
+            UI.ActionButton {
+                id: choosePeriod
+                objectName: "statusHistoryChoose"
+                width: heading.width - Theme.controlHeight * 3 - Theme.actionButtonWidth * 2 - Theme.controlSpacing * 3
+                label: root.period.range || Translations.text("status.report.empty")
+                enabled: root.hasHistory
+                glyph: Theme.chevronDownIcon
+                hint: Translations.text("status.history.choose")
+                onClicked: {
+                    root.pickerExpanded = !root.pickerExpanded
+                    if (root.pickerExpanded) periodPicker.revealSelection()
+                }
+            }
+            UI.ActionButton {
+                objectName: "statusHistoryNext"
+                glyph: Theme.chevronRightIcon
+                hint: Translations.text("common.actions.next")
+                enabled: root.canMovePeriod(1)
+                onClicked: root.movePeriod(1)
+            }
+        }
+        UI.CalendarPeriodPicker {
+            id: periodPicker
+            objectName: "statusHistoryPicker"
+            width: parent.width
+            visible: root.history && root.pickerExpanded
+            kind: root.historyKind
+            selectedDate: root.historyDate
+            periods: root.historyPeriods
+            today: root.reportNow
+            onSelected: date => root.selectPeriod(date)
+            Keys.onEscapePressed: event => { root.pickerExpanded = false; choosePeriod.forceActiveFocus(); event.accepted = true }
+        }
         UI.ColumnText {
             width: parent.width
-            visible: !root.managing
+            visible: root.hasHistory && root.partialHistory
+            text: Translations.text("status.history.partial",[Dates.key(root.earliest)])
+            color: Theme.inactive
+            wrapMode: Text.Wrap
+            horizontalAlignment: Text.AlignHCenter
+        }
+        UI.ColumnText {
+            width: parent.width
+            visible: !root.managing && !root.history
             text: root.ranged ? root.period.range : new Date(root.statusService.timecardDate + "T12:00:00").toLocaleDateString(Translations.locale, "dddd yyyy-MM-dd")
             color: Theme.inactive
             horizontalAlignment: Text.AlignHCenter

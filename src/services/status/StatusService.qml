@@ -75,6 +75,7 @@ Singleton {
     readonly property string currentMonthTimecard: report.currentMonth ?? ''
     readonly property string lastMonthTimecard: report.lastMonth ?? ''
     readonly property string timecardDate: report.date ?? ''
+    readonly property var recordedPeriods: Tracking.recordedPeriods(StatusRepository.sessions)
     property string wallpaperMode: ''
     property string appliedWallpaperMode: ''
     function includesCategory(category, showAll = false, workStatus = Config.pickerWorkStatus) {
@@ -169,6 +170,10 @@ Singleton {
     function refreshTimecard() {
         if (ready)
             report = Tracking.reports(StatusRepository.sessions, Date.now(), currentId);
+    }
+    function periodReport(kind, date) {
+        // Keep selected reports reactive to the same repository as live totals.
+        return ready ? Tracking.periodReport(StatusRepository.sessions, kind, date, currentId) : '';
     }
     function beginPanel() {
         panels++;

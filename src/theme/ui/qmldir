@@ -64,3 +64,6 @@ LabeledField 1.0 components/LabeledField.qml
 LineListField 1.0 components/LineListField.qml
 
 CaptureOverlay 1.0 components/CaptureOverlay.qml
+
+MonthCalendar 1.0 components/MonthCalendar.qml
+CalendarPeriodPicker 1.0 components/CalendarPeriodPicker.qml

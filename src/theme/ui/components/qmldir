@@ -57,3 +57,6 @@ LabeledField 1.0 LabeledField.qml
 LineListField 1.0 LineListField.qml
 
 CaptureOverlay 1.0 CaptureOverlay.qml
+
+MonthCalendar 1.0 MonthCalendar.qml
+CalendarPeriodPicker 1.0 CalendarPeriodPicker.qml

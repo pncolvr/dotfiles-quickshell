@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Controls as QC
 import QtTest as Test
 import Quickshell
 import "../../src/theme/ui" as UI
@@ -93,7 +94,7 @@ Scope {
         onTriggered: {
             root.check(view.selectedId === "0", "first entry selected")
             root.check(view.listView.itemAtIndex(0).height === view.listView.itemAtIndex(1).height, "rows reserve the same height with and without a subtitle")
-            const row = view.listView.itemAtIndex(1)
+            const row = view.listView.itemAtIndex(1) as QC.ItemDelegate
             const title = row.contentItem.children[0]
             const subtitle = row.contentItem.children[1]
             const topPadding = title.mapToItem(row,0,0).y

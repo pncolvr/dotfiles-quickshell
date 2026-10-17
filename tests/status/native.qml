@@ -1,12 +1,16 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls as QC
+import QtTest as Test
 import Quickshell
 import "../../src/services"
 import "../../src/config"
 import "../../src/modules/status"
 import "../../src/modules/launcher"
 import "../../src/services/status/TimeTracking.mjs" as Tracking
+import "../../src/services/time/CalendarDates.mjs" as Dates
+import "../../src/theme/ui" as UI
+import "../../src/theme"
 
 Scope {
     id: root
@@ -16,6 +20,7 @@ Scope {
     property bool failed: false
     property int oldId: 0
     property real beforePause: 0
+    Test.TestCase { id: events; when: false }
     function check(ok, message) {
         if (!ok) {
             failed = true;
@@ -35,6 +40,10 @@ Scope {
     function modeAlert() {
         return AlertService.messages.find(message => message.id === 'status-mode');
     }
+    function preview(name) {
+        const folder = Quickshell.env('STATUS_PREVIEWS');
+        if (folder) events.grabImage(window.contentItem).save(folder + '/' + name + '.png');
+    }
     function finish() {
         if (!failed)
             console.log('PASS: native status ' + phase);
@@ -51,6 +60,8 @@ Scope {
     }
     Component.onCompleted: StatusService.sessionState = session
     FloatingWindow {
+        id: window
+        color: Theme.tooltipBackground
         visible: true
         implicitWidth: 900
         implicitHeight: 900
@@ -63,6 +74,15 @@ Scope {
             id: category
             y: 850
             width: 200
+        }
+        UI.CalendarPeriodPicker {
+            id: availabilityPicker
+            visible: false
+            width: 420
+            kind: 'week'
+            periods: ['2026-01-05','2026-03-02']
+            selectedDate: new Date(2026,0,5)
+            today: new Date(2026,2,17)
         }
     }
     Timer {
@@ -191,6 +211,14 @@ Scope {
                 {
                     if (StatusService.detectionMatches.length !== 1)
                         return;
+                    timer.stop();
+                    root.check(!root.find(availabilityPicker,'periodPickerToday').enabled,
+                        'Today is disabled when current week has no records');
+                    availabilityPicker.periods = ['2026-01-05','2026-03-02','2026-03-16'];
+                    root.check(root.find(availabilityPicker,'periodPickerToday').enabled, 'Today enables when current week has records');
+                    availabilityPicker.periods = [];
+                    root.check(!root.find(availabilityPicker,'periodPickerToday').enabled && !availabilityPicker.adjacentPage(-1)
+                        && !availabilityPicker.adjacentPage(1), 'empty data disables Today and calendar navigation');
                     root.check(StatusService.detectionMatches[0].name === 'synthetic-work', 'automatic detection uses private stored rules');
                     const unchangedAlert = root.modeAlert();
                     StatusService.clear();
@@ -211,13 +239,79 @@ Scope {
                     root.check(AlertService.messages.filter(message => message.id === 'status-mode').length === 1, 'rapid mode changes replace rather than stack alerts');
                     StatusService.setStatus('work');
                     StatusService.heartbeat();
+                    events.wait(30);
+                    root.check(Dates.key(panel.historyDate) === StatusService.recordedPeriods.week.slice(-1)[0],
+                        'missing previous week falls back to latest recorded week');
+                    const previousWeek = Dates.shift(new Date(),'week',-1);
+                    const olderMonth = Dates.shift(new Date(),'month',-3);
+                    root.check(DbService.write(tx => {
+                        for (const date of [previousWeek,olderMonth]) {
+                            const start = new Date(date.getFullYear(),date.getMonth(),date.getDate(),9).getTime();
+                            tx.executeSql('INSERT INTO status_sessions(start_ms,end_ms,mode) VALUES(?,?,?)',[start,start+3600000,'work']);
+                        }
+                    }) && StatusRepository.reload(), 'seed recorded periods with gaps');
+                    panel.selectPeriod(previousWeek);
                     const tabs = root.find(panel, 'statusTimecardTabs') as QC.TabBar;
                     root.check(panel.period.days.length > 0 && panel.height > 0, 'Today report renders');
                     tabs.currentIndex = 1;
                     root.check(panel.period.days.length === 7, 'week includes all days');
-                    tabs.currentIndex = 3;
+                    root.check(tabs.count === 4, 'only Today, This week, History and Manage tabs remain');
+                    tabs.currentIndex = 2;
+                    events.wait(30);
+                    root.check(panel.weekly && panel.period.days.length === 7
+                        && Dates.key(panel.historyDate) === Dates.key(Dates.shift(new Date(),'week',-1)), 'History initially shows previous complete week');
+                    const choose = root.find(panel, 'statusHistoryChoose');
+                    events.mouseClick(choose, choose.width / 2, choose.height / 2);
+                    events.wait(30);
+                    const picker = root.find(panel, 'statusHistoryPicker') as UI.CalendarPeriodPicker;
+                    root.check(picker.visible, 'period label opens calendar picker');
+                    root.preview('history-week');
+                    const week = root.find(picker, 'calendarWeek-' + Dates.key(panel.historyDate));
+                    events.mouseClick(week, week.width / 2, week.height / 2);
+                    root.check(!picker.visible && panel.period.days.length === 7, 'calendar row selects whole week and closes picker');
+                    events.mouseClick(choose, choose.width / 2, choose.height / 2);
+                    events.wait(30);
+                    week.forceActiveFocus();
+                    events.keyClick(Qt.Key_Return);
+                    root.check(!picker.visible && choose.activeFocus, 'keyboard selects whole week and restores period-control focus');
+                    root.find(panel,'statusHistoryKind').selected('month');
+                    events.wait(30);
                     root.check(panel.period.days.length >= 28, 'month includes all days');
-                    tabs.currentIndex = 5;
+                    events.mouseClick(choose, choose.width / 2, choose.height / 2);
+                    picker.displayYear = new Date().getFullYear();
+                    events.wait(30);
+                    root.preview('history-month');
+                    const emptyMonth = Array.from({length:12},(_,index)=>index).find(index=>!StatusService.recordedPeriods.month.includes(
+                        Dates.key(new Date(picker.displayYear,index,1))));
+                    root.check(!root.find(picker,'periodPickerMonth-' + emptyMonth).enabled, 'calendar months without stored records cannot be selected');
+                    const month = root.find(picker,'periodPickerMonth-' + new Date().getMonth());
+                    events.mouseClick(month,month.width / 2,month.height / 2);
+                    root.check(!picker.visible && !panel.weekly && !root.find(panel,'statusHistoryNext').enabled,
+                        'current month selected, future navigation disabled');
+                    root.find(panel,'statusHistoryPrevious').clicked();
+                    root.check(Dates.key(panel.historyDate) === StatusService.recordedPeriods.month.slice(-2)[0],
+                        'report arrow skips months without recorded data');
+                    panel.selectPeriod(panel.earliest);
+                    root.check(!root.find(panel,'statusHistoryPrevious').enabled, 'oldest recorded month is bounded');
+                    const beforeInvalid = panel.historyDate.getTime();
+                    panel.selectPeriod(Dates.shift(panel.historyDate,'month',-1));
+                    root.check(panel.historyDate.getTime() === beforeInvalid, 'expired selections rejected');
+                    events.mouseClick(choose,choose.width / 2,choose.height / 2);
+                    events.wait(30);
+                    const today = root.find(picker,'periodPickerToday');
+                    events.mouseClick(today,today.width / 2,today.height / 2);
+                    root.check(panel.historyKind === 'month' && Dates.key(panel.historyDate) === Dates.key(Dates.start(new Date(),'month'))
+                        && !picker.visible, 'Today selects current month and preserves month range');
+                    panel.selectPeriod(panel.earliest);
+                    root.find(panel,'statusHistoryKind').selected('week');
+                    root.check(panel.period.days.length === 7 && StatusService.recordedPeriods.week.includes(Dates.key(panel.historyDate)),
+                        'switching from oldest partial month selects a retained week');
+                    events.mouseClick(choose,choose.width / 2,choose.height / 2);
+                    events.wait(30);
+                    events.mouseClick(today,today.width / 2,today.height / 2);
+                    root.check(panel.historyKind === 'week' && Dates.key(panel.historyDate) === Dates.key(Dates.start(new Date(),'week'))
+                        && !picker.visible, 'Today selects current week and preserves week range');
+                    tabs.currentIndex = 3;
                     root.check(panel.managing && root.find(panel, 'statusWorkDirectories').visible, 'Manage opens multiline work folders');
                     const field = root.find(panel, 'statusWorkFoldersList');
                     root.check(field.text === '/synthetic/work\n/synthetic/second', 'all saved work folders are shown one per line');

@@ -273,7 +273,16 @@ Run `bash tests/status/status.sh` for native SQLite sessions, stale-writer
 protection, restart gaps, lock/suspend/inactive pauses, rolling twelve-month
 retention, disabled mode and Today/week/month reports. The suite also checks
 local-midnight/DST boundaries, app profiles and read-only desktop-state handling.
-It uses isolated databases and mocked desktop commands.
+History checks cover whole-week mouse/keyboard selection, the year/month grid,
+picker closure and focus return, recorded-data selection, gap-skipping arrows,
+empty data, Today availability and previous-week/latest-recorded fallback.
+Model checks include stored records older than twelve months to verify selection
+has no independent age limit; database cleanup is tested separately.
+`STATUS_PREVIEWS=/tmp/status-previews`
+saves synthetic Week/Month picker images if the destination directory exists.
+The suite uses isolated databases and mocked desktop commands. Calendar date
+arithmetic is shared with `UI.MonthCalendar`; `bash tests/time/calendar.sh`
+checks that the clock month/year views retain their styling and navigation.
 Run `bash tests/status/reload.sh` to upgrade an already-loaded editor to the current
 shared folder/process list component, exercise folder append/save, and verify
 both explicit and component-file automatic reloads. This catches hot-reload type

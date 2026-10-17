@@ -8,7 +8,23 @@ Reset restores automatic detection. A change between Work and Personal shows a
 small bar alert for three seconds, for manual and automatic transitions. Restoring
 the saved mode on startup/reload and selecting the current mode stay quiet.
 
-Today shows totals and expandable sessions. Week views cover Monday–Sunday and
+The tabs are Today, This week, History and Manage. Today shows totals and
+expandable sessions. History starts on the previous week when it has records,
+otherwise the latest recorded week, and offers a Week/Month
+selector. Click its period label to open the picker: Week uses the same calendar
+as the clock's month tooltip, with whole Monday–Sunday rows selectable; Month
+shows twelve months beneath a year heading. Selecting a period closes the picker.
+The picker's Today icon sits directly below Next, beside the calendar/grid without
+a footer row. It selects the current week or month, keeping the chosen
+range type, and is disabled when that period has no records. Only weeks/months
+with stored activity can be selected, including when there are gaps between
+records. Report arrows skip empty periods; picker arrows skip empty calendar
+pages. Available periods come from stored records, with no separate retention
+limit in the picker. The existing twelve-month database cleanup remains in place.
+The oldest period shows the first recorded date when it begins partway through
+that period. With no recorded activity, History shows an empty state and its
+selection controls are disabled.
+Week views cover Monday–Sunday and
 month views cover complete calendar months, including days without activity.
 Intervals split at local midnight and use elapsed time across daylight-saving
 changes. The current session ends with “now”. Long reports scroll within the

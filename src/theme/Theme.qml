@@ -73,6 +73,7 @@ QtObject {
     readonly property string playIcon: "" // play
     readonly property string pauseIcon: "" // pause
     readonly property string defaultIcon: "" // star
+    readonly property string todayIcon: "" // calendar-day
 
     // Tooltips
     readonly property int panelOpenDuration: 150
