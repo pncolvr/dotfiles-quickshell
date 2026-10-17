@@ -23,9 +23,9 @@ export function split(value) {
             default: word += character; started = true
         }
     }
-    if (escaped || quote) throw new Error('Close all quotes and finish the escaped argument.')
+    if (escaped || quote) throw new Error("arguments.errors.unclosedQuote")
     if (started) words.push(word)
-    if (words.some(word => word.includes('\0'))) throw new Error('Arguments cannot contain NUL characters.')
+    if (words.some(word => word.includes('\0'))) throw new Error("arguments.errors.nul")
     return words
 }
 export function join(words) {
@@ -33,6 +33,6 @@ export function join(words) {
 }
 export function command(value) {
     const words = split(value)
-    if (words.length && (!words[0] || words[0].startsWith('-'))) throw new Error('Enter an executable followed by its arguments.')
+    if (words.length && (!words[0] || words[0].startsWith('-'))) throw new Error("arguments.errors.executableRequired")
     return words
 }

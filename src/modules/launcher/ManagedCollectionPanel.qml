@@ -1,4 +1,5 @@
 pragma ComponentBehavior: Bound
+import "../../i18n"
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls as QC
@@ -53,7 +54,7 @@ ManagedPickerFrame {
     UI.TabBar {
         id: header
         width: parent.width
-        labels: [root.collectionName,'Manage']
+        labels: [root.collectionName,Translations.text("common.tabs.manage")]
         currentIndex: root.managing ? 1 : 0
         onTabClicked: index => root.management(index === 1)
     }
@@ -64,8 +65,8 @@ ManagedPickerFrame {
         backgroundVisible: root.backgroundVisible
         visible: !root.managing
         actionButtons: root.listActionButtons
-        searchPlaceholder: 'Search ' + root.collectionName.toLowerCase()
-        footerHint: StatusService.filterHint(Config.pickerShowAllShortcut,root.service.showAll) + Config.pickerManageShortcut + ': manage · Enter: ' + root.picker.acceptLabel.toLowerCase() + ' · Esc: close'
+        searchPlaceholder: Translations.text("collections.search", [root.collectionName.toLowerCase()])
+        footerHint: StatusService.filterHint(Config.pickerShowAllShortcut,root.service.showAll) + Translations.text("collections.shortcuts.list",[Config.pickerManageShortcut,root.picker.acceptLabel.toLowerCase()])
     }
     QC.ScrollView {
         id: manage
@@ -98,7 +99,7 @@ ManagedPickerFrame {
                     id: manageSearch
                     objectName: 'collectionManageSearch'
                     width: parent.width
-                    placeholderText: 'Filter ' + root.collectionName.toLowerCase()
+                    placeholderText: Translations.text("collections.manage.search", [root.collectionName.toLowerCase()])
                     retainPanelWhileEditing: false
                     Keys.onShortcutOverride: event => { if (root.handleAddKey(event,false)) event.accepted=true }
                     Keys.onPressed: event => { if (root.handleAddKey(event,true)) event.accepted=true }
@@ -113,18 +114,18 @@ ManagedPickerFrame {
                             Layout.fillWidth: true
                             UI.ColumnText { text: row.modelData.name; width: parent.width; elide: Text.ElideRight }
                             UI.ColumnText {
-                                text: (row.modelData.enabled ? '' : 'Disabled · ') + (row.modelData.url ?? row.modelData.endpoint ?? '')
+                                text: row.modelData.enabled ? (row.modelData.url ?? row.modelData.endpoint ?? '') : Translations.text("collections.entry.disabled",[row.modelData.url ?? row.modelData.endpoint ?? ''])
                                 color: Theme.inactive; width: parent.width; elide: Text.ElideMiddle
                             }
                         }
-                        UI.ActionButton { glyph: Theme.editIcon; hint: 'edit entry'; enabled: !root.service.busy; onClicked: root.edit(row.modelData) }
+                        UI.ActionButton { glyph: Theme.editIcon; hint: Translations.text("collections.actions.editHint"); enabled: !root.service.busy; onClicked: root.edit(row.modelData) }
                         UI.ActionButton {
-                            glyph: Theme.deleteIcon; hint: 'remove entry'; fillColor: Theme.urgent
+                            glyph: Theme.deleteIcon; hint: Translations.text("collections.actions.removeHint"); fillColor: Theme.urgent
                             enabled: !root.service.busy && root.canRemoveEntry(row.modelData); onClicked: root.service.remove(row.modelData.id)
                         }
                     }
                 }
-                UI.ColumnText { text: 'No matching entries.'; visible: !root.managedEntries.length; color: Theme.inactive }
+                UI.ColumnText { text: Translations.text("collections.empty.filtered"); visible: !root.managedEntries.length; color: Theme.inactive }
             }
         }
     }
@@ -137,7 +138,7 @@ ManagedPickerFrame {
             anchors.right: parent.right; anchors.rightMargin: Theme.projectManagePadding
             visible: root.showForm
             submitEnabled: !root.service.busy
-            submitHint: 'save entry'; cancelHint: 'cancel edit'
+            submitHint: Translations.text("collections.actions.saveHint"); cancelHint: Translations.text("common.actions.cancelEditHint")
             onSubmitted: root.submit()
             onCancelled: { root.service.cancel(); Qt.callLater(root.focusSearch) }
         }
@@ -145,11 +146,11 @@ ManagedPickerFrame {
             objectName: 'addCollectionEntry'
             anchors.right: parent.right; anchors.rightMargin: Theme.projectManagePadding
             visible: !root.showForm
-            glyph: Theme.addIcon; hint: 'add entry (' + Config.pickerAddShortcut + ')'
+            glyph: Theme.addIcon; hint: Translations.text("collections.actions.addHint",[Config.pickerAddShortcut])
             enabled: !root.service.busy
             onClicked: { root.beginAdd(); Qt.callLater(root.focusSearch) }
         }
-        UI.ShortcutHints { width: parent.width; hints: Config.pickerManageShortcut + ': list · Esc: cancel/close' }
+        UI.ShortcutHints { width: parent.width; hints: Translations.text("collections.shortcuts.manage",[Config.pickerManageShortcut]) }
         Item { width: 1; height: Theme.projectManagePadding }
     }
 }

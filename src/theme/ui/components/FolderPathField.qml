@@ -1,4 +1,5 @@
 pragma ComponentBehavior: Bound
+import "../../../i18n"
 import QtQuick
 import "../../"
 import "../" as UI
@@ -10,7 +11,7 @@ Row {
     property alias inputObjectName: input.objectName
     property alias browseObjectName: browse.objectName
     property alias folderPicker: dialog
-    property string dialogTitle: "Choose folder"
+    property string dialogTitle: Translations.text("folders.dialog.title")
     readonly property bool nativeDialogOpen: dialog.nativeDialogOpen
     signal accepted()
     spacing: Theme.controlSpacing
@@ -25,7 +26,7 @@ Row {
     UI.ActionButton {
         id: browse
         glyph: Theme.folderOpenIcon
-        hint: "choose folder"
+        hint: Translations.text("folders.actions.chooseHint")
         onClicked: dialog.open()
     }
     UI.FolderDialog {

@@ -1,4 +1,5 @@
 pragma ComponentBehavior: Bound
+import "../../../i18n"
 import QtQuick
 import "../../../theme"
 import ".."
@@ -21,7 +22,7 @@ Column {
                 required property string modelData
                 width: (root.width - Theme.controlSpacing * 2) / 3
                 spacing: 4
-                UI.ColumnText { width: parent.width; text: parent.modelData; color: Theme.inactive; horizontalAlignment: Text.AlignHCenter }
+                UI.ColumnText { width: parent.width; text: ({Temperature:Translations.text("stats.cpu.temperature"),Download:Translations.text("stats.network.download"),Upload:Translations.text("stats.network.upload")})[parent.modelData] ?? parent.modelData; color: Theme.inactive; horizontalAlignment: Text.AlignHCenter }
                 UI.ColumnText {
                     width: parent.width
                     horizontalAlignment: Text.AlignHCenter
@@ -49,7 +50,7 @@ Column {
                 required property string modelData
                 width: (root.width - Theme.controlSpacing) / 2
                 spacing: 4
-                UI.ColumnText { width: parent.width; text: parent.modelData; color: Theme.inactive; horizontalAlignment: Text.AlignHCenter }
+                UI.ColumnText { width: parent.width; text: ({Temperature:Translations.text("stats.cpu.temperature"),Download:Translations.text("stats.network.download"),Upload:Translations.text("stats.network.upload")})[parent.modelData] ?? parent.modelData; color: Theme.inactive; horizontalAlignment: Text.AlignHCenter }
                 UI.ColumnText {
                     width: parent.width
                     horizontalAlignment: Text.AlignHCenter
@@ -60,8 +61,8 @@ Column {
         }
     }
     Repeater {
-        model: [{label: "Connected", value: root.networkService.connectedNetworks.filter(network => network.connected).map(network => network.name).join(", ") || "None"},
-            {label: "VPN", value: root.networkService.vpnConnections.filter(vpn => vpn.active).map(vpn => vpn.name).join(", ") || "Off"}]
+        model: [{label: Translations.text("stats.network.connected"), value: root.networkService.connectedNetworks.filter(network => network.connected).map(network => network.name).join(", ") || Translations.text("common.states.none")},
+            {label: "VPN", value: root.networkService.vpnConnections.filter(vpn => vpn.active).map(vpn => vpn.name).join(", ") || Translations.text("common.states.off")}]
         Item {
             required property var modelData
             width: root.width
@@ -88,9 +89,9 @@ Column {
                 required property int index
                 objectName: "statsPowerProfile-" + modelData
                 width: (profiles.width - profiles.spacing * (Config.powerProfiles.length - 1)) / Config.powerProfiles.length
-                label: ["Power saver", "Balanced", "Performance"][index]
+                label: [Translations.text("stats.power.saver"), Translations.text("stats.power.balanced"), Translations.text("stats.power.performance")][index]
                 glyph: Theme.powerProfileIcons[index]
-                hint: label + (enabled ? "" : " unavailable")
+                hint: enabled ? label : Translations.text("common.states.unavailableLabel",[label])
                 enabled: root.powerService.availableProfiles.includes(modelData)
                 checked: root.powerService.profile === modelData
                 foreground: checked ? Theme.accent : Theme.inactive

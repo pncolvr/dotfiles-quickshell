@@ -1,4 +1,5 @@
 pragma ComponentBehavior: Bound
+import "../../i18n"
 import QtQuick
 import "../../theme"
 import "../../theme/ui" as UI
@@ -30,44 +31,44 @@ Column {
                 endpoint:endpoint.text,port:Number(port.text),username:username.text,password:password.text,domain:domain.text,
                 displayName:title.text,hopHost:hop.text,hopUsername:hopUser.text,sshKeyPath:sshKey.text,
                 vmName:vm.text,arguments:Arguments.split(extra.text)})
-        } catch (error) { parseError=error.message; return null }
+        } catch (error) { parseError=Translations.message(error); return null }
     }
-    UI.LabeledField { id:name; inputObjectName:'remoteName'; width:parent.width; label:'Name'; onAccepted:root.accepted() }
+    UI.LabeledField { id:name; inputObjectName:'remoteName'; width:parent.width; label:Translations.text("common.fields.name"); onAccepted:root.accepted() }
     UI.ComboSelector {
-        objectName:'remoteTypeSelector'; width:parent.width; compact:true; labelPrefix:'Connection: '
-        options:[{name:'remote',description:'RDP through SSH tunnel'},{name:'vm',description:'Virtual machine'}]
+        objectName:'remoteTypeSelector'; width:parent.width; compact:true; label: Translations.text("remotes.type.label", [selectedDescription])
+        options:[{name:'remote',description:Translations.text("remotes.type.sshTunnel")},{name:'vm',description:Translations.text("remotes.type.virtualMachine")}]
         selectedName:root.connectionType; onSelected:name=>root.connectionType=name
     }
     EntryCategorySelector {
         objectName:'remoteCategorySelector'; width:parent.width
         selectedName:root.entryCategory; onSelected:name=>root.entryCategory=name
     }
-    UI.LabeledField { id:endpoint; inputObjectName:'remoteEndpoint'; width:parent.width; label:'RDP host'; onAccepted:root.accepted() }
-    UI.LabeledField { id:port; inputObjectName:'remotePort'; width:parent.width; label:'RDP port'; onAccepted:root.accepted() }
-    UI.LabeledField { id:username; inputObjectName:'remoteUsername'; width:parent.width; label:'Username'; onAccepted:root.accepted() }
-    UI.ColumnText { text:'Password'; color:Theme.inactive }
+    UI.LabeledField { id:endpoint; inputObjectName:'remoteEndpoint'; width:parent.width; label:Translations.text("remotes.fields.host"); onAccepted:root.accepted() }
+    UI.LabeledField { id:port; inputObjectName:'remotePort'; width:parent.width; label:Translations.text("remotes.fields.port"); onAccepted:root.accepted() }
+    UI.LabeledField { id:username; inputObjectName:'remoteUsername'; width:parent.width; label:Translations.text("common.fields.username"); onAccepted:root.accepted() }
+    UI.ColumnText { text:Translations.text("common.fields.password"); color:Theme.inactive }
     UI.SecretField { id:password; objectName:'remotePassword'; width:parent.width; onAccepted:root.accepted() }
     Column {
         width:parent.width; spacing:Theme.controlSpacing; visible:root.connectionType==='remote'
-        UI.LabeledField { id:hop; inputObjectName:'remoteHop'; width:parent.width; label:'SSH jump host'; onAccepted:root.accepted() }
-        UI.LabeledField { id:hopUser; inputObjectName:'remoteHopUsername'; width:parent.width; label:'SSH username'; onAccepted:root.accepted() }
-        UI.LabeledField { id:sshKey; inputObjectName:'remoteKey'; width:parent.width; label:'SSH key path (optional)'; onAccepted:root.accepted() }
+        UI.LabeledField { id:hop; inputObjectName:'remoteHop'; width:parent.width; label:Translations.text("remotes.fields.jumpHost"); onAccepted:root.accepted() }
+        UI.LabeledField { id:hopUser; inputObjectName:'remoteHopUsername'; width:parent.width; label:Translations.text("remotes.fields.sshUsername"); onAccepted:root.accepted() }
+        UI.LabeledField { id:sshKey; inputObjectName:'remoteKey'; width:parent.width; label:Translations.text("remotes.fields.sshKey"); onAccepted:root.accepted() }
     }
-    UI.LabeledField { id:vm; inputObjectName:'remoteVm'; width:parent.width; visible:root.connectionType==='vm'; label:'Virtual machine'; onAccepted:root.accepted() }
+    UI.LabeledField { id:vm; inputObjectName:'remoteVm'; width:parent.width; visible:root.connectionType==='vm'; label:Translations.text("remotes.type.virtualMachine"); onAccepted:root.accepted() }
     UI.ActionButton {
-        objectName:'remoteEnabled'; label:root.entryEnabled ? 'Enabled' : 'Disabled'; checkable:true; checked:root.entryEnabled
+        objectName:'remoteEnabled'; label:Translations.text(root.entryEnabled ? "common.states.enabled" : "common.states.disabled"); checkable:true; checked:root.entryEnabled
         foreground:root.entryEnabled ? Theme.accent : Theme.inactive
-        hint:'Include this connection in the picker'; onClicked:root.entryEnabled=!root.entryEnabled
+        hint:Translations.text("remotes.fields.enabledHint"); onClicked:root.entryEnabled=!root.entryEnabled
     }
     UI.ActionButton {
-        label:'Advanced'; glyph:Theme.chevronDownIcon; checkable:true; checked:root.advanced
-        hint:'Additional connection options'; onClicked:root.advanced=!root.advanced
+        label:Translations.text("common.sections.advanced"); glyph:Theme.chevronDownIcon; checkable:true; checked:root.advanced
+        hint:Translations.text("remotes.advanced.hint"); onClicked:root.advanced=!root.advanced
     }
     Column {
         width:parent.width; spacing:Theme.controlSpacing; visible:root.advanced
-        UI.LabeledField { id:domain; width:parent.width; label:'Domain (optional)'; onAccepted:root.accepted() }
-        UI.LabeledField { id:title; width:parent.width; label:'Window title (optional)'; onAccepted:root.accepted() }
-        UI.LabeledField { id:extra; width:parent.width; label:'RDP arguments (literal, quoted arguments supported)'; onAccepted:root.accepted() }
+        UI.LabeledField { id:domain; width:parent.width; label:Translations.text("remotes.fields.domain"); onAccepted:root.accepted() }
+        UI.LabeledField { id:title; width:parent.width; label:Translations.text("remotes.fields.windowTitle"); onAccepted:root.accepted() }
+        UI.LabeledField { id:extra; width:parent.width; label:Translations.text("remotes.fields.arguments"); onAccepted:root.accepted() }
     }
     UI.ColumnText { width:parent.width; text:root.parseError; visible:!!text; color:Theme.urgent; wrapMode:Text.Wrap }
 }

@@ -1,4 +1,5 @@
 pragma ComponentBehavior: Bound
+import "../../i18n"
 import QtQml
 import QtQml.WorkerScript
 import Quickshell
@@ -115,7 +116,7 @@ QtObject {
     property Timer dispatch: Timer { interval: 25; onTriggered: root.run() }
     property Timer deadline: Timer {
         interval: 4000; running: reader.running
-        onTriggered: { reader.running = false; root.pending = false; root.failed = true; root.pendingAccept = null; root.owner.error = "Clipboard search timed out." }
+        onTriggered: { reader.running = false; root.pending = false; root.failed = true; root.pendingAccept = null; root.owner.error = Translations.text("clipboard.errors.searchTimeout") }
     }
     property Process readerProcess: Process {
         id: reader
@@ -138,14 +139,14 @@ QtObject {
             let data
             try { data = JSON.parse(response) } catch (_) { data = null }
             if (code !== 0 || status !== 0 || !Array.isArray(data?.rows) || data.error) {
-                root.pending = false; root.failed = true; root.pendingAccept = null; root.owner.error = "Clipboard search unavailable. Check sqlite3 or try Fuzzy."; return
+                root.pending = false; root.failed = true; root.pendingAccept = null; root.owner.error = Translations.text("clipboard.errors.searchUnavailable"); return
             }
             root.owner.error = ""
             if (fuzzyJob) {
                 root.fuzzyMetadata = data.rows.map(entry => root.row(entry))
                 root.fuzzyRevision = ClipboardRepository.revision
                 root.sendWorker(data.rows.map(entry => ({title:(entry.preview ?? "").replace(/\s+/g," "),
-                    search:entry.kind === "image" ? entry.mime + " image" : entry.search,pinned:!!entry.pinned,kind:entry.kind})))
+                    search:entry.kind === "image" ? entry.mime + Translations.text("clipboard.image.suffix") : entry.search,pinned:!!entry.pinned,kind:entry.kind})))
             } else {
                 root.hasMore = data.rows.length > take
                 const rows = data.rows.slice(0,take).map(entry => root.row(entry))

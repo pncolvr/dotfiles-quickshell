@@ -1,4 +1,5 @@
 pragma Singleton
+import "../../i18n"
 import QtQml
 import Quickshell
 import Quickshell.Io
@@ -11,8 +12,8 @@ ManagedCollectionService {
     id: root
     repository: RemoteRepository
     pickerMode: PickerService.Mode.Remotes
-    collectionName: 'Remotes'
-    acceptLabel: selectedSession ? 'Disconnect' : 'Connect'
+    collectionName: Translations.text("remotes.title")
+    acceptLabel: Translations.text(selectedSession ? "remotes.actions.disconnect" : "remotes.actions.connect")
     busy: shutdownTask.running
     property var sessions: []
     property var pendingControls: []
@@ -30,9 +31,9 @@ ManagedCollectionService {
     }
     function stateLabel(state) {
         switch (state) {
-            case 'connecting': return 'Connecting'
-            case 'running': return 'RDP running'
-            case 'disconnecting': return 'Disconnecting'
+            case 'connecting': return Translations.text("remotes.states.connecting")
+            case 'running': return Translations.text("remotes.states.running")
+            case 'disconnecting': return Translations.text("remotes.states.disconnecting")
             default: return ''
         }
     }
@@ -47,7 +48,7 @@ ManagedCollectionService {
         if (!entry) return
         if (sessions.some(session=>session.id===entry.id)) { disconnect(entry.id); return }
         if (!entry.enabled) return
-        try { Entries.validate(entry) } catch (exception) { error=exception.message; return }
+        try { Entries.validate(entry) } catch (exception) { error=Translations.message(exception); return }
         Quickshell.execDetached({command:['bash',workerPath,'--run',runtimeDatabase,entry.id,
             Config.databasePath,Quickshell.shellDir,workerOptions()],unbindStdout:true})
         sessions=sessions.concat([{id:entry.id,state:'connecting'}])
@@ -104,7 +105,7 @@ ManagedCollectionService {
         // qmllint disable signal-handler-parameters
         onExited: (code,status) => {
             if (code || status) {
-                root.error='Remote connection control failed.'
+                root.error=Translations.text("remotes.errors.control")
                 if (action==='--disconnect') root.disconnectingIds=root.disconnectingIds.filter(id=>id!==controller.entryId)
             }
             const pending=root.pendingControls[0]
@@ -120,8 +121,8 @@ ManagedCollectionService {
         stderr: StdioCollector { waitForEnd:true }
         // qmllint disable signal-handler-parameters
         onExited: (code,status) => {
-            if (code || status) root.error='Virtual machine shutdown failed.'
-            else AlertService.post('remotes','Virtual machine shutdown requested.','info',3000)
+            if (code || status) root.error=Translations.text("remotes.errors.shutdown")
+            else AlertService.post('remotes',Translations.text("remotes.status.shutdownRequested"),'info',3000)
         }
         // qmllint enable signal-handler-parameters
     }

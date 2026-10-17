@@ -1,4 +1,5 @@
 pragma ComponentBehavior: Bound
+import "../../i18n"
 import QtQuick
 import "../../theme"
 import "../../theme/ui" as UI
@@ -16,7 +17,7 @@ Column {
     UI.ComboSelector {
         objectName:root.objectNamePrefix+'BrowserSelector'
         toggleObjectName:root.objectNamePrefix+'BrowserToggle'
-        width: parent.width; compact:true; labelPrefix:'Browser: '
+        width: parent.width; compact:true; label: Translations.text("browser.selector.label", [selectedDescription])
         options: Config.webappBrowsers.map(browser => ({name:browser.id,description:browser.name}))
         selectedName: root.browser
         onSelected: name => {
@@ -30,17 +31,17 @@ Column {
         objectName:root.objectNamePrefix+'ProfileSelector'
         toggleObjectName:root.objectNamePrefix+'ProfileToggle'
         choicesObjectName:root.objectNamePrefix+'ProfileChoices'
-        width: parent.width; compact:true; labelPrefix:'Profile: '
+        width: parent.width; compact:true; label: Translations.text("browser.profile.label", [selectedDescription])
         visible: !!root.configuredBrowser?.profileArguments
-        options: Entries.profileOptions(root.configuredBrowser)
+        options: Entries.profileOptions(root.configuredBrowser).map(option => Object.assign({},option,{description:option.name ? option.description : Translations.text("browser.profile.default")}))
         selectedName: root.browserProfile
-        placeholder: 'Profile unavailable — choose another'
+        placeholder: Translations.text("browser.profile.unavailable")
         onSelected: name => root.browserProfile=name
     }
     UI.ComboSelector {
         objectName:root.objectNamePrefix+'WindowSelector'
-        width: parent.width; compact:true; labelPrefix:'Window: '
-        options: Entries.windowOptions(root.configuredBrowser)
+        width: parent.width; compact:true; label: Translations.text("browser.window.label", [selectedDescription])
+        options: Entries.windowOptions(root.configuredBrowser).map(option => Object.assign({},option,{description:Translations.text(option.description)}))
         selectedName:root.windowMode; onSelected: name => root.windowMode=name
     }
 }

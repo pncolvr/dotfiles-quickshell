@@ -1,6 +1,7 @@
 pragma Singleton
 pragma ComponentBehavior: Bound
 
+import "../../i18n"
 import QtQml
 import Quickshell
 import Quickshell.Io
@@ -32,7 +33,7 @@ Singleton {
         initializing = true
         run(Config.clipboardCommand.concat(["prune"]), JSON.stringify(entries.map(row => row.id)), success => {
             initializing = false
-            if (!success) { error = "Could not clean up clipboard payloads; retrying."; retry.restart(); return }
+            if (!success) { error = Translations.text("clipboard.errors.cleanup"); retry.restart(); return }
             initialized = true
             error = ""
             start()
@@ -53,14 +54,14 @@ Singleton {
     }
     function receive(line, imported) {
         let entry
-        try { entry = JSON.parse(line) } catch (_) { error = "Invalid response from the clipboard helper."; return }
+        try { entry = JSON.parse(line) } catch (_) { error = Translations.text("clipboard.errors.invalidResponse"); return }
         if ((maintenance && !imported) || (paused && !imported) || entry.id === ignoredId) return
         if (ignoredText && entry.kind === "text" && entry.text === ignoredText) {
             if (DbService.ready && !ClipboardRepository.contains(entry.id)) run(Config.clipboardCommand.concat(["delete", entry.id]))
             return
         }
         const removed = ClipboardRepository.add(entry)
-        if (removed === null) { error = DbService.error || "Could not save clipboard history."; return }
+        if (removed === null) { error = DbService.error || Translations.text("clipboard.errors.save"); return }
         if (removed.length) run(Config.clipboardCommand.concat(["delete"]).concat(removed))
         error = ""
     }
@@ -95,8 +96,7 @@ Singleton {
         const command = paste ? Config.clipboardCommand.concat(["paste", entry.id, entry.mime, destination, className])
             : Config.clipboardCommand.concat(["restore", entry.id, entry.mime])
         run(command, "", (success) => {
-            if (!success) error = paste ? "Could not paste. Use Copy and paste manually into the destination."
-                : "Could not restore the clipboard entry."
+            if (!success) error = Translations.text(paste ? "clipboard.errors.paste" : "clipboard.errors.restore")
         })
     }
     function importCopyq() {
@@ -135,7 +135,7 @@ Singleton {
         // qmllint disable signal-handler-parameters
         onExited: (exitCode, exitStatus) => {
             if (root.enabled && !root.paused && !root.maintenance) {
-                root.error = "Clipboard monitoring stopped; retrying."
+                root.error = Translations.text("clipboard.errors.monitoring")
                 retry.restart()
             }
         }
@@ -149,7 +149,7 @@ Singleton {
         stderr: StdioCollector { waitForEnd: true }
         // qmllint disable signal-handler-parameters
         onExited: (exitCode, exitStatus) => {
-            if (exitCode !== 0 || exitStatus !== 0) root.error = "Could not import CopyQ history. Ensure CopyQ is running."
+            if (exitCode !== 0 || exitStatus !== 0) root.error = Translations.text("clipboard.errors.copyqImport")
         }
         // qmllint enable signal-handler-parameters
     }

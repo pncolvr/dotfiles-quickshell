@@ -3,6 +3,6 @@ import "../remotes/RemoteEntries.mjs" as Entries
 
 ManagedCollectionRepository {
     tableName: 'remotes'
-    entryLabel: 'remote'
+    entryLabel: 'collections.types.remote'
     validateEntry: Entries.validate
 }

@@ -1,5 +1,6 @@
 pragma Singleton
 
+import "../../i18n"
 import QtQml
 import Quickshell
 import Quickshell.Io
@@ -113,7 +114,7 @@ Singleton {
         onRunningChanged: {
             if (!running) {
                 if (!_internal.online) {
-                    AlertService.post("network", "no internet access")
+                    AlertService.post("network", Translations.text("network.status.noInternet"))
                     retryTimer.start()
                 } else {
                     AlertService.dismiss("network")

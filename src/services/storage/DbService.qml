@@ -1,5 +1,6 @@
 pragma Singleton
 
+import "../../i18n"
 import QtQml
 import QtQuick.LocalStorage as SQL
 import Quickshell
@@ -36,7 +37,7 @@ Singleton {
             : message.includes("transaction") ? "transaction"
             : message.includes("syntax") ? "syntax"
             : "unknown"
-        state.error = "Local database operation failed."
+        state.error = Translations.text("storage.errors.operation")
         const constraint = message.match(/constraint failed: ([a-z_]+)\.([a-z_]+)/)
         const fields = {
             clipboard: ["id", "mime", "kind", "bytes", "text", "updated_at", "pinned"],

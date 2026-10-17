@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 pragma Singleton
 
+import "../../i18n"
 import QtQuick
 import Quickshell
 import Quickshell.Io
@@ -208,7 +209,7 @@ Singleton {
         if (invoke(entry, "default")) return
         const emitter = NotificationEmitterRepository.emitters[entry.emitterKey]
         if (!WindowService.focusEmitter(emitter?.desktopEntry || "", emitter?.name || "")) {
-            focusMessage = "No matching application window is available."
+            focusMessage = Translations.text("projects.errors.windowUnavailable")
             focusMessageTimer.restart()
         }
     }

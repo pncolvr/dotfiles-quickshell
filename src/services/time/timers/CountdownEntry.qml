@@ -1,9 +1,10 @@
+import "../../../i18n"
 import "../../../config"
 
 TimeEntry {
     id: root
     property real durationMs: 0
-    defaultLabel: "Countdown"
+    defaultLabel: Translations.text("timers.defaults.countdown")
     valueMs: Math.max(0, durationMs - elapsedMs)
     urgency: !running ? 0 : valueMs <= Config.countdownUrgentThreshold ? 2
         : valueMs <= Config.countdownWarningThreshold ? 1 : 0

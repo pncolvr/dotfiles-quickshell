@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 
+import "../../../i18n"
 import QtQuick
 import "../../../theme"
 import "../../../theme/ui" as UI
@@ -8,7 +9,7 @@ import "../../../services"
 TimeEntryTab {
     id: root
     empty: TimersService.timers.length === 0
-    emptyMessage: "No timers"
+    emptyMessage: Translations.text("timers.stopwatches.empty")
     creationComponent: Component {
         Row {
             spacing: Theme.controlSpacing
@@ -16,7 +17,7 @@ TimeEntryTab {
                 id: nameField
                 objectName: "timerName"
                 width: parent.width - addButton.width - parent.spacing
-                placeholderText: "Name (optional)"
+                placeholderText: Translations.text("timers.fields.nameOptional")
                 onAccepted: TimersService.addTimer(text)
             }
             UI.ActionButton {
@@ -24,7 +25,7 @@ TimeEntryTab {
                 objectName: "timerStart"
                 glyph: Theme.addIcon
                 foreground: Theme.accent
-                hint: "Add timer"
+                hint: Translations.text("timers.stopwatches.add")
                 onClicked: TimersService.addTimer(nameField.text)
             }
         }

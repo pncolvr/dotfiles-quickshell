@@ -1,5 +1,6 @@
 pragma Singleton
 
+import "../../i18n"
 import QtQml
 import Quickshell
 import Quickshell.Io
@@ -103,7 +104,7 @@ Singleton {
                 files = snapshot.files
                 state.error = ""
                 folderAdded(snapshot.folder)
-            } else state.error = "Could not save the folder list."
+            } else state.error = Translations.text("files.errors.saveFolders")
         } else if (!showingPinned && state.requestFolder === currentFolder) {
             if (canNavigateUp && snapshot.folder !== currentFolder)
                 state.navigationFolders = state.navigationFolders.slice(0, -1).concat([snapshot.folder])
@@ -185,7 +186,7 @@ Singleton {
     }
     function addFolder(path) {
         if (scan.running || state.dragging) return false
-        if (!path) { state.error = "Enter a folder path."; return false }
+        if (!path) { state.error = Translations.text("files.errors.pathRequired"); return false }
         state.refreshPending = false
         state.requestFolder = path
         state.addingFolder = true
@@ -205,7 +206,7 @@ Singleton {
         delete aliases[path]
         values["files.folderAliases"] = aliases
         if (!PreferencesRepository.setValues(values)) {
-            state.error = "Could not save the folder list."
+            state.error = Translations.text("files.errors.saveFolders")
             return false
         }
         if (state.activeFolder === path) selectFolder("")
@@ -220,7 +221,7 @@ Singleton {
             || (tab === "folder" && !folders.includes(path))) return false
         if (!PreferencesRepository.setValues({"files.defaultTab": tab,
             "files.defaultFolder": tab === "folder" ? path : ""})) {
-            state.error = "Could not save the default tab."
+            state.error = Translations.text("files.errors.saveDefaultTab")
             return false
         }
         return true
@@ -237,7 +238,7 @@ Singleton {
         if (alias) aliases[path] = alias
         else delete aliases[path]
         if (!PreferencesRepository.setValue("files.folderAliases", aliases)) {
-            state.error = "Could not save the tab name."
+            state.error = Translations.text("files.errors.saveTabName")
             return false
         }
         return true
@@ -266,7 +267,7 @@ Singleton {
                 if (state.dragging) { state.deferredSnapshot = snapshot; state.refreshPending = true }
                 else root.applySnapshot(snapshot)
             } else if (state.addingFolder || (!root.showingPinned && state.requestFolder === root.currentFolder))
-                state.error = snapshot?.error || "Could not load files."
+                state.error = Translations.message(snapshot?.error) || Translations.text("files.errors.load")
             if (state.refreshPending && !state.dragging) Qt.callLater(root.refresh)
         }
         // qmllint enable signal-handler-parameters

@@ -1,4 +1,5 @@
 pragma ComponentBehavior: Bound
+import "../../i18n"
 import QtQuick
 import "../../theme"
 import "../../theme/ui" as UI
@@ -29,9 +30,9 @@ Column {
             uris: urls.text.split("\n").map(value => value.trim()).filter(Boolean)}
     }
     spacing: Theme.controlSpacing
-    UI.InputField { id: title; objectName: "vaultTitle"; width: parent.width; visible: root.adding; placeholderText: "Entry title"; retainPanelWhileEditing: false }
-    UI.TextArea { id: urls; width: parent.width; visible: root.adding; placeholderText: "Website URLs, one per line" }
-    UI.InputField { id: username; width: parent.width; visible: root.adding; placeholderText: "Username / email"; retainPanelWhileEditing: false }
+    UI.InputField { id: title; objectName: "vaultTitle"; width: parent.width; visible: root.adding; placeholderText: Translations.text("vault.fields.title"); retainPanelWhileEditing: false }
+    UI.TextArea { id: urls; width: parent.width; visible: root.adding; placeholderText: Translations.text("vault.fields.websites") }
+    UI.InputField { id: username; width: parent.width; visible: root.adding; placeholderText: Translations.text("vault.fields.username"); retainPanelWhileEditing: false }
     Item {
         width: parent.width
         height: Theme.controlHeight
@@ -40,7 +41,7 @@ Column {
             anchors.left: parent.left
             anchors.right: length.left
             anchors.rightMargin: Theme.controlSpacing
-            text: "Password"
+            text: Translations.text("common.fields.password")
             color: Theme.inactive
             elide: Text.ElideRight
         }
@@ -50,8 +51,8 @@ Column {
             anchors.rightMargin: Theme.controlSpacing
             width: 60
             text: "24"
-            placeholderText: "Length"
-            Accessible.name: "Generated password length"
+            placeholderText: Translations.text("vault.password.length")
+            Accessible.name: Translations.text("vault.password.lengthAccessibleName")
             retainPanelWhileEditing: false
             validator: IntValidator { bottom: 8; top: 128 }
         }
@@ -59,11 +60,11 @@ Column {
             id: passwordActions
             anchors.right: parent.right
             spacing: Theme.controlSpacing
-            UI.ActionButton { glyph: Theme.retryIcon; hint: "Generate password"; onClicked: RbwService.generate(Number(length.text)) }
-            UI.ActionButton { glyph: Theme.copyIcon; hint: "Copy password"; onClicked: root.copyRequested(password.text) }
+            UI.ActionButton { glyph: Theme.retryIcon; hint: Translations.text("secrets.actions.generatePassword"); onClicked: RbwService.generate(Number(length.text)) }
+            UI.ActionButton { glyph: Theme.copyIcon; hint: Translations.text("secrets.actions.copyPassword"); onClicked: root.copyRequested(password.text) }
         }
     }
-    UI.SecretField { revealObjectName: "vaultEye"; id: password; objectName: "vaultPassword"; width: parent.width; visible: root.adding || RbwService.detail?.data !== null; placeholderText: "Password" }
-    UI.InputField { id: folder; width: parent.width; visible: root.adding; placeholderText: "Folder (optional, existing or new)"; retainPanelWhileEditing: false }
-    UI.ComboSelector { width: parent.width; visible: root.adding && RbwService.folders.length > 0; compact: true; options: RbwService.folders.map(value => ({name: value, description: value})); selectedName: folder.text; placeholder: "Choose an existing folder"; onSelected: name => folder.text = name }
+    UI.SecretField { revealObjectName: "vaultEye"; id: password; objectName: "vaultPassword"; width: parent.width; visible: root.adding || RbwService.detail?.data !== null; placeholderText: Translations.text("common.fields.password") }
+    UI.InputField { id: folder; width: parent.width; visible: root.adding; placeholderText: Translations.text("vault.fields.folder"); retainPanelWhileEditing: false }
+    UI.ComboSelector { width: parent.width; visible: root.adding && RbwService.folders.length > 0; compact: true; options: RbwService.folders.map(value => ({name: value, description: value})); selectedName: folder.text; placeholder: Translations.text("vault.fields.folderHint"); onSelected: name => folder.text = name }
 }

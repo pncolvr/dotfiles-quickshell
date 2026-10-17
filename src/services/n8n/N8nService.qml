@@ -1,4 +1,5 @@
 pragma Singleton
+import "../../i18n"
 import QtQml
 import Quickshell
 import "../"
@@ -36,7 +37,7 @@ ManagedCollectionService {
         if (result.workflowId && (!workflow || source?.url!==instance.url)) return
         let command
         try { command=Entries.launch(instance,result.workflowId ? workflow.url : instance.url,Config.webappBrowsers) }
-        catch (exception) { error=exception.message; return }
+        catch (exception) { error=Translations.message(exception); return }
         PickerService.close()
         Quickshell.execDetached(command)
     }
@@ -49,17 +50,17 @@ ManagedCollectionService {
     function nextInstance() {
         if (!queue.length) {
             current=null; refreshing=false
-            refreshStatus='Refreshed '+succeeded+' instance(s)'+(failed ? '; '+failed+' failed — saved lists kept.' : '.')
+            refreshStatus=Translations.text("n8n.refresh.completed",[succeeded,failed ? Translations.text("n8n.refresh.failures",[failed]) : "."])
             return
         }
         current=queue[0]; queue=queue.slice(1); pending=[]; seenCursors=[]; pages=0
-        refreshStatus='Refreshing '+current.name+'…'
-        if (!current.apiKey) { fail('Add an API key in Manage before refreshing.'); return }
+        refreshStatus=Translations.text("n8n.refresh.busy",[current.name])+"…"
+        if (!current.apiKey) { fail(Translations.text("n8n.errors.keyRequired")); return }
         requestPage('')
     }
     function requestPage(cursor) {
         if (++pages>1000 || pending.length>100000 || seenCursors.includes(cursor)) {
-            fail('Pagination did not complete. The saved list was kept.'); return
+            fail(Translations.text("n8n.errors.pagination")); return
         }
         seenCursors=seenCursors.concat([cursor])
         http.get(Entries.apiUrl(current,cursor),{'X-N8N-API-KEY':current.apiKey,Accept:'application/json'})
@@ -79,10 +80,10 @@ ManagedCollectionService {
                 page=Entries.page(JSON.parse(json))
                 const ids=new Set(root.pending.map(row=>row.id))
                 for (const row of page.workflows) {
-                    if (ids.has(row.id)) throw new Error('The API repeated a workflow ID. The saved list was kept.')
+                    if (ids.has(row.id)) throw new Error(Translations.text("n8n.errors.duplicateWorkflow"))
                     ids.add(row.id)
                 }
-            } catch (exception) { root.fail(exception.message); return }
+            } catch (exception) { root.fail(Translations.message(exception)); return }
             root.pending=root.pending.concat(page.workflows)
             if (page.cursor) { Qt.callLater(()=>root.requestPage(page.cursor)); return }
             if (!N8nRepository.replaceWorkflows(root.current,root.pending)) { root.fail(N8nRepository.error); return }

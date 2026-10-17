@@ -1,4 +1,5 @@
 pragma ComponentBehavior: Bound
+import "../../i18n"
 import QtQuick
 import "../../theme"
 import "../../theme/ui" as UI
@@ -117,7 +118,7 @@ FocusScope {
             anchors.left: parent.left
             anchors.bottom: parent.bottom
             width: root.searchWidth
-            placeholderText: "Search windows"
+            placeholderText: Translations.text("expose.search.placeholder")
             retainPanelWhileEditing: false
             resetWithTooltip: false
             handleEscape: false
@@ -135,7 +136,7 @@ FocusScope {
         height: width
         glyph: Theme.cancelIcon
         foreground: hovered || down ? Theme.foregroundOn(Theme.notificationCritical) : Theme.accent
-        hint: "Close Exposé"
+        hint: Translations.text("expose.actions.closeHint")
         background: Rectangle {
             radius: width / 2
             antialiasing: true
@@ -160,7 +161,7 @@ FocusScope {
     UI.ColumnText {
         anchors.centerIn: grid
         visible: grid.count === 0
-        text: search.text ? "No matching windows" : "No windows in this workspace"
+        text: Translations.text(search.text ? "expose.empty.filtered" : "expose.empty.workspace")
         color: Theme.inactive
     }
     UI.ColumnText {
@@ -168,9 +169,9 @@ FocusScope {
         anchors.bottom: parent.bottom
         width: parent.width
         horizontalAlignment: Text.AlignHCenter
-        text: root.picker.filteredItems.length + " windows · Type to search · Arrows select · Enter focus · Esc close"
-            + " · Ctrl+A all/current · Ctrl+1–0 workspace · Ctrl+Shift+1–0 move (0 = 10)"
-            + " · Meta+Shift+E toggle · Drag to a workspace"
+        text: Translations.text("expose.shortcuts.primary",[root.picker.filteredItems.length])
+            + Translations.text("expose.shortcuts.workspaces")
+            + Translations.text("expose.shortcuts.drag")
         color: Theme.inactive
         wrapMode: Text.WordWrap
     }

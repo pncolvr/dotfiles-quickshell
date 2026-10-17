@@ -1,5 +1,6 @@
 pragma Singleton
 
+import "../../i18n"
 import QtQml
 import Quickshell
 import "../"
@@ -9,14 +10,14 @@ import "../../theme"
 Singleton {
     id: root
     readonly property var actions: [
-        {title: "Reboot", glyph: Theme.powerRebootIcon, result: "Reboot"},
-        {title: "Lock", glyph: Theme.powerLockIcon, result: "Lock"},
-        {title: "Logout", glyph: Theme.powerLogoutIcon, result: "Logout"},
-        {title: "Shutdown", glyph: Theme.powerShutdownIcon, result: "Shutdown"},
-        {title: "Bios", glyph: Theme.powerBiosIcon, result: "Bios"}
+        {title: Translations.text("power.actions.reboot"), glyph: Theme.powerRebootIcon, result: "Reboot"},
+        {title: Translations.text("power.actions.lock"), glyph: Theme.powerLockIcon, result: "Lock"},
+        {title: Translations.text("power.actions.logout"), glyph: Theme.powerLogoutIcon, result: "Logout"},
+        {title: Translations.text("power.actions.shutdown"), glyph: Theme.powerShutdownIcon, result: "Shutdown"},
+        {title: Translations.text("power.actions.bios"), glyph: Theme.powerBiosIcon, result: "Bios"}
     ]
     function open() {
-        PickerService.promptMenu("Choose", actions, picked => root.execute(picked[0].result), "grid")
+        PickerService.promptMenu(Translations.text("common.actions.choose"), actions, picked => root.execute(picked[0].result), "grid")
     }
     function execute(action) {
         if (!actions.some(item => item.result === action)) return false

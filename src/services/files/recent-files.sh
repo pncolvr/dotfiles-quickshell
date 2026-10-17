@@ -12,44 +12,44 @@ max_days=7
 while (($#)); do
     case "$1" in
         --source|--max-items|--max-days)
-            (($# >= 2)) || fail 'Missing recent-file option value.' 2
+            (($# >= 2)) || fail 'files.recent.errors.missingOption' 2
             case "$1" in
                 --source) source_path=$2 ;;
                 --max-items) max_items=$2 ;;
                 --max-days) max_days=$2 ;;
             esac
             shift 2 ;;
-        *) fail 'Unknown recent-file option.' 2 ;;
+        *) fail 'files.recent.errors.unknownOption' 2 ;;
     esac
 done
 for limit in "$max_items" "$max_days"; do
     [[ $limit =~ ^[0-9]{1,10}$ ]] && ((10#$limit <= 2147483647)) \
-        || fail 'Limits must be nonnegative integers; use 0 to disable a limit.' 2
+        || fail 'files.recent.errors.limits' 2
 done
 max_items=$((10#$max_items))
 max_days=$((10#$max_days))
 for dependency in jq xsltproc date; do
-    command -v "$dependency" >/dev/null || fail 'Recent files require jq, xsltproc (libxslt), and GNU coreutils.'
+    command -v "$dependency" >/dev/null || fail 'files.recent.errors.dependencies'
 done
 if [[ ! -e $source_path ]]; then
     printf '{"files":[],"error":""}\n'
     exit 0
 fi
-[[ -f $source_path && -r $source_path ]] || fail 'Could not read the desktop recent-file list.'
+[[ -f $source_path && -r $source_path ]] || fail 'files.recent.errors.read'
 
 helper_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 umask 077
-work_dir=$(mktemp -d) || fail 'Could not prepare the recent-file list.'
+work_dir=$(mktemp -d) || fail 'files.recent.errors.prepare'
 trap 'rm -rf -- "$work_dir"' EXIT
 # Read one snapshot: application writes during filtering cannot change the input.
-cp -- "$source_path" "$work_dir/history.xbel" || fail 'Could not read the desktop recent-file list.'
+cp -- "$source_path" "$work_dir/history.xbel" || fail 'files.recent.errors.read'
 # The desktop bookmark format does not need DTDs or custom entities.
 if LC_ALL=C grep -aqE '<!DOCTYPE|<!ENTITY' "$work_dir/history.xbel"; then
-    fail 'Could not read the desktop recent-file list.'
+    fail 'files.recent.errors.read'
 fi
 xsltproc --nonet --novalid --nowrite --nomkdir "$helper_dir/recent-files.xsl" \
     "$work_dir/history.xbel" > "$work_dir/records" 2>/dev/null \
-    || fail 'Could not read the desktop recent-file list.'
+    || fail 'files.recent.errors.read'
 now=$(date +%s)
 cutoff=0
 if ((max_days > 0)); then cutoff=$((now - max_days * 86400)); fi
@@ -114,4 +114,4 @@ jq -L "$helper_dir" -Rs --argjson max "$max_items" '
         {usedAt: ($fields[$i + 1] | tonumber), icon: $fields[$i + 2]}] |
     group_by(.uri) | map(max_by(.usedAt)) | sort_by([-.usedAt, (.name | natural_name_key), .path]) |
     (if $max > 0 then .[:$max] else . end) | {files: ., error: ""}
-' "$work_dir/files" || fail 'Could not prepare the recent-file list.'
+' "$work_dir/files" || fail 'files.recent.errors.prepare'

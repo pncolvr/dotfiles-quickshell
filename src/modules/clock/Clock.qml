@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 
+import "../../i18n"
 import QtQuick
 import "../../services"
 import "../../theme/ui"
@@ -49,9 +50,9 @@ TooltipArea {
         font.pixelSize: Theme.fontSize - 1
         horizontalAlignment: Text.AlignHCenter
         textFormat: Text.RichText
-        text: [showToday ? '<font color="' + Theme.calendarTodayBackground + '">Today</font>' : '',
-             showHolidays ? '<font color="' + Theme.calendarHolidayBackground + '">Holiday</font>' : '',
-             showClockChangeEve ? '<font color="' + Theme.calendarClockChangeEveBackground + '">Change eve</font>' : '']
+        text: [showToday ? '<font color="' + Theme.calendarTodayBackground + '">' + Translations.text("calendar.relative.today") + '</font>' : '',
+             showHolidays ? '<font color="' + Theme.calendarHolidayBackground + '">' + Translations.text("calendar.legend.holiday") + '</font>' : '',
+             showClockChangeEve ? '<font color="' + Theme.calendarClockChangeEveBackground + '">' + Translations.text("calendar.legend.changeEve") + '</font>' : '']
             .filter(hint => hint.length > 0).join(' · ')
       }
     }

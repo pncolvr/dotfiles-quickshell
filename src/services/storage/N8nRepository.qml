@@ -1,4 +1,5 @@
 pragma Singleton
+import "../../i18n"
 import QtQml
 import "../"
 import "../../config"
@@ -7,7 +8,7 @@ import "../n8n/N8nEntries.mjs" as Entries
 ManagedCollectionRepository {
     id: root
     tableName: 'n8n_instances'
-    entryLabel: 'n8n instance'
+    entryLabel: "n8n.instance.label"
     validateEntry: value => Entries.validate(value,Config.webappBrowsers)
     removeRelated: (tx,id) => tx.executeSql('DELETE FROM n8n_workflows WHERE instance_id=?',[id])
     property var workflows: []
@@ -21,7 +22,7 @@ ManagedCollectionRepository {
         // A renamed/removed connection must not receive a response for an old URL/key.
         const current=entries.find(entry=>entry.id===instance.id)
         if (!current || current.url!==instance.url || current.apiKey!==instance.apiKey) {
-            error='The connection changed during refresh. Refresh again.'; return false
+            error=Translations.text("n8n.errors.connectionChanged"); return false
         }
         const now=Date.now()
         if (!DbService.write(tx=>{

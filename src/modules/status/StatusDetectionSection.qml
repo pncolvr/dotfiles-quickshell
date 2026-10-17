@@ -1,4 +1,5 @@
 pragma ComponentBehavior: Bound
+import "../../i18n"
 import QtQuick
 import QtQuick.Controls as QC
 import QtQuick.Layouts
@@ -22,10 +23,10 @@ Column {
     Rectangle { width: parent.width; height: 1; color: Theme.empty }
     RowLayout {
         width: parent.width
-        UI.ColumnText { text: "Automatic detection"; color: Theme.inactive; Layout.fillWidth: true }
+        UI.ColumnText { text: Translations.text("status.detection.title"); color: Theme.inactive; Layout.fillWidth: true }
         UI.ColumnText {
-            text: root.statusService.detectionLoading && root.matches.length ? "Refreshing…"
-                : root.matches.length + (root.matches.length === 1 ? " process" : " processes")
+            text: root.statusService.detectionLoading && root.matches.length ? Translations.text("common.status.refreshing")
+                : Translations.text("status.detection.processes",[],root.matches.length)
             color: Theme.inactive; font.bold: false; font.weight: Font.Normal; font.styleName: ""
         }
     }
@@ -33,7 +34,7 @@ Column {
         objectName: "statusDetectionManual"
         width: parent.width
         visible: root.statusService.source === "manual"
-        text: "Manual override · automatic evidence does not set the mode."
+        text: Translations.text("status.detection.manualHint")
         textFormat: Text.PlainText; wrapMode: Text.Wrap
         color: Theme.inactive; font.bold: false; font.weight: Font.Normal; font.styleName: ""
     }
@@ -42,7 +43,7 @@ Column {
         width: parent.width
         visible: text.length > 0
         text: root.statusService.detectionError || (!root.matches.length
-            ? root.statusService.detectionLoading ? "Checking automatic detection…" : "No active work detections." : "")
+            ? Translations.text(root.statusService.detectionLoading ? "status.detection.checking" : "status.detection.empty") : "")
         textFormat: Text.PlainText; wrapMode: Text.Wrap
         color: root.statusService.detectionError ? Theme.warning : Theme.inactive
         font.bold: false; font.weight: Font.Normal; font.styleName: ""
@@ -51,7 +52,7 @@ Column {
         objectName: "statusDetectionStale"
         width: parent.width
         visible: root.statusService.detectionStale ?? false
-        text: "Showing the previous successful scan."
+        text: Translations.text("status.detection.stale")
         color: Theme.inactive; font.bold: false; font.weight: Font.Normal; font.styleName: ""
     }
     Repeater {
@@ -61,7 +62,7 @@ Column {
             required property var modelData
             width: root.width
             readonly property bool expanded: root.expandedProcess === modelData.name
-            readonly property string methods: modelData.methods.map(method => ({process:"Configured process",directory:"Working directory",file:"Open work files"})[method] || method).join(" · ")
+            readonly property string methods: modelData.methods.map(method => ({process:Translations.text("status.detection.configuredProcess"),directory:Translations.text("status.detection.workingDirectory"),file:Translations.text("status.detection.openFiles")})[method] || method).join(" · ")
             QC.ItemDelegate {
                 id: toggle
                 objectName: "statusDetectionToggle-" + match.modelData.name
@@ -69,7 +70,7 @@ Column {
                 height: Theme.controlHeight
                 padding: Theme.controlFieldPadding
                 enabled: match.modelData.paths.length > 0
-                Accessible.name: match.modelData.name + ", " + match.methods + ", " + match.modelData.paths.length + " paths"
+                Accessible.name: match.modelData.name + ", " + match.methods + ", " + Translations.text("status.detection.paths",[],match.modelData.paths.length)
                 Accessible.expanded: match.expanded
                 onClicked: root.expandedProcess = match.expanded ? "" : match.modelData.name
                 Keys.onReturnPressed: clicked()
@@ -104,7 +105,7 @@ Column {
                         font.bold: false; font.weight: Font.Normal; font.styleName: ""
                     }
                     UI.ColumnText {
-                        text: match.modelData.paths.length + (match.modelData.paths.length === 1 ? " path" : " paths")
+                        text: Translations.text("status.detection.paths",[],match.modelData.paths.length)
                         color: Theme.inactive; font.bold: false; font.weight: Font.Normal; font.styleName: ""
                     }
                 }

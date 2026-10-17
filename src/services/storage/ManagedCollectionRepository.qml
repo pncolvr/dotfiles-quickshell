@@ -1,3 +1,4 @@
+import "../../i18n"
 import QtQml
 import Quickshell
 import "../"
@@ -15,18 +16,18 @@ Singleton {
         const rows=DbService.read('SELECT id,payload_json FROM '+tableName+' ORDER BY name COLLATE NOCASE,id')
         if (rows===null) { error=DbService.error; return false }
         try { entries=rows.map(row=>Object.assign(JSON.parse(row.payload_json),{id:row.id})) }
-        catch (_) { error='A stored '+entryLabel+' could not be read.'; return false }
+        catch (_) { error=Translations.text("collections.errors.read",[Translations.text(entryLabel)]); return false }
         error=''; return true
     }
     function validated(value) {
         const entry=validateEntry(value)
         if (entries.some(other=>other.id!==entry.id && other.name.toLowerCase()===entry.name.toLowerCase()))
-            throw new Error('An entry with this name already exists.')
+            throw new Error(Translations.text("collections.errors.duplicateName"))
         return entry
     }
     function save(value) {
         let entry
-        try { entry=validated(value) } catch (exception) { error=exception.message; return false }
+        try { entry=validated(value) } catch (exception) { error=Translations.message(exception); return false }
         if (!entry.id) entry.id=String(Date.now())+'-'+Math.random().toString(36).slice(2)
         if (!DbService.write(tx=>{
             tx.executeSql('DELETE FROM '+tableName+' WHERE id=?',[entry.id])

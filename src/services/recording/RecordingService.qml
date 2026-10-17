@@ -1,5 +1,6 @@
 pragma Singleton
 
+import "../../i18n"
 import QtQml
 import Quickshell
 import Quickshell.Io
@@ -79,7 +80,7 @@ Singleton {
                       case Date.now() >= session.launchDeadline:
                         session.launching = false
                         session.cancelAfterLaunch = false
-                        AlertService.post("recording-control", "Recording could not start", "error", 3000)
+                        AlertService.post("recording-control", Translations.text("recording.errors.start"), "error", 3000)
                     }
                 }
                 if (session.cancelAfterLaunch && ["starting", "recording"].includes(result.state)) {
@@ -93,7 +94,7 @@ Singleton {
         // qmllint disable signal-handler-parameters
         onExited: (code, status) => {
             if ((code !== 0 || status !== 0) && controller.requestedToggle)
-                AlertService.post("recording-control", "Recording control failed; retry the shortcut.", "error", 3000)
+                AlertService.post("recording-control", Translations.text("recording.errors.control"), "error", 3000)
             if (session.togglePending) Qt.callLater(root.refresh)
         }
         // qmllint enable signal-handler-parameters

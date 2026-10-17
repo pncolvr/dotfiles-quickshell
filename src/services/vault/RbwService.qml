@@ -1,5 +1,6 @@
 pragma Singleton
 pragma ComponentBehavior: Bound
+import "../../i18n"
 import QtQuick
 import Quickshell
 import Quickshell.Io
@@ -69,7 +70,7 @@ Singleton {
     function copy(value) {
         if (!value) return
         clipboardOwner = SensitiveClipboardService.copy(value, 30000, success => {
-            if (success === false) root.error = "Clipboard copy failed."
+            if (success === false) root.error = Translations.text("vault.errors.copy")
         })
         copied()
     }
@@ -107,16 +108,16 @@ Singleton {
             return
         }
         if (!message || message.ok !== true) {
-            if (background) { generation++; reloadAfterPending = false; entries = []; clear(); error = "Vault lock state unavailable. Refresh to reconnect." }
+            if (background) { generation++; reloadAfterPending = false; entries = []; clear(); error = Translations.text("vault.errors.lockState") }
             else {
                 if (action === "detail") clear()
-                error = message?.error || "Vault operation failed. Refresh before retrying a write."
+                error = Translations.text(message?.error) || Translations.text("vault.errors.operation")
             }
             return
         }
         if (action === "totp") {
             if (typeof message.token !== "string" || !/^(?:[0-9]{1,10}|[23456789BCDFGHJKMNPQRTVWXY]{5})$/.test(message.token)) {
-                error = "Invalid TOTP token response."
+                error = Translations.text("vault.errors.totpResponse")
                 return
             }
             if (detail?.id === entryId) copy(message.token)
@@ -129,7 +130,7 @@ Singleton {
         if (message.locked || message.unlocked === false) {
             generation++; reloadAfterPending = false; entries = []; clear()
             SensitiveClipboardService.stop(clipboardOwner)
-            error = "Vault is locked. Refresh to unlock."
+            error = Translations.text("vault.errors.locked")
         }
     }
     Timer {

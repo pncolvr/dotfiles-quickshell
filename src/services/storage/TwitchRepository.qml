@@ -1,5 +1,6 @@
 pragma Singleton
 
+import "../../i18n"
 import QtQml
 import QtQuick
 import Quickshell
@@ -50,24 +51,24 @@ Singleton {
 
     function validateChannels(login, fallback, original = "", linkExisting = false) {
         if (!validLogin(login) || (fallback && !validLogin(fallback))) {
-            state.error = "Enter a Twitch login (letters, numbers or underscores, up to 25 characters) or a streamer Twitch URL"
+            state.error = Translations.text("twitch.errors.invalidLogin")
             return false
         }
         if (login === fallback) {
-            state.error = "Main and second channel must be different channels"
+            state.error = Translations.text("twitch.errors.sameChannel")
             return false
         }
         const others = users.filter(user => user.login !== original)
         if (others.some(user => user.login === login || user.fallbackLogin === login)) {
-            state.error = "That streamer is already in the list"
+            state.error = Translations.text("twitch.errors.duplicate")
             return false
         }
         if (fallback && others.some(user => user.fallbackLogin === fallback || (user.login === fallback && user.fallbackLogin))) {
-            state.error = "That channel already belongs to another association"
+            state.error = Translations.text("twitch.errors.alreadyAssociated")
             return false
         }
         if (fallback && others.some(user => user.login === fallback) && !linkExisting) {
-            state.error = "That channel is already followed. Use Link these entries."
+            state.error = Translations.text("twitch.errors.alreadyFollowed")
             return false
         }
         return true
@@ -108,7 +109,7 @@ Singleton {
     function updateUser(original, value, fallback = "", linkExisting = false) {
         const login = normalizeLogin(original)
         if (!users.some(user => user.login === login)) {
-            state.error = "That streamer is no longer in the list"
+            state.error = Translations.text("twitch.errors.missingChannel")
             return false
         }
         return saveUser(value, fallback, login, linkExisting)

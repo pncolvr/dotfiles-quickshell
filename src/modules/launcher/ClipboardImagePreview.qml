@@ -1,4 +1,5 @@
 pragma ComponentBehavior: Bound
+import "../../i18n"
 import QtQuick
 import QtQuick.Window
 import Quickshell.Io
@@ -202,7 +203,7 @@ Item {
         centerVertical: false
         anchors.centerIn: parent
         visible: !root.selectedSource || root.metadataError || root.currentImage.status === Image.Error
-        text: root.metadataError || root.currentImage.status === Image.Error ? "Image unavailable" : "No image selected"
+        text: Translations.text(root.metadataError || root.currentImage.status === Image.Error ? "images.preview.unavailable" : "images.preview.empty")
         color: Theme.inactive
     }
     UI.Text {
@@ -211,7 +212,7 @@ Item {
         anchors.bottom: parent.bottom
         anchors.horizontalCenter: parent.horizontalCenter
         visible: root.searching || root.loading
-        text: root.searching ? "Searching…" : "Loading image…"
+        text: Translations.text(root.searching ? "common.status.searching" : "images.preview.loading")
         color: Theme.inactive
     }
 }

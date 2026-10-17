@@ -1,4 +1,5 @@
 pragma ComponentBehavior: Bound
+import "../../i18n"
 import QtQuick
 import "../../services"
 import "../../theme"
@@ -19,9 +20,9 @@ ManagedCollectionPanel {
             spacing:Theme.controlSpacing
             UI.ActionButton {
                 id: refresh
-                objectName:'n8nRefresh'; glyph:Theme.refreshIcon; label:'Refresh'
+                objectName:'n8nRefresh'; glyph:Theme.refreshIcon; label:Translations.text("common.actions.refresh")
                 enabled:!N8nService.refreshing && !!N8nService.availableEntries.length
-                hint:'Refresh workflows for the visible instances (Ctrl+R)'
+                hint:Translations.text("n8n.actions.refreshHint")
                 onClicked:N8nService.refresh()
             }
             UI.ColumnText {

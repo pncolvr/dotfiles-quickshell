@@ -1,4 +1,5 @@
 pragma ComponentBehavior: Bound
+import "../../../i18n"
 import QtQuick
 import QtQuick.Layouts
 import "../../"
@@ -41,16 +42,16 @@ Column {
             id: nameField
             visible: root.showName
             Layout.fillWidth: true
-            placeholderText: "Name (optional)"
+            placeholderText: Translations.text("timers.fields.nameOptional")
             retainPanelWhileEditing: false
             onAccepted: root.accepted()
         }
         UI.ActionButton {
             id: kindButton
             visible: root.showKind
-            label: root.kind === "root" ? "Repositories root" : "Single folder"
+            label: Translations.text(root.kind === "root" ? "projects.source.repositoryRoot" : "projects.source.singleFolder")
             Layout.preferredWidth: Theme.projectOptionButtonWidth
-            hint: "switch folder type"
+            hint: Translations.text("folders.actions.switchTypeHint")
             onClicked: root.kindRequested(root.kind === "root" ? "folder" : "root")
         }
         UI.FolderCategoryButton {

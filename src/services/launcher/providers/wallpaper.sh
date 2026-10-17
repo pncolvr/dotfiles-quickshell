@@ -8,13 +8,13 @@ source "$provider_dir/_common/utils.sh"
 alert() {
     [[ $configured == false ]] || return 0
     "${QS_PICKER_EXECUTABLE:-qs}" ipc -p "${QS_PICKER_CONFIG:-$provider_dir/../../../..}" \
-        call alerts post wallpaper "$1" "$2" 3000 >/dev/null 2>&1 || true
+        call alerts postMessage wallpaper "$1" "${3:-[]}" "$2" 3000 false >/dev/null 2>&1 || true
 }
-fail() { printf '%s\n' "$1" >&2; alert "$1" error; exit 2; }
+fail() { jq -nc --arg key "$1" --argjson args "${2:-[]}" '{key:$key,args:$args}' >&2; alert "$1" error "${2:-[]}"; exit 2; }
 
 configured=false
 if [[ ${1:-} == list ]]; then
-    [[ $# == 2 && -d $2 ]] || { printf 'Wallpaper folder is unavailable\n' >&2; exit 2; }
+    [[ $# == 2 && -d $2 ]] || { printf 'wallpaper.worker.errors.folder\n' >&2; exit 2; }
     IFS= read -r -d '' folder < <(realpath -ez -- "$2") || exit 2
     printf '%s\0' "$folder"
     # Exec makes discovery cancellable as one owned process. Preserve literal paths.
@@ -25,9 +25,9 @@ if [[ ${1:-} == --configured ]]; then
     configured=true
     shift
     [[ -n ${WALLPAPER_STATE_DIRECTORY:-} && ( ${WORK_MODE_ENABLED:-} == true || ${WORK_MODE_ENABLED:-} == false ) ]] \
-        || fail "Could not read wallpaper configuration"
+        || fail "wallpaper.worker.errors.configuration"
 else
-    load_provider_config || fail "Could not read wallpaper configuration"
+    load_provider_config || fail "wallpaper.worker.errors.configuration"
 fi
 state_folder=$WALLPAPER_STATE_DIRECTORY
 
@@ -42,8 +42,8 @@ slot_for_output() {
     case $1 in DP-1) printf 1 ;; HDMI-A-1) printf 2 ;; *) printf '%s' "$1" ;; esac
 }
 validate_target() {
-    [[ $1 =~ ^[a-zA-Z0-9_.:-]+$ ]] || fail "Invalid wallpaper output"
-    [[ $2 == personal || $2 == work ]] || fail "Wallpaper mode must be personal or work"
+    [[ $1 =~ ^[a-zA-Z0-9_.:-]+$ ]] || fail "wallpaper.worker.errors.output"
+    [[ $2 == personal || $2 == work ]] || fail "wallpaper.worker.errors.mode"
 }
 monitors() {
     hyprctl monitors -j | jq -ce 'if type == "array" and length > 0
@@ -56,38 +56,38 @@ set_wallpaper() {
     case $output in 1) output=DP-1 ;; 2) output=HDMI-A-1 ;; esac
     [[ $WORK_MODE_ENABLED == true ]] || mode=personal
     validate_target "$output" "$mode"
-    [[ -f $path && -r $path ]] || fail "Wallpaper file is unavailable"
-    IFS= read -r -d '' path < <(realpath -ez -- "$path") || fail "Wallpaper file is unavailable"
+    [[ -f $path && -r $path ]] || fail "wallpaper.worker.errors.file"
+    IFS= read -r -d '' path < <(realpath -ez -- "$path") || fail "wallpaper.worker.errors.file"
     local outputs
-    outputs=$(monitors) || fail "Could not read connected monitors"
+    outputs=$(monitors) || fail wallpaper.errors.monitors
     jq -e --arg name "$output" 'any(.[]; .name == $name)' <<< "$outputs" >/dev/null \
-        || fail "Wallpaper monitor is not connected: $output"
-    mkdir -p -- "$state_folder" || fail "Could not access saved wallpaper folder"
+        || fail wallpaper.worker.errors.monitor "$(jq -nc --arg output "$output" '[$output]')"
+    mkdir -p -- "$state_folder" || fail "wallpaper.worker.errors.stateFolder"
     target="$state_folder/wallpaper_${mode}_$(slot_for_output "$output")"
-    [[ ! -e $target || -L $target ]] || fail "Saved wallpaper path is not a symlink: $target"
+    [[ ! -e $target || -L $target ]] || fail wallpaper.worker.errors.statePath "$(jq -nc --arg path "$target" '[$path]')"
     awww img "$path" --outputs "$output" --transition-type any --transition-duration 2 \
-        || fail "Could not set wallpaper"
-    ln -s -- "$path" "$work_dir/saved" || fail "Could not save wallpaper choice"
-    mv -Tf -- "$work_dir/saved" "$target" || fail "Could not save wallpaper choice"
+        || fail wallpaper.errors.apply
+    ln -s -- "$path" "$work_dir/saved" || fail "wallpaper.worker.errors.save"
+    mv -Tf -- "$work_dir/saved" "$target" || fail "wallpaper.worker.errors.save"
     alert "Wallpaper saved for $mode on $output" success
 }
 restore_wallpapers() {
     local mode=${1:-personal} outputs output target ready=false
     [[ $WORK_MODE_ENABLED == true ]] || mode=personal
-    [[ $mode == personal || $mode == work ]] || fail "Wallpaper mode must be personal or work"
+    [[ $mode == personal || $mode == work ]] || fail "wallpaper.worker.errors.mode"
     outputs=$(monitors) || fail "Could not read connected monitors"
     # Hyprland starts awww-daemon separately; allow its socket to become ready.
     for ((attempt=0; attempt<30; attempt++)); do
         if awww query >/dev/null 2>&1; then ready=true; break; fi
         sleep 0.1
     done
-    [[ $ready == true ]] || fail "Wallpaper daemon is unavailable"
+    [[ $ready == true ]] || fail "wallpaper.worker.errors.daemon"
     while IFS= read -r output; do
         validate_target "$output" "$mode"
         target="$state_folder/wallpaper_${mode}_$(slot_for_output "$output")"
         [[ -f $target ]] || continue
         awww img "$target" --outputs "$output" --transition-type any --transition-duration 0.5 \
-            || fail "Could not restore wallpaper on $output"
+            || fail wallpaper.worker.errors.restore "$(jq -nc --arg output "$output" '[$output]')"
     done < <(jq -r '.[].name' <<< "$outputs")
 }
 case ${1:-} in

@@ -21,6 +21,28 @@ clipboard; Hyprland;
 calendar/timers; package updates; status/timecard; notifications; recent files;
 audio/media; network/statistics/power; batteries; Twitch/browser sessions; and TOTP.
 
+## Display language
+
+Set `Config.language` in `config/Config.qml` to `"system"` (default), `"en"` or
+`"pt"`. Portuguese uses European Portuguese. System mode reads Qt's default locale
+once when the translation singleton starts; Portuguese locales select Portuguese,
+and other unsupported locales use English. There are no locale subprocesses or
+polling. A changed system locale may require restarting Quickshell. Editing the
+Config override applies through the normal config reload.
+
+All shell-owned wording comes from the shared `Translations` singleton and the
+public catalogs `src/i18n/en.json` and `src/i18n/pt.json`. Missing Portuguese
+messages fall back to English. Catalogs use stable semantic identifiers, independent
+of wording. Complete messages own their placeholders and singular/plural forms.
+Calendar month and weekday names live in these catalogs, rather than Theme;
+weekday highlighting uses numeric indexes. Theme still owns calendar styling.
+
+User-entered names, paths, browser profiles, application names, notification/OCR
+content and output from external tools stay unchanged. Action IDs, command
+arguments, stored categories and the internal time-report grammar remain
+independent of the selected language. Detached workers return semantic diagnostics;
+Quickshell translates them using its current language.
+
 ## Launcher defaults
 
 Project and directory pickers inherit `pickerManageShortcut`, `pickerAddShortcut`,

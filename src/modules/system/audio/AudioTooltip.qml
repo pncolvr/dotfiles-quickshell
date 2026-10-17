@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 
+import "../../../i18n"
 import QtQuick
 import QtQuick.Controls as QC
 import Quickshell
@@ -39,7 +40,7 @@ Column {
         UI.TabBar {
             id: tabs
             objectName: "audioTabs"
-            labels: root.input ? ["Apps", "Microphones"] : ["Apps", "Audio outputs", "Media"]
+            labels: root.input ? [Translations.text("audio.tabs.apps"), Translations.text("audio.tabs.microphones")] : [Translations.text("audio.tabs.apps"), Translations.text("audio.tabs.outputs"), Translations.text("audio.tabs.media")]
             anchors.left: parent.left
             anchors.right: root.input ? micActivity.left : mute.left
             anchors.rightMargin: Theme.audioSpacing
@@ -57,7 +58,7 @@ Column {
             color: root.audioService.micActivityEnabled ? Theme.ok : Theme.inactive
             UI.HoverTooltip {
                 objectName: "micActivityHint"
-                text: root.audioService.micActivityEnabled ? "Mic activity enabled" : "Mic activity disabled"
+                text: Translations.text(root.audioService.micActivityEnabled ? "audio.mic.activityEnabled" : "audio.mic.activityDisabled")
             }
         }
         UI.ActionButton {
@@ -69,7 +70,7 @@ Column {
             glyph: root.input ? (muted ? Theme.micMutedIcon : Theme.micIcon)
                 : (muted ? Theme.volumeMutedIcon : Theme.volumeIcons[Theme.volumeIcons.length - 1])
             foreground: muted ? Theme.warning : Theme.text
-            hint: (muted ? "Unmute " : "Mute ") + (root.input ? "microphone" : "audio")
+            hint: Translations.text(muted ? "audio.actions.unmuteDevice" : "audio.actions.muteDevice",[Translations.text(root.input ? "audio.device.microphone" : "audio.device.audio")])
             onClicked: root.input ? root.audioService.toggleMicMute() : root.audioService.toggleMute()
         }
     }
@@ -78,7 +79,7 @@ Column {
         id: routingFeedback
         width: parent.width
         visible: text.length > 0
-        text: root.audioService.routingBusy ? "Switching audio…" : root.audioService.routingError || root.audioService.routingMessage
+        text: root.audioService.routingBusy ? Translations.text("audio.routing.busy") : root.audioService.routingError || root.audioService.routingMessage
         color: root.audioService.routingError ? Theme.warning : Theme.inactive
         wrapMode: Text.Wrap
     }
@@ -130,7 +131,7 @@ Column {
             UI.ColumnText {
                 width: parent.width
                 visible: root.devices.length === 0
-                text: root.input ? "No microphones available" : "No audio outputs available"
+                text: Translations.text(root.input ? "audio.empty.microphones" : "audio.empty.outputs")
                 color: Theme.inactive
                 wrapMode: Text.Wrap
             }
@@ -159,7 +160,7 @@ Column {
                 objectName: "audioAppsTitle"
                 width: parent.width
                 visible: root.apps.length === 0
-                text: root.input ? "No apps recording" : "No apps playing audio"
+                text: Translations.text(root.input ? "audio.empty.recording" : "audio.empty.playback")
                 color: Theme.inactive
                 elide: Text.ElideRight
             }

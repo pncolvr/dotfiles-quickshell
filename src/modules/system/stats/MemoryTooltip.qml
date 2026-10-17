@@ -1,4 +1,5 @@
 pragma ComponentBehavior: Bound
+import "../../../i18n"
 import QtQuick
 import "../../../theme"
 import "../../../theme/ui" as UI
@@ -14,8 +15,8 @@ Column {
     StatsBar {
         objectName: "statsSwapBar"
         width: parent.width
-        label: "Swap"
-        value: root.statsService.swapTotal > 0 ? root.size(root.statsService.swapUsed) + " / " + root.size(root.statsService.swapTotal) : "Disabled"
+        label: Translations.text("stats.memory.swap")
+        value: root.statsService.swapTotal > 0 ? root.size(root.statsService.swapUsed) + " / " + root.size(root.statsService.swapTotal) : Translations.text("common.states.disabled")
         ratio: root.statsService.swapTotal > 0 ? root.statsService.swapUsed / root.statsService.swapTotal : 0
         fillColor: Theme.warning
     }
@@ -25,7 +26,7 @@ Column {
             required property string modelData
             width: root.width
             height: Math.max(detailLabel.implicitHeight, detailValue.implicitHeight)
-            UI.ColumnText { id: detailLabel; text: parent.modelData; color: Theme.inactive }
+            UI.ColumnText { id: detailLabel; text: Translations.text(({Free:"stats.memory.free", Available:"stats.memory.available", Cached:"stats.memory.cached"})[parent.modelData]); color: Theme.inactive }
             UI.ColumnText {
                 id: detailValue
                 objectName: "statsMemory" + parent.modelData

@@ -1,3 +1,4 @@
+import "../../../i18n"
 import QtQuick
 import "../../../theme"
 import "../../../theme/ui" as UI
@@ -63,7 +64,7 @@ Item {
                     id: percentage
                     objectName: "batteryPercentage"
                     anchors.right: parent.right
-                    text: root.battery.percentage === null ? "Level unavailable" : Math.round(root.battery.percentage) + "%"
+                    text: root.battery.percentage === null ? Translations.text("batteries.level.unavailable") : Math.round(root.battery.percentage) + "%"
                     font.pixelSize: root.battery.percentage === null ? Theme.fontSize : Theme.batteryPercentageFontSize
                 }
             }

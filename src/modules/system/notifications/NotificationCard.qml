@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 
+import "../../../i18n"
 import QtQuick
 import QtQuick.Window
 import QtQuick.Shapes
@@ -200,7 +201,7 @@ Rectangle {
                             centerVertical: false
                             width: Math.min(implicitWidth, Math.max(0, parent.width - (timestamp.visible ? timestamp.implicitWidth + parent.spacing : 0)))
                             anchors.verticalCenter: parent.verticalCenter
-                            text: root.emitter?.name || "Unknown application"
+                            text: root.emitter?.name || Translations.text("notifications.emitter.unknown")
                             elide: Text.ElideRight
                             color: Theme.inactive
                             font.family: root.popup ? Theme.notificationFont : Theme.fontFamily
@@ -236,7 +237,7 @@ Rectangle {
                     height: width
                     glyph: Theme.cancelIcon
                     foreground: hovered || down ? Theme.foregroundOn(Theme.notificationCritical) : Theme.accent
-                    hint: root.popup ? "Dismiss popup; keep history" : "Delete this history entry"
+                    hint: Translations.text(root.popup ? "notifications.actions.dismissHint" : "notifications.actions.deleteEntryHint")
                     background: Rectangle {
                         radius: width / 2
                         antialiasing: true
@@ -288,9 +289,9 @@ Rectangle {
                         }
                         QC.ToolTip {
                             visible: unavailableArea.containsMouse
-                            text: "This app action is no longer available."
+                            text: Translations.text("notifications.actions.unavailable")
                             delay: 500
-                            contentItem: UI.ColumnText { text: "This app action is no longer available."; color: Theme.accent }
+                            contentItem: UI.ColumnText { text: Translations.text("notifications.actions.unavailable"); color: Theme.accent }
                             background: Rectangle { color: Theme.tooltipBackground; border.color: Theme.accent; border.width: 1 }
                         }
                     }

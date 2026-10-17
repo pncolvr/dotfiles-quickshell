@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 
+import "../../../i18n"
 import QtQuick
 import QtQuick.Window
 import Quickshell
@@ -27,7 +28,7 @@ Rectangle {
         textBlock.implicitHeight + Theme.pickerRowPadding * 2,
         thumbnail.visible ? thumbnail.height + Theme.pickerRowPadding * 2 : 0)
     height: implicitHeight
-    Accessible.name: entry.title || (clipboardImage ? "Clipboard image" : "")
+    Accessible.name: entry.title || (clipboardImage ? Translations.text("clipboard.image.accessibleName") : "")
     Accessible.role: multiple ? Accessible.CheckBox : Accessible.ListItem
     Accessible.checkable: multiple
     Accessible.checked: selected

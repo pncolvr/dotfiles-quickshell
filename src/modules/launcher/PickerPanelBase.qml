@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 
+import "../../i18n"
 import QtQuick
 import "../../theme"
 import "../../theme/ui" as UI
@@ -16,7 +17,7 @@ Rectangle {
     readonly property bool inputOnly: picker.mode === PickerService.Mode.Menu && picker.allowTyped && picker.items.length === 0
     readonly property var modulePointerTarget: search
     readonly property bool searchHasFocus: search.activeFocus
-    property string searchPlaceholder: inputOnly ? picker.prompt : "Search"
+    property string searchPlaceholder: inputOnly ? picker.prompt : Translations.text("common.actions.search")
     property string panelError: picker.error
     property real minimumRowHeight: 0
     property int minimumListRows: 1
@@ -35,9 +36,7 @@ Rectangle {
     readonly property real columnWidth: fixedListWidth > 0 ? Math.min(fixedListWidth,width - Theme.tooltipPaddingHeight * 2) : width - Theme.tooltipPaddingHeight * 2
     readonly property real normalHeight: panelHeader.height + list.implicitHeight + panelFooter.height + Theme.tooltipPaddingHeight * 2 + (inputOnly ? Theme.controlSpacing : 12)
     property var searchKeyHandler: null
-    property string footerHint: inputOnly ? "Enter to " + picker.acceptLabel.toLowerCase() + " · Esc to cancel"
-        : gridMode ? "Arrows to select · Enter to choose · Esc to cancel"
-        : "Arrows to select · Enter to " + picker.acceptLabel.toLowerCase() + " · Esc to cancel"
+    property string footerHint: Translations.text(inputOnly ? "picker.shortcuts.input" : gridMode ? "picker.shortcuts.default" : "picker.shortcuts.list", [picker.acceptLabel.toLowerCase()])
     property real openedListHeight: Theme.pickerRowHeight
     property bool awaitingOpeningRows: false
     implicitWidth: Theme.pickerWidth
@@ -204,7 +203,7 @@ Rectangle {
             centerVertical: false
             anchors.centerIn: list
             visible: list.count === 0 && !root.inputOnly
-            text: root.inputOnly ? "" : root.picker.allowTyped && search.text.length ? "Enter to use typed input" : "No results"
+            text: root.inputOnly ? "" : Translations.text(root.picker.allowTyped && search.text.length ? "picker.empty.useTyped" : "picker.empty.results")
             textFormat: Text.PlainText
             color: Theme.inactive
         }

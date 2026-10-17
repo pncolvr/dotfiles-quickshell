@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 
+import "../../../i18n"
 import QtQuick
 import QtQuick.Controls as QC
 import "../../../theme"
@@ -31,7 +32,7 @@ Item {
         UI.Text {
             centerVertical: false
             width: parent.width
-            text: "Defaults: show notifications, DND blocked, history on. Transient notifications are not saved. Buttons show the current state; click to change it."
+            text: Translations.text("notifications.emitters.defaultsHint")
             wrapMode: Text.Wrap
             textFormat: Text.PlainText
             color: Theme.inactive
@@ -40,7 +41,7 @@ Item {
             id: searchField
             objectName: "notificationEmitterSearchField"
             width: parent.width
-            placeholderText: "Search emitters…"
+            placeholderText: Translations.text("notifications.emitters.searchPlaceholder")
         }
         Flow {
             width: parent.width
@@ -49,7 +50,7 @@ Item {
                 model: ["All", "Hidden", "DND allowed", "History off"]
                 NotificationButton {
                     required property string modelData
-                    label: modelData
+                    label: Translations.text(({All:"common.filters.all", Hidden:"notifications.filters.hidden", "DND allowed":"notifications.dnd.allowed", "History off":"notifications.history.disabled"})[modelData])
                     foreground: root.filter === modelData ? Theme.accent : Theme.text
                     onClicked: root.filter = modelData
                 }
@@ -76,7 +77,7 @@ Item {
                 objectName: "notificationEmitterSearchEmpty"
                 centerVertical: false
                 visible: !root.emitters.length
-                text: root.searchQuery ? "No matching emitters." : "No emitters in this list."
+                text: Translations.text(root.searchQuery ? "notifications.empty.filteredEmitters" : "notifications.empty.emitters")
             }
             Repeater {
                 model: root.emitters
@@ -108,7 +109,7 @@ Item {
                                 implicitWidth: Theme.controlHeight
                                 glyph: Theme.deleteIcon
                                 fillColor: Theme.notificationCritical
-                                hint: "Delete emitter, its history and settings, and dismiss its notifications. New notifications recreate it with defaults."
+                                hint: Translations.text("notifications.actions.deleteEmitterHint")
                                 onClicked: NotificationService.deleteEmitter(row.modelData.key)
                             }
                         }

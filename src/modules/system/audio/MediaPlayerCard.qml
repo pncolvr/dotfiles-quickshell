@@ -1,4 +1,5 @@
 pragma ComponentBehavior: Bound
+import "../../../i18n"
 import QtQuick
 import QtQuick.Window
 import QtQuick.Layouts
@@ -183,14 +184,14 @@ Item {
                 AudioButton {
                     objectName: "mediaFullscreen"
                     glyph: Theme.mediaExpandIcon
-                    hint: "Fullscreen"
+                    hint: Translations.text("media.actions.fullscreen")
                     enabled: !root.flipping && !root.preparingFullscreen
                     onClicked: root.toggleFullscreen()
                 }
                 AudioButton {
                     objectName: "mediaFlip"
                     glyph: Theme.mediaFlipIcon
-                    hint: "Flip to audio visualizer"
+                    hint: Translations.text("media.actions.showVisualizer")
                     visible: !!root.app
                     onClicked: root.flip()
                 }
@@ -258,7 +259,7 @@ Item {
                                 color: Theme.text
                                 width: parent.width
                                 horizontalAlignment: Text.AlignHCenter
-                                text: root.player?.trackTitle || root.player?.identity || "Media player"
+                                text: root.player?.trackTitle || root.player?.identity || Translations.text("media.player.fallbackName")
                                 textFormat: Text.PlainText
                                 wrapMode: Text.Wrap
                                 maximumLineCount: 2
@@ -280,7 +281,7 @@ Item {
                                 font.pixelSize: Theme.fontSize
                                 width: parent.width
                                 horizontalAlignment: Text.AlignHCenter
-                                text: root.player?.identity || "Media player"
+                                text: root.player?.identity || Translations.text("media.player.fallbackName")
                                 textFormat: Text.PlainText
                                 color: Theme.text
                                 elide: Text.ElideRight
@@ -295,7 +296,7 @@ Item {
                                 glyphSize: Theme.fontSize
                                 implicitHeight: Theme.audioButtonHeight
                                 glyph: root.muted ? Theme.volumeMutedIcon : Theme.volumeIcons[Theme.volumeIcons.length - 1]
-                                hint: root.muted ? "Unmute" : "Mute"
+                                hint: Translations.text(root.muted ? "audio.actions.unmute" : "audio.actions.mute")
                                 enabled: root.canVolume
                                 highlightedDevice: root.muted
                                 onClicked: {
@@ -310,7 +311,7 @@ Item {
                                 muted: root.muted
                                 to: Config.audioMaxVolume
                                 enabled: root.canVolume
-                                Accessible.name: "Media volume"
+                                Accessible.name: Translations.text("media.volume.accessibleName")
                                 onVolumeMoved: value => {
                                     if (root.app) root.audioService.setAppVolume(root.app, value);
                                 }
@@ -349,7 +350,7 @@ Item {
                             glyphSize: Theme.fontSize
                             implicitHeight: Theme.audioButtonHeight
                             glyph: Theme.mediaPreviousIcon
-                            hint: "Previous"
+                            hint: Translations.text("common.actions.previous")
                             enabled: !!root.player?.canGoPrevious
                             onClicked: root.player.previous()
                         }
@@ -358,7 +359,7 @@ Item {
                             glyphSize: Theme.fontSize
                             implicitHeight: Theme.audioButtonHeight
                             glyph: root.player?.isPlaying ? Theme.pauseIcon : Theme.playIcon
-                            hint: root.player?.isPlaying ? "Pause" : "Play"
+                            hint: Translations.text(root.player?.isPlaying ? "media.actions.pause" : "media.actions.play")
                             highlightedDevice: true
                             enabled: root.player?.isPlaying ? !!root.player?.canPause : !!root.player?.canPlay
                             onClicked: {
@@ -373,7 +374,7 @@ Item {
                             glyphSize: Theme.fontSize
                             implicitHeight: Theme.audioButtonHeight
                             glyph: Theme.mediaNextIcon
-                            hint: "Next"
+                            hint: Translations.text("common.actions.next")
                             enabled: !!root.player?.canGoNext
                             onClicked: root.player.next()
                         }
@@ -382,7 +383,7 @@ Item {
                             glyphSize: Theme.fontSize
                             implicitHeight: Theme.audioButtonHeight
                             glyph: Theme.mediaStopIcon
-                            hint: "Stop playback"
+                            hint: Translations.text("media.actions.stop")
                             enabled: !!root.player?.canControl
                             onClicked: root.player.stop()
                         }
@@ -412,7 +413,7 @@ Item {
                         stepSize: 1
                         wheelEnabled: false
                         enabled: root.canSeek
-                        Accessible.name: "Playback position"
+                        Accessible.name: Translations.text("media.position.accessibleName")
                         onVolumeMoved: value => root.seekTo(value)
                     }
                     UI.ColumnText {
@@ -486,14 +487,14 @@ Item {
                 AudioButton {
                     objectName: "mediaFullscreenBack"
                     glyph: Theme.mediaExpandIcon
-                    hint: "Fullscreen"
+                    hint: Translations.text("media.actions.fullscreen")
                     enabled: !root.flipping && !root.preparingFullscreen
                     onClicked: root.toggleFullscreen()
                 }
                 AudioButton {
                     objectName: "mediaFlipBack"
                     glyph: Theme.mediaFlipIcon
-                    hint: "Flip to playback controls"
+                    hint: Translations.text("media.actions.showControls")
                     visible: !!root.app
                     onClicked: root.flip()
                 }

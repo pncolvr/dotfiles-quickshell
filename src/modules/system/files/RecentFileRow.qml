@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 
+import "../../../i18n"
 import QtQuick
 import Quickshell
 import "../../../theme"
@@ -73,7 +74,7 @@ Rectangle {
         UI.Text {
             centerVertical: false
             width: Math.min(implicitWidth, parent.width)
-            text: root.file.directory + " · " + Qt.formatDateTime(new Date(root.file.usedAt), "dd MMM hh:mm")
+            text: root.file.directory + " · " + new Date(root.file.usedAt).toLocaleString(Translations.locale, "dd MMM hh:mm")
             textFormat: Text.PlainText
             color: Theme.inactive
             font.pixelSize: 10
@@ -98,7 +99,7 @@ Rectangle {
         glyph: Theme.filePinIcon
         foreground: root.pinned ? Theme.accent : Theme.inactive
         fillColor: "transparent"
-        hint: root.pinned ? "Unpin file" : "Pin file"
+        hint: Translations.text(root.pinned ? "files.actions.unpinHint" : "files.actions.pinHint")
         onClicked: root.fileService.togglePin(root.file)
     }
 }

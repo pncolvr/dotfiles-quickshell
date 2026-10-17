@@ -1,3 +1,4 @@
+import "../../../i18n"
 import QtQuick
 import "../../../services"
 import "../../../theme"
@@ -18,7 +19,7 @@ Column {
         id: tabs
         objectName: "timersTabs"
         width: parent.width
-        labels: ["Countdowns", "Timers"]
+        labels: [Translations.text("timers.tabs.countdowns"), Translations.text("timers.tabs.stopwatches")]
     }
     Item {
         width: parent.width

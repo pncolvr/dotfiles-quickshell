@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 
+import "../../../i18n"
 import QtQuick
 import "../../../theme"
 
@@ -14,24 +15,24 @@ Row {
 
     DurationField {
         id: hours
-        objectName: root.namePrefix + "Hours"
-        label: "Hours"
+        objectName: root.namePrefix + Translations.text("timers.duration.hours")
+        label: Translations.text("timers.duration.hours")
         width: (root.width - root.spacing * 2) / 3
         text: String(Math.floor(root.initialDurationMs / 3600000))
         onAccepted: root.accepted()
     }
     DurationField {
         id: minutes
-        objectName: root.namePrefix + "Minutes"
-        label: "Minutes"
+        objectName: root.namePrefix + Translations.text("timers.duration.minutes")
+        label: Translations.text("timers.duration.minutes")
         width: hours.width
         text: String(Math.floor(root.initialDurationMs / 60000) % 60)
         onAccepted: root.accepted()
     }
     DurationField {
         id: seconds
-        objectName: root.namePrefix + "Seconds"
-        label: "Seconds"
+        objectName: root.namePrefix + Translations.text("timers.duration.seconds")
+        label: Translations.text("timers.duration.seconds")
         width: hours.width
         text: String(Math.floor(root.initialDurationMs / 1000) % 60)
         onAccepted: root.accepted()

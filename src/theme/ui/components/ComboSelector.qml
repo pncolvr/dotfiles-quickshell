@@ -1,4 +1,5 @@
 pragma ComponentBehavior: Bound
+import "../../../i18n"
 import QtQuick
 import QtQuick.Window
 import QtQuick.Controls as QC
@@ -9,8 +10,8 @@ Item {
     id: root
     property var options: []
     property string selectedName: ""
-    property string placeholder: "Choose an option"
-    property string labelPrefix: ""
+    property string placeholder: Translations.text("common.actions.chooseOption")
+    property string label: selectedDescription
     property string hint: ""
     property int hintDelay: 500
     property bool compact: false
@@ -102,7 +103,7 @@ Item {
         padding: root.contentPadding
         hoverEnabled: true
         opacity: enabled ? 1 : 0.5
-        Accessible.name: root.hint || root.labelPrefix + root.selectedDescription
+        Accessible.name: root.hint || root.label
         onClicked: root.expanded = !root.expanded
         Keys.onPressed: event => {
             if (event.key === Qt.Key_Down || event.key === Qt.Key_Up) { root.expanded = true; event.accepted = true }
@@ -119,7 +120,7 @@ Item {
                 width: parent.width - arrow.width - root.spacing
                 anchors.verticalCenter: parent.verticalCenter
                 textFormat: Text.PlainText
-                text: root.labelPrefix + root.selectedDescription
+                text: root.label
                 wrapMode: root.compact ? Text.NoWrap : Text.Wrap
                 elide: root.compact ? Text.ElideRight : Text.ElideNone
             }

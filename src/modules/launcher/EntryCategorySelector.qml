@@ -1,19 +1,20 @@
 pragma ComponentBehavior: Bound
+import "../../i18n"
 import "../../services"
 import "../../theme/ui" as UI
 
 UI.ComboSelector {
     visible: StatusService.enabled
     compact: true
-    labelPrefix: 'Category: '
+    label: Translations.text("category.selector.label", [selectedDescription])
     options: [
         {
             name: 'personal',
-            description: 'Personal'
+            description: Translations.text("status.modes.personal")
         },
         {
             name: 'work',
-            description: 'Work'
+            description: Translations.text("status.modes.work")
         }
     ]
 }

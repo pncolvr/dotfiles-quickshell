@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 
+import "../../i18n"
 import QtQuick
 import QtQuick.Controls as QC
 import Quickshell
@@ -39,12 +40,12 @@ Column {
                 spacing: 0
                 UI.ColumnText {
                     width: parent.width
-                    text: UpdatesService.hasUpdates ? `${UpdatesService.count} updates available` : "no updates available"
+                    text: UpdatesService.hasUpdates ? Translations.text("updates.status.available",[],UpdatesService.count) : Translations.text("updates.empty")
                     color: UpdatesService.hasUpdates ? Theme.text : Theme.inactive
                 }
                 UI.ColumnText {
                     width: parent.width
-                    text: `last checked ${Qt.formatTime(UpdatesService.lastChecked, "HH:mm")}`
+                    text: Translations.text("updates.status.lastChecked",[Qt.formatTime(UpdatesService.lastChecked, "HH:mm")])
                     color: Theme.inactive
                 }
             }
@@ -56,14 +57,14 @@ Column {
                 UI.ActionButton {
                     objectName: "updatesNotes"
                     glyph: Theme.notesIcon
-                    hint: "Open all update notes"
+                    hint: Translations.text("updates.actions.notesHint")
                     enabled: UpdatesService.hasUpdates
                     onClicked: UpdatesService.openMarkdown()
                 }
                 UI.ActionButton {
                     objectName: "updatesInstall"
                     glyph: Theme.downloadIcon
-                    hint: "Install updates"
+                    hint: Translations.text("updates.actions.installHint")
                     enabled: UpdatesService.hasUpdates
                     onClicked: UpdatesService.install()
                 }

@@ -1,5 +1,6 @@
 pragma Singleton
 
+import "../../i18n"
 import QtQml
 import Quickshell
 import Quickshell.Io
@@ -53,6 +54,13 @@ Singleton {
         }
         function postCapture(id: string, text: string, severity: string, duration: int): bool {
             return root.post(id, text, severity, duration, true)
+        }
+        // Only messages authored by this shell use this path. External/user text stays verbatim.
+        function postMessage(id: string, key: string, argumentsJson: string, severity: string, duration: int, captureBlocking: bool): bool {
+            let args
+            try { args = JSON.parse(argumentsJson) } catch (_) { return false }
+            if (!Array.isArray(args)) return false
+            return root.post(id, Translations.text(key, args), severity, duration, captureBlocking)
         }
         function dismiss(id: string): void { root.dismiss(id) }
     }

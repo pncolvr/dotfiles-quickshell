@@ -53,11 +53,11 @@ case $action in
 esac
 main_database=${4:?} config_root=${5:?} options=${6:?}
 fail() {
-    "${QS_PICKER_EXECUTABLE:-qs}" ipc -p "$config_root" call alerts post remotes "$1" error 5000 >/dev/null 2>&1 || true
+    "${QS_PICKER_EXECUTABLE:-qs}" ipc -p "$config_root" call alerts postMessage remotes "$1" '[]' error 5000 false >/dev/null 2>&1 || true
     exit 1
 }
-[[ -f $main_database && -O $main_database && ! -L $main_database ]] || fail "Remote host database is unavailable."
-jq -e 'all(.rdp,.ssh,.virsh,.probe; type=="array" and length>0 and all(.[];type=="string")) and (.waitSeconds|type=="number" and .>=1 and .<=300)' <<< "$options" >/dev/null || fail 'Remote command configuration is invalid.'
+[[ -f $main_database && -O $main_database && ! -L $main_database ]] || fail "remotes.worker.database"
+jq -e 'all(.rdp,.ssh,.virsh,.probe; type=="array" and length>0 and all(.[];type=="string")) and (.waitSeconds|type=="number" and .>=1 and .<=300)' <<< "$options" >/dev/null || fail 'remotes.worker.configuration'
 entry=$(sqlite3 -readonly -batch -cmd '.timeout 5000' "$main_database" "SELECT payload_json FROM remotes WHERE id=$key;" 2>/dev/null) || exit 2
 jq -e '.enabled==true and (.type=="remote" or .type=="vm")' <<< "$entry" >/dev/null || exit 2
 mapfile -d '' -t rdp_command < <(jq -j '.rdp[] | ., "\u0000"' <<< "$options")
@@ -132,18 +132,18 @@ case $(jq -r '.type' <<< "$entry") in
             tunnel_pid=0; tunnel_start=''
             break
         done
-        $established || fail 'SSH tunnel could not be opened. Check the jump host, key and SSH configuration.'
+        $established || fail 'remotes.worker.tunnel'
         endpoint=127.0.0.1; port=$local_port ;;
     vm)
         vm=$(jq -r '.vmName' <<< "$entry")
         vm_id=$(timeout 10 "${virsh_command[@]}" domid -- "$vm" 2>/dev/null) || vm_id='-'
         if [[ ! $vm_id =~ ^[0-9]+$ ]]; then
-            timeout 15 "${virsh_command[@]}" start -- "$vm" >/dev/null 2>&1 || fail 'Virtual machine could not be started.'
+            timeout 15 "${virsh_command[@]}" start -- "$vm" >/dev/null 2>&1 || fail 'remotes.worker.vmStart'
         fi
         deadline=$((SECONDS+wait_seconds))
         until "${probe_command[@]}" -z -w 1 "$endpoint" "$port" >/dev/null 2>&1; do
             $stopping && exit 0
-            ((SECONDS<deadline)) || fail 'Virtual machine RDP port did not become ready.'
+            ((SECONDS<deadline)) || fail 'remotes.worker.vmTimeout'
             sleep 0.2
         done ;;
 esac
@@ -166,8 +166,8 @@ rdp_start=$(process_identity "$rdp_pid") || rdp_start=''
 state=running; publish || exit 2
 while process_alive "$rdp_pid" "$rdp_start" "$PROCESS_BOOT_ID"; do
     $stopping && exit 0
-    if [[ $tunnel_pid != 0 ]] && ! process_alive "$tunnel_pid" "$tunnel_start" "$PROCESS_BOOT_ID"; then fail 'SSH tunnel disconnected.'; fi
+    if [[ $tunnel_pid != 0 ]] && ! process_alive "$tunnel_pid" "$tunnel_start" "$PROCESS_BOOT_ID"; then fail 'remotes.worker.disconnected'; fi
     sleep 0.15
 done
 wait "$rdp_pid"; result=$?
-[[ $result == 0 ]] || $stopping || fail 'RDP connection ended with an error. Check the host, credentials and RDP options.'
+[[ $result == 0 ]] || $stopping || fail 'remotes.worker.rdp'

@@ -94,7 +94,7 @@ for(const method of ['ocr','qrcode']) {
 for(const method of ['region','output','window']) {
  const {result,reply}=run(method);assert.equal(result.status,0);assert.equal(reply.status,'editing');
  wait(()=>fs.existsSync(fixture+'/revealed'),'saved capture reveals folder');
- assert.ok(actions().includes('alerts post screenshot Screenshot saved:'));
+ assert.ok(actions().includes('alerts postMessage screenshot screenshot.status.saved'));
  if(method==='window') {
   assert.equal(fs.readFileSync(fixture+'/boxes','utf8'),'-100,10 1400x900\n');
   assert.ok(actions().includes('grim -g 0,10 1280x710 -'),'logical window clipping');
@@ -105,7 +105,7 @@ for(const mode of ['editorCancel','editorFail']) {
  const before=fs.readdirSync(destination).length;run('region',mode);
  wait(()=>fs.readdirSync(fixture+'/r').filter(p=>p.startsWith('quickshell-capture.')).length===0,'annotation cleanup');
  assert.equal(fs.readdirSync(destination).length,before);assert.ok(!fs.existsSync(fixture+'/revealed'));
- assert.equal(actions().includes('Screenshot editor failed'),mode==='editorFail');
+ assert.equal(actions().includes('screenshot.errors.editor'),mode==='editorFail');
 }
 const invalid=fixture+'/unrelated-directory';fs.mkdirSync(invalid);fs.writeFileSync(invalid+'/capture.png','keep');
 const rejected=cp.spawnSync('bash',[worker,'--annotate',invalid,destination,config],{encoding:'utf8',env:process.env});

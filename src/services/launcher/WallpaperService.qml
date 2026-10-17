@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 pragma Singleton
 
+import "../../i18n"
 import QtQml
 import Quickshell
 import Quickshell.Io
@@ -21,14 +22,14 @@ Singleton {
         operation.job = run(["list", directory || Config.wallpaperDirectory], (success, output, error) => {
             if (session !== operation) return
             operation.job = null
-            if (!success) { fail(error || "Could not list wallpapers", operation); return }
+            if (!success) { fail(Translations.message(error) || Translations.text("wallpaper.errors.list"), operation); return }
             const paths = output.split("\0")
             const folder = paths.shift()
             operation.rows = PickerService.menuRows(paths.filter(path => path.length > 0).sort((a,b) => a.localeCompare(b)).map(path => ({
                 title: path.slice(folder === "/" ? 1 : folder.length + 1), result: path,
                 image: "file://" + path.split("/").map(encodeURIComponent).join("/")
             })))
-            if (!operation.rows.length) { fail("No wallpaper images found", operation); return }
+            if (!operation.rows.length) { fail(Translations.text("wallpaper.empty"), operation); return }
             PickerService.items = operation.rows
             PickerService.restoreMenuSelection({query: PickerService.query, selectionKey: "wallpaper.image"})
         })
@@ -39,7 +40,7 @@ Singleton {
         if (previous?.job?.running) previous.job.signal(15)
     }
     function fail(message, operation = null) {
-        AlertService.post("wallpaper", message, "error", 3000)
+        AlertService.post("wallpaper", Translations.message(message), "error", 3000)
         if (!operation || session !== operation) return
         endSession()
         if (PickerService.menuCallback === operation.callback) PickerService.close()
@@ -68,22 +69,22 @@ Singleton {
         }))
     }
     function browse(operation) {
-        menu(operation, "Choose wallpaper", operation.rows, (rows, state) => {
+        menu(operation, Translations.text("shortcuts.wallpaper"), operation.rows, (rows, state) => {
             operation.query = state.query
             operation.selectedResult = rows[0].result
             chooseMode(operation)
         }, {previewImages: true, query: operation.query, selectedResult: operation.selectedResult,
-            selectionKey: "wallpaper.image", acceptLabel: "Choose"})
+            selectionKey: "wallpaper.image", acceptLabel: Translations.text("common.actions.choose")})
     }
     function chooseMode(operation) {
         if (!Config.workModeEnabled) { chooseMonitor(operation, "personal"); return }
-        menu(operation, "Wallpaper mode", [{title: "Personal", result: "personal"}, {title: "Work", result: "work"}],
+        menu(operation, Translations.text("wallpaper.mode.title"), [{title: Translations.text("status.modes.personal"), result: "personal"}, {title: Translations.text("status.modes.work"), result: "work"}],
             rows => chooseMonitor(operation, rows[0].result),
-            {selectionKey: "wallpaper.mode", acceptLabel: "Choose mode"}, true)
+            {selectionKey: "wallpaper.mode", acceptLabel: Translations.text("wallpaper.actions.chooseMode")}, true)
     }
     function chooseMonitor(operation, mode) {
-        menu(operation, "Wallpaper monitor", [], rows => apply(operation, rows[0].result, mode),
-            {selectionKey: "wallpaper.monitor", acceptLabel: "Set wallpaper"}, true)
+        menu(operation, Translations.text("wallpaper.monitor.title"), [], rows => apply(operation, rows[0].result, mode),
+            {selectionKey: "wallpaper.monitor", acceptLabel: Translations.text("wallpaper.actions.apply")}, true)
         const callback = operation.callback
         operation.job = run([], (success, output) => {
             if (session !== operation || operation.callback !== callback) return
@@ -92,7 +93,7 @@ Singleton {
             try { outputs = JSON.parse(output) } catch (_) { outputs = null }
             if (!success || !Array.isArray(outputs) || !outputs.length
                 || !outputs.every(item => typeof item.name === "string" && item.name.length > 0)) {
-                fail("Could not read connected monitors")
+                fail(Translations.text("wallpaper.errors.monitors"))
                 browse(operation)
                 return
             }
@@ -106,8 +107,8 @@ Singleton {
     function apply(operation, output, mode) {
         if (!Config.workModeEnabled) mode = "personal"
         run(["--configured", "set", output, mode, operation.selectedResult], (success, _output, error) => {
-            if (success) AlertService.post("wallpaper", "Wallpaper saved for " + mode + " on " + output, "success", 3000)
-            else fail(error || "Could not set wallpaper")
+            if (success) AlertService.post("wallpaper", Translations.text("wallpaper.status.saved",[Translations.text("status.modes."+mode),output]), "success", 3000)
+            else fail(error || Translations.text("wallpaper.errors.apply"))
             if (session === operation) browse(operation)
         })
     }
@@ -159,7 +160,7 @@ Singleton {
         stderr: StdioCollector { id: restoreError; waitForEnd: true }
         // qmllint disable signal-handler-parameters
         onExited: (code, status) => {
-            if (code !== 0 || status !== 0) root.fail(restoreError.text.trim() || "Could not restore wallpapers")
+            if (code !== 0 || status !== 0) root.fail(restoreError.text.trim() || Translations.text("wallpaper.errors.restore"))
             Qt.callLater(root.restoreNext)
         }
         // qmllint enable signal-handler-parameters

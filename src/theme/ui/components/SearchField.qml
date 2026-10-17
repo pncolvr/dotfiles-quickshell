@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 
+import "../../../i18n"
 import QtQuick
 import "../" as UI
 import "../../"
@@ -39,7 +40,7 @@ UI.InputField {
         glyph: Theme.cancelIcon
         foreground: hovered ? Theme.text : Theme.inactive
         fillColor: "transparent"
-        hint: "Clear search"
+        hint: Translations.text("common.actions.clearSearch")
         onClicked: { root.clear(); root.forceActiveFocus() }
     }
 }

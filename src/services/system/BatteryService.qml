@@ -1,5 +1,6 @@
 pragma Singleton
 
+import "../../i18n"
 import QtQml
 import Quickshell
 import Quickshell.Io
@@ -73,13 +74,13 @@ Singleton {
         // qmllint disable signal-handler-parameters
         onExited: (exitCode, exitStatus) => {
             if (exitCode !== 0 || exitStatus !== 0) {
-                _internal.receiverError = "Some device batteries could not be read"
+                _internal.receiverError = Translations.text("batteries.errors.read")
                 return
             }
             try {
                 const snapshot = JSON.parse(receiverOutput.text)
                 if (!snapshot || !Array.isArray(snapshot.devices) || typeof snapshot.error !== "string")
-                    throw new Error("Invalid receiver snapshot")
+                    throw new Error(Translations.text("batteries.errors.invalidSnapshot"))
                 if (snapshot.error) {
                     _internal.receiverError = snapshot.error
                     return
@@ -91,7 +92,7 @@ Singleton {
                 BatteryRepository.saveReceiverSnapshot(devices)
                 _internal.receiverError = ""
             } catch (error) {
-                _internal.receiverError = "Some device batteries could not be read"
+                _internal.receiverError = Translations.text("batteries.errors.read")
             }
         }
         // qmllint enable signal-handler-parameters
@@ -176,8 +177,8 @@ Singleton {
             const state = stateName(device.state)
             result.push({
                 id: "upower:" + (path || i),
-                name: internal ? "Laptop battery" + (slot ? " · " + slot : "")
-                    : bluetooth?.name || device.model || UPowerDeviceType.toString(device.type) || "Battery-powered device",
+                name: internal ? Translations.text("batteries.names.laptop") + (slot ? " · " + slot : "")
+                    : bluetooth?.name || device.model || UPowerDeviceType.toString(device.type) || Translations.text("batteries.names.device"),
                 internal: internal,
                 percentage: percentage(device.percentage),
                 state: state,
@@ -192,7 +193,7 @@ Singleton {
             if (!device.connected || !device.batteryAvailable || matchedPaths.has(device.dbusPath)) continue
             result.push({
                 id: "bluetooth:" + device.dbusPath,
-                name: device.name || device.deviceName || "Bluetooth device",
+                name: device.name || device.deviceName || Translations.text("batteries.names.bluetooth"),
                 internal: false,
                 percentage: percentage(device.battery),
                 // BlueZ Battery1 reports a level, without charging state or time estimates.
@@ -207,25 +208,25 @@ Singleton {
 
     function statusText(state) {
         switch (state) {
-        case "charging": return "Charging"
-        case "discharging": return "Discharging"
-        case "empty": return "Empty"
-        case "charged": return "Fully charged"
-        case "pending-charge": return "Charging paused"
-        case "pending-discharge": return "Waiting to discharge"
-        default: return "Status unavailable"
+        case "charging": return Translations.text("batteries.states.charging")
+        case "discharging": return Translations.text("batteries.states.discharging")
+        case "empty": return Translations.text("batteries.states.empty")
+        case "charged": return Translations.text("batteries.states.full")
+        case "pending-charge": return Translations.text("batteries.states.paused")
+        case "pending-discharge": return Translations.text("batteries.states.pendingDischarge")
+        default: return Translations.text("batteries.states.unavailable")
         }
     }
 
     function displayName(battery) {
         const brand = String(battery.brand ?? "").trim()
-        const name = String(battery.name ?? "Battery-powered device")
+        const name = String(battery.name ?? Translations.text("batteries.names.device"))
         return brand && !name.toLowerCase().includes(brand.toLowerCase()) ? brand + " " + name : name
     }
 
     function durationText(seconds) {
         if (!Number.isFinite(seconds) || seconds <= 0) return ""
-        if (seconds < 60) return "less than a minute"
+        if (seconds < 60) return Translations.text("batteries.duration.lessThanMinute")
         const minutes = Math.ceil(seconds / 60)
         const hours = Math.floor(minutes / 60)
         const remainder = minutes % 60
@@ -236,12 +237,12 @@ Singleton {
         switch (battery.state) {
         case "charging": {
             const time = durationText(battery.timeToFull)
-            return time ? "Full in " + time : ""
+            return time ? Translations.text("batteries.duration.full",[time]) : ""
         }
         case "discharging":
         case "pending-discharge": {
             const time = durationText(battery.timeToEmpty)
-            return time ? "Empty in " + time : ""
+            return time ? Translations.text("batteries.duration.empty",[time]) : ""
         }
         default: return ""
         }

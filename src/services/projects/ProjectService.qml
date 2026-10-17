@@ -1,4 +1,5 @@
 pragma Singleton
+import "../../i18n"
 import QtQml
 import "ProjectLaunchers.mjs" as Launchers
 import Quickshell
@@ -37,7 +38,7 @@ Singleton {
         const state = pathStates[path]
         if (state?.message) return state.message
         const missing = workspaces.filter(workspace => pathStates[workspace.path]?.status === "unavailable").length
-        return missing ? missing + (missing === 1 ? " project file missing or unavailable" : " project files missing or unavailable") : ""
+        return missing ? Translations.text("projects.files.missing",[],missing) : ""
     }
     function checkPaths() {
         if (pathCheck.running) { pathCheckPending = true; return }
@@ -66,14 +67,14 @@ Singleton {
         // qmllint disable signal-handler-parameters
         onExited: (code, status) => {
             try {
-                if (code !== 0 || status !== 0) throw new Error("check failed")
+                if (code !== 0 || status !== 0) throw new Error(Translations.text("files.errors.check"))
                 const rows = JSON.parse(pathOutput.text)
                 const states = {}
                 for (const row of rows) states[row.path] = row
                 root.pathStates = states
             } catch (_) {
                 const states = {}
-                for (const row of root.pathRecords()) states[row.path] = {status:"unchecked",message:"Location not checked"}
+                for (const row of root.pathRecords()) states[row.path] = {status:"unchecked",message:Translations.text("files.status.unchecked")}
                 root.pathStates = states
             }
             if (root.pathCheckPending && root.managing) Qt.callLater(root.checkPaths)
@@ -104,16 +105,16 @@ Singleton {
             }
             rows.sort((a,b) => a.title.localeCompare(b.title))
             PickerService.multiple = true
-            PickerService.acceptLabel = "Open"
+            PickerService.acceptLabel = Translations.text("common.actions.open")
         } else if (projectPath) {
             const project = availableProjects.find(project => project.path === projectPath)
             if (!project) { projectPath = ""; syncPicker(); return }
-            rows.push(...Launchers.choices(project,Config.projectApps,Config.projectDefaultApp))
-            PickerService.acceptLabel = "Open"
+            rows.push(...Launchers.choices(project,Config.projectApps,Config.projectDefaultApp,Translations.text))
+            PickerService.acceptLabel = Translations.text("common.actions.open")
         } else {
             for (const project of availableProjects) rows.push({id:project.path,title:project.name,subtitle:project.path,
                 search:project.name + " " + project.path,result:project.path,category:project.category})
-            PickerService.acceptLabel = "Select"
+            PickerService.acceptLabel = Translations.text("common.actions.select")
         }
         PickerService.items = rows
         PickerService.currentIndex = Math.max(0, PickerService.filteredItems.findIndex(row => row.id === previous))
@@ -134,8 +135,8 @@ Singleton {
             const project = availableProjects.find(project => project.path === item.result)
             if (!project) return
             let actions
-            try { actions = Launchers.choices(project,Config.projectApps,Config.projectDefaultApp) }
-            catch (exception) { error = exception.message; PickerService.error = error; return }
+            try { actions = Launchers.choices(project,Config.projectApps,Config.projectDefaultApp,Translations.text) }
+            catch (exception) { error = Translations.message(exception); PickerService.error = error; return }
             if (actions.length > 1) {
                 projectPath = project.path
                 PickerService.query = ""; syncPicker()
@@ -156,7 +157,7 @@ Singleton {
         const launcher = Config.projectApps.find(item => item.id === launcherId)
         let action
         try { action = Launchers.prepare(launcher,path,project,project.category,StatusService.enabled) }
-        catch (exception) { error = exception.message; PickerService.error = error; return }
+        catch (exception) { error = Translations.message(exception); PickerService.error = error; return }
         const client = (StatusService.enabled || !launcher.profileArguments?.length) && action.windowClass && action.windowTitlePrefix ? WindowService.allWindows.find(client =>
             client.class === action.windowClass && client.title.startsWith(action.windowTitlePrefix)) : null
         PickerService.close()
@@ -169,7 +170,7 @@ Singleton {
         if (busy) return false
         let fileExtensions
         try { fileExtensions = Launchers.extensions(Config.projectApps) }
-        catch (exception) { error = exception.message; PickerService.error = error; return false }
+        catch (exception) { error = Translations.message(exception); PickerService.error = error; return false }
         error = ""; operation = action
         scan.input = JSON.stringify({sources:scanSources,sshConfig:Config.projectSshConfig,
             fileExtensions,fileExclusions:Config.projectFileExclusions,dotfilesGitDirectory:Config.projectDotfilesGitDirectory,
@@ -178,18 +179,18 @@ Singleton {
         return true
     }
     function addSource(path, kind, category) {
-        if (draft) { error = "Save or cancel the current draft first"; return false }
+        if (draft) { error = Translations.text("projects.errors.unsavedDraft"); return false }
         const home = Quickshell.env("HOME")
         path = path.trim().replace(/^~(?=\/|$)/,home).replace(/\/+$/,"") || "/"
         if (!path.startsWith("/") || !["root","folder"].includes(kind) || !["work","personal"].includes(category)) {
-            error = "Choose an absolute folder path and a category"; return false
+            error = Translations.text("projects.errors.pathAndCategoryRequired"); return false
         }
         return startScan([{path,kind,category}],ProjectService.Operation.Add)
     }
     function refresh(path = "") {
-        if (draft) { error = "Save or cancel the current draft before refreshing"; return false }
+        if (draft) { error = Translations.text("projects.errors.unsavedRefresh"); return false }
         const selected = path ? sources.filter(source => source.path === path) : sources
-        if (path && !selected.length) { error = "That folder is not configured"; return false }
+        if (path && !selected.length) { error = Translations.text("projects.errors.sourceMissing"); return false }
         return startScan(selected,ProjectService.Operation.Refresh)
     }
     function editSource(path) {
@@ -253,8 +254,8 @@ Singleton {
         if (!draft || busy) return false
         if (draft.previousPath) {
             const path = draft.path.trim().replace(/^~(?=\/|$)/,Quickshell.env("HOME")).replace(/\/+$/,"") || "/"
-            if (!path.startsWith("/")) { error = "Choose an absolute folder path"; return false }
-            if (sources.some(source => source.path === path && source.path !== draft.previousPath)) { error = "That source is already configured"; return false }
+            if (!path.startsWith("/")) { error = Translations.text("projects.errors.absolutePathRequired"); return false }
+            if (sources.some(source => source.path === path && source.path !== draft.previousPath)) { error = Translations.text("projects.errors.duplicateSource"); return false }
             if (path !== (draft.scannedPath || draft.previousPath) || draft.kind !== (draft.scannedKind || draft.originalKind)) {
                 startScan([{path,kind:draft.kind,category:draft.category}],ProjectService.Operation.Edit)
                 return false
@@ -276,7 +277,7 @@ Singleton {
             : draft.previousPath ? ProjectRepository.apply([draft],draft.path !== draft.previousPath,draft.path !== draft.previousPath ? draft.previousPath : "")
             : draft.review ? ProjectRepository.apply(results) : ProjectRepository.apply([draft],true)
         if (!saved) { error = ProjectRepository.error; return false }
-        const refreshErrors = results?.filter(source => source.error).map(source => source.path + ": " + source.error).join("\n") || ""
+        const refreshErrors = results?.filter(source => source.error).map(source => source.path + ": " + Translations.message(source.error)).join("\n") || ""
         cancelDraft(); error = refreshErrors; syncPicker()
         if (adding) sourceAdded()
         return true
@@ -306,14 +307,14 @@ Singleton {
         // qmllint disable signal-handler-parameters
         onExited: (exitCode, exitStatus) => {
             stdinEnabled = true
-            if (exitCode !== 0 || exitStatus !== 0) { root.error = errors.text.trim() || "Project scan failed"; root.syncPicker(); return }
+            if (exitCode !== 0 || exitStatus !== 0) { root.error = errors.text.trim() || Translations.text("projects.errors.scan"); root.syncPicker(); return }
             try {
                 const results = JSON.parse(output.text).sources
                 switch (root.operation) {
                   case ProjectService.Operation.Add: {
                     const source = results[0]
                     if (source.error) throw new Error(source.error)
-                    if (root.sources.some(existing => existing.path === source.path)) throw new Error("That source is already configured")
+                    if (root.sources.some(existing => existing.path === source.path)) throw new Error(Translations.text("projects.errors.duplicateSource"))
                     if (!source.projects.some(project => project.workspaces.length > 0)) {
                         if (!ProjectRepository.apply([source],true)) throw new Error(ProjectRepository.error)
                         root.sourceAdded()
@@ -327,7 +328,7 @@ Singleton {
                     const source = results[0]
                     if (source.error) throw new Error(source.error)
                     if (root.sources.some(existing => existing.path === source.path && existing.path !== root.draft.previousPath))
-                        throw new Error("That source is already configured")
+                        throw new Error(Translations.text("projects.errors.duplicateSource"))
                     const previousPath = root.draft.scannedPath || root.draft.previousPath
                     const previousProjects = root.draft.projects
                     const relative = (path,base) => path.slice(base === "/" ? 1 : base.length + 1)
@@ -350,14 +351,14 @@ Singleton {
                   }
                   case ProjectService.Operation.Refresh: {
                     if (!root.reviewRefresh(results) && !ProjectRepository.apply(results)) throw new Error(ProjectRepository.error)
-                    root.error = results.filter(source => source.error).map(source => source.path + ": " + source.error).join("\n")
+                    root.error = results.filter(source => source.error).map(source => source.path + ": " + Translations.message(source.error)).join("\n")
                     break
                   }
                   case ProjectService.Operation.None:
                   case ProjectService.Operation.Discard:
                     break
                 }
-            } catch (error) { root.error = error.message || String(error) }
+            } catch (error) { root.error = Translations.message(error) || String(error) }
             root.syncPicker()
         }
         // qmllint enable signal-handler-parameters

@@ -54,7 +54,7 @@ if [[ ${6:-} == providerConfig ]]; then
           WALLPAPER_DIRECTORY:($home+"/Pictures/wallpapers"),WALLPAPER_STATE_DIRECTORY:$state,
           WORKING_STATE_NAME:"work",WORK_MODE_ENABLED:env.WALL_TEST_WORK_MODE // "true"}'
 elif [[ ${5:-} == alerts ]]; then
-    jq -nc --arg message "$8" --arg kind "$9" '{message:$message,kind:$kind}' >> "$WALL_TEST_DIR/alerts"
+    jq -nc --arg message "$8" --arg kind "${10}" '{message:$message,kind:$kind}' >> "$WALL_TEST_DIR/alerts"
 elif [[ ${1:-} == -p ]]; then
     exit 2
 else

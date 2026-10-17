@@ -102,7 +102,7 @@ wait "$worker_pid"; worker_pid=''
 elapsed=$(( ($(date +%s%N)-start_ns)/1000000 ))
 [[ $(state) == idle && -s $test_dir/result.mp4 ]]
 [[ $(rg -c '^interrupt$' "$test_dir/actions") == 1 ]]
-rg -q 'recording finishing' "$test_dir/alerts"
+rg -q 'recording.worker.finishing' "$test_dir/alerts"
 rg -q '^reveal$' "$test_dir/actions"
 [[ $elapsed -lt 2500 ]]
 printf 'PASS: duplicate setup excluded, one owned interrupt, repeated stop safe, finalization awaited (%s ms)\n' "$elapsed"
@@ -113,7 +113,7 @@ wait_state starting
 control --toggle >/dev/null
 wait "$worker_pid"; worker_pid=''
 [[ $(state) == idle && ! -e $test_dir/recorder.pid ]]
-rg -q 'recording cancelled' "$test_dir/alerts"
+rg -q 'recording.worker.cancelled' "$test_dir/alerts"
 printf 'PASS: starting-delay shortcut cancels capture\n'
 
 reset_logs
@@ -132,7 +132,7 @@ rm "$test_dir/readiness-held"
 wait_state recording
 control --toggle >/dev/null
 wait "$worker_pid"; worker_pid=''
-rg -q 'postCapture recording recording starting' "$test_dir/alerts"
+rg -Fq 'postMessage recording recording.worker.starting [] success 1000 true' "$test_dir/alerts"
 printf 'PASS: missing readiness retries through bar reconnect, closing overlays block capture, and readiness releases the same worker\n'
 
 reset_logs
@@ -147,7 +147,7 @@ control --toggle >/dev/null
 wait "$worker_pid"; worker_pid=''
 rm "$test_dir/readiness-held"
 [[ $(state) == idle && ! -e $test_dir/recorder.pid ]]
-rg -q 'recording cancelled' "$test_dir/alerts"
+rg -q 'recording.worker.cancelled' "$test_dir/alerts"
 printf 'PASS: recording shortcut cancels during shared-readiness waiting without starting a recorder\n'
 
 reset_logs
@@ -157,7 +157,7 @@ if wait "$worker_pid"; then exit 1; fi
 worker_pid=''
 rm "$test_dir/readiness-unavailable"
 [[ $(state) == idle && ! -e $test_dir/recorder.pid ]]
-rg -q 'recording cancelled: capture was not ready' "$test_dir/alerts"
+rg -q 'recording.worker.notReady' "$test_dir/alerts"
 printf 'PASS: unavailable readiness cancels startup within the bounded retry and releases its runtime claim\n'
 
 reset_logs
@@ -180,7 +180,7 @@ if wait "$worker_pid"; then exit 1; fi
 worker_pid=''
 [[ $(state) == idle ]]
 rg -q '^unload-module 99$' "$test_dir/audio"
-rg -q 'recording error' "$test_dir/alerts"
+rg -q 'recording.worker.error' "$test_dir/alerts"
 ! rg -q '^reveal$' "$test_dir/actions"
 printf 'PASS: recorder failure cleans audio and never claims a saved file\n'
 
@@ -221,6 +221,7 @@ printf 'PASS: audio cleanup failure preserves its runtime record for retry\n'
 
 # Production controller, independent worker, real automatic QML reload and full bar-process restart.
 mkdir -p "$test_dir/src/config"
+cp -r "$project_root/src/i18n" "$test_dir/src/i18n"
 mkdir -m 700 "$test_dir/runtime"
 cp "$project_root/src/services/recording/RecordingService.qml" "$test_dir/src/services/recording/"
 cp "$project_root/src/services/recording/qmldir" "$test_dir/src/services/recording/"
@@ -252,6 +253,7 @@ import QtQml
 import Quickshell
 QtObject {
     readonly property string databasePath: Quickshell.shellPath("data/quickshell.db")
+    readonly property string language: "en"
     readonly property string testThemeColor: "before"
 }
 QML

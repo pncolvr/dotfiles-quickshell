@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 
+import "../../../i18n"
 import QtQuick
 import QtQuick.Controls as QC
 import Quickshell
@@ -15,8 +16,8 @@ Column {
     readonly property real maxPanelHeight: (monitor?.height ?? 1080) * Theme.recentFilesMaxHeightRatio
     readonly property bool folderTab: fileService.activeFolder.length > 0
     readonly property bool pinnedTab: fileService.showingPinned
-    readonly property var tabEntries: [{label: "Recent", kind: "recent", path: ""}]
-        .concat(fileService.pinnedFiles.length > 0 ? [{label: "Pinned", kind: "pinned", path: ""}] : [])
+    readonly property var tabEntries: [{label: Translations.text("files.tabs.recent"), kind: "recent", path: ""}]
+        .concat(fileService.pinnedFiles.length > 0 ? [{label: Translations.text("files.tabs.pinned"), kind: "pinned", path: ""}] : [])
         .concat(fileService.folders.map(path => ({label: fileService.folderLabel(path), kind: "folder", path: path})))
     property var selectedUris: []
     property string selectionAnchor: ""
@@ -160,7 +161,7 @@ Column {
     }
     UI.FolderDialog {
         id: picker
-        title: "Add folder tab"
+        title: Translations.text("files.actions.addTabHint")
         onFolderSelected: path => root.fileService.addFolder(path)
     }
 
@@ -195,14 +196,14 @@ Column {
             UI.ActionButton {
                 objectName: "refreshFiles"
                 glyph: Theme.refreshIcon
-                hint: "Refresh files"
+                hint: Translations.text("files.actions.refreshHint")
                 enabled: !root.fileService.loading && !root.fileService.dragging
                 onClicked: root.fileService.refresh()
             }
             UI.ActionButton {
                 objectName: "addFolderTab"
                 glyph: Theme.addIcon
-                hint: "Add folder tab"
+                hint: Translations.text("files.actions.addTabHint")
                 enabled: !root.fileService.loading && !root.fileService.dragging
                 onClicked: root.openFolderPicker()
             }
@@ -222,12 +223,12 @@ Column {
             text: {
                 switch (true) {
                 case root.pinnedTab:
-                    return "Pinned files · " + root.fileService.pinnedFiles.length
+                    return Translations.text("files.summary.pinned",[root.fileService.pinnedFiles.length])
                 case root.folderTab:
                     return root.fileService.currentFolder
                 default: {
-                    const period = Config.recentFilesMaxDays > 0 ? "Last " + Config.recentFilesMaxDays + " days" : "All time"
-                    const limit = Config.recentFilesMaxItems > 0 ? "max " + Config.recentFilesMaxItems + " files" : "all files"
+                    const period = Config.recentFilesMaxDays > 0 ? Translations.text("files.summary.days",[],Config.recentFilesMaxDays) : Translations.text("files.summary.allTime")
+                    const limit = Config.recentFilesMaxItems > 0 ? Translations.text("files.summary.limit",[],Config.recentFilesMaxItems) : Translations.text("files.summary.allFiles")
                     return [period, limit].join(" · ")
                 }
                 }
@@ -249,7 +250,7 @@ Column {
                 objectName: "navigateFolderUp"
                 visible: root.folderTab
                 glyph: Theme.upIcon
-                hint: "Go up"
+                hint: Translations.text("files.actions.goUp")
                 enabled: root.fileService.canNavigateUp
                 onClicked: root.fileService.navigateUp()
             }
@@ -257,7 +258,7 @@ Column {
                 objectName: "editFolderAlias"
                 visible: root.folderTab
                 glyph: Theme.editIcon
-                hint: "Edit tab name"
+                hint: Translations.text("files.actions.renameTabHint")
                 onClicked: {
                     if (root.renameFolder.length > 0) root.cancelFolderName()
                     else root.editFolderName(root.fileService.activeFolder)
@@ -271,9 +272,9 @@ Column {
                 foreground: isDefault ? Theme.accent : Theme.text
                 hint: {
                     switch (true) {
-                    case !isDefault: return "Set as default tab"
-                    case root.fileService.activeTab === "recent": return "Default tab"
-                    default: return "Use Recent as default"
+                    case !isDefault: return Translations.text("files.actions.setDefaultHint")
+                    case root.fileService.activeTab === "recent": return Translations.text("files.tabs.default")
+                    default: return Translations.text("files.actions.defaultRecentHint")
                     }
                 }
                 onClicked: root.fileService.setDefaultTab(isDefault ? "recent" : root.fileService.activeTab,
@@ -283,7 +284,7 @@ Column {
                 objectName: "removeFolderTab"
                 visible: root.folderTab
                 glyph: Theme.deleteIcon
-                hint: "Remove folder tab"
+                hint: Translations.text("files.actions.removeTabHint")
                 fillColor: Theme.urgent
                 onClicked: root.fileService.removeFolder(root.fileService.activeFolder)
             }
@@ -297,7 +298,7 @@ Column {
         spacing: Theme.controlSpacing
         UI.ColumnText {
             width: parent.width
-            text: "Tab name · " + root.renameFolder
+            text: Translations.text("files.tab.nameLabel",[root.renameFolder])
             textFormat: Text.PlainText
             color: Theme.inactive
             elide: Text.ElideMiddle
@@ -311,8 +312,8 @@ Column {
                 anchors.left: parent.left
                 anchors.right: renameActions.left
                 anchors.rightMargin: Theme.controlSpacing
-                placeholderText: "Blank uses the folder name"
-                Accessible.name: "Folder tab name"
+                placeholderText: Translations.text("files.tab.namePlaceholder")
+                Accessible.name: Translations.text("files.tab.nameAccessibleName")
                 onAccepted: root.saveFolderName()
                 Keys.onEscapePressed: root.cancelFolderName()
             }
@@ -321,8 +322,8 @@ Column {
                 anchors.right: parent.right
                 cancelObjectName: "cancelFolderAlias"
                 submitObjectName: "saveFolderAlias"
-                submitHint: "Apply tab name"
-                cancelHint: "Cancel rename"
+                submitHint: Translations.text("files.actions.applyNameHint")
+                cancelHint: Translations.text("files.actions.cancelNameHint")
                 onSubmitted: root.saveFolderName()
                 onCancelled: root.cancelFolderName()
             }
@@ -335,9 +336,9 @@ Column {
         text: {
             switch (true) {
             case root.fileService.error.length > 0: return root.fileService.error
-            case root.fileService.loading: return "Loading files…"
-            case root.folderTab: return "No files in this folder."
-            default: return "No recent files yet."
+            case root.fileService.loading: return Translations.text("files.status.loading")
+            case root.folderTab: return Translations.text("files.empty.folder")
+            default: return Translations.text("files.empty.recent")
             }
         }
         color: root.fileService.error ? Theme.warning : Theme.inactive
@@ -432,9 +433,8 @@ Column {
         id: hint
         width: parent.width
         visible: root.fileService.files.length > 0
-        text: (root.selectedUris.length > 0 ? root.selectedUris.length + " selected · Drag into an app.\n" : "")
-            + (pinnedDrop.containsDrag ? "Drop here to pin or reorder files"
-                : "Click to select · Ctrl/Shift for multiple · Double-click to open")
+        text: (root.selectedUris.length > 0 ? Translations.text("files.shortcuts.selected",[],root.selectedUris.length) : "")
+            + (Translations.text(pinnedDrop.containsDrag ? "files.pin.dropHint" : "files.shortcuts.selection"))
         color: Theme.inactive
         font.pixelSize: 10
         wrapMode: Text.Wrap

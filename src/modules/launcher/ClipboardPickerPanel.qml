@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 
+import "../../i18n"
 import QtQuick
 import "../../theme"
 import "../../theme/ui" as UI
@@ -8,7 +9,7 @@ import "../../config"
 
 PickerPanelBase {
     id: root
-    searchPlaceholder: "Search clipboard"
+    searchPlaceholder: Translations.text("clipboard.search.placeholder")
     panelError: picker.error || ClipboardService.error
     minimumRowHeight: Theme.clipboardRowHeight
     readonly property bool imagesOnly: picker.itemCriteria.kind === "image"
@@ -63,9 +64,9 @@ PickerPanelBase {
     function toggleImagesOnly() { setCriterion("kind",imagesOnly ? undefined : "image") }
     readonly property bool pinnedOnly: picker.itemCriteria.pinned === true
     inlineFooter: imagesOnly && sideBySide
-    footerHint: "Enter to paste · Ctrl+C to copy · Del to delete"
+    footerHint: Translations.text("clipboard.shortcuts.primary")
         + (imagesOnly && sideBySide ? " · " : "\n")
-        + "Ctrl+P pin/unpin · Ctrl+Shift+P pinned only · Ctrl+Shift+I images"
+        + Translations.text("clipboard.shortcuts.filters")
 
     function sizeListForOpening() {
         const entries = picker.items.slice(0, Config.pickerMaxRows)
@@ -110,27 +111,27 @@ PickerPanelBase {
                 id: toolbar
                 anchors.right: parent.right
                 spacing: Theme.controlSpacing
-                UI.ActionButton { objectName: "clipboardImagesOnly"; glyph: Theme.imageIcon; foreground: root.imagesOnly ? Theme.accent : Theme.text; hint: "Images only (Ctrl+Shift+I)"; onClicked: root.toggleImagesOnly() }
-                UI.ActionButton { objectName: "clipboardFuzzy"; glyph: Theme.searchIcon; foreground: root.picker.clipboardFuzzy ? Theme.accent : Theme.text; hint: "Use fuzzy search instead of indexed word/prefix search"; onClicked: root.picker.clipboardFuzzy = !root.picker.clipboardFuzzy }
+                UI.ActionButton { objectName: "clipboardImagesOnly"; glyph: Theme.imageIcon; foreground: root.imagesOnly ? Theme.accent : Theme.text; hint: Translations.text("clipboard.filter.images"); onClicked: root.toggleImagesOnly() }
+                UI.ActionButton { objectName: "clipboardFuzzy"; glyph: Theme.searchIcon; foreground: root.picker.clipboardFuzzy ? Theme.accent : Theme.text; hint: Translations.text("clipboard.search.fuzzyHint"); onClicked: root.picker.clipboardFuzzy = !root.picker.clipboardFuzzy }
                 UI.ActionButton {
                     objectName: "clipboardPinnedOnly"
                     glyph: Theme.filterIcon
                     foreground: root.pinnedOnly ? Theme.accent : Theme.text
-                    hint: root.pinnedOnly ? "Show all clipboard entries (Ctrl+Shift+P)" : "Show only pinned entries (Ctrl+Shift+P)"
+                    hint: Translations.text(root.pinnedOnly ? "clipboard.filter.showAllHint" : "clipboard.filter.pinnedHint")
                     onClicked: root.togglePinnedOnly()
                 }
                 UI.ActionButton {
                     objectName: "pinClipboardEntry"
                     glyph: Theme.filePinIcon
                     foreground: root.picker.currentItem?.pinned ? Theme.accent : Theme.inactive
-                    hint: root.picker.currentItem?.pinned ? "Unpin entry (Ctrl+P)" : "Pin entry (Ctrl+P)"
+                    hint: Translations.text(root.picker.currentItem?.pinned ? "clipboard.actions.unpinHint" : "clipboard.actions.pinHint")
                     enabled: !!root.picker.currentItem
                     onClicked: root.toggleCurrentPin()
                 }
                 UI.ActionButton {
                     glyph: Theme.deleteIcon
                     fillColor: Theme.urgent
-                    hint: "Remove the highlighted entry from history (Delete)"
+                    hint: Translations.text("clipboard.actions.deleteHint")
                     enabled: !!root.picker.currentItem
                     onClicked: root.deleteCurrentEntry()
                 }
@@ -138,14 +139,14 @@ PickerPanelBase {
                     objectName: "clearClipboardHistory"
                     glyph: Theme.clearIcon
                     fillColor: Theme.urgent
-                    hint: "Remove unpinned clipboard entries; keep pinned entries"
+                    hint: Translations.text("clipboard.actions.clearHint")
                     onClicked: ClipboardService.clear()
                 }
                 UI.ActionButton {
                     glyph: Theme.pasteIcon
                     enabled: !!root.picker.currentItem && root.picker.destination.length > 0
                     fillColor: Theme.accent
-                    hint: "Paste into the original window (Enter)"
+                    hint: Translations.text("clipboard.actions.pasteHint")
                     onClicked: root.picker.accept(false, false)
                 }
             }

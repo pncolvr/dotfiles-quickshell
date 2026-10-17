@@ -1,4 +1,5 @@
 pragma ComponentBehavior: Bound
+import "../../i18n"
 import QtQuick
 import "../../theme"
 import "../../theme/ui" as UI
@@ -32,17 +33,17 @@ Column {
         id: folders
         objectName: 'statusWorkFoldersList'
         width: parent.width
-        label: 'Work folders (one per line)'
+        label: Translations.text("status.rules.foldersLabel")
         inputObjectName: 'statusWorkDirectories'
         chooseFolders: true
         browseObjectName: 'addStatusWorkFolder'
-        browseHint: 'Add work folder'
-        dialogTitle: 'Add work folder'
+        browseHint: Translations.text("status.rules.addFolder")
+        dialogTitle: Translations.text("status.rules.addFolder")
     }
     UI.LineListField {
         id: patterns
         width: parent.width
-        label: 'Process patterns (one per line)'
+        label: Translations.text("status.rules.processesLabel")
         inputObjectName: 'statusProcessPatterns'
     }
     UI.ColumnText {
@@ -55,8 +56,8 @@ Column {
     UI.EditorActions {
         objectName: 'statusRulesActions'
         anchors.right: parent.right
-        submitHint: 'Save detection rules'
-        cancelHint: 'Reset unsaved changes'
+        submitHint: Translations.text("status.rules.saveHint")
+        cancelHint: Translations.text("status.rules.resetHint")
         onSubmitted: if (root.statusService.saveRules({
             workDirectories: folders.values(),
             processes: patterns.values()

@@ -74,7 +74,7 @@ while IFS= read -r source; do
     category=$(jq -r .category <<< "$source")
     error='' projects='[]'
     if [[ ! -d $path ]]; then
-        error='Folder is missing or unavailable'
+        error='projects.scan.errors.folder'
     else
         canonical=$(realpath -e -- "$path")
         folders=()
@@ -82,13 +82,13 @@ while IFS= read -r source; do
             listing=$(mktemp)
             if find "$canonical" -mindepth 1 -maxdepth 1 -type d -print0 > "$listing"; then
                 while IFS= read -r -d '' folder; do folders+=("$folder"); done < "$listing"
-            else error='Cannot read repositories root'; fi
+            else error='projects.scan.errors.root'; fi
             rm -f "$listing"
         else folders=("$canonical"); fi
         for folder in "${folders[@]}"; do
             if project=$(scan_project "$(realpath -e -- "$folder")" "$canonical" "$category"); then
                 projects=$(jq -c --argjson project "$project" '. + [$project]' <<< "$projects")
-            else error='Cannot read project files'; break; fi
+            else error='projects.scan.errors.files'; break; fi
         done
         path=$canonical
     fi

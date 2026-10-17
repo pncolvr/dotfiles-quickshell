@@ -1,4 +1,5 @@
 pragma ComponentBehavior: Bound
+import "../../../i18n"
 import QtQuick
 import QtQuick.Shapes
 import QtQml.Models
@@ -60,23 +61,23 @@ Item {
     }
     readonly property string cavaPreset: effects.find(option => option.name === effect)?.shader ?? ""
     readonly property var effects: [
-        {name: "wave", description: "Wave", available: true},
-        {name: "bars", description: "Bars", available: true},
-        {name: "mirror", description: "Mirror", available: true},
-        {name: "ribbon", description: "Ribbon", available: true},
-        {name: "bars_top", description: "Bars from top", available: true},
-        {name: "bars_left", description: "Bars from left", available: true},
-        {name: "bars_right", description: "Bars from right", available: true},
-        {name: "waveform", description: "Waveform", available: true},
-        {name: "cava_bar_spectrum", description: "CAVA Spectrum", shader: "bar_spectrum", available: true},
-        {name: "cava_winamp_line", description: "Winamp Line", shader: "winamp_line_style_spectrum", available: true},
-        {name: "cava_northern_lights", description: "Northern Lights", shader: "northern_lights", available: true},
-        {name: "cava_eye_of_phi", description: "Eye of Phi", shader: "eye_of_phi", available: true},
-        {name: "cava_orion_circle", description: "Orion Circle", shader: "orion_circle", available: true},
-        {name: "cava_orion_rotate", description: "Orion Rotate", shader: "orion_circle_rotate", available: true},
-        {name: "cava_orion_core", description: "Orion Saturn Core", shader: "orion_saturn_core", available: true},
-        {name: "cava_orion_subring", description: "Orion Saturn Subring", shader: "orion_saturn_subring", available: true},
-        {name: "cava_spectrogram", description: "Spectrogram", shader: "spectrogram", available: true}
+        {name: "wave", description: Translations.text("media.visualizers.wave"), available: true},
+        {name: "bars", description: Translations.text("media.visualizers.bars"), available: true},
+        {name: "mirror", description: Translations.text("media.visualizers.mirror"), available: true},
+        {name: "ribbon", description: Translations.text("media.visualizers.ribbon"), available: true},
+        {name: "bars_top", description: Translations.text("media.visualizers.barsTop"), available: true},
+        {name: "bars_left", description: Translations.text("media.visualizers.barsLeft"), available: true},
+        {name: "bars_right", description: Translations.text("media.visualizers.barsRight"), available: true},
+        {name: "waveform", description: Translations.text("media.visualizers.waveform"), available: true},
+        {name: "cava_bar_spectrum", description: Translations.text("media.visualizers.cava"), shader: "bar_spectrum", available: true},
+        {name: "cava_winamp_line", description: Translations.text("media.visualizers.winamp"), shader: "winamp_line_style_spectrum", available: true},
+        {name: "cava_northern_lights", description: Translations.text("media.visualizers.aurora"), shader: "northern_lights", available: true},
+        {name: "cava_eye_of_phi", description: Translations.text("media.visualizers.eye"), shader: "eye_of_phi", available: true},
+        {name: "cava_orion_circle", description: Translations.text("media.visualizers.circle"), shader: "orion_circle", available: true},
+        {name: "cava_orion_rotate", description: Translations.text("media.visualizers.rotate"), shader: "orion_circle_rotate", available: true},
+        {name: "cava_orion_core", description: Translations.text("media.visualizers.saturnCore"), shader: "orion_saturn_core", available: true},
+        {name: "cava_orion_subring", description: Translations.text("media.visualizers.saturnRing"), shader: "orion_saturn_subring", available: true},
+        {name: "cava_spectrogram", description: Translations.text("media.visualizers.spectrogram"), shader: "spectrogram", available: true}
     ]
 
     function parseFrame(text) {

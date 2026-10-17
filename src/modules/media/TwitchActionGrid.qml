@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 
+import "../../i18n"
 import QtQuick
 import QtQuick.Controls as QC
 import "../../theme"
@@ -9,7 +10,7 @@ QC.ScrollView {
     id: root
     property var logins: []
     property string glyph: Theme.addIcon
-    property string hintPrefix: "Add "
+    property string hintKey: "twitch.actions.addChannel"
     property string buttonPrefix: "addBrowserTwitchUser_"
     property string gridObjectName: ""
     readonly property real gridHeight: grid.implicitHeight
@@ -35,7 +36,7 @@ QC.ScrollView {
                 height: Theme.twitchEditorHeight
                 label: modelData
                 glyph: root.glyph
-                hint: root.hintPrefix + modelData
+                hint: Translations.text(root.hintKey,[modelData])
                 enabled: root.enabled
                 onClicked: root.selected(modelData)
             }

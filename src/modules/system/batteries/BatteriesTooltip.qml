@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 
+import "../../../i18n"
 import QtQuick
 import QtQuick.Controls as QC
 import Quickshell
@@ -18,7 +19,7 @@ Column {
     UI.ColumnText {
         width: parent.width
         visible: BatteryService.scanningReceivers && root.batteries.length === 0
-        text: "Checking device batteries…"
+        text: Translations.text("batteries.status.checking")
         color: Theme.inactive
     }
 
@@ -33,7 +34,7 @@ Column {
     UI.ColumnText {
         width: parent.width
         visible: root.batteries.length === 0 && !BatteryService.scanningReceivers
-        text: "No batteries detected"
+        text: Translations.text("batteries.empty")
         color: Theme.inactive
     }
 

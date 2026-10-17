@@ -1,3 +1,4 @@
+import "../../i18n"
 import QtQml
 import Quickshell
 import Quickshell.Io
@@ -94,10 +95,10 @@ Scope {
                 return;
             try {
                 if (code || status)
-                    throw Error('Session unavailable');
+                    throw Error(Translations.text("session.errors.unavailable"));
                 const path = JSON.parse(lookupOutput.text).data[0];
                 if (typeof path !== 'string' || !path.startsWith('/org/freedesktop/login1/session/'))
-                    throw Error('Invalid session');
+                    throw Error(Translations.text("session.errors.invalidSession"));
                 root.sessionPath = path;
                 Qt.callLater(root.refresh);
             } catch (_) {
@@ -122,10 +123,10 @@ Scope {
                 return;
             try {
                 if (code || status)
-                    throw Error('Session unavailable');
+                    throw Error(Translations.text("session.errors.unavailable"));
                 const value = JSON.parse(sessionOutput.text).data[0];
                 if (typeof value.Active?.data !== 'boolean' || typeof value.LockedHint?.data !== 'boolean')
-                    throw Error('Invalid state');
+                    throw Error(Translations.text("session.errors.invalidState"));
                 root.active = value.Active.data && value.State?.data !== 'closing';
                 root.sessionLocked = value.LockedHint.data;
                 root.sessionKnown = true;
@@ -153,10 +154,10 @@ Scope {
                 return;
             try {
                 if (code || status)
-                    throw Error('Compositor unavailable');
+                    throw Error(Translations.text("session.errors.compositorUnavailable"));
                 const value = JSON.parse(lockOutput.text).locked;
                 if (typeof value !== 'boolean')
-                    throw Error('Invalid lock state');
+                    throw Error(Translations.text("session.errors.invalidLockState"));
                 root.compositorLocked = value;
                 root.lockKnown = true;
             } catch (_) {

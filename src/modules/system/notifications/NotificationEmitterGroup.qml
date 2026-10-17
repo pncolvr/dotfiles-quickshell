@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 
+import "../../../i18n"
 import QtQuick
 import QtQuick.Layouts
 import "../../../theme"
@@ -67,7 +68,7 @@ Column {
             implicitWidth: Theme.controlHeight
             glyph: Theme.deleteIcon
             fillColor: Theme.notificationCritical
-            hint: "Delete this emitter's history and dismiss its current notifications; keep its settings"
+            hint: Translations.text("notifications.actions.clearEmitterHint")
             onClicked: NotificationService.clearEmitter(root.group.emitterKey)
         }
     }
@@ -106,7 +107,7 @@ Column {
     }
     NotificationButton {
         visible: root.expanded && root.entries.length < root.group.count
-        label: "Load older notifications"
+        label: Translations.text("notifications.actions.loadOlder")
         onClicked: root.loadMore()
     }
 }

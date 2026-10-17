@@ -1,5 +1,6 @@
 pragma Singleton
 
+import "../../i18n"
 import QtQml
 import Quickshell
 import Quickshell.Io
@@ -51,7 +52,7 @@ Singleton {
     function streamNotification(changes) {
         const sections = []
         let summary = ""
-        for (const [heading, streams] of [["Live", changes.online], ["Offline", changes.offline]]) {
+        for (const [heading, streams] of [[Translations.text("twitch.sections.live"), changes.online], [Translations.text("twitch.sections.offline"), changes.offline]]) {
             if (!streams.length) continue
             const title = summary ? `**${heading}**\n\n` : ""
             if (!summary) summary = heading
@@ -259,7 +260,7 @@ Singleton {
             try {
                 // The CLI update check can fail after a successful API response; validate the JSON itself.
                 const json = JSON.parse(streamsOutput.text)
-                if (!Array.isArray(json.data)) throw new Error("Missing streams data")
+                if (!Array.isArray(json.data)) throw new Error(Translations.text("twitch.errors.missingStreams"))
                 const logins = TwitchRepository.channelLogins()
                 state.pendingStreams = [...state.pendingStreams, ...json.data.filter(stream => logins.includes(stream.user_login.toLowerCase())).map(stream => ({
                     login: stream.user_login.toLowerCase(), streamId: String(stream.id ?? stream.started_at ?? ""),
@@ -296,7 +297,7 @@ Singleton {
             if (exitStatus === 0) {
                 try {
                     const json = JSON.parse(avatarOutput.text)
-                    if (!Array.isArray(json.data)) throw new Error("Missing users data")
+                    if (!Array.isArray(json.data)) throw new Error(Translations.text("twitch.errors.missingUsers"))
                     const logins = TwitchRepository.channelLogins()
                     for (const user of json.data) {
                         const login = user.login.toLowerCase()

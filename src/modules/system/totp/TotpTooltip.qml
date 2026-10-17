@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 
+import "../../../i18n"
 import QtQuick
 import QtQuick.Controls as QC
 import QtQml.Models
@@ -81,14 +82,14 @@ Column {
     UI.ColumnText {
         width: parent.width
         visible: !TotpService.ready && TotpService.error.length === 0
-        text: "opening keyring…"
+        text: Translations.text("totp.status.loading")
         color: Theme.inactive
     }
 
     UI.ColumnText {
         width: parent.width
         visible: TotpService.ready && TotpService.entries.count === 0
-        text: "no tokens yet — add a secret below"
+        text: Translations.text("totp.empty.initial")
         color: Theme.inactive
     }
 
@@ -109,7 +110,7 @@ Column {
             parent: list
             width: list.width
             visible: TotpService.ready && TotpService.entries.count > 0 && list.count === 0
-            text: "No matching tokens."
+            text: Translations.text("totp.empty.filtered")
             color: Theme.inactive
         }
     }
@@ -168,7 +169,7 @@ Column {
             anchors.bottom: parent.bottom
             height: Theme.totpRowHeight
             visible: !root.adding
-            placeholderText: "Search tokens…"
+            placeholderText: Translations.text("totp.search.placeholder")
         }
 
         UI.ActionButton {
@@ -178,7 +179,7 @@ Column {
             anchors.bottom: parent.bottom
             visible: !root.adding
             glyph: TotpService.error.length > 0 ? Theme.retryIcon : Theme.addIcon
-            hint: TotpService.error.length > 0 ? "reload keyring" : "add token"
+            hint: Translations.text(TotpService.error.length > 0 ? "totp.actions.reloadHint" : "totp.actions.addHint")
             enabled: !TotpService.busy
             onClicked: {
                 if (TotpService.error.length > 0) { root.cancelEditor(); TotpService.reload() }

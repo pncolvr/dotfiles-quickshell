@@ -1,4 +1,5 @@
 pragma ComponentBehavior: Bound
+import "../../../i18n"
 import QtQuick
 import QtQuick.Controls as QC
 import "../../"
@@ -12,8 +13,8 @@ Column {
     property alias folderPicker: dialog
     property bool chooseFolders: false
     property string browseObjectName: ''
-    property string browseHint: 'Add folder'
-    property string dialogTitle: 'Add folder'
+    property string browseHint: Translations.text("folders.actions.add")
+    property string dialogTitle: Translations.text("folders.actions.add")
     readonly property bool nativeDialogOpen: dialog.nativeDialogOpen
     spacing: Theme.controlSpacing
     function values() {

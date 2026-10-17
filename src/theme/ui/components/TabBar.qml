@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 
+import "../../../i18n"
 import QtQuick
 import QtQuick.Controls as QC
 import Quickshell
@@ -100,7 +101,7 @@ QC.TabBar {
                     glyph: Theme.cancelIcon
                     foreground: hovered ? Theme.text : Theme.inactive
                     fillColor: "transparent"
-                    hint: "Remove " + tabButton.text + " tab"
+                    hint: Translations.text("tabs.actions.remove", [tabButton.text])
                     onClicked: root.tabCloseRequested(tabButton.index)
                 }
             }

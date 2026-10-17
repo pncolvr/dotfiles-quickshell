@@ -1,3 +1,4 @@
+import "../../../i18n"
 import QtQuick
 import "../../../theme/ui" as UI
 import "../../../theme"
@@ -88,7 +89,7 @@ Column {
         visible: root.networkService.connectedNetworks.length > 0
 
         UI.ColumnText {
-            text: "networks"
+            text: Translations.text("stats.network.networks")
             color: Theme.inactive
         }
 
@@ -142,7 +143,7 @@ Column {
         visible: root.networkService.vpnConnections.length > 0
 
         UI.ColumnText {
-            text: "vpn"
+            text: Translations.text("stats.network.vpn")
             color: Theme.inactive
         }
 
@@ -165,7 +166,7 @@ Column {
                 UI.ColumnText {
                     id: vpnStatus
                     anchors.right: parent.right
-                    text: vpnRow.modelData.active ? "online" : "offline"
+                    text: Translations.text(vpnRow.modelData.active ? "common.states.online" : "common.states.offline")
                     color: vpnRow.modelData.active ? Theme.ok : Theme.inactive
                 }
             }

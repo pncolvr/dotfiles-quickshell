@@ -1,5 +1,6 @@
 pragma Singleton
 
+import "../../i18n"
 import QtQml
 import Quickshell
 import Quickshell.Io
@@ -91,7 +92,7 @@ Singleton {
     }
     function save(entries) {
         if (!PreferencesRepository.setValue("files.pinned", entries)) {
-            error = "Could not save pinned files."
+            error = Translations.text("files.errors.savePins")
             return false
         }
         error = ""
@@ -155,8 +156,8 @@ Singleton {
                 if (result.files.length > 0) {
                     state.pendingPlacements = state.pendingPlacements.concat([{files: result.files, beforeUri: state.importBeforeUri}])
                     root.addPendingFiles()
-                } else root.error = "Only existing, readable files can be pinned."
-            } else root.error = "Could not pin dropped files."
+                } else root.error = Translations.text("files.errors.invalidPin")
+            } else root.error = Translations.text("files.errors.pinDropped")
             if (state.pendingImports.length > 0) Qt.callLater(root.importNext)
         }
         // qmllint enable signal-handler-parameters
@@ -174,7 +175,7 @@ Singleton {
                 root.error = ""
                 state.missingUris = missing
                 if (!state.dragging) root.removeMissing()
-            } else root.error = "Could not check pinned files."
+            } else root.error = Translations.text("files.errors.checkPins")
             if (state.refreshPending && !state.dragging) Qt.callLater(root.refresh)
         }
         // qmllint enable signal-handler-parameters

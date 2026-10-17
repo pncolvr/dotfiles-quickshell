@@ -1,3 +1,4 @@
+import "../../../i18n"
 TimeEntry {
-    defaultLabel: "Timer"
+    defaultLabel: Translations.text("timers.defaults.stopwatch")
 }

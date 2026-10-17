@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 
+import "../../i18n"
 import QtQuick
 import "../../theme/ui" as UI
 import "../../theme"
@@ -60,8 +61,8 @@ Item {
         return 1 + Math.round(((d - week1) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7)
     }
 
-    function isTodayWeekday(weekDayName) {
-        return Theme.calendarDayNames[_internal.todayWeekDay] == weekDayName
+    function isTodayWeekday(index) {
+        return _internal.todayWeekDay === index
     }
 
     WheelHandler {
@@ -86,7 +87,7 @@ Item {
         // Month header
         UI.ColumnText {
             width: parent.width
-            text: Theme.calendarMonthNames[root.displayMonth] + (root.showYearTitle ? ` ${root.displayYear}` : '')
+            text: Translations.calendarMonthNames[root.displayMonth] + (root.showYearTitle ? ` ${root.displayYear}` : '')
             color: Theme.calendarHeaderText
             horizontalAlignment: Text.AlignHCenter
         }
@@ -104,12 +105,13 @@ Item {
             }
 
             Repeater {
-                model: Theme.calendarDayNames
+                model: Translations.calendarDayNames
                 UI.ColumnText {
                     required property string modelData
+                    required property int index
                     width: Theme.calendarCellWidth
                     text: modelData
-                    color: root.isTodayWeekday(modelData) ? Theme.accent : Theme.calendarHeaderText
+                    color: root.isTodayWeekday(index) ? Theme.accent : Theme.calendarHeaderText
                     horizontalAlignment: Text.AlignHCenter
                 }
             }

@@ -12,6 +12,9 @@ Item {
         readonly property string runtimeDirectory: Quickshell.env("XDG_RUNTIME_DIR")
     }
 
+    // Display language: system, en or pt (European Portuguese). Unsupported locales use English.
+    readonly property string language: "system"
+
     // Shared UI and privacy
     // Decorative motion follows both switches below.
     readonly property bool animationsEnabled: true

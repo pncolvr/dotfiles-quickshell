@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 
+import "../../i18n"
 import QtQuick
 import "../../theme"
 import "../../theme/ui" as UI
@@ -48,13 +49,13 @@ Rectangle {
             asynchronous: true
             onStatusChanged: if (status === Image.Error && root.picker.visible) root.picker.imagePreviewFailed()
             Accessible.role: Accessible.Graphic
-            Accessible.name: root.picker.currentItem?.title ?? "Image"
+            Accessible.name: root.picker.currentItem?.title ?? Translations.text("images.viewer.title")
         }
         UI.Text {
             centerVertical: false
             anchors.centerIn: parent
             visible: image.status === Image.Error
-            text: "Image unavailable"
+            text: Translations.text("images.preview.unavailable")
             color: "black"
         }
     }

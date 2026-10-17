@@ -1,4 +1,5 @@
 pragma ComponentBehavior: Bound
+import "../../i18n"
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls as QC
@@ -104,7 +105,7 @@ ManagedPickerFrame {
         spacing: Theme.controlSpacing
         UI.TabBar {
             objectName: "projectTabs"
-            labels: ["Projects", "Manage"]
+            labels: [Translations.text("projects.title"), Translations.text("common.tabs.manage")]
             currentIndex: ProjectService.managing ? 1 : 0
             Layout.fillWidth: true
             onTabClicked: index => root.management(index === 1)
@@ -112,14 +113,14 @@ ManagedPickerFrame {
         UI.ActionButton {
             visible: !ProjectService.managing && !!ProjectService.projectPath
             glyph: Theme.upIcon
-            hint: "back to projects"
+            hint: Translations.text("projects.actions.backHint")
             onClicked: ProjectService.back()
         }
         UI.ActionButton {
             objectName: "refreshProjects"
             visible: ProjectService.managing
             glyph: Theme.refreshIcon
-            hint: "refresh all folders"
+            hint: Translations.text("projects.actions.refreshHint")
             enabled: !ProjectService.busy && !ProjectService.draft && ProjectService.sources.length > 0
             onClicked: ProjectService.refresh()
         }
@@ -132,11 +133,9 @@ ManagedPickerFrame {
         picker: root.picker
         backgroundVisible: root.backgroundVisible
         visible: !ProjectService.managing
-        searchPlaceholder: ProjectService.urls ? "Search repository URLs" : "Search projects"
+        searchPlaceholder: Translations.text(ProjectService.urls ? "projects.urls.searchPlaceholder" : "projects.search.placeholder")
         searchKeyHandler: root.handlePickerKey
-        footerHint: StatusService.filterHint(Config.projectShowAllShortcut,ProjectService.showAll) + Config.projectManageShortcut + ": manage"
-            + (ProjectService.urls ? " · Esc: close\n" + root.picker.selectedIds.length + " selected · Shift+Space: toggle + next\nCtrl+A: all / clear · Enter: open"
-                : " · Enter: open · Esc: close")
+        footerHint: StatusService.filterHint(Config.projectShowAllShortcut,ProjectService.showAll) + Translations.text(ProjectService.urls ? "projects.shortcuts.urls" : "projects.shortcuts.list",[Config.projectManageShortcut,root.picker.selectedIds.length])
     }
     QC.ScrollView {
         id: manage
@@ -158,7 +157,7 @@ ManagedPickerFrame {
             width: Math.max(0,manage.availableWidth - Theme.projectManagePadding * 2)
             spacing: Theme.projectManageSectionSpacing
             UI.ColumnText {
-                text: ProjectService.busy ? "Scanning…" : ProjectService.error
+                text: ProjectService.busy ? Translations.text("projects.status.scanning") : ProjectService.error
                 visible: !!text
                 width: parent.width
                 wrapMode: Text.Wrap
@@ -172,7 +171,7 @@ ManagedPickerFrame {
                     objectName: "projectManageSearch"
                     width: parent.width
                     visible: ProjectService.sources.length > 0
-                    placeholderText: "Filter paths, repositories and project files"
+                    placeholderText: Translations.text("projects.manage.searchPlaceholder")
                     retainPanelWhileEditing: false
                     resetWithTooltip: false
                     handleEscape: false
@@ -184,12 +183,12 @@ ManagedPickerFrame {
                     }
                 }
                 UI.ColumnText {
-                    text: "No sources yet. Add a folder to get started."
+                    text: Translations.text("projects.empty.sources")
                     visible: ProjectService.sources.length === 0
                     color: Theme.inactive
                 }
                 UI.ColumnText {
-                    text: "No matching paths or repositories."
+                    text: Translations.text("projects.empty.filtered")
                     visible: ProjectService.sources.length > 0 && root.managedSources.length === 0
                     color: Theme.inactive
                 }
@@ -228,8 +227,8 @@ ManagedPickerFrame {
                                     copyObjectName: "copySourcePath_" + path
                                     editObjectName: "editSource_" + path
                                     refreshObjectName: "refreshSource_" + path
-                                    editHint: "edit folder and project files"
-                                    removeHint: "remove source"
+                                    editHint: Translations.text("projects.actions.editSourceHint")
+                                    removeHint: Translations.text("projects.actions.removeSourceHint")
                                     removeColor: Theme.urgent
                                     showRefresh: true
                                     editEnabled: !ProjectService.busy && !ProjectService.draft
@@ -244,19 +243,19 @@ ManagedPickerFrame {
                                 width: parent.width
                                 spacing: Theme.controlSpacing
                                 UI.ColumnText {
-                                    text: (sourceRow.modelData.kind === "root" ? "Repositories root" : "Single folder") + " ·"
+                                    text: (Translations.text(sourceRow.modelData.kind === "root" ? "projects.source.repositoryRoot" : "projects.source.singleFolder")) + " ·"
                                     color: Theme.inactive
                                 }
                                 UI.ColumnText {
                                     visible: StatusService.enabled
-                                    text: sourceRow.modelData.category === "work" ? "Work" : "Personal"
+                                    text: Translations.text(sourceRow.modelData.category === "work" ? "status.modes.work" : "status.modes.personal")
                                     color: sourceRow.modelData.category === "work" ? Theme.accent : Theme.active
                                     Layout.fillWidth: true
                                 }
                             }
                             UI.ColumnText {
                                 width: parent.width
-                                text: sourceRow.modelData.error
+                                text: Translations.message(sourceRow.modelData.error)
                                 visible: !!text
                                 color: Theme.urgent
                                 wrapMode: Text.Wrap
@@ -317,7 +316,7 @@ ManagedPickerFrame {
                                                 objectName: "matchedWorkspace_" + modelData.path
                                                 width: projectText.width
                                                 text: root.highlighted(modelData.name + " · " + modelData.path)
-                                                    + (ProjectService.pathStates[modelData.path]?.message ? " · " + ProjectService.pathStates[modelData.path].message : "")
+                                                    + (ProjectService.pathStates[modelData.path]?.message ? " · " + Translations.text(ProjectService.pathStates[modelData.path].message) : "")
                                                 textFormat: Text.StyledText
                                                 Accessible.name: modelData.name + " · " + modelData.path
                                                 color: ProjectService.pathStates[modelData.path]?.status === "unavailable" ? Theme.warning : Theme.inactive
@@ -330,7 +329,7 @@ ManagedPickerFrame {
                                         path: projectRow.modelData.path
                                         copyObjectName: "copyProjectPath_" + path
                                         editObjectName: "editProject_" + path
-                                        editHint: "edit project files"
+                                        editHint: Translations.text("projects.actions.editFilesHint")
                                         showEdit: projectRow.modelData.workspaces.length > 0
                                         showRemove: false
                                         editEnabled: !ProjectService.busy && !ProjectService.draft
@@ -339,7 +338,7 @@ ManagedPickerFrame {
                                 }
                             }
                             UI.ColumnText {
-                                text: "No repositories found."
+                                text: Translations.text("projects.empty.repositories")
                                 visible: sourceRow.modelData.kind === "root" && sourceRow.projects.length === 0
                                 color: Theme.inactive
                             }
@@ -379,8 +378,8 @@ ManagedPickerFrame {
             browseObjectName: ProjectService.draft?.previousPath ? "browseEditProjectSource" : "browseProjectSource"
             categoryObjectName: ProjectService.draft?.previousPath ? "editSourceCategory" : "projectSourceCategory"
             kindObjectName: "projectSourceKind"
-            placeholderText: root.sourceKind === "root" ? "Repositories root folder" : "Project folder"
-            dialogTitle: root.sourceKind === "root" ? "Choose repositories root" : "Choose project folder"
+            placeholderText: Translations.text(root.sourceKind === "root" ? "projects.source.rootLabel" : "projects.source.folderLabel")
+            dialogTitle: Translations.text(root.sourceKind === "root" ? "projects.dialog.chooseRoot" : "projects.dialog.chooseFolder")
             showKind: true
             kind: root.sourceKind
             category: root.sourceCategory
@@ -407,8 +406,8 @@ ManagedPickerFrame {
                 UI.ColumnText {
                     visible: !!text
                     text: ProjectService.draft?.previousPath ? ""
-                        : ProjectService.draft?.review ? "New project files found. Choose which to include."
-                        : ProjectService.draft?.workspaceEdit ? "Choose project files to include" : "Choose project files before adding"
+                        : ProjectService.draft?.review ? Translations.text("projects.files.newFound")
+                        : Translations.text(ProjectService.draft?.workspaceEdit ? "projects.files.choose" : "projects.files.chooseBeforeAdding")
                 }
                 Repeater {
                     model: ProjectService.draft?.projects ?? []
@@ -435,7 +434,7 @@ ManagedPickerFrame {
                                 UI.ActionButton {
                                     objectName: "projectWorkspace_" + workspaceRow.modelData.path
                                     glyph: workspaceRow.modelData.included ? Theme.checkIcon : Theme.addIcon
-                                    hint: workspaceRow.modelData.included ? "exclude project file" : "include project file"
+                                    hint: Translations.text(workspaceRow.modelData.included ? "projects.files.excludeHint" : "projects.files.includeHint")
                                     fillColor: workspaceRow.modelData.included ? Theme.accent : Theme.alternateBackground
                                     onClicked: root.setIncluded(projectDraft.modelData.path,workspaceRow.modelData.path,!workspaceRow.modelData.included)
                                 }
@@ -454,7 +453,7 @@ ManagedPickerFrame {
                                     UI.ColumnText {
                                         objectName: "workspacePathWarning_" + workspaceRow.modelData.path
                                         width: parent.width
-                                        text: ProjectService.pathStates[workspaceRow.modelData.path]?.message ?? ""
+                                        text: Translations.text(ProjectService.pathStates[workspaceRow.modelData.path]?.message ?? "")
                                         visible: !!text
                                         color: ProjectService.pathStates[workspaceRow.modelData.path]?.status === "unavailable" ? Theme.warning : Theme.inactive
                                         wrapMode: Text.Wrap
@@ -479,14 +478,14 @@ ManagedPickerFrame {
                 Layout.alignment: Qt.AlignVCenter
                 wrapMode: Text.NoWrap
                 elide: Text.ElideRight
-                hints: Config.projectManageShortcut + ": projects"
-                    + (!root.showAddForm && !ProjectService.draft ? " · " + Config.projectAddShortcut + ": add folder" : "")
+                hints: Translations.text("projects.shortcuts.manage",[Config.projectManageShortcut])
+                    + (!root.showAddForm && !ProjectService.draft ? " · " + Translations.text("common.shortcuts.addFolder",[Config.projectAddShortcut]) : "")
                     + " · Esc: " + (root.adding || ProjectService.draft ? "cancel" : "close")
             }
             UI.ActionButton {
                 objectName: "beginAddProjectSource"
                 glyph: Theme.addIcon
-                hint: "add folder (" + Config.projectAddShortcut + ")"
+                hint: Translations.text("projects.actions.addHint",[Config.projectAddShortcut])
                 enabled: root.addAllowed
                 onClicked: root.beginAdd()
             }
@@ -495,8 +494,8 @@ ManagedPickerFrame {
                 cancelObjectName: ProjectService.draft ? "cancelProjectDraft" : "cancelAddProjectSource"
                 submitObjectName: ProjectService.draft ? "saveProjectDraft" : "addProjectSource"
                 submitGlyph: ProjectService.draft ? Theme.checkIcon : Theme.addIcon
-                cancelHint: ProjectService.draft?.review ? "Cancel refresh" : "Cancel"
-                submitHint: ProjectService.draft?.review ? "Apply refresh" : ProjectService.draft ? "Save" : "scan folder before adding"
+                cancelHint: Translations.text(ProjectService.draft?.review ? "projects.actions.cancelRefresh" : "common.actions.cancel")
+                submitHint: ProjectService.draft?.review ? Translations.text("projects.actions.applyRefresh") : Translations.text(ProjectService.draft ? "common.actions.save" : "projects.actions.scanBeforeAddingHint")
                 submitEnabled: !ProjectService.busy && (!sourceForm.visible || !!sourceForm.text.trim())
                 cancelEnabled: !ProjectService.busy
                 onCancelled: root.cancelDraft()

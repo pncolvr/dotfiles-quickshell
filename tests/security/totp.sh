@@ -119,7 +119,7 @@ if [[ ${1:-} == --qml-smoke ]]; then
     mkdir -m 700 "$sandbox_dir/runtime"
     # Preserve relative imports while keeping storage and clipboard monitoring
     # away from the live shell, vault and clipboard.
-    tar -C "$project_root" --exclude='*.json' --exclude='*.env' -cf - src | tar -C "$sandbox_dir" -xf -
+    tar -C "$project_root" --exclude='src/services/launcher/providers/*.json' --exclude='*.env' -cf - src | tar -C "$sandbox_dir" -xf -
     sed -i 's/clipboardMonitorEnabled: true/clipboardMonitorEnabled: false/' "$sandbox_dir/src/config/Config.qml"
     mkdir -p "$sandbox_dir/tests/security" "$sandbox_dir/data" "$sandbox_dir/cache"
     cp "$project_root/tests/security/totp-smoke.qml" "$project_root/tests/security/totp-animation-smoke.qml" "$sandbox_dir/tests/security/"

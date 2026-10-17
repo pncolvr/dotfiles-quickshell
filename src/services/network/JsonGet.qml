@@ -1,3 +1,4 @@
+import "../../i18n"
 import QtQml
 import Quickshell
 import Quickshell.Io
@@ -18,7 +19,7 @@ Scope {
     }
     function quoted(value) {
         value=String(value)
-        if (/[\x00-\x1f\x7f]/.test(value)) throw new Error('Invalid request parameter.')
+        if (/[\x00-\x1f\x7f]/.test(value)) throw new Error(Translations.text("network.errors.requestParameter"))
         return '"'+value.replace(/\\/g,'\\\\').replace(/"/g,'\\"')+'"'
     }
     function get(url,headers={}) {
@@ -26,10 +27,10 @@ Scope {
         try {
             input='url = '+quoted(url)+'\n'
             for (const name of Object.keys(headers)) {
-                if (!/^[A-Za-z0-9-]+$/.test(name)) throw new Error('Invalid request header.')
+                if (!/^[A-Za-z0-9-]+$/.test(name)) throw new Error(Translations.text("network.errors.requestHeader"))
                 input+='header = '+quoted(name+': '+headers[name])+'\n'
             }
-        } catch (_) { input=''; completed('','Invalid request parameters.'); return false }
+        } catch (_) { input=''; completed('',Translations.text("network.errors.requestParameters")); return false }
         pending=true
         request.stdinEnabled=true
         startup.restart()
@@ -41,7 +42,7 @@ Scope {
         interval:5000
         onTriggered: {
             root.input=''; request.running=false
-            root.finish('','Could not start curl. Install curl to load remote data.')
+            root.finish('',Translations.text("network.errors.curlMissing"))
         }
     }
     Process {
@@ -62,17 +63,17 @@ Scope {
             if (code || status || http<200 || http>=300) {
                 let message
                 switch (http) {
-                    case 401: case 403: message='Access denied. Check the API key and workflow-list permissions.'; break
-                    case 404: message='API not found. Check the instance address and base path.'; break
-                    case 301: case 302: case 303: case 307: case 308: message='The API redirected. Use its final instance address.'; break
-                    default: message='Request failed or timed out. The saved list was kept.'
+                    case 401: case 403: message=Translations.text("n8n.errors.accessDenied"); break
+                    case 404: message=Translations.text("n8n.errors.notFound"); break
+                    case 301: case 302: case 303: case 307: case 308: message=Translations.text("n8n.errors.redirect"); break
+                    default: message=Translations.text("n8n.errors.requestFailed")
                 }
                 root.finish('',message)
                 return
             }
             const json=output.text.slice(0,separator)
             try { JSON.parse(json) }
-            catch (_) { root.finish('','The server returned invalid JSON. The saved list was kept.'); return }
+            catch (_) { root.finish('',Translations.text("n8n.errors.invalidJson")); return }
             root.finish(json,'')
         }
         // qmllint enable signal-handler-parameters

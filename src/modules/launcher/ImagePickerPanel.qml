@@ -1,11 +1,12 @@
 pragma ComponentBehavior: Bound
 
+import "../../i18n"
 import QtQuick
 import "../../theme"
 
 PickerPanelBase {
     id: root
-    searchPlaceholder: "Search images"
+    searchPlaceholder: Translations.text("images.search.placeholder")
     showThumbnails: false
     readonly property bool sideBySide: availableContentWidth >= Theme.pickerWidth + 240
     placementWidth: sideBySide ? availableContentWidth : implicitWidth

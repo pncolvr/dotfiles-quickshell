@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 
+import "../../i18n"
 import QtQuick
 import QtQuick.Layouts
 
@@ -105,7 +106,7 @@ Row {
                 UI.ColumnText {
                     objectName: "twitchSecondChannelLabel_" + root.mainLogin
                     visible: root.user.usingFallback === true
-                    text: "Second channel for " + root.mainLogin
+                    text: Translations.text("twitch.channel.secondLabel",[root.mainLogin])
                     color: Theme.inactive
                     elide: Text.ElideRight
                     Layout.maximumWidth: parent.width / 2
@@ -171,7 +172,7 @@ Row {
         UI.ActionButton {
             objectName: "editTwitchUser_" + root.mainLogin
             glyph: Theme.editIcon
-            hint: "edit channel"
+            hint: Translations.text("twitch.actions.editHint")
             enabled: TwitchService.usersReady
             onClicked: root.editRequested(root.mainLogin)
         }
@@ -179,7 +180,7 @@ Row {
         UI.ActionButton {
             objectName: "removeTwitchUser_" + root.mainLogin
             glyph: Theme.deleteIcon
-            hint: "remove streamer"
+            hint: Translations.text("twitch.actions.removeHint")
             fillColor: Theme.urgent
             enabled: TwitchService.usersReady
             onClicked: TwitchService.removeUser(root.mainLogin)

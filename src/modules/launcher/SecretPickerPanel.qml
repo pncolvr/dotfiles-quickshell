@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 
+import "../../i18n"
 import QtQuick
 import "../../theme"
 import "../../theme/ui" as UI
@@ -31,7 +32,7 @@ Item {
     function accept() {
         if (!secret.text.length || actions?.generating) return
         if (actions && /[\x00-\x1f\x7f]/.test(secret.text)) {
-            root.picker.error = "Enter a password without control characters."
+            root.picker.error = Translations.text("secrets.errors.controlCharacters")
             return
         }
         const value = secret.text
@@ -83,8 +84,8 @@ Item {
             objectName: "secretInput"
             width: parent.width
             maximumLength: root.actions ? 1024 : 32767
-            revealHint: "Show password"
-            hideHint: "Hide password"
+            revealHint: Translations.text("secrets.actions.revealPassword")
+            hideHint: Translations.text("secrets.actions.hidePassword")
             Accessible.name: root.picker.prompt
             Keys.onReturnPressed: root.accept()
             Keys.onEnterPressed: root.accept()
@@ -98,7 +99,7 @@ Item {
                 anchors.centerIn: parent
                 width: Math.max(0, parent.width - (passwordActions.width + Theme.controlSpacing) * 2)
                 horizontalAlignment: Text.AlignHCenter
-                text: root.actions?.creating ? "Enter: create · Esc: cancel" : "Enter: restore · Esc: cancel"
+                text: Translations.text(root.actions?.creating ? "backup.shortcuts.create" : "backup.shortcuts.restore")
                 color: Theme.inactive
                 elide: Text.ElideRight
             }
@@ -111,7 +112,7 @@ Item {
                     objectName: "generateBackupPassword"
                     visible: root.actions?.creating ?? false
                     glyph: Theme.retryIcon
-                    hint: "Generate password"
+                    hint: Translations.text("secrets.actions.generatePassword")
                     enabled: !root.actions?.generating
                     onClicked: root.actions.generate()
                 }
@@ -119,7 +120,7 @@ Item {
                     objectName: "copyBackupPassword"
                     visible: root.actions?.creating ?? false
                     glyph: Theme.copyIcon
-                    hint: "Copy password"
+                    hint: Translations.text("secrets.actions.copyPassword")
                     enabled: secret.text.length > 0
                     onClicked: { root.actions.copy(secret.text); root.focusSearch() }
                 }

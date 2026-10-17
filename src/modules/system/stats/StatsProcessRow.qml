@@ -1,4 +1,5 @@
 pragma ComponentBehavior: Bound
+import "../../../i18n"
 import QtQuick
 import "../../../theme"
 import "../../../theme/ui" as UI
@@ -67,8 +68,8 @@ Item {
         font.bold: !root.childProcess
         font.weight: root.childProcess ? Font.Normal : Theme.fontWeight
         UI.HoverTooltip {
-            text: root.childProcess ? root.process.name + " · PID " + root.process.pid
-                : root.process.name + " · " + (root.process.count || 1) + " contributing processes"
+            text: root.childProcess ? Translations.text("stats.processes.pidDescription",[root.process.name,root.process.pid])
+                : Translations.text("stats.processes.description",[root.process.name,root.process.count||1])
             cursorShape: root.canExpand ? Qt.PointingHandCursor : Qt.ArrowCursor
             onClicked: if (root.canExpand) root.toggleExpanded()
         }
@@ -105,7 +106,7 @@ Item {
         glyph: Theme.copyIcon
         foreground: Theme.inactive
         fillColor: "transparent"
-        hint: root.process.pid > 0 ? "Copy " + (root.canExpand || root.process.count > 1 ? "parent " : "") + "PID " + root.process.pid : "PID unavailable"
+        hint: root.process.pid > 0 ? Translations.text(root.canExpand || root.process.count > 1 ? "stats.processes.copyParentPid" : "stats.processes.copyPid",[root.process.pid]) : Translations.text("stats.processes.pidUnavailable")
         enabled: root.process.pid > 0
         onClicked: root.statsService.copyPid(root.process.pid)
     }

@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 
+import "../../i18n"
 import QtQuick
 import QtQuick.Controls as QC
 import Quickshell
@@ -55,7 +56,7 @@ Column {
                     color: root.modeColor
                 }
                 UI.ColumnText {
-                    text: root.statusService.status === "work" ? "Work" : root.statusService.status === "personal" ? "Personal" : "Unknown"
+                    text: Translations.text(["work","personal"].includes(root.statusService.status) ? "status.modes."+root.statusService.status : "common.states.unknown")
                     color: root.modeColor
                 }
             }
@@ -65,7 +66,7 @@ Column {
                 anchors.right: modes.left
                 anchors.rightMargin: Theme.controlSpacing
                 glyph: Theme.refreshIcon
-                hint: "Recheck mode and refresh timecard"
+                hint: Translations.text("status.actions.refreshHint")
                 enabled: !root.statusService.timecardLoading
                 onClicked: root.statusService.reload()
             }
@@ -82,7 +83,7 @@ Column {
                             && root.statusService.status === modelData
                         objectName: "setStatusMode-" + modelData
                         glyph: modelData === "work" ? Theme.statusWorkingIcon : Theme.statusPersonalIcon
-                        hint: "Set " + (modelData === "work" ? "Work" : "Personal") + " (manual)"
+                        hint: Translations.text("status.actions.setMode",[Translations.text("status.modes."+modelData)])
                         foreground: selected ? Theme.accent : Theme.text
                         fillColor: selected ? Theme.selectionSelectedBackground : Theme.alternateBackground
                         enabled: !root.statusService.changingStatus
@@ -95,7 +96,7 @@ Column {
                 objectName: "resetStatusMode"
                 anchors.right: parent.right
                 glyph: Theme.cancelIcon
-                hint: "Reset to automatic detection"
+                hint: Translations.text("status.actions.automaticHint")
                 enabled: root.statusService.source === "manual" && !root.statusService.changingStatus
                 onClicked: root.statusService.clear()
             }
@@ -106,7 +107,7 @@ Column {
             objectName: "statusTimecardTabs"
             width: parent.width
             tabPadding: Theme.controlFieldPadding
-            labels: ["Today", "This week", "Last week", "This month", "Last month", "Manage"]
+            labels: [Translations.text("calendar.relative.today"), Translations.text("status.tabs.thisWeek"), Translations.text("status.tabs.lastWeek"), Translations.text("status.tabs.thisMonth"), Translations.text("status.tabs.lastMonth"), Translations.text("common.tabs.manage")]
             onCurrentIndexChanged: {
                 root.expandedDay = ""
                 root.statusService.showPeriod(currentIndex)
@@ -116,7 +117,7 @@ Column {
         UI.ColumnText {
             width: parent.width
             visible: !root.managing
-            text: root.ranged ? root.period.range : Qt.formatDate(new Date(root.statusService.timecardDate + "T12:00:00"), "dddd yyyy-MM-dd")
+            text: root.ranged ? root.period.range : new Date(root.statusService.timecardDate + "T12:00:00").toLocaleDateString(Translations.locale, "dddd yyyy-MM-dd")
             color: Theme.inactive
             horizontalAlignment: Text.AlignHCenter
         }
@@ -132,7 +133,7 @@ Column {
                     spacing: 2
                     UI.ColumnText {
                         width: parent.width
-                        text: parent.modelData === "work" ? "Work" : "Personal"
+                        text: Translations.text(parent.modelData === "work" ? "status.modes.work" : "status.modes.personal")
                         color: parent.modelData === "work" ? Theme.accent : Theme.active
                         horizontalAlignment: Text.AlignHCenter
                     }
@@ -151,7 +152,7 @@ Column {
             objectName: "statusTimecardFeedback"
             width: parent.width
             visible: text.length > 0
-            text: root.statusService.timecardError || (root.statusService.timecardLoading && !root.selectedReport ? "Loading timecard…" : "")
+            text: root.statusService.timecardError || (root.statusService.timecardLoading && !root.selectedReport ? Translations.text("status.report.loading") : "")
             color: root.statusService.timecardError ? Theme.warning : Theme.inactive
             textFormat: Text.PlainText
             wrapMode: Text.Wrap
@@ -181,7 +182,7 @@ Column {
             UI.ColumnText {
                 width: parent.width
                 visible: root.period.days.length === 0 && !root.statusService.timecardLoading && !root.statusService.timecardError
-                text: "No activity recorded."
+                text: Translations.text("status.report.empty")
                 color: Theme.inactive
                 horizontalAlignment: Text.AlignHCenter
             }
@@ -203,7 +204,7 @@ Column {
                             anchors.verticalCenter: parent.verticalCenter
                             width: Math.min(implicitWidth, Math.max(0, dayTotals.x - Theme.controlSpacing))
                             elide: Text.ElideRight
-                            text: Qt.formatDate(new Date(day.modelData.date + "T12:00:00"), root.weekly ? "dddd" : root.ranged ? "yyyy-MM-dd" : "dddd yyyy-MM-dd")
+                            text: new Date(day.modelData.date + "T12:00:00").toLocaleDateString(Translations.locale, root.weekly ? "dddd" : root.ranged ? "yyyy-MM-dd" : "dddd yyyy-MM-dd")
                             HoverHandler {
                                 id: dateHover
                                 cursorShape: day.modelData.blocks.length ? Qt.PointingHandCursor : Qt.ArrowCursor
@@ -221,7 +222,7 @@ Column {
                             anchors.verticalCenter: parent.verticalCenter
                             text: Timecard.duration(day.modelData.work) + " / " + Timecard.duration(day.modelData.personal)
                             color: Theme.inactive
-                            UI.HoverTooltip { text: "Work / Personal" }
+                            UI.HoverTooltip { text: Translations.text("status.report.legend") }
                         }
                         UI.IconText {
                             id: expand
@@ -285,7 +286,7 @@ Column {
             anchors.left: parent.left
             anchors.verticalCenter: parent.verticalCenter
             width: parent.width * 0.4
-            text: session.block.start.slice(0, 5) + "–" + (session.block.ongoing ? "now" : session.block.end.slice(0, 5))
+            text: session.block.start.slice(0, 5) + "–" + (session.block.ongoing ? Translations.text("common.states.now") : session.block.end.slice(0, 5))
             color: Theme.inactive
             UI.HoverTooltip { text: session.block.start + "–" + session.block.end }
         }
@@ -293,7 +294,7 @@ Column {
             anchors.left: times.right
             anchors.right: duration.left
             anchors.verticalCenter: parent.verticalCenter
-            text: session.block.category === "work" ? "Work" : "Personal"
+            text: Translations.text(session.block.category === "work" ? "status.modes.work" : "status.modes.personal")
             color: session.block.category === "work" ? Theme.accent : Theme.active
         }
         UI.ColumnText {

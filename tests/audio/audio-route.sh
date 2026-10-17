@@ -48,21 +48,21 @@ cat > "$test_dir/source-outputs.json" <<'JSON'
 JSON
 helper="$project_root/src/services/audio/audio-route.sh"
 result=$(bash "$helper" output 'speaker (desk) $literal')
-[[ $result == 'Switched 2 apps.'* ]]
+[[ $(jq -r '.key' <<< "$result") == audio.route.status.apps && $(jq -r '.count' <<< "$result") == 2 ]]
 mapfile -t moves < <(rg '^move-' "$test_dir/calls")
 [[ ${#moves[@]} == 2 && ${moves[0]} == $'move-sink-input\t21\tspeaker (desk) $literal\t' && ${moves[1]} == $'move-sink-input\t22\tspeaker (desk) $literal\t' ]]
 ! rg -q 'set-default' "$test_dir/calls"
 
 : > "$test_dir/calls"
 result=$(bash "$helper" output headset 101)
-[[ $result == 'Switched this app.'* ]]
+[[ $(jq -r '.key' <<< "$result") == audio.route.status.app ]]
 mapfile -t moves < <(rg '^move-' "$test_dir/calls")
 [[ ${#moves[@]} == 1 && ${moves[0]} == $'move-sink-input\t21\theadset\t' ]]
 ! rg -q 'set-default' "$test_dir/calls"
 : > "$test_dir/calls"
 result=$(bash "$helper" input mic 201)
 mapfile -t moves < <(rg '^move-' "$test_dir/calls")
-[[ $result == 'Switched this app.'* && ${#moves[@]} == 1 && ${moves[0]} == $'move-source-output\t31\tmic\t' ]]
+[[ $(jq -r '.key' <<< "$result") == audio.route.status.app && ${#moves[@]} == 1 && ${moves[0]} == $'move-source-output\t31\tmic\t' ]]
 
 cp "$test_dir/sink-inputs.json" "$test_dir/original-streams.json"
 jq '. + [{index:26,properties:{"application.name":"Browser","object.serial":"106"}}]' \
@@ -70,7 +70,7 @@ jq '. + [{index:26,properties:{"application.name":"Browser","object.serial":"106
 : > "$test_dir/calls"
 result=$(bash "$helper" output headset 101 106)
 mapfile -t moves < <(rg '^move-' "$test_dir/calls")
-[[ $result == 'Switched this app.'* && ${#moves[@]} == 2 && ${moves[0]} == $'move-sink-input\t21\theadset\t' && ${moves[1]} == $'move-sink-input\t26\theadset\t' ]]
+[[ $(jq -r '.key' <<< "$result") == audio.route.status.app && ${#moves[@]} == 2 && ${moves[0]} == $'move-sink-input\t21\theadset\t' && ${moves[1]} == $'move-sink-input\t26\theadset\t' ]]
 cp "$test_dir/original-streams.json" "$test_dir/sink-inputs.json"
 
 for serial in 999 103 104 105; do
@@ -78,12 +78,12 @@ for serial in 999 103 104 105; do
     if bash "$helper" output headset "$serial" > "$test_dir/out" 2> "$test_dir/error"; then
         printf 'FAIL: moved missing app or internal stream\n' >&2; exit 1
     fi
-    [[ $(<"$test_dir/error") == 'That app is no longer using audio.' ]]
+    [[ $(jq -r .key "$test_dir/error") == audio.route.errors.appStopped ]]
     ! rg -q '^move-' "$test_dir/calls"
 done
 : > "$test_dir/calls"
 result=$(bash "$helper" input mic)
-[[ $result == 'Switched 1 app.'* ]]
+[[ $(jq -r '.key' <<< "$result") == audio.route.status.apps && $(jq -r '.count' <<< "$result") == 1 ]]
 mapfile -t moves < <(rg '^move-' "$test_dir/calls")
 [[ ${#moves[@]} == 1 && ${moves[0]} == $'move-source-output\t31\tmic\t' ]]
 ! rg -q 'set-default' "$test_dir/calls"
@@ -93,15 +93,15 @@ for arguments in 'input speaker.monitor' 'output missing'; do
     if bash "$helper" "$direction" "$device" > "$test_dir/out" 2> "$test_dir/error"; then
         printf 'FAIL: accepted unavailable or monitor device\n' >&2; exit 1
     fi
-    [[ $(<"$test_dir/error") == 'That audio device is no longer available.' ]]
+    [[ $(jq -r .key "$test_dir/error") == audio.route.errors.deviceUnavailable ]]
 done
 
 if AUDIO_TEST_FAIL_INDEX=21 bash "$helper" output headset > "$test_dir/out" 2> "$test_dir/error"; then
     printf 'FAIL: did not report routing failure\n' >&2; exit 1
 fi
-[[ $(<"$test_dir/error") == 'Could not switch an app.'* ]]
+[[ $(jq -r .key "$test_dir/error") == audio.route.errors.switchApp ]]
 result=$(AUDIO_TEST_FAIL_INDEX=21 AUDIO_TEST_DISAPPEAR=1 bash "$helper" output headset)
-[[ $result == 'Switched 1 app.'* ]]
+[[ $(jq -r '.key' <<< "$result") == audio.route.status.apps && $(jq -r '.count' <<< "$result") == 1 ]]
 result=$(bash "$helper" output headset)
-[[ $result == 'No compatible apps to switch.'* ]]
+[[ $(jq -r .key <<< "$result") == audio.route.status.empty ]]
 printf 'PASS: audio routing, individual apps, multiple streams, separate defaults, monitor filtering, disappearing apps, and errors\n'

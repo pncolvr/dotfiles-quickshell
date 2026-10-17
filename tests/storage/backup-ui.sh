@@ -12,7 +12,7 @@ set -euo pipefail
 mkdir -p "$BACKUP_UI_DIRECTORY/locations/"{source,project-missing,directory-missing}
 printf '{}' > "$BACKUP_UI_DIRECTORY/locations/project-present/test.code-workspace"
 SH
-tar -C "$repo" --exclude='*.env' --exclude='*.json' -cf - src | tar -C "$fixture" -xf -
+tar -C "$repo" --exclude='*.env' --exclude='src/services/launcher/providers/*.json' -cf - src | tar -C "$fixture" -xf -
 mkdir -p "$fixture/tests/storage"
 cp "$repo/tests/storage/backup-smoke.qml" "$fixture/tests/storage/"
 sed -i 's/clipboardMonitorEnabled: true/clipboardMonitorEnabled: false/' "$fixture/src/config/Config.qml"

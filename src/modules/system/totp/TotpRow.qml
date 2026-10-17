@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 
+import "../../../i18n"
 import QtQuick
 import QtQuick.Layouts
 import "../../../theme"
@@ -57,7 +58,7 @@ Item {
             Layout.preferredWidth: Theme.totpCodeWidth
             glyph: TotpService.copiedId === root.entryId ? Theme.checkIcon : Theme.copyIcon
             label: root.code.replace(/(.{3})(?=.)/g, "$1 ")
-            hint: TotpService.copiedId === root.entryId ? "copied" : "copy code"
+            hint: TotpService.copiedId === root.entryId ? "copied" : Translations.text("totp.actions.copyHint")
             foreground: TotpService.copiedId === root.entryId ? Theme.active : Theme.text
             enabled: !TotpService.busy
             onClicked: TotpService.copy(root.entryId)
@@ -87,14 +88,14 @@ Item {
 
         UI.ActionButton {
             glyph: Theme.editIcon
-            hint: "edit token"
+            hint: Translations.text("totp.actions.editHint")
             enabled: !TotpService.busy
             onClicked: root.editRequested(root.entryId)
         }
 
         UI.ActionButton {
             glyph: Theme.deleteIcon
-            hint: "delete token"
+            hint: Translations.text("totp.actions.deleteHint")
             fillColor: Theme.totpDeleteBackground
             enabled: !TotpService.busy
             onClicked: TotpService.remove(root.entryId)

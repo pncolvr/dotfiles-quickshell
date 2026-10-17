@@ -17,7 +17,7 @@ for token in 01234567 234BC; do
 done
 printf 'SYNTHETIC_SEED\n' > "$test_dir/token"
 call "{\"action\":\"totp\",\"id\":\"$item_id\"}"
-jq -e '.ok==false and .error=="Invalid TOTP token response."' "$test_dir/reply" >/dev/null
+jq -e '.ok==false and .error=="vault.errors.totpResponse"' "$test_dir/reply" >/dev/null
 rm "$test_dir/token"
 touch "$test_dir/protect-on-code"
 call "{\"action\":\"totp\",\"id\":\"$item_id\"}"
@@ -33,13 +33,13 @@ cmp "$test_dir/expected" "$test_dir/write-input"
 jq -se --arg id "$item_id" 'any(.[]; . == ["edit",$id]) and (any(.[]; any(.[]; contains("new password") or contains("new notes")))|not)' "$test_dir/calls" >/dev/null
 rm "$test_dir/write-input"
 call "$(printf '%s' "$request" | jq -c '.notes="#cannot preserve"')"
-jq -e '.ok==false and (.error|contains("notes are read-only"))' "$test_dir/reply" >/dev/null
+jq -e '.ok==false and .error=="vault.worker.readOnlyNotes"' "$test_dir/reply" >/dev/null
 [[ ! -f $test_dir/write-input ]]
 call "$(printf '%s' "$request" | jq -c '.baseline="stale"')"
-jq -e '.ok==false and (.error|contains("changed"))' "$test_dir/reply" >/dev/null
+jq -e '.ok==false and .error=="vault.worker.changedEntry"' "$test_dir/reply" >/dev/null
 [[ ! -f $test_dir/write-input ]]
 call '{"action":"add","name":"--title","username":"--user","password":"new password","notes":"new notes","folder":"New folder","uris":[]}'
-jq -e '.ok==false and (.error|contains("notes are read-only"))' "$test_dir/reply" >/dev/null
+jq -e '.ok==false and .error=="vault.worker.readOnlyNotes"' "$test_dir/reply" >/dev/null
 [[ ! -f $test_dir/write-input ]]
 call '{"action":"add","name":"--title","username":"--user","password":"new password","notes":"","folder":"New folder","uris":["https://example.test","https://other.test"]}'
 jq -e '.ok and .saved' "$test_dir/reply" >/dev/null
@@ -61,13 +61,13 @@ jq '.data=null | .history=[]' "$test_dir/entry.json" > "$test_dir/entry-next"
 mv "$test_dir/entry-next" "$test_dir/entry.json"
 code_calls=$(jq -s '[.[]|select(.[0]=="code")]|length' "$test_dir/calls")
 call "{\"action\":\"totp\",\"id\":\"$item_id\"}"
-jq -e '.ok==false and .error=="This entry has no TOTP secret."' "$test_dir/reply" >/dev/null
+jq -e '.ok==false and .error=="vault.worker.noTotp"' "$test_dir/reply" >/dev/null
 [[ $(jq -s '[.[]|select(.[0]=="code")]|length' "$test_dir/calls") == "$code_calls" ]]
 call "{\"action\":\"detail\",\"id\":\"$item_id\"}"
 baseline=$(jq -r .baseline "$test_dir/reply")
 rm "$test_dir/write-input"
 call "$(jq -nc --arg id "$item_id" --arg baseline "$baseline" '{action:"edit",id:$id,baseline:$baseline,password:"",notes:"updated note"}')"
-jq -e '.ok==false and (.error|contains("Only login passwords can be edited"))' "$test_dir/reply" >/dev/null
+jq -e '.ok==false and .error=="vault.worker.loginOnly"' "$test_dir/reply" >/dev/null
 [[ ! -f $test_dir/write-input ]]
 call "$(jq -nc --arg id "$item_id" --arg baseline "$baseline" '{action:"remove",id:$id,baseline:$baseline}')"
 jq -e '.ok and .saved' "$test_dir/reply" >/dev/null

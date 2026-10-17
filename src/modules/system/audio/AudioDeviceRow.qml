@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 
+import "../../../i18n"
 import QtQuick
 import "../../../theme"
 import "../../../theme/ui" as UI
@@ -45,7 +46,7 @@ Rectangle {
                 glyph: root.input
                     ? (root.muted ? Theme.micMutedIcon : Theme.micIcon)
                     : (root.muted ? Theme.volumeMutedIcon : Theme.volumeIcons[Theme.volumeIcons.length - 1])
-                hint: (root.muted ? "Unmute " : "Mute ") + root.audioService.deviceName(root.node)
+                hint: Translations.text(root.muted ? "audio.actions.unmuteDevice" : "audio.actions.muteDevice",[root.audioService.deviceName(root.node)])
                 enabled: root.deviceReady
                 highlightedDevice: root.muted
                 onClicked: root.audioService.toggleNodeMute(root.node)
@@ -57,7 +58,7 @@ Rectangle {
                 volume: root.node?.audio?.volume ?? 0
                 muted: root.muted
                 enabled: root.deviceReady
-                Accessible.name: (root.input ? "Microphone gain: " : "Volume: ") + root.audioService.deviceName(root.node)
+                Accessible.name: Translations.text(root.input ? "audio.gain.device" : "audio.volume.device",[root.audioService.deviceName(root.node)])
                 onVolumeMoved: value => root.audioService.setNodeVolume(root.node, value)
             }
 
@@ -77,22 +78,22 @@ Rectangle {
             AudioButton {
                 objectName: "deviceUseNow"
                 glyph: Theme.playIcon
-                label: "Use now"
-                hint: root.input ? "Move current recording apps here" : "Move current playback apps here"
+                label: Translations.text("audio.device.useNow")
+                hint: Translations.text(root.input ? "audio.device.moveRecordingHint" : "audio.device.movePlaybackHint")
                 enabled: root.deviceReady && !root.audioService.routingBusy
                 onClicked: root.audioService.useNow(root.node, root.input)
             }
             AudioButton {
                 objectName: "deviceDefault"
                 glyph: Theme.audioDefaultIcon
-                label: root.isDefault ? "Default" : "Set default"
-                hint: root.isDefault ? "System default" : (root.input ? "Set as the system default microphone" : "Set as the system default output")
+                label: Translations.text(root.isDefault ? "common.states.default" : "audio.device.setDefault")
+                hint: root.isDefault ? Translations.text("audio.device.systemDefault") : (Translations.text(root.input ? "audio.device.defaultMicrophoneHint" : "audio.device.defaultOutputHint"))
                 highlightedDevice: root.isDefault
                 enabled: root.deviceReady && !root.isDefault
                 onClicked: root.audioService.setDefault(root.node, root.input)
             }
             UI.Text {
-                text: [root.audioService.deviceInUse(root.node, root.input) ? "In use" : "", root.muted ? "Muted" : ""].filter(Boolean).join(" · ")
+                text: [root.audioService.deviceInUse(root.node, root.input) ? Translations.text("audio.device.inUse") : "", root.muted ? Translations.text("audio.states.muted") : ""].filter(Boolean).join(" · ")
                 color: Theme.inactive
             }
         }

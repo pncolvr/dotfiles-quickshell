@@ -1,4 +1,5 @@
 pragma Singleton
+import "../../i18n"
 import QtQml
 import Quickshell
 import Quickshell.Io
@@ -38,7 +39,7 @@ Singleton {
         const previous = PickerService.currentItem?.id
         PickerService.items = availableDirectories.map(entry => ({id:entry.path,title:entry.name,subtitle:entry.path,search:entry.name + " " + entry.path,result:entry.path}))
         PickerService.currentIndex = Math.max(0,PickerService.filteredItems.findIndex(entry => entry.id === previous))
-        PickerService.acceptLabel = "Open"
+        PickerService.acceptLabel = Translations.text("common.actions.open")
         PickerService.error = error
     }
     function setManaging(value) {
@@ -58,9 +59,9 @@ Singleton {
         path = path.trim()
         if (/^file:\/\/(?:localhost)?\//.test(path)) {
             try { path = decodeURIComponent(path.replace(/^file:\/\/(?:localhost)?/,"")) }
-            catch (error) { root.error = "Invalid folder URL."; return }
+            catch (error) { root.error = Translations.text("directories.errors.invalidUrl"); return }
         }
-        if (!path) { error = "Choose a folder or enter a file-manager location."; return }
+        if (!path) { error = Translations.text("directories.errors.required"); return }
         error = ""
         resolve.openOnly = false
         resolve.previousPath = draft?.path ?? ""
@@ -110,14 +111,14 @@ Singleton {
         // qmllint disable signal-handler-parameters
         onExited: (code, status) => {
             try {
-                if (code !== 0 || status !== 0) throw new Error("check failed")
+                if (code !== 0 || status !== 0) throw new Error(Translations.text("files.errors.check"))
                 const rows = JSON.parse(pathOutput.text)
                 const states = {}
                 for (const row of rows) states[row.path] = row
                 root.pathStates = states
             } catch (_) {
                 const states = {}
-                for (const entry of root.directories) states[entry.path] = {status:"unchecked",message:"Location not checked"}
+                for (const entry of root.directories) states[entry.path] = {status:"unchecked",message:Translations.text("files.status.unchecked")}
                 root.pathStates = states
             }
             if (root.pathCheckPending && root.managing) Qt.callLater(root.checkPaths)
@@ -136,7 +137,7 @@ Singleton {
         // qmllint disable signal-handler-parameters
         onExited: (exitCode, exitStatus) => {
             if (generation !== root.generation) return
-            if (exitCode !== 0 || exitStatus !== 0) { root.error = failures.text.trim() || "Could not resolve folder."; return }
+            if (exitCode !== 0 || exitStatus !== 0) { root.error = Translations.message(failures.text.trim() || "directories.errors.resolve"); return }
             try {
                 const entry = JSON.parse(output.text)
                 if (openOnly) { root.openDirectory(entry.path); return }
@@ -144,7 +145,7 @@ Singleton {
                     root.error = DirectoryRepository.error; return
                 }
                 root.draft = null; root.error = ""; root.saved()
-            } catch (error) { root.error = error.message ?? String(error) }
+            } catch (error) { root.error = Translations.message(error) ?? String(error) }
         }
         // qmllint enable signal-handler-parameters
     }

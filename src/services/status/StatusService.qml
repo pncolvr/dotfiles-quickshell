@@ -1,4 +1,5 @@
 pragma Singleton
+import "../../i18n"
 import QtQml
 import Quickshell
 import Quickshell.Io
@@ -33,17 +34,17 @@ Singleton {
     readonly property string pauseReason: {
         switch (true) {
         case !enabled:
-            return 'Work mode is disabled.';
+            return Translations.text("status.pause.disabled");
         case actionPending:
-            return 'Pausing desktop activity.';
+            return Translations.text("status.pause.pending");
         case !sessionState?.ready:
-            return 'Paused — waiting for desktop session state.';
+            return Translations.text("status.pause.waiting");
         case sessionState.sleeping:
-            return 'Paused while suspended.';
+            return Translations.text("status.pause.suspended");
         case sessionState.locked:
-            return 'Paused while the screen is locked.';
+            return Translations.text("status.pause.locked");
         case !sessionState.active:
-            return 'Paused while the desktop session is inactive.';
+            return Translations.text("status.pause.inactive");
         default:
             return '';
         }
@@ -80,7 +81,7 @@ Singleton {
         return !enabled || showAll || category !== 'work' || status === workStatus;
     }
     function filterHint(shortcut, showAll = false) {
-        return enabled ? (showAll ? 'All entries' : 'By status') + ' · ' + shortcut + (showAll ? ': status' : ': all') + ' · ' : '';
+        return enabled ? Translations.text(showAll ? "status.shortcuts.filterAll" : "status.shortcuts.filterMode",[shortcut]) : '';
     }
     function initialize() {
         if (!ready || initialized)
@@ -108,10 +109,10 @@ Singleton {
         let message;
         switch (announcedMode) {
         case 'work':
-            message = 'Work mode';
+            message = Translations.text("status.alerts.work");
             break;
         case 'personal':
-            message = 'Personal mode';
+            message = Translations.text("status.alerts.personal");
             break;
         default:
             return;
@@ -202,9 +203,9 @@ Singleton {
         try {
             const validated = Tracking.rules(value);
             if (!PreferencesRepository.setValue('status.rules', validated))
-                throw Error('Could not save detection rules.');
+                throw Error(Translations.text("status.errors.saveRules"));
         } catch (exception) {
-            rulesError = exception.message;
+            rulesError = Translations.message(exception);
             return false;
         }
         rulesError = '';
@@ -322,9 +323,9 @@ Singleton {
             try {
                 value = JSON.parse(detectionOutput.text);
                 if (code || status || !Array.isArray(value.matches) || !Array.isArray(value.errors) || !value.matches.every(match => typeof match.name === 'string' && Array.isArray(match.methods) && Array.isArray(match.paths) && match.paths.every(path => typeof path === 'string')))
-                    throw Error('Invalid detection');
+                    throw Error(Translations.text("status.errors.invalidDetection"));
             } catch (_) {
-                root.detectionError = 'Could not read automatic detection.';
+                root.detectionError = Translations.text("status.errors.readDetection");
                 root.detectionStale = true;
                 return;
             }

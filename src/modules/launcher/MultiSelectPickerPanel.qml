@@ -1,15 +1,14 @@
 pragma ComponentBehavior: Bound
 
+import "../../i18n"
 import QtQuick
 import "../../theme"
 import "../../theme/ui" as UI
 
 PickerPanelBase {
     id: root
-    footerHint: picker.selectedIds.length + " selected · Arrows to move · Shift+Space toggle + next\n"
-        + "Ctrl+A select visible / clear all · "
-        + (picker.selectedIds.length ? "Enter to " + picker.acceptLabel.toLowerCase() : "Enter uses highlighted row")
-
+    footerHint: Translations.text("picker.shortcuts.multiple", [picker.selectedIds.length,
+        picker.selectedIds.length ? Translations.text("picker.shortcuts.accept",[picker.acceptLabel.toLowerCase()]) : Translations.text("picker.shortcuts.highlighted")])
     searchKeyHandler: root.handleSelectionKey
     Keys.onPressed: event => { event.accepted = root.handleSelectionKey(event,true) }
 
@@ -21,10 +20,10 @@ PickerPanelBase {
                 spacing: Theme.controlSpacing
                 UI.ActionButton {
                     objectName: "pickerSelectVisible"
-                    label: root.picker.selectionToggleClears ? "Deselect all" : "Select visible"
+                    label: Translations.text(root.picker.selectionToggleClears ? "picker.actions.clearSelection" : "picker.actions.selectVisible")
                     implicitWidth: 125; width: implicitWidth
                     enabled: root.picker.filteredItems.length > 0 || root.picker.selectedIds.length > 0
-                    hint: "Ctrl+A: select visible / clear all · Ctrl+Shift+A: clear all"
+                    hint: Translations.text("picker.actions.selectVisibleHint")
                     onClicked: root.picker.toggleVisibleSelection()
                 }
                 UI.ActionButton {

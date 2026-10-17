@@ -1,4 +1,5 @@
 pragma ComponentBehavior: Bound
+import "../../../i18n"
 import QtQuick
 import QtQuick.Controls as QC
 import Quickshell
@@ -66,7 +67,7 @@ Column {
                 count: group.count || 1, isChild: false, expandable, expanded})
             if (expanded) for (const member of orderedProcesses(group.members, key, member => member.pid + ":" + member.name)) {
                 rows.push({key: key + ":" + member.pid + ":" + member.name, pid: member.pid, name: member.name,
-                    label: member.label || (member.pid === group.pid ? "Main process" : member.name),
+                    label: member.label || (member.pid === group.pid ? Translations.text("stats.processes.main") : member.name),
                     value: member.value, down: member.down || 0, up: member.up || 0, count: 1, isChild: true, expandable: false, expanded: false})
             }
         }
@@ -103,7 +104,7 @@ Column {
             id: tabs
             objectName: "statsTabs"
             width: parent.width
-            labels: ["Overview", "CPU", "Memory", "Network"]
+            labels: [Translations.text("stats.tabs.overview"), "CPU", Translations.text("stats.tabs.memory"), Translations.text("stats.tabs.network")]
         }
         Flickable {
             width: parent.width
@@ -127,8 +128,8 @@ Column {
         UI.ColumnText {
             width: parent.width
             visible: root.resource.length > 0
-            text: root.statsService.processError || (!processModel.count ? root.statsService.processesLoading ? "Loading processes…"
-                : search.query ? "No matching processes." : "No process activity recorded." : "Applications · " + root.applicationCount)
+            text: root.statsService.processError || (!processModel.count ? root.statsService.processesLoading ? Translations.text("stats.processes.loading")
+                : Translations.text(search.query ? "stats.processes.emptyFiltered" : "stats.processes.empty") : Translations.text("stats.processes.count",[root.applicationCount]))
             color: root.statsService.processError ? Theme.warning : Theme.inactive
             wrapMode: Text.Wrap
         }
@@ -137,7 +138,7 @@ Column {
             objectName: "statsProcessSearch"
             width: parent.width
             visible: root.resource.length > 0
-            placeholderText: "Filter apps or processes by name"
+            placeholderText: Translations.text("stats.processes.searchPlaceholder")
             onQueryChanged: root.updateProcesses(false)
         }
         Item {
@@ -147,7 +148,7 @@ Column {
             height: Theme.controlHeight * 0.6
             UI.ColumnText {
                 x: Theme.fontSize + Theme.controlSpacing
-                text: "Application"
+                text: Translations.text("stats.processes.application")
                 color: Theme.inactive
                 font.pixelSize: Theme.fontSize - 1
                 font.styleName: ""
@@ -159,7 +160,7 @@ Column {
                 anchors.rightMargin: Theme.controlSpacing
                 width: Theme.statsPidWidth
                 horizontalAlignment: Text.AlignHCenter
-                text: "PID"
+                text: Translations.text("stats.processes.pidLabel")
                 color: Theme.inactive
                 font.pixelSize: Theme.fontSize - 1
                 font.styleName: ""
@@ -176,7 +177,7 @@ Column {
                         required property string modelData
                         width: root.resource === "network" ? Theme.statsTrafficWidth : Theme.statsValueWidth
                         horizontalAlignment: Text.AlignRight
-                        text: modelData
+                        text: ({Download:Translations.text("stats.network.download"),Upload:Translations.text("stats.network.upload"),Memory:Translations.text("stats.tabs.memory")})[modelData] ?? modelData
                         color: Theme.inactive
                         font.pixelSize: Theme.fontSize - 1
                         font.styleName: ""

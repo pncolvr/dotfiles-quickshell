@@ -1,4 +1,5 @@
 pragma ComponentBehavior: Bound
+import "../../i18n"
 import QtQuick
 import "../../theme"
 import "../../theme/ui" as UI
@@ -73,7 +74,7 @@ Column {
                         implicitWidth: Theme.controlHeight
                         implicitHeight: Theme.controlHeight - 4
                         glyph: notesField.revealed ? Theme.eyeSlashIcon : Theme.eyeIcon
-                        hint: notesField.revealed ? "Hide notes" : "Show notes"
+                        hint: Translations.text(notesField.revealed ? "vault.actions.hideNotes" : "vault.actions.showNotes")
                         checkable: true
                         checked: notesField.revealed
                         onClicked: { notesField.revealed = !notesField.revealed; notesField.forceActiveFocus() }
@@ -84,14 +85,14 @@ Column {
                 UI.ActionButton {
                     objectName: valueRow.modelData.totp ? "vaultCopyTotpSecret" : ""
                     glyph: Theme.copyIcon
-                    hint: "Copy " + valueRow.modelData.label
+                    hint: Translations.text("common.actions.copyField",[valueRow.modelData.label])
                     onClicked: root.copyRequested(valueRow.modelData.value)
                 }
                 UI.ActionButton {
                     objectName: valueRow.modelData.totp ? "vaultCopyTotp" : ""
                     visible: valueRow.modelData.totp === true
                     glyph: Theme.totpIcon
-                    hint: "Copy current TOTP token"
+                    hint: Translations.text("vault.actions.copyTotpHint")
                     enabled: !RbwService.busy
                     onClicked: RbwService.copyTotp()
                 }

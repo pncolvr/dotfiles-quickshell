@@ -1,4 +1,5 @@
 pragma ComponentBehavior: Bound
+import "../../../i18n"
 import Quickshell.Io
 import "../../../theme"
 import "../../../config"
@@ -28,7 +29,7 @@ Process {
         worker.frame = Array(Theme.mediaVisualizerPoints).fill(0);
         worker.waveform = Array(Theme.mediaVisualizerPoints).fill(0);
         if (worker.capturing && (exitCode !== 0 || exitStatus !== 0))
-            worker.error = failure.text.trim() || "Could not analyse the media stream.";
+            worker.error = failure.text.trim() || Translations.text("media.errors.analysis");
     }
     // qmllint enable signal-handler-parameters
 }

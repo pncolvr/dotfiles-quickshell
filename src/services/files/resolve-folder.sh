@@ -24,8 +24,8 @@ if [[ ${1:-} == --check ]]; then
     done < <(printf '%s' "$records" | jq -jr '.[] | .path, "\u0000", .kind, "\u0000"') |
         jq -Rs --slurpfile records <(printf '%s' "$records") '
             split("\u0000")[:-1] as $states | $records[0] | to_entries | map(.value + {status:$states[.key]} |
-                .message = (if .status == "available" then "" elif .status == "unchecked" then "Location not checked"
-                    elif .kind == "file" then "Workspace file missing or unavailable" else "Folder missing or unavailable" end))'
+                .message = (if .status == "available" then "" elif .status == "unchecked" then "files.path.unchecked"
+                    elif .kind == "file" then "files.path.fileUnavailable" else "files.path.folderUnavailable" end))'
     exit 0
 fi
 # Typed opening uses environment substitutions as data, never shell evaluation.
@@ -42,13 +42,13 @@ if $local_only; then
     while [[ $path =~ $variable_pattern ]]; do
         token=${BASH_REMATCH[0]}
         variable=${BASH_REMATCH[2]:-${BASH_REMATCH[3]}}
-        [[ -v $variable ]] || { printf 'Environment variable is not set: %s.\n' "$variable" >&2; exit 1; }
+        [[ -v $variable ]] || { jq -nc --arg variable "$variable" '{key:"files.errors.unsetVariable",args:[$variable]}' >&2; exit 1; }
         expanded+="${path%%"$token"*}${!variable}"
         path=${path#*"$token"}
     done
     path="$expanded$path"
     if [[ -z $path || $path =~ ^[a-zA-Z][a-zA-Z0-9+.-]*:// ]]; then
-        printf 'Choose an existing local folder.\n' >&2; exit 1
+        printf 'files.errors.localFolder\n' >&2; exit 1
     fi
     [[ $path == /* ]] || path="$HOME/$path"
 fi
@@ -59,8 +59,8 @@ else
     [[ $path == '~' ]] && path=$HOME
     [[ $path == '~/'* ]] && path="$HOME/${path:2}"
     IFS= read -r -d '' path < <(realpath -ez -- "$path" 2>/dev/null) \
-        || { printf 'Choose an existing folder.\n' >&2; exit 1; }
-    [[ -d $path ]] || { printf 'Choose an existing folder.\n' >&2; exit 1; }
+        || { printf 'files.errors.existingFolder\n' >&2; exit 1; }
+    [[ -d $path ]] || { printf 'files.errors.existingFolder\n' >&2; exit 1; }
     name=$(basename -- "$path")
 fi
 jq -cn --arg path "$path" --arg name "$name" '{path:$path,name:$name}'

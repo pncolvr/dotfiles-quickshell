@@ -66,7 +66,7 @@ printf '%s\n' "$output"
 if [[ ${1:-} == --native ]]; then
     native_wayland_display=${WAYLAND_DISPLAY:-wayland-0}
     [[ $native_wayland_display == /* ]] || native_wayland_display=${XDG_RUNTIME_DIR:?}/$native_wayland_display
-    tar -C "$project_root" --exclude='*.env' --exclude='*.json' -cf - src | tar -C "$test_dir" -xf -
+    tar -C "$project_root" --exclude='*.env' --exclude='src/services/launcher/providers/*.json' -cf - src | tar -C "$test_dir" -xf -
     cat > "$test_dir/shell.qml" <<'QML'
 pragma ComponentBehavior: Bound
 import QtQuick

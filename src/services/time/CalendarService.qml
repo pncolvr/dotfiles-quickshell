@@ -1,5 +1,6 @@
 pragma Singleton
 
+import "../../i18n"
 import QtQml
 import Quickshell
 import "../"
@@ -19,6 +20,11 @@ Singleton {
     Connections {
         target: Config
         function onCalendarMunicipalHolidaysChanged() { root._holidaysByYear = ({}) }
+    }
+
+    Connections {
+        target: Translations
+        function onLanguageChanged() { root._holidaysByYear = ({}) }
     }
 
     function transitionsFor(year) {
@@ -55,8 +61,9 @@ Singleton {
 
     function transitionText(event, tomorrow = false) {
         const forward = direction(event) === CalendarService.Direction.Forward;
-        return "Clocks go " + (forward ? "forward" : "back") + (tomorrow ? " tomorrow" : "")
-            + ": " + event.old.slice(11).replace(/:00$/, "") + " → " + event.new.slice(11).replace(/:00$/, "");
+        const key = forward ? "calendar.change.forward" : "calendar.change.back";
+        return Translations.text(key + (tomorrow ? "Tomorrow" : ""),
+            [event.old.slice(11).replace(/:00$/, ""), event.new.slice(11).replace(/:00$/, "")]);
     }
 
     function tooltipText(text) {
@@ -78,7 +85,7 @@ Singleton {
         const transition = transitionFor(date);
         if (eve) parts.push(transitionText(eve, _key(date) === currentDateKey));
         if (transition) parts.push(transitionText(transition));
-        return tooltipText(parts.join("\n") || "Create event");
+        return tooltipText(parts.join("\n") || Translations.text("calendar.actions.createEvent"));
     }
 
     function dayStyle(date, valid, today) {
@@ -109,7 +116,8 @@ Singleton {
             Config.calendarClockChangeEventMinute) - event.before * 1000;
         const end = start + Config.calendarClockChangeEventDurationMinutes * 60000;
         const stamp = value => new Date(value).toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
-        const title = "Clocks go " + (direction(event) === CalendarService.Direction.Forward ? "forward" : "back") + " tonight";
+        const title = Translations.text(direction(event) === CalendarService.Direction.Forward
+            ? "calendar.change.forwardTonight" : "calendar.change.backTonight");
         return Config.calendarEventUrl + "&text=" + encodeURIComponent(title)
             + "&dates=" + encodeURIComponent(stamp(start) + "/" + stamp(end))
             + "&ctz=Europe%2FLisbon"
@@ -119,18 +127,15 @@ Singleton {
     function formatDate(date, referenceTime) {
         if (!date)
             return "";
-        const time = " 'at' hh:mm";
-        let format = "yyyy-MM-dd";
+
         const d = new Date(date);
         const d2 = new Date(referenceTime ?? Date.now());
         if (!Number.isFinite(d.getTime()) || !Number.isFinite(d2.getTime()))
             return "";
-        if (isSameDay(d, d2)) {
-            format = "'today'";
-        } else if (isSameDay(d, addDays(d2, 1))) {
-            format = "'tomorrow'";
-        }
-        return Qt.formatDateTime(d, format + time);
+        const time = Qt.formatTime(d, "hh:mm");
+        if (isSameDay(d, d2)) return Translations.text("calendar.relative.todayAt", [time]);
+        if (isSameDay(d, addDays(d2, 1))) return Translations.text("calendar.relative.tomorrowAt", [time]);
+        return Translations.text("calendar.relative.dateAt", [Qt.formatDate(d, "yyyy-MM-dd"), time]);
     }
 
     function addDays(value, days) {
@@ -183,20 +188,20 @@ Singleton {
         const corpusChristi = addDays(easter, 60);
 
         const entries = [
-            [new Date(year, 0, 1), "Ano Novo"],
-            [carnival, "Carnaval (facultativo)"],
-            [goodFriday, "Sexta-Feira Santa"],
-            [easter, "Páscoa"],
-            [new Date(year, 3, 25), "Dia da Liberdade"],
-            [new Date(year, 4, 1), "Dia do Trabalhador"],
-            [new Date(year, 5, 10), "Dia de Portugal"],
-            [corpusChristi, "Corpo de Deus"],
-            [new Date(year, 7, 15), "Assunção de Nossa Senhora"],
-            [new Date(year, 9, 5), "Implantação da República"],
-            [new Date(year, 10, 1), "Todos os Santos"],
-            [new Date(year, 11, 1), "Restauração da Independência"],
-            [new Date(year, 11, 8), "Imaculada Conceição"],
-            [new Date(year, 11, 25), "Natal"]
+            [new Date(year, 0, 1), Translations.text("calendar.holidays.newYear")],
+            [carnival, Translations.text("calendar.holidays.carnival")],
+            [goodFriday, Translations.text("calendar.holidays.goodFriday")],
+            [easter, Translations.text("calendar.holidays.easter")],
+            [new Date(year, 3, 25), Translations.text("calendar.holidays.freedom")],
+            [new Date(year, 4, 1), Translations.text("calendar.holidays.labour")],
+            [new Date(year, 5, 10), Translations.text("calendar.holidays.portugal")],
+            [corpusChristi, Translations.text("calendar.holidays.corpusChristi")],
+            [new Date(year, 7, 15), Translations.text("calendar.holidays.assumption")],
+            [new Date(year, 9, 5), Translations.text("calendar.holidays.republic")],
+            [new Date(year, 10, 1), Translations.text("calendar.holidays.allSaints")],
+            [new Date(year, 11, 1), Translations.text("calendar.holidays.independence")],
+            [new Date(year, 11, 8), Translations.text("calendar.holidays.immaculateConception")],
+            [new Date(year, 11, 25), Translations.text("calendar.holidays.christmas")]
         ];
 
         for (const holiday of Config.calendarMunicipalHolidays) {

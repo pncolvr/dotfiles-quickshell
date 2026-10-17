@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 
+import "../../../i18n"
 import QtQuick
 import "../../../theme"
 import "../../../theme/ui" as UI
@@ -8,7 +9,7 @@ import "../../../services"
 TimeEntryTab {
     id: root
     empty: TimersService.countdowns.length === 0
-    emptyMessage: "No countdowns"
+    emptyMessage: Translations.text("timers.countdowns.empty")
     creationComponent: Component {
         Column {
             id: creator
@@ -21,7 +22,7 @@ TimeEntryTab {
                 id: nameField
                 objectName: "countdownName"
                 width: parent.width
-                placeholderText: "Name (optional)"
+                placeholderText: Translations.text("timers.fields.nameOptional")
                 onAccepted: creator.addCountdown()
             }
             Row {
@@ -40,7 +41,7 @@ TimeEntryTab {
                     anchors.bottom: parent.bottom
                     glyph: Theme.addIcon
                     foreground: Theme.accent
-                    hint: "Add countdown"
+                    hint: Translations.text("timers.countdowns.add")
                     enabled: duration.acceptableInput && duration.totalSeconds > 0
                     onClicked: creator.addCountdown()
                 }

@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 
+import "../../i18n"
 import QtQuick
 import QtQuick.Controls as QC
 import "../../theme"
@@ -28,7 +29,7 @@ Column {
         checkable: !root.forceExpanded
         checked: root.showingUsers
         Accessible.name: root.title + " (" + root.users.length + "), "
-            + (root.forceExpanded ? "search results" : root.expanded ? "collapse" : "expand")
+            + (root.forceExpanded ? Translations.text("twitch.sections.searchResults") : Translations.text(root.expanded ? "common.actions.collapse" : "common.actions.expand"))
         onClicked: if (!root.forceExpanded) root.expanded = !root.expanded
 
         background: Rectangle {

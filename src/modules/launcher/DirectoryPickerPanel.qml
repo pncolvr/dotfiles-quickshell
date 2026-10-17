@@ -1,4 +1,5 @@
 pragma ComponentBehavior: Bound
+import "../../i18n"
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls as QC
@@ -57,7 +58,7 @@ ManagedPickerFrame {
         id: header
         objectName: "directoryTabs"
         width: parent.width
-        labels: ["Directories", "Manage"]
+        labels: [Translations.text("directories.title"), Translations.text("common.tabs.manage")]
         currentIndex: DirectoryService.managing ? 1 : 0
         onTabClicked: index => root.management(index === 1)
     }
@@ -69,9 +70,9 @@ ManagedPickerFrame {
         picker: root.picker
         backgroundVisible: root.backgroundVisible
         visible: !DirectoryService.managing
-        searchPlaceholder: "Search directories"
+        searchPlaceholder: Translations.text("directories.search.placeholder")
         footerHint: StatusService.filterHint(Config.directoryShowAllShortcut,DirectoryService.showAll) + Config.directoryManageShortcut
-            + ": manage · Enter: open · Esc: close"
+            + Translations.text("directories.shortcuts.primary")
     }
     QC.ScrollView {
         id: manage
@@ -100,7 +101,7 @@ ManagedPickerFrame {
                 id: manageSearch
                 objectName: "directoryManageSearch"
                 width: parent.width
-                placeholderText: "Filter directories"
+                placeholderText: Translations.text("directories.manage.searchPlaceholder")
                 visible: DirectoryService.directories.length > 0
                 retainPanelWhileEditing: false
                 Keys.onShortcutOverride: event => { if (root.handleAddKey(event,false)) event.accepted = true }
@@ -128,14 +129,14 @@ ManagedPickerFrame {
                             }
                             UI.ColumnText {
                                 visible: StatusService.enabled
-                                    text: entryRow.modelData.category === "work" ? "Work" : "Personal"
+                                    text: Translations.text(entryRow.modelData.category === "work" ? "status.modes.work" : "status.modes.personal")
                                 color: entryRow.modelData.category === "work" ? Theme.accent : Theme.active
                             }
                         }
                         UI.ColumnText {
                             objectName: "directoryPathWarning_" + entryRow.modelData.path
                             width: parent.width
-                            text: DirectoryService.pathStates[entryRow.modelData.path]?.message ?? ""
+                            text: Translations.text(DirectoryService.pathStates[entryRow.modelData.path]?.message ?? "")
                             visible: !!text
                             color: DirectoryService.pathStates[entryRow.modelData.path]?.status === "unavailable" ? Theme.warning : Theme.inactive
                             wrapMode: Text.Wrap
@@ -146,7 +147,7 @@ ManagedPickerFrame {
                         copyObjectName: "copyDirectoryPath_" + path
                         editObjectName: "editDirectory_" + path
                         removeObjectName: "removeDirectory_" + path
-                        editHint: "edit directory"
+                        editHint: Translations.text("directories.actions.editHint")
                         editEnabled: !DirectoryService.busy
                         removeEnabled: !DirectoryService.busy
                         onEditRequested: root.edit(entryRow.modelData)
@@ -158,7 +159,7 @@ ManagedPickerFrame {
                 }
             }
             UI.ColumnText {
-                text: DirectoryService.directories.length ? "No matching directories." : "No directories yet. Add a folder to get started."
+                text: Translations.text(DirectoryService.directories.length ? "directories.empty.filtered" : "directories.empty.initial")
                 visible: root.managedDirectories.length === 0
                 color: Theme.inactive
             }
@@ -185,7 +186,7 @@ ManagedPickerFrame {
                 browseObjectName: "browseDirectory"
                 nameObjectName: "directoryName"
                 categoryObjectName: "directoryCategory"
-                placeholderText: "Folder path or location (trash:///...)"
+                placeholderText: Translations.text("directories.path.placeholder")
                 enabled: !DirectoryService.busy
                 showName: true
                 category: root.category
@@ -197,7 +198,7 @@ ManagedPickerFrame {
                 submitObjectName: "saveDirectory"
                 cancelObjectName: "cancelDirectory"
                 submitGlyph: root.editing ? Theme.checkIcon : Theme.addIcon
-                submitHint: root.editing ? "save directory" : "add directory"
+                submitHint: Translations.text(root.editing ? "directories.actions.saveHint" : "directories.actions.addHint")
                 submitEnabled: !DirectoryService.busy && !!folderForm.text.trim()
                 onSubmitted: root.save()
                 onCancelled: root.cancel()
@@ -209,15 +210,15 @@ ManagedPickerFrame {
             anchors.rightMargin: Theme.projectManagePadding
             visible: !root.showForm
             glyph: Theme.addIcon
-            hint: "add directory (" + Config.directoryAddShortcut + ")"
+            hint: Translations.text("directories.actions.addShortcutHint",[Config.directoryAddShortcut])
             enabled: !DirectoryService.busy
             onClicked: root.beginAdd()
         }
         UI.ShortcutHints {
             objectName: "directoryManageHints"
             width: parent.width
-            hints: Config.directoryManageShortcut + ": directories"
-                + (!root.showForm ? " · " + Config.directoryAddShortcut + ": add folder" : "")
+            hints: Translations.text("directories.shortcuts.manage",[Config.directoryManageShortcut])
+                + (!root.showForm ? " · " + Translations.text("common.shortcuts.addFolder",[Config.directoryAddShortcut]) : "")
                 + " · Esc: " + (root.adding || root.editing ? "cancel" : "close")
         }
         Item { width: 1; height: Theme.projectManagePadding }

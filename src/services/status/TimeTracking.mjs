@@ -13,7 +13,7 @@ export function days(sessions,currentId=0) {
         while(start<session.end_ms) {
             const date=new Date(start),key=dateKey(date)
             const end=Math.min(session.end_ms,new Date(date.getFullYear(),date.getMonth(),date.getDate()+1).getTime())
-            if(!(end>start))throw Error('Invalid tracking boundary.')
+            if(!(end>start))throw Error("status.errors.trackingBoundary")
             const day=result[key]??{date:key,work:0,personal:0,blocks:[]}
             day[session.mode]+=(end-start)/1000
             day.blocks.push({start,end,category:session.mode,ongoing:session.id===currentId && end===session.end_ms})
@@ -30,6 +30,7 @@ function clock(at) {
     const date=new Date(at)
     return [date.getHours(),date.getMinutes(),date.getSeconds()].map(value=>String(value).padStart(2,'0')).join(':')
 }
+// Internal report grammar: Timecard.parse consumes these tokens independently of display language.
 function render(values) {
     if(!values.length)return 'No completed time blocks found.'
     return values.map(day=>day.date+'\n  work '+duration(day.work)+'\n  personal '+duration(day.personal)+'\n  blocks:\n'+
@@ -56,10 +57,10 @@ export function rules(value) {
     const processes = value.processes ?? []
     if (!Array.isArray(directories) || directories.some(path => typeof path !== 'string'
         || !path.trim().startsWith('/') || /[\0\r\n]/.test(path)))
-        throw Error('Enter one absolute work folder per line.')
+        throw Error("status.rules.errors.folders")
     if (!Array.isArray(processes) || processes.some(pattern => typeof pattern !== 'string'
         || !pattern.trim() || /[\0\r\n]/.test(pattern)))
-        throw Error('Enter one process pattern per line.')
+        throw Error("status.rules.errors.processes")
     const workDirectories = directories.map(path => path.trim().replace(/\/+$/, '') || '/')
     return {workDirectories: [...new Set(workDirectories)], processes: [...new Set(processes.map(pattern => pattern.trim()))]}
 }

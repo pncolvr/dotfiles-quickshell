@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 
+import "../../../i18n"
 import QtQuick as Q
 import "../../"
 import "../" as UI
@@ -11,9 +12,9 @@ Q.Row {
     property bool submitEnabled: true
     property bool cancelEnabled: true
     property string submitGlyph: Theme.checkIcon
-    property string submitHint: "Apply"
+    property string submitHint: Translations.text("common.actions.apply")
     property alias submitColor: submitButton.fillColor
-    property string cancelHint: "Cancel"
+    property string cancelHint: Translations.text("common.actions.cancel")
     property alias submitObjectName: submitButton.objectName
     property alias cancelObjectName: cancelButton.objectName
     signal submitted()

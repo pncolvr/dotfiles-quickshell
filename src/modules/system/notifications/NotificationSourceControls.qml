@@ -1,3 +1,4 @@
+import "../../../i18n"
 import QtQuick
 import "../../../theme"
 import "../../../services"
@@ -12,27 +13,24 @@ Flow {
     NotificationButton {
         id: muteButton
         objectName: "notificationMute"
-        label: root.emitter?.muted ? "Hide" : "Show"
-        hint: root.emitter?.muted ? "Popups are muted. Click to show future popups; DND still applies."
-            : "Popups are enabled. Click to mute future popups; history is unaffected."
+        label: Translations.text(root.emitter?.muted ? "common.actions.hide" : "common.actions.show")
+        hint: Translations.text(root.emitter?.muted ? "notifications.popups.mutedHint" : "notifications.popups.enabledHint")
         foreground: root.emitter?.muted ? Theme.accent : Theme.text
         onClicked: NotificationService.setEmitterPreference(root.emitterKey, "muted", !root.emitter?.muted)
     }
     NotificationButton {
         id: dndButton
         objectName: "notificationDndWhitelist"
-        label: root.emitter?.allowDuringDnd ? "DND allowed" : "DND blocked"
-        hint: root.emitter?.allowDuringDnd ? "This emitter can show popups during DND. Click to block it; mute still takes precedence."
-            : "This emitter is blocked during DND. Click to add it to the whitelist; history is unaffected."
+        label: Translations.text(root.emitter?.allowDuringDnd ? "notifications.dnd.allowed" : "notifications.dnd.blocked")
+        hint: Translations.text(root.emitter?.allowDuringDnd ? "notifications.dnd.allowedHint" : "notifications.dnd.blockedHint")
         foreground: root.emitter?.allowDuringDnd ? Theme.accent : Theme.text
         onClicked: NotificationService.setEmitterPreference(root.emitterKey, "allowDuringDnd", !root.emitter?.allowDuringDnd)
     }
     NotificationButton {
         id: historyButton
         objectName: "notificationHistoryExclude"
-        label: root.emitter?.excludeFromHistory ? "History off" : "History on"
-        hint: root.emitter?.excludeFromHistory ? "Future notifications are not saved. Click to resume saving; transient notifications remain excluded."
-            : "Future notifications are saved at every urgency. Click to stop saving; existing history is kept."
+        label: Translations.text(root.emitter?.excludeFromHistory ? "notifications.history.disabled" : "notifications.history.enabled")
+        hint: Translations.text(root.emitter?.excludeFromHistory ? "notifications.history.disabledHint" : "notifications.history.enabledHint")
         foreground: root.emitter?.excludeFromHistory ? Theme.accent : Theme.text
         onClicked: NotificationService.setEmitterPreference(root.emitterKey, "excludeFromHistory", !root.emitter?.excludeFromHistory)
     }

@@ -1,4 +1,5 @@
 pragma ComponentBehavior: Bound
+import "../../i18n"
 import QtQuick
 import "../../theme"
 import "../../theme/ui" as UI
@@ -29,10 +30,10 @@ Column {
             return Object.assign({},original,{name:name.text,url:url.text,browser,profile:browserProfile,windowMode,
                 enabled:entryEnabled,category:entryCategory,arguments:Arguments.split(extra.text),
                 before:Arguments.command(before.text),after:Arguments.command(after.text)})
-        } catch (error) { parseError=error.message; return null }
+        } catch (error) { parseError=Translations.message(error); return null }
     }
-    UI.LabeledField { onAccepted: root.accepted(); id: name; inputObjectName:'webappName'; width: parent.width; label:'Name' }
-    UI.LabeledField { onAccepted: root.accepted(); id: url; inputObjectName:'webappUrl'; width: parent.width; label:'URL'; placeholderText:'https://example.com' }
+    UI.LabeledField { onAccepted: root.accepted(); id: name; inputObjectName:'webappName'; width: parent.width; label:Translations.text("common.fields.name") }
+    UI.LabeledField { onAccepted: root.accepted(); id: url; inputObjectName:'webappUrl'; width: parent.width; label:Translations.text("common.fields.url"); placeholderText:'https://example.com' }
     BrowserLaunchFields { id:browserFields; width:parent.width }
     EntryCategorySelector {
         objectName:'webappCategorySelector'
@@ -44,25 +45,25 @@ Column {
     }
     UI.ActionButton {
         objectName:'webappEnabled'
-        label: root.entryEnabled ? 'Enabled' : 'Disabled'
+        label: Translations.text(root.entryEnabled ? "common.states.enabled" : "common.states.disabled")
         checkable:true; checked:root.entryEnabled
         foreground: root.entryEnabled ? Theme.accent : Theme.inactive
-        hint: 'Include this webapp in the picker'
+        hint: Translations.text("webapps.fields.enabledHint")
         onClicked: root.entryEnabled=!root.entryEnabled
     }
     UI.ActionButton {
         objectName:'webappAdvanced'
-        label:'Advanced'; glyph:Theme.chevronDownIcon
+        label:Translations.text("common.sections.advanced"); glyph:Theme.chevronDownIcon
         checkable:true; checked:root.advanced
         foreground: root.advanced ? Theme.accent : Theme.text
-        hint: 'Additional launch options'
+        hint: Translations.text("webapps.advanced.hint")
         onClicked: root.advanced=!root.advanced
     }
     Column {
         width: parent.width; spacing:Theme.controlSpacing; visible:root.advanced
-        UI.LabeledField { onAccepted: root.accepted(); id:extra; width:parent.width; label:'Browser arguments (literal, quoted arguments supported)' }
-        UI.LabeledField { onAccepted: root.accepted(); id:before; width:parent.width; label:'Before opening: executable and arguments (optional)' }
-        UI.LabeledField { onAccepted: root.accepted(); id:after; width:parent.width; label:'After opening: executable and arguments (optional)' }
+        UI.LabeledField { onAccepted: root.accepted(); id:extra; width:parent.width; label:Translations.text("webapps.fields.arguments") }
+        UI.LabeledField { onAccepted: root.accepted(); id:before; width:parent.width; label:Translations.text("webapps.fields.before") }
+        UI.LabeledField { onAccepted: root.accepted(); id:after; width:parent.width; label:Translations.text("webapps.fields.after") }
     }
     UI.ColumnText { width:parent.width; text:root.parseError; visible:!!text; color:Theme.urgent; wrapMode:Text.Wrap }
 }

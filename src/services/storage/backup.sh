@@ -9,8 +9,8 @@ export LC_ALL=C.UTF-8
 temporary='' output_directory='' tokens_fd='' restore_armed=false previous_tokens=''
 max_bytes=8589934592
 json() { printf '%s' "$1" | jq "${@:2}"; }
-emit() { jq -nc --arg type "$1" --arg message "${2:-}" '{type:$type,message:$message}'; }
-fail() { emit error "$1"; exit 1; }
+emit() { jq -nc --arg type "$1" --arg message "${2:-}" --argjson args "${3:-[]}" '{type:$type,message:$message,args:$args}'; }
+fail() { emit error "$1" "${2:-[]}"; exit 1; }
 progress() { emit progress "$1"; }
 owned_file() { [[ -f $1 && -O $1 && ! -L $1 ]]; }
 owned_directory() { [[ -d $1 && -O $1 && ! -L $1 ]]; }
@@ -58,7 +58,7 @@ cleanup() {
         keyring backup-import "$previous_tokens" >/dev/null 2>&1 || tokens_ok=false
         if ! $storage_ok || ! $tokens_ok; then
             jq -nc --argjson required "$([[ $storage_ok == true ]] && printf false || printf true)" \
-                '{type:"error",recoveryRequired:$required,message:"Restore failed and rollback needs attention. Keep the recovery copy and restart; unlock the keyring before retrying."}'
+                '{type:"error",recoveryRequired:$required,message:"backup.worker.rollback"}'
         fi
     fi
     [[ -z $tokens_fd ]] || exec {tokens_fd}>&-
@@ -68,7 +68,7 @@ cleanup() {
     exit "$status"
 }
 trap cleanup EXIT
-trap 'fail "Backup operation failed. Check dependencies, permissions and free space."' ERR
+trap 'fail "backup.worker.operation"' ERR
 trap 'exit 1' INT TERM HUP
 
 if [[ ${1:-} == recover && $# == 2 ]]; then
@@ -89,35 +89,35 @@ if [[ $action == generate ]]; then
     { printf '{"type":"generated","password":"'; head -c 24 /dev/urandom | base64 -w0; printf '"}\n'; }
     exit 0
 fi
-[[ $action == export || $action == import ]] || fail 'Unknown backup operation.'
+[[ $action == export || $action == import ]] || fail 'backup.worker.unknownOperation'
 json "$request" -e '(.password | type == "string" and length > 0 and length <= 1024 and
     (explode | all(. >= 32 and . != 127))) and
     (.path | type == "string" and length > 0 and (explode | all(. >= 32 and . != 127))) and
     (.database | type == "string") and (.clipboard | type == "string") and
     (.schema | type == "number" and . >= 6 and . == floor) and
     (.totpCommand | type == "array" and length > 0 and all(.[]; type == "string"))' >/dev/null \
-    || fail 'Enter a password and valid backup path without control characters.'
+    || fail 'backup.worker.request'
 password=$(json "$request" -r .password)
 database=$(json "$request" -r .database)
 database=$(realpath -m -- "$database")
 directory=${database%/*}
 clipboard=$(json "$request" -r .clipboard)
 clipboard=$(realpath -m -- "$clipboard")
-[[ $clipboard == "$directory/clipboard" ]] || fail 'Clipboard storage must be beside the database.'
+[[ $clipboard == "$directory/clipboard" ]] || fail 'backup.worker.clipboardLocation'
 path=$(json "$request" -r .path)
 [[ $path != '~/'* ]] || path=$HOME/${path:2}
 path=$(realpath -ms -- "$path")
 schema=$(json "$request" -r .schema)
 mapfile -d '' -t totp_command < <(json "$request" -j '.totpCommand[] | ., "\u0000"')
 unset request
-sevenzip=$(command -v 7z || command -v 7zz) || fail 'Install 7-Zip to create or restore backups.'
+sevenzip=$(command -v 7z || command -v 7zz) || fail 'backup.worker.sevenzip'
 for dependency in sqlite3 jq sha256sum flock timeout; do
-    command -v "$dependency" >/dev/null || fail 'A required backup dependency is missing.'
+    command -v "$dependency" >/dev/null || fail 'backup.worker.dependency'
 done
-owned_directory "$directory" && owned_file "$database" || fail 'Local backup data is unavailable or unsafe.'
+owned_directory "$directory" && owned_file "$database" || fail 'backup.worker.localData'
 exec {backup_lock}>"$directory/.backup.lock"
-flock -x -n "$backup_lock" || fail 'Another backup or restore is already running.'
-[[ ! -e $directory/.restore-pending.json ]] || fail 'An interrupted restore needs recovery. Restart Quickshell first.'
+flock -x -n "$backup_lock" || fail 'backup.worker.busy'
+[[ ! -e $directory/.restore-pending.json ]] || fail 'backup.worker.pending'
 temporary=$(mktemp -d "$directory/.backup.XXXXXXXX")
 
 seven() {
@@ -130,9 +130,9 @@ inventory() {
     local source=$1
     version=$(sqlite3 -readonly "$source" 'PRAGMA user_version;' 2>/dev/null)
     [[ $version =~ ^[0-9]+$ ]] && ((version >= 6 && version <= schema)) \
-        || fail 'This backup uses an unsupported database version.'
+        || fail 'backup.worker.version'
     [[ $(sqlite3 -readonly "$source" 'PRAGMA trusted_schema=OFF; PRAGMA integrity_check;' 2>/dev/null) == ok ]] \
-        || fail 'The database failed its integrity check.'
+        || fail 'backup.worker.integrity'
     sqlite3 -readonly -json "$source" 'SELECT id,mime,kind,bytes,pinned,updated_at FROM clipboard;' \
         > "$temporary/rows.json" 2>/dev/null
     # sqlite3 emits no JSON for an empty result.
@@ -145,16 +145,16 @@ inventory() {
             (.bytes | type == "number" and . > 0 and . <= $limit and . == floor) and
             (.pinned == 0 or .pinned == 1) and (.updated_at | type == "number" and . == floor)) and
         ([.[].bytes] | add // 0) <= $limit' "$temporary/rows.json" >/dev/null \
-        || fail 'The database contains invalid clipboard metadata or exceeds the backup size limit.'
+        || fail 'backup.worker.metadata'
 }
 check_payloads() {
     local base=$1 mode=$2 id mime size file actual hash rest
     while IFS=$'\t' read -r id mime size; do
         file=$base/$id
         owned_file "$file" && [[ $(stat -c %s -- "$file") == "$size" ]] \
-            || fail 'A clipboard payload is missing or damaged.'
+            || fail 'backup.worker.payloadMissing'
         read -r actual rest < <({ printf '%s\0' "$mime"; cat -- "$file"; } | sha256sum)
-        [[ $actual == "$id" ]] || fail 'A clipboard payload failed its integrity check.'
+        [[ $actual == "$id" ]] || fail 'backup.worker.payloadIntegrity'
         if [[ $mode == export ]]; then
             cp -- "$file" "$temporary/stage/clipboard/$id"
             hash=$(hash_file "$temporary/stage/clipboard/$id")
@@ -179,7 +179,7 @@ path_report() {
     jq -s 'add // []' "$temporary/path-tables.json" > "$temporary/paths.json"
     if ! timeout 10 bash "${BASH_SOURCE[0]%/*}/../files/resolve-folder.sh" --check \
         < "$temporary/paths.json" > "$temporary/checked-paths.json" 2>/dev/null; then
-        jq 'map(. + {status:"unchecked",message:"Location not checked"})' "$temporary/paths.json" > "$temporary/checked-paths.json"
+        jq 'map(. + {status:"unchecked",message:"files.path.unchecked"})' "$temporary/paths.json" > "$temporary/checked-paths.json"
     fi
     jq '{unavailable:map(select(.status == "unavailable")),unchecked:map(select(.status == "unchecked"))} |
         .counts = {directories:([.unavailable[]|select(.type == "directory")]|length),
@@ -195,51 +195,51 @@ path_report() {
 }
 
 if [[ $action == export ]]; then
-    [[ $path == *.7z && ! -e $path && ! -L $path ]] || fail 'Choose a new .7z filename; existing files are never overwritten.'
-    [[ -d ${path%/*} ]] || fail "Backup folder does not exist: ${path%/*}"
+    [[ $path == *.7z && ! -e $path && ! -L $path ]] || fail 'backup.worker.filename'
+    [[ -d ${path%/*} ]] || fail backup.worker.folderMissing "$(jq -nc --arg path "${path%/*}" '[$path]')"
     owned_directory "${path%/*}" && [[ -w ${path%/*} ]] \
-        || fail "Backup folder must be writable, owned by you and not a symlink: ${path%/*}"
-    progress 'backup: reading TOTP secrets'
-    tokens=$(keyring backup-export) || fail 'Cannot read TOTP secrets. Unlock the desktop keyring and retry.'
+        || fail backup.worker.folderPermissions "$(jq -nc --arg path "${path%/*}" '[$path]')"
+    progress 'backup.progress.readTotp'
+    tokens=$(keyring backup-export) || fail 'backup.worker.totpRead'
     # An unlinked tmpfs file supplies a seekable descriptor to 7-Zip. Secrets
     # have no filename and are never staged on persistent storage.
-    [[ $(stat -f -c %T /dev/shm) == tmpfs ]] || fail 'Memory-backed storage is required for TOTP backup.'
+    [[ $(stat -f -c %T /dev/shm) == tmpfs ]] || fail 'backup.worker.memory'
     memory_file=$(mktemp /dev/shm/quickshell-backup.XXXXXXXX)
     exec {tokens_fd}<>"$memory_file"
     rm -- "$memory_file"
     printf '%s' "$tokens" >&"$tokens_fd"
     mkdir -m700 -- "$temporary/stage" "$temporary/stage/clipboard"
     ln -s -- "/proc/$$/fd/$tokens_fd" "$temporary/stage/totp.json"
-    progress 'backup: snapshotting database'
+    progress 'backup.progress.database'
     snapshot "$database" "$temporary/stage/quickshell.db"
     inventory "$temporary/stage/quickshell.db"
     total_bytes=$(jq '[.[].bytes] | add // 0' "$temporary/rows.json")
     ((total_bytes + $(stat -c %s "$temporary/stage/quickshell.db") + ${#tokens} <= max_bytes)) \
-        || fail 'This backup exceeds the supported archive size.'
+        || fail 'backup.worker.archiveSize'
     printf '%s quickshell.db\n' "$(hash_file "$temporary/stage/quickshell.db")" > "$temporary/hashes"
     printf '%s totp.json\n' "$(hash_file "$temporary/stage/totp.json")" >> "$temporary/hashes"
-    progress 'backup: copying clipboard history'
+    progress 'backup.progress.clipboard'
     check_payloads "$clipboard" export
     jq -Rn --arg created "$(date -u +%FT%TZ)" --argjson schema "$version" \
         '{format:"quickshell-backup",version:1,schema:$schema,createdAt:$created,
           files:(reduce inputs as $line ({}; ($line | split(" ")) as $parts | .[$parts[1]]=$parts[0]))}' \
         < "$temporary/hashes" > "$temporary/stage/manifest.json"
     output_directory=$(mktemp -d "${path%/*}/.quickshell-backup.XXXXXXXX")
-    progress 'backup: encrypting archive'
+    progress 'backup.progress.encrypt'
     (cd -- "$temporary/stage"; seven a -t7z -mhe=on -mx=3 -p "$output_directory/backup.7z" . >/dev/null) \
-        || fail 'Could not create the encrypted archive. Check free space.'
+        || fail 'backup.worker.encrypt'
     chmod 600 -- "$output_directory/backup.7z"
     sync -f "$output_directory/backup.7z"
-    ln -- "$output_directory/backup.7z" "$path" || fail 'The destination already exists or could not be written.'
+    ln -- "$output_directory/backup.7z" "$path" || fail 'backup.worker.destination'
     jq -nc --arg path "$path" '{type:"done",action:"export",path:$path}'
     exit 0
 fi
 
-owned_file "$path" && (($(stat -c %s -- "$path") <= max_bytes)) || fail 'The archive is unavailable, unsafe or too large.'
-progress 'restore: validating encrypted archive'
+owned_file "$path" && (($(stat -c %s -- "$path") <= max_bytes)) || fail 'backup.worker.archiveUnavailable'
+progress 'backup.progress.validate'
 cp -- "$path" "$temporary/archive.7z"
 seven l -slt -ba "$temporary/archive.7z" > "$temporary/listing" \
-    || fail 'Cannot open archive. Check the password and backup file.'
+    || fail 'backup.worker.openArchive'
 # Parse properties without evaluating archive text. Reject duplicate properties,
 # links, streams and every filename outside the fixed backup layout before x.
 jq -Rse '
@@ -259,17 +259,17 @@ jq -Rse '
     select(has("manifest.json") and has("quickshell.db") and has("totp.json")) |
     select(([.[]] | add) <= 8589934592 and .["manifest.json"] <= 16777216 and .["totp.json"] <= 67108864)
     ' "$temporary/listing" > "$temporary/members.json" 2>/dev/null \
-    || fail 'The archive has unexpected files, links, encryption or size.'
+    || fail 'backup.worker.archiveContents'
 tokens=$(seven x -so "$temporary/archive.7z" totp.json) \
-    || fail 'Could not read TOTP secrets from the archive.'
+    || fail 'backup.worker.archiveTotp'
 mkdir -m700 -- "$temporary/incoming"
 seven x -y "-o$temporary/incoming" "$temporary/archive.7z" '-x!totp.json' >/dev/null \
-    || fail 'Could not extract the backup. Check the password and free space.'
+    || fail 'backup.worker.extract'
 mkdir -p -m700 -- "$temporary/incoming/clipboard"
-[[ -z $(find "$temporary/incoming" -type l -print -quit) ]] || fail 'Archive links are not supported.'
+[[ -z $(find "$temporary/incoming" -type l -print -quit) ]] || fail 'backup.worker.links'
 find "$temporary/incoming" -type f -printf '%P\0' | jq -Rse --slurpfile members "$temporary/members.json" \
     '(split("\u0000") | map(select(length > 0)) | sort) == ($members[0] | del(.["totp.json"]) | keys)' >/dev/null \
-    || fail 'Extracted files do not match the archive manifest.'
+    || fail 'backup.worker.manifestFiles'
 find "$temporary/incoming" -type d -exec chmod 700 -- {} +
 find "$temporary/incoming" -type f -exec chmod 600 -- {} +
 manifest=$temporary/incoming/manifest.json
@@ -277,35 +277,35 @@ jq -e --slurpfile members "$temporary/members.json" '
     .format == "quickshell-backup" and .version == 1 and
     (.files | type == "object" and keys == ($members[0] | del(.["manifest.json"]) | keys)) and
     all(.files[]; type == "string" and test("^[a-f0-9]{64}$"))' "$manifest" >/dev/null \
-    || fail 'The backup manifest is invalid or unsupported.'
+    || fail 'backup.worker.manifest'
 while IFS=$'\t' read -r member hash; do
     if [[ $member == totp.json ]]; then
         read -r actual rest < <(printf '%s' "$tokens" | sha256sum)
     else
-        owned_file "$temporary/incoming/$member" || fail 'A backup file is missing or unsafe.'
+        owned_file "$temporary/incoming/$member" || fail 'backup.worker.fileMissing'
         actual=$(hash_file "$temporary/incoming/$member")
     fi
-    [[ $actual == "$hash" ]] || fail 'The backup failed checksum verification.'
+    [[ $actual == "$hash" ]] || fail 'backup.worker.checksum'
 done < <(jq -r '.files | to_entries[] | [.key,.value] | @tsv' "$manifest")
 inventory "$temporary/incoming/quickshell.db"
-[[ $(jq -r .schema "$manifest") == "$version" ]] || fail 'The backup schema does not match its manifest.'
+[[ $(jq -r .schema "$manifest") == "$version" ]] || fail 'backup.worker.schema'
 jq -e --slurpfile rows "$temporary/rows.json" \
     '[.files | keys[] | select(startswith("clipboard/"))] == ([$rows[0][] | "clipboard/" + .id] | sort)' \
-    "$manifest" >/dev/null || fail 'Clipboard payloads do not match the backup database.'
+    "$manifest" >/dev/null || fail 'backup.worker.clipboardMismatch'
 check_payloads "$temporary/incoming/clipboard" import
 json "$tokens" -e '.type == "backup" and .version == 1 and (.entries | type == "array")' >/dev/null \
-    || fail 'The TOTP backup format is unsupported.'
-progress 'restore: checking saved project and directory paths'
+    || fail 'backup.worker.totpFormat'
+progress 'backup.progress.checkPaths'
 path_report "$temporary/incoming/quickshell.db"
-progress 'restore: saving recovery copy'
-previous_tokens=$(keyring backup-export) || fail 'Cannot read the current TOTP keyring. Unlock it and retry.'
+progress 'backup.progress.recovery'
+previous_tokens=$(keyring backup-export) || fail 'backup.worker.currentTotp'
 recovery=$(mktemp -d "$directory/backup-recovery.XXXXXXXX")
 jq --arg recovery "$recovery" --arg archive "$path" --arg completedAt "$(date -u +%FT%TZ)" \
     '. + {recovery:$recovery,archive:$archive,completedAt:$completedAt,pendingNotice:true}' \
     "$temporary/report.json" > "$temporary/report-complete.json"
 snapshot "$database" "$recovery/quickshell.db"
 if [[ -e $clipboard ]]; then
-    owned_directory "$clipboard" || fail 'Clipboard storage is unsafe.'
+    owned_directory "$clipboard" || fail 'backup.worker.clipboardUnsafe'
     cp -a -- "$clipboard" "$recovery/clipboard"
 else
     mkdir -m700 -- "$recovery/clipboard"
@@ -314,10 +314,10 @@ jq -nc --arg recovery "${recovery##*/}" --arg clipboard "$clipboard" '{recovery:
     > "$directory/.restore-pending.json"
 sync -f "$directory"
 restore_armed=true
-progress 'restore: restoring TOTP secrets'
+progress 'backup.progress.restoreTotp'
 keyring backup-import "$tokens" >/dev/null \
-    || fail 'TOTP restore failed. Unlock the keyring and retry; previous data is being restored.'
-progress 'restore: restoring database and clipboard'
+    || fail 'backup.worker.totpRestore'
+progress 'backup.progress.restoreDatabase'
 [[ ! -e $clipboard ]] || mv -- "$clipboard" "$temporary/old-clipboard"
 mv -- "$temporary/incoming/clipboard" "$clipboard"
 snapshot "$temporary/incoming/quickshell.db" "$database"

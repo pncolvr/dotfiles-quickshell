@@ -992,3 +992,49 @@ The existing external JSON/dmenu/secret protocol regression remains unchanged ap
 from removing obsolete handle.sh adapter tests; native Bookmarks covers its former
 selection/browser behavior. Singleton smoke checks parent/local exports share one
 BookmarkService instance.
+
+## Translations
+
+Use `src/i18n/Translations.qml` for every shell-owned display string. Import
+its directory from the component and use stable semantic IDs grouped by feature,
+for example `common.actions.save`, `tabs.actions.remove` or
+`stats.memory.usageHint`. English wording is a catalog value, never a lookup key.
+Changing wording must not change an ID, a stored value or a dispatch argument.
+
+Keep complete sentences and hints in the catalogs. Avoid translated prefixes,
+suffixes and concatenating grammar around user data. Use a single call with
+placeholders, and choose the ID before calling the translator:
+
+```qml
+hint: Translations.text("tabs.actions.remove", [tabButton.text])
+text: Translations.text(root.searching ? "common.status.searching" : "images.preview.loading")
+text: Translations.text("updates.status.available", [], UpdatesService.count)
+```
+
+Positional placeholders are `%1`, `%2`, etc. Counted messages use `%n` and an
+object with `one` and `other` forms in each language. Formatting uses one pass,
+so placeholder-like user content stays literal. Escape substituted user content
+where a rich-text surface requires it; translation formatting itself does not
+interpret or escape markup.
+
+Pure models and workers return semantic diagnostic IDs, with `args` and `count`
+when needed. `Translations.message(value)` handles a diagnostic object, its JSON
+representation or an Error with a message ID and optional `args`. Unknown external
+output remains literal. Detached alerts use the shared `alerts.postMessage` IPC
+method, preserving their existing severity, duration and capture-readiness flags.
+Decoded text and other user content continue through the ordinary literal path.
+
+English and European Portuguese live in separate public JSON files. Add a new
+message to both with the same ID, placeholder set and value shape. Calendar name
+arrays must retain twelve months and seven Monday-first weekday headings. Do not
+translate model keys, file paths, application names or saved user content. A new
+language also needs an explicit locale mapping in `Catalog.mjs`, a catalog loader
+in the singleton, and coverage in the configuration documentation and tests.
+
+Run `bash tests/i18n/run.sh` for catalog parity, semantic IDs, missing references,
+placeholder/plural compatibility, system/override selection, fallback, one-pass
+interpolation and offscreen language changes. The UI fixture checks calendar
+indexes, input focus, user text, shared selectors, memory labels and unchanged
+power action codes in Portuguese. It uses isolated data and never takes native
+keyboard focus. Existing test fixtures must include these public catalogs when
+excluding private JSON. Run `bash tests/qml/lint.sh` after changing imports.

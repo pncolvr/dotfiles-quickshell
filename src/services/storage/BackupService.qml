@@ -1,6 +1,7 @@
 pragma Singleton
 pragma ComponentBehavior: Bound
 
+import "../../i18n"
 import QtQml
 import Quickshell
 import Quickshell.Io
@@ -47,9 +48,8 @@ Singleton {
         importReport = null
         epoch++
         awaitingPassword = true
-        PickerService.promptSecret(creating ? "Create backup" : "Restore backup",
-            filename + (creating ? "\nDatabase, clipboard history and TOTP secrets"
-                : "\nReplaces saved data and TOTP entries, then reloads the shell."), root,
+        PickerService.promptSecret(Translations.text(creating ? "backup.actions.create" : "backup.actions.restore"),
+            filename + (Translations.text(creating ? "backup.create.description" : "backup.restore.description")), root,
             value => { if (value === null) root.cancel(); else root.submit(value) })
         return true
     }
@@ -70,7 +70,7 @@ Singleton {
     function copy(password) {
         if (!visible || !password) return
         SensitiveClipboardService.copy(password, 0, success => {
-            if (visible) PickerService.error = success === false ? "Could not copy password." : ""
+            if (visible) PickerService.error = success === false ? Translations.text("secrets.errors.copyPassword") : ""
         })
     }
     function submit(password) {
@@ -81,7 +81,7 @@ Singleton {
         error = ""
         busy = true
         awaitingPassword = false
-        phase = action === "export" ? "backup: preparing" : "restore: preparing"
+        phase = Translations.text(action === "export" ? "backup.status.preparing" : "backup.status.restoring")
         AlertService.post("backup", phase, "info")
         TotpService.maintenance = true
         ClipboardService.beginMaintenance()
@@ -101,15 +101,27 @@ Singleton {
         phase = message
         AlertService.post("backup", message, "error", 60000)
     }
+    function reportSummary(report) {
+        if (!report) return Translations.text("backup.status.restored");
+        const warnings = [];
+        for (const type of ["directories", "sources", "projects", "workspaces"]) {
+            const count = report.counts?.[type] ?? 0;
+            if (count) warnings.push(Translations.text("backup.report."+type, [], count));
+        }
+        const unchecked = report.unchecked?.length ?? 0;
+        if (unchecked) warnings.push(Translations.text("backup.report.unchecked", [], unchecked));
+        return warnings.length ? Translations.text("backup.status.restoredWarnings", [warnings.join(", ")])
+            : Translations.text("backup.status.restoredSummary");
+    }
     function receive(line) {
         let message
-        try { message = JSON.parse(line) } catch (_) { fail("Invalid response from the backup helper."); return }
+        try { message = JSON.parse(line) } catch (_) { fail(Translations.text("backup.errors.invalidResponse")); return }
         if (message.type === "progress") {
-            phase = message.message
+            phase = Translations.text(message.message,message.args ?? [])
             AlertService.post("backup", phase, "info")
         } else if (message.type === "error") {
             recoveryRequired = message.recoveryRequired === true
-            fail(message.message)
+            fail(Translations.text(message.message))
         }
         else if (message.type === "done") {
             completed = true
@@ -125,7 +137,7 @@ Singleton {
             const report = PreferencesRepository.value("backup.lastRestore", null)
             if (!report) return
             root.recovery = report.recovery ?? ""
-            root.phase = report.summary ?? "backup restored"
+            root.phase = root.reportSummary(report)
             AlertService.post("backup", root.phase, report.warningCount > 0 ? "warning" : "success", report.warningCount > 0 ? 10000 : 4000)
             PreferencesRepository.setValue("backup.lastRestore", Object.assign({},report,{pendingNotice:false}))
         }
@@ -138,7 +150,7 @@ Singleton {
             if (++root.waitTicks > 600) {
                 stop()
                 root.release()
-                root.fail("Backup could not start while another clipboard or TOTP operation was running.")
+                root.fail(Translations.text("backup.errors.busy"))
             } else if (ClipboardService.settled && TotpService.stopped) {
                 stop()
                 DbService.maintenance = true
@@ -159,13 +171,13 @@ Singleton {
                 try {
                     const result = JSON.parse(line)
                     if (root.visible && generator.epoch === root.epoch && result.type === "generated") root.generated(result.password)
-                } catch (_) { if (root.visible) PickerService.error = "Password generation failed." }
+                } catch (_) { if (root.visible) PickerService.error = Translations.text("secrets.errors.generatePassword") }
             }
         }
         stderr: SplitParser { onRead: _data => {} }
         // qmllint disable signal-handler-parameters
         onExited: (code, status) => {
-            if (root.visible && (code !== 0 || status !== 0)) PickerService.error = "Password generation failed."
+            if (root.visible && (code !== 0 || status !== 0)) PickerService.error = Translations.text("secrets.errors.generatePassword")
         }
         // qmllint enable signal-handler-parameters
     }
@@ -180,13 +192,13 @@ Singleton {
         // qmllint disable signal-handler-parameters
         onExited: (code, status) => {
             if (!root.completed || code !== 0 || status !== 0) {
-                if (!root.error) root.fail("Backup operation failed. Check dependencies and file permissions.")
+                if (!root.error) root.fail(Translations.text("backup.errors.operation"))
                 if (root.recoveryRequired) { root.pendingInput = ""; root.busy = false }
                 else root.release()
                 return
             }
-            root.phase = root.creating ? "backup created" : (root.importReport?.summary ?? "backup restored") + "; reloading"
-            AlertService.post("backup", root.creating ? "Backup created: " + root.outputPath : root.phase,
+            root.phase = root.creating ? Translations.text("backup.status.created") : Translations.text("backup.status.reloading",[root.reportSummary(root.importReport)])
+            AlertService.post("backup", root.creating ? Translations.text("backup.status.createdFile",[root.outputPath]) : root.phase,
                 root.importReport?.warningCount > 0 ? "warning" : "success", root.creating ? 15000 : 4000)
             if (root.action === "import") {
                 // Keep stale models and callbacks from writing until reload.

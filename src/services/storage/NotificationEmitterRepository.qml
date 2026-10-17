@@ -1,5 +1,6 @@
 pragma Singleton
 
+import "../../i18n"
 import QtQml
 import Quickshell
 import "../"
@@ -30,7 +31,7 @@ Singleton {
     function ensure(desktopEntry, appName, icon) {
         const key = identity(desktopEntry, appName)
         const previous = emitters[key]
-        const name = String(appName || desktopEntry || "Unknown application")
+        const name = String(appName || desktopEntry || Translations.text("notifications.emitter.unknown"))
         const image = String(icon || previous?.icon || "")
         if (previous && previous.name === name && previous.icon === image) return previous
         if (DbService.write(tx => {

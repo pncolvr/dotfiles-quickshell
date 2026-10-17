@@ -1,4 +1,5 @@
 pragma Singleton
+import "../../i18n"
 import QtQml
 import Quickshell
 import "../"
@@ -15,7 +16,7 @@ Singleton {
     function save(previousPath, path, name, category) {
         if (!path || !name.trim() || !["personal","work"].includes(category)) return false
         if (directories.some(entry => entry.path === path && entry.path !== previousPath)) {
-            error = "This folder is already in the picker."; return false
+            error = Translations.text("directories.errors.duplicate"); return false
         }
         if (!DbService.write(tx => {
             if (previousPath) tx.executeSql("UPDATE directories SET path = ?,name = ?,category = ? WHERE path = ?",[path,name.trim(),category,previousPath])

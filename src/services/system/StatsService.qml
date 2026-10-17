@@ -1,5 +1,6 @@
 pragma Singleton
 
+import "../../i18n"
 import QtQml
 import Quickshell
 import Quickshell.Io
@@ -83,7 +84,7 @@ Singleton {
             group.down += row.down || 0
             group.up += row.up || 0
             group.count++
-            group.members.push({pid: row.pid, name: row.name, label: row.role || (row.pid === pid ? "Main process" : row.name), value, down: row.down || 0, up: row.up || 0})
+            group.members.push({pid: row.pid, name: row.name, label: row.role || (row.pid === pid ? Translations.text("stats.processes.main") : row.name), value, down: row.down || 0, up: row.up || 0})
             group.searchName += " " + row.name + " " + (row.role || "")
             if (pid > 0 && (group.pid <= 0 || pid < group.pid)) group.pid = pid
         }
@@ -164,7 +165,7 @@ Singleton {
             let report
             try { report = JSON.parse(processOutput.text) } catch (_) { report = null }
             if (exitCode !== 0 || exitStatus !== 0 || !root.applyProcesses(report))
-                root.processError = report?.error || "Could not read process usage."
+                root.processError = report?.error || Translations.text("stats.errors.processUsage")
         }
         // qmllint enable signal-handler-parameters
     }

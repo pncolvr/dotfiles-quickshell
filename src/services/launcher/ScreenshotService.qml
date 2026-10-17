@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 pragma Singleton
+import "../../i18n"
 import QtQml
 import Quickshell
 import Quickshell.Io
@@ -17,7 +18,7 @@ Singleton {
     function open(method = "") {
         if (busy) return
         if (!method) {
-            PickerService.promptMenu("", ["ocr", "output", "qrcode", "region", "window"].map(title => ({title})),
+            PickerService.promptMenu("", ["ocr", "output", "qrcode", "region", "window"].map(method => ({title:Translations.text("screenshot.modes."+method),result:method})),
                 rows => root.open(rows[0].result))
             return
         }
@@ -49,10 +50,10 @@ Singleton {
             AlertService.post("screenshot", result.text, "success", 4000)
             break
           case "empty":
-            AlertService.post("screenshot", result.message, "info", 3000)
+            AlertService.post("screenshot", Translations.text(result.message,result.args ?? []), "info", 3000)
             break
           case "error":
-            AlertService.post("screenshot", result.message, "error", 4000)
+            AlertService.post("screenshot", Translations.text(result.message,result.args ?? []), "error", 4000)
             break
           case "cancelled":
           case "editing":
@@ -86,7 +87,7 @@ Singleton {
                 const operation = root.job
                 if (operation?.process === task) {
                     root.lastAttempt = Object.assign({}, root.lastAttempt, {phase: "finished", exitCode: code, exitStatus: status})
-                    if (!operation.replied) AlertService.post("screenshot", "Screenshot capture failed", "error", 4000)
+                    if (!operation.replied) AlertService.post("screenshot", Translations.text("screenshot.errors.capture"), "error", 4000)
                     root.job = null
                 }
                 task.destroy()

@@ -1,4 +1,5 @@
 pragma ComponentBehavior: Bound
+import "../../i18n"
 import QtQuick
 import QtQuick.Controls as QC
 import "../../theme"
@@ -46,5 +47,5 @@ ListView {
         Keys.onReturnPressed: list.entrySelected(modelData.id)
         Keys.onEnterPressed: list.entrySelected(modelData.id)
     }
-    UI.Text { centerVertical: false; anchors.centerIn: parent; text: "No entries"; visible: !list.entries.length && !list.busy }
+    UI.Text { centerVertical: false; anchors.centerIn: parent; text: Translations.text("vault.empty.entries"); visible: !list.entries.length && !list.busy }
 }

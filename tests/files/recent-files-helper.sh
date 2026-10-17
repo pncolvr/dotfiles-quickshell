@@ -116,5 +116,5 @@ mkdir "$test_dir/no-dependencies"
 status=0
 result=$(PATH="$test_dir/no-dependencies" "$bash_bin" "$helper") || status=$?
 [[ $status == 1 ]]
-check '.error | contains("xsltproc")'
+check '.error == "files.recent.errors.dependencies"'
 printf 'PASS: Bash recent-file helper, limits, filtering, natural order, URI escaping, unchanged history and error states\n'

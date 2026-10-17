@@ -1,5 +1,6 @@
 pragma Singleton
 
+import "../../i18n"
 import QtQml
 import Quickshell
 import Quickshell.Io
@@ -19,7 +20,7 @@ Singleton {
     function open() {
         callback = rows => root.launch(rows)
         PickerService.promptMenu("", [], callback, "list", {
-            allowMultipleSelection: true, allowTyped: true, acceptLabel: "Open links"
+            allowMultipleSelection: true, allowTyped: true, acceptLabel: Translations.text("bookmarks.actions.open")
         })
         source.reload()
         source.text() // Start the lazy FileView read without blocking input focus.
@@ -55,6 +56,6 @@ Singleton {
         blockLoading: false
         printErrors: false
         onLoaded: root.publish(text())
-        onLoadFailed: if (root.ownsMenu()) PickerService.error = "Could not read bookmarks."
+        onLoadFailed: if (root.ownsMenu()) PickerService.error = Translations.text("bookmarks.errors.read")
     }
 }

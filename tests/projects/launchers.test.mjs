@@ -1,5 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import * as Catalog from '../../src/i18n/Catalog.mjs';
+const english=JSON.parse(fs.readFileSync(new URL('../../src/i18n/en.json',import.meta.url)));
+const translate=(key,args)=>Catalog.text(key,english,english,args);
 import * as launchers from '../../src/services/projects/ProjectLaunchers.mjs';
 const rules = [
     {id:'code',name:'Code',offerFolder:true,useFileNames:true,extensions:['.code-workspace'],command:['code'],profiles:{work:'Work',personal:'Personal'},arguments:['{path}','--profile','{profile}'],windowClass:'code',windowTitlePrefix:'{folderName}'},
@@ -13,10 +17,10 @@ test('configured extensions control matching and included choices', () => {
     assert.equal(launchers.forFile(project.path+'/nested.godot/plain.txt',rules),undefined);
     project.workspaces = [{path:project.path+'/project.godot',name:'project',included:true},
         {path:project.path+'/nested/project.godot',name:'project',included:false}];
-    assert.equal(launchers.title(project.workspaces[0],project,rules),'Open in Godot');
+    assert.equal(launchers.title(project.workspaces[0],project,rules,translate),'Open in Godot');
     project.workspaces[1].included=true;
-    assert.equal(launchers.title(project.workspaces[0],project,rules),'Open in Godot · project.godot');
-    assert.equal(launchers.title(project.workspaces[1],project,rules),'Open in Godot · nested/project.godot');
+    assert.equal(launchers.title(project.workspaces[0],project,rules,translate),'Open in Godot · project.godot');
+    assert.equal(launchers.title(project.workspaces[1],project,rules,translate),'Open in Godot · nested/project.godot');
     assert.deepEqual(launchers.includedFiles(project,[]),[]);
 });
 test('argv preserves exact paths, profiles and editor-specific flags', () => {
@@ -30,19 +34,19 @@ test('argv preserves exact paths, profiles and editor-specific flags', () => {
     assert.deepEqual(launchers.prepare(rules[0],project.path,project,'personal').command,['code',project.path,'--profile','Personal']);
 });
 test('invalid configuration reports errors rather than executing a shell string', () => {
-    assert.throws(()=>launchers.extensions([{extensions:['*.godot']}]),/literal suffix/);
+    assert.throws(()=>launchers.extensions([{extensions:['*.godot']}]),/projects.errors.invalidExtensions/);
     assert.throws(()=>launchers.prepare({command:'godot'},project.path,project,'Work'),/command/);
-    assert.throws(()=>launchers.prepare({command:['code'],profiles:{work:'Work',personal:'Personal'},arguments:['{unknown}']},project.path,project,'Work'),/placeholder/);
+    assert.throws(()=>launchers.prepare({command:['code'],profiles:{work:'Work',personal:'Personal'},arguments:['{unknown}']},project.path,project,'Work'),/projects.errors.unknownPlaceholder/);
 });
 
 test('one inferred action skips the chooser; mixed project retains every relevant app', () => {
     const game={...project,workspaces:[{path:project.path+'/project.godot',name:'project',included:true}]};
-    assert.deepEqual(launchers.choices(game,rules,'code').map(row=>row.title),['Open in Godot']);
+    assert.deepEqual(launchers.choices(game,rules,'code',translate).map(row=>row.title),['Open in Godot']);
     game.workspaces.push({path:project.path+'/Game.code-workspace',name:'Game',included:true});
-    assert.deepEqual(launchers.choices(game,rules,'code').map(row=>row.title),['Open in Code','Open in Godot','Game']);
+    assert.deepEqual(launchers.choices(game,rules,'code',translate).map(row=>row.title),['Open in Code','Open in Godot','Game']);
     game.workspaces=[];
-    assert.deepEqual(launchers.choices(game,rules,'code').map(row=>row.title),['Open in Code']);
-    assert.throws(()=>launchers.choices(game,rules,'unknown'),/default project app/);
+    assert.deepEqual(launchers.choices(game,rules,'code',translate).map(row=>row.title),['Open in Code']);
+    assert.throws(()=>launchers.choices(game,rules,'unknown',translate),/projects.errors.defaultApp/);
 });
 
 
@@ -55,9 +59,9 @@ test('app actions sort alphabetically above named files regardless of input orde
         {path:project.path+'/Game.sampleproj',name:'Game',included:true}
     ]};
     const expected = ['Open in Code','Open in Custom editor','Open in Godot','Alpha','Open in Aardvark','zebra'];
-    assert.deepEqual(launchers.choices(mixed,rules,'code').map(row=>row.title),expected);
+    assert.deepEqual(launchers.choices(mixed,rules,'code',translate).map(row=>row.title),expected);
     mixed.workspaces.reverse();
-    assert.deepEqual(launchers.choices(mixed,[...rules].reverse(),'code').map(row=>row.title),expected);
+    assert.deepEqual(launchers.choices(mixed,[...rules].reverse(),'code',translate).map(row=>row.title),expected);
 });
 
 

@@ -1,5 +1,6 @@
 pragma Singleton
 
+import "../../i18n"
 import QtQuick
 import Quickshell
 import Quickshell.Io
@@ -111,7 +112,7 @@ Singleton {
         try { message = JSON.parse(data) }
         catch (_error) {
             state.busy = false
-            state.error = "Invalid response from the TOTP helper. Reload and retry."
+            state.error = Translations.text("totp.errors.invalidResponse")
             return
         }
         state.busy = false
@@ -137,14 +138,14 @@ Singleton {
                 if (!root.active || state.stopping || generation !== state.generation) return
                 state.busy = false
                 if (success === null) return
-                if (!success) { state.error = "Could not copy the TOTP code. Check wl-copy and retry."; return }
+                if (!success) { state.error = Translations.text("totp.errors.copy"); return }
                 state.copiedId = entryId
                 copiedTimer.restart()
             })
             break
           }
           case "error":
-            state.error = message.message
+            state.error = Translations.text(message.message)
             if (message.action === "load") state.ready = false
             if (message.action === "edit") root.editFailed()
             break
@@ -188,7 +189,7 @@ Singleton {
                 state.busy = false
                 state.ready = false
                 if (root.active && state.stopping) Qt.callLater(root.start)
-                else if (root.active) state.error = "The TOTP helper is unavailable. Check the configured commands and reload."
+                else if (root.active) state.error = Translations.text("totp.errors.helperUnavailable")
             }
         }
     }

@@ -1,4 +1,5 @@
 pragma ComponentBehavior: Bound
+import "../../../i18n"
 import QtQuick
 import Quickshell
 import "../../"
@@ -13,8 +14,8 @@ Row {
     property bool editEnabled: true
     property bool refreshEnabled: true
     property bool removeEnabled: true
-    property string editHint: "edit folder"
-    property string removeHint: "remove from picker"
+    property string editHint: Translations.text("folders.actions.editHint")
+    property string removeHint: Translations.text("folders.actions.removeHint")
     property color removeColor: Theme.alternateBackground
     property alias copyObjectName: copyButton.objectName
     property alias editObjectName: editButton.objectName
@@ -28,7 +29,7 @@ Row {
     UI.ActionButton {
         id: copyButton
         glyph: Theme.copyIcon
-        hint: "copy folder path"
+        hint: Translations.text("folders.actions.copyPathHint")
         onClicked: Quickshell.clipboardText = root.path
     }
     UI.ActionButton {
@@ -42,7 +43,7 @@ Row {
     UI.ActionButton {
         id: refreshButton
         glyph: Theme.refreshIcon
-        hint: "refresh this folder"
+        hint: Translations.text("folders.actions.refreshHint")
         visible: root.showRefresh
         enabled: root.refreshEnabled
         onClicked: root.refreshRequested()

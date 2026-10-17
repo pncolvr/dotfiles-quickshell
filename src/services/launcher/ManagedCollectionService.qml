@@ -1,3 +1,4 @@
+import "../../i18n"
 import Quickshell
 import "../"
 
@@ -11,7 +12,7 @@ Singleton {
     property bool managing: false
     property bool showAll: false
     property bool activeOnly: false
-    property string acceptLabel: 'Open'
+    property string acceptLabel: Translations.text("common.actions.open")
     property var draft: null
     property string error: ''
     property bool busy: false

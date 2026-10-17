@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 
+import "../../../i18n"
 import QtQuick
 import QtQuick.Layouts
 import "../../../theme"
@@ -38,10 +39,10 @@ RowLayout {
         objectName: "totpNameField"
         Layout.preferredWidth: root.nameWidth
         Layout.minimumWidth: 0
-        placeholderText: "name"
+        placeholderText: Translations.text("common.fields.namePlaceholder")
         maximumLength: 128
         enabled: !root.busy
-        Accessible.name: "TOTP name"
+        Accessible.name: Translations.text("totp.fields.name")
         onAccepted: tokenField.forceActiveFocus()
         onTextChanged: if (!root.destroying) root.draftChanged(text, tokenField.text)
         Keys.onEscapePressed: root.cancelled()
@@ -52,13 +53,13 @@ RowLayout {
         objectName: "totpTokenField"
         Layout.fillWidth: true
         Layout.minimumWidth: 0
-        placeholderText: "secret or otpauth URI"
+        placeholderText: Translations.text("totp.fields.secretPlaceholder")
         maximumLength: 4096
         retainPanelWhileEditing: true
-        revealHint: "Show TOTP secret"
-        hideHint: "Hide TOTP secret"
+        revealHint: Translations.text("totp.actions.revealSecret")
+        hideHint: Translations.text("totp.actions.hideSecret")
         enabled: !root.busy
-        Accessible.name: "TOTP secret or URI"
+        Accessible.name: Translations.text("totp.fields.secretAccessibleName")
         onAccepted: root.submit()
         onTextChanged: if (!root.destroying) root.draftChanged(nameField.text, text)
         Keys.onEscapePressed: root.cancelled()
@@ -66,10 +67,10 @@ RowLayout {
 
     UI.EditorActions {
         spacing: Theme.totpSpacing
-        cancelHint: "cancel"
+        cancelHint: Translations.text("common.actions.cancelHint")
         cancelEnabled: !root.busy
         submitGlyph: root.adding ? Theme.addIcon : Theme.checkIcon
-        submitHint: root.adding ? "add token" : "save changes"
+        submitHint: Translations.text(root.adding ? "totp.actions.addHint" : "common.actions.saveChangesHint")
         submitEnabled: !root.busy && nameField.text.trim().length > 0 && tokenField.text.trim().length > 0
         onCancelled: root.cancelled()
         onSubmitted: root.submit()

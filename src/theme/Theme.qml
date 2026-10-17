@@ -173,8 +173,6 @@ QtObject {
 
     // Calendar
     readonly property int calendarDayTooltipDelay: Timespan.fromSeconds(1)
-    readonly property var calendarMonthNames: ["january","february","march","april","may","june","july","august","september","october","november","december"]
-    readonly property var calendarDayNames: ["mo","tu","we","th","fr","sa","su"]
     readonly property int calendarWidth: 225
     readonly property int calendarCellWidth: 26
     readonly property int calendarCellHeight: calendarCellWidth

@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 
+import "../../../i18n"
 import QtQuick
 import "../../../services"
 
@@ -11,9 +12,9 @@ AudioSelector {
     readonly property string activeDescription: selectedDescription
     options: profiles
     selectedName: card?.activeProfile ?? ""
-    placeholder: "Choose a profile"
-    labelPrefix: "Profile: "
-    hint: "Profiles affect both playback and microphone availability."
+    placeholder: Translations.text("audio.profile.choose")
+    label: Translations.text("browser.profile.label", [selectedDescription])
+    hint: Translations.text("audio.profile.hint")
     hintDelay: 700
     toggleObjectName: "profileToggle"
     choicesObjectName: "profileChoices"

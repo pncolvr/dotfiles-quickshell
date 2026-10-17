@@ -1,4 +1,5 @@
 pragma ComponentBehavior: Bound
+import "../../../i18n"
 import QtQuick
 import QtQuick.Window
 import Quickshell
@@ -182,7 +183,7 @@ PanelWindow {
             height: width
             glyph: Theme.cancelIcon
             foreground: hovered || down ? Theme.foregroundOn(Theme.notificationCritical) : Theme.accent
-            hint: "Exit fullscreen (Esc)"
+            hint: Translations.text("media.fullscreen.exitHint")
             background: Rectangle {
                 radius: width / 2
                 antialiasing: true
@@ -204,7 +205,7 @@ PanelWindow {
             AudioButton {
                 objectName: "mediaFullscreenPreviousPlayer"
                 glyph: Theme.chevronLeftIcon
-                hint: "Previous media player (←)"
+                hint: Translations.text("media.actions.previousPlayerHint")
                 onClicked: root.navigate(-1)
             }
             UI.ColumnText {
@@ -214,7 +215,7 @@ PanelWindow {
             AudioButton {
                 objectName: "mediaFullscreenNextPlayer"
                 glyph: Theme.chevronRightIcon
-                hint: "Next media player (→)"
+                hint: Translations.text("media.actions.nextPlayerHint")
                 onClicked: root.navigate(1)
             }
         }

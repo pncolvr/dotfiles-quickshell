@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 
+import "../../../i18n"
 import QtQuick
 import "../../"
 import "../" as UI
@@ -8,8 +9,8 @@ UI.InputField {
     id: root
     property bool revealed: false
     property string revealObjectName: "revealSecret"
-    property string revealHint: "Show value"
-    property string hideHint: "Hide value"
+    property string revealHint: Translations.text("secrets.actions.revealValue")
+    property string hideHint: Translations.text("secrets.actions.hideValue")
 
     retainPanelWhileEditing: false
     echoMode: revealed ? TextInput.Normal : TextInput.Password

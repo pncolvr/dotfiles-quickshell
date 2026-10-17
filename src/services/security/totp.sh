@@ -22,8 +22,8 @@ fail() { ERROR=$1; return 1; }
 json() { printf '%s' "$1" | jq "${@:2}"; }
 
 check_dependencies() {
-    command -v "$secret_tool" >/dev/null || { fail 'Install libsecret (secret-tool) to access the desktop keyring.'; return 1; }
-    command -v "$oath_tool" >/dev/null || { fail 'Install oath-toolkit (oathtool) to generate TOTP codes.'; return 1; }
+    command -v "$secret_tool" >/dev/null || { fail 'totp.worker.secretTool'; return 1; }
+    command -v "$oath_tool" >/dev/null || { fail 'totp.worker.oathTool'; return 1; }
 }
 
 # Decode URI query values using Bash builtins, without evaluating user input.
@@ -33,7 +33,7 @@ urldecode() {
         prefix=${value%%\%*}
         value=${value#*%}
         hex=${value:0:2}
-        [[ $hex =~ ^[[:xdigit:]]{2}$ && $hex != 00 ]] || { fail 'The TOTP URI has invalid encoding.'; return 1; }
+        [[ $hex =~ ^[[:xdigit:]]{2}$ && $hex != 00 ]] || { fail 'totp.worker.uriEncoding'; return 1; }
         printf -v char '%b' "\\x$hex"
         result+=$prefix$char
         value=${value:2}
@@ -49,9 +49,9 @@ parse_token() {
     TOKEN_PERIOD=$default_period
     TOKEN_DIGITS=$default_digits
     TOKEN_ALGORITHM=$default_algorithm
-    [[ -n $value && ${#value} -le 4096 ]] || { fail 'Enter a Base32 secret or an otpauth://totp URI.'; return 1; }
+    [[ -n $value && ${#value} -le 4096 ]] || { fail 'totp.worker.secretRequired'; return 1; }
     if [[ $value == *://* ]]; then
-        [[ $value == otpauth://totp/*\?* ]] || { fail 'Only standard otpauth://totp URIs are supported.'; return 1; }
+        [[ $value == otpauth://totp/*\?* ]] || { fail 'totp.worker.uriType'; return 1; }
         query=${value#*\?}
         query=${query%%#*}
         value=''
@@ -59,7 +59,7 @@ parse_token() {
         for part in "${params[@]}"; do
             urldecode "${part%%=*}" || return 1
             key=$DECODED
-            [[ -n $key && ! ${seen[$key]+present} ]] || { fail 'The TOTP URI has duplicate or empty parameters.'; return 1; }
+            [[ -n $key && ! ${seen[$key]+present} ]] || { fail 'totp.worker.uriParameters'; return 1; }
             seen[$key]=1
             urldecode "${part#*=}" || return 1
             decoded=$DECODED
@@ -72,37 +72,37 @@ parse_token() {
         done
     fi
     TOKEN_ALGORITHM=${TOKEN_ALGORITHM^^}
-    [[ $TOKEN_ALGORITHM =~ ^(SHA1|SHA256|SHA512)$ ]] || { fail 'Use SHA1, SHA256, or SHA512.'; return 1; }
-    [[ $TOKEN_PERIOD =~ ^[0-9]{1,5}$ && $TOKEN_DIGITS =~ ^[678]$ ]] || { fail 'Use 6–8 digits and a period of 1–86400 seconds.'; return 1; }
+    [[ $TOKEN_ALGORITHM =~ ^(SHA1|SHA256|SHA512)$ ]] || { fail 'totp.worker.algorithm'; return 1; }
+    [[ $TOKEN_PERIOD =~ ^[0-9]{1,5}$ && $TOKEN_DIGITS =~ ^[678]$ ]] || { fail 'totp.worker.digits'; return 1; }
     TOKEN_PERIOD=$((10#$TOKEN_PERIOD))
-    (( TOKEN_PERIOD >= 1 && TOKEN_PERIOD <= 86400 )) || { fail 'Use a period of 1–86400 seconds.'; return 1; }
+    (( TOKEN_PERIOD >= 1 && TOKEN_PERIOD <= 86400 )) || { fail 'totp.worker.period'; return 1; }
     TOKEN_SECRET=$(printf '%s' "$value" | tr -d '[:space:]-')
     TOKEN_SECRET=${TOKEN_SECRET^^}
     while [[ $TOKEN_SECRET == *= ]]; do TOKEN_SECRET=${TOKEN_SECRET%=}; done
-    [[ $TOKEN_SECRET =~ ^[A-Z2-7]+$ ]] || { fail 'The secret must be Base32 (A–Z and 2–7).'; return 1; }
+    [[ $TOKEN_SECRET =~ ^[A-Z2-7]+$ ]] || { fail 'totp.worker.base32'; return 1; }
     rem=$((${#TOKEN_SECRET} % 8))
-    [[ $rem =~ ^[02457]$ ]] || { fail 'The Base32 secret is incomplete.'; return 1; }
+    [[ $rem =~ ^[02457]$ ]] || { fail 'totp.worker.incompleteSecret'; return 1; }
     padded=$TOKEN_SECRET
     while (( ${#padded} % 8 )); do padded+='='; done
-    canonical=$(printf '%s' "$padded" | base32 --decode 2>/dev/null | base32 --wrap=0) || { fail 'The Base32 secret is invalid.'; return 1; }
+    canonical=$(printf '%s' "$padded" | base32 --decode 2>/dev/null | base32 --wrap=0) || { fail 'totp.worker.invalidSecret'; return 1; }
     while [[ $canonical == *= ]]; do canonical=${canonical%=}; done
-    [[ $canonical == "$TOKEN_SECRET" ]] || { fail 'The Base32 secret is invalid.'; return 1; }
+    [[ $canonical == "$TOKEN_SECRET" ]] || { fail 'totp.worker.invalidSecret'; return 1; }
     TOKEN_URI="otpauth://totp/Quickshell?secret=$TOKEN_SECRET&algorithm=$TOKEN_ALGORITHM&digits=$TOKEN_DIGITS&period=$TOKEN_PERIOD"
-    (( ${#TOKEN_URI} <= 4096 )) || { fail 'The TOTP secret or URI is too long.'; return 1; }
+    (( ${#TOKEN_URI} <= 4096 )) || { fail 'totp.worker.secretTooLong'; return 1; }
 }
 
 generate_code() {
     local timestamp=$1
     CODE=$(printf '%s\n' "$TOKEN_SECRET" | timeout --signal=KILL "$secret_timeout" "$oath_tool" \
         --totp="$TOKEN_ALGORITHM" --base32 --digits="$TOKEN_DIGITS" \
-        --time-step-size="${TOKEN_PERIOD}s" --now="@$timestamp" - 2>/dev/null) || { fail 'TOTP generation failed. Check oathtool and the token.'; return 1; }
-    [[ $CODE =~ ^[0-9]+$ && ${#CODE} -eq TOKEN_DIGITS ]] || { fail 'Invalid response from oathtool.'; return 1; }
+        --time-step-size="${TOKEN_PERIOD}s" --now="@$timestamp" - 2>/dev/null) || { fail 'totp.worker.generation'; return 1; }
+    [[ $CODE =~ ^[0-9]+$ && ${#CODE} -eq TOKEN_DIGITS ]] || { fail 'totp.worker.invalidResponse'; return 1; }
 }
 
 load_vault() {
     local raw line payload item next='[]' blocks=0 secrets=0 token
     check_dependencies || return 1
-    raw=$(timeout --signal=KILL "$secret_timeout" "$secret_tool" search --all --unlock "${attributes[@]}" 2>/dev/null) || { fail 'Cannot read the desktop keyring. Start or unlock your Secret Service and reload.'; return 1; }
+    raw=$(timeout --signal=KILL "$secret_timeout" "$secret_tool" search --all --unlock "${attributes[@]}" 2>/dev/null) || { fail 'totp.worker.keyringRead'; return 1; }
     while IFS= read -r line; do
         if [[ $line =~ ^\[[^]]+\]$ ]]; then ((blocks+=1)); fi
         [[ $line == 'secret = '* ]] || continue
@@ -111,13 +111,13 @@ load_vault() {
         item=$(json "$payload" -ce '
             select(.version == 1 and (.id | type == "string" and test("^[a-f0-9-]{36}$"))
                 and (.name | type == "string" and length > 0 and length <= 128 and (explode | all(. >= 32 and . != 127)))
-                and (.token | type == "string")) | {id, name, token}') || { fail 'A TOTP entry in the keyring is invalid. Repair it before saving.'; return 1; }
+                and (.token | type == "string")) | {id, name, token}') || { fail 'totp.worker.invalidEntry'; return 1; }
         token=$(json "$item" -r .token)
-        parse_token "$token" || { fail 'A TOTP entry in the keyring has an invalid token.'; return 1; }
+        parse_token "$token" || { fail 'totp.worker.invalidToken'; return 1; }
         next=$(printf '%s\n%s\n' "$next" "$item" | jq -cs '.[0] + [.[1]]') || return 1
     done < <(printf '%s\n' "$raw")
-    (( blocks == secrets )) || { fail 'The TOTP keyring is locked. Unlock it and reload.'; return 1; }
-    json "$next" -e '[.[].id] | length == (unique | length)' >/dev/null || { fail 'Duplicate TOTP entries were found. Repair them in the keyring.'; return 1; }
+    (( blocks == secrets )) || { fail 'totp.worker.locked'; return 1; }
+    json "$next" -e '[.[].id] | length == (unique | length)' >/dev/null || { fail 'totp.worker.duplicates'; return 1; }
     entries=$(json "$next" -c 'sort_by(.name | ascii_downcase)')
 }
 
@@ -166,19 +166,19 @@ handle() {
             snapshot load ''
             return $? ;;
         refresh)
-            $loaded || { fail 'Load the keyring first.'; return 1; }
+            $loaded || { fail 'totp.worker.loadFirst'; return 1; }
             snapshot refresh ''
             return $? ;;
         save|delete|edit|copy) ;;
-        *) fail 'Unknown TOTP operation.'; return 1 ;;
+        *) fail 'totp.worker.operation'; return 1 ;;
     esac
-    $loaded || { fail 'Load the keyring before changing entries.'; return 1; }
-    [[ -z $id || $id =~ ^[a-f0-9-]{36}$ ]] || { fail 'Invalid entry identifier.'; return 1; }
+    $loaded || { fail 'totp.worker.loadBeforeEdit'; return 1; }
+    [[ -z $id || $id =~ ^[a-f0-9-]{36}$ ]] || { fail 'totp.worker.invalidId'; return 1; }
     # Read before changes to preserve sequential edits made by other keyring clients.
     if [[ $action != copy ]]; then load_vault || return 1; fi
     entry=$(json "$entries" -c --arg id "$id" '.[] | select(.id == $id)')
     if [[ -n $id || $action != save ]]; then
-        [[ -n $entry ]] || { fail 'This entry no longer exists. Reload the keyring.'; return 1; }
+        [[ -n $entry ]] || { fail 'totp.worker.missingEntry'; return 1; }
     fi
     case $action in
         edit)
@@ -191,21 +191,21 @@ handle() {
             RESPONSE=$(printf '"%s"' "$CODE" | jq -c --arg id "$id" '{type: "copy", id: $id, code: .}')
             return $? ;;
         save)
-            name=$(json "$request" -er '.name | select(type == "string") | gsub("^\\s+|\\s+$"; "") | select(length > 0 and length <= 128 and (explode | all(. >= 32 and . != 127)))') || { fail 'Enter a name of 1–128 characters without control characters.'; return 1; }
-            token=$(json "$request" -er '.token | select(type == "string") | gsub("^\\s+|\\s+$"; "")') || { fail 'Enter a Base32 secret or an otpauth URI.'; return 1; }
+            name=$(json "$request" -er '.name | select(type == "string") | gsub("^\\s+|\\s+$"; "") | select(length > 0 and length <= 128 and (explode | all(. >= 32 and . != 127)))') || { fail 'totp.worker.name'; return 1; }
+            token=$(json "$request" -er '.token | select(type == "string") | gsub("^\\s+|\\s+$"; "")') || { fail 'totp.worker.tokenRequired'; return 1; }
             parse_token "$token" || return 1
             if [[ -z $id ]]; then IFS= read -r id < /proc/sys/kernel/random/uuid; fi
             replacement=$(printf '%s\n' "$name" "$TOKEN_URI" | jq -Rsc --arg id "$id" \
                 'split("\n") | {id: $id, name: .[0], token: .[1]}') || return 1
             payload=$(json "$replacement" -c '. + {version: 1}')
             size=$(printf '%s' "$payload" | wc -c)
-            (( size < 8192 )) || { fail 'This token is too large for secret-tool.'; return 1; }
+            (( size < 8192 )) || { fail 'totp.worker.tokenSize'; return 1; }
             printf '%s' "$payload" | timeout --signal=KILL "$secret_timeout" "$secret_tool" store \
-                "--label=$label" "${attributes[@]}" id "$id" >/dev/null 2>&1 || { fail 'Cannot save the token. Unlock the keyring and retry.'; return 1; }
+                "--label=$label" "${attributes[@]}" id "$id" >/dev/null 2>&1 || { fail 'totp.worker.save'; return 1; }
             entries=$(printf '%s\n%s\n' "$entries" "$replacement" | jq -cs \
                 '.[1] as $new | [.[0][] | select(.id != $new.id)] + [$new] | sort_by(.name | ascii_downcase)') ;;
         delete)
-            timeout --signal=KILL "$secret_timeout" "$secret_tool" clear "${attributes[@]}" id "$id" >/dev/null 2>&1 || { fail 'Cannot delete the token. Unlock the keyring and retry.'; return 1; }
+            timeout --signal=KILL "$secret_timeout" "$secret_tool" clear "${attributes[@]}" id "$id" >/dev/null 2>&1 || { fail 'totp.worker.delete'; return 1; }
             entries=$(json "$entries" -c --arg id "$id" 'map(select(.id != $id))') ;;
     esac
     snapshot "$action" "$id"
@@ -237,16 +237,16 @@ restore_backup() {
         select([.[].id] | length == (unique | length)) |
         select(all(.[]; (.name | type == "string" and length > 0 and length <= 128 and (explode | all(. >= 32 and . != 127)))
             and (.token | type == "string" and length <= 4096))) | map({id, name, token})') \
-        || { fail 'The TOTP backup is invalid.'; return 1; }
+        || { fail 'totp.worker.invalidBackup'; return 1; }
     while IFS= read -r entry; do
         token=$(json "$entry" -r .token)
-        parse_token "$token" || { fail 'The TOTP backup contains an invalid token.'; return 1; }
+        parse_token "$token" || { fail 'totp.worker.backupToken'; return 1; }
     done < <(json "$target" -c '.[]')
     load_vault || return 1
     previous=$entries
     if ! replace_entries "$target" "$previous"; then
-        if replace_entries "$previous" "$target"; then fail 'Could not restore TOTP entries. Previous entries were restored.'
-        else fail 'TOTP restore and rollback failed. Unlock the keyring and import the backup again.'; fi
+        if replace_entries "$previous" "$target"; then fail 'totp.worker.restore'
+        else fail 'totp.worker.rollback'; fi
         return 1
     fi
     entries=$target
@@ -272,7 +272,7 @@ main() {
         ERROR=''
         RESPONSE=''
         if ! json "$request" -e 'type == "object" and (.action | type == "string")' >/dev/null 2>&1; then
-            printf '%s\n' '{"type":"error","message":"Invalid TOTP request."}'
+            printf '%s\n' '{"type":"error","message":"totp.worker.invalidRequest"}'
             continue
         fi
         action=$(json "$request" -r .action)

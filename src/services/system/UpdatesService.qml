@@ -1,5 +1,6 @@
 pragma Singleton
 
+import "../../i18n"
 import QtQml
 import Quickshell
 import Quickshell.Io
@@ -67,7 +68,7 @@ Singleton {
     function writeMarkdown() {
         const priority = root.priorityUpdates.map(root.markdownRow).join("\n")
         const normal = root.normalUpdates.map(root.markdownRow).join("\n")
-        const markdown = `# Available Updates\n\n## Priority Updates\n\n${priority || "No priority updates."}\n\n## Other Updates\n\n${normal || "No other updates."}\n`
+        const markdown = `# ${Translations.text("updates.report.title")}\n\n## ${Translations.text("updates.report.priority")}\n\n${priority || Translations.text("updates.empty.priority")}\n\n## ${Translations.text("updates.report.other")}\n\n${normal || Translations.text("updates.empty.other")}\n`
         markdownProcess.command = ["bash", "-c", "printf '%s' \"$1\" > \"$2\"", "updates-markdown", markdown, Config.updatesMarkdownFile]
         markdownProcess.running = true
     }
@@ -105,7 +106,7 @@ Singleton {
         // qmllint disable signal-handler-parameters
         onExited: (exitCode, exitStatus) => {
             if (exitCode !== 0 || exitStatus !== 0) {
-                _internal.error = "Could not read available updates."
+                _internal.error = Translations.text("updates.errors.read")
                 return
             }
             const priority = []
@@ -113,7 +114,7 @@ Singleton {
             for (const line of updatesOutput.text.split("\n").filter(line => line.trim())) {
                 const parts = line.trim().split(/\s+/)
                 if (parts.length !== 5) {
-                    _internal.error = "Invalid response from the update checker."
+                    _internal.error = Translations.text("updates.errors.invalidResponse")
                     return
                 }
                 const update = {repository: parts[0], architecture: parts[1], name: parts[2],
@@ -137,7 +138,7 @@ Singleton {
         // qmllint disable signal-handler-parameters
         onExited: (exitCode, exitStatus) => {
             if (exitCode !== 0 || exitStatus !== 0) {
-                _internal.error = "Could not refresh available updates."
+                _internal.error = Translations.text("updates.errors.refresh")
                 return
             }
             root.refresh()

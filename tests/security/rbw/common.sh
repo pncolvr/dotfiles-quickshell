@@ -25,7 +25,7 @@ export XDG_RUNTIME_DIR="$test_dir/runtime" XDG_DATA_HOME="$test_dir/data"
 export XDG_CACHE_HOME="$test_dir/cache" XDG_CONFIG_HOME="$test_dir/config"
 export PYTHONDONTWRITEBYTECODE=1 RBW_PROFILE=''
 copy_shell() {
-    tar -C "$project_root" --exclude='*.json' --exclude='*.env' --exclude='__pycache__' -cf - src | tar -C "$test_dir" -xf -
+    tar -C "$project_root" --exclude='src/services/launcher/providers/*.json' --exclude='*.env' --exclude='__pycache__' -cf - src | tar -C "$test_dir" -xf -
     sed -i 's/clipboardMonitorEnabled: true/clipboardMonitorEnabled: false/' "$test_dir/src/config/Config.qml"
     sed -i 's@readonly property var hyprlandHideApplicationsCommand:.*@readonly property var hyprlandHideApplicationsCommand: (active) => ["true"]@' "$test_dir/src/config/Config.qml"
 }

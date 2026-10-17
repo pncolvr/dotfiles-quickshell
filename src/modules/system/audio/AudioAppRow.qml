@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 
+import "../../../i18n"
 import QtQuick
 import "../../../theme"
 import "../../../theme/ui" as UI
@@ -48,7 +49,7 @@ Rectangle {
                 glyph: root.input
                     ? (root.muted ? Theme.micMutedIcon : Theme.micIcon)
                     : (root.muted ? Theme.volumeMutedIcon : Theme.volumeIcons[Theme.volumeIcons.length - 1])
-                hint: (root.muted ? "Unmute " : "Mute ") + root.app.name
+                hint: Translations.text(root.muted ? "audio.actions.unmuteDevice" : "audio.actions.muteDevice",[root.app.name])
                 enabled: root.canMute
                 highlightedDevice: root.muted
                 onClicked: root.audioService.toggleAppMute(root.app, root.input)
@@ -62,7 +63,7 @@ Rectangle {
                 volume: root.volume
                 muted: root.muted
                 enabled: root.canMute && root.app.nodes.length > 0
-                Accessible.name: (root.input ? "Microphone gain: " : "Volume: ") + root.app.name
+                Accessible.name: Translations.text(root.input ? "audio.gain.device" : "audio.volume.device",[root.app.name])
                 onVolumeMoved: value => root.audioService.setAppVolume(root.app, value)
             }
 
@@ -83,9 +84,9 @@ Rectangle {
                 compact: true
                 options: root.devices.map(node => ({name: node.name, description: root.audioService.deviceName(node), available: true}))
                 selectedName: root.app.deviceName
-                placeholder: root.app.multipleDevices ? "Multiple devices" : "Choose device"
-                hint: !root.app.routable ? "Device selection is unavailable for this app"
-                    : (root.input ? "Microphone for " : "Output for ") + root.app.name
+                placeholder: Translations.text(root.app.multipleDevices ? "audio.device.multiple" : "audio.device.choose")
+                hint: !root.app.routable ? Translations.text("audio.device.unavailableHint")
+                    : Translations.text(root.input ? "audio.device.appMicrophone" : "audio.device.appOutput",[root.app.name])
                 enabled: root.app.routable && options.length > 0 && !root.audioService.routingBusy
                 onSelected: name => {
                     const device = root.devices.find(node => node.name === name)

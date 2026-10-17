@@ -51,6 +51,10 @@ const services={
  ],
  BarModuleService:['function open(name) { Calls.record("bar", [name]) }']
 };
+fs.cpSync(repo+'/src/i18n',fixture+'/src/i18n',{recursive:true});
+fs.mkdirSync(fixture+'/src/config');
+fs.writeFileSync(fixture+'/src/config/qmldir','singleton Config 1.0 Config.qml\n');
+fs.writeFileSync(fixture+'/src/config/Config.qml','pragma Singleton\nimport QtQml\nQtObject { readonly property string language: "en" }\n');
 let metadata='GlobalShortcutRegistry 1.0 hyprland/GlobalShortcutRegistry.qml\nsingleton Calls 1.0 Calls.qml\n';
 fs.writeFileSync(fixture+'/src/services/Calls.qml', 'pragma Singleton\nimport QtQml\nQtObject {\n'
  +'property var calls: []\nfunction record(method, args) { calls = calls.concat([{method, args, at: Date.now()}]) }\n}\n');

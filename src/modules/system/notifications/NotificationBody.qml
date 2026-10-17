@@ -1,3 +1,4 @@
+import "../../../i18n"
 import QtQuick
 import "../../../theme"
 import "../../../theme/ui" as UI
@@ -22,7 +23,7 @@ UI.Text {
     readonly property string inboxTable: {
         if (!inboxReport) return ""
         const border = `border: 1px solid ${Theme.notificationBorder};`
-        const headers = ["Inbox", "Junk", "Error"].map(label =>
+        const headers = [Translations.text("notifications.inbox.inbox"), Translations.text("notifications.inbox.junk"), Translations.text("common.states.error")].map(label =>
             `<th width="33%" style="${border} color: ${Theme.accent};">${label}</th>`).join("")
         const counts = [inboxReport.inbox, inboxReport.junk, inboxReport.error].map(count =>
             `<td align="center" style="${border}">${count}</td>`).join("")

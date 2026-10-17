@@ -1,4 +1,5 @@
 pragma Singleton
+import "../../i18n"
 import "../"
 import "../status/TimeTracking.mjs" as Tracking
 import QtQml
@@ -43,7 +44,7 @@ Singleton {
         if (!write(tx => {
             const owner = tx.executeSql('SELECT token,session_id FROM status_writer WHERE id=1').rows.item(0);
             if (!owner || owner.token !== token)
-                throw Error('Writer changed');
+                throw Error(Translations.text("status.errors.writerChanged"));
 
             if (owner.session_id) {
                 const row = tx.executeSql('SELECT end_ms FROM status_sessions WHERE id=?', [owner.session_id]).rows.item(0);
@@ -52,7 +53,7 @@ Singleton {
             }
             if (mode) {
                 if (!['work', 'personal'].includes(mode))
-                    throw Error('Invalid tracking mode');
+                    throw Error(Translations.text("status.errors.invalidMode"));
 
                 const last = tx.executeSql('SELECT MAX(end_ms) AS last FROM status_sessions').rows.item(0).last;
                 now = Math.max(now, last ?? now);
@@ -76,7 +77,7 @@ Singleton {
             return false;
 
         if (!updated) {
-            error = 'Tracking writer changed.';
+            error = Translations.text("status.errors.writerReplaced");
             return false;
         }
         return reload();

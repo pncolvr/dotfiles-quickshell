@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 
+import "../../i18n"
 import QtQuick
 import QtQuick.Controls as QC
 import "../../theme"
@@ -131,7 +132,7 @@ Item {
                 TwitchUserSection {
                     objectName: "twitchLiveUsersSection"
                     width: parent.width
-                    title: "Live"
+                    title: Translations.text("twitch.sections.live")
                     users: root.liveUsers
                     columns: 1
                     forceExpanded: root.searchQuery.length > 0
@@ -140,7 +141,7 @@ Item {
                 TwitchUserSection {
                     objectName: "twitchOfflineUsersSection"
                     width: parent.width
-                    title: "Offline"
+                    title: Translations.text("twitch.sections.offline")
                     expanded: false
                     users: root.offlineUsers
                     columns: 1
@@ -149,13 +150,13 @@ Item {
                 }
                 UI.ColumnText {
                     visible: !root.users.length
-                    text: "No streamers yet — add one below"
+                    text: Translations.text("twitch.empty.initial")
                     color: Theme.inactive
                 }
                 UI.ColumnText {
                     objectName: "twitchSearchEmpty"
                     visible: root.users.length > 0 && !root.filteredUsers.length
-                    text: "No matching streamers."
+                    text: Translations.text("twitch.empty.filtered")
                     color: Theme.inactive
                 }
             }
@@ -182,7 +183,7 @@ Item {
                 anchors.rightMargin: root.spacing
                 height: parent.height
                 visible: !root.adding
-                placeholderText: "Search streamers…"
+                placeholderText: Translations.text("twitch.search.placeholder")
             }
 
             UI.ActionButton {
@@ -192,7 +193,7 @@ Item {
                 width: Theme.twitchEditorButtonWidth
                 height: Theme.twitchEditorHeight
                 glyph: Theme.addIcon
-                hint: "Add streamer"
+                hint: Translations.text("twitch.actions.add")
                 visible: !root.adding
                 enabled: TwitchService.usersReady
                 onClicked: {
@@ -218,9 +219,9 @@ Item {
                         objectName: "twitchLoginField"
                         width: Math.max(0, (parent.width - editorActions.width - 2 * parent.spacing) / 2)
                         height: Theme.twitchEditorHeight
-                        placeholderText: "Twitch channel"
+                        placeholderText: Translations.text("twitch.fields.channel")
                         enabled: TwitchService.usersReady
-                        Accessible.name: "Main streamer login or Twitch URL"
+                        Accessible.name: Translations.text("twitch.fields.channelAccessibleName")
                         onAccepted: root.addUser()
                         Keys.onEscapePressed: root.cancelEditor()
                     }
@@ -229,9 +230,9 @@ Item {
                         objectName: "twitchSecondChannelField"
                         width: loginField.width
                         height: Theme.twitchEditorHeight
-                        placeholderText: "Second channel"
+                        placeholderText: Translations.text("twitch.fields.secondChannel")
                         enabled: TwitchService.usersReady
-                        Accessible.name: "Optional second channel; clear to unlink"
+                        Accessible.name: Translations.text("twitch.fields.secondChannelAccessibleName")
                         onAccepted: root.addUser()
                         Keys.onEscapePressed: root.cancelEditor()
                     }
@@ -243,7 +244,7 @@ Item {
                         cancelObjectName: "cancelAddTwitchUser"
                         submitObjectName: "addTwitchUser"
                         submitGlyph: root.editingLogin ? Theme.checkIcon : Theme.addIcon
-                        submitHint: root.editingLogin ? "Save channels" : "Add streamer"
+                        submitHint: Translations.text(root.editingLogin ? "twitch.actions.saveChannels" : "twitch.actions.add")
                         submitEnabled: TwitchService.usersReady && loginField.text.trim().length > 0 && !root.linkEntry
                         onCancelled: root.cancelEditor()
                         onSubmitted: root.addUser()
@@ -252,9 +253,7 @@ Item {
                 UI.ColumnText {
                     width: parent.width
                     visible: !!root.linkEntry
-                    text: root.linkEntry?.fallbackLogin
-                        ? "That entry already has a second channel. Choose another channel."
-                        : "This replaces the separate " + (root.linkEntry?.login ?? "") + " entry with a second channel."
+                    text: Translations.text(root.linkEntry?.fallbackLogin ? "twitch.errors.alreadyLinked" : "twitch.link.replaces",[root.linkEntry?.login ?? ""])
                     wrapMode: Text.Wrap
                     color: Theme.inactive
                     textFormat: Text.PlainText
@@ -264,7 +263,7 @@ Item {
                     width: parent.width
                     height: Theme.twitchEditorHeight
                     visible: !!root.linkEntry && !root.linkEntry.fallbackLogin
-                    label: "Link these entries"
+                    label: Translations.text("twitch.actions.link")
                     fillColor: Theme.accent
                     enabled: TwitchService.usersReady && loginField.text.trim().length > 0
                     onClicked: root.addUser(true)
@@ -284,7 +283,7 @@ Item {
                 anchors.verticalCenterOffset: (height - headingMetrics.tightBoundingRect.height) / 2
                     - baselineOffset - headingMetrics.tightBoundingRect.y
                 width: parent.width - addAllButton.width - root.spacing
-                text: "Open in qutebrowser"
+                text: Translations.text("twitch.sections.browser")
                 color: Theme.inactive
                 elide: Text.ElideRight
                 centerVertical: true
@@ -300,8 +299,8 @@ Item {
                 anchors.right: parent.right
                 width: implicitContentWidth
                 height: Theme.twitchEditorHeight
-                label: "Add all (" + root.browserSuggestions.length + ")"
-                hint: "Add all " + root.browserSuggestions.length + " suggested streamers"
+                label: Translations.text("twitch.actions.addAll",[root.browserSuggestions.length])
+                hint: Translations.text("twitch.actions.addAllHint",[],root.browserSuggestions.length)
                 fillColor: Theme.accent
                 enabled: TwitchService.usersReady && root.browserSuggestions.length > 0
                 onClicked: root.addAllSuggestions()
@@ -332,7 +331,7 @@ Item {
                 anchors.verticalCenterOffset: (height - undoHeadingMetrics.tightBoundingRect.height) / 2
                     - baselineOffset - undoHeadingMetrics.tightBoundingRect.y
                 width: parent.width - undoAllButton.width - root.spacing
-                text: "Recently removed"
+                text: Translations.text("twitch.sections.removed")
                 color: Theme.inactive
                 elide: Text.ElideRight
                 centerVertical: true
@@ -348,8 +347,8 @@ Item {
                 anchors.right: parent.right
                 width: implicitContentWidth
                 height: Theme.twitchEditorHeight
-                label: "Undo all (" + TwitchService.removedUsers.length + ")"
-                hint: "Restore all recently removed streamers"
+                label: Translations.text("twitch.actions.undoAll",[TwitchService.removedUsers.length])
+                hint: Translations.text("twitch.actions.undoAllHint")
                 fillColor: Theme.accent
                 enabled: TwitchService.usersReady
                 onClicked: TwitchService.undoAllRemovals()
@@ -364,7 +363,7 @@ Item {
             visible: root.hasUndo
             logins: TwitchService.removedUsers.map(entry => entry.login)
             glyph: Theme.retryIcon
-            hintPrefix: "Restore "
+            hintKey: "twitch.actions.restoreChannel"
             buttonPrefix: "undoRemoveTwitchUser_"
             enabled: TwitchService.usersReady
             onSelected: login => TwitchService.undoRemoveUser(login)

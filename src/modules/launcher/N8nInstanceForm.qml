@@ -1,4 +1,5 @@
 pragma ComponentBehavior: Bound
+import "../../i18n"
 import QtQuick
 import "../../theme"
 import "../../theme/ui" as UI
@@ -20,9 +21,9 @@ Column {
         return Object.assign({},original,{name:name.text,url:url.text,apiKey:key.text,browser:browser.browser,
             profile:browser.browserProfile,windowMode:browser.windowMode,category,enabled:entryEnabled})
     }
-    UI.LabeledField { id:name; width:parent.width; label:'Name'; inputObjectName:'n8nName'; onAccepted:root.accepted() }
-    UI.LabeledField { id:url; width:parent.width; label:'Instance address'; inputObjectName:'n8nUrl'; placeholderText:'https://n8n.example.com'; onAccepted:root.accepted() }
-    UI.ColumnText { text:'API key'; color:Theme.inactive }
+    UI.LabeledField { id:name; width:parent.width; label:Translations.text("common.fields.name"); inputObjectName:'n8nName'; onAccepted:root.accepted() }
+    UI.LabeledField { id:url; width:parent.width; label:Translations.text("n8n.fields.address"); inputObjectName:'n8nUrl'; placeholderText:'https://n8n.example.com'; onAccepted:root.accepted() }
+    UI.ColumnText { text:Translations.text("n8n.fields.apiKey"); color:Theme.inactive }
     UI.SecretField { id:key; width:parent.width; objectName:'n8nApiKey'; onAccepted:root.accepted() }
     BrowserLaunchFields { id:browser; width:parent.width; objectNamePrefix:'n8n' }
     EntryCategorySelector {
@@ -30,8 +31,8 @@ Column {
         selectedName:root.category; onSelected: name => root.category=name
     }
     UI.ActionButton {
-        label:root.entryEnabled ? 'Enabled' : 'Disabled'; checkable:true; checked:root.entryEnabled
+        label:Translations.text(root.entryEnabled ? "common.states.enabled" : "common.states.disabled"); checkable:true; checked:root.entryEnabled
         foreground:root.entryEnabled ? Theme.accent : Theme.inactive
-        hint:'Include this instance in the picker'; onClicked:root.entryEnabled=!root.entryEnabled
+        hint:Translations.text("n8n.fields.enabledHint"); onClicked:root.entryEnabled=!root.entryEnabled
     }
 }

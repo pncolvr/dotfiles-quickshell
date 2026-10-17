@@ -1,3 +1,4 @@
+import "../../i18n"
 import QtQml
 
 QtObject {
@@ -16,7 +17,7 @@ QtObject {
                 const source = sources[0]
                 return {id: node.id,
                     description: source?.description || props["media.name"] || props["application.name"]
-                        || props["application.process.binary"] || node.description || "Video capture"}
+                        || props["application.process.binary"] || node.description || Translations.text("audio.sources.video")}
             }).filter(stream => stream !== null).sort((a, b) => a.description.localeCompare(b.description) || a.id - b.id)
     }
 }

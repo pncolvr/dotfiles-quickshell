@@ -1,3 +1,4 @@
+import "../../../i18n"
 import QtQuick
 import "../../../theme"
 import "../../../theme/ui" as UI
@@ -36,21 +37,21 @@ Item {
         UI.ActionButton {
             objectName: "timerPause"
             glyph: root.entry.running ? Theme.pauseIcon : Theme.playIcon
-            hint: root.entry.finished ? "Start again" : root.entry.running ? "Pause"
-                : root.entry.elapsedMs === 0 ? "Start" : "Resume"
+            hint: root.entry.finished ? Translations.text("timers.actions.restart") : root.entry.running ? Translations.text("media.actions.pause")
+                : Translations.text(root.entry.elapsedMs === 0 ? "timers.actions.start" : "timers.actions.resume")
             foreground: root.entry.running ? Theme.text : Theme.ok
             onClicked: TimersService.togglePause(root.entry)
         }
         UI.ActionButton {
             objectName: "timerReset"
             glyph: Theme.refreshIcon
-            hint: "Reset"
+            hint: Translations.text("common.actions.reset")
             onClicked: TimersService.reset(root.entry)
         }
         UI.ActionButton {
             objectName: "timerDelete"
             glyph: Theme.deleteIcon
-            hint: "Stop and delete"
+            hint: Translations.text("timers.actions.deleteHint")
             fillColor: Theme.urgent
             onClicked: TimersService.remove(root.entry)
         }

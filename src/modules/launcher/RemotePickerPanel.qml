@@ -1,4 +1,5 @@
 pragma ComponentBehavior: Bound
+import "../../i18n"
 import QtQuick
 import "../../services"
 import "../../theme"
@@ -7,7 +8,7 @@ import "../../theme/ui" as UI
 ManagedCollectionPanel {
     id: root
     service: RemoteService
-    collectionName: 'Remotes'
+    collectionName: Translations.text("remotes.title")
     pickerMode: PickerService.Mode.Remotes
     entryForm: RemoteForm {}
     canRemoveEntry: entry => !RemoteService.sessions.some(session=>session.id===entry.id)
@@ -20,22 +21,22 @@ ManagedCollectionPanel {
         Row {
             spacing:Theme.controlSpacing
             UI.ActionButton {
-                objectName:'remoteRunningOnly'; label:'Running only'
+                objectName:'remoteRunningOnly'; label:Translations.text("remotes.filter.running")
                 checkable:true; checked:RemoteService.activeOnly
                 foreground:checked ? Theme.accent : Theme.inactive
-                hint:'Show running and connecting sessions (Ctrl+R)'
+                hint:Translations.text("remotes.filter.runningHint")
                 onClicked:RemoteService.toggleActiveOnly()
             }
             UI.ActionButton {
-                objectName:'remoteDisconnect'; label:'Disconnect'
+                objectName:'remoteDisconnect'; label:Translations.text("remotes.actions.disconnect")
                 enabled:!!RemoteService.selectedSession && RemoteService.selectedSession.state!=='disconnecting'
-                hint:'Disconnect only this managed connection'; onClicked:RemoteService.disconnectSelected()
+                hint:Translations.text("remotes.actions.disconnectHint"); onClicked:RemoteService.disconnectSelected()
             }
             UI.ActionButton {
-                objectName:'remoteShutdown'; label:'Shut down VM'
+                objectName:'remoteShutdown'; label:Translations.text("remotes.actions.shutdown")
                 visible:RemoteService.selectedEntry?.type==='vm'
                 enabled:!RemoteService.busy; fillColor:Theme.urgent
-                hint:'Shut down the selected virtual machine'; onClicked:RemoteService.shutdownSelected()
+                hint:Translations.text("remotes.actions.shutdownHint"); onClicked:RemoteService.shutdownSelected()
             }
         }
     }

@@ -18,7 +18,15 @@ boot=$PROCESS_BOOT_ID
 identity() { process_identity "$@"; }
 alive() { process_alive "$@"; }
 alert() {
-    "${QS_PICKER_EXECUTABLE:-qs}" ipc -p "$config_root" call alerts "$@" >/dev/null 2>&1 || true
+    case $1 in
+        post|postCapture)
+            local capture_blocking=false
+            [[ $1 == postCapture ]] && capture_blocking=true
+            shift
+            "${QS_PICKER_EXECUTABLE:-qs}" ipc -p "$config_root" call alerts postMessage "$1" "$2" '[]' "$3" "$4" "$capture_blocking" >/dev/null 2>&1 || true
+            ;;
+        *) "${QS_PICKER_EXECUTABLE:-qs}" ipc -p "$config_root" call alerts "$@" >/dev/null 2>&1 || true ;;
+    esac
 }
 read_session() { sql 'SELECT payload FROM recording_session WHERE id=1;'; }
 delete_session() { sql "DELETE FROM recording_session WHERE token=CAST(X'$(hex "$1")' AS TEXT);"; }
@@ -34,7 +42,7 @@ recover_session() {
             saved=$(jq -c '.state="recovering"' <<< "$saved")
             sql "UPDATE recording_session SET payload=CAST(X'$(hex "$saved")' AS TEXT) WHERE token=CAST(X'$(hex "$token")' AS TEXT);" || return 2
             alive "$child" "$child_start" "$saved_boot" && kill -INT "$child"
-            alert post recording 'recording finishing' info 0
+            alert post recording 'recording.worker.finishing' info 0
         fi
         printf '%s\n' "$saved"
         return
@@ -100,7 +108,7 @@ request_stop() {
             publish
             # wf-recorder installs its own SIGINT handler, even as a background child.
             alive "$recorder_pid" "$recorder_start" "$boot" && kill -INT "$recorder_pid"
-            alert post recording 'recording finishing' info 0 ;;
+            alert post recording 'recording.worker.finishing' info 0 ;;
     esac
 }
 cleanup() {
@@ -121,24 +129,24 @@ trap cleanup EXIT
 trap request_stop USR1
 
 prepared=${4:-}
-[[ -n $prepared ]] || { alert post recording 'recording options missing' error 3000; exit 2; }
+[[ -n $prepared ]] || { alert post recording 'recording.worker.optionsMissing' error 3000; exit 2; }
 jq -e '(.command | type == "array" and length > 0 and all(.[]; type == "string"))
     and (.loopback | type == "array" and all(.[]; type == "string")) and (.filename | type == "string")' \
     <<< "$prepared" >/dev/null || exit 2
 filename=$(jq -r '.filename' <<< "$prepared")
 [[ -n $filename && $filename == /* ]] || exit 2
-mkdir -p -- "${filename%/*}" || { alert post recording 'recording folder unavailable' error 3000; exit 1; }
+mkdir -p -- "${filename%/*}" || { alert post recording 'recording.worker.folderUnavailable' error 3000; exit 1; }
 mapfile -d '' -t command < <(jq -j '.command[] | ., "\u0000"' <<< "$prepared")
 mapfile -d '' -t loopback < <(jq -j '.loopback[] | ., "\u0000"' <<< "$prepared")
 if ((${#loopback[@]})); then
-    loopback_id=$(pactl load-module "${loopback[@]}") || { alert post recording 'recording error' error 3000; exit 1; }
+    loopback_id=$(pactl load-module "${loopback[@]}") || { alert post recording 'recording.worker.error' error 3000; exit 1; }
     [[ $loopback_id =~ ^[0-9]+$ ]] || exit 2
     publish
     sleep 0.25
 fi
 state=starting
 publish
-alert postCapture recording 'recording starting' success 1000
+alert postCapture recording 'recording.worker.starting' success 1000
 sleep 1 & delay_pid=$!
 wait "$delay_pid" || true
 delay_pid=0
@@ -148,7 +156,7 @@ alert dismiss recording
 ready_deadline=$((SECONDS + 10))
 while ! $cancelled; do
     if ((SECONDS >= ready_deadline)); then
-        alert post recording 'recording cancelled: capture was not ready' error 3000
+        alert post recording 'recording.worker.notReady' error 3000
         exit 1
     fi
     capture_ready=$(timeout --kill-after=0.1 1 "${QS_PICKER_EXECUTABLE:-qs}" ipc -p "$config_root" call capture ready 2>/dev/null) || capture_ready=''
@@ -157,7 +165,7 @@ while ! $cancelled; do
     wait "$delay_pid" || true
     delay_pid=0
 done
-if $cancelled; then alert post recording 'recording cancelled' info 1000; exit 0; fi
+if $cancelled; then alert post recording 'recording.worker.cancelled' info 1000; exit 0; fi
 
 "${command[@]}" & recorder_pid=$!
 recorder_start=$(identity "$recorder_pid") || recorder_start='-'
@@ -171,15 +179,15 @@ while true; do
 done
 state=finalizing
 publish
-if ! cleanup; then alert post recording 'recording audio cleanup failed' error 3000; exit 1; fi
+if ! cleanup; then alert post recording 'recording.worker.cleanup' error 3000; exit 1; fi
 # cleanup is idempotent, but do not unload an already released module from EXIT.
 loopback_id=''
 trap - EXIT
 if [[ $recorder_status != 0 || ! -s $filename ]]; then
-    alert post recording 'recording error' error 3000
+    alert post recording 'recording.worker.error' error 3000
     exit 1
 fi
-alert post recording 'recording stopped' success 1000
+alert post recording 'recording.worker.stopped' success 1000
 if ((stop_time > 0)); then printf 'Recording stop completed in %s ms\n' "$(( $(date +%s%3N) - stop_time ))"; fi
 source "$worker_dir/../launcher/providers/_common/utils.sh"
 open_file_explorer "$filename"

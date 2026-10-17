@@ -1,5 +1,6 @@
 pragma Singleton
 
+import "../../i18n"
 import QtQml
 import Quickshell
 import Quickshell.Io
@@ -63,15 +64,15 @@ Singleton {
         // qmllint disable signal-handler-parameters
         onExited: (exitCode, exitStatus) => {
             if (exitCode !== 0 || exitStatus !== 0) {
-                devicesState.error = deviceError.text.trim() || "Could not read audio device profiles."
+                devicesState.error = deviceError.text.trim() || Translations.text("audio.errors.readProfiles")
                 return
             }
             try {
                 const snapshot = JSON.parse(deviceOutput.text)
-                if (!Array.isArray(snapshot.cards) || !Array.isArray(snapshot.nodes)) throw new Error("Invalid audio devices")
+                if (!Array.isArray(snapshot.cards) || !Array.isArray(snapshot.nodes)) throw new Error(Translations.text("audio.errors.invalidDevices"))
                 devicesState.snapshot = snapshot
                 devicesState.error = ""
-            } catch (error) { devicesState.error = "Could not read audio device profiles." }
+            } catch (error) { devicesState.error = Translations.text("audio.errors.readProfiles") }
         }
         // qmllint enable signal-handler-parameters
     }
@@ -108,14 +109,14 @@ Singleton {
         // qmllint disable signal-handler-parameters
         onExited: (exitCode, exitStatus) => {
             if (exitCode !== 0 || exitStatus !== 0)
-                devicesState.error = profileError.text.trim() || "Could not change the audio device profile."
+                devicesState.error = profileError.text.trim() || Translations.text("audio.errors.changeProfile")
             else root.refreshDevices()
         }
         // qmllint enable signal-handler-parameters
     }
 
     function deviceName(node) {
-        return node?.description || node?.nickname || node?.name || "Audio device"
+        return node?.description || node?.nickname || node?.name || Translations.text("audio.device.fallbackName")
     }
 
     function devices(input) { return input ? inputs : outputs }
@@ -243,8 +244,8 @@ Singleton {
         // qmllint disable signal-handler-parameters
         onExited: (exitCode, exitStatus) => {
             if (exitStatus !== 0 || exitCode !== 0)
-                root.routingError = routeError.text.trim() || "Could not switch the current apps."
-            else root.routingMessage = routeOutput.text.trim()
+                root.routingError = Translations.message(routeError.text.trim()) || Translations.text("audio.errors.moveApps")
+            else root.routingMessage = Translations.message(routeOutput.text.trim())
         }
         // qmllint enable signal-handler-parameters
     }

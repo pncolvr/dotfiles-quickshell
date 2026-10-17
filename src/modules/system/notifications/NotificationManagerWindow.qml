@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 
+import "../../../i18n"
 import QtQuick
 import QtQuick.Controls as QC
 import "../../../bar"
@@ -45,7 +46,7 @@ PrivateTooltipWindow {
                 UI.TabBar {
                     id: tabs
                     objectName: "notificationTabs"
-                    labels: ["History", "Emitters"]
+                    labels: [Translations.text("notifications.tabs.history"), Translations.text("notifications.tabs.emitters")]
                     anchors.left: parent.left
                     anchors.right: actions.left
                     anchors.rightMargin: Theme.controlSpacing
@@ -58,13 +59,13 @@ PrivateTooltipWindow {
                     UI.ActionButton {
                         glyph: NotificationService.dndEnabled ? Theme.notificationsDndEnabledIcon : Theme.notificationsDndDisabledIcon
                         foreground: NotificationService.dndEnabled ? Theme.accent : Theme.text
-                        hint: NotificationService.dndEnabled ? "Disable do not disturb" : "Enable do not disturb"
+                        hint: Translations.text(NotificationService.dndEnabled ? "notifications.dnd.disableHint" : "notifications.dnd.enableHint")
                         onClicked: NotificationService.toggle()
                     }
                     UI.ActionButton {
                         glyph: Theme.clearIcon
                         fillColor: Theme.urgent
-                        hint: "Clear all notifications"
+                        hint: Translations.text("notifications.actions.clearAllHint")
                         onClicked: NotificationService.clearAll()
                     }
                 }
@@ -95,7 +96,7 @@ PrivateTooltipWindow {
                 id: history
                 width: historyView.width - 10
                 spacing: 16
-                UI.Text { centerVertical: false; visible: !root.groups.length; text: "No saved notifications." }
+                UI.Text { centerVertical: false; visible: !root.groups.length; text: Translations.text("notifications.empty.history") }
                 Repeater {
                     model: root.groups.slice(0, root.groupLimit)
                     NotificationEmitterGroup {
@@ -108,7 +109,7 @@ PrivateTooltipWindow {
                         onLoadMore: root.entryLimits = Object.assign({}, root.entryLimits, {[modelData.emitterKey]: entryLimit + Config.notificationPageSize})
                     }
                 }
-                NotificationButton { visible: root.groups.length > root.groupLimit; label: "Load older emitters"; onClicked: root.groupLimit += Config.notificationPageSize }
+                NotificationButton { visible: root.groups.length > root.groupLimit; label: Translations.text("notifications.actions.loadOlderEmitters"); onClicked: root.groupLimit += Config.notificationPageSize }
             }
         }
         NotificationEmitterSettings {

@@ -1,4 +1,5 @@
 pragma Singleton
+import "../../i18n"
 import QtQml
 import Quickshell
 import Quickshell.Io
@@ -11,7 +12,7 @@ ManagedCollectionService {
     id: root
     repository: WebappRepository
     pickerMode: PickerService.Mode.Webapps
-    collectionName: 'Webapps'
+    collectionName: Translations.text("webapps.title")
     itemForEntry: entry => ({id:entry.id,title:entry.name,subtitle:entry.url,
         search:entry.name+' '+entry.url,result:entry.id})
     busy: launchTask.running
@@ -22,7 +23,7 @@ ManagedCollectionService {
         if (!entry || !entry.enabled) return
         let command
         try { command=Entries.launch(entry,Config.webappBrowsers) }
-        catch (exception) { error=exception.message; syncPicker(); return }
+        catch (exception) { error=Translations.message(exception); syncPicker(); return }
         launchTask.browserCommand=command
         launchTask.afterCommand=entry.after
         PickerService.close()
@@ -49,7 +50,7 @@ ManagedCollectionService {
         stderr: StdioCollector { waitForEnd:true }
         // qmllint disable signal-handler-parameters
         onExited: (code,status) => {
-            if (code || status) { root.error='Webapp launch failed.'; AlertService.post('webapps',root.error,'error'); return }
+            if (code || status) { root.error=Translations.text("webapps.errors.launch"); AlertService.post('webapps',root.error,'error'); return }
             if (beforeOpening) Qt.callLater(root.dispatchBrowser)
         }
         // qmllint enable signal-handler-parameters

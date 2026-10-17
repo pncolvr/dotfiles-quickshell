@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 pragma Singleton
 
+import "../../i18n"
 import QtQml
 import Quickshell
 import Quickshell.Io
@@ -13,8 +14,8 @@ Singleton {
 
     function open() {
         cancel()
-        PickerService.promptMenu("Text to encode", [], rows => root.encode(rows[0].result), "list", {
-            allowTyped: true, acceptLabel: "Generate QR code"
+        PickerService.promptMenu(Translations.text("qr.fields.text"), [], rows => root.encode(rows[0].result), "list", {
+            allowTyped: true, acceptLabel: Translations.text("qr.actions.generate")
         })
     }
     function encode(text) {
@@ -50,19 +51,19 @@ Singleton {
         if (operation?.process !== process) return
         let response
         try { response = JSON.parse(data) } catch (_) {
-            fail(operation, "Could not encode QR code")
+            fail(operation, Translations.text("qr.errors.encode"))
             return
         }
         switch (response.status) {
           case "error":
-            fail(operation, response.message)
+            fail(operation, Translations.text(response.message,response.args ?? []))
             break
           case "ready": {
             process.ready = true
-            AlertService.post("encode-qrcode", "QR code copied to clipboard", "success", 3000)
+            AlertService.post("encode-qrcode", Translations.text("qr.status.copied"), "success", 3000)
             previewCallback = () => {}
-            PickerService.promptMenu("", [{title: "QR code", result: "close", image: response.image}], previewCallback, "list", {
-                imageOnly: true, acceptLabel: "Close", onClosed: () => root.release(operation)
+            PickerService.promptMenu("", [{title: Translations.text("qr.title"), result: "close", image: response.image}], previewCallback, "list", {
+                imageOnly: true, acceptLabel: Translations.text("common.actions.close"), onClosed: () => root.release(operation)
             })
             break
           }
@@ -77,7 +78,7 @@ Singleton {
         }
         function onImagePreviewFailed() {
             if (root.job && root.previewCallback && PickerService.menuCallback === root.previewCallback)
-                root.fail(root.job, "Could not display QR code")
+                root.fail(root.job, Translations.text("qr.errors.display"))
         }
     }
     Component {
@@ -95,7 +96,7 @@ Singleton {
             onExited: (code, status) => {
                 const operation = root.job
                 if (operation?.process === task) {
-                    if (!ready || code !== 0 || status !== 0) root.fail(operation, "Could not encode QR code")
+                    if (!ready || code !== 0 || status !== 0) root.fail(operation, Translations.text("qr.errors.encode"))
                     else operation.process = null
                 }
                 task.destroy()

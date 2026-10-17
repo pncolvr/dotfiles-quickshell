@@ -1,4 +1,5 @@
 pragma ComponentBehavior: Bound
+import "../../../i18n"
 import QtQuick
 import QtQuick.Window
 import QtQuick.Layouts
@@ -132,7 +133,7 @@ Rectangle {
             width: parent.width
             font.pixelSize: Theme.fontSize * 4
             horizontalAlignment: Text.AlignHCenter
-            text: root.player?.trackTitle || root.player?.identity || "Media player"
+            text: root.player?.trackTitle || root.player?.identity || Translations.text("media.player.fallbackName")
             textFormat: Text.PlainText
             wrapMode: Text.Wrap
             maximumLineCount: 3
@@ -153,7 +154,7 @@ Rectangle {
             width: parent.width
             font.pixelSize: Theme.fontSize * 1.75
             horizontalAlignment: Text.AlignHCenter
-            text: root.player?.identity || "Media player"
+            text: root.player?.identity || Translations.text("media.player.fallbackName")
             textFormat: Text.PlainText
             elide: Text.ElideRight
         }
@@ -162,9 +163,9 @@ Rectangle {
             width: parent.width
             color: Theme.inactive
             horizontalAlignment: Text.AlignHCenter
-            text: visualizer.error ? "Audio visualizer unavailable"
+            text: visualizer.error ? Translations.text("media.visualizer.unavailable")
                 : !root.app ? ""
-                : !root.player?.isPlaying ? "Playback paused" : root.muted ? "Muted" : ""
+                : !root.player?.isPlaying ? Translations.text("media.states.paused") : root.muted ? Translations.text("audio.states.muted") : ""
             visible: !!text
         }
     }
@@ -193,7 +194,7 @@ Rectangle {
                 glyphSize: Theme.fontSize * 1.6
                 width: playbackControls.buttonSize
                 height: width
-                hint: "Previous track"
+                hint: Translations.text("media.actions.previousTrack")
                 enabled: !!root.player?.canGoPrevious
                 onClicked: root.player.previous()
             }
@@ -203,7 +204,7 @@ Rectangle {
                 glyphSize: Theme.fontSize * 1.6
                 width: playbackControls.buttonSize
                 height: width
-                hint: root.player?.isPlaying ? "Pause" : "Play"
+                hint: Translations.text(root.player?.isPlaying ? "media.actions.pause" : "media.actions.play")
                 highlightedDevice: true
                 enabled: root.player?.isPlaying ? !!root.player?.canPause : !!root.player?.canPlay
                 onClicked: { if (root.player.isPlaying) root.player.pause(); else root.player.play(); }
@@ -214,7 +215,7 @@ Rectangle {
                 glyphSize: Theme.fontSize * 1.6
                 width: playbackControls.buttonSize
                 height: width
-                hint: "Next track"
+                hint: Translations.text("media.actions.nextTrack")
                 enabled: !!root.player?.canGoNext
                 onClicked: root.player.next()
             }
@@ -224,7 +225,7 @@ Rectangle {
                 glyphSize: Theme.fontSize * 1.6
                 width: playbackControls.buttonSize
                 height: width
-                hint: "Stop playback"
+                hint: Translations.text("media.actions.stop")
                 enabled: !!root.player?.canControl
                 onClicked: root.player.stop()
             }
@@ -247,7 +248,7 @@ Rectangle {
             to: root.hasDuration ? root.player.length : 1
             stepSize: 1
             wheelEnabled: false
-            Accessible.name: "Playback position"
+            Accessible.name: Translations.text("media.position.accessibleName")
             onVolumeMoved: value => root.seekTo(value)
         }
         Item { visible: !root.hasPosition; Layout.fillWidth: true }
@@ -268,7 +269,7 @@ Rectangle {
                 glyphSize: Theme.fontSize * 1.5
                 Layout.preferredWidth: playbackControls.buttonSize
                 Layout.preferredHeight: playbackControls.buttonSize
-                hint: root.muted ? "Unmute" : "Mute"
+                hint: Translations.text(root.muted ? "audio.actions.unmute" : "audio.actions.mute")
                 highlightedDevice: root.muted
                 onClicked: if (root.app) root.audioService.toggleAppMute(root.app, false)
             }
@@ -279,7 +280,7 @@ Rectangle {
                 rightPadding: 0
                 volume: root.volume
                 muted: root.muted
-                Accessible.name: "Media volume"
+                Accessible.name: Translations.text("media.volume.accessibleName")
                 onVolumeMoved: value => { if (root.app) root.audioService.setAppVolume(root.app, value); }
             }
             UI.ColumnText {

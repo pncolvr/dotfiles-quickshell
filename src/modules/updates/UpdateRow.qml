@@ -1,3 +1,4 @@
+import "../../i18n"
 import QtQuick
 import "../../theme/ui" as UI
 import "../../theme"
@@ -51,7 +52,7 @@ Item {
                 text: root.versionText(root.update.oldVersion, Theme.urgent)
 
                 UI.HoverTooltip {
-                    text: `Installed: ${root.update.oldVersion}`
+                    text: Translations.text("updates.version.installed",[root.update.oldVersion])
                     cursorShape: Qt.PointingHandCursor
                     onClicked: UpdatesService.openPackage(root.update)
                 }
@@ -72,7 +73,7 @@ Item {
                 text: root.versionText(root.update.newVersion, Theme.active)
 
                 UI.HoverTooltip {
-                    text: `Available: ${root.update.newVersion}`
+                    text: Translations.text("updates.version.available",[root.update.newVersion])
                     cursorShape: Qt.PointingHandCursor
                     onClicked: UpdatesService.openPackage(root.update)
                 }

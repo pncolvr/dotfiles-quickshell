@@ -1,4 +1,5 @@
 pragma ComponentBehavior: Bound
+import "../../../i18n"
 import QtQuick
 import QtQuick.Controls as QC
 import "../../../theme"
@@ -39,7 +40,7 @@ Flickable {
         UI.ColumnText {
             width: parent.width
             visible: root.players.length === 0
-            text: "No media players available. Other audio apps are in Apps."
+            text: Translations.text("media.empty.players")
             color: Theme.inactive
             wrapMode: Text.Wrap
         }

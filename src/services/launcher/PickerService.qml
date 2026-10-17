@@ -1,5 +1,6 @@
 pragma Singleton
 
+import "../../i18n"
 import QtQml
 import "Search.mjs" as Search
 import Quickshell
@@ -25,7 +26,7 @@ Singleton {
     property var menuCallback: null
     property var menuClosedCallback: null
     property bool menuKeepOpen: false
-    property string acceptLabel: "Select"
+    property string acceptLabel: Translations.text("common.actions.select")
     property string query: ""
     property string layout: "list"
     property var items: []
@@ -114,7 +115,12 @@ Singleton {
         mode = newMode; prompt = title; query = ""; items = []; selectedIds = []; currentIndex = 0
         if (newMode === PickerService.Mode.Clipboard) clipboardSearch.fuzzy = false
         itemCriteria = ({})
-        acceptLabel = newMode === PickerService.Mode.Apps ? "Open" : newMode === PickerService.Mode.Windows ? "Focus" : "Select"
+        let actionKey = "common.actions.select"
+        switch (newMode) {
+          case PickerService.Mode.Apps: actionKey = "common.actions.open"; break
+          case PickerService.Mode.Windows: actionKey = "common.actions.focus"; break
+        }
+        acceptLabel = Translations.text(actionKey)
         layout = "list"; multiple = false; allowTyped = false; customAccept = false
         error = ""; destination = ""; destinationClass = ""; selectionKey = ""
         forcePrompt = false; previewImages = false; secretDescription = ""; privateRequest = false
@@ -144,7 +150,7 @@ Singleton {
         layout = presentation
         multiple = options.allowMultipleSelection === true
         allowTyped = options.allowTyped === true
-        acceptLabel = options.acceptLabel || "Select"
+        acceptLabel = options.acceptLabel || Translations.text("common.actions.select")
         restoreMenuSelection(options)
         show()
     }
@@ -158,17 +164,17 @@ Singleton {
             JSON.stringify(item.result) === JSON.stringify(previous)))
     }
     function apps() {
-        begin(PickerService.Mode.Apps, "Applications")
+        begin(PickerService.Mode.Apps, Translations.text("picker.titles.applications"))
         syncApps()
         show()
     }
     function projects(browser = false) {
-        begin(PickerService.Mode.Projects, "Projects")
+        begin(PickerService.Mode.Projects, Translations.text("projects.title"))
         ProjectService.open(browser)
         show()
     }
     function directories() {
-        begin(PickerService.Mode.Directories, "Directories")
+        begin(PickerService.Mode.Directories, Translations.text("directories.title"))
         allowTyped = true
         DirectoryService.open()
         show()
@@ -179,12 +185,12 @@ Singleton {
         show()
     }
     function remotes() {
-        begin(PickerService.Mode.Remotes, "Remotes")
+        begin(PickerService.Mode.Remotes, Translations.text("remotes.title"))
         RemoteService.open()
         show()
     }
     function webapps() {
-        begin(PickerService.Mode.Webapps, "Webapps")
+        begin(PickerService.Mode.Webapps, Translations.text("webapps.title"))
         WebappService.open()
         show()
     }
@@ -217,7 +223,7 @@ Singleton {
                 search: client.title + " " + client.class + " " + client.workspace.name, result: client.address, workspaceId: client.workspace.id, client}))
     }
     function windows(scope) {
-        begin(PickerService.Mode.Windows, scope === "current" ? "Windows in this workspace" : "Windows")
+        begin(PickerService.Mode.Windows, Translations.text(scope === "current" ? "picker.titles.workspaceWindows" : "picker.titles.windows"))
         windowScope = scope
         items = windowItems(scope)
         customAccept = true
@@ -233,7 +239,7 @@ Singleton {
     function expose(scope) {
         if (visible && layout === "expose") { close(); return }
         const focused = Hyprland.activeToplevel?.address
-        begin(PickerService.Mode.Windows, "Windows")
+        begin(PickerService.Mode.Windows, Translations.text("picker.titles.windows"))
         layout = "expose"
         windowScope = "all"
         items = windowItems("all", true)
@@ -289,7 +295,7 @@ Singleton {
     }
 
     function clipboard() {
-        begin(PickerService.Mode.Clipboard, "Clipboard")
+        begin(PickerService.Mode.Clipboard, Translations.text("picker.titles.clipboard"))
         openingClipboard = true
         clipboardSearch.fuzzy = false
         ClipboardService.initialize()
@@ -511,7 +517,7 @@ Singleton {
                 const client = JSON.parse(windowOutput.text)
                 root.destination = client.address || ""
                 root.destinationClass = client.class || ""
-            } catch (_) { root.error = "Original window unavailable. Use Copy, then paste manually." }
+            } catch (_) { root.error = Translations.text("clipboard.errors.originalWindow") }
             root.show()
         }
         // qmllint enable signal-handler-parameters
@@ -540,7 +546,7 @@ Singleton {
             }
             root.privateRequest = request.private === true
             root.requestDirectory = directory
-            root.prompt = request.prompt || "Choose"
+            root.prompt = request.prompt || Translations.text("common.actions.choose")
             root.forcePrompt = request.showPrompt === true
             root.previewImages = request.previewImages === true
             root.imageOnly = request.kind === "image"
@@ -552,7 +558,7 @@ Singleton {
                 root.show()
                 return
             }
-            root.acceptLabel = request.acceptLabel || (request.action === "default" ? "Open links" : "Select")
+            root.acceptLabel = request.acceptLabel || (Translations.text(request.action === "default" ? "bookmarks.actions.open" : "common.actions.select"))
             root.multiple = request.allowMultipleSelection === true
             root.allowTyped = request.allowTyped === true
             root.customAccept = request.customAccept === true
