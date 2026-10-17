@@ -28,7 +28,6 @@ Item {
             color: root.nameColor
             elide: Text.ElideMiddle
             width: root.width - versions.width - content.spacing
-
             UI.HoverTooltip {
                 text: parent.text
                 cursorShape: Qt.PointingHandCursor
@@ -50,7 +49,7 @@ Item {
                 width: Math.min(implicitWidth, Math.max(versions.availableVersionWidth / 2,
                     versions.availableVersionWidth - newVersion.implicitWidth))
                 text: root.versionText(root.update.oldVersion, Theme.urgent)
-
+                color: Theme.updatesUnchangedColor
                 UI.HoverTooltip {
                     text: Translations.text("updates.version.installed",[root.update.oldVersion])
                     cursorShape: Qt.PointingHandCursor
@@ -71,7 +70,7 @@ Item {
                 width: Math.min(implicitWidth, Math.max(versions.availableVersionWidth / 2,
                     versions.availableVersionWidth - oldVersion.implicitWidth))
                 text: root.versionText(root.update.newVersion, Theme.active)
-
+                color: Theme.updatesUnchangedColor
                 UI.HoverTooltip {
                     text: Translations.text("updates.version.available",[root.update.newVersion])
                     cursorShape: Qt.PointingHandCursor
