@@ -7,11 +7,10 @@ layout(std140, binding = 0) uniform buf {
     vec4 baseColor;
     vec4 pulseColor;
     float phase;
-    float phaseOffset;
 };
 layout(binding = 1) uniform sampler2D source;
 void main() {
     float coverage = texture(source, qt_TexCoord0).a;
-    float blend = 0.5 - 0.5 * cos(6.28318530718 * (phase + phaseOffset));
+    float blend = 0.5 - 0.5 * cos(6.28318530718 * phase);
     fragColor = mix(baseColor, pulseColor, blend) * coverage * qt_Opacity;
 }

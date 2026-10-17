@@ -12,6 +12,17 @@ tar -C "$project_root" --exclude='*.env' --exclude='src/services/launcher/provid
 sed -i -E 's/readonly property bool (animationsEnabled|micPulseEnabled):.*/property bool \1: true/;s/readonly property bool animateDuringScreenShare:.*/property bool animateDuringScreenShare: false/' "$test_dir/src/config/Config.qml"
 sed -i 's/readonly property bool screencastActive:.*/property bool screencastActive: false/' "$test_dir/src/services/audio/AudioService.qml"
 sed 's@"../../src@"src@g' "$project_root/tests/qml/pulse-smoke.qml" > "$test_dir/shell.qml"
+if [[ ${PULSE_TEST_COMPOSITOR:-0} == 1 ]]; then
+    export PULSE_TEST_CAPTURE_HELPER="$test_dir/capture.sh"
+    cat > "$PULSE_TEST_CAPTURE_HELPER" <<'CAPTURE'
+#!/usr/bin/env bash
+set -euo pipefail
+# Only the two 100x100 test surfaces; discard the image after reading its pixels.
+pixels=$(grim -s 1 -g "$1" - | magick png:- -format '%[fx:p{50,50}.r] %[fx:p{150,50}.r]' info:)
+read -r first second <<< "$pixels"
+jq -nc --argjson first "$first" --argjson second "$second" '{first:$first,second:$second}'
+CAPTURE
+fi
 output=$(QT_QPA_PLATFORM=wayland timeout -k 2 10 qs -p "$test_dir/shell.qml" 2>&1) || { printf '%s\n' "$output"; exit 1; }
 printf '%s\n' "$output"
 [[ $output == *'PASS: GPU pulse'* && $output == *'PASS: disabling pulse'* \

@@ -8,9 +8,21 @@ Run the following commands from the repository root.
 bash tests/run.sh
 ```
 
-This runs the isolated suites sequentially on a private session bus, continues
-after failures and retains a log for each suite plus `results.tsv` under the
-printed `/tmp/quickshell-tests.*` directory. It exits nonzero if any suite fails.
+This runs the isolated suites sequentially on a private session bus and continues
+after failures. In a terminal, each suite starts with RUN and replaces that same
+line with green PASS or red FAIL; redirected output contains only the completed
+line. `NO_COLOR` disables colors. The summary gives separate suite and test totals
+and lists failed suites and test names with their logs.
+
+The printed `/tmp/quickshell-tests.*` directory retains a log for each suite,
+`results.tsv` with suite results and counts, and `tests.tsv` with every named test
+result, mode, suite and log path. All suites use this common reporting format:
+shell/QML PASS/FAIL/SKIP checkpoints and QtTest cases are normalized by the runner;
+Node's test runner uses TAP. A named checkpoint may cover several assertions and
+counts once. An uncaught exit or timeout without a reported failure becomes an
+explicit suite-execution failure. Successful suites must report at least one
+named result; empty reports fail instead of inflating the pass count.
+The runner exits nonzero if a suite exits unsuccessfully or reports a failed test.
 Fixture helpers and mocks are exercised by their parent suites.
 
 ```sh
@@ -35,6 +47,11 @@ surface transitions. Its timer pauses during each action to prevent synthetic
 input from reentering the same step.
 
 ## Individual checks
+
+`bash tests/runner/reporting.sh` checks reporting with synthetic passing, failing,
+skipped, silent, TAP and QtTest suites. It verifies terminal colors and line
+replacement through a private pseudoterminal, named failures, timeouts and TSV
+totals. It does not run the full suite or take desktop focus.
 
 `bash tests/system/optional-integrations.sh` checks both
 branches of `hyprlandHideApplicationsEnabled` for sharing on/off and animations
@@ -275,14 +292,12 @@ and event subscriptions. Mute and screen-sharing pulses deliberately keep
 rendering while active; measure truly idle CPU with no ongoing animation.
 
 Pulsing text caches its glyph in a layer and blends colors in the shared
-`PulseText` shader. `UniformAnimator` runs the existing two-second sine pulse on
-the render thread, avoiding per-frame JavaScript and text-color updates. The
-shader's sine curve uses `PulseClock`'s shared elapsed-time origin, so later-starting or
-reshown indicators join the same pulse phase. Each effect synchronizes once after
-its first rendered frame, then disconnects that signal; no per-frame global timer
-or JavaScript synchronization runs. The
-layer and animation share one gate: a requested pulse, visible text, a visible
-containing window and the shared motion policy. Hiding either stops the animation and releases the layer;
+`PulseText` shader. `PulseClock` animates one shared phase on the GUI thread for
+the existing two-second sine pulse. Every effect binds to that phase, so later
+and resumed indicators stay synchronized. The clock runs only while at least one
+pulse is active; it uses one animation and no per-frame JavaScript callback.
+The layer and clock registration share one gate: a requested pulse, visible text,
+a visible containing window and the shared motion policy. Hiding either releases the layer and registration;
 showing it again resumes the requested pulse. Muted mic and speaker indicators
 pulse only while an application's active PipeWire link requests their default
 device. Paused links and requests routed to another device do not keep them
@@ -290,6 +305,7 @@ animating. Screen sharing pulses while sharing is active. Duration and colors
 remain in Theme.qml. Rendering still runs while the pulse is active.
 Default-device link groups must be bound with `PwObjectTracker` before their
 state can be used; an unbound group's state does not reflect active audio.
+Run `bash tests/qml/pulse-clock.sh` for offscreen shared-clock lifecycle checks.
 Run `bash tests/qml/pulse.sh` in a Wayland session to verify rendered colors and
 stopping behavior, including an independently enabled status pulse with the master
 off during sharing; software/offscreen tests cannot validate this GPU effect. The

@@ -38,6 +38,23 @@ limit=${TEST_TIMEOUT:-180}
 passed=0
 failed=0
 total=0
+skipped=0
+tests_passed=0
+tests_failed=0
+tests_skipped=0
+failed_suites=()
+green=''
+red=''
+reset=''
+interactive=false
+if [[ -t 1 && ${TERM:-dumb} != dumb ]]; then
+    interactive=true
+    if [[ ! -v NO_COLOR ]]; then
+        green=$'\e[32m'
+        red=$'\e[31m'
+        reset=$'\e[0m'
+    fi
+fi
 native_running=false
 native_notification_id=''
 desktop_bus=${QS_TEST_DESKTOP_BUS:-}
@@ -52,7 +69,7 @@ finish_native() {
     native_running=false
     local status=${1:-0} summary='Native tests finished' body
     if ((status != 0)); then summary='Native tests stopped'; fi
-    body="You can use the keyboard and mouse now. Results so far: $passed passed, $failed failed. Logs: $logs"
+    body="You can use the keyboard and mouse now. Suites: $passed passed, $failed failed. Tests: $tests_passed passed, $tests_failed failed. Logs: $logs"
     if [[ $native_notification_id =~ ^[1-9][0-9]*$ ]]; then
         notify_native --replace-id="$native_notification_id" --urgency=normal \
             --expire-time=8000 "$summary" "$body" >/dev/null 2>&1 || true
@@ -62,9 +79,10 @@ finish_native() {
 if ! $list; then
     logs=$(mktemp -d /tmp/quickshell-tests.XXXXXXXX)
     printf 'Logs: %s\n' "$logs"
-    printf 'status\tseconds\tsuite\tlog\n' > "$logs/results.tsv"
-    trap 'printf "Interrupted; logs: %s\n" "$logs" >&2; exit 130' INT
-    trap 'printf "Stopped; logs: %s\n" "$logs" >&2; exit 143' TERM
+    printf 'status\tseconds\tsuite\tlog\tmode\tpassed\tfailed\tskipped\n' > "$logs/results.tsv"
+    printf 'status\tmode\tsuite\ttest\tlog\n' > "$logs/tests.tsv"
+    trap 'printf "\nInterrupted; logs: %s\n" "$logs" >&2; exit 130' INT
+    trap 'printf "\nStopped; logs: %s\n" "$logs" >&2; exit 143' TERM
     trap 'finish_native "$?"' EXIT
 fi
 run() {
@@ -79,7 +97,7 @@ run() {
     total=$((total + 1))
     local log="$logs/$(printf '%03d' "$total")-${name//\//-}.log"
     local started=$SECONDS status=0
-    printf 'RUN  %s\n' "$name"
+    if $interactive; then printf 'RUN  %s/%s' "$mode" "$name"; fi
     if [[ $mode == isolated ]]; then
         env -u WAYLAND_DISPLAY -u HYPRLAND_INSTANCE_SIGNATURE -u DISPLAY \
             QT_QPA_PLATFORM=offscreen QT_NO_XDG_DESKTOP_PORTAL=1 \
@@ -91,21 +109,43 @@ run() {
         timeout --kill-after=10 "$limit" "$@" > "$log" 2>&1 || status=$?
     fi
     local elapsed=$((SECONDS - started)) result=PASS
-    if ((status == 0)); then
+    local cases="$log.tests.tsv" case_passed case_failed case_skipped
+    awk -v mode="$mode" -v suite="$name" -v log_path="$log" -v exit_status="$status" \
+        -v limit="$limit" -f "$repo/tests/runner/results.awk" "$log" > "$cases"
+    cat "$cases" >> "$logs/tests.tsv"
+    read -r case_passed case_failed case_skipped < <(awk -F '\t' '
+        $1 == "PASS" { passed++ } $1 == "FAIL" { failed++ } $1 == "SKIP" { skipped++ }
+        END { print passed+0, failed+0, skipped+0 }
+    ' "$cases")
+    tests_passed=$((tests_passed + case_passed))
+    tests_failed=$((tests_failed + case_failed))
+    tests_skipped=$((tests_skipped + case_skipped))
+    if ((status == 0 && case_failed == 0 && case_passed == 0)); then
+        skipped=$((skipped + 1))
+        result=SKIP
+    elif ((status == 0 && case_failed == 0)); then
         passed=$((passed + 1))
     else
         failed=$((failed + 1))
+        failed_suites+=("$mode/$name ($log)")
         result=FAIL
     fi
-    printf '%s %s (%ss; exit %s)\n' "$result" "$name" "$elapsed" "$status"
-    printf '%s\t%s\t%s\t%s\n' "$result" "$elapsed" "$name" "$log" >> "$logs/results.tsv"
+    local color=''
+    if [[ $result == PASS ]]; then color=$green; elif [[ $result == FAIL ]]; then color=$red; fi
+    if $interactive; then printf '\r\033[2K'; fi
+    printf '%s%s%s %s/%s (%s passed, %s failed, %s skipped; %ss; exit %s)\n' \
+        "$color" "$result" "$reset" "$mode" "$name" "$case_passed" "$case_failed" "$case_skipped" "$elapsed" "$status"
+    printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$result" "$elapsed" "$name" "$log" \
+        "$mode" "$case_passed" "$case_failed" "$case_skipped" >> "$logs/results.tsv"
 }
 
+run isolated runner/reporting bash tests/runner/reporting.sh
 run isolated qml/lint bash tests/qml/lint.sh
 run isolated qml/singletons bash tests/qml/singletons.sh
 run isolated qml/selection bash tests/qml/selection.sh
 run isolated qml/button-focus bash tests/qml/button-focus.sh
 run isolated qml/batched-model bash tests/qml/batched-model.sh
+run isolated qml/pulse-clock bash tests/qml/pulse-clock.sh
 run isolated qml/alerts bash tests/qml/alerts.sh
 run isolated i18n bash tests/i18n/run.sh
 run isolated audio/controls bash tests/audio/audio.sh
@@ -141,7 +181,7 @@ run isolated launcher/capture-close-model node tests/launcher/capture-close-timi
 run isolated launcher/wallpaper bash tests/launcher/wallpaper.sh
 run isolated launcher/window-switcher bash tests/launcher/window-switcher.sh
 run isolated projects/scan bash tests/projects/scan.sh
-run isolated projects/model node --test tests/projects/launchers.test.mjs
+run isolated projects/model node --test --test-reporter=tap tests/projects/launchers.test.mjs
 run isolated projects/launchers bash tests/projects/launchers.sh
 run isolated projects/sources bash tests/projects/projects.sh
 run isolated projects/grouping bash tests/projects/grouping.sh
@@ -251,7 +291,16 @@ if $native; then
     finish_native
 fi
 if ! $list; then
-    printf '\nSuites: %s passed, %s failed, %s total.\nLogs: %s\n' "$passed" "$failed" "$total" "$logs"
+    printf '\nSuites: %s passed, %s failed, %s skipped, %s total.\n' "$passed" "$failed" "$skipped" "$total"
+    printf 'Tests: %s passed, %s failed, %s skipped, %s total.\n' \
+        "$tests_passed" "$tests_failed" "$tests_skipped" "$((tests_passed + tests_failed + tests_skipped))"
+    if ((${#failed_suites[@]})); then
+        printf '\nFailed suites:\n'
+        printf '  %s\n' "${failed_suites[@]}"
+        printf '\nFailed tests:\n'
+        awk -F '\t' '$1 == "FAIL" { printf "  %s/%s: %s (%s)\n", $2, $3, $4, $5 }' "$logs/tests.tsv"
+    fi
+    printf '\nSuite results: %s/results.tsv\nAll test results: %s/tests.tsv\nLogs: %s\n' "$logs" "$logs" "$logs"
     $native || printf 'Native desktop checks excluded; opt in with --native while idle.\n'
     $benchmarks || printf 'Benchmarks excluded; opt in with --benchmarks.\n'
     ((failed == 0))
