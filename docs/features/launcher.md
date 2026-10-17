@@ -384,7 +384,8 @@ changes, so a delayed grab-clear event cannot dismiss the next step.
 Search and preview an image, press Enter, choose personal/work mode, then choose
 the connected monitor in a separate step. The focused monitor appears first. After
 applying, browsing resumes with the same image selected and the same search terms.
-Escape in either target step returns to image browsing; Escape in the image picker
+Escape in either target step returns to image browsing without closing the native
+surface or releasing its keyboard focus; Escape in the image picker
 ends the session. Target choices use the standard picker without prompt labels.
 The wallpaper list shows filenames without thumbnails, so rows do not load or
 cache images. Only the highlighted image loads in a separate, larger floating

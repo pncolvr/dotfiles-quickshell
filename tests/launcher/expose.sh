@@ -35,8 +35,12 @@ if [[ -n ${WAYLAND_DISPLAY:-} ]]; then
     display=$WAYLAND_DISPLAY
     [[ $display = /* ]] || display="${XDG_RUNTIME_DIR:-/run/user/$UID}/$display"
     sed 's@"../../src@"src@g' "$project_root/tests/launcher/expose-animation-smoke.qml" > "$test_dir/shell.qml"
-    output=$(QT_QPA_PLATFORM=wayland WAYLAND_DISPLAY="$display" XDG_RUNTIME_DIR="$test_dir/runtime" \
-        XDG_DATA_HOME="$test_dir/data" XDG_CACHE_HOME="$test_dir/cache" timeout -k 2 10 qs -p "$test_dir" 2>&1) || { printf '%s\n' "$output" >&2; exit 1; }
+    # A crash reporter can inherit stdout. A file keeps that child from holding
+    # a command-substitution pipe open after the fixture has already crashed.
+    QT_QPA_PLATFORM=wayland WAYLAND_DISPLAY="$display" XDG_RUNTIME_DIR="$test_dir/runtime" \
+        XDG_DATA_HOME="$test_dir/data" XDG_CACHE_HOME="$test_dir/cache" timeout -k 2 10 qs -p "$test_dir" \
+        > "$test_dir/native.log" 2>&1 || { cat "$test_dir/native.log" >&2; exit 1; }
+    output=$(< "$test_dir/native.log")
     while IFS= read -r line; do [[ $line != *'PASS:'* ]] || printf '%s\n' "$line"; done <<< "$output"
     [[ $output == *'PASS:'* && $output != *'EXPOSE FAIL:'* && $output != *'TypeError:'* && $output != *'ReferenceError:'* \
         && $output != *'Binding loop'* && $output != *'Failed to load configuration'* ]] || { printf '%s\n' "$output" >&2; exit 1; }

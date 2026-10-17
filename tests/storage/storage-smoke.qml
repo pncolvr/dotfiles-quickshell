@@ -228,8 +228,8 @@ Scope {
         const midnightAfter = new Date(2026, 9, 5, 0, 1).getTime()
         const starts = new Date(2026, 9, 5, 10, 0).getTime()
         const users = [{login: "alice", nextStreamAt: starts}]
-        check(TwitchService.formatOfflineUsers(users, midnightBefore)[0].nextStream === "tomorrow at 10:00", "tomorrow before midnight")
-        check(TwitchService.formatOfflineUsers(users, midnightAfter)[0].nextStream === "today at 10:00", "today after midnight without fetching")
+        check(TwitchService.formatOfflineUsers(users, midnightBefore)[0].nextStream === "Tomorrow at 10:00", "tomorrow before midnight")
+        check(TwitchService.formatOfflineUsers(users, midnightAfter)[0].nextStream === "Today at 10:00", "today after midnight without fetching")
         check(TwitchService.formatOfflineUsers(users, starts)[0].nextStream === "", "past schedules disappear")
         check(CalendarService.formatDate("invalid", midnightBefore) === "", "invalid timestamp ignored")
         check(TwitchService.nextScheduledStream([

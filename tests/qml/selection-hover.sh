@@ -43,7 +43,7 @@ wait_state '.writes==0'
 for mode in volume mic profile folder type private-folder; do
     for above in true false; do
         ipc begin "$mode" "$above" >/dev/null
-        wait_state '.visible and .toggleReady'
+        wait_state '.visible and .toggleReady and .settled'
         ipc hoverToggle >/dev/null
         ipc open >/dev/null
         wait_state ".expanded and .popupOpened and .opensAbove==$above and .rowsReady"
@@ -62,7 +62,7 @@ done
 for mode in folder private-folder; do
     for lower in false true; do
         ipc begin "$mode" false >/dev/null
-        wait_state '.visible and .toggleReady'
+        wait_state '.visible and .toggleReady and .settled'
         ipc hoverAction "$lower" true >/dev/null
         ipc leaveTrigger >/dev/null
         wait_state '.cursorHovered and .cursorHintReady and .cursorHintOpened'

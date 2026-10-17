@@ -2,6 +2,34 @@
 
 Run the following commands from the repository root.
 
+## Run the suite
+
+```sh
+bash tests/run.sh
+```
+
+This runs the isolated suites sequentially on a private session bus, continues
+after failures and retains a log for each suite plus `results.tsv` under the
+printed `/tmp/quickshell-tests.*` directory. It exits nonzero if any suite fails.
+Fixture helpers and mocks are exercised by their parent suites.
+
+```sh
+bash tests/run.sh --benchmarks             # include performance benchmarks
+bash tests/run.sh --native --benchmarks    # also include native desktop checks
+bash tests/run.sh --list                   # print suite names and commands
+```
+
+Run `--native` only with the keyboard and mouse idle: those checks can take focus,
+move the pointer, open native dialogs or use GPU capture. Default runs unset the
+desktop display/compositor variables and disable optional native fixture modes.
+Before native checks, the runner gives a one-minute warning and shows a persistent
+critical desktop notification. It replaces that notification when the checks finish
+or stop, so you know when the keyboard and mouse are available again. Notifications
+require `notify-send` and a desktop session bus; terminal status remains available.
+Set `TEST_TIMEOUT=300` to change the default 180-second limit per suite.
+
+## Individual checks
+
 `bash tests/system/optional-integrations.sh` checks both
 branches of `hyprlandHideApplicationsEnabled` for sharing on/off and animations
 on/off. It exercises the capture-sync service with a mock hyprctl; it never
@@ -897,7 +925,8 @@ picker/config IPC. Separate retained-executor checks cover per-mode/output links
 legacy numeric slots, application failure, daemon readiness, custom Config storage
 and offline restoration. The fixture isolates capture-state policy from live audio. It selects a non-first
 row beyond the initial viewport and checks the rendered highlight/scroll position,
-as well as continuously visible image → mode → monitor steps.
+as well as continuously visible image → mode → monitor steps and cancellation
+back to image browsing without closing the native picker.
 With the keyboard idle, run `WALLPAPER_TEST_NATIVE=1 bash tests/launcher/wallpaper.sh`
 for the actual PickerWindow Enter/click handoffs with a delayed monitor read.
 It uses synthetic images and mocked setters, restores original focus, never moves
@@ -1135,6 +1164,10 @@ checks initial/repeated/rapid opening with motion on/off, and sends the first in
 as soon as the native window owns focus, before the opening animation completes.
 It verifies complete text, editing, Escape and that the previous test window receives
 no characters. The pointer stays still; original application focus is restored.
+Opening and Wallpaper native fixtures share `NativeFocusDriver.qml`: each step
+runs from a separate event-loop turn, with a reentry guard around QtTest input
+helpers. Keep native mapping/closing waits in step predicates rather than nested
+QtTest wait loops so activation events can finish between actions.
 The logged timings measure native activation after the open request, not keybind
 client startup. This cannot guarantee delivery of keys typed before native focus
 transfers; test immediate Meta+P typing on the live desktop as well.

@@ -31,6 +31,9 @@ platform=offscreen
 display=${WAYLAND_DISPLAY:-}
 [[ -z $display || $display == /* ]] || display=${XDG_RUNTIME_DIR:?}/$display
 [[ ${CLIPBOARD_NATIVE:-0} != 1 ]] || platform=wayland
+if [[ $platform == wayland ]]; then
+    ln -s "${XDG_RUNTIME_DIR:?}/hypr" "$fixture/runtime/hypr"
+fi
 XDG_RUNTIME_DIR="$fixture/runtime" XDG_DATA_HOME="$fixture/local" XDG_CACHE_HOME="$fixture/cache" \
     QT_QPA_PLATFORM="$platform" WAYLAND_DISPLAY="$display" timeout 30 qs -p "$fixture" > "$fixture/log" 2>&1 || { cat "$fixture/log"; exit 1; }
 cat "$fixture/log"

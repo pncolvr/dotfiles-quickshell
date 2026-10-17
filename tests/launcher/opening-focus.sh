@@ -36,6 +36,7 @@ Singleton {
 }
 QML
 sed 's@"../../src@"src@g' "$repo_dir/tests/launcher/opening-focus.qml" > "$fixture/shell.qml"
+cp "$repo_dir/tests/launcher/NativeFocusDriver.qml" "$fixture/NativeFocusDriver.qml"
 for animations in false true; do
     # Each mode starts with a fresh synthetic database.
     rm -rf -- "$fixture/data"

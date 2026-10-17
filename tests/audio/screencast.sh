@@ -9,12 +9,29 @@ cleanup() {
 }
 trap cleanup EXIT
 # Import only the production model: its directory also registers shell-only
-# singletons that ordinary qmltestrunner cannot load.
-mkdir "$test_dir/model"
-cp "$project_root/src/services/audio/ScreencastModel.qml" "$test_dir/model/"
+# singletons that ordinary qmltestrunner cannot load. Preserve its relative
+# translation import, with a Qt-only fixture backed by the packaged label.
+model_dir="$test_dir/src/services/audio"
+mkdir -p "$model_dir" "$test_dir/src/i18n"
+cp "$project_root/src/services/audio/ScreencastModel.qml" "$model_dir/"
+printf 'singleton Translations 1.0 Translations.qml\n' > "$test_dir/src/i18n/qmldir"
+node - "$project_root/src/i18n/en.json" "$test_dir/src/i18n/Translations.qml" <<'JS'
+const fs = require('node:fs');
+const label = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'))['audio.sources.video'];
+if (typeof label !== 'string') throw new Error('Missing video capture translation');
+fs.writeFileSync(process.argv[3], `pragma Singleton
+import QtQml
+QtObject {
+    function text(key) {
+        if (key !== "audio.sources.video") throw new Error("Unexpected translation: " + key)
+        return ${JSON.stringify(label)}
+    }
+}
+`);
+JS
 sed 's|import "../../src/services/audio"|import "."|' \
-    "$project_root/tests/audio/tst-screencast.qml" > "$test_dir/model/tst-screencast.qml"
-QT_QPA_PLATFORM=offscreen /usr/lib/qt6/bin/qmltestrunner -input "$test_dir/model/tst-screencast.qml" -o -,txt
+    "$project_root/tests/audio/tst-screencast.qml" > "$model_dir/tst-screencast.qml"
+QT_QPA_PLATFORM=offscreen /usr/lib/qt6/bin/qmltestrunner -input "$model_dir/tst-screencast.qml" -o -,txt
 
 if [[ ${1:-} == --native ]]; then
     # A private server prevents these disposable nodes from reaching the desktop.

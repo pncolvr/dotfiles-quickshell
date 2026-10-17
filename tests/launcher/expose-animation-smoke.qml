@@ -24,6 +24,7 @@ Scope {
     Test.TestCase { id: objects; when: false }
     QtObject {
         id: fixturePicker
+        signal opened()
         property bool visible: false
         property string layout: "expose"
         property var targetScreen: Quickshell.screens[0]
@@ -99,6 +100,7 @@ Scope {
         running: true
         repeat: true
         onTriggered: {
+            if (Quickshell.env("EXPOSE_TEST_TRACE") === "1") console.log("EXPOSE STEP", root.step)
             if (root.step === 0) {
                 root.check(!window.visible, "closed overview starts unmapped")
                 fixturePicker.visible = true

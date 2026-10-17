@@ -14,6 +14,18 @@ PanelWindow {
     // qmllint enable uncreatable-type
     id: root
     property var capturePanel: contentLoader.item
+    property bool contentActive: false
+    function synchronizeContent() {
+        if (requested || visible) {
+            contentActive = true;
+            (contentLoader.item as ExposePanel)?.resumePreviews()
+        } else {
+            // Remove delegate bindings while their models/context still exist.
+            // Destroy the surrounding view only after those removals settle.
+            (contentLoader.item as ExposePanel)?.releasePreviews()
+            Qt.callLater(() => { if (!root.visible) root.contentActive = false })
+        }
+    }
     property bool hideForCapture: capturePanel?.hideForCapture ?? false
     signal captureHideRequested()
     onCaptureHideRequested: picker.close()
@@ -69,8 +81,12 @@ PanelWindow {
         interval: 16
         onTriggered: if (root.requested) root.updateTransition()
     }
-    Component.onCompleted: if (requested && animationsEnabled) prepareTransition.restart(); else updateTransition()
+    Component.onCompleted: {
+        synchronizeContent()
+        if (requested && animationsEnabled) prepareTransition.restart(); else updateTransition()
+    }
     readonly property bool requested: picker.visible && picker.layout === "expose" && !!picker.targetScreen
+    readonly property bool requestedVisible: requested
     screen: Quickshell.screens.includes(picker.targetScreen) ? picker.targetScreen : Quickshell.screens[0] ?? null
     visible: requested || (picker.layout === "expose" && transitionProgress > 0)
     anchors { top: true; bottom: true; left: true; right: true }
@@ -94,6 +110,7 @@ PanelWindow {
         } catch (_) { wallpapers = ({}) }
     }
     onRequestedChanged: {
+        synchronizeContent()
         if (requested) {
             transitionWorkspace = picker.exposeReturnWorkspace
         } else if (picker.exposeCloseTarget) {
@@ -104,6 +121,7 @@ PanelWindow {
         else updateTransition()
     }
     onVisibleChanged: {
+        synchronizeContent()
         if (visible) {
             Hyprland.refreshMonitors()
             Hyprland.refreshToplevels()
@@ -156,7 +174,7 @@ PanelWindow {
                 anchors.margins: Theme.exposeSpacing * 2
                 anchors.topMargin: Theme.exposeSpacing
                 anchors.bottomMargin: Theme.exposeSpacing
-                active: root.visible
+                active: root.contentActive
                 sourceComponent: ExposePanel {
                     picker: root.picker
                     transitionProgress: root.transitionProgress

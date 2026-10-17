@@ -19,6 +19,14 @@ Scope {
     property bool badgeVisible: false
     Test.TestResult { id: objects }
     Test.TestEvent { id: events }
+    FloatingWindow {
+        id: desktopFixture
+        visible: false
+        title: "Quickshell Twitch focus fixture"
+        implicitWidth: 320
+        implicitHeight: 160
+        UI.Text { anchors.centerIn: parent; text: "Synthetic focus target" }
+    }
     // Quickshell selects the native PanelWindow backend at runtime.
     // qmllint disable uncreatable-type
     PanelWindow {
@@ -67,6 +75,7 @@ Scope {
     onSearchChanged: if (search) search.readOnly = true
     IpcHandler {
         target: "twitchpaneltest"
+        function showDesktopFixture(): void { desktopFixture.visible = true }
         function snapshot(): string {
             const iconCenter = twitch.mapToGlobal(twitch.width / 2, twitch.height / 2)
             const pointerTarget = {x: iconCenter.x, y: iconCenter.y}

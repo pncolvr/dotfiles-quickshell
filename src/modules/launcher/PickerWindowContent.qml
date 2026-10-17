@@ -13,7 +13,11 @@ Item {
     readonly property real reservedHostHeight: (panel?.transitioning ? availableContentHeight : boundedContentHeight) + host.shadowBottomPadding
     readonly property real boundedContentWidth: Math.min(panel?.implicitWidth ?? Theme.pickerWidth,
         Math.max(0, (host.geometryScreen?.width || 800) - Theme.tooltipRadius * 2 - Theme.tooltipPaddingWidth * 2))
-    readonly property real boundedContentHeight: Math.min(panel?.implicitHeight ?? 0,
+    property real measuredContentHeight
+    // Loader geometry can change its child's implicit size while the native
+    // host is applying a size. Publish that measurement after the binding turn.
+    Binding on measuredContentHeight { value: root.panel?.implicitHeight ?? 0; delayed: true }
+    readonly property real boundedContentHeight: Math.min(measuredContentHeight,
         Math.max(0, (host.geometryScreen?.height || 1080)
             * (panel?.floatingPreviewRequested ? Theme.pickerPreviewListHeightRatio : 0.75) - host.shadowBottomPadding))
     // A fitted preview can resize inside a stable placement footprint.
@@ -26,7 +30,6 @@ Item {
     LauncherFocusHandler {
         id: focusHandler
         host: root.host; panel: root.panel; picker: root.picker
-        interactionWindows: preview.visible ? [root.host, preview] : [root.host]
     }
     PickerPreviewWindow { id: preview; host: root.host; picker: root.picker; previewPanel: root.panel; privateWindow: root.privateHost }
     Component.onCompleted: ClipboardService.initialize()

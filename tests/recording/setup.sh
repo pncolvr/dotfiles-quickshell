@@ -22,6 +22,11 @@ jq -nc --arg tool "$name" --args '{tool:$tool,args:$ARGS.positional}' -- "$@" >>
 control=$(cat "$RECORD_SETUP_TEST/control" 2>/dev/null || printf '{}')
 case $name in
     hyprctl)
+        if [[ ${1:-} == -j && ${2:-} == --batch ]]; then
+            [[ ${3:-} == 'animations; getoption animations:enabled; monitors' ]] || exit 90
+            printf '%s\n' '[[],[]]' '{"bool":false}' '[{"refreshRate":60}]'
+            exit
+        fi
         case " $* " in
             *" clients "*) printf '[]\n' ;;
             *" activewindow "*) printf '{"hidden":false}\n' ;;

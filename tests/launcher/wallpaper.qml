@@ -87,6 +87,13 @@ Scope {
     function wallpaperAlert() { return AlertService.messages.find(message => message.id === "wallpaper") }
     function enter() { events.keyClick(Qt.Key_Return, Qt.NoModifier, 0) }
     function pressEscape() { events.keyClick(Qt.Key_Escape, Qt.NoModifier, 0) }
+    function cancelTarget() {
+        const previousClosures = closures
+        pressEscape()
+        check(PickerService.visible && closures === previousClosures,
+            "child cancellation retains the native picker instead of closing and reopening it")
+        restored()
+    }
     function chooseTarget() {
         const previousClosures = closures
         enter()
@@ -134,10 +141,9 @@ Scope {
         // Child Escape returns to the same image; image Escape ends the session.
         enter()
         step(Config.workModeEnabled ? "mode" : "monitor")
-        pressEscape()
-        restored()
+        cancelTarget()
         if (Config.workModeEnabled) {
-            enter(); step("mode"); enter(); step("monitor"); pressEscape(); restored()
+            enter(); step("mode"); enter(); step("monitor"); cancelTarget()
         }
         check(commandList().length === 1, "child cancellation never applies")
 
@@ -191,7 +197,7 @@ Scope {
         WallpaperService.open(); images(); field.text = "quote"; enter()
         if (Config.workModeEnabled) { step("mode"); enter() }
         waitFor(() => PickerService.selectionKey === "wallpaper.monitor", "pending monitor read")
-        pressEscape(); restored()
+        cancelTarget()
         events.wait(300)
         restored()
         check(!wallpaperAlert(), "cancelling discovery does not report a spurious failure")

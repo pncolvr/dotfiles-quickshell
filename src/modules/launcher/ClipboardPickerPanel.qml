@@ -13,6 +13,7 @@ PreviewPickerPanel {
     panelError: picker.error || ClipboardService.error
     minimumRowHeight: Theme.clipboardRowHeight
     readonly property bool imagesOnly: picker.itemCriteria.kind === "image"
+    function resetPreview() { previewEnabled = imagesOnly || initialPreviewEnabled }
     previewKind: "clipboard"
     compactImageRows: previewEnabled
     onPreviewEnabledChanged: sizeListForOpening()

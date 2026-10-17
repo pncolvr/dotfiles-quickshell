@@ -16,6 +16,8 @@ Rectangle {
     border.color: Theme.selectionBorder
     UI.SelectionList {
         id: choices
+        // This is a permanent list, not a popup owning the panel's cancel action.
+        blocksPanelShortcuts: false
         objectName: "mediaEffectChoices"
         anchors.fill: parent
         anchors.margins: Theme.selectionPopupPadding

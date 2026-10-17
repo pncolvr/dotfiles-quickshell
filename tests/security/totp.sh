@@ -169,6 +169,7 @@ import "src/services"
 Scope {
     id: root
     property int step: 0
+    property double closeDeadline: 0
     Component { Bar {} }
     Component { id: content; Item { implicitWidth: 320; implicitHeight: 200 } }
     PanelWindow {
@@ -199,9 +200,11 @@ Scope {
                 console.log("PASS: TOTP uses the shared private capture namespace")
                 TooltipService.togglePin(320, content, probeIcon, false, probeWindow.screen)
                 TooltipService.hide()
+                root.closeDeadline = Date.now() + 2000
             } else if (root.step === 7) {
                 if (tooltipWindow.visible || TooltipService.pinned) {
-                    console.error("FAIL: native tooltip did not close")
+                    if (Date.now() < root.closeDeadline) return
+                    console.error("FAIL: native tooltip did not close", TooltipService.visible, TooltipService.pinned, TooltipService.interactionHeld)
                     Qt.quit()
                     return
                 }

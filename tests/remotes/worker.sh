@@ -29,6 +29,11 @@ options=$(jq -nc --arg dir "$fixture/bin" '{rdp:[$dir+"/rdp"],ssh:[$dir+"/ssh"],
 worker="$repo/src/services/remotes/remote-worker.sh"
 start() { bash "$worker" --run "$fixture/runtime.db" "$1" "$fixture/main.db" "$fixture" "$options" > "$fixture/log-$1" 2>&1 & workers+=("$!"); }
 status() { bash "$worker" --status "$fixture/runtime.db"; }
+# The worker publishes its child PID before Node's mock appends its action log.
+# Read the current session's PID instead of racing the previous launch's log row.
+session_terminal_pid() {
+    sqlite3 -readonly "$fixture/runtime.db" "SELECT json_extract(payload,'$.rdp.pid') FROM remote_sessions WHERE id='gamma';"
+}
 wait_count() {
     for ((attempt=0;attempt<80;attempt++)); do
         if status | jq -e --argjson count "$1" 'length==$count and all(.[];.state=="running")' >/dev/null; then return; fi
@@ -108,7 +113,7 @@ start gamma
 wait "${workers[7]}"
 [[ $(jq -s '[.[]|select(.program=="terminal")]|length' "$fixture/actions") == 1 ]]
 status | jq -e '.[0].id=="gamma" and .[0].state=="running"' >/dev/null
-terminal_pid=$(jq -sr '[.[]|select(.program=="terminal")][-1].pid' "$fixture/actions")
+terminal_pid=$(session_terminal_pid)
 terminal_ssh_pid=$(jq -sr '[.[]|select(.program=="ssh" and (.args|index("server.example"))!=null)][-1].pid' "$fixture/actions")
 bash "$worker" --disconnect "$fixture/runtime.db" gamma
 wait_count 0
@@ -118,13 +123,13 @@ wait_count 0
 printf 'PASS: owned SSH terminal launch, duplicate prevention, restart status and targeted terminal/SSH disconnect\n'
 start gamma
 wait_count 1
-terminal_pid=$(jq -sr '[.[]|select(.program=="terminal")][-1].pid' "$fixture/actions")
+terminal_pid=$(session_terminal_pid)
 kill -TERM "$terminal_pid"
 wait_count 0
 printf 'PASS: closing the SSH terminal clears the managed session\n'
 start gamma
 wait_count 1
-terminal_pid=$(jq -sr '[.[]|select(.program=="terminal")][-1].pid' "$fixture/actions")
+terminal_pid=$(session_terminal_pid)
 kill -KILL "${workers[-1]}"
 wait "${workers[-1]}" 2>/dev/null || true
 wait_count 0

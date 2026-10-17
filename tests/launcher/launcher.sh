@@ -193,7 +193,7 @@ for close_action in enter pressEscape; do
     snapshot | jq -e '.items == [] and .query == "" and (.canAccept | not)
         and .emptyHint == "" and (.emptyHintVisible | not) and .placeholder == "Text to encode"
         and .listHeight == 0 and .listImplicitHeight == 0
-        and .footerHint == "Enter to generate qr code · Esc to cancel"' >/dev/null
+        and .footerHint == ""' >/dev/null
     ipc call pickertest query '   '
     snapshot | jq -e '(.canAccept | not) and (.emptyHintVisible | not)' >/dev/null
     ipc call pickertest query "$qr_text"

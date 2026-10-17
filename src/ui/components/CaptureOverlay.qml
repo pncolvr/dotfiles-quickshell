@@ -10,9 +10,22 @@ Scope {
     property bool requested: false
     property bool hideForCapture: host.hideForCapture ?? false
     property bool presentationPending: host.visible
-    readonly property bool presented: hideForCapture && (requested || presentationPending)
+    property bool captureParticipant: false
+    // A closing Loader can release its content (and its opt-in property) before
+    // the native surface unmaps. Retain that participation through the close.
+    function synchronizeParticipation() {
+        if (requested) captureParticipant = hideForCapture
+        else if (!presentationPending) captureParticipant = false
+    }
+    onRequestedChanged: synchronizeParticipation()
+    onPresentationPendingChanged: synchronizeParticipation()
+    onHideForCaptureChanged: {
+        if (hideForCapture) synchronizeParticipation()
+        else Qt.callLater(synchronizeParticipation)
+    }
+    readonly property bool presented: captureParticipant && (requested || presentationPending)
     onPresentedChanged: CaptureHandoffService.update(root, presented)
     function hide() { host.captureHideRequested() }
-    Component.onCompleted: { CaptureHandoffService.registerPanel(root); CaptureHandoffService.update(root, presented) }
+    Component.onCompleted: { synchronizeParticipation(); CaptureHandoffService.registerPanel(root); CaptureHandoffService.update(root, presented) }
     Component.onDestruction: CaptureHandoffService.unregisterPanel(root)
 }

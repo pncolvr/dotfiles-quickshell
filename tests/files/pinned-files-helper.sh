@@ -19,7 +19,7 @@ jq -n --arg path "$path" --arg directory "$test_dir" '[
 ]' > "$test_dir/pins.json"
 result=$(bash "$helper" < "$test_dir/pins.json")
 jq -e '. == ["missing","removed-folder","broken-symlink"]' <<< "$result" >/dev/null
-rm -- "$path"
+rm -f -- "$path"
 result=$(bash "$helper" < "$test_dir/pins.json")
 jq -e '. == ["existing","symlink","missing","removed-folder","broken-symlink"]' <<< "$result" >/dev/null
 [[ $(printf '[]' | bash "$helper") == '[]' ]]

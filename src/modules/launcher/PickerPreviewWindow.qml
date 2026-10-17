@@ -35,6 +35,9 @@ UI.PanelWindow {
     WlrLayershell.namespace: privateWindow ? Config.screenShareHiddenNamespace : Config.pickerNamespace
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
-    mask: Region { x: surface.inputRect.x; y: surface.inputRect.y; width: surface.inputRect.width; height: surface.inputRect.height }
+    // This window only displays an image. An input region would let Hyprland's
+    // focus grab give it keyboard focus when it appears beneath the pointer,
+    // even with keyboardFocus None. Keep all interaction in the list window.
+    mask: Region {}
     PickerPreviewSurface { id: surface; parent: root.contentItem; anchors.fill: parent; host: root.host; picker: root.picker; previewPanel: root.previewPanel }
 }

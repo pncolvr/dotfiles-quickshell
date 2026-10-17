@@ -9,22 +9,46 @@ ListView {
     property bool blocksPanelShortcuts: true
     property var cancelHandler: null
     property var options: []
+    property var modelOptions: []
+    property int viewportGeneration: 0
     property string selectedName: ""
     property real rowHeight: Theme.controlHeight + Theme.controlSpacing
     property real contentPadding: Theme.controlFieldPadding
     property bool wrapDescriptions: false
     property int descriptionAlignment: Text.AlignLeft
     signal selected(string name)
-    model: options
+    model: modelOptions
     clip: true
     boundsBehavior: Flickable.StopAtBounds
     keyNavigationEnabled: false
     function revealSelected() {
+        viewportGeneration++
         currentIndex = options.findIndex(option => option.name === selectedName && option.available !== false)
         if (currentIndex < 0) navigate(1, true)
         if (currentIndex >= 0) positionViewAtIndex(currentIndex, ListView.Contain)
     }
+    function synchronizeOptions() {
+        // Polling services publish fresh objects even when the choices are unchanged.
+        const next = options.map(option => ({name:option.name, description:option.description, available:option.available !== false}))
+        if (next.length === modelOptions.length && next.every((option,index) => {
+            const previous = modelOptions[index]
+            return option.name === previous.name && option.description === previous.description && option.available === previous.available
+        })) return
+        const currentName = modelOptions[currentIndex]?.name
+        const previousY = contentY
+        const preserveViewport = modelOptions.length > 0
+        const generation = ++viewportGeneration
+        modelOptions = next
+        if (!preserveViewport) { Qt.callLater(revealSelected); return }
+        currentIndex = next.findIndex(option => option.name === currentName && option.available)
+        if (currentIndex < 0) currentIndex = next.findIndex(option => option.name === selectedName && option.available)
+        Qt.callLater(() => {
+            if (generation !== root.viewportGeneration) return
+            root.contentY = Math.max(root.originY, Math.min(previousY, root.originY + Math.max(0,root.contentHeight - root.height)))
+        })
+    }
     function navigate(direction, fromEdge = false) {
+        viewportGeneration++
         let next = fromEdge ? (direction > 0 ? 0 : options.length - 1) : currentIndex + direction
         while (next >= 0 && next < options.length) {
             if (options[next].available !== false) {
@@ -40,8 +64,8 @@ ListView {
         if (option && option.available !== false) selected(option.name)
     }
     onSelectedNameChanged: Qt.callLater(revealSelected)
-    onOptionsChanged: Qt.callLater(revealSelected)
-    Component.onCompleted: Qt.callLater(revealSelected)
+    onOptionsChanged: synchronizeOptions()
+    Component.onCompleted: { synchronizeOptions(); Qt.callLater(revealSelected) }
     Keys.onPressed: event => {
         if (root.cancelHandler && UI.Keybinds.handleCancel(event, root.cancelHandler)) return
         if (event.key === Qt.Key_Down) navigate(1)

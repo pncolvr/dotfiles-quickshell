@@ -26,6 +26,7 @@ Scope {
     property var menuCallback: null
     property var menuClosedCallback: null
     property bool menuKeepOpen: false
+    property bool menuKeepOpenOnCancel: false
     property string acceptLabel: Translations.text("common.actions.select")
     property string query: ""
     property string layout: "list"
@@ -144,6 +145,7 @@ Scope {
     function promptMenu(title, rows, callback, presentation = "list", options = {}) {
         begin(PickerService.Mode.Menu, title, options.keepOpen === true)
         menuKeepOpen = options.keepOpen === true
+        menuKeepOpenOnCancel = options.keepOpenOnCancel === true
         items = menuRows(rows, options.sort === true)
         menuCallback = callback
         menuClosedCallback = options.onClosed || null
@@ -352,6 +354,7 @@ Scope {
         process.running = true
     }
     function close(reason = "cancelled", keepVisible = false, pasteToPanel = false) {
+        keepVisible = keepVisible || (reason === "cancelled" && menuKeepOpenOnCancel)
         clipboardRestoreGeneration++
         clipboardRestoring = false
         windowSwitching = false
@@ -360,6 +363,7 @@ Scope {
         menuClosedCallback = null
         menuCallback = null
         menuKeepOpen = false
+        menuKeepOpenOnCancel = false
         const secretResult = secretCallback
         secretCallback = null
         openingClipboard = false

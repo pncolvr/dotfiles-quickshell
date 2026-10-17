@@ -102,12 +102,16 @@ check_state '.visible and (.pinned | not) and .text == "alice"' 'reopening keeps
 check_state '.visible and .pinned and (.keyboard | not)' 'bar icon manually pins the keyboard-opened panel'
 ipc bar open twitch >/dev/null
 wait_for 'IPC refocuses a manually pinned panel' state_matches '.focused and .pinned and .keyboard and .onDemand'
-if [[ $original_window =~ ^0x[0-9a-fA-F]+$ ]]; then
-    hyprctl dispatch "hl.dsp.focus({ window = \"address:$original_window\" })" >/dev/null
-    wait_for 'another window can focus while Twitch stays pinned' state_matches '.visible and .pinned and (.windowActive | not)'
-    ipc bar open twitch >/dev/null
-    wait_for 'IPC refocuses the pinned panel after another window' state_matches '.windowActive and .focused and .onDemand'
-fi
+ipc twitchpaneltest showDesktopFixture >/dev/null
+wait_for 'synthetic desktop focus target maps' sh -c \
+    'hyprctl clients -j | jq -e '\''any(.[]; .title == "Quickshell Twitch focus fixture")'\'' >/dev/null'
+hyprctl dispatch 'hl.dsp.focus({ window = "title:^Quickshell Twitch focus fixture$" })' >/dev/null
+wait_for 'another window can focus while Twitch stays pinned' state_matches '.visible and .pinned and (.windowActive | not)'
+# Mapping/activating the synthetic desktop window may warp the cursor according
+# to compositor policy. Restore the baseline before checking bar-open behavior.
+hyprctl dispatch "hl.dsp.cursor.move({ x = $original_x, y = $original_y })" >/dev/null
+ipc bar open twitch >/dev/null
+wait_for 'IPC refocuses the pinned panel after another window' state_matches '.windowActive and .focused and .onDemand'
 [[ $(ipc twitchpaneltest pressEscape) == true ]] || fail 'Escape key delivered'
 wait_for 'Escape dismisses keyboard panel' state_matches '.visible == false'
 check_state '(.pinned | not) and (.keyboard | not)' 'Escape releases pinning and keyboard focus'

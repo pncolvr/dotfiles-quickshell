@@ -11,6 +11,7 @@ PickerPanelBase {
     readonly property bool initialPreviewEnabled: previewRequired || (typeof Config.pickerPreviewDefaults[previewKind] === "boolean"
         ? Config.pickerPreviewDefaults[previewKind] : Config.pickerPreviewEnabled)
     property bool previewEnabled: initialPreviewEnabled
+    function resetPreview() { previewEnabled = initialPreviewEnabled }
     property bool previewShortcut: !previewRequired
     maximumListRows: previewEnabled ? Math.max(1, Math.min(Config.pickerMaxRows, Config.pickerPreviewMaxRows)) : Config.pickerMaxRows
     uniformRows: previewEnabled
@@ -28,6 +29,6 @@ PickerPanelBase {
     }
     Connections {
         target: root.picker
-        function onVisibleChanged() { if (root.picker.visible) root.previewEnabled = root.initialPreviewEnabled }
+        function onVisibleChanged() { if (root.picker.visible) root.resetPreview() }
     }
 }

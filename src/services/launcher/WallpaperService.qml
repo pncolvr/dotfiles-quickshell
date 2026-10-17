@@ -50,6 +50,7 @@ Singleton {
         operation.callback = callback
         PickerService.promptMenu(title, rows, callback, "list", Object.assign({}, options, {
             keepOpen: true,
+            keepOpenOnCancel: returnToImages,
             onClosed: reason => {
                 if (session !== operation || operation.callback !== callback) return
                 switch (reason) {

@@ -11,6 +11,11 @@ export XDG_RUNTIME_DIR=$native_runtime
 original_window=$(XDG_RUNTIME_DIR="$desktop_runtime" hyprctl activewindow -j | jq -r '.address // ""')
 original_cursor=$(XDG_RUNTIME_DIR="$desktop_runtime" hyprctl cursorpos -j | jq -r '[.x,.y] | @tsv')
 native_cleanup() {
+    local result=$?
+    if ((result != 0)); then
+        printf 'FAIL: native rbw fixture exited with status %s\n' "$result" >&2
+        [[ ! -f $test_dir/log ]] || cat "$test_dir/log" >&2
+    fi
     cleanup
     rm -rf -- "$native_runtime"
     if [[ $original_window =~ ^0x[0-9a-fA-F]+$ ]]; then
@@ -18,6 +23,7 @@ native_cleanup() {
     fi
     read -r original_x original_y <<< "$original_cursor"
     XDG_RUNTIME_DIR="$desktop_runtime" hyprctl dispatch "hl.dsp.cursor.move({ x = $original_x, y = $original_y })" >/dev/null 2>&1 || true
+    return "$result"
 }
 trap native_cleanup EXIT
 copy_shell

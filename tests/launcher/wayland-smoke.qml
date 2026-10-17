@@ -60,7 +60,7 @@ Scope {
                     Qt.quit()
                     return
                 }
-                window.previewItem.grabToImage(result => {
+                window.panel.grabToImage(result => {
                     result.saveToFile(Quickshell.env("PICKER_TEST_SCREENSHOT"))
                     events.keyClick(Qt.Key_Escape, Qt.NoModifier, 0)
                     console.log(PickerService.visible ? "PICKER FAIL: native Escape" : "PASS: native picker geometry, focus and Escape")

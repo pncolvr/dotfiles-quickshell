@@ -101,7 +101,8 @@ Item {
                 events.wait(250)
                 root.check(!combo.expanded && body.selection === "last" && body.commits === 1 && body.escapes === 0,
                     "Escape dismisses only the dropdown without applying")
-                root.check((combo.children[0] as QC.Button).activeFocus, "Escape returns focus to the trigger")
+                const comboToggle = events.findChild(combo, combo.toggleObjectName) as QC.Button
+                root.check(comboToggle !== null && comboToggle.activeFocus, "Escape returns focus to the trigger")
                 combo.expanded = true
                 events.wait(250)
                 combo.expanded = false
@@ -115,7 +116,10 @@ Item {
                 root.check(!combo.expanded && outside.activeFocus, "outside click closes and focuses the clicked input")
                 combo.expanded = true
                 events.wait(250)
-                events.mouseClick(profile.children[0], 20, 15)
+                const profileToggle = events.findChild(profile, profile.toggleObjectName) as QC.Button
+                root.check(profileToggle !== null, "profile selector exposes its trigger")
+                if (!profileToggle) { Qt.quit(); return }
+                events.mouseClick(profileToggle, 20, 15)
                 events.wait(250)
                 root.check(!combo.expanded && profile.expanded && profile.choicesView.activeFocus,
                     "opening another selector closes the previous popup without stealing focus")
@@ -136,6 +140,26 @@ Item {
                 combo.enabled = false
                 events.wait(250)
                 root.check(!combo.expanded && !combo.popup.visible, "disabling selector closes its popup")
+                combo.enabled = true
+                combo.options = Array.from({length:16}, (_,index) => ({name:"profile" + index,description:"Profile " + index}))
+                body.selection = "profile0"
+                combo.expanded = true
+                events.wait(250)
+                combo.choicesView.positionViewAtEnd()
+                const scrolledY = combo.choicesView.contentY
+                root.check(scrolledY > combo.choicesView.originY, "long profile list scrolls below the selected option")
+                combo.options = combo.options.map(option => Object.assign({}, option))
+                events.wait(100)
+                root.check(Math.abs(combo.choicesView.contentY - scrolledY) < 1, "equivalent profile refresh preserves manual scrolling")
+                combo.options = combo.options.map(option => Object.assign({},option,{description:option.description + " refreshed"}))
+                events.wait(100)
+                root.check(Math.abs(combo.choicesView.contentY - scrolledY) < 1, "updated profile labels preserve the browsing viewport")
+                combo.expanded = false
+                combo.expanded = true
+                events.wait(250)
+                root.check(combo.choicesView.currentIndex === 0 && combo.choicesView.contentY < scrolledY,
+                    "reopening still reveals the selected profile")
+                combo.expanded = false
                 if (!root.failed) console.log("PASS: selection overlays preserve layout, private ownership, bounds, focus, disabled options, keyboard and outside-click behavior")
                 Qt.quit()
             }

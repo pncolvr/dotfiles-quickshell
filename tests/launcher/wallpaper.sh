@@ -113,12 +113,14 @@ if [[ ${WALLPAPER_TEST_NATIVE:-0} == 1 ]]; then
     ln -s "$desktop_runtime/hypr" "$test_dir/r/hypr"
     original_window=$(XDG_RUNTIME_DIR="$desktop_runtime" "$native_hyprctl" activewindow -j | jq -r '.address // ""')
     sed 's@"../../src@"src@g' "$project_root/tests/launcher/wallpaper-focus.qml" > "$test_dir/shell.qml"
+    cp "$project_root/tests/launcher/NativeFocusDriver.qml" "$test_dir/NativeFocusDriver.qml"
     WALL_TEST_WORK_MODE=true WALL_TEST_REMEMBER=0 WALL_TEST_NATIVE=1 QT_QPA_PLATFORM=wayland WAYLAND_DISPLAY="$native_display" \
         timeout -k 1 12 "$qs_bin" -p "$test_dir" > "$test_dir/log" 2>&1 || { cat "$test_dir/log"; exit 1; }
     if ! rg -q 'PASS: native Wallpaper' "$test_dir/log" || rg -q 'WALLPAPER NATIVE FAIL:|TypeError:|ReferenceError:|Binding loop|Failed to load configuration' "$test_dir/log"; then
         cat "$test_dir/log"; exit 1
     fi
     rg 'PASS:' "$test_dir/log"
+    if [[ ${FOCUS_TEST_TRACE:-0} == 1 ]]; then cat "$test_dir/log"; fi
     exit
 fi
 sed 's@"../../src@"src@g' "$project_root/tests/launcher/wallpaper.qml" > "$test_dir/shell.qml"

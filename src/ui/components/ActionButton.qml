@@ -21,7 +21,7 @@ QC.Button {
     hoverEnabled: true
     opacity: enabled ? 1 : 0.45
     Accessible.name: shortcutHint || label
-    UI.PanelShortcut { owner: root; action: root.keyAction; onActivated: root.click() }
+    UI.PanelShortcut { owner: root; action: root.keyAction; onActivated: root.clicked() }
     UI.PointerFocus {}
 
     background: Rectangle {

@@ -144,7 +144,7 @@ Scope {
             const observer = objects.findChild(root.activeHost,"tooltipPointerHandler") as TooltipPointerHandler
             const toggle = selector ? objects.findChild(selector, selector.toggleObjectName) as QC.Button : null
             const rowHover = selector?.options.map((value,index)=>(selector.choicesView.itemAtIndex(index) as QC.ItemDelegate)?.hovered) ?? []
-            return JSON.stringify({visible:root.activeHost.visible, expanded:selector?.expanded ?? false,
+            return JSON.stringify({visible:root.activeHost.visible, settled:!root.activeHost.transitioning, expanded:selector?.expanded ?? false,
                 popupVisible:selector?.popup.visible ?? false,popupOpened:selector?.popup.opened ?? false,
                 writes:root.writes,hovered:observer?.hovered ?? false,
                 popupHovered:observer?.popupHovered ?? false,

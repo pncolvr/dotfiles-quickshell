@@ -12,14 +12,28 @@ Scope {
     readonly property var scenarios: ["apps", "webapps", "input", "image", "clipboard", "clipboard-images", "private-menu", "secret", "overview", "image"]
     property int scenario: 0
     readonly property string kind: scenarios[scenario] ?? ""
-    readonly property var currentWindow: kind === "overview" ? overview : PickerService.privateWindow ? privateWindow : window
+    readonly property var session: kind.startsWith("clipboard") ? ClipboardPickerService : PickerService
+    readonly property var currentWindow: kind.startsWith("clipboard") ? clipboardWindow
+        : kind === "overview" ? overview : PickerService.privateWindow ? privateWindow : window
     readonly property bool windowActive: currentWindow.contentItem.Window.active
     property string phase: "open"
     property double phaseStarted: 0
     property var savedPosition: null
     property bool failed: false
+    readonly property bool traceFocus: Quickshell.env("POINTER_TEST_TRACE") === "1"
+    function trace() {
+        if (!traceFocus) return
+        const handler = root.find(currentWindow.contentItem,"windowFocusHandler")
+        const preview = currentWindow.floatingPreviewWindow
+        console.log("POINTER FOCUS:",kind,phase,JSON.stringify({active:windowActive,
+            previewVisible:preview?.visible,previewActive:preview?.contentItem.Window.active,
+            requesting:handler?.requestingKeyboardFocus,settled:handler?.activationSettled,
+            keyboardMode:handler?.keyboardFocusMode}))
+    }
+    onWindowActiveChanged: trace()
     Test.TestEvent { id: events }
     PickerWindow { id: window }
+    PickerWindow { id: clipboardWindow; picker: ClipboardPickerService }
     PrivatePickerWindow { id: privateWindow }
     ExposeWindow { id: overview }
     function find(item, name) {
@@ -32,24 +46,29 @@ Scope {
     }
     function fail(message) {
         failed = true
-        console.error("POINTER FAIL:", kind, phase, message, "active:", windowActive, "query:", PickerService.query,
-            "focus:", currentWindow.contentItem.Window.window?.activeFocusItem?.objectName)
-        PickerService.close()
+        const handler = root.find(currentWindow.contentItem,"windowFocusHandler")
+        console.error("POINTER FAIL:", kind, phase, message, "active:", windowActive, "query:", root.session.query,
+            "visible:",root.session.visible,currentWindow.visible,"focus:", currentWindow.contentItem.Window.window?.activeFocusItem?.objectName,
+            "handler:",JSON.stringify(handler ? {requested:handler.hostRequestedVisible,ready:handler.ready,
+                opening:handler.openingFocus,requesting:handler.requestingKeyboardFocus,settled:handler.activationSettled,
+                keyboard:handler.keyboardEnabled,retaining:handler.retainingNativeFocus} : null))
+        root.session.close()
         Qt.quit()
     }
     function openCurrent() {
         const mode = kind.startsWith("clipboard") ? PickerService.Mode.Clipboard
             : kind === "secret" ? PickerService.Mode.Secret : kind === "apps" ? PickerService.Mode.Apps
             : kind === "overview" ? PickerService.Mode.Windows : PickerService.Mode.Menu
-        PickerService.begin(mode,"Synthetic keyboard focus check")
-        PickerService.privateRequest = kind === "private-menu"
-        if (kind === "clipboard-images") PickerService.itemCriteria = {kind:"image"}
-        PickerService.allowTyped = kind === "input"
-        PickerService.imageOnly = kind === "image"
-        PickerService.layout = kind === "overview" ? "expose" : "list"
-        PickerService.items = ["input", "secret", "overview"].includes(kind) ? [] : [{id:"0",title:"Synthetic item",result:"test",
+        root.session.begin(mode,"Synthetic keyboard focus check")
+        root.session.privateRequest = kind === "private-menu"
+        if (kind === "clipboard-images") root.session.itemCriteria = {kind:"image"}
+        root.session.allowTyped = kind === "input"
+        root.session.imageOnly = kind === "image"
+        root.session.layout = kind === "overview" ? "expose" : "list"
+        root.session.items = ["input", "secret", "overview"].includes(kind) ? [] : [{id:"0",title:"Synthetic item",result:"test",
             image:kind === "image" ? Quickshell.shellPath("synthetic.png") : ""}]
-        PickerService.show()
+        root.session.show()
+        trace()
         phaseStarted = Date.now()
         phase = "mapped"
     }
@@ -90,6 +109,17 @@ Scope {
                 root.phase = "mapped"
                 return
             }
+            if (root.kind === "clipboard-images" && !root.currentWindow.panel.floatingPreviewRequested) {
+                root.fail("opening Images mode must keep its companion preview enabled"); return
+            }
+            if (root.kind === "clipboard-images") {
+                const card = root.find(root.currentWindow.floatingPreviewWindow.contentItem,"floatingPickerPreview")
+                const corner = card?.mapToGlobal(0,0)
+                if (!corner || point.x < corner.x || point.x >= corner.x + card.width
+                    || point.y < corner.y || point.y >= corner.y + card.height) {
+                    root.fail("Images focus regression requires the preview to open beneath the pointer"); return
+                }
+            }
             if (root.kind === "image") {
                 const panel = root.currentWindow.panel
                 const topLeft = panel.mapToGlobal(0,0)
@@ -101,7 +131,7 @@ Scope {
                 if (root.kind === "secret") {
                     const input = root.find(root.currentWindow.previewItem,"secretInput")
                     if (!input?.activeFocus || input.text !== "a") { root.fail("secret prompt did not receive keyboard focus"); return }
-                } else if (PickerService.query !== "a") { root.fail("keyboard search is unavailable"); return }
+                } else if (root.session.query !== "a") { root.fail("keyboard search is unavailable"); return }
             }
             events.keyClick(Qt.Key_Escape, Qt.NoModifier, 0)
             root.phase = "closed"
@@ -114,7 +144,7 @@ Scope {
         onTriggered: {
             if (root.failed) return
             if (root.phase === "open") {
-                const screen = PickerService.chooseScreen()
+                const screen = root.session.chooseScreen()
                 const monitor = Hyprland.monitorFor(screen)?.lastIpcObject
                 if (!monitor) { root.fail("monitor geometry unavailable"); return }
                 root.phase = "place"
@@ -124,7 +154,7 @@ Scope {
                 root.phase = "verify"
                 cursor.running = true
             } else if (root.phase === "closed" && Date.now() - root.phaseStarted >= 400) {
-                if (PickerService.visible) { root.fail("Escape did not close the picker"); return }
+                if (root.session.visible) { root.fail("Escape did not close the picker"); return }
                 root.phase = "verify-closed"
                 cursor.running = true
             }

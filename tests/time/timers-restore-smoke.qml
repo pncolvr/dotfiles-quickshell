@@ -88,6 +88,8 @@ Scope {
             if (root.phase === "late")
                 root.check(TimersService.ready, "service created after preference loading restores immediately")
             if (!TimersService.ready) return
+            // Quit can wait for pending persistence work; never seed or verify twice.
+            stop()
             const entries = TimersService.entries.slice()
             TimersService.restore()
             root.check(TimersService.entries.length === entries.length

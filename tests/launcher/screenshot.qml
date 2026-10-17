@@ -11,6 +11,25 @@ Scope {
     id: root
     property bool submapRequested: false
     property bool otherPanelRequested: true
+    property double captureUnmappedAt: 0
+    Connections {
+        target: picker
+        function onVisibleChanged() {
+            if (!picker.visible) root.captureUnmappedAt = Date.now()
+            if (Quickshell.env("CAPTURE_TEST_TRACE")) console.log("CAPTURE VISIBLE", Date.now(), picker.visible, CaptureHandoffService.overlays.length)
+        }
+    }
+    Connections {
+        target: CaptureHandoffService
+        function onOverlaysChanged() {
+            if (Quickshell.env("CAPTURE_TEST_TRACE")) console.log("CAPTURE OVERLAYS", Date.now(), CaptureHandoffService.overlays.length,
+                JSON.stringify(CaptureHandoffService.panels.map(panel => ({requested:panel.requested, pending:panel.presentationPending,
+                    optedIn:panel.hideForCapture, visible:panel.host.visible}))))
+        }
+        function onCompositorPendingChanged() {
+            if (Quickshell.env("CAPTURE_TEST_TRACE")) console.log("CAPTURE PENDING", Date.now(), CaptureHandoffService.compositorPending)
+        }
+    }
     FileView { id: closeFailure; path: Quickshell.env("CAPTURE_TEST_DIR") + "/close-state-fail"; blockWrites: true; printErrors: false }
     Test.TestCase { id: events; when: false }
     component Surface: FloatingWindow {
@@ -98,9 +117,10 @@ Scope {
         waitFor(() => !picker.visible, "capture panel unmaps after its enabled animation")
         check(CaptureHandoffService.compositorPending && !CaptureHandoffService.ready && !ScreenshotService.job.process,
             "unmapped panel still blocks capture during compositor closing animation")
-        const unmappedAt = Date.now()
+        const unmappedAt = root.captureUnmappedAt
         waitFor(() => !!ScreenshotService.job?.process, "capture starts after panel and compositor closing animations")
-        check(Date.now() - unmappedAt >= 180,"configured compositor close is awaited after native unmap")
+        if (Quickshell.env("CAPTURE_TEST_TRACE")) console.log("CAPTURE START", Date.now(), unmappedAt)
+        check(Date.now() - unmappedAt >= 180,"configured compositor close is awaited after native unmap: " + (Date.now() - unmappedAt) + "ms")
         check(!picker.visible && submap.visible && other.visible && TooltipService.visible && TooltipService.captureHeld, "bar tooltip, submap and ordinary panels stay open without blocking")
         waitFor(() => !ScreenshotService.busy && result()?.severity === "success", "decoded text receives native success alert")
         check(!TooltipService.captureHeld && TooltipService.visible,"completed capture releases its hold and leaves the bar tooltip open")

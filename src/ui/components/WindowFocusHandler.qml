@@ -9,6 +9,7 @@ import "../../services" as Services
 // Shared activation and native-child handoff for public and private surfaces.
 Item {
     id: root
+    objectName: "windowFocusHandler"
     required property var host
     property var panel: null
     property var focusSession: panel
@@ -184,6 +185,21 @@ Item {
             // After activation, blur releases focus without taking it back.
             if (!requestingKeyboardFocus) { activationGeneration++; focusPanelPending = false }
             if (!dismissOnOutside) grab.active = false
+        }
+    }
+    Connections {
+        target: Hyprland
+        function onActiveToplevelChanged() {
+            // An explicit desktop activation must be able to leave a layer-shell
+            // grab, including persistent panels and password prompts.
+            if (!Hyprland.activeToplevel || !root.activationSettled || !root.hostRequestedVisible
+                || !root.ready || root.blocked || root.handoffHeld || root.nativeDialogOpen) return
+            root.activationGeneration++
+            root.focusPanelPending = false
+            root.requestingKeyboardFocus = false
+            root.keyboardEnabled = !root.passive
+            grab.active = false
+            if (root.dismissOnOutside) root.dismissRequested()
         }
     }
     onNativeDialogOpenChanged: {

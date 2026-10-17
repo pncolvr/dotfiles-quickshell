@@ -73,6 +73,7 @@ import QtQml
 import Quickshell
 QtObject {
     property bool hyprlandAnimationsEnabled: $enabled
+    readonly property bool hyprlandHideApplicationsEnabled: true
     readonly property var hyprlandSynchronizeCaptureCommand: (active, enabled) =>
         [Quickshell.env("CAPTURE_SYNC_COMMAND"), String(active), String(enabled)]
 }

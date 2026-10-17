@@ -227,7 +227,11 @@ Scope {
         function enter(): void { panel.focusSearch(); events.keyClick(Qt.Key_Return, Qt.NoModifier, 0) }
         function down(): void { panel.focusSearch(); events.keyClick(Qt.Key_Down, Qt.NoModifier, 0) }
         function toggleEntry(): void { panel.focusSearch(); events.keyClick(Qt.Key_Space, Qt.ShiftModifier, 0) }
-        function toggleVisible(): void { panel.focusSearch(); events.keyClick(Qt.Key_A, Qt.ControlModifier, 0) }
+        function toggleVisible(): void {
+            // Ctrl+A selects text in Search; entry selection belongs to panel focus.
+            panel.panel.forceActiveFocus()
+            events.keyClick(Qt.Key_A, Qt.ControlModifier, 0)
+        }
         function clearSelection(): void { panel.focusSearch(); events.keyClick(Qt.Key_A, Qt.ControlModifier | Qt.ShiftModifier, 0) }
         function pasteFixture(replaceSelection: bool): bool {
             pasteSource.selectAll()

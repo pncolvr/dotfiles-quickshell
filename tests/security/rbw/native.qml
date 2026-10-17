@@ -31,7 +31,9 @@ Scope {
         Hyprland.dispatch(`hl.dsp.cursor.move({ x = ${Math.round(pos.x)}, y = ${Math.round(pos.y)} })`)
     }
     function fail() {
-        console.error("FAIL: native private secret picker", root.step, pickerWindow.windowActive, root.helperActive)
+        console.error("FAIL: native private secret picker", root.step, pickerWindow.windowActive, root.helperActive,
+            JSON.stringify({helperText:helperInput.text, helperFocus:helperInput.activeFocus, visible:PickerService.visible,
+                secretPreserved:(root.find(pickerWindow.previewItem,"secretInput") as UI.InputField)?.text === "NATIVE_RBW_SYNTHETIC"}))
         Qt.quit()
     }
     PickerWindow { id: ordinaryWindow }
@@ -44,6 +46,8 @@ Scope {
         implicitHeight: 160
         UI.InputField {
             id: helperInput
+            Test.TestCase { id: helperEvents; when: false }
+            Keys.onPressed: event => console.log("RBW HELPER KEY", event.key, helperWindow.contentItem.Window.active)
             readonly property bool moduleFocusSearch: true
             anchors.centerIn: parent
             width: 280
@@ -138,8 +142,8 @@ Scope {
             if (root.step === 6) return
             if (root.step === 7) {
                 if (!root.helperActive || pickerWindow.windowActive) return
-                events.keyClick(Qt.Key_A, Qt.NoModifier, 0)
-                events.keyClick(Qt.Key_Escape, Qt.NoModifier, 0)
+                helperEvents.keyClick(Qt.Key_A, Qt.NoModifier, 0)
+                helperEvents.keyClick(Qt.Key_Escape, Qt.NoModifier, 0)
                 if (helperInput.text !== "a" || !PickerService.visible || input.text !== "NATIVE_RBW_SYNTHETIC") {
                     root.fail(); return
                 }

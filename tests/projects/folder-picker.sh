@@ -7,6 +7,7 @@ test_dir=$(mktemp -d /tmp/quickshell-project-dialog.XXXXXXXX)
 trap 'rm -rf -- "$test_dir"' EXIT
 mkdir -p "$test_dir/config/data" "$test_dir/home" "$test_dir/single folder"
 mkdir -m700 "$test_dir/runtime"
+ln -s "${XDG_RUNTIME_DIR:?}/hypr" "$test_dir/runtime/hypr"
 # Isolate services from the desktop clipboard, real database and private configs.
 tar -C "$project_root" --exclude='*.env' --exclude='src/services/launcher/providers/*.json' -cf - src | tar -C "$test_dir/config" -xf -
 sed -i 's/readonly property bool clipboardMonitorEnabled: true/readonly property bool clipboardMonitorEnabled: false/' "$test_dir/config/src/config/Config.qml"

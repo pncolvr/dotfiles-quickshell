@@ -84,7 +84,7 @@ Scope {
                 PickerService.destination = "fixture-window"
                 PickerService.show(); root.step++; return
             }
-            if (!root.panel) return
+            if (!root.panel && root.step !== 11) return
             if (root.step === 1) {
                 if (PickerService.searchPending) return
                 root.check(PickerService.items.length === 50 && PickerService.clipboardHasMore,"bounded first page")
@@ -131,7 +131,9 @@ Scope {
                 if (PickerService.searchPending || root.companion.transitioning) return
                 root.check(root.panel.floatingPreviewRequested && root.panel.width === Theme.pickerWidth,"floating mode keeps normal list width")
                 root.check(PickerService.filteredItems.length === 4 && PickerService.destination === "fixture-window","image criteria and paste destination")
-                if (root.nativeTest) root.check(root.find(root.panel,"pickerSearch").activeFocus,"floating preview preserves native search focus")
+                if (root.nativeTest) root.check(root.find(root.panel,"pickerSearch").activeFocus,
+                    "floating preview preserves native search focus: " + JSON.stringify({active:root.popup.windowActive,
+                        visible:PickerService.visible, focus:root.popup.contentItem.Window.window?.activeFocusItem?.objectName}))
                 const image = root.find(root.nativeTest ? root.companion.contentItem : root.companion,"clipboardLargeImage") as UI.ScaledImage
                 if (!image || image.status !== Image.Ready) return
                 root.check(image.mipmap && image.smooth && image.fillMode === Image.PreserveAspectFit && !image.cache,"shared floating image settings")
@@ -200,7 +202,7 @@ Scope {
                 PickerService.close(); root.step++; return
             }
             stop()
-            root.check(!PickerService.items.length && !PickerService.searchPending && !root.panel.floatingPreviewRequested,"close cancels motion and releases rows")
+            root.check(!PickerService.items.length && !PickerService.searchPending && !root.panel?.floatingPreviewRequested,"close cancels motion and releases rows")
             PickerService.begin(PickerService.Mode.Menu,"Other launcher")
             PickerService.items = [{id:"menu",title:"Menu"}]
             PickerService.show()

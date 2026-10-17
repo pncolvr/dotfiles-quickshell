@@ -9,8 +9,22 @@ mkdir -p "$fixture/bin" "$fixture/Game \$literal; folder" "$fixture/data" "$fixt
 tar -C "$root_dir" --exclude='*.env' --exclude='src/services/launcher/providers/*.json' -cf - src | tar -C "$fixture" -xf -
 sed -i 's/clipboardMonitorEnabled: true/clipboardMonitorEnabled: false/' "$fixture/src/config/Config.qml"
 node - "$fixture/src/config/Config.qml" <<'JSCONFIG'
-const fs=require('node:fs'),file=process.argv[2];
-fs.writeFileSync(file,fs.readFileSync(file,'utf8').replace('{id: "godot", name:', '{id: "custom", name: "Custom editor", extensions: [".sampleproj"], command: ["custom-editor"], profiles: {personal: "Custom personal"}, arguments: ["--open", "{path}", "--root", "{project}"], profileArguments:["--profile","{profile}"]},\n        {id: "godot", name:'));
+const fs = require('node:fs'), file = process.argv[2];
+const source = fs.readFileSync(file, 'utf8');
+const declaration = /readonly property var projectApps:\s*\[/g;
+if ([...source.matchAll(declaration)].length !== 1)
+    throw new Error('Expected exactly one projectApps declaration');
+const custom = {
+    id: 'custom',
+    name: 'Custom editor',
+    extensions: ['.sampleproj'],
+    command: ['custom-editor'],
+    profiles: {personal: 'Custom personal'},
+    arguments: ['--open', '{path}', '--root', '{project}'],
+    profileArguments: ['--profile', '{profile}']
+};
+fs.writeFileSync(file, source.replace(declaration, match =>
+    `${match}\n${JSON.stringify(custom, null, 4)},`));
 JSCONFIG
 sed 's@"../../src@"src@g' "$root_dir/tests/projects/launchers.qml" > "$fixture/shell.qml"
 printf '{}' > "$fixture/Standalone/project.godot"

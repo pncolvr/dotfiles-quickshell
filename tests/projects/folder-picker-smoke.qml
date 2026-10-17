@@ -6,6 +6,7 @@ import QtTest as Test
 import Quickshell
 import "../../src/modules/launcher"
 import "../../src/services"
+import "../../src/ui" as UI
 
 Scope {
     id: root
@@ -57,9 +58,11 @@ Scope {
                 search.text = "banana"
                 search.forceActiveFocus()
                 root.check(search.activeFocus,"Projects search receives native keyboard focus")
-                root.check(root.find(popup.contentItem,"pickerFooterHint").text.includes("Ctrl+W")
-                    && !root.find(popup.contentItem,"pickerFooterHint").text.includes("Ctrl+N"),"Projects hints show the filter shortcut, without Add")
-                root.check(root.find(popup.contentItem,"pickerFooterHint").lineCount === 1,"Projects hints fit on one line")
+                const hints = root.find(popup.contentItem,"pickerFooterHint") as UI.ShortcutHints
+                root.check(hints.selectedHints
+                    === UI.Keybinds.panelHintText("projects", hints.availableActions, hints.actionOverrides),
+                    "Projects hints follow the configured selection actions")
+                root.check(!hints.text || hints.lineCount === 1,"Projects hints fit on one line when configured")
                 root.check(events.keyClick(Qt.Key_A,Qt.ControlModifier,0),"Ctrl+A reaches native Projects search")
                 root.check(!ProjectService.managing && !root.projectPanel.adding,"Ctrl+A does not open Add from Projects")
                 search.clear()
@@ -77,7 +80,10 @@ Scope {
                 const search = root.find(popup.contentItem,"pickerSearch")
                 search.forceActiveFocus()
                 root.check(events.keyClick(Qt.Key_W,Qt.ControlModifier,0),"Ctrl+W reaches GitHub search")
-                root.check(root.find(popup.contentItem,"pickerFooterHint").lineCount === 3,"GitHub selection hints use three complete lines")
+                const hints = root.find(popup.contentItem,"pickerFooterHint") as UI.ShortcutHints
+                root.check(hints.selectedHints === UI.Keybinds.panelHintText("projects", hints.availableActions, hints.actionOverrides)
+                    && hints.selectedHints.includes(UI.Keybinds.sequence("selection.toggle")),
+                    "GitHub selection hints follow the configured actions")
                 root.check(events.keyClick(Qt.Key_Space,Qt.ShiftModifier,0),"Shift+Space reaches GitHub search")
                 root.check(PickerService.selectedIds.length === 1 && PickerService.currentIndex === 1,"Shift+Space selects GitHub row and advances")
                 root.check(events.keyClick(Qt.Key_Space,Qt.ShiftModifier,0),"Shift+Space reaches next GitHub row")
@@ -102,8 +108,9 @@ Scope {
                 root.openDialog()
                 root.step = 2
             } else if (root.step === 7) {
-                root.check(root.find(popup.contentItem,"projectManageHints").text.includes("Ctrl+N")
-                    && root.find(popup.contentItem,"projectManageHints").text.includes("Ctrl+M"),"Manage shows shortcut hints")
+                const hints = root.find(popup.contentItem,"managementHints") as UI.ShortcutHints
+                root.check(hints.selectedHints === UI.Keybinds.panelHintText("manage", hints.availableActions, hints.actionOverrides)
+                    && hints.selectedHints.includes(UI.Keybinds.sequence("add")),"Manage shows configured action hints")
                 const search = root.find(popup.contentItem,"projectManageSearch")
                 search.forceActiveFocus()
                 root.check(search.activeFocus,"Manage search receives native keyboard focus")
@@ -138,11 +145,15 @@ Scope {
                 if (!popup.visible || !popup.windowActive) return
                 root.projectPanel = root.find(popup.contentItem,"directoryPickerPanel")
                 root.check(!!root.projectPanel,"native directory panel exists")
-                root.check(root.find(popup.contentItem,"pickerFooterHint").lineCount === 1,"directory hints fit on one line")
+                root.check(root.find(popup.contentItem,"pickerFooterHint").text === "", "directory list has no configured hints")
                 root.check(events.keyClick(Qt.Key_M,Qt.ControlModifier,0),"Ctrl+M opens native directory management")
                 root.check(DirectoryService.managing,"native directory management is open")
                 root.step = 11
             } else if (root.step === 11) {
+                if (!root.projectPanel.adding) {
+                    events.keyClick(Qt.Key_N,Qt.ControlModifier,0)
+                    return
+                }
                 root.check(root.find(popup.contentItem,"directoryPath").activeFocus,"directory form focuses its path input")
                 root.openDialog()
                 root.step = 12

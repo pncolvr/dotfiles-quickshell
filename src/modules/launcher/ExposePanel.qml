@@ -6,6 +6,9 @@ import "../../ui" as UI
 
 FocusScope {
     id: root
+    property bool releasingPreviews: false
+    function releasePreviews() { releasingPreviews = true }
+    function resumePreviews() { releasingPreviews = false }
     required property var picker
     property real transitionProgress: 1
     property bool animationsEnabled: true
@@ -91,7 +94,7 @@ FocusScope {
             orientation: ListView.Horizontal
             interactive: false
             contentX: 0
-            model: root.picker.exposeWorkspaces
+            model: root.releasingPreviews ? [] : root.picker.exposeWorkspaces
             spacing: root.workspaceSpacing
             clip: true
             boundsBehavior: Flickable.StopAtBounds
