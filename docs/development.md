@@ -310,6 +310,16 @@ private detection rules alongside the other saved data.
 
 ## Clipboard validation
 
+`PickerSession` contains the shared launcher state/behavior; `PickerService`
+retains the launcher IPC endpoint and forwards Clipboard opening to the independent
+`ClipboardPickerService`. Both use the existing `PickerWindow` and controls.
+Run `bash tests/launcher/clipboard-handoff.sh` for offscreen regression coverage
+of an unsaved SSH form, preserved username/password and selection, repeated
+opening, Escape/Copy focus return, selected-field paste, outside dismissal and
+closed-parent safety. The test simulates compositor activation in offscreen Qt
+windows and stubs clipboard commands; it does not take desktop focus or use
+real credentials. Native focus/grab behavior still needs user review.
+
 ```sh
 bash tests/clipboard/fts/run.sh
 bash tests/clipboard/fts/contention.sh

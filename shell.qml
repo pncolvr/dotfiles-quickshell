@@ -30,6 +30,7 @@ Scope {
   NotificationManagerWindow {}
   LazyLoader { active: Config.totpEnabled; TotpWindow {} }
   PickerWindow {}
+  PickerWindow { picker: ClipboardPickerService }
   PickerWindow { picker: CaptureMenuService }
   PrivatePickerWindow {}
   LazyLoader { active: Config.vaultEnabled; VaultWindow {} }

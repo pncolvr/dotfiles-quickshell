@@ -40,6 +40,8 @@ QC.Button {
 
         Q.Text {
             id: codeLabel
+            renderType: Theme.textRenderType
+            font.hintingPreference: Theme.fontHintingPreference
             anchors.horizontalCenter: parent.horizontalCenter
             // Match the glyph's visible center, rather than the font's line box.
             y: (parent.height - labelMetrics.tightBoundingRect.height) / 2
@@ -54,6 +56,8 @@ QC.Button {
 
         Q.Text {
             id: icon
+            renderType: Theme.textRenderType
+            font.hintingPreference: Theme.fontHintingPreference
             // Center the visible glyph rather than the font's advance and line box.
             x: (root.label.length > 0
                 ? parent.width - Theme.controlFieldPadding - iconMetrics.tightBoundingRect.width

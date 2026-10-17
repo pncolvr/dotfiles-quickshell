@@ -11,6 +11,8 @@ QC.TextArea {
     font.family: Theme.fontFamily
     font.pixelSize: Theme.fontSize
     font.bold: Theme.fontBold
+    renderType: Theme.textRenderType
+    font.hintingPreference: Theme.fontHintingPreference
     padding: Theme.controlFieldPadding
     textFormat: TextEdit.PlainText
     placeholderTextColor: Theme.inactive

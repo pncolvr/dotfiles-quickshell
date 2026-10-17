@@ -87,8 +87,8 @@ Singleton {
         if (!ClipboardRepository.clear()) { error = DbService.error; return }
         if (ids.length) run(Config.clipboardCommand.concat(["delete"]).concat(ids))
     }
-    function restore(entry, destination, className, paste) {
-        if (maintenance) return
+    function restore(entry, destination, className, paste, completed = null) {
+        if (maintenance) { if (completed) completed(false); return }
         const removed = ClipboardRepository.touch(entry.id)
         if (removed?.length) run(Config.clipboardCommand.concat(["delete"]).concat(removed))
         ignoredId = entry.id
@@ -97,6 +97,7 @@ Singleton {
             : Config.clipboardCommand.concat(["restore", entry.id, entry.mime])
         run(command, "", (success) => {
             if (!success) error = Translations.text(paste ? "clipboard.errors.paste" : "clipboard.errors.restore")
+            if (completed) completed(success)
         })
     }
     function importCopyq() {

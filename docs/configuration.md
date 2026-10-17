@@ -6,13 +6,14 @@
 | --- | --- |
 | [`src/config/Config.qml`](../src/config/Config.qml) | Commands, intervals, defaults, namespaces and feature settings |
 | [`config/Theme.qml`](../config/Theme.qml) → [`src/theme/Theme.qml`](../src/theme/Theme.qml) | Fonts, glyphs, colors, dimensions and spacing |
+| [`config/ThemePalette.qml`](../config/ThemePalette.qml) → [`src/theme/ThemePalette.qml`](../src/theme/ThemePalette.qml) | Dark/light palette colors and contrast policy |
 | [`src/bar/LeftModules.qml`](../src/bar/LeftModules.qml) | Workspaces and windows |
 | [`src/bar/CenterModules.qml`](../src/bar/CenterModules.qml) | Clock, package updates and recent files |
 | [`src/bar/RightModules.qml`](../src/bar/RightModules.qml) | System, Twitch, status, TOTP, batteries, notifications and tray |
 | [`shell.qml`](../shell.qml) | Entry point, startup environment and dedicated windows |
 
-The root `config/` link exposes `Config.qml` and a relative `Theme.qml` link to
-`src/theme/Theme.qml`. Editing either theme path updates the same file; both QML
+The root `config/` link exposes `Config.qml` and relative links to `Theme.qml`
+and `ThemePalette.qml` under `src/theme/`. Editing either path updates the same file; both QML
 modules export the same singleton. Reusable UI components remain under `src/theme/ui`.
 
 `Config.qml` groups settings by component: shared UI/privacy and storage;
@@ -130,7 +131,12 @@ Set it to `false` for the similar light palette. The existing configuration relo
 applies the change; there is no separate picker, database preference or Config.qml
 switch. Fonts, icons, dimensions and motion controls keep their existing settings.
 
-`src/theme/ThemePalette.qml` holds the dark/light color definitions and foreground
+Shared text, icons and input controls use `Theme.textRenderType` (default
+`Text.NativeRendering`) and `Theme.fontHintingPreference` (default
+`Font.PreferFullHinting`). Configure both in `config/Theme.qml`. Full hinting
+applies with native rendering; changing these defaults can affect text metrics.
+
+`config/ThemePalette.qml` holds the dark/light color definitions and foreground
 contrast policy. The dark defaults preserve the original colors, including alpha.
 Edit its palette entries to customize colors, or override a specific Theme property
 with a literal as before. Every component reads colors through Theme; only the

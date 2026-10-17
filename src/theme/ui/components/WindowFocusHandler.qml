@@ -4,6 +4,7 @@ import QtQuick.Window
 import QtQml.Models
 import Quickshell.Wayland
 import Quickshell.Hyprland
+import "../../../services" as Services
 
 // Shared activation and native-child handoff for public and private surfaces.
 Item {
@@ -20,20 +21,22 @@ Item {
     property bool passive: false
     property bool dismissOnOutside: true
     property bool blocked: false
+    property var handoffOwner: host.picker ?? null
+    readonly property bool handoffHeld: Services.PanelFocusService.held(root)
     property bool childDialogOpen: false
     property var interactionWindows: [host]
     property Item interactionTarget: host.surfaceComponent?.popupContentBounds ?? host.contentItem
     readonly property var nativeWindow: host.contentItem.Window.window
     property bool windowActive: nativeWindow?.active ?? false
     readonly property bool retainingNativeFocus: hostRequestedVisible && windowActive && grab.active
-        && !blocked && !nativeDialogOpen
+        && !blocked && !handoffHeld && !nativeDialogOpen
     property bool keyboardEnabled: !passive
     property bool focusPanelPending: false
     readonly property bool hostRequestedVisible: host.requestedVisible ?? host.visible
     readonly property bool nativeDialogOpen: childDialogOpen || panel?.nativeDialogOpen === true
     readonly property int keyboardFocusMode: {
         switch (true) {
-        case !hostRequestedVisible || blocked || nativeDialogOpen || !keyboardEnabled:
+        case !hostRequestedVisible || blocked || handoffHeld || nativeDialogOpen || !keyboardEnabled:
             return WlrKeyboardFocus.None
         case openingFocus:
             return WlrKeyboardFocus.Exclusive
@@ -49,6 +52,19 @@ Item {
     property bool restoringDialogFocus: false
     signal dismissRequested()
     visible: false
+    Component.onCompleted: Services.PanelFocusService.register(root)
+    Component.onDestruction: Services.PanelFocusService.unregister(root)
+
+    function restoreFocus(item) {
+        if (!hostRequestedVisible || blocked || handoffHeld || nativeDialogOpen) return false
+        if (item?.visible && item.enabled) {
+            item.forceActiveFocus(Qt.OtherFocusReason)
+            requestInteraction()
+            return true
+        }
+        requestFocus()
+        return false
+    }
 
     function release() {
         activationGeneration++
@@ -65,7 +81,7 @@ Item {
         focusPanelPending = false
     }
     function requestFocus() {
-        if (!hostRequestedVisible || !ready || blocked || nativeDialogOpen || !panel) return
+        if (!hostRequestedVisible || !ready || blocked || handoffHeld || nativeDialogOpen || !panel) return
         keyboardEnabled = true
         focusPanelPending = true
         // Subview changes need field focus, not another layer-shell activation.
@@ -82,13 +98,13 @@ Item {
         const generation = ++activationGeneration
         Qt.callLater(() => {
             if (generation !== root.activationGeneration || !root.hostRequestedVisible || !root.ready
-                || root.blocked || root.nativeDialogOpen || !root.panel) return
+                || root.blocked || root.handoffHeld || root.nativeDialogOpen || !root.panel) return
             root.focusPanel()
             root.settleFocus()
         })
     }
     function requestInteraction() {
-        if (!hostRequestedVisible || !ready || blocked || nativeDialogOpen) return
+        if (!hostRequestedVisible || !ready || blocked || handoffHeld || nativeDialogOpen) return
         keyboardEnabled = true
         focusPanelPending = false // Preserve the clicked control, rather than refocusing Search.
         if (windowActive && grab.active) return
@@ -112,7 +128,7 @@ Item {
         }
     }
     function settleFocus() {
-        if (!windowActive || !hostRequestedVisible || !ready || blocked || nativeDialogOpen || !keyboardEnabled) return
+        if (!windowActive || !hostRequestedVisible || !ready || blocked || handoffHeld || nativeDialogOpen || !keyboardEnabled) return
         focusPanel()
         if (restoringDialogFocus) {
             nativeWindow?.update()
@@ -126,7 +142,7 @@ Item {
         requestingKeyboardFocus = false
     }
     function finishDialogFocus() {
-        if (!restoringDialogFocus || nativeDialogOpen || !windowActive || !hostRequestedVisible || blocked) return
+        if (!restoringDialogFocus || nativeDialogOpen || !windowActive || !hostRequestedVisible || blocked || handoffHeld) return
         restoringDialogFocus = false
         grab.active = true
         activationSettled = true
@@ -154,6 +170,12 @@ Item {
         else if (!retainingNativeFocus) { restoringDialogFocus = false; release() }
     }
     onBlockedChanged: if (blocked) release()
+    onHandoffHeldChanged: if (handoffHeld) {
+        release()
+        // Existing panels must not all request opening focus when the hold ends.
+        // Only the saved destination explicitly requests focus on return.
+        activationSettled = true
+    }
 
     onWindowActiveChanged: {
         if (windowActive) Qt.callLater(root.settleFocus)
@@ -201,7 +223,7 @@ Item {
         id: grab
         windows: root.interactionWindows
         onCleared: if (root.hostRequestedVisible && root.ready && root.dismissOnOutside
-            && !root.blocked && !root.nativeDialogOpen && !root.restoringDialogFocus)
+            && !root.blocked && !root.handoffHeld && !root.nativeDialogOpen && !root.restoringDialogFocus)
             root.dismissRequested()
     }
 }

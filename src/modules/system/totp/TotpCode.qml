@@ -9,7 +9,12 @@ Item {
     required property string code
     property color color: Theme.text
     property bool animationsEnabled: UI.MotionPolicy.enabled
-    property font font: Qt.font({family: Theme.fontFamily, pixelSize: Theme.fontSize, bold: Theme.fontBold})
+    property font font: Qt.font({
+        family: Theme.fontFamily,
+        pixelSize: Theme.fontSize,
+        bold: Theme.fontBold,
+        hintingPreference: Theme.fontHintingPreference
+    })
     readonly property bool spinning: spin.running
     property bool initialized: false
     property string previousCode: ""
@@ -73,6 +78,7 @@ Item {
 
                 Text {
                     id: currentDigit
+                    renderType: Theme.textRenderType
                     objectName: "totpDigit_" + reel.index
                     x: reel.gap
                     y: -(reel.position - reel.offset) * reel.height
@@ -85,6 +91,7 @@ Item {
                     color: root.color
                 }
                 Text {
+                    renderType: Theme.textRenderType
                     x: reel.gap
                     y: currentDigit.y + reel.height
                     width: digitMetrics.advanceWidth

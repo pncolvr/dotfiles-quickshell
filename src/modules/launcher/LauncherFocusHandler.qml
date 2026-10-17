@@ -11,6 +11,6 @@ UI.WindowFocusHandler {
     focusSession: panel?.panel ?? panel
     ready: !!panel && (panel.focusReady ?? true)
     dismissOnOutside: !secretPrompt && (!CaptureHandoffService.active || panel?.hideForCapture === true)
-    onDismissRequested: picker.close()
+    onDismissRequested: picker.close(picker.independentClipboard ? "outside" : "cancelled")
     Connections { target: root.picker; function onOpened() { root.requestFocus() } }
 }

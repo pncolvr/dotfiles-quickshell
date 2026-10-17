@@ -73,6 +73,8 @@ Item {
                 }
                 Text {
                     id: copyIcon
+                    renderType: Theme.textRenderType
+                    font.hintingPreference: Theme.fontHintingPreference
                     x: parent.width - Theme.controlFieldPadding - iconMetrics.tightBoundingRect.width
                         - iconMetrics.tightBoundingRect.x
                     y: (parent.height - iconMetrics.tightBoundingRect.height) / 2

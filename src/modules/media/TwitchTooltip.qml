@@ -372,6 +372,8 @@ Item {
 
         Text {
             id: errorText
+            renderType: Theme.textRenderType
+            font.hintingPreference: Theme.fontHintingPreference
             width: root.width
             height: Math.min(implicitHeight, root.maximumHeight * 0.2)
             visible: text.length > 0

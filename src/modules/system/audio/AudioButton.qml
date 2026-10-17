@@ -35,6 +35,8 @@ UI.ActionButton {
                 font.bold: false
             }
             Text {
+                renderType: Theme.textRenderType
+                font.hintingPreference: Theme.fontHintingPreference
                 anchors.verticalCenter: parent.verticalCenter
                 text: root.label
                 visible: text.length > 0

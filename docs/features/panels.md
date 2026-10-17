@@ -60,6 +60,14 @@ Native text editing takes priority. Hidden panels, inactive windows, native chil
 dialogs and selection popups cannot dispatch their parent's actions. Focus
 feedback works with motion disabled and during screen sharing.
 
+Clipboard borrows focus through shared `PanelFocusService` and
+`WindowFocusHandler` behavior. Existing panel sessions suspend their keyboard
+grabs and outside-dismissal while Clipboard is active, retaining their content.
+Only the saved destination requests focus on return. Panel paste uses the
+original Qt text control after clipboard restoration succeeds, preserving normal
+selection replacement without injecting keys into the underlying application.
+Native child-dialog handoff and capture visibility policy remain separate.
+
 ## Keyboard entry points
 
 The companion Hypr modules submap uses native `quickshell:bar-NAME` global actions.

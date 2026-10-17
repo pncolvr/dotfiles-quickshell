@@ -862,6 +862,15 @@ remaining capture, recording, Wallpaper and QR workers.
 
 ## Clipboard
 
+Clipboard opens in its own session/window and reuses the shared picker controls
+and search. Meta+V leaves other panels and their unsaved forms open. Escape or
+Copy returns focus to the original panel field, preserving its selection;
+Enter/Paste restores the selected clipboard entry and pastes into that field.
+An outside click closes Clipboard without taking focus back. A closed or replaced
+parent is never reopened or used as a paste target. With a desktop application
+focused, the existing original-window paste behavior applies. Repeating Meta+V
+while Clipboard is open focuses it without resetting its query or return target.
+
 Regular clipboard text and supported images are captured through supervised
 `wl-paste --watch` processes; primary selection is not recorded. Watcher groups
 are cleaned up on reload, including active capture workers. Stalled transfers
@@ -876,7 +885,7 @@ The thumbtack button or Ctrl+P toggles the highlighted entry's pin. Pinned entri
 show a thumbtack and survive restarts, repeated copies, history clearing, and
 automatic pruning. The Pinned only button or Ctrl+Shift+P toggles a pinned-entry
 filter, highlighted with the accent color when active. Search still applies
-within the filtered entries; opening the picker again starts with all entries.
+within the filtered entries; a new opening after closing starts with all entries.
 Clipboard search defaults to case-insensitive FTS5 word/prefix matching. Terms
 must all match; punctuation separates words and typed FTS operators are literal
 words. Results arrive in pages with bounded previews. The Fuzzy button switches

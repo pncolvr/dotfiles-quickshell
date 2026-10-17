@@ -30,6 +30,8 @@ QtObject {
     readonly property int fontSizeWorkspaces: 13
     readonly property bool fontBold: true
     readonly property int fontWeight: Font.Bold
+    readonly property int textRenderType: Text.NativeRendering
+    readonly property int fontHintingPreference: Font.PreferFullHinting
 
     // Bar and shared controls
     readonly property int barHeight: 30

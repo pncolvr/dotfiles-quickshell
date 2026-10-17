@@ -70,3 +70,7 @@ singleton ScreenshotService 1.0 launcher/ScreenshotService.qml
 
 MenuSession 1.0 launcher/MenuSession.qml
 singleton CaptureMenuService 1.0 launcher/CaptureMenuService.qml
+
+PickerSession 1.0 launcher/PickerSession.qml
+singleton ClipboardPickerService 1.0 launcher/ClipboardPickerService.qml
+singleton PanelFocusService 1.0 ui/PanelFocusService.qml

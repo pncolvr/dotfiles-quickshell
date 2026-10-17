@@ -19,6 +19,8 @@ QC.TextField {
     font.family: Theme.fontFamily
     font.pixelSize: Theme.fontSize
     font.bold: Theme.fontBold
+    renderType: Theme.textRenderType
+    font.hintingPreference: Theme.fontHintingPreference
     selectByMouse: true
     background: Rectangle {
         color: Theme.alternateBackground

@@ -1,0 +1,1 @@
+../theme/ThemePalette.qml

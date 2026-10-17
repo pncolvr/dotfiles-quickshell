@@ -4,3 +4,5 @@ singleton BarModuleService 1.0 BarModuleService.qml
 singleton TooltipService 1.0 TooltipService.qml
 
 singleton CaptureHandoffService 1.0 CaptureHandoffService.qml
+
+singleton PanelFocusService 1.0 PanelFocusService.qml
