@@ -973,7 +973,9 @@ shown when the panel next opens. The IPC pause toggle stops saving new copies
 and persists across restarts.
 
 `clipboard.sh` owns byte capture, restoration, cleanup and paste injection. QML
-owns SQLite metadata. Payloads live in private `data/clipboard/` files, indexed
+owns SQLite metadata. Its orphan guard uses the shared process-identity helper
+to match the supervisor and owner by user, boot ID and kernel start time, so a
+reused PID cannot keep detached watchers alive. Payloads live in private `data/clipboard/` files, indexed
 by MIME type and content hash; metadata lives in `data/quickshell.db` schema 5.
 The defaults retain at most 1,000 entries and 500 MB total, controlled by
 `Config.clipboardMaxItems` and `Config.clipboardMaxTotalBytes`, with a 10 MB image

@@ -159,5 +159,32 @@ kill -KILL "$watch_pid"
 wait "$watch_pid" 2>/dev/null || true
 watch_pid=''
 assert_watchers_stopped
+# Simulate a reused PID by changing only its reported kernel start time. Keep
+# the real PID alive: an existence-only guard would leave both watchers running.
+mkdir -p "$test_dir/identity-fixture/clipboard" "$test_dir/identity-fixture/processes"
+cp "$helper" "$test_dir/identity-fixture/clipboard/clipboard.sh"
+sed 's/^process_identity()/kernel_process_identity()/' \
+    "$project_root/src/services/processes/process-identity.sh" > "$test_dir/identity-fixture/processes/process-identity.sh"
+cat >> "$test_dir/identity-fixture/processes/process-identity.sh" <<'IDENTITY'
+process_identity() {
+    local start stale=''
+    start=$(kernel_process_identity "$1") || return 1
+    [[ ! -f $CLIPBOARD_TEST_DIR/stale-pid ]] || read -r stale < "$CLIPBOARD_TEST_DIR/stale-pid"
+    if [[ $1 == "$stale" ]]; then printf '%s' "$((start + 1))"; else printf '%s' "$start"; fi
+}
+IDENTITY
+helper="$test_dir/identity-fixture/clipboard/clipboard.sh"
+for identity in owner supervisor; do
+    rm -f "$test_dir/stale-pid"
+    start_watch
+    if [[ $identity == owner ]]; then stale_pid=$$; else stale_pid=$watch_pid; fi
+    kill -0 "$stale_pid"
+    printf '%s\n' "$stale_pid" > "$test_dir/stale-pid"
+    assert_watchers_stopped
+    wait "$watch_pid" 2>/dev/null || true
+    watch_pid=''
+    kill -0 "$$"
+done
+printf 'PASS: orphan guard rejects stale owner and supervisor identities even while their PIDs exist\n'
 printf 'PASS: stalled clipboard transfers time out without blocking copies; watcher and child cleanup survives termination and forced reload\n'
 printf 'PASS: clipboard byte preservation, Unicode/newlines, PNG, sensitive hints, limits, private files, target validation, paste shortcuts, CopyQ import and cleanup\n'

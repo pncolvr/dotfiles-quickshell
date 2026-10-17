@@ -53,6 +53,11 @@ capture() {
 
 case ${1:-} in
     watch)
+        source "$(dirname -- "${BASH_SOURCE[0]}")/../processes/process-identity.sh"
+        watch_pid=$BASHPID
+        owner_pid=$PPID
+        watch_start=$(process_identity "$watch_pid") || exit 2
+        owner_start=$(process_identity "$owner_pid") || exit 2
         initialize
         # The installed wl-clipboard does not expose CLIPBOARD_TYPE. Watch each
         # supported family directly; a lock serializes stdout and file writes.
@@ -71,13 +76,12 @@ case ${1:-} in
         watcher_pids+=("$!")
         setsid wl-paste --type image --watch bash "${BASH_SOURCE[0]}" capture image &
         watcher_pids+=("$!")
-        watch_pid=$BASHPID
-        owner_pid=$PPID
         # Quickshell can kill the supervisor before its EXIT trap runs on reload.
-        # A surviving guard cleans up those watcher groups without reading content.
+        # Match owner and supervisor identities so PID reuse cannot keep orphans alive.
         (
             trap - EXIT TERM INT HUP
-            while kill -0 "$watch_pid" 2>/dev/null && kill -0 "$owner_pid" 2>/dev/null; do sleep 1; done
+            while process_alive "$watch_pid" "$watch_start" "$PROCESS_BOOT_ID" \
+                && process_alive "$owner_pid" "$owner_start" "$PROCESS_BOOT_ID"; do sleep 1; done
             for watcher_pid in "${watcher_pids[@]}"; do kill -- "-$watcher_pid" 2>/dev/null || true; done
         ) >/dev/null 2>&1 &
         guard_pid=$!
