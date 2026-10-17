@@ -552,6 +552,7 @@
   "picker.shortcuts.accept": "Enter to %1",
   "picker.shortcuts.default": "Arrows to select · Enter to choose · Esc to cancel",
   "picker.shortcuts.highlighted": "Enter uses highlighted row",
+  "picker.shortcuts.windowSwitch": "Alt+Tab: Next · Alt+Shift+Tab: Previous · Ctrl+Shift+I: Preview · Enter: Focus · Esc: Close",
   "picker.shortcuts.input": "Enter to %1 · Esc to cancel",
   "picker.shortcuts.list": "Arrows to select · Enter to %1 · Esc to cancel",
   "picker.shortcuts.multiple": "%1 selected · Arrows to move · Shift+Space toggle + next\nCtrl+A select visible / clear all · %2",

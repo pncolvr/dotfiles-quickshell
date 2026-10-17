@@ -1012,12 +1012,18 @@ client startup. This cannot guarantee delivery of keys typed before native focus
 transfers; test immediate Meta+P typing on the live desktop as well.
 
 Run `bash tests/launcher/global-shortcuts.sh` in a Hyprland session to check all
-45 production shortcut callbacks before and after reload, covering launcher and
+52 production shortcut callbacks before and after reload, covering launcher and
 recording actions, Vault, notification DND, shell reload, all 14 module shortcuts,
 window cycling and all ten numbered window targets. It loads the unmodified
 registry component with fixture-only feature services, captures reload through
 a test override and uses a unique native shortcut namespace; it opens
 no windows, sends no keys and never invokes the user's real bindings or actions.
+`bash tests/launcher/window-switcher.sh` checks the actual picker service with
+synthetic clients and an offscreen panel: repeated/reverse/wrapping selection,
+stable refreshes, closed windows, explicit Enter acceptance, no Alt-release or
+two-window auto-activation, Ctrl+Shift+I preview toggling/release, narrow layout
+and suppressed decorative motion during sharing. Window focus and external
+commands are mocked and all data is private to the fixture.
 Native shortcut app ID/name pairs must be unique across running processes, so do
 not instantiate the production registry in a second test shell under its default
 `quickshell` app ID. The fixture reports callback latency including the test client;

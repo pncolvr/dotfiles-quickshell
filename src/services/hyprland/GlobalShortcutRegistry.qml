@@ -20,6 +20,7 @@ Scope {
         {name: "launcher-remotes", description: Translations.text("shortcuts.remotes"), activate: () => PickerService.remotes()},
         {name: "launcher-n8n", description: Translations.text("shortcuts.n8n"), activate: () => PickerService.n8n()},
         {name: "launcher-windows-all", description: Translations.text("shortcuts.windows"), activate: () => PickerService.windows("all")},
+        {name: "window-switch", description: Translations.text("shortcuts.windows"), activate: () => PickerService.switchWindows()},
         {name: "launcher-windows-current", description: Translations.text("shortcuts.workspaceWindows"), activate: () => PickerService.windows("current")},
         {name: "launcher-expose-current", description: Translations.text("shortcuts.expose"), activate: () => PickerService.expose("current")},
         {name: "launcher-clipboard", description: Translations.text("shortcuts.clipboard"), activate: () => PickerService.clipboard()},

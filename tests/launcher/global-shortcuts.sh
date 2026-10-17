@@ -33,6 +33,7 @@ const services={
   'function remotes() { Calls.record("remotes", []) }',
   'function n8n() { Calls.record("n8n", []) }',
   'function windows(scope) { Calls.record("windows", [scope]) }',
+  'function switchWindows() { Calls.record("window-switch", []) }',
   'function expose(scope) { Calls.record("expose", [scope]) }',
   'function clipboard() { Calls.record("clipboard", []) }'
  ],
@@ -85,6 +86,7 @@ const expected={
  'launcher-project-urls':['projects',[true]], 'launcher-directories':['directories',[]],
  'launcher-webapps':['webapps',[]], 'launcher-remotes':['remotes',[]], 'launcher-n8n':['n8n',[]],
  'launcher-windows-all':['windows',['all']], 'launcher-windows-current':['windows',['current']],
+ 'window-switch':['window-switch',[]],
  'launcher-expose-current':['expose',['current']], 'launcher-clipboard':['clipboard',[]],
  'launcher-wallpaper':['wallpaper',[]], 'launcher-encode-qr':['encode-qr',[]], 'launcher-bookmarks':['bookmarks',[]], 'launcher-power':['power',[]], 'recording-toggle':['recording',[]], 'vault-toggle':['vault',[]],
  'notifications-toggle-dnd':['dnd',[]], 'shell-reload':['shell-reload',[]],

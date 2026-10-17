@@ -552,6 +552,7 @@
   "picker.shortcuts.accept": "Enter para %1",
   "picker.shortcuts.default": "Setas para selecionar · Enter para escolher · Esc para cancelar",
   "picker.shortcuts.highlighted": "Enter usa a linha selecionada",
+  "picker.shortcuts.windowSwitch": "Alt+Tab: Seguinte · Alt+Shift+Tab: Anterior · Ctrl+Shift+I: Pré-visualizar · Enter: Focar · Esc: Fechar",
   "picker.shortcuts.input": "Enter para %1 · Esc para cancelar",
   "picker.shortcuts.list": "Setas para selecionar · Enter para %1 · Esc para cancelar",
   "picker.shortcuts.multiple": "%1 selecionados · Setas para mover · Shift+Espaço alternar + seguinte\nCtrl+A selecionar visíveis / limpar tudo · %2",

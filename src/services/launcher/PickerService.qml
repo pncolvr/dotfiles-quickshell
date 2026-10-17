@@ -43,6 +43,8 @@ Singleton {
     property string destinationClass: ""
     property bool openingClipboard: false
     property string windowScope: "all"
+    property bool windowSwitching: false
+    property bool windowSwitchAwaitingRows: false
     property int exposeWorkspace: 0
     property int exposeReturnWorkspace: 0
     property bool exposeDragging: false
@@ -207,7 +209,8 @@ Singleton {
         if (scope === "current" && clients.length < 2) clients = WindowService.allWindows.filter(client => client.mapped !== false)
         return clients
             .sort((a, b) => {
-                if (!spatial) return a.focusHistoryID - b.focusHistoryID
+                if (!spatial) return (a.focusHistoryID >= 0 ? a.focusHistoryID : Infinity)
+                    - (b.focusHistoryID >= 0 ? b.focusHistoryID : Infinity)
                 const workspaceOrder = a.workspace.id - b.workspace.id
                 if (workspaceOrder) return workspaceOrder
                 if (a.grouped?.includes(b.address) || b.grouped?.includes(a.address)) {
@@ -228,13 +231,25 @@ Singleton {
         items = windowItems(scope)
         customAccept = true
         currentIndex = items.length > 1 ? 1 : 0
-        if (items.length === 2) {
-            const previous = items[1]
-            WindowService.focusWindow(previous.result)
-            return
-        }
         show()
         WindowService.buildWindows()
+    }
+    function switchWindows() {
+        if (visible && windowSwitching) { cycleWindowSwitch(1); return }
+        begin(PickerService.Mode.Windows, Translations.text("picker.titles.windows"))
+        windowScope = "all"
+        layout = "switcher"
+        windowSwitching = true
+        items = windowItems("all")
+        currentIndex = items.length > 1 ? 1 : 0
+        windowSwitchAwaitingRows = !items.length
+        show()
+        Hyprland.refreshToplevels()
+        WindowService.buildWindows()
+    }
+    function cycleWindowSwitch(delta) {
+        if (!visible || !windowSwitching || !filteredItems.length) return
+        currentIndex = (currentIndex + delta + filteredItems.length) % filteredItems.length
     }
     function expose(scope) {
         if (visible && layout === "expose") { close(); return }
@@ -326,6 +341,8 @@ Singleton {
         process.running = true
     }
     function close(reason = "cancelled", keepVisible = false) {
+        windowSwitching = false
+        windowSwitchAwaitingRows = false
         const menuClosed = menuClosedCallback
         menuClosedCallback = null
         menuCallback = null
@@ -492,14 +509,22 @@ Singleton {
             if (root.mode !== PickerService.Mode.Windows || !root.visible) return
             if (root.layout === "expose") { root.syncExpose(); return }
             const id = root.currentItem?.id
-            root.items = root.windowItems(root.windowScope)
-            root.currentIndex = Math.max(0, root.filteredItems.findIndex(item => item.id === id))
+            const previousIndex = root.currentIndex
+            const next = root.windowItems(root.windowScope)
+            // Keep the cycle stable while titles, focus history and windows change.
+            root.items = root.windowSwitching ? root.items.map(item => next.find(entry => entry.id === item.id)).filter(Boolean)
+                .concat(next.filter(entry => !root.items.some(item => item.id === entry.id))) : next
+            const index = root.filteredItems.findIndex(item => item.id === id)
+            root.currentIndex = root.windowSwitchAwaitingRows ? (root.items.length > 1 ? 1 : 0)
+                : index >= 0 ? index : Math.max(0, Math.min(previousIndex,root.filteredItems.length - 1))
+            root.windowSwitchAwaitingRows = false
+            if (root.windowSwitching && !root.items.length) root.close()
         }
     }
     Connections {
         target: Hyprland
         function onRawEvent(event) {
-            if (root.visible && root.layout === "expose"
+            if (root.visible && (root.layout === "expose" || root.windowSwitching)
                 && ["movewindow", "movewindowv2", "windowtitle", "windowtitlev2", "changefloatingmode", "togglegroup", "moveintogroup", "moveoutofgroup"].includes(event.name))
                 WindowService.buildWindows()
         }

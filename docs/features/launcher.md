@@ -90,10 +90,26 @@ qs ipc call launcher clipboard
 Applications use native desktop-entry metadata and `gtk-launch`, including terminal
 applications. Launches strip the IDE-only `ELECTRON_RUN_AS_NODE` variable so
 Electron applications start normally even if the shell inherited it. Rows show only application names. Recent launches are ordered first. Window modes reuse `WindowService`;
-Enter focuses a window, Ctrl+Enter focuses without dismissing, and two-window lists
-switch immediately to the previous window. Focusing a grouped window activates
+Enter focuses a window and Ctrl+Enter focuses without dismissing. Even a
+two-window list waits for explicit selection. Focusing a grouped window activates
 its tab using live group membership. Current-workspace mode considers tiled
 windows and falls back to all windows if fewer than two are available.
+
+**Alt+Tab** opens windows from all workspaces in recent-focus order, initially
+selecting the previous window. Repeated Alt+Tab advances through the same session
+and wraps; Alt+Shift+Tab moves backward while the picker is open. Hypr has no
+dedicated Alt+Shift+Tab binding. Meta+Tab and Meta+Shift+Tab keep their existing
+immediate cycling behavior. Releasing Alt or rapidly tapping Alt+Tab never
+activates an entry. Enter or a click confirms; Escape cancels. Refreshes preserve
+selection and cycle order where possible; closed windows disappear and new
+windows join the list.
+
+The switcher starts with previews off. **Ctrl+Shift+I** toggles a live preview,
+using the clipboard image-only layout: list left and preview right, or stacked
+on narrow screens. It reuses `WindowPreview` and its application-icon fallback
+when capture is unavailable. Preview resizing follows the shared motion policy,
+including screen-sharing suppression. Disabling preview or closing releases its
+capture view.
 
 ## Bookmarks
 

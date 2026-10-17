@@ -29,6 +29,7 @@ Item {
         id: content
         anchors.fill: parent
         sourceComponent: {
+            if (root.picker.layout === "switcher") return windowSwitcher
             switch (root.picker.mode) {
                 case PickerService.Mode.Projects: return projectPanel
                 case PickerService.Mode.Webapps: return webappPanel
@@ -44,6 +45,15 @@ Item {
                 case root.picker.multiple: return multiSelectPanel
                 default: return standardPanel
             }
+        }
+    }
+    Component {
+        id: windowSwitcher
+        WindowSwitcherPanel {
+            picker: root.picker
+            backgroundVisible: root.backgroundVisible
+            availableContentWidth: root.availableContentWidth
+            availableContentHeight: root.availableContentHeight
         }
     }
     Component {
