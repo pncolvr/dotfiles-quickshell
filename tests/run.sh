@@ -26,11 +26,13 @@ if ! $list && [[ ${QS_TEST_RUNNER_BUS:-0} != 1 ]]; then
     if $native; then
         # Test services use a private bus; status notifications belong on the desktop.
         exec dbus-run-session -- env QS_TEST_RUNNER_BUS=1 \
-            QS_TEST_DESKTOP_BUS="${DBUS_SESSION_BUS_ADDRESS:-}" bash "$0" "$@"
+            QS_TEST_DESKTOP_BUS="${DBUS_SESSION_BUS_ADDRESS:-}" \
+            bash "$repo/tests/runner/session.sh" bash "$0" "$@"
     fi
     # Activation helpers inherit the bus daemon's environment, not each client's.
     exec env -u WAYLAND_DISPLAY -u HYPRLAND_INSTANCE_SIGNATURE -u DISPLAY \
-        dbus-run-session -- env QS_TEST_RUNNER_BUS=1 bash "$0" "$@"
+        dbus-run-session -- env QS_TEST_RUNNER_BUS=1 \
+            bash "$repo/tests/runner/session.sh" bash "$0" "$@"
 fi
 cd -- "$repo"
 limit=${TEST_TIMEOUT:-180}
@@ -140,6 +142,7 @@ run() {
 }
 
 run isolated runner/reporting bash tests/runner/reporting.sh
+run isolated runner/session bash tests/runner/session-test.sh
 run isolated qml/lint bash tests/qml/lint.sh
 run isolated qml/singletons bash tests/qml/singletons.sh
 run isolated qml/selection bash tests/qml/selection.sh

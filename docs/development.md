@@ -24,6 +24,9 @@ explicit suite-execution failure. Successful suites must report at least one
 named result; empty reports fail instead of inflating the pass count.
 The runner exits nonzero if a suite exits unsuccessfully or reports a failed test.
 Fixture helpers and mocks are exercised by their parent suites.
+`tests/runner/session.sh` keeps normal service activation enabled and stops the
+private bus's portal/GVfs/dconf services before the daemon exits. It checks bus
+ownership and process identity; desktop-session services are left alone.
 
 ```sh
 bash tests/run.sh --benchmarks             # include performance benchmarks
@@ -52,6 +55,12 @@ input from reentering the same step.
 skipped, silent, TAP and QtTest suites. It verifies terminal colors and line
 replacement through a private pseudoterminal, named failures, timeouts and TSV
 totals. It does not run the full suite or take desktop focus.
+
+`bash tests/runner/session-test.sh` checks private-bus activation, selective cleanup,
+exit-status preservation and refusal to clean up an unowned bus using mock services.
+`bash tests/runner/session-test.sh --portal` checks the installed portals' activation
+and shutdown on a temporary bus. Neither command opens windows or takes focus;
+the latter requires the installed portal backends and their normal session environment.
 
 `bash tests/system/optional-integrations.sh` checks both
 branches of `hyprlandHideApplicationsEnabled` for sharing on/off and animations
