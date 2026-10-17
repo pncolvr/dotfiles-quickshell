@@ -1,5 +1,7 @@
 Text 1.0 components/Text.qml
 ColumnText 1.0 components/ColumnText.qml
+RightAlignedText 1.0 components/RightAlignedText.qml
+RightAlignedTooltipText 1.0 components/RightAlignedTooltipText.qml
 PanelWindow 1.0 components/PanelWindow.qml
 WrapperMouseArea 1.0 components/WrapperMouseArea.qml
 Row 1.0 components/Row.qml

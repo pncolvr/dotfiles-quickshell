@@ -108,6 +108,13 @@ slot. `AudioButton` uses `Theme.iconButtonWidth`; bar icons use `UI.BarIcon` and
 the compact `Theme.barIconWidth` slot. All bar module icons share that width, so
 their centers remain evenly spaced and state changes do not resize controls.
 
+`UI.RightAlignedText` aligns rendered text with the right edge of its allotted
+width, including spare space left by styled-text elision. It extends `UI.ColumnText`.
+`UI.RightAlignedTooltipText` adds the shared hover tooltip, a `hint`, `cursorShape`
+and `clicked` signal. Updates uses `UpdateVersionText` on top of that component
+for version highlighting and middle elision; the row supplies each version,
+shared prefix, change color, translated hint and package action.
+
 Static images use `UI.ScaledImage` for smooth filtering and mipmaps, with aspect
 fit by default. Avatars and media artwork use `UI.CroppedImage`, which shares
 those texture settings and conservatively trims embedded, thin saturated circular

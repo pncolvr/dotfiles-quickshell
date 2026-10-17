@@ -42,19 +42,15 @@ Item {
                 root.width - Math.min(name.implicitWidth, root.width * 0.4) - content.spacing)
             readonly property real availableVersionWidth: Math.max(0, width - arrow.implicitWidth - spacing * 2)
 
-            UI.ColumnText {
+            UpdateVersionText {
                 id: oldVersion
-                textFormat: Text.StyledText
-                elide: Text.ElideMiddle
                 width: Math.min(implicitWidth, Math.max(versions.availableVersionWidth / 2,
                     versions.availableVersionWidth - newVersion.implicitWidth))
-                text: root.versionText(root.update.oldVersion, Theme.urgent)
-                color: Theme.updatesUnchangedColor
-                UI.HoverTooltip {
-                    text: Translations.text("updates.version.installed",[root.update.oldVersion])
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: UpdatesService.openPackage(root.update)
-                }
+                version: root.update.oldVersion
+                sharedPrefix: root._shared
+                changeColor: Theme.urgent
+                hint: Translations.text("updates.version.installed",[root.update.oldVersion])
+                onClicked: UpdatesService.openPackage(root.update)
             }
 
             UI.IconText {
@@ -63,26 +59,17 @@ Item {
                 color: Theme.updatesUnchangedColor
             }
 
-            UI.ColumnText {
+            UpdateVersionText {
                 id: newVersion
-                textFormat: Text.StyledText
-                elide: Text.ElideMiddle
                 width: Math.min(implicitWidth, Math.max(versions.availableVersionWidth / 2,
                     versions.availableVersionWidth - oldVersion.implicitWidth))
-                text: root.versionText(root.update.newVersion, Theme.active)
-                color: Theme.updatesUnchangedColor
-                UI.HoverTooltip {
-                    text: Translations.text("updates.version.available",[root.update.newVersion])
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: UpdatesService.openPackage(root.update)
-                }
+                version: root.update.newVersion
+                sharedPrefix: root._shared
+                changeColor: Theme.active
+                hint: Translations.text("updates.version.available",[root.update.newVersion])
+                onClicked: UpdatesService.openPackage(root.update)
             }
         }
-    }
-
-    function versionText(version, changeColor) {
-        return '<font color="' + Theme.updatesUnchangedColor + '">' + escapeHtml(_shared) + '</font>'
-            + '<font color="' + changeColor + '">' + escapeHtml(diffSuffix(version, _shared)) + '</font>'
     }
 
     function versionParts(v) {
@@ -95,14 +82,6 @@ Item {
         let i = 0
         while (i < pa.length && i < pb.length && pa[i] === pb[i]) i++
         return pa.slice(0, i).join("")
-    }
-
-    function diffSuffix(v, shared) {
-        return v.slice(shared.length)
-    }
-
-    function escapeHtml(s) {
-        return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
     }
 
     property string _shared: sharedPrefix(update.oldVersion, update.newVersion)
