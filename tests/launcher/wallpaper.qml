@@ -18,6 +18,12 @@ Scope {
     property int closures: 0
     Connections { target: PickerService; function onVisibleChanged() { if (!PickerService.visible) root.closures++ } }
     Test.TestCase { id: events; when: false }
+    LauncherFocusHandler {
+        id: dismissal
+        host: listWindow
+        autoFocus: false
+        dismissOnOutside: false
+    }
     FloatingWindow {
         id: listWindow
         visible: true
@@ -190,6 +196,23 @@ Scope {
         replacement()
         events.wait(50)
         checkReplacement()
+
+        // Outside dismissal and Vault replacement must not act like child Escape.
+        for (const action of ["outside", "vault"]) {
+            WallpaperService.open(); images(); field.text = "quote"; enter()
+            step(Config.workModeEnabled ? "mode" : "monitor")
+            if (action === "outside") dismissal.dismissRequested()
+            else {
+                // Suppress the external Vault worker; exercise the real opening path.
+                RbwService.busy = true
+                RbwService.open()
+                check(RbwService.visible, "Vault opens when replacing Wallpaper")
+            }
+            events.wait(50)
+            check(!PickerService.visible && WallpaperService.session === null,
+                action + " fully dismisses Wallpaper without returning to images")
+            if (action === "vault") { RbwService.close(); RbwService.busy = false }
+        }
 
         // A cancelled async monitor read must not reopen any menu or report failure.
         AlertService.dismiss("wallpaper")

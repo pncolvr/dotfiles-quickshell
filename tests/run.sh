@@ -198,18 +198,18 @@ fi
 if $native; then
     if ! $list; then
         native_running=true
-        printf '\nNative tests will start in the next 60 seconds. Leave the keyboard and mouse idle until the completion notice.\n'
+        printf '\nNative tests will start in the next 60 seconds.\nLeave the keyboard and mouse idle until the completion notice.\n'
         native_notification_id=$(notify_native --print-id --urgency=critical --expire-time=0 \
-            'Native tests starting' 'Tests will start in the next 60 seconds. Leave the keyboard and mouse idle until the completion notice.') \
+            'Native tests starting' $'Tests will start in the next 60 seconds.\nLeave the keyboard and mouse idle until the completion notice.') \
             || printf 'Desktop notification unavailable; follow the status in this terminal.\n' >&2
         sleep 60
-        printf 'Native tests are now running. Leave the keyboard and mouse idle until the completion notice.\n'
+        printf 'Native tests are now running.\nLeave the keyboard and mouse idle until the completion notice.\n'
         notification_options=()
         if [[ $native_notification_id =~ ^[1-9][0-9]*$ ]]; then
             notification_options+=(--replace-id="$native_notification_id")
         fi
         native_notification_id=$(notify_native --print-id "${notification_options[@]}" --urgency=critical --expire-time=0 \
-            'Native tests running' 'Tests are now running. Leave the keyboard and mouse idle until the completion notice.') \
+            'Native tests running' $'Tests are now running.\nLeave the keyboard and mouse idle until the completion notice.') \
             || printf 'Desktop notification unavailable; follow the status in this terminal.\n' >&2
     fi
     # Explicit opt-in: these checks can take focus, move the pointer or use GPU capture.

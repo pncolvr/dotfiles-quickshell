@@ -38,7 +38,7 @@ Singleton {
     function open() {
         if (!enabled) return
         if (visible) { close(); return }
-        PickerService.close()
+        PickerService.close("replaced")
         targetScreen = Quickshell.screens.find(output => output.name === Hyprland.focusedMonitor?.name) || Quickshell.screens[0] || null
         generation++
         visible = true
