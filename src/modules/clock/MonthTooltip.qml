@@ -37,6 +37,8 @@ Item {
         switch (style) {
             case CalendarService.DayStyle.Invalid: return "transparent"
             case CalendarService.DayStyle.Today: return Theme.calendarTodayText
+            case CalendarService.DayStyle.Holiday: return Theme.calendarHolidayText
+            case CalendarService.DayStyle.ClockChangeEve: return Theme.calendarClockChangeEveText
             default: return weekend ? Theme.calendarWeekendText : Theme.calendarDayText
         }
     }

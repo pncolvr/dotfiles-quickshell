@@ -67,6 +67,26 @@ settings; add and edit entries through Manage.
 
 ## Theme defaults
 
+`config/Theme.qml` exposes one palette toggle:
+
+```qml
+readonly property bool darkMode: true
+```
+
+Set it to `false` for the similar light palette. The existing configuration reload
+applies the change; there is no separate picker, database preference or Config.qml
+switch. Fonts, icons, dimensions and motion controls keep their existing settings.
+
+`src/theme/ThemePalette.qml` holds the dark/light color definitions and foreground
+contrast policy. The dark defaults preserve the original colors, including alpha.
+Edit its palette entries to customize colors, or override a specific Theme property
+with a literal as before. Every component reads colors through Theme; only the
+Theme implementation selects a palette. Shared filled controls use
+`Theme.foregroundOn(surface)`, while selected text uses `Theme.selectionText`.
+Calendar highlight text and notification colors also come from Theme. Functional
+black/white used by QR images, image masks and shader inputs stays independent.
+
+
 `Theme.qml` groups appearance settings by component and keeps rendering state in
 shared UI utilities. Pulse timing lives in `src/theme/ui/PulseClock.qml`; calendar
 color selection belongs to the month view used by month/year calendars.

@@ -13,6 +13,18 @@ requires ImageMagick. Native fixtures that grab focus must run sequentially.
 rebuild and read-only query pipeline; `FTS_BENCH_BYTES` changes bytes per row.
 These tests create temporary databases and never inspect live clipboard history.
 
+## Theme palette checks
+
+Run `bash tests/ui/theme.sh` to render both palettes in an isolated offscreen
+fixture. It checks the original dark colors/alpha, live binding updates, shared
+Theme alias identity, light text/selection/button/calendar contrast, pressed/hover
+states, disabled controls, input focus and unchanged dimensions/motion settings.
+Only the fixture makes darkMode writable; the real setting stays readonly.
+`THEME_TEST_PREVIEWS=/tmp/theme-previews bash tests/ui/theme.sh` saves dark.png and
+light.png for visual review without changing the live theme or desktop focus.
+Mode selection and color/contrast policy belong in Theme.qml/ThemePalette.qml;
+components consume Theme values rather than checking darkMode or reading palettes.
+
 ## Layout
 
 ```text

@@ -16,6 +16,7 @@ Rectangle {
     property bool showThumbnail: true
     readonly property bool clipboardImage: showThumbnail && clipboard && !!entry.image
     property bool grid: false
+    readonly property color foreground: current ? Theme.selectionText : Theme.text
     signal chosen(bool toggle)
     signal activated()
     color: current ? Theme.accent : hover.hovered ? Theme.alternateBackground : "transparent"
@@ -50,7 +51,8 @@ Rectangle {
         color: "transparent"
         radius: 3
         border.width: 1
-        border.color: root.current || root.selected ? Theme.text : Theme.inactive
+        border.color: root.current || root.selected ? root.foreground : Theme.inactive
+        iconColor: root.foreground
         text: root.selected ? Theme.checkIcon : ""
     }
     UI.ScaledImage {
@@ -86,6 +88,7 @@ Rectangle {
             width: parent.width
             visible: root.grid && text.length > 0
             text: root.entry.glyph || ""
+            color: root.foreground
             font.pixelSize: 20
             horizontalAlignment: Text.AlignHCenter
         }
@@ -93,6 +96,7 @@ Rectangle {
             centerVertical: false
             width: parent.width
             text: root.entry.title
+            color: root.foreground
             visible: text.length > 0
             textFormat: Text.PlainText
             horizontalAlignment: root.grid ? Text.AlignHCenter : Text.AlignLeft
@@ -106,7 +110,7 @@ Rectangle {
             text: root.entry.subtitle || ""
             visible: text.length > 0 && !root.grid
             textFormat: Text.PlainText
-            color: root.current ? Theme.text : Theme.inactive
+            color: root.current ? Theme.selectionText : Theme.inactive
             font.pixelSize: Theme.fontSize - 1
             elide: Text.ElideRight
         }
@@ -120,7 +124,7 @@ Rectangle {
         height: 16
         visible: root.entry.pinned === true
         text: Theme.filePinIcon
-        color: root.current ? Theme.text : Theme.accent
+        color: root.current ? Theme.selectionText : Theme.accent
         horizontalAlignment: Text.AlignHCenter
     }
 }

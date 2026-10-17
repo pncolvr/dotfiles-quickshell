@@ -134,7 +134,7 @@ FocusScope {
         width: Theme.controlHeight
         height: width
         glyph: Theme.cancelIcon
-        foreground: hovered || down ? Theme.text : Theme.accent
+        foreground: hovered || down ? Theme.foregroundOn(Theme.notificationCritical) : Theme.accent
         hint: "Close Exposé"
         background: Rectangle {
             radius: width / 2

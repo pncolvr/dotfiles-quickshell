@@ -13,7 +13,7 @@ QC.TextField {
     color: Theme.text
     placeholderTextColor: Theme.inactive
     selectionColor: Theme.accent
-    selectedTextColor: Theme.text
+    selectedTextColor: Theme.selectionText
     font.family: Theme.fontFamily
     font.pixelSize: Theme.fontSize
     font.bold: Theme.fontBold

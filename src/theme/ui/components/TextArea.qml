@@ -13,6 +13,8 @@ QC.TextArea {
     textFormat: TextEdit.PlainText
     placeholderTextColor: Theme.inactive
     color: Theme.text
+    selectionColor: Theme.accent
+    selectedTextColor: Theme.selectionText
     wrapMode: TextEdit.Wrap
     background: Rectangle {
         color: Theme.alternateBackground

@@ -181,7 +181,7 @@ PanelWindow {
             width: Theme.controlHeight
             height: width
             glyph: Theme.cancelIcon
-            foreground: hovered || down ? Theme.text : Theme.accent
+            foreground: hovered || down ? Theme.foregroundOn(Theme.notificationCritical) : Theme.accent
             hint: "Exit fullscreen (Esc)"
             background: Rectangle {
                 radius: width / 2

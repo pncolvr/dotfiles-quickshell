@@ -4,18 +4,23 @@ import QtQuick
 import "../services/time"
 
 QtObject {
+    id: root
+    readonly property bool darkMode: true
+    readonly property ThemePalette palette: ThemePalette { darkMode: root.darkMode }
+    function foregroundOn(surface) { return palette.foregroundOn(surface, background, text) }
+
     // Colors
-    readonly property color background:Qt.rgba(0,0,0,1)
-    readonly property color text:"#d8dadc"
+    readonly property color background: palette.colors.background
+    readonly property color text: palette.colors.text
     readonly property color tooltipBackground: background
-    readonly property color alternateBackground: "#be1b1a1a"
-    readonly property color accent: "#6B8FB3"
-    readonly property color urgent: "#B80F0A"
-    readonly property color ok: "#3E8E5A"
-    readonly property color active: "#5C9E7E"
-    readonly property color warning: "#fd6d37"
-    readonly property color inactive: "#b0b3b8"
-    readonly property color empty: "#8080804d"
+    readonly property color alternateBackground: palette.colors.alternateBackground
+    readonly property color accent: palette.colors.accent
+    readonly property color urgent: palette.colors.urgent
+    readonly property color ok: palette.colors.ok
+    readonly property color active: palette.colors.active
+    readonly property color warning: palette.colors.warning
+    readonly property color inactive: palette.colors.inactive
+    readonly property color empty: palette.colors.empty
 
     // Typography
     readonly property string fontFamily: "Noto Sans Mono"
@@ -80,7 +85,7 @@ QtObject {
     readonly property int tooltipHoverTolerance: 2
     readonly property int tooltipRadius: 12
     readonly property bool tooltipShadowEnabled: true
-    readonly property color tooltipShadowColor: "black"
+    readonly property color tooltipShadowColor: palette.colors.tooltipShadowColor
     readonly property real tooltipShadowOpacity: 0.5 // 0–1
     readonly property int tooltipShadowBlurRadius: 18 // Pixels, clamped to 2–64.
     readonly property real tooltipShadowHorizontalOffset: 0
@@ -88,11 +93,13 @@ QtObject {
     readonly property int tooltipPaddingWidth: 20
     readonly property int tooltipPaddingHeight: 10
 
+    readonly property color selectionText: foregroundOn(accent)
+
     // Selection and scrollbars
-    readonly property color selectionBackground: "#1b1b1b"
-    readonly property color selectionHoverBackground: "#30343a"
-    readonly property color selectionSelectedBackground: "#273441"
-    readonly property color selectionBorder: "#454a50"
+    readonly property color selectionBackground: palette.colors.selectionBackground
+    readonly property color selectionHoverBackground: palette.colors.selectionHoverBackground
+    readonly property color selectionSelectedBackground: palette.colors.selectionSelectedBackground
+    readonly property color selectionBorder: palette.colors.selectionBorder
     readonly property int selectionPopupPadding: 4
     readonly property int selectionAnimationDuration: 120
     readonly property int scrollbarWidth: 6
@@ -176,7 +183,9 @@ QtObject {
     readonly property color calendarTodayBackground: accent
     readonly property color calendarClockChangeEveBackground: warning
     readonly property color calendarHolidayBackground: active
-    readonly property color calendarTodayText: text
+    readonly property color calendarTodayText: foregroundOn(calendarTodayBackground)
+    readonly property color calendarHolidayText: foregroundOn(calendarHolidayBackground)
+    readonly property color calendarClockChangeEveText: foregroundOn(calendarClockChangeEveBackground)
     readonly property color calendarDayText: text
     readonly property color calendarHeaderText: inactive
     readonly property color calendarWeekNumberText: empty
@@ -191,7 +200,7 @@ QtObject {
     readonly property string updatesIcon: ""
     readonly property int updatesTooltipWidth: 320
     readonly property real updatesTooltipMaxHeightRatio: tooltipCompactMaxHeightRatio
-    readonly property color updatesUnchangedColor: "#62666b"
+    readonly property color updatesUnchangedColor: palette.colors.updatesUnchangedColor
 
     // TOTP
     readonly property string totpIcon: ""
@@ -225,12 +234,12 @@ QtObject {
     readonly property int batteryPercentageFontSize: 16
     readonly property var batteryLevelColors: ({ "normal": ok, "low": warning, "critical": urgent })
     readonly property real batteryFillOpacity: 0.5
-    readonly property color batteryEmptyColor: "#232323"
+    readonly property color batteryEmptyColor: palette.colors.batteryEmptyColor
     readonly property color batteryBorderColor: inactive
 
     // Twitch
     readonly property string twitchIcon: ""
-    readonly property color twitchColor: "#A970FF"
+    readonly property color twitchColor: palette.colors.twitchColor
     readonly property int twitchInfoWidth: 200
     readonly property int twitchAvatarSize: 40
     readonly property int twitchTooltipSpacing: controlSpacing
@@ -349,8 +358,8 @@ QtObject {
     readonly property int notificationEnterDuration: 320
     readonly property int notificationExitDuration: 220
     readonly property int notificationMoveDuration: 220
-    readonly property color notificationBackground: Qt.rgba(33 / 255, 34 / 255, 44 / 255, 0.95)
-    readonly property color notificationBorder: "#2a2d38"
-    readonly property color notificationCritical: "#d32f2f"
+    readonly property color notificationBackground: palette.colors.notificationBackground
+    readonly property color notificationBorder: palette.colors.notificationBorder
+    readonly property color notificationCritical: palette.colors.notificationCritical
     readonly property string notificationFont: fontFamily
 }

@@ -46,7 +46,7 @@ Column {
                     color: revealed ? Theme.text : "transparent"
                     rightPadding: notesEye.width + Theme.controlFieldPadding * 2
                     selectionColor: Theme.accent
-                    selectedTextColor: Theme.text
+                    selectedTextColor: Theme.selectionText
                     inputMethodHints: Qt.ImhSensitiveData | Qt.ImhNoPredictiveText
                     focusBorder: true
                     Accessible.name: valueRow.modelData.label

@@ -235,7 +235,7 @@ Rectangle {
                     width: Theme.controlHeight
                     height: width
                     glyph: Theme.cancelIcon
-                    foreground: hovered || down ? Theme.text : Theme.accent
+                    foreground: hovered || down ? Theme.foregroundOn(Theme.notificationCritical) : Theme.accent
                     hint: root.popup ? "Dismiss popup; keep history" : "Delete this history entry"
                     background: Rectangle {
                         radius: width / 2

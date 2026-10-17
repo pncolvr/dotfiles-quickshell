@@ -10,7 +10,7 @@ QC.Button {
     property string label: ""
     property string hint: ""
     property color fillColor: Theme.alternateBackground
-    property color foreground: Theme.text
+    property color foreground: Theme.foregroundOn((background as Rectangle)?.color ?? fillColor)
 
     implicitWidth: label.length ? Math.max(Theme.actionButtonWidth, implicitContentWidth) : Theme.actionButtonWidth
     implicitHeight: Theme.controlHeight

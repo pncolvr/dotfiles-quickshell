@@ -65,7 +65,7 @@ UI.PrivatePanelWindow {
         layer.enabled: true
         layer.effect: MultiEffect {
             shadowEnabled: true
-            shadowColor: "black"
+            shadowColor: Theme.tooltipShadowColor
             shadowOpacity: 0.35
             blurMax: root.shadowBlurRadius
             shadowBlur: 0.8
