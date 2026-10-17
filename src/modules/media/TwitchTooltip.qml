@@ -189,6 +189,7 @@ Item {
             UI.ActionButton {
                 id: addButton
                 objectName: "beginAddTwitchUser"
+                keyAction: "add"
                 anchors.right: parent.right
                 width: Theme.twitchEditorButtonWidth
                 height: Theme.twitchEditorHeight

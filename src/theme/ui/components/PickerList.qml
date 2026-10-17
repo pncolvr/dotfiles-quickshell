@@ -8,6 +8,8 @@ import "../" as UI
 
 ListView {
     id: root
+    activeFocusOnTab: true
+    Rectangle { parent: root; anchors.fill: parent; z: 1; color: "transparent"; radius: Theme.iconButtonRadius; border.width: root.activeFocus ? 1 : 0; border.color: Theme.accent }
     required property var picker
     property bool showThumbnails: true
     model: picker.filteredItems

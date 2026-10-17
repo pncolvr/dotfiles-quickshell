@@ -23,6 +23,7 @@ TimeEntryTab {
             UI.ActionButton {
                 id: addButton
                 objectName: "timerStart"
+                    keyAction: "add"
                 glyph: Theme.addIcon
                 foreground: Theme.accent
                 hint: Translations.text("timers.stopwatches.add")

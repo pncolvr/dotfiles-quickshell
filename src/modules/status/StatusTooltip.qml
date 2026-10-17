@@ -102,6 +102,7 @@ Column {
             UI.ActionButton {
                 id: refresh
                 objectName: "refreshTimecard"
+                keyAction: "refresh"
                 anchors.right: modes.left
                 anchors.rightMargin: Theme.controlSpacing
                 glyph: Theme.refreshIcon

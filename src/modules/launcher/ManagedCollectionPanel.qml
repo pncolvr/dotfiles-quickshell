@@ -104,7 +104,6 @@ ManagedPickerFrame {
         hints: Translations.text("collections.shortcuts.manage",[Config.pickerManageShortcut])
         onEditRequested: root.edit(root.selectedEntry)
         onAddRequested: root.beginAdd()
-        onAddKey: (event, activate) => { if (root.handleAddKey(event,activate)) event.accepted = true }
         detailContent: [
             Item {
                 id: formHolder
@@ -117,7 +116,7 @@ ManagedPickerFrame {
             Row {
                 visible: !root.showForm && !!root.selectedEntry
                 spacing: Theme.controlSpacing
-                UI.ActionButton { glyph: Theme.editIcon; hint: Translations.text("collections.actions.editHint"); enabled: !root.service.busy; onClicked: root.edit(root.selectedEntry) }
+                UI.ActionButton { glyph: Theme.editIcon; hintAction: "edit"; hint: Translations.text("collections.actions.editHint"); enabled: !root.service.busy; onClicked: root.edit(root.selectedEntry) }
                 UI.ActionButton {
                     glyph: Theme.deleteIcon; hint: Translations.text("collections.actions.removeHint"); fillColor: Theme.urgent
                     enabled: !root.service.busy && !!root.selectedEntry && root.canRemoveEntry(root.selectedEntry)

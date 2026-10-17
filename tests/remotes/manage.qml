@@ -92,12 +92,12 @@ Scope {
                     const shutdown=objects.findChild(panel,'remoteShutdown') as UI.ActionButton
                     root.check(!!disconnect && disconnect.enabled && shutdown.visible,'selected connection actions available')
                     root.check(PickerService.acceptLabel==='Disconnect','Enter hint describes running selection')
-                    panel.focusSearch(); events.keyClick(Qt.Key_R,Qt.ControlModifier,0)
+                    panel.focusSearch(); events.keyClick(Qt.Key_R,Qt.ControlModifier | Qt.ShiftModifier,0)
                     root.step=51; break
                 }
                 case 51: {
                     const running=objects.findChild(panel,'remoteRunningOnly') as UI.ActionButton
-                    root.check(RemoteService.activeOnly && running.checked,'Ctrl+R enables the checked running filter')
+                    root.check(RemoteService.activeOnly && running.checked,'Ctrl+Shift+R enables the checked running filter')
                     root.check(PickerService.items.length===1,'running filter excludes idle hosts')
                     PickerService.query='Beta'; root.check(!PickerService.filteredItems.length,'search composes with running filter')
                     PickerService.query='Alpha'
@@ -121,7 +121,7 @@ Scope {
                     RemoteService.request()
                     if(RemoteService.sessions.length!==2 || RemoteService.sessions.some(session=>session.state!=='running'))return
                     PickerService.remotes(); PickerService.query=''; panel.focusSearch()
-                    events.keyClick(Qt.Key_R,Qt.ControlModifier,0); root.step=82; break
+                    events.keyClick(Qt.Key_R,Qt.ControlModifier | Qt.ShiftModifier,0); root.step=82; break
                 case 82:
                     root.check(RemoteService.activeOnly && PickerService.items.length===2,'running filter includes both owned clients')
                     root.check(PickerService.acceptLabel==='Disconnect','Enter hint follows the selected running row')
@@ -144,7 +144,7 @@ Scope {
                     RemoteService.request()
                     if(root.ticks<7 || RemoteService.sessions[0]?.state!=='connecting')return
                     PickerService.remotes(); PickerService.query=''; panel.focusSearch()
-                    events.keyClick(Qt.Key_R,Qt.ControlModifier,0); root.step=21; break
+                    events.keyClick(Qt.Key_R,Qt.ControlModifier | Qt.ShiftModifier,0); root.step=21; break
                 case 21:
                     root.check(RemoteService.activeOnly && PickerService.items.length===1 && PickerService.acceptLabel==='Disconnect','connecting session appears in running filter with Disconnect action')
                     events.keyClick(Qt.Key_Return,Qt.NoModifier,0); root.step=22; break

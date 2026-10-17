@@ -58,7 +58,7 @@ Scope {
                 search.forceActiveFocus()
                 root.check(search.activeFocus,"Projects search receives native keyboard focus")
                 root.check(root.find(popup.contentItem,"pickerFooterHint").text.includes("Ctrl+W")
-                    && !root.find(popup.contentItem,"pickerFooterHint").text.includes("Ctrl+A"),"Projects hints show the filter shortcut, without Add")
+                    && !root.find(popup.contentItem,"pickerFooterHint").text.includes("Ctrl+N"),"Projects hints show the filter shortcut, without Add")
                 root.check(root.find(popup.contentItem,"pickerFooterHint").lineCount === 1,"Projects hints fit on one line")
                 root.check(events.keyClick(Qt.Key_A,Qt.ControlModifier,0),"Ctrl+A reaches native Projects search")
                 root.check(!ProjectService.managing && !root.projectPanel.adding,"Ctrl+A does not open Add from Projects")
@@ -86,7 +86,8 @@ Scope {
                 root.check(search.text === " ","plain Space keeps normal search typing")
                 search.clear()
                 PickerService.deselectAll()
-                root.check(events.keyClick(Qt.Key_A,Qt.ControlModifier,0),"Ctrl+A reaches GitHub search")
+                root.find(popup.contentItem,"pickerList").forceActiveFocus()
+                root.check(events.keyClick(Qt.Key_A,Qt.ControlModifier,0),"Ctrl+A reaches GitHub list")
                 root.check(PickerService.selectedIds.length === 2 && !ProjectService.managing,"GitHub Ctrl+A selects visible URLs")
                 root.check(events.keyClick(Qt.Key_A,Qt.ControlModifier,0),"Ctrl+A reaches GitHub search again")
                 root.check(PickerService.selectedIds.length === 0,"GitHub Ctrl+A clears the selection")
@@ -101,13 +102,13 @@ Scope {
                 root.openDialog()
                 root.step = 2
             } else if (root.step === 7) {
-                root.check(root.find(popup.contentItem,"projectManageHints").text.includes("Ctrl+A")
+                root.check(root.find(popup.contentItem,"projectManageHints").text.includes("Ctrl+N")
                     && root.find(popup.contentItem,"projectManageHints").text.includes("Ctrl+M"),"Manage shows shortcut hints")
                 const search = root.find(popup.contentItem,"projectManageSearch")
                 search.forceActiveFocus()
                 root.check(search.activeFocus,"Manage search receives native keyboard focus")
-                root.check(events.keyClick(Qt.Key_A,Qt.ControlModifier,0),"Ctrl+A reaches native Manage search")
-                root.check(root.find(popup.contentItem,"projectAddForm").visible,"Ctrl+A opens the add footer from Manage search")
+                root.check(events.keyClick(Qt.Key_N,Qt.ControlModifier,0),"Ctrl+N reaches native Manage search")
+                root.check(root.find(popup.contentItem,"projectAddForm").visible,"Ctrl+N opens the add footer from Manage search")
                 root.find(popup.contentItem,"projectSourcePath").text = root.folder
                 root.step = 6
             } else if (root.step === 2) {

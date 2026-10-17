@@ -13,6 +13,7 @@ Q.Row {
     property bool cancelEnabled: true
     property string submitGlyph: Theme.checkIcon
     property string submitHint: Translations.text("common.actions.apply")
+    property string submitKeyAction: "save"
     property alias submitColor: submitButton.fillColor
     property string cancelHint: Translations.text("common.actions.cancel")
     property alias submitObjectName: submitButton.objectName
@@ -32,6 +33,7 @@ Q.Row {
     }
     UI.ActionButton {
         id: submitButton
+        keyAction: root.submitKeyAction
         width: root.buttonWidth
         height: root.buttonHeight
         glyph: root.submitGlyph

@@ -13,16 +13,12 @@ ManagedCollectionPanel {
     pickerMode: PickerService.Mode.Remotes
     entryForm: RemoteForm {}
     canRemoveEntry: entry => !RemoteService.sessions.some(session=>session.id===entry.id)
-    Shortcut {
-        sequence: 'Ctrl+R'
-        enabled: root.sessionActive && !root.managing
-        onActivated: RemoteService.toggleActiveOnly()
-    }
     listActionButtons: Component {
         Row {
             spacing:Theme.controlSpacing
             UI.ActionButton {
                 objectName:'remoteRunningOnly'; label:Translations.text("remotes.filter.running")
+                keyAction: "remotes.runningOnly"
                 checkable:true; checked:RemoteService.activeOnly
                 foreground:checked ? Theme.accent : Theme.inactive
                 hint:Translations.text("remotes.filter.runningHint")

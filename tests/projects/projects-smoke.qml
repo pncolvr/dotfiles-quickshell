@@ -148,8 +148,8 @@ Scope {
                 panel.focusSearch()
                 root.find("projectManageSearch").text="banana"
                 root.check(root.find("projectManageSearch").activeFocus, "management search has keyboard focus")
-                root.check(events.keyClick(Qt.Key_A,Qt.ControlModifier,0), "add shortcut receives key in management search")
-                root.check(root.find("projectAddForm").visible && root.find("projectManageSearch").visible, "Ctrl+A opens the right-pane add form while keeping search visible")
+                root.check(events.keyClick(Qt.Key_N,Qt.ControlModifier,0), "add shortcut receives key in management search")
+                root.check(root.find("projectAddForm").visible && root.find("projectManageSearch").visible, "Ctrl+N opens the right-pane add form while keeping search visible")
                 root.find("projectSourcePath").text = root.directory + "/cancelled"
                 root.find("projectSourcePath").forceActiveFocus()
                 root.step=12

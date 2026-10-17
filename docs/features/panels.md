@@ -45,6 +45,21 @@ The shared components are `TooltipArea` (pin gesture and color),
 (Escape fallback), and `FolderDialog` (native selection). Module-specific adapters
 declare policy; they do not implement separate pinning or dismissal mechanisms.
 
+## Keyboard navigation and actions
+
+Keyboard focus has an accent outline distinct from a tab's active underline.
+Tab and Shift+Tab traverse enabled, visible controls; focused controls in scroll
+areas scroll into view. Tab-strip arrows select and activate the next tab through
+the same action as a click. Window buttons in the bar instead move focus with
+arrows and activate with Enter/Space.
+
+Panel actions use the grouped `Config.keybinds` settings described in
+[configuration](../configuration.md#panel-keybinds). Buttons and their shortcuts
+share enabled states and handlers, and shortcut hints follow configuration.
+Native text editing takes priority. Hidden panels, inactive windows, native child
+dialogs and selection popups cannot dispatch their parent's actions. Focus
+feedback works with motion disabled and during screen sharing.
+
 ## Keyboard entry points
 
 The companion Hypr modules submap uses native `quickshell:bar-NAME` global actions.

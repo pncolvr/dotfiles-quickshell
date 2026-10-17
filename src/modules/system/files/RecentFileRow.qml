@@ -12,6 +12,7 @@ Rectangle {
     required property var file
     property var fileService: RecentFilesService
     property var selection: null
+    property bool keyboardCurrent: false
     readonly property bool selected: selection?.selectedUris.includes(file.uri) ?? false
     readonly property bool pinned: fileService.isPinned(file.uri)
     readonly property string iconSource: Quickshell.iconPath(file.icon || "text-x-generic", true)
@@ -20,7 +21,7 @@ Rectangle {
     implicitHeight: Theme.recentFilesRowHeight
     radius: Theme.iconButtonRadius
     color: hover.hovered || dragging ? Theme.alternateBackground : "transparent"
-    border.width: selected ? 1 : 0
+    border.width: keyboardCurrent ? 2 : selected ? 1 : 0
     border.color: Theme.accent
 
     HoverHandler { id: hover; cursorShape: Qt.PointingHandCursor }

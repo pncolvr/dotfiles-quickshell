@@ -64,6 +64,7 @@ Column {
         UI.ActionButton {
             id: mute
             objectName: "audioPanelMute"
+            keyAction: "audio.mute"
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
             readonly property bool muted: root.input ? root.audioService.micMuted : root.audioService.muted

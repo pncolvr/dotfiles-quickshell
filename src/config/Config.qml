@@ -36,11 +36,56 @@ Item {
     readonly property string databaseName: "quickshell"
     readonly property var backupCommand: ["bash", Quickshell.shellPath("src/services/storage/backup.sh")]
 
+    // Panel keybinds. Desktop-opening shortcuts remain in Hypr.
+    readonly property var keybinds: ({
+        common: {
+            add: "Ctrl+N",
+            edit: "Ctrl+E",
+            save: "Ctrl+S",
+            refresh: "Ctrl+R",
+            search: "Ctrl+F",
+            manage: "Ctrl+M",
+            workFilter: "Ctrl+W",
+            nextTab: "Ctrl+Tab",
+            previousTab: "Ctrl+Shift+Tab",
+            preview: "Ctrl+Shift+I"
+        },
+        clipboard: {
+            pin: "Ctrl+P",
+            pinnedOnly: "Ctrl+Shift+P"
+        },
+        remotes: {
+            runningOnly: "Ctrl+Shift+R"
+        },
+        audio: {
+            mute: "Ctrl+Shift+M"
+        },
+        notifications: {
+            dnd: "Ctrl+Shift+D"
+        },
+        media: {
+            previousPlayer: "Left",
+            nextPlayer: "Right",
+            exit: "Escape",
+            closeWindow: "Alt+F4"
+        },
+        expose: {
+            all: "Ctrl+Shift+A",
+            workspace: "Ctrl",
+            move: "Ctrl+Shift"
+        },
+        selection: {
+            toggle: "Shift+Space",
+            all: "Ctrl+A",
+            clear: "Ctrl+Shift+A"
+        }
+    })
+
     // Launcher: shared picker
     // Shared defaults; feature-specific settings below can override these bindings.
-    readonly property string pickerManageShortcut: "Ctrl+M"
-    readonly property string pickerAddShortcut: "Ctrl+A"
-    readonly property string pickerShowAllShortcut: "Ctrl+W"
+    readonly property string pickerManageShortcut: keybinds.common.manage
+    readonly property string pickerAddShortcut: keybinds.common.add
+    readonly property string pickerShowAllShortcut: keybinds.common.workFilter
     readonly property string pickerWorkStatus: "work"
     readonly property int pickerMaxRows: 12
     readonly property bool pickerShowPrompt: false
@@ -55,11 +100,30 @@ Item {
     readonly property string projectDefaultApp: "code"
     // First matching extension wins. Commands are argv arrays, never shell code.
     readonly property var projectApps: [
-        {id: "code", name: "Code", offerFolder: true, useFileNames: true, extensions: [".code-workspace"],
-            command: ["code"], profiles: {work: "Work", personal: "Personal"},
-            arguments: ["{path}"], profileArguments: ["--profile", "{profile}"], windowClass: "code", windowTitlePrefix: "{folderName}"},
-        {id: "godot", name: "Godot", extensions: [".godot"], command: ["godot"],
-            arguments: ["--editor", "{path}"], folderArguments: ["--editor", "--path", "{path}"]}
+        {
+            id: "code",
+            name: "Code",
+            offerFolder: true,
+            useFileNames: true,
+            extensions: [".code-workspace"],
+            command: ["code"],
+            profiles: {
+                work: "Work",
+                personal: "Personal"
+            },
+            arguments: ["{path}"],
+            profileArguments: ["--profile", "{profile}"],
+            windowClass: "code",
+            windowTitlePrefix: "{folderName}"
+        },
+        {
+            id: "godot",
+            name: "Godot",
+            extensions: [".godot"],
+            command: ["godot"],
+            arguments: ["--editor", "{path}"],
+            folderArguments: ["--editor", "--path", "{path}"]
+        }
     ]
     readonly property var projectFileExclusions: ["*/.config/Code/*", "*/.godot/*", "*/.git/*"]
     readonly property var projectScanCommand: ["bash", Quickshell.shellPath("src/services/projects/scan.sh"), "scan"]
@@ -86,20 +150,47 @@ Item {
 
     // Launcher: managed webapps. Browser commands are literal argv templates.
     readonly property var webappBrowsers: [
-        {id: "qutebrowser", name: "Qutebrowser", command: ["qutebrowser"],
+        {
+            id: "qutebrowser",
+            name: "Qutebrowser",
+            command: ["qutebrowser"],
             profiles: [
-                {id: "qutebrowser-webapp", name: "Webapps"}
+                {
+                    id: "qutebrowser-webapp",
+                    name: "Webapps"
+                }
             ],
             profileArguments: ["--desktop-file-name", "{profile}", "-C", _internal.home + "/.config/qutebrowser/config.py", "-B", _internal.dataHome + "/{profile}"],
-            reuseArguments: ["--target", "tab"], windowArguments: ["--target", "window"]},
-        {id: "vivaldi", name: "Vivaldi", command: ["vivaldi"],
+            reuseArguments: ["--target", "tab"],
+            windowArguments: ["--target", "window"]
+        },
+        {
+            id: "vivaldi",
+            name: "Vivaldi",
+            command: ["vivaldi"],
             profiles: [
-                {id: "inbox", name: "inbox"},
-                {id: "lt", name: "lt"},
-                {id: "storage", name: "storage"}
+                {
+                    id: "inbox",
+                    name: "inbox"
+                },
+                {
+                    id: "lt",
+                    name: "lt"
+                },
+                {
+                    id: "storage",
+                    name: "storage"
+                }
             ],
-            profileArguments: ["--profile-directory={profile}"], windowArguments: ["--new-window"], appArguments: ["--app={url}"]},
-        {id: "default", name: "System default", command: ["xdg-open"]}
+            profileArguments: ["--profile-directory={profile}"],
+            windowArguments: ["--new-window"],
+            appArguments: ["--app={url}"]
+        },
+        {
+            id: "default",
+            name: "System default",
+            command: ["xdg-open"]
+        }
     ]
 
     // Launcher: remotes. Managed hosts/credentials stay in the backed-up database.
@@ -202,7 +293,11 @@ Item {
     readonly property int calendarClockChangeEventDurationMinutes: 15
     // Month numbers are 1–12; an empty list disables municipal holidays.
     readonly property var calendarMunicipalHolidays: [
-        {month: 5, day: 22, name: "Dia de Leiria"}
+        {
+            month: 5,
+            day: 22,
+            name: "Dia de Leiria"
+        }
     ]
 
     // Timers and countdowns

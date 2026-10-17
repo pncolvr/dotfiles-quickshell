@@ -14,6 +14,7 @@ UI.InputField {
     property bool handleEscape: !TooltipService.keyboardActive
     rightPadding: Theme.controlFieldPadding + (clearButton.visible ? clearButton.width : 0)
     Accessible.name: placeholderText
+    UI.PanelShortcut { owner: root; action: "search"; actionEnabled: !root.readOnly; onActivated: root.forceActiveFocus(Qt.ShortcutFocusReason) }
 
     function resetSearch() { clear(); focus = false }
 

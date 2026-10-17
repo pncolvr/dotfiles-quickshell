@@ -105,6 +105,11 @@ Scope {
                 root.check(root.nativePayload === root.expectedPayload && !backend.dragging, "native drag starts with the group and balances drag lifecycle")
                 root.check(panel.selectedUris.length === 0, "files missing after refresh are removed from selection")
                 root.click(0)
+                mouse.keyClick(Qt.Key_Down)
+                root.check(root.list.currentIndex === 1 && panel.selectedUris[0] === backend.files[1].uri,
+                    "Down moves the current file and selection")
+                mouse.keyClick(Qt.Key_Return)
+                root.check(backend.opened === backend.files[1].uri, "Enter opens the keyboard-current file")
                 mouse.keyClick(Qt.Key_A, Qt.ControlModifier)
                 root.check(panel.selectedUris.length === 5, "Ctrl+A selects the active list")
                 mouse.keyClick(Qt.Key_Escape)

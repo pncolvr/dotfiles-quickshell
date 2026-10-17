@@ -65,6 +65,7 @@ Column {
             readonly property string methods: modelData.methods.map(method => ({process:Translations.text("status.detection.configuredProcess"),directory:Translations.text("status.detection.workingDirectory"),file:Translations.text("status.detection.openFiles")})[method] || method).join(" · ")
             QC.ItemDelegate {
                 id: toggle
+                UI.FocusReveal { owner: toggle }
                 objectName: "statusDetectionToggle-" + match.modelData.name
                 width: parent.width
                 height: Theme.controlHeight
@@ -80,8 +81,10 @@ Column {
                     cursorShape: toggle.enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
                 }
                 background: Rectangle {
-                    color: toggle.hovered || match.expanded ? Theme.alternateBackground : "transparent"
                     radius: Theme.iconButtonRadius
+                    border.width: toggle.visualFocus ? 1 : 0
+                    border.color: Theme.accent
+                    color: toggle.hovered || match.expanded ? Theme.alternateBackground : "transparent"
                 }
                 contentItem: RowLayout {
                     spacing: Theme.controlSpacing

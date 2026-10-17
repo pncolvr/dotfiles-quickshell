@@ -226,6 +226,18 @@ to change an existing keyboard focus to pointer focus on press. Run
 Selected tabs, active devices and input-field borders
 continue to indicate their own states.
 
+Panel shortcuts use `UI.PanelShortcut` and `UI.Keybinds` with grouped
+`Config.keybinds` settings. Give an action button a `keyAction` to reuse its click
+handler and enabled state; use `hintAction` alone when a scoped shortcut already
+owns that action. Use `UI.FocusReveal` for custom focusable controls in scroll
+areas. Native field editing must retain priority over panel actions.
+
+Run `bash tests/ui/keybinds.sh` for isolated offscreen checks of remapped actions
+and hints, disabled actions, dialog/popup blocking, native text selection and
+cursor navigation, tab activation, visible focus with motion disabled/sharing,
+search focus, scrolling and disabled bindings. It uses private configuration and
+does not open live panels or move the pointer.
+
 Inline editors use `UI.EditorActions` for a neutral Cancel button followed by an
 accent Apply button. Recent files, TOTP, and Twitch share this component.
 
@@ -378,7 +390,7 @@ Timing is reported without a fixed speed threshold; results depend on the local
 machine and Qt build. Both fixtures use isolated databases and never scan actual
 projects or launch applications.
 Run `bash tests/projects/folder-picker.sh` in a Wayland session to verify that
-Ctrl+A opens Add from focused Projects and Manage searches, and accepting or cancelling the native
+Ctrl+N opens Add from focused Projects and Manage searches, and accepting or cancelling the native
 folder picker keeps Manage open and restores its keyboard focus. This test
 briefly shows an isolated picker and folder dialog.
 `bash tests/launcher/providers.sh` also checks that code/GitHub dispatch to native
@@ -962,7 +974,7 @@ stdin-only passwords, targeted disconnect, dead-owner recovery, stale PID protec
 cancellation and VM readiness failure. Manage tests use offscreen UI and the same
 mock commands to check input focus, masked passwords, CRUD/rollback, disabled entries,
 selected-VM shutdown and detached connections recovered after a shell restart.
-They also cover Ctrl+R Running-only filtering composed with search, per-opening
+They also cover Ctrl+Shift+R Running-only filtering composed with search, per-opening
 filter reset, dynamic Connect/Disconnect hints, rapid Enter disconnects while a
 controller request is in flight, and cancelling a connecting VM without launching
 an RDP client. Disconnecting rows leave the running view immediately while the

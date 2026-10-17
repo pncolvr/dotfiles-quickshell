@@ -142,8 +142,8 @@ Scope {
                 root.step = 3
             } else if (root.step === 3) {
                 root.check(root.find("directoryManageSearch").activeFocus,"Manage search focused")
-                root.check(events.keyClick(Qt.Key_A,Qt.ControlModifier,0),"Ctrl+A reaches Manage")
-                root.check(root.find("directoryForm").visible,"Ctrl+A opens Add only in Manage")
+                root.check(events.keyClick(Qt.Key_N,Qt.ControlModifier,0),"Ctrl+N reaches Manage")
+                root.check(root.find("directoryForm").visible,"Ctrl+N opens Add only in Manage")
                 root.find("directoryPath").text = "computer:///"
                 root.find("directoryCategory").selected(root.find("directoryCategory").selectedName === "work" ? "personal" : "work")
                 root.step = 4

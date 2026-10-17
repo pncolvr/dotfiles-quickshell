@@ -42,17 +42,18 @@ FocusScope {
     Keys.priority: Keys.BeforeItem
     Keys.onPressed: event => {
         const modifiers = event.modifiers & ~Qt.KeypadModifier
-        if (modifiers === Qt.ControlModifier && event.key === Qt.Key_A) {
+        if (UI.Keybinds.matches(event,"expose.all")) {
             if (!event.isAutoRepeat) root.picker.toggleExposeAll()
             root.focusSearch()
             event.accepted = true
             return
         }
-        if (modifiers === Qt.ControlModifier || modifiers === (Qt.ControlModifier | Qt.ShiftModifier)) {
+        if ((UI.Keybinds.sequence("expose.workspace") && modifiers === UI.Keybinds.modifiers("expose.workspace"))
+            || (UI.Keybinds.sequence("expose.move") && modifiers === UI.Keybinds.modifiers("expose.move"))) {
             const workspace = root.workspaceForKey(event)
             if (workspace) {
                 if (root.picker.exposeWorkspaces.some(entry => entry.id === workspace)) {
-                    if (modifiers & Qt.ShiftModifier) {
+                    if (modifiers === UI.Keybinds.modifiers("expose.move")) {
                         const selected = root.picker.currentItem
                         if (selected && !event.isAutoRepeat) root.picker.moveExposeWindow(selected.id, workspace)
                     } else {
@@ -171,7 +172,7 @@ FocusScope {
         width: parent.width
         horizontalAlignment: Text.AlignHCenter
         hints: Translations.text("expose.shortcuts.primary",[root.picker.filteredItems.length])
-            + Translations.text("expose.shortcuts.workspaces")
+            + Translations.text("expose.shortcuts.workspaces",[UI.Keybinds.sequence("expose.all"),UI.Keybinds.sequence("expose.workspace"),UI.Keybinds.sequence("expose.move")])
             + Translations.text("expose.shortcuts.drag")
         color: Theme.inactive
         wrapMode: Text.WordWrap

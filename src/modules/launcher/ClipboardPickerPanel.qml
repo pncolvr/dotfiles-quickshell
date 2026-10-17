@@ -66,7 +66,9 @@ PickerPanelBase {
     inlineFooter: imagesOnly && sideBySide
     footerHint: Translations.text("clipboard.shortcuts.primary")
         + (imagesOnly && sideBySide ? " · " : "\n")
-        + Translations.text("clipboard.shortcuts.filters")
+        + [UI.Keybinds.describe("clipboard.pin",Translations.text(root.picker.currentItem?.pinned ? "clipboard.actions.unpinHint" : "clipboard.actions.pinHint")),
+            UI.Keybinds.describe("clipboard.pinnedOnly",Translations.text("clipboard.filter.pinnedHint")),
+            UI.Keybinds.describe("preview",Translations.text("clipboard.filter.images"))].filter(Boolean).join(" · ")
 
     function sizeListForOpening() {
         const entries = picker.items.slice(0, Config.pickerMaxRows)
@@ -90,15 +92,7 @@ PickerPanelBase {
     }
     Keys.onDeletePressed: event => { root.deleteCurrentEntry(); event.accepted = true }
     Keys.onPressed: event => {
-        if (event.key === Qt.Key_I && event.modifiers === (Qt.ControlModifier | Qt.ShiftModifier)) { root.toggleImagesOnly(); event.accepted = true; return }
-        if (event.key === Qt.Key_C && event.modifiers === Qt.ControlModifier) {
-            root.picker.accept(false, true)
-            event.accepted = true
-            return
-        }
-        if (event.key !== Qt.Key_P) { event.accepted = false; return }
-        if (event.modifiers === (Qt.ControlModifier | Qt.ShiftModifier)) root.togglePinnedOnly()
-        else if (event.modifiers === Qt.ControlModifier) root.toggleCurrentPin()
+        if (event.matches(StandardKey.Copy)) root.picker.accept(false, true)
         else { event.accepted = false; return }
         event.accepted = true
     }
@@ -111,10 +105,11 @@ PickerPanelBase {
                 id: toolbar
                 anchors.right: parent.right
                 spacing: Theme.controlSpacing
-                UI.ActionButton { objectName: "clipboardImagesOnly"; glyph: Theme.imageIcon; foreground: root.imagesOnly ? Theme.accent : Theme.text; hint: Translations.text("clipboard.filter.images"); onClicked: root.toggleImagesOnly() }
+                UI.ActionButton { objectName: "clipboardImagesOnly"; keyAction: "preview"; glyph: Theme.imageIcon; foreground: root.imagesOnly ? Theme.accent : Theme.text; hint: Translations.text("clipboard.filter.images"); onClicked: root.toggleImagesOnly() }
                 UI.ActionButton { objectName: "clipboardFuzzy"; glyph: Theme.searchIcon; foreground: root.picker.clipboardFuzzy ? Theme.accent : Theme.text; hint: Translations.text("clipboard.search.fuzzyHint"); onClicked: root.picker.clipboardFuzzy = !root.picker.clipboardFuzzy }
                 UI.ActionButton {
                     objectName: "clipboardPinnedOnly"
+                    keyAction: "clipboard.pinnedOnly"
                     glyph: Theme.filterIcon
                     foreground: root.pinnedOnly ? Theme.accent : Theme.text
                     hint: Translations.text(root.pinnedOnly ? "clipboard.filter.showAllHint" : "clipboard.filter.pinnedHint")
@@ -122,6 +117,7 @@ PickerPanelBase {
                 }
                 UI.ActionButton {
                     objectName: "pinClipboardEntry"
+                    keyAction: "clipboard.pin"
                     glyph: Theme.filePinIcon
                     foreground: root.picker.currentItem?.pinned ? Theme.accent : Theme.inactive
                     hint: Translations.text(root.picker.currentItem?.pinned ? "clipboard.actions.unpinHint" : "clipboard.actions.pinHint")

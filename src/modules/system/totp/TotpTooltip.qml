@@ -175,6 +175,7 @@ Column {
         UI.ActionButton {
             id: addButton
             objectName: "beginAddTotpToken"
+            keyAction: "add"
             anchors.right: parent.right
             anchors.bottom: parent.bottom
             visible: !root.adding

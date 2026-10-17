@@ -90,6 +90,7 @@ Column {
         const available = fileService.files.map(file => file.uri)
         const index = available.indexOf(uri)
         if (index < 0) return
+        list.currentIndex = index
         const toggle = (modifiers & Qt.ControlModifier) !== 0
         const anchor = available.indexOf(selectionAnchor)
         switch (true) {
@@ -195,6 +196,7 @@ Column {
             spacing: Theme.controlSpacing
             UI.ActionButton {
                 objectName: "refreshFiles"
+                keyAction: "refresh"
                 glyph: Theme.refreshIcon
                 hint: Translations.text("files.actions.refreshHint")
                 enabled: !root.fileService.loading && !root.fileService.dragging
@@ -202,6 +204,7 @@ Column {
             }
             UI.ActionButton {
                 objectName: "addFolderTab"
+                keyAction: "add"
                 glyph: Theme.addIcon
                 hint: Translations.text("files.actions.addTabHint")
                 enabled: !root.fileService.loading && !root.fileService.dragging
@@ -353,6 +356,8 @@ Column {
             - (feedback.visible ? feedback.height + root.spacing : 0)
             - (hint.visible ? hint.height + root.spacing : 0) - root.spacing * 2))
         model: root.fileService.files
+        activeFocusOnTab: true
+        keyNavigationEnabled: false
         clip: true
         boundsBehavior: Flickable.StopAtBounds
         interactive: !root.fileService.dragging
@@ -360,6 +365,22 @@ Column {
         Keys.onPressed: event => {
             if (root.fileService.dragging) return
             switch (event.key) {
+            case Qt.Key_Up:
+            case Qt.Key_Down:
+                if (!count) return
+                currentIndex = Math.max(0,Math.min(count - 1,currentIndex + (event.key === Qt.Key_Down ? 1 : -1)))
+                positionViewAtIndex(currentIndex,ListView.Contain)
+                root.selectFile(root.fileService.files[currentIndex].uri,event.modifiers)
+                break
+            case Qt.Key_Return:
+            case Qt.Key_Enter:
+                if (!root.fileService.files[currentIndex]) return
+                root.fileService.openFile(root.fileService.files[currentIndex])
+                break
+            case Qt.Key_Space:
+                if (!root.fileService.files[currentIndex]) return
+                root.selectFile(root.fileService.files[currentIndex].uri,event.modifiers)
+                break
             case Qt.Key_A:
                 if (!(event.modifiers & Qt.ControlModifier)) return
                 root.selectedUris = root.fileService.files.map(file => file.uri)
@@ -375,6 +396,8 @@ Column {
             event.accepted = true
         }
         delegate: RecentFileRow {
+            required property int index
+            keyboardCurrent: list.activeFocus && list.currentIndex === index
             required property var modelData
             file: modelData
             fileService: root.fileService

@@ -1,9 +1,11 @@
 import QtQuick
 import QtQuick.Controls as QC
 import "../../"
+import "../" as UI
 
 QC.TextField {
     id: root
+    UI.FocusReveal { owner: root }
     // Focus keeps inputs usable when filtering moves the panel off the pointer.
     property bool retainPanelWhileFocused: true
     property bool retainPanelWhileEditing: true

@@ -86,7 +86,6 @@ ManagedPickerFrame {
         hints: Translations.text("directories.shortcuts.manage",[Config.directoryManageShortcut])
         onEditRequested: root.edit(root.selectedEntry)
         onAddRequested: root.beginAdd()
-        onAddKey: (event,activate) => { if (root.handleAddKey(event,activate)) event.accepted = true }
         detailContent: [
             UI.ColumnText {
                 width: parent.width

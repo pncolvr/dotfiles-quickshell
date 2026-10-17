@@ -12,16 +12,13 @@ ManagedCollectionPanel {
     collectionName:'n8n'
     pickerMode:PickerService.Mode.N8n
     entryForm:N8nInstanceForm {}
-    Shortcut {
-        sequence:'Ctrl+R'; enabled:root.sessionActive && !root.managing
-        onActivated:N8nService.refresh()
-    }
     listActionButtons: Component {
         Row {
             spacing:Theme.controlSpacing
             UI.ActionButton {
                 id: refresh
                 objectName:'n8nRefresh'; glyph:Theme.refreshIcon; label:Translations.text("common.actions.refresh")
+                keyAction: "refresh"
                 enabled:!N8nService.refreshing && !!N8nService.availableEntries.length
                 hint:Translations.text("n8n.actions.refreshHint")
                 onClicked:N8nService.refresh()

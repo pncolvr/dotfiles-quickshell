@@ -38,6 +38,7 @@ TimeEntryTab {
                 UI.ActionButton {
                     id: addButton
                     objectName: "countdownStart"
+                    keyAction: "add"
                     anchors.bottom: parent.bottom
                     glyph: Theme.addIcon
                     foreground: Theme.accent

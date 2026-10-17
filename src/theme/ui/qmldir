@@ -67,3 +67,7 @@ CaptureOverlay 1.0 components/CaptureOverlay.qml
 
 MonthCalendar 1.0 components/MonthCalendar.qml
 CalendarPeriodPicker 1.0 components/CalendarPeriodPicker.qml
+
+singleton Keybinds 1.0 components/Keybinds.qml
+PanelShortcut 1.0 components/PanelShortcut.qml
+FocusReveal 1.0 components/FocusReveal.qml

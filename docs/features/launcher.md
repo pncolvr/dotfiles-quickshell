@@ -183,7 +183,7 @@ the packed card layout. Window cards retain their original proportions and
 relative size. A single window uses the largest
 size that fits the preview area. Opaque rectangular title boxes sit above the previews.
 Click a workspace tile's miniature preview to close Exposé into that workspace.
-Click its header or outer area to see its windows within Exposé, or press **Ctrl+A** to show
+Click its header or outer area to see its windows within Exposé, or press **Ctrl+Shift+A** to show
 every workspace. The All view orders windows by workspace, then top to bottom
 and left to right within each workspace, including special workspaces.
 Tabs in the same window group use alphabetical display-name order.
@@ -195,7 +195,7 @@ workspaces are added automatically. Existing special workspaces also have tiles,
 so their windows use the same workspace transitions.
 
 **Ctrl+1–9** selects workspace views 1–9; **Ctrl+0** selects workspace 10.
-**Ctrl+A** toggles the All view and the workspace view where the toggle started.
+**Ctrl+Shift+A** toggles the All view and the workspace view where the toggle started.
 **Ctrl+Shift+1–9** and **Ctrl+Shift+0** move the selected window to that
 workspace without following it or closing Exposé. Search text stays in place.
 
@@ -288,7 +288,7 @@ Ctrl+Enter exits 10 when `customAccept` is enabled. Multi-selection rows toggle
 with a click or Shift+Space, including while typing in search. Shift+Space also
 moves the highlight to the next result, stopping at the last row. Arrow keys move
 the highlighted entry; plain Space still types a space in search. Checkboxes
-show the selection. Ctrl+A and the Select visible button add the current filtered
+show the selection. Ctrl+A with the result list focused and the Select visible button add the current filtered
 results, preserving earlier selections. When all visible results are selected,
 the action toggles to Deselect all and clears selections across every search.
 Ctrl+Shift+A always clears every selection. Enter and the submit button use the
@@ -457,7 +457,7 @@ in their final row, with no content below them.
 
 Open with `launcher.sh provider webapps` (or `launcher.sh webapps`). The existing
 binding opens the native Webapps picker. **Ctrl+M** switches to **Manage**;
-**Ctrl+A** adds an entry while managing. Manage lists disabled entries too.
+**Ctrl+N** adds an entry while managing. Manage lists disabled entries too.
 Editing, search, Escape and focus reuse the shared managed-picker components.
 
 Entries have a name, HTTP(S) URL, browser, optional browser profile, window mode
@@ -493,7 +493,7 @@ workflows from every eligible instance, with the instance name on each row.
 Each instance also has an **Open instance** row, available before its first refresh.
 Search matches workflow names, instance names and editor URLs.
 
-**Ctrl+M** switches to Manage; **Ctrl+A** adds an instance there. Store each
+**Ctrl+M** switches to Manage; **Ctrl+N** adds an instance there. Store each
 instance's name, address (including any base path), API key, browser/profile,
 window mode, Personal/Work category and enabled state. Browser fields are shared
 with Webapps and use `Config.webappBrowsers`. Keys use the shared masked secret
@@ -527,7 +527,7 @@ non-Enterprise keys have broader account access according to the
 `launcher.sh remotes`, `launcher.sh provider remotes` and
 `qs ipc call launcher remotes` open the native Remotes/Manage picker.
 It reuses the Webapps collection controller, repository and UI components.
-Ctrl+M switches Manage, Ctrl+A adds a record while managing, and Ctrl+W toggles
+Ctrl+M switches Manage, Ctrl+N adds a record while managing, and Ctrl+W toggles
 the work-status filter. Disabled records remain editable in Manage.
 
 Choose RDP through an SSH tunnel or a local libvirt VM. The form masks passwords;
@@ -537,7 +537,7 @@ Shared legacy arguments are migrated into each record, including private paths.
 
 A detached worker owns each managed connection across bar/theme/config reloads.
 Enter or clicking a row connects an idle host and disconnects an active one.
-The Enter hint follows the selected row. **Running only** (Ctrl+R) filters to
+The Enter hint follows the selected row. **Running only** (Ctrl+Shift+R) filters to
 running and connecting sessions, alongside the search query. It starts off each
 time Remotes opens. Disconnecting rows leave this view immediately so repeated
 Enter presses can disconnect several in a row. The picker stays open after
@@ -568,8 +568,8 @@ readers, import controls, global process-kill actions or hardcoded VM names.
 starts in **Directories**, with the work-status filter enabled. Personal folders
 remain available; work folders appear while the status is `directoryWorkStatus`.
 **Ctrl+W** toggles all directories for the current opening. **Ctrl+M** toggles
-**Manage**. **Ctrl+A** opens the right-pane Add form only in Manage; while
-editing a field it retains Select all. Both tabs show shortcut hints. Commands,
+**Manage**. **Ctrl+N** opens the right-pane Add form only in Manage; Ctrl+A in
+text fields remains Select all. Both tabs show shortcut hints. Commands,
 status and shortcuts live in `src/config/Config.qml`.
 
 When no saved entry matches, press Enter to open the local folder path typed into
@@ -625,12 +625,12 @@ In Manage, the right-pane Add form starts with the folder path and browse button
 Cancel and Apply remain anchored below the form. Use the folder-open button to choose a path in the native folder picker.
 Accepting or cancelling the folder picker keeps Manage open and returns focus
 to the path field; selecting a folder does not start a scan.
-Two buttons show the current options: **Single folder** / **Repositories root**
-and **Personal** / **Work**. Clicking a button switches to its other option.
-The plus button next to search opens the Add form in the right pane. **Ctrl+A**
+Two combo boxes select **Single folder** / **Repositories root**
+and **Personal** / **Work**.
+The plus button next to search opens the Add form in the right pane. **Ctrl+N**
 opens the same controls only in Manage (`projectAddShortcut` in Config.qml).
-In the GitHub Projects picker, Ctrl+A retains its URL-selection behavior; in an
-editor it remains Select all. Save or Cancel returns to source details. Empty
+In the GitHub Projects picker, Ctrl+A selects URLs when the result list has
+focus; in search and other text fields it remains Select all. Save or Cancel returns to source details. Empty
 source lists offer Add without opening a form automatically.
 A repositories root includes each immediate
 child directory; neither kind requires Git. The add action scans the source.

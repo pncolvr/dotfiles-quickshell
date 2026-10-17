@@ -12,6 +12,14 @@ import "../../../services"
 
 Rectangle {
     id: root
+    activeFocusOnTab: !popup && !closing
+    Accessible.role: Accessible.Button
+    Accessible.name: entry.summary ?? ""
+    UI.FocusReveal { owner: root }
+    Keys.onReturnPressed: NotificationService.activate(root.entry, !root.popup)
+    Keys.onEnterPressed: NotificationService.activate(root.entry, !root.popup)
+    Keys.onSpacePressed: NotificationService.activate(root.entry, !root.popup)
+    Rectangle { parent: root; anchors.fill: parent; z: 10; color: "transparent"; radius: root.radius; border.width: root.activeFocus ? 1 : 0; border.color: Theme.accent }
     required property var entry
     property bool popup: false
     property bool closing: false

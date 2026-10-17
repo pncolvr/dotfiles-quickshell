@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import "../../../i18n"
 import QtQuick
+import QtQuick.Controls as QC
 import QtQuick.Layouts
 import "../../../theme"
 import "../../../theme/ui" as UI
@@ -53,11 +54,17 @@ Column {
                 elide: Text.ElideRight
                 textFormat: Text.PlainText
             }
-            MouseArea {
+            QC.AbstractButton {
+                id: groupToggle
                 anchors.fill: parent
                 enabled: root.group.count > 1
-                cursorShape: Qt.PointingHandCursor
+                Accessible.name: root.emitter?.name || root.group.emitterKey
+                background: Rectangle { color: "transparent"; radius: Theme.iconButtonRadius; border.width: groupToggle.visualFocus ? 1 : 0; border.color: Theme.accent }
+                UI.FocusReveal { owner: groupToggle }
+                HoverHandler { cursorShape: groupToggle.enabled ? Qt.PointingHandCursor : Qt.ArrowCursor }
                 onClicked: root.toggleExpanded()
+                Keys.onReturnPressed: click()
+                Keys.onEnterPressed: click()
             }
         }
         NotificationSourceControls {

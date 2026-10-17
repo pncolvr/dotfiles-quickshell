@@ -152,24 +152,28 @@ PanelWindow {
         anchors.fill: parent
         z: 10
         focus: true
-        Shortcut {
-            sequence: "Escape"
-            enabled: root.visible
+        UI.PanelShortcut {
+            owner: keys
+            action: "media.exit"
+            actionEnabled: root.visible
             onActivated: root.dismiss()
         }
-        Shortcut {
-            sequence: "Alt+F4"
-            enabled: root.visible
+        UI.PanelShortcut {
+            owner: keys
+            action: "media.closeWindow"
+            actionEnabled: root.visible
             onActivated: root.dismiss()
         }
-        Shortcut {
-            sequence: "Left"
-            enabled: root.requested && root.transitionProgress === 1 && MediaFullscreenService.players.length > 1
+        UI.PanelShortcut {
+            owner: keys
+            action: "media.previousPlayer"
+            actionEnabled: root.requested && root.transitionProgress === 1 && MediaFullscreenService.players.length > 1
             onActivated: root.navigate(-1)
         }
-        Shortcut {
-            sequence: "Right"
-            enabled: root.requested && root.transitionProgress === 1 && MediaFullscreenService.players.length > 1
+        UI.PanelShortcut {
+            owner: keys
+            action: "media.nextPlayer"
+            actionEnabled: root.requested && root.transitionProgress === 1 && MediaFullscreenService.players.length > 1
             onActivated: root.navigate(1)
         }
         UI.ActionButton {
@@ -183,6 +187,7 @@ PanelWindow {
             height: width
             glyph: Theme.cancelIcon
             foreground: hovered || down ? Theme.foregroundOn(Theme.notificationCritical) : Theme.accent
+            hintAction: "media.exit"
             hint: Translations.text("media.fullscreen.exitHint")
             background: Rectangle {
                 radius: width / 2
@@ -205,6 +210,7 @@ PanelWindow {
             AudioButton {
                 objectName: "mediaFullscreenPreviousPlayer"
                 glyph: Theme.chevronLeftIcon
+                hintAction: "media.previousPlayer"
                 hint: Translations.text("media.actions.previousPlayerHint")
                 onClicked: root.navigate(-1)
             }
@@ -215,6 +221,7 @@ PanelWindow {
             AudioButton {
                 objectName: "mediaFullscreenNextPlayer"
                 glyph: Theme.chevronRightIcon
+                hintAction: "media.nextPlayer"
                 hint: Translations.text("media.actions.nextPlayerHint")
                 onClicked: root.navigate(1)
             }

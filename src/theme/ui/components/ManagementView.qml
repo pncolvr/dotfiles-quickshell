@@ -59,7 +59,6 @@ Item {
         return filters
     }
     signal addRequested()
-    signal addKey(var event, bool activate)
     implicitHeight: Theme.manageHeight
     onFilteredEntriesChanged: {
         if (!filteredEntries.some(entry => entry.id === selectedId)) selectedId = filteredEntries[0]?.id ?? ""
@@ -79,9 +78,10 @@ Item {
         select(filteredEntries[Math.max(0, Math.min(filteredEntries.length - 1, index + delta))]?.id ?? "")
         list.positionViewAtIndex(Math.max(0, filteredEntries.findIndex(entry => entry.id === selectedId)), ListView.Contain)
     }
-    Shortcut {
-        sequence: "Ctrl+E"
-        enabled: root.editEnabled
+    UI.PanelShortcut {
+        owner: root
+        action: "edit"
+        actionEnabled: root.editEnabled
         onActivated: root.editRequested()
     }
     Column {
@@ -105,11 +105,8 @@ Item {
                 resetWithTooltip: false
                 handleEscape: false
                 onTextChanged: root.select(root.filteredEntries[0]?.id ?? "")
-                Keys.onShortcutOverride: event => root.addKey(event, false)
                 Keys.onPressed: event => {
                     event.accepted = false
-                    root.addKey(event, true)
-                    if (event.accepted) return
                     if (event.key === Qt.Key_Down || event.key === Qt.Key_Up) {
                         root.moveSelection(event.key === Qt.Key_Down ? 1 : -1)
                         event.accepted = true
@@ -164,6 +161,8 @@ Item {
             spacing: Theme.controlSpacing * 2
             ListView {
                 id: list
+                activeFocusOnTab: true
+                keyNavigationEnabled: false
                 objectName: root.listObjectName
                 width: parent.width * 0.38
                 height: parent.height
@@ -181,9 +180,10 @@ Item {
                         event.accepted = true
                     }
                 }
-                Rectangle { anchors.fill: parent; anchors.margins: 1; z: 1; color: "transparent"; radius: Theme.iconButtonRadius; border.width: 1; border.color: Theme.empty }
+                Rectangle { anchors.fill: parent; anchors.margins: 1; z: 1; color: "transparent"; radius: Theme.iconButtonRadius; border.width: 1; border.color: list.activeFocus ? Theme.accent : Theme.empty }
                 delegate: QC.ItemDelegate {
                     id: row
+                    focusPolicy: Qt.NoFocus
                     required property var modelData
                     required property int index
                     width: list.width
@@ -246,6 +246,6 @@ Item {
         x: Theme.projectManagePadding
         width: parent.width - Theme.projectManagePadding * 2
         anchors.bottom: parent.bottom
-        hints: root.hints + (root.editEnabled ? " · " + Translations.text("common.shortcuts.edit") : "")
+        hints: root.hints + (root.editEnabled && UI.Keybinds.sequence("edit") ? " · " + Translations.text("common.shortcuts.edit",[UI.Keybinds.sequence("edit")]) : "")
     }
 }

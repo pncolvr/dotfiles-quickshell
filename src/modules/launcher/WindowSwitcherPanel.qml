@@ -18,12 +18,10 @@ PickerPanelBase {
     stackedPreview: !sideBySide && previewProgress > 0
     previewOpacity: previewProgress
     showThumbnails: false
-    footerHint: Translations.text("picker.shortcuts.windowSwitch")
+    footerHint: Translations.text("picker.shortcuts.windowSwitch",[UI.Keybinds.sequence("preview")
+        ? " · " + UI.Keybinds.describe("preview",Translations.text("common.actions.preview")) : ""])
+    UI.PanelShortcut { owner: root; action: "preview"; onActivated: root.previewEnabled = !root.previewEnabled }
     searchKeyHandler: (event, activate) => {
-        if (event.key === Qt.Key_I && event.modifiers === (Qt.ControlModifier | Qt.ShiftModifier)) {
-            if (activate) root.previewEnabled = !root.previewEnabled
-            return true
-        }
         if ((event.key === Qt.Key_Tab || event.key === Qt.Key_Backtab) && (event.modifiers & Qt.AltModifier)) {
             if (activate) root.picker.cycleWindowSwitch((event.modifiers & Qt.ShiftModifier) || event.key === Qt.Key_Backtab ? -1 : 1)
             return true

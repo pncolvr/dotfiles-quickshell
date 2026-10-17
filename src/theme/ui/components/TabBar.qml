@@ -27,6 +27,22 @@ QC.TabBar {
     property var closeableTabs: []
     property var dropEnabledTabs: []
     property bool interactionEnabled: true
+    property bool actionTabs: false
+    function activateTab(index) {
+        if (!interactionEnabled || index < 0 || index >= count) return
+        setCurrentIndex(index)
+        tabClicked(index)
+    }
+    function navigateTab(delta) {
+        if (!count) return
+        const index = (currentIndex + delta + count) % count
+        itemAt(index).forceActiveFocus(Qt.TabFocusReason)
+        activateTab(index)
+        const view = contentItem as ListView
+        if (view) view.positionViewAtIndex(index,ListView.Contain)
+    }
+    UI.PanelShortcut { owner: root; action: "nextTab"; actionEnabled: root.interactionEnabled && !root.actionTabs; onActivated: root.navigateTab(1) }
+    UI.PanelShortcut { owner: root; action: "previousTab"; actionEnabled: root.interactionEnabled && !root.actionTabs; onActivated: root.navigateTab(-1) }
     property real tabPadding: Theme.controlFieldPadding * 2
     property real closeButtonWidth: 16
     property real underlineBottomMargin: 3
@@ -76,6 +92,19 @@ QC.TabBar {
             padding: 0
             hoverEnabled: true
             focusPolicy: root.interactionEnabled ? Qt.StrongFocus : Qt.NoFocus
+            Keys.priority: Keys.BeforeItem
+            Keys.onPressed: event => {
+                if (![Qt.Key_Left,Qt.Key_Right,Qt.Key_Return,Qt.Key_Enter,Qt.Key_Space].includes(event.key)) { event.accepted = false; return }
+                if (root.interactionEnabled) {
+                    if (event.key === Qt.Key_Left || event.key === Qt.Key_Right) {
+                        const index = (tabButton.index + (event.key === Qt.Key_Right ? 1 : -1) + root.count) % root.count
+                        const next = root.itemAt(index)
+                        next.forceActiveFocus(Qt.TabFocusReason)
+                        if (!root.actionTabs) root.activateTab(index)
+                    } else root.activateTab(tabButton.index)
+                }
+                event.accepted = true
+            }
             contentItem: Item {
                 UI.Text {
                     id: tabLabel
@@ -108,7 +137,8 @@ QC.TabBar {
             background: Rectangle {
                 color: tabButton.down ? Qt.darker(Theme.alternateBackground, 1.2)
                     : tabButton.hovered || tabDrop.containsDrag ? Theme.alternateBackground : "transparent"
-                border.width: tabDrop.containsDrag ? 1 : 0
+                radius: Theme.iconButtonRadius
+                border.width: tabButton.visualFocus || tabDrop.containsDrag ? 1 : 0
                 border.color: Theme.accent
                 Rectangle {
                     anchors.bottom: parent.bottom
@@ -120,7 +150,7 @@ QC.TabBar {
                     color: Theme.accent
                 }
             }
-            onClicked: { if (root.interactionEnabled) root.tabClicked(index) }
+            onClicked: { if (root.interactionEnabled) root.activateTab(index) }
             // Block activation during source drags while keeping drop targets alive.
             MouseArea { anchors.fill: parent; visible: !root.interactionEnabled }
             DropArea {

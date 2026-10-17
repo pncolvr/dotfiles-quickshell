@@ -73,25 +73,22 @@ Item {
         Qt.callLater(root.focusSearch)
     }
     function beginAdd() { addRequested(); Qt.callLater(root.focusSearch) }
-    function handleAddKey(event, activate) {
-        if (!addShortcut.enabled || addShortcut.portableText !== "Ctrl+A" || !event.matches(StandardKey.SelectAll)) return false
-        if (activate) beginAdd()
-        return true
-    }
-    Shortcut {
-        id: addShortcut
-        sequence: root.addSequence
-        enabled: root.sessionActive && root.addAllowed
+    UI.PanelShortcut {
+        owner: root
+        configuredSequence: root.addSequence
+        actionEnabled: root.sessionActive && root.addAllowed
         onActivated: root.beginAdd()
     }
-    Shortcut {
-        sequence: root.manageSequence
-        enabled: root.sessionActive && (root.manageDuringDialog || !root.nativeDialogOpen)
+    UI.PanelShortcut {
+        owner: root
+        configuredSequence: root.manageSequence
+        actionEnabled: root.sessionActive && (root.manageDuringDialog || !root.nativeDialogOpen)
         onActivated: root.management(!root.managing)
     }
-    Shortcut {
-        sequence: root.showAllSequence
-        enabled: root.sessionActive && !root.managing && StatusService.enabled
+    UI.PanelShortcut {
+        owner: root
+        configuredSequence: root.showAllSequence
+        actionEnabled: root.sessionActive && !root.managing && StatusService.enabled
         onActivated: root.showAllRequested()
     }
     Keys.onEscapePressed: root.escapeRequested()

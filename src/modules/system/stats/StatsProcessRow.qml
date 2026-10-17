@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import "../../../i18n"
 import QtQuick
+import QtQuick.Controls as QC
 import "../../../theme"
 import "../../../theme/ui" as UI
 import "../../../services"
@@ -33,15 +34,20 @@ Item {
         height: parent.height + Theme.statsProcessRowSpacing
         color: Theme.empty
     }
-    MouseArea {
+    QC.AbstractButton {
+        id: expander
         objectName: "statsExpandProcess"
         anchors.left: parent.left
         anchors.right: pid.left
         anchors.rightMargin: Theme.controlSpacing
         height: parent.height
         enabled: root.canExpand
-        cursorShape: Qt.PointingHandCursor
         onClicked: root.toggleExpanded()
+        Keys.onReturnPressed: click()
+        Keys.onEnterPressed: click()
+        UI.FocusReveal { owner: expander }
+        background: Rectangle { color: "transparent"; radius: Theme.iconButtonRadius; border.width: expander.visualFocus ? 1 : 0; border.color: Theme.accent }
+        HoverHandler { cursorShape: root.canExpand ? Qt.PointingHandCursor : Qt.ArrowCursor }
     }
     UI.IconText {
         id: chevron

@@ -57,6 +57,7 @@ PrivateTooltipWindow {
                     anchors.right: parent.right
                     spacing: Theme.controlSpacing
                     UI.ActionButton {
+                        keyAction: "notifications.dnd"
                         glyph: NotificationService.dndEnabled ? Theme.notificationsDndEnabledIcon : Theme.notificationsDndDisabledIcon
                         foreground: NotificationService.dndEnabled ? Theme.accent : Theme.text
                         hint: Translations.text(NotificationService.dndEnabled ? "notifications.dnd.disableHint" : "notifications.dnd.enableHint")

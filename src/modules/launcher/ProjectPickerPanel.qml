@@ -135,7 +135,7 @@ ManagedPickerFrame {
         visible: !ProjectService.managing
         searchPlaceholder: Translations.text(ProjectService.urls ? "projects.urls.searchPlaceholder" : "projects.search.placeholder")
         searchKeyHandler: root.handlePickerKey
-        footerHint: StatusService.filterHint(Config.projectShowAllShortcut,ProjectService.showAll) + Translations.text(ProjectService.urls ? "projects.shortcuts.urls" : "projects.shortcuts.list",[Config.projectManageShortcut,root.picker.selectedIds.length])
+        footerHint: StatusService.filterHint(Config.projectShowAllShortcut,ProjectService.showAll) + Translations.text(ProjectService.urls ? "projects.shortcuts.urls" : "projects.shortcuts.list",[Config.projectManageShortcut,root.picker.selectedIds.length,UI.Keybinds.sequence("selection.toggle"),UI.Keybinds.sequence("selection.all"),UI.Keybinds.sequence("selection.clear")])
     }
     UI.ManagementView {
         id: manage
@@ -160,10 +160,10 @@ ManagedPickerFrame {
         hints: Translations.text("projects.shortcuts.manage",[Config.projectManageShortcut])
         onEditRequested: root.editSource(root.selectedSource.path)
         onAddRequested: root.beginAdd()
-        onAddKey: (event,activate) => { if (root.handleAddKey(event,activate)) event.accepted = true }
         toolbarContent: [UI.ActionButton {
             objectName: "refreshProjects"
             visible: ProjectService.managing
+            keyAction: "refresh"
             glyph: Theme.refreshIcon
             hint: Translations.text("projects.actions.refreshHint")
             enabled: !ProjectService.busy && !root.showForm && ProjectService.sources.length > 0

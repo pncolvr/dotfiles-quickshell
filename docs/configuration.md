@@ -43,6 +43,37 @@ arguments, stored categories and the internal time-report grammar remain
 independent of the selected language. Detached workers return semantic diagnostics;
 Quickshell translates them using its current language.
 
+## Panel keybinds
+
+`Config.keybinds` groups in-panel shortcuts by action. Desktop shortcuts that
+open modules, including Alt+Tab, remain in Hypr. These are the defaults:
+
+| Group | Actions and bindings |
+| --- | --- |
+| `common` | `add`: Ctrl+N; `edit`: Ctrl+E; `save`: Ctrl+S; `refresh`: Ctrl+R; `search`: Ctrl+F |
+| `common` | `manage`: Ctrl+M; `workFilter`: Ctrl+W; `nextTab`: Ctrl+Tab; `previousTab`: Ctrl+Shift+Tab; `preview`: Ctrl+Shift+I |
+| `clipboard` | `pin`: Ctrl+P; `pinnedOnly`: Ctrl+Shift+P |
+| `remotes` | `runningOnly`: Ctrl+Shift+R |
+| `audio` | `mute`: Ctrl+Shift+M |
+| `notifications` | `dnd`: Ctrl+Shift+D |
+| `media` | `previousPlayer`: Left; `nextPlayer`: Right; `exit`: Escape; `closeWindow`: Alt+F4 |
+| `expose` | `all`: Ctrl+Shift+A; `workspace`: Ctrl; `move`: Ctrl+Shift |
+| `selection` | `toggle`: Shift+Space; `all`: Ctrl+A; `clear`: Ctrl+Shift+A |
+
+Edit a binding in the corresponding group, for example `refresh: "F6"`.
+An empty string disables that action's shortcut. Use single key combinations
+with Qt names such as `Ctrl+Shift+R`; Exposé's workspace and move settings are
+modifier prefixes for its existing workspace keys. Choose distinct bindings for
+actions available in the same panel. Action hints and tooltips follow the
+configured bindings in both languages.
+
+Shortcuts act only in the active owning panel and respect disabled actions,
+native child dialogs and selection popups. Standard field editing remains
+native, including Ctrl+A for Select all and Left/Right for cursor movement.
+Multi-selection Ctrl+A applies when the result list has focus. Tab/Shift+Tab,
+list arrows, Enter/Space activation and Escape dismissal keep their normal
+control behavior.
+
 ## Launcher defaults
 
 Project and directory pickers inherit `pickerManageShortcut`, `pickerAddShortcut`,
@@ -51,7 +82,7 @@ Changing a shared default updates both pickers. Each feature retains its own
 setting and can override the shared value:
 
 ```qml
-readonly property string pickerManageShortcut: "Ctrl+M"
+readonly property string pickerManageShortcut: keybinds.common.manage
 readonly property string projectManageShortcut: pickerManageShortcut
 readonly property string directoryManageShortcut: "Alt+M"
 ```

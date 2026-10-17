@@ -6,9 +6,13 @@ import "../" as UI
 
 QC.Button {
     id: root
+    UI.FocusReveal { owner: root }
     property string glyph: ""
     property string label: ""
     property string hint: ""
+    property string keyAction: ""
+    property string hintAction: keyAction
+    readonly property string shortcutHint: hintAction ? UI.Keybinds.hint(hint || label,hintAction) : hint
     property color fillColor: Theme.alternateBackground
     property color foreground: Theme.foregroundOn((background as Rectangle)?.color ?? fillColor)
 
@@ -17,7 +21,8 @@ QC.Button {
     padding: 0
     hoverEnabled: true
     opacity: enabled ? 1 : 0.45
-    Accessible.name: hint || label
+    Accessible.name: shortcutHint || label
+    UI.PanelShortcut { owner: root; action: root.keyAction; onActivated: root.click() }
     UI.PointerFocus {}
 
     background: Rectangle {
@@ -77,10 +82,10 @@ QC.Button {
     HoverHandler { cursorShape: Qt.PointingHandCursor }
 
     QC.ToolTip {
-        visible: root.hovered && root.hint.length > 0
-        text: root.hint
+        visible: root.hovered && root.shortcutHint.length > 0
+        text: root.shortcutHint
         delay: 500
-        contentItem: UI.ColumnText { text: root.hint; color: Theme.accent }
+        contentItem: UI.ColumnText { text: root.shortcutHint; color: Theme.accent }
         background: Rectangle { color: Theme.tooltipBackground; border.color: Theme.accent; border.width: 1 }
     }
 }

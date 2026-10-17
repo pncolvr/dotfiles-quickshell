@@ -8,7 +8,7 @@ import "../../theme/ui" as UI
 PickerPanelBase {
     id: root
     footerHint: Translations.text("picker.shortcuts.multiple", [picker.selectedIds.length,
-        picker.selectedIds.length ? Translations.text("picker.shortcuts.accept",[picker.acceptLabel.toLowerCase()]) : Translations.text("picker.shortcuts.highlighted")])
+        picker.selectedIds.length ? Translations.text("picker.shortcuts.accept",[picker.acceptLabel.toLowerCase()]) : Translations.text("picker.shortcuts.highlighted"),UI.Keybinds.sequence("selection.toggle"),UI.Keybinds.sequence("selection.all"),UI.Keybinds.sequence("selection.clear")])
     searchKeyHandler: root.handleSelectionKey
     Keys.onPressed: event => { event.accepted = root.handleSelectionKey(event,true) }
 
@@ -23,7 +23,7 @@ PickerPanelBase {
                     label: Translations.text(root.picker.selectionToggleClears ? "picker.actions.clearSelection" : "picker.actions.selectVisible")
                     implicitWidth: 125; width: implicitWidth
                     enabled: root.picker.filteredItems.length > 0 || root.picker.selectedIds.length > 0
-                    hint: Translations.text("picker.actions.selectVisibleHint")
+                    hint: Translations.text("picker.actions.selectVisibleHint",[UI.Keybinds.sequence("selection.all"),UI.Keybinds.sequence("selection.clear")])
                     onClicked: root.picker.toggleVisibleSelection()
                 }
                 UI.ActionButton {

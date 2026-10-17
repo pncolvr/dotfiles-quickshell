@@ -1,9 +1,11 @@
 import QtQuick
 import QtQuick.Controls as QC
 import "../../"
+import "../" as UI
 
 QC.TextArea {
     id: root
+    UI.FocusReveal { owner: root }
     property bool retainPanelWhileEditing: true
     property bool focusBorder: false
     font.family: Theme.fontFamily
@@ -19,7 +21,7 @@ QC.TextArea {
     background: Rectangle {
         color: Theme.alternateBackground
         radius: Theme.iconButtonRadius
-        border.width: root.focusBorder ? 1 : 0
+        border.width: root.focusBorder || root.activeFocus ? 1 : 0
         border.color: root.activeFocus ? Theme.accent : Theme.empty
     }
 }

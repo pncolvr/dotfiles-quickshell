@@ -6,6 +6,7 @@ import "../" as UI
 
 ListView {
     id: root
+    property bool blocksPanelShortcuts: true
     property var options: []
     property string selectedName: ""
     property real rowHeight: Theme.controlHeight + Theme.controlSpacing

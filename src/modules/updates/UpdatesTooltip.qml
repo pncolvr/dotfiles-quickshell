@@ -63,6 +63,7 @@ Column {
                 }
                 UI.ActionButton {
                     objectName: "updatesCheckNow"
+                    keyAction: "refresh"
                     glyph: Theme.refreshIcon
                     hint: Translations.text("updates.actions.checkNowHint")
                     enabled: !UpdatesService.checking

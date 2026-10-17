@@ -1,23 +1,17 @@
 import QtQuick
-import QtQuick.Controls as QC
 import "../../../theme"
 import "../../../theme/ui" as UI
 
-QC.Button {
+UI.ActionButton {
     id: root
-    property string glyph: ""
-    property string label: ""
-    property string hint: ""
     property int glyphSize: Theme.fontSize
     property bool highlightedDevice: false
-    readonly property color foreground: highlightedDevice ? Theme.accent : Theme.text
+    foreground: highlightedDevice ? Theme.accent : Theme.text
     implicitWidth: contents.implicitWidth + Theme.audioButtonPadding * 2
     implicitHeight: Theme.audioButtonHeight
     padding: Theme.audioButtonPadding
     hoverEnabled: true
     opacity: enabled ? 1 : 0.5
-    Accessible.name: hint || label
-    UI.PointerFocus {}
 
     background: Rectangle {
         radius: Theme.iconButtonRadius
@@ -50,10 +44,5 @@ QC.Button {
                 font.bold: Theme.fontBold
             }
         }
-    }
-    HoverHandler { cursorShape: Qt.PointingHandCursor }
-    UI.HoverTooltip {
-        hoverTarget: root
-        text: root.hint
     }
 }

@@ -91,13 +91,13 @@ Scope {
             check(fixturePicker.exposeWorkspace === (available ? workspace : before), "Ctrl+digit selects its numbered workspace")
         }
         events.keyClick(Qt.Key_2, Qt.ControlModifier)
-        events.keyClick(Qt.Key_A, Qt.ControlModifier)
-        check(fixturePicker.exposeWorkspace === 0, "Ctrl+A shows all from a workspace")
-        events.keyClick(Qt.Key_A, Qt.ControlModifier)
-        check(fixturePicker.exposeWorkspace === 2, "Ctrl+A returns to the workspace where the toggle started")
+        events.keyClick(Qt.Key_A, Qt.ControlModifier | Qt.ShiftModifier)
+        check(fixturePicker.exposeWorkspace === 0, "Ctrl+Shift+A shows all from a workspace")
+        events.keyClick(Qt.Key_A, Qt.ControlModifier | Qt.ShiftModifier)
+        check(fixturePicker.exposeWorkspace === 2, "Ctrl+Shift+A returns to the workspace where the toggle started")
         events.keyClick(Qt.Key_1, Qt.ControlModifier)
-        events.keyClick(Qt.Key_A, Qt.ControlModifier)
-        events.keyClick(Qt.Key_A, Qt.ControlModifier)
+        events.keyClick(Qt.Key_A, Qt.ControlModifier | Qt.ShiftModifier)
+        events.keyClick(Qt.Key_A, Qt.ControlModifier | Qt.ShiftModifier)
         check(fixturePicker.exposeWorkspace === 1, "a different workspace becomes the next toggle's return view")
         const selected = fixturePicker.currentItem.id
         for (let workspace = 1; workspace <= 10; workspace++) {
@@ -221,9 +221,9 @@ Scope {
                 events.mouseClick(empty, empty.width / 2, empty.height - 10)
             } else if (root.step === 3) {
                 root.check(grid.count === 0, "empty workspace remains selectable and a drop target")
-                events.keyClick(Qt.Key_A, Qt.ControlModifier)
+                events.keyClick(Qt.Key_A, Qt.ControlModifier | Qt.ShiftModifier)
             } else if (root.step === 4) {
-                root.check(grid.count === 8 && fixturePicker.exposeWorkspace === 0 && search.activeFocus, "Ctrl+A restores the window grid")
+                root.check(grid.count === 8 && fixturePicker.exposeWorkspace === 0 && search.activeFocus, "Ctrl+Shift+A restores the window grid")
                 fixturePicker.simulateDropUpdate = true
                 const card = grid.itemAtIndex(0) as ExposeWindowCard
                 events.mousePress(card, card.width / 2, card.height / 2)

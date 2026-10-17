@@ -86,11 +86,13 @@ Item {
             else detailBusyDelay.stop()
         }
     }
-    Shortcut {
-        sequence: "Ctrl+E"
-        enabled: root.visible && RbwService.visible && root.detailReady && root.editable && !RbwService.busy && !root.editing && !root.deleting
+    UI.PanelShortcut {
+        owner: root
+        action: "edit"
+        actionEnabled: root.visible && RbwService.visible && root.detailReady && root.editable && !RbwService.busy && !root.editing && !root.deleting
         onActivated: root.edit()
     }
+    UI.PanelShortcut { owner: root; action: "search"; actionEnabled: !root.editing && !root.deleting; onActivated: root.focusSearch() }
     Keys.onPressed: event => {
         if (event.key === Qt.Key_Escape) { root.back(); event.accepted = true }
     }
@@ -123,9 +125,9 @@ Item {
                 id: headerActions
                 anchors.right: parent.right
                 spacing: Theme.controlSpacing
-                UI.ActionButton { glyph: Theme.refreshIcon; hint: Translations.text("vault.actions.syncHint"); enabled: !RbwService.busy && !root.editing; onClicked: RbwService.reload(true) }
+                UI.ActionButton { keyAction: "refresh"; glyph: Theme.refreshIcon; hint: Translations.text("vault.actions.syncHint"); enabled: !RbwService.busy && !root.editing; onClicked: RbwService.reload(true) }
                 UI.ActionButton { objectName: "vaultLock"; glyph: Theme.lockIcon; hint: Translations.text("vault.actions.lockHint"); enabled: !RbwService.busy; onClicked: RbwService.lock() }
-                UI.ActionButton { objectName: "vaultAdd"; glyph: Theme.addIcon; hint: Translations.text("vault.actions.newLogin"); enabled: !RbwService.busy && !root.editing && !root.deleting; onClicked: root.newLogin() }
+                UI.ActionButton { objectName: "vaultAdd"; keyAction: "add"; glyph: Theme.addIcon; hint: Translations.text("vault.actions.newLogin"); enabled: !RbwService.busy && !root.editing && !root.deleting; onClicked: root.newLogin() }
             }
         }
         Row {
@@ -237,7 +239,7 @@ Item {
                         anchors.right: parent.right
                         visible: !root.editing && !root.deleting
                         spacing: Theme.controlSpacing
-                        UI.ActionButton { objectName: "vaultEdit"; glyph: Theme.editIcon; hint: Translations.text("vault.actions.editHint"); visible: root.editable; enabled: root.detailReady && root.editable && !RbwService.busy; onClicked: root.edit() }
+                        UI.ActionButton { objectName: "vaultEdit"; glyph: Theme.editIcon; hintAction: "edit"; hint: Translations.text("vault.actions.editHint"); visible: root.editable; enabled: root.detailReady && root.editable && !RbwService.busy; onClicked: root.edit() }
                         UI.ActionButton { objectName: "vaultDelete"; glyph: Theme.deleteIcon; hint: Translations.text("vault.actions.deleteHint"); fillColor: Theme.urgent; enabled: root.detailReady && !RbwService.busy; onClicked: root.deleting = true }
                     }
                     UI.EditorActions {
@@ -256,6 +258,7 @@ Item {
                     UI.EditorActions {
                         anchors.right: parent.right
                         visible: root.deleting
+                        submitKeyAction: ""
                         submitGlyph: Theme.deleteIcon
                         submitColor: Theme.urgent
                         submitHint: Translations.text("vault.actions.deleteHint")
@@ -286,7 +289,7 @@ Item {
                 height: parent.height
                 visible: !status.visible
                 hints: Translations.text(root.editing || root.deleting ? "common.shortcuts.cancel" : "vault.shortcuts.details")
-                    + (!root.editing && !root.deleting && root.detailReady && root.editable ? " · " + Translations.text("common.shortcuts.edit") : "")
+                    + (!root.editing && !root.deleting && root.detailReady && root.editable && UI.Keybinds.sequence("edit") ? " · " + Translations.text("common.shortcuts.edit",[UI.Keybinds.sequence("edit")]) : "")
             }
             UI.Text {
                 id: status

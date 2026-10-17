@@ -19,6 +19,7 @@ Row {
     }
 
     UI.TabBar {
+        actionTabs: true
         id: windowTabs
         visible: WindowService.isSpecialWorkspace
         labels: WindowService.isSpecialWorkspace

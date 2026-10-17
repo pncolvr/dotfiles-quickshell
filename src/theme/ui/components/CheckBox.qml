@@ -6,6 +6,7 @@ import "../" as UI
 
 QC.CheckBox {
     id: root
+    UI.FocusReveal { owner: root }
     UI.PointerFocus {}
     padding: Theme.controlFieldPadding
     spacing: Theme.controlSpacing
