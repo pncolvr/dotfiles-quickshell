@@ -1251,3 +1251,11 @@ optional-integrations fixture removes qutebrowser from its configured browser
 list and checks both services, fields and unchanged drafts with two generic IDs.
 Browser autofill remains an optional browser-side installation, with no new
 runtime gate or modification of external browser files.
+
+Optional Stats Network checks: `bash tests/system/stats-optional.sh` uses a private
+offscreen panel and synthetic collector. It covers disabled startup, direct
+backend gating, CPU/Memory sampling, preserved Overview network data, enabling,
+active cancellation, late results and rapid off/on transitions. No packet
+capture or real `bandwhich` execution is used. `bash tests/system/stats.sh`
+retains the enabled-tab regressions and checks CPU/Memory without a bandwhich
+executable, plus the expected missing-dependency error for enabled Network.

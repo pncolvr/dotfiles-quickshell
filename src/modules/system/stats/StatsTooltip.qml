@@ -4,6 +4,7 @@ import QtQuick
 import QtQuick.Controls as QC
 import Quickshell
 import "../../../theme"
+import "../../../config"
 import "../../../ui" as UI
 import "../../../services"
 import ".."
@@ -14,6 +15,8 @@ Column {
     property var networkService: NetworkService
     property var powerService: PowerProfileService
     property alias currentIndex: tabs.currentIndex
+    readonly property bool networkEnabled: Config.statsNetworkEnabled
+    onNetworkEnabledChanged: if (!networkEnabled && currentIndex >= 3) currentIndex = 0
     property var expandedGroups: ({})
     property int applicationCount: 0
     property var processOrders: ({})
@@ -21,7 +24,7 @@ Column {
         || view.contentItem.children.some(item => (item as StatsProcessRow)?.pidFocused === true)
         || Object.keys(expandedGroups).some(key => key.startsWith(resource + ":") && expandedGroups[key] === true)
     onOrderingPausedChanged: if (!orderingPaused) Qt.callLater(root.updateProcesses)
-    readonly property string resource: ["", "cpu", "memory", "network"][tabs.currentIndex] || ""
+    readonly property string resource: (networkEnabled ? ["", "cpu", "memory", "network"] : ["", "cpu", "memory"])[tabs.currentIndex] || ""
     readonly property var monitor: TooltipService.screen ?? (root.QsWindow.window as QsWindow)?.screen
     readonly property real maxPanelHeight: Math.max(0, Math.min((monitor?.height ?? 1080) * Theme.statsTooltipMaxHeightRatio,
         (monitor?.height ?? 1080) - Theme.barHeight - Theme.tooltipPaddingHeight * 2))
@@ -104,7 +107,8 @@ Column {
             id: tabs
             objectName: "statsTabs"
             width: parent.width
-            labels: [Translations.text("stats.tabs.overview"), "CPU", Translations.text("stats.tabs.memory"), Translations.text("stats.tabs.network")]
+            labels: [Translations.text("stats.tabs.overview"), "CPU", Translations.text("stats.tabs.memory")]
+                .concat(root.networkEnabled ? [Translations.text("stats.tabs.network")] : [])
         }
         Flickable {
             width: parent.width
@@ -115,7 +119,7 @@ Column {
             Loader {
                 id: summary
                 width: parent.width
-                sourceComponent: root.currentIndex === 0 ? overview : root.currentIndex === 1 ? cpu : root.currentIndex === 2 ? memory : network
+                sourceComponent: root.resource === "cpu" ? cpu : root.resource === "memory" ? memory : root.resource === "network" ? network : overview
             }
             QC.ScrollBar.vertical: UI.ScrollBar {}
         }

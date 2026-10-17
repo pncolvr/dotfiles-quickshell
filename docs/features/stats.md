@@ -69,10 +69,17 @@ Its native Networking and PowerProfiles interfaces supply network devices and
 power controls. Connectivity checks and VPN discovery retain their existing
 `ping` and `nmcli` helpers.
 
-The Bash process helper reads `/proc` and emits JSON through `jq`. **Bandwhich is
-still used** for network process traffic, only while the Network tab is open.
-The helper resolves PIDs from connection sockets and file descriptors. Missing
-bandwhich or capture failures appear in the panel; CPU and Memory remain usable.
+`Config.statsNetworkEnabled` defaults to `true`. Set it to `false` to hide the
+Network tab and stop its process collector. If Network is selected, disabling it
+returns the panel to Overview. CPU, Memory and Overview's native network totals
+remain available, so `bandwhich` is not required with the tab disabled.
+
+The Bash process helper reads `/proc` and emits JSON through `jq`. With the
+Network tab enabled, `bandwhich` is required for per-process traffic and runs
+only while that tab is open. The helper resolves PIDs from connection sockets
+and file descriptors. Missing `bandwhich` or capture failures appear in the
+panel; CPU and Memory remain usable. Cancelled samples cannot restore stale
+data after disabling or switching tabs.
 
 `Config.statsInterval` controls the main polling interval;
 `Config.networkProcessesInterval` controls network process polling.

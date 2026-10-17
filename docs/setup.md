@@ -49,7 +49,7 @@ those before running on another desktop.
 | BlueZ | Bluetooth battery reporting |
 | Solaar | Optional Logitech receiver battery readings |
 | NetworkManager (`nmcli`), `ping` | Native network devices, VPN discovery and connectivity |
-| `bandwhich` | Optional per-process network bandwidth |
+| `bandwhich` | Required only for Stats’ Network tab (`statsNetworkEnabled: true`); disable the tab to omit it |
 | power-profiles-daemon | Native Quickshell power profile controls |
 | `twitch` CLI, `curl`, `notify-send` | Twitch data, avatars and stream notifications; curl also fetches n8n workflows |
 | qutebrowser and jq-compatible `yq` | Optional suggestions from saved browser sessions |

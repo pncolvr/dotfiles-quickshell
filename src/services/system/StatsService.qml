@@ -9,6 +9,10 @@ import "../../config"
 Singleton {
     id: root
     property bool active: false
+    readonly property bool networkEnabled: Config.statsNetworkEnabled
+    readonly property bool processResourceEnabled: processResource === "cpu" || processResource === "memory"
+        || (networkEnabled && processResource === "network")
+    onNetworkEnabledChanged: if (!networkEnabled && processResource === "network") processResource = ""
     property string processResource: ""
     property real cpu: 0
     property var cores: []
@@ -65,6 +69,7 @@ Singleton {
         swapUsed = Math.max(0, swapTotal - swapFree)
     }
     function applyProcesses(report) {
+        if (processResource === "network" && !networkEnabled) return false
         if (!Array.isArray(report?.processes) || !Number.isFinite(report.timestamp) || !Number.isFinite(report.clockTicks) || report.clockTicks <= 0) return false
         const next = {}
         const elapsed = report.timestamp - previousProcessTime
@@ -98,7 +103,8 @@ Singleton {
         return true
     }
     function sampleProcesses() {
-        if (!active || !processResource || processSample.running) return
+        if (!active || !processResourceEnabled || processSample.running) return
+        processSample.discardResult = false
         processSample.command = Config.statsProcessesCommand(processResource)
         processSample.resource = processResource
         processSample.running = true
@@ -108,15 +114,16 @@ Singleton {
         Quickshell.execDetached(["wl-copy", "--", String(pid)])
     }
     onProcessResourceChanged: {
+        processSample.discardResult = true
         processSample.running = false
         processes = []
         processError = ""
         previousProcesses = ({})
         previousProcessTime = 0
-        if (active && processResource) Qt.callLater(root.sampleProcesses)
+        if (active && processResourceEnabled) Qt.callLater(root.sampleProcesses)
     }
     onActiveChanged: {
-        if (!active) processSample.running = false
+        if (!active) { processSample.discardResult = true; processSample.running = false }
         else { previousCpu = ({}); Qt.callLater(root.sampleProcesses) }
     }
     Timer {
@@ -150,7 +157,7 @@ Singleton {
     }
     Timer {
         interval: root.processResource === "network" ? Config.networkProcessesInterval : Config.statsInterval
-        running: root.active && root.processResource.length > 0
+        running: root.active && root.processResourceEnabled
         repeat: true
         triggeredOnStart: true
         onTriggered: root.sampleProcesses()
@@ -158,10 +165,14 @@ Singleton {
     Process {
         id: processSample
         property string resource: ""
+        property bool discardResult: false
         stdout: StdioCollector { id: processOutput; waitForEnd: true }
         // qmllint disable signal-handler-parameters
         onExited: (exitCode, exitStatus) => {
-            if (!root.active || resource !== root.processResource) return
+            if (discardResult || !root.active || !root.processResourceEnabled || resource !== root.processResource) {
+                if (root.active && root.processResourceEnabled) Qt.callLater(root.sampleProcesses)
+                return
+            }
             let report
             try { report = JSON.parse(processOutput.text) } catch (_) { report = null }
             if (exitCode !== 0 || exitStatus !== 0 || !root.applyProcesses(report))

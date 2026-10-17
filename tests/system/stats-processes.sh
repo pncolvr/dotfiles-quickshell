@@ -113,4 +113,13 @@ status=0
 result=$(network) || status=$?
 [[ $status == 1 ]]
 jq -e '.error == "capture failed"' <<< "$result" >/dev/null
+# CPU/Memory do not require the optional network collector executable.
+for resource in cpu memory; do
+    result=$(bash "$helper" "$resource" --proc "$proc_root" --bandwhich "$test_dir/not-installed")
+    jq -e '.error == "" and (.processes | length) > 0' <<< "$result" >/dev/null
+done
+status=0
+result=$(bash "$helper" network --proc "$proc_root" --bandwhich "$test_dir/not-installed") || status=$?
+[[ $status == 1 ]]
+jq -e '.error == "bandwhich is unavailable."' <<< "$result" >/dev/null
 printf 'PASS: Bash Stats snapshots, full lists, unusual names, IPv4/IPv6 sockets, UDP, last traffic frame, ambiguous PIDs and collector errors\n'

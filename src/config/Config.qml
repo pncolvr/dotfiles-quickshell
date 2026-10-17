@@ -458,6 +458,7 @@ Item {
     readonly property int networkAlertInterval: Timespan.fromMinutes(1)
 
     // System statistics and power
+    readonly property bool statsNetworkEnabled: true
     readonly property string statsProcRoot: "/proc"
     readonly property string statsTemperaturePath: "/sys/class/thermal/thermal_zone1/temp"
     readonly property var statsProcessesCommand: resource => [

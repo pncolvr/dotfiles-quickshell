@@ -111,6 +111,13 @@ support `manage`, `search` and `workFilter` where work mode exists. Existing
 button guards still apply to shortcuts: VM shutdown requires a selected running
 VM, and Vault lock is blocked while busy.
 
+## Stats Network tab
+
+`statsNetworkEnabled` defaults to `true`. Set it to `false` to hide Stats’ Network
+tab and stop its `bandwhich` sampling. Disabling it while selected returns to
+Overview. Overview's download/upload totals, CPU and Memory stay available;
+`bandwhich` is required only when the Network tab is enabled.
+
 ## Launcher defaults
 
 Project and directory pickers inherit `pickerManageShortcut`, `pickerAddShortcut`,
