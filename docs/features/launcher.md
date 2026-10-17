@@ -515,7 +515,12 @@ Personal instances remain available; Work instances appear while work status is
 active. **Ctrl+W** toggles all/status filtering, resetting on each opening.
 Disabled instances remain in Manage and are excluded from launching and Refresh.
 
-**Refresh** or **Ctrl+R** fetches the currently eligible instances. Opening the
+In Manage, the details pane's refresh icon fetches only the selected instance.
+The **Refresh all** icon sits beside Add in the search toolbar, matching Vault;
+it and **Ctrl+R** refresh all enabled instances across both categories, regardless
+of search or Manage filters. Both controls are disabled during refresh, and
+Refresh all is unavailable while editing. Progress and errors appear below the
+Manage panes. Opening the
 picker uses its cache immediately and makes no API requests. Refresh is explicit
 only: no periodic or stale-on-open polling. Each instance's complete paginated
 response replaces its own cache in one transaction, reconciling names, additions

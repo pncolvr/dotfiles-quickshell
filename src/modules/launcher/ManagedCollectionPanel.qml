@@ -12,6 +12,10 @@ ManagedPickerFrame {
     required property var service
     required property string collectionName
     property Component listActionButtons: null
+    property alias managementToolbarContent: manage.toolbarContent
+    property alias detailActionContent: detailActions.data
+    property string managementMessage: service.error
+    property bool refreshHintEnabled: false
     property string listHintPanel: "default"
     property var listHintActions: []
     property var canRemoveEntry: entry => true
@@ -105,7 +109,8 @@ ManagedPickerFrame {
         addObjectName: 'addCollectionEntry'
         searchPlaceholder: Translations.text("collections.manage.search",[root.collectionName.toLowerCase()])
         addHint: Translations.text("collections.actions.addHint",[Config.pickerAddShortcut])
-        message: root.service.error
+        message: root.managementMessage
+        refreshHintEnabled: root.refreshHintEnabled
         onEditRequested: root.edit(root.selectedEntry)
         onAddRequested: root.beginAdd()
         detailContent: [
@@ -120,6 +125,7 @@ ManagedPickerFrame {
             Row {
                 visible: !root.showForm && !!root.selectedEntry
                 spacing: Theme.controlSpacing
+                Row { id: detailActions; spacing: Theme.controlSpacing }
                 UI.ActionButton { glyph: Theme.editIcon; hintAction: "edit"; hint: Translations.text("collections.actions.editHint"); enabled: !root.service.busy; onClicked: root.edit(root.selectedEntry) }
                 UI.ActionButton {
                     glyph: Theme.deleteIcon; hint: Translations.text("collections.actions.removeHint"); fillColor: Theme.urgent

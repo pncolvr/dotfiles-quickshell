@@ -55,14 +55,33 @@ Scope {
                     root.check(root.field('n8nName').text==='t','Manage name accepts input')
                     root.check((objects.findChild(panel,'n8nApiKey') as UI.SecretField).echoMode===TextInput.Password,'API key is masked')
                     root.check(!!objects.findChild(panel,'n8nBrowserSelector') && !!objects.findChild(panel,'n8nCategorySelector'),'shared browser and category controls')
-                    N8nService.cancel(); N8nService.setManaging(false)
-                    events.keyClick(Qt.Key_W,Qt.ControlModifier,0)
-                    root.check(N8nService.showAll && PickerService.items.length===2,'Ctrl+W shows both enabled instances')
+                    root.check(!(objects.findChild(panel,'n8nRefreshAll') as UI.ActionButton).enabled,'Refresh all is disabled during editing')
+                    N8nService.cancel()
+                    panel.panel.managementView.select('a')
+                    const refreshInstance=objects.findChild(panel,'n8nRefresh') as UI.ActionButton
+                    const refreshAll=objects.findChild(panel,'n8nRefreshAll') as UI.ActionButton
+                    const add=objects.findChild(panel,'addCollectionEntry') as UI.ActionButton
+                    root.check(refreshAll.mapToItem(panel,0,0).x<add.mapToItem(panel,0,0).x
+                        && refreshAll.mapToItem(panel,0,0).y===add.mapToItem(panel,0,0).y,'Refresh all is immediately before Add in the toolbar')
+                    root.check(refreshInstance.mapToItem(panel,0,0).y>refreshAll.mapToItem(panel,0,0).y,'instance refresh is in the details action row')
+                    refreshInstance.clicked()
+                    root.check(N8nService.refreshing && N8nService.current.id==='a' && !N8nService.queue.length,'details refresh queues only the selected instance')
+                    root.check(!refreshInstance.enabled && !refreshAll.enabled,'both refresh controls disable during a request')
+                    root.step=12; break
+                case 12:
+                    root.check(N8nService.succeeded===1 && N8nRepository.workflows.filter(row=>row.instance_id==='b').length===0,'single-instance refresh leaves other caches untouched')
+                    panel.panel.managementView.select('disabled')
+                    root.check(!(objects.findChild(panel,'n8nRefresh') as UI.ActionButton).enabled,'disabled instances cannot be refreshed')
+                    panel.panel.managementView.select('a')
+                    root.check(!N8nService.showAll && N8nService.availableEntries.length===1,'Refresh all starts with the Work category hidden')
                     events.keyClick(Qt.Key_R,Qt.ControlModifier,0)
                     root.check(N8nService.refreshing,'Ctrl+R starts explicit refresh')
                     root.step=2; break
                 case 2:
                     root.check(N8nService.succeeded===2 && N8nService.failed===0,'both instances fully refreshed')
+                    N8nService.setManaging(false)
+                    events.keyClick(Qt.Key_W,Qt.ControlModifier,0)
+                    root.check(N8nService.showAll,'Ctrl+W shows both enabled instances')
                     root.check(PickerService.items.length===6 && N8nRepository.workflows.length===6,'combined home/workflow list updates reactively')
                     root.check(new Set(PickerService.items.map(item=>item.id)).size===6,'same workflow ID on different instances remains distinct')
                     root.check(!JSON.stringify(N8nRepository.workflows).includes('discard-me'),'definitions discarded before storage')

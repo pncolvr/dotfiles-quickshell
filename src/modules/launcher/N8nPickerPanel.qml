@@ -13,22 +13,26 @@ ManagedCollectionPanel {
     collectionName:'n8n'
     pickerMode:PickerService.Mode.N8n
     entryForm:N8nInstanceForm {}
-    listActionButtons: Component {
-        Row {
-            spacing:Theme.controlSpacing
-            UI.ActionButton {
-                id: refresh
-                objectName:'n8nRefresh'; glyph:Theme.refreshIcon; label:Translations.text("common.actions.refresh")
-                keyAction: "refresh"
-                enabled:!N8nService.refreshing && !!N8nService.availableEntries.length
-                hint:Translations.text("n8n.actions.refreshHint")
-                onClicked:N8nService.refresh()
-            }
-            UI.ColumnText {
-                width:Math.max(0,parent.width-refresh.width-Theme.controlSpacing)
-                text:N8nService.refreshStatus; color:Theme.inactive
-                anchors.verticalCenter:parent.verticalCenter; elide:Text.ElideRight
-            }
+    managementMessage: N8nService.error || N8nService.refreshStatus
+    refreshHintEnabled: refreshAll.enabled
+    managementToolbarContent: [
+        UI.ActionButton {
+            id: refreshAll
+            objectName: "n8nRefreshAll"
+            glyph: Theme.refreshIcon
+            keyAction: "refresh"
+            enabled: !root.showForm && !N8nService.refreshing && N8nService.entries.some(entry => entry.enabled)
+            hint: Translations.text("n8n.actions.refreshAllHint")
+            onClicked: N8nService.refresh()
         }
-    }
+    ]
+    detailActionContent: [
+        UI.ActionButton {
+            objectName: "n8nRefresh"
+            glyph: Theme.refreshIcon
+            enabled: !N8nService.refreshing && !!root.selectedEntry?.enabled
+            hint: Translations.text("n8n.actions.refreshHint")
+            onClicked: N8nService.refresh(root.selectedEntry.id)
+        }
+    ]
 }

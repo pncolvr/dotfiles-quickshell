@@ -41,9 +41,11 @@ ManagedCollectionService {
         PickerService.close()
         Quickshell.execDetached(command)
     }
-    function refresh() {
-        if (refreshing || !availableEntries.length) return
-        queue=availableEntries.map(entry=>Object.assign({},entry))
+    function refresh(instanceId = '') {
+        if (refreshing) return
+        const instances=entries.filter(entry=>entry.enabled && (!instanceId || entry.id===instanceId))
+        if (!instances.length) return
+        queue=instances.map(entry=>Object.assign({},entry))
         succeeded=0; failed=0; error=''; refreshing=true
         nextInstance()
     }
