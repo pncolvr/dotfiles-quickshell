@@ -30,25 +30,27 @@ mkdir -m 700 "$startup_test_dir/runtime"
 cp -R -- "$project_root/shell.qml" "$project_root/src" "$startup_test_dir/config/"
 
 # Only startup commands are stubbed; all module registrations and QML are copied unchanged.
-python3 - "$startup_test_dir/config" <<'PY'
-import pathlib
-import sys
-config = pathlib.Path(sys.argv[1])
-entry = config / 'shell.qml'
-text = entry.read_text().replace('import Quickshell', 'import QtQuick\nimport Quickshell', 1)
-end = text.rfind('}')
-text = text[:end] + '''
-  Timer {
-    interval: 500
-    running: true
-    onTriggered: {
-      console.log("PASS: full shell startup")
-      Qt.quit()
+awk '
+    !imported && /import Quickshell/ { sub(/import Quickshell/, "import QtQuick\nimport Quickshell"); imported = 1 }
+    { lines[NR] = $0; if ($0 ~ /^}$/) closing = NR }
+    END {
+        if (!closing || !imported) exit 1
+        for (i = 1; i <= NR; i++) {
+            if (i == closing) {
+                print "  Timer {"
+                print "    interval: 500"
+                print "    running: true"
+                print "    onTriggered: {"
+                print "      console.log(\"PASS: full shell startup\")"
+                print "      Qt.quit()"
+                print "    }"
+                print "  }"
+            }
+            print lines[i]
+        }
     }
-  }
-''' + text[end:]
-entry.write_text(text)
-PY
+' "$startup_test_dir/config/shell.qml" > "$startup_test_dir/config/startup.qml"
+mv -- "$startup_test_dir/config/startup.qml" "$startup_test_dir/config/shell.qml"
 
 cat > "$startup_test_dir/bin/hyprctl" <<'MOCK'
 #!/usr/bin/env bash

@@ -7,24 +7,18 @@ trap 'rm -rf -- "$fixture"' EXIT
 mkdir -m700 "$fixture/runtime"
 tar -C "$repo" --exclude='*.env' --exclude='src/services/launcher/providers/*.json' -cf - src | tar -C "$fixture" -xf -
 sed 's@"../../src@"src@g' "$repo/tests/ui/shortcut-hints.qml" > "$fixture/shell.qml"
-python - "$repo" "$fixture" <<'PY'
-import json, sys
-from pathlib import Path
-repo, fixture = map(Path, sys.argv[1:])
-samples = []
-for locale in ['en', 'pt']:
-    catalog = json.loads((repo / 'src/i18n' / (locale + '.json')).read_text())
-    for key, value in catalog.items():
-        if '.shortcuts.' not in key:
-            continue
-        for text in (value.values() if isinstance(value, dict) else [value]):
-            for token, replacement in {'%n':'2','%1':'Ctrl+Shift+R','%2':'Open','%3':'Shift+Space','%4':'Ctrl+A','%5':'Ctrl+Shift+A'}.items():
-                text = text.replace(token, replacement)
-            samples.append(text)
-    samples.append(catalog['files.shortcuts.selection'])
-    samples.append(catalog['vault.shortcuts.details'] + ' · Ctrl+E: ' + ('Edit' if locale == 'en' else 'Editar'))
-(fixture / 'samples.json').write_text(json.dumps(samples, ensure_ascii=False))
-PY
+for locale in en pt; do
+    edit=Edit
+    [[ $locale != pt ]] || edit=Editar
+    jq --arg edit "$edit" '[
+        (to_entries[] | select(.key | contains(".shortcuts.")) | .value
+            | if type == "object" then .[] else . end
+            | gsub("%n"; "2") | gsub("%1"; "Ctrl+Shift+R") | gsub("%2"; "Open")
+            | gsub("%3"; "Shift+Space") | gsub("%4"; "Ctrl+A") | gsub("%5"; "Ctrl+Shift+A")),
+        .["files.shortcuts.selection"],
+        (.["vault.shortcuts.details"] + " · Ctrl+E: " + $edit)
+    ]' "$repo/src/i18n/$locale.json"
+done | jq -s 'add' > "$fixture/samples.json"
 env -u WAYLAND_DISPLAY -u HYPRLAND_INSTANCE_SIGNATURE QT_QPA_PLATFORM=offscreen QT_QUICK_BACKEND=software \
     XDG_RUNTIME_DIR="$fixture/runtime" XDG_DATA_HOME="$fixture/data" XDG_CACHE_HOME="$fixture/cache" \
     timeout -k 2 25 qs -p "$fixture" > "$fixture/log" 2>&1 || { tail -100 "$fixture/log"; exit 1; }

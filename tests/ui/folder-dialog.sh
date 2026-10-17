@@ -7,7 +7,7 @@ mkdir -m700 "$fixture/runtime"
 mkdir "$fixture/folder % café"
 ln -s "$repo_dir/src" "$fixture/src"
 sed 's@"../../src@"src@g' "$repo_dir/tests/ui/folder-dialog.qml" > "$fixture/shell.qml"
-folder_url=$(python3 -c 'from pathlib import Path; import sys; print(Path(sys.argv[1]).as_uri())' "$fixture/folder % café")
+folder_url=$(jq -nr --arg path "$fixture/folder % café" '$path | split("/") | map(@uri) | join("/") | "file://" + .')
 env -u WAYLAND_DISPLAY FOLDER_TEST_PATH="$fixture/folder % café" FOLDER_TEST_URL="$folder_url" \
     QT_QPA_PLATFORM=offscreen QT_QUICK_BACKEND=software XDG_RUNTIME_DIR="$fixture/runtime" \
     XDG_DATA_HOME="$fixture/data" XDG_CACHE_HOME="$fixture/cache" \

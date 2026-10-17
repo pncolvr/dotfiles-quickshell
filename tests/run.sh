@@ -189,7 +189,7 @@ run isolated ui/rows bash tests/ui/rows.sh
 run isolated ui/hints bash tests/ui/shortcut-hints.sh
 run isolated ui/theme bash tests/ui/theme.sh
 run isolated ui/hover bash tests/ui/tooltip-hover.sh
-run isolated ui/search python3 tests/ui/tooltip-search.py
+run isolated ui/search bash tests/ui/tooltip-search.sh
 
 if $benchmarks; then
     run isolated benchmark/clipboard bash tests/clipboard/fts/benchmark.sh

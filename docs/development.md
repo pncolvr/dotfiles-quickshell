@@ -739,7 +739,7 @@ The original CAVA 1.0.0 shader sources, Qt ports, and compiled bundles are track
 under `src/ui/shaders/cava`. Rebuild all shader stages with:
 
 ```sh
-python3 src/ui/shaders/cava/build.py
+bash src/ui/shaders/cava/build.sh
 ```
 Add `--native-imports` to check the complete bar, real device/profile mapping,
 sorted lists, and system default bindings without changing your audio settings.
@@ -805,7 +805,7 @@ tab preview, or `STATS_TEST_NETWORK_SCREENSHOT=/tmp/stats-network.png` for Netwo
 ## Panel lifecycle
 
 ```sh
-python3 tests/ui/tooltip-search.py
+bash tests/ui/tooltip-search.sh
 bash tests/ui/module-pins.sh
 bash tests/ui/tooltip-hover.sh
 ```
@@ -1035,7 +1035,7 @@ screen or window visibility changes, including when the pointer stays still.
 Run `bash tests/ui/tooltip-hover.sh` for offscreen regression checks covering late
 hide requests over triggers, panels and popups, stationary source changes, and
 normal dismissal after leaving. It never moves the real cursor. Run
-`python3 tests/ui/tooltip-search.py` for typing protection and pinning coverage.
+`bash tests/ui/tooltip-search.sh` for typing protection and pinning coverage.
 The observers follow popup/window lifetimes. They avoid making the full overlay
 hoverable, which would steal hover and the hand cursor from buttons when their
 hints appear. Run

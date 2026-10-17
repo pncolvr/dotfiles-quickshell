@@ -64,16 +64,29 @@ CONF
     timeout 5 pw-cli create-node adapter '{ factory.name = support.null-audio-sink node.name = visualizer-sink media.class = Audio/Sink audio.position = [ FL FR ] object.linger = true }'
     wireplumber > "$test_dir/wireplumber.log" 2>&1 &
     test_pids+=("$!")
-    python3 - "$test_dir/tone.wav" "$test_dir/other.wav" <<'PY'
-import math
-import struct
-import sys
-import wave
-for path, frequency, volume in [(sys.argv[1], 220, 6000), (sys.argv[2], 4400, 18000)]:
-    with wave.open(path, 'wb') as output:
-        output.setparams((2, 2, 48000, 0, 'NONE', 'not compressed'))
-        output.writeframes(b''.join(struct.pack('<hh', *([int(volume * math.sin(i * 2 * math.pi * frequency / 48000))] * 2)) for i in range(48000 * 20)))
-PY
+    tone() {
+        LC_ALL=C awk -v frequency="$2" -v volume="$3" '
+            function little_endian(value, bytes, i) {
+                for (i = 0; i < bytes; i++) { printf "%c", value % 256; value = int(value / 256) }
+            }
+            BEGIN {
+                rate = 48000; frames = rate * 20; bytes = frames * 4
+                printf "RIFF"; little_endian(36 + bytes, 4); printf "WAVEfmt "
+                little_endian(16, 4); little_endian(1, 2); little_endian(2, 2)
+                little_endian(rate, 4); little_endian(rate * 4, 4)
+                little_endian(4, 2); little_endian(16, 2)
+                printf "data"; little_endian(bytes, 4)
+                pi = atan2(0, -1)
+                for (i = 0; i < frames; i++) {
+                    sample = int(volume * sin(i * 2 * pi * frequency / rate))
+                    if (sample < 0) sample += 65536
+                    little_endian(sample, 2); little_endian(sample, 2)
+                }
+            }
+        ' > "$1"
+    }
+    tone "$test_dir/tone.wav" 220 6000
+    tone "$test_dir/other.wav" 4400 18000
     pw-cat --playback --target visualizer-sink --properties '{ application.name = Banana application.id = banana node.name = visualizer-test }' "$test_dir/tone.wav" > "$test_dir/playback.log" 2>&1 &
     test_pids+=("$!")
     pw-cat --playback --target visualizer-sink --properties '{ application.name = Potato application.id = potato node.name = unrelated-test }' "$test_dir/other.wav" > "$test_dir/other-playback.log" 2>&1 &
