@@ -981,6 +981,22 @@ stdin-only passwords, targeted disconnect, dead-owner recovery, stale PID protec
 cancellation and VM readiness failure. Manage tests use offscreen UI and the same
 mock commands to check input focus, masked passwords, CRUD/rollback, disabled entries,
 selected-VM shutdown and detached connections recovered after a shell restart.
+Run `bash tests/remotes/ssh.sh` for SSH credential routing and prompt checks with
+a mock client and an isolated pseudo-terminal. It covers separate target/jump
+passwords, resolved host/user matching, literal paths with quotes/percent signs,
+SSH configuration defaults, missing-password/passphrase/host-key prompts and
+absence of secret output. It never opens Ghostty or connects to a host.
+The worker suite also covers SSH terminal ownership, duplicate prevention,
+targeted disconnect, terminal closure and orphan recovery. Its terminal stub models
+Ghostty 1.3.1's Bash command reconstruction and waits for the actual mock SSH
+invocation. The worker launches the executable helper directly so shell integration
+cannot strip JSON quotes or split paths. Manage checks include
+SSH form fields, masked/read-only credentials, default port, persistence,
+restart recovery and Running only/Disconnect behavior.
+They verify disabled Running only actions without active sessions, automatic
+return to the normal list after the last disconnect, and shutdown availability
+following the selected VM's actual state even while its RDP client stays listed.
+
 They also cover Ctrl+Shift+R Running-only filtering composed with search, per-opening
 filter reset, dynamic Connect/Disconnect hints, rapid Enter disconnects while a
 controller request is in flight, and cancelling a connecting VM without launching

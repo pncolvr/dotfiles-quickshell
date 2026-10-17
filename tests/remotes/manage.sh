@@ -25,7 +25,12 @@ const fs=require('node:fs'),dir=process.argv[2],file=dir+'/src/config/Config.qml
 JS
 cp "$repo/tests/remotes/mock-command.mjs" "$fixture/bin/mock"
 chmod +x "$fixture/bin/mock"
-for command in ssh rdp virsh probe alerts getent; do ln -s mock "$fixture/bin/$command"; done
+for command in ssh rdp virsh probe alerts getent terminal; do ln -s mock "$fixture/bin/$command"; done
+node - "$fixture" <<'JS'
+const fs=require('fs'),dir=process.argv[2],path=dir+'/src/config/Config.qml';
+fs.writeFileSync(path,fs.readFileSync(path,'utf8').replace(/readonly property var remoteTerminalCommand: \[[^\n]*\]/,
+ 'readonly property var remoteTerminalCommand: '+JSON.stringify([dir+'/bin/terminal','-e'])));
+JS
 sed 's@"../../src@"src@g' "$repo/tests/remotes/manage.qml" > "$fixture/shell.qml"
 export REMOTE_TEST_DIR="$fixture" QS_PICKER_EXECUTABLE="$fixture/bin/alerts"
 export PATH="$fixture/bin:$PATH"
@@ -33,7 +38,7 @@ export HOME="$fixture/home" XDG_RUNTIME_DIR="$fixture/runtime" XDG_DATA_HOME="$f
 export QT_QPA_PLATFORM=offscreen QT_QUICK_BACKEND=software QT_NO_XDG_DESKTOP_PORTAL=1
 export QT_QPA_PLATFORMTHEME=generic XDG_CURRENT_DESKTOP=
 unset WAYLAND_DISPLAY HYPRLAND_INSTANCE_SIGNATURE
-for phase in setup restart connecting; do
+for phase in setup restart connecting ssh sshrestart; do
     if [[ $phase == connecting ]]; then touch "$fixture/not-ready"; fi
     REMOTE_TEST_PHASE="$phase" timeout 25 qs -p "$fixture" > "$fixture/log" 2>&1 || { cat "$fixture/log"; exit 1; }
     if ! rg -q 'PASS: remotes' "$fixture/log" || rg -q 'REMOTE FAIL:|TypeError:|ReferenceError:|Failed to load configuration|Binding loop' "$fixture/log"; then cat "$fixture/log"; exit 1; fi

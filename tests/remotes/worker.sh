@@ -7,7 +7,7 @@ workers=() foreign_pid=''
 cleanup() {
     for pid in "${workers[@]}"; do kill -TERM "$pid" 2>/dev/null || true; done
     if [[ -f $fixture/runtime.db ]]; then
-        for id in alpha beta; do bash "$repo/src/services/remotes/remote-worker.sh" --disconnect "$fixture/runtime.db" "$id" >/dev/null 2>&1 || true; done
+        for id in alpha beta gamma; do bash "$repo/src/services/remotes/remote-worker.sh" --disconnect "$fixture/runtime.db" "$id" >/dev/null 2>&1 || true; done
     fi
     [[ -z $foreign_pid ]] || kill -TERM "$foreign_pid" 2>/dev/null || true
     for pid in "${workers[@]}"; do wait "$pid" 2>/dev/null || true; done
@@ -20,7 +20,7 @@ export REMOTE_TEST_DIR="$fixture" QS_PICKER_EXECUTABLE="$fixture/bin/alerts"
 export PATH="$fixture/bin:$PATH"
 cp "$repo/tests/remotes/mock-command.mjs" "$fixture/bin/mock"
 chmod +x "$fixture/bin/mock"
-for command in ssh rdp virsh probe alerts getent; do ln -s mock "$fixture/bin/$command"; done
+for command in ssh rdp virsh probe alerts getent terminal; do ln -s mock "$fixture/bin/$command"; done
 node - "$fixture" <<'JS'
 const {DatabaseSync}=require('node:sqlite'),fs=require('node:fs'),dir=process.argv[2];const db=new DatabaseSync(dir+'/main.db');db.exec('CREATE TABLE remotes(id TEXT PRIMARY KEY,payload_json TEXT)');
 for(const [id,type] of [['alpha','remote'],['beta','vm']]) db.prepare('INSERT INTO remotes VALUES(?,?)').run(id,JSON.stringify({id,name:id,type,enabled:true,endpoint:'test.example',port:3389,displayName:'Test "title"',username:'user;literal',password:'pa$$ \\ "quoted" $(no-execution)',domain:'domain name',hopHost:'jump.example',hopUsername:'test',sshKeyPath:'~/key path/key',vmName:'fixture-vm',arguments:['/drive:Docs,/some path','/cert:ignore']}));db.close()
@@ -84,3 +84,49 @@ start alpha
 if wait "${workers[5]}"; then printf 'Expected SSH failure\n' >&2; exit 1; fi
 wait_count 0
 printf 'PASS: SSH failure prevents RDP dispatch and cleans the session\n'
+
+rm "$fixture/ssh-fail"
+node - "$fixture" <<'JS'
+const {DatabaseSync}=require('node:sqlite'),dir=process.argv[2],db=new DatabaseSync(dir+'/main.db');
+db.prepare('INSERT INTO remotes VALUES(?,?)').run('gamma',JSON.stringify({id:'gamma',type:'ssh',name:'SSH terminal',enabled:true,
+ endpoint:'server.example',port:2222,username:'test',password:'PRIVATE_TARGET_PASSWORD',sshKeyPath:'~/key path/key',
+ hopHost:'',hopPort:22,hopUsername:'',hopPassword:'',hopKeyPath:'',sshArguments:[]}));db.close();
+JS
+options=$(jq --arg terminal "$fixture/bin/terminal" '. + {terminal:[$terminal,"-e"]}' <<< "$options")
+start gamma
+wait_count 1
+# A terminal process alone does not prove that the helper reached SSH. In
+# particular, a command-line quoting failure can leave Ghostty's error window open.
+for ((attempt=0;attempt<80;attempt++)); do
+    if jq -se 'any(.program=="ssh" and (.args|index("server.example"))!=null and (.args|index("-G"))==null)' "$fixture/actions" >/dev/null; then break; fi
+    sleep 0.05
+done
+jq -se 'any(.program=="ssh" and (.args|index("server.example"))!=null and (.args|index("-G"))==null)' "$fixture/actions" >/dev/null || {
+    printf 'SSH terminal did not reach the SSH client\n' >&2; exit 1;
+}
+start gamma
+wait "${workers[7]}"
+[[ $(jq -s '[.[]|select(.program=="terminal")]|length' "$fixture/actions") == 1 ]]
+status | jq -e '.[0].id=="gamma" and .[0].state=="running"' >/dev/null
+terminal_pid=$(jq -sr '[.[]|select(.program=="terminal")][-1].pid' "$fixture/actions")
+terminal_ssh_pid=$(jq -sr '[.[]|select(.program=="ssh" and (.args|index("server.example"))!=null)][-1].pid' "$fixture/actions")
+bash "$worker" --disconnect "$fixture/runtime.db" gamma
+wait_count 0
+! kill -0 "$terminal_pid" 2>/dev/null
+! kill -0 "$terminal_ssh_pid" 2>/dev/null
+! rg -q 'PRIVATE_TARGET_PASSWORD' "$fixture/actions" "$fixture"/log-*
+printf 'PASS: owned SSH terminal launch, duplicate prevention, restart status and targeted terminal/SSH disconnect\n'
+start gamma
+wait_count 1
+terminal_pid=$(jq -sr '[.[]|select(.program=="terminal")][-1].pid' "$fixture/actions")
+kill -TERM "$terminal_pid"
+wait_count 0
+printf 'PASS: closing the SSH terminal clears the managed session\n'
+start gamma
+wait_count 1
+terminal_pid=$(jq -sr '[.[]|select(.program=="terminal")][-1].pid' "$fixture/actions")
+kill -KILL "${workers[-1]}"
+wait "${workers[-1]}" 2>/dev/null || true
+wait_count 0
+! kill -0 "$terminal_pid" 2>/dev/null
+printf 'PASS: orphan recovery closes only the owned SSH terminal\n'

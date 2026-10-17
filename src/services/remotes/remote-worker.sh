@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Detached SSH/RDP owner. Credentials come from SQLite and reach FreeRDP through stdin.
+# Detached SSH/RDP owner. Credentials come from SQLite, never command arguments.
 set +x
 set -uo pipefail
 umask 077
@@ -59,12 +59,18 @@ fail() {
 [[ -f $main_database && -O $main_database && ! -L $main_database ]] || fail "remotes.worker.database"
 jq -e 'all(.rdp,.ssh,.virsh,.probe; type=="array" and length>0 and all(.[];type=="string")) and (.waitSeconds|type=="number" and .>=1 and .<=300)' <<< "$options" >/dev/null || fail 'remotes.worker.configuration'
 entry=$(sqlite3 -readonly -batch -cmd '.timeout 5000' "$main_database" "SELECT payload_json FROM remotes WHERE id=$key;" 2>/dev/null) || exit 2
-jq -e '.enabled==true and (.type=="remote" or .type=="vm")' <<< "$entry" >/dev/null || exit 2
+jq -e '.enabled==true and (.type=="remote" or .type=="vm" or .type=="ssh")' <<< "$entry" >/dev/null || exit 2
 mapfile -d '' -t rdp_command < <(jq -j '.rdp[] | ., "\u0000"' <<< "$options")
 mapfile -d '' -t ssh_command < <(jq -j '.ssh[] | ., "\u0000"' <<< "$options")
 mapfile -d '' -t virsh_command < <(jq -j '.virsh[] | ., "\u0000"' <<< "$options")
 mapfile -d '' -t probe_command < <(jq -j '.probe[] | ., "\u0000"' <<< "$options")
 wait_seconds=$(jq -r '.waitSeconds' <<< "$options")
+connection_type=$(jq -r '.type' <<< "$entry")
+if [[ $connection_type == ssh ]]; then
+    jq -e '.terminal | type=="array" and length>0 and all(.[];type=="string")' <<< "$options" >/dev/null || fail 'remotes.worker.configuration'
+    mapfile -d '' -t terminal_command < <(jq -j '.terminal[] | ., "\u0000"' <<< "$options")
+    command -v "${terminal_command[0]}" >/dev/null 2>&1 || fail 'remotes.worker.terminalMissing'
+fi
 state=connecting stopping=false rdp_pid=0 rdp_start='' tunnel_pid=0 tunnel_start=''
 start=$(process_identity "$$") || exit 2
 token=$(cat /proc/sys/kernel/random/uuid) || exit 2
@@ -97,7 +103,12 @@ cleanup() {
 }
 trap cleanup EXIT
 endpoint=$(jq -r '.endpoint' <<< "$entry") port=$(jq -r '.port' <<< "$entry")
-case $(jq -r '.type' <<< "$entry") in
+case $connection_type in
+    ssh)
+        # Launch the executable helper directly. Ghostty's Bash integration can
+        # rebuild bash argv as shell text, stripping JSON quotes and path boundaries.
+        "${terminal_command[@]}" "$worker_dir/ssh-session.sh" --connect "$main_database" "$entry_id" "$options" >/dev/null 2>&1 & rdp_pid=$!
+        ;;
     remote)
         hop=$(jq -r '.hopHost' <<< "$entry") user=$(jq -r '.hopUsername' <<< "$entry") key_path=$(jq -r '.sshKeyPath' <<< "$entry")
         ssh_args=(-N -o ExitOnForwardFailure=yes -o BatchMode=yes -o ConnectTimeout=10)
@@ -161,7 +172,9 @@ rdp_arguments() {
     [[ -z $password ]] || printf '/p:%s\n' "$password"
     jq -r '.arguments[]' <<< "$entry"
 }
-"${rdp_command[@]}" /args-from:stdin < <(rdp_arguments) >/dev/null 2>&1 & rdp_pid=$!
+if [[ $connection_type != ssh ]]; then
+    "${rdp_command[@]}" /args-from:stdin < <(rdp_arguments) >/dev/null 2>&1 & rdp_pid=$!
+fi
 rdp_start=$(process_identity "$rdp_pid") || rdp_start=''
 state=running; publish || exit 2
 while process_alive "$rdp_pid" "$rdp_start" "$PROCESS_BOOT_ID"; do
@@ -170,4 +183,6 @@ while process_alive "$rdp_pid" "$rdp_start" "$PROCESS_BOOT_ID"; do
     sleep 0.15
 done
 wait "$rdp_pid"; result=$?
-[[ $result == 0 ]] || $stopping || fail 'remotes.worker.rdp'
+if [[ $result != 0 ]] && ! $stopping; then
+    if [[ $connection_type == ssh ]]; then fail 'remotes.worker.ssh'; else fail 'remotes.worker.rdp'; fi
+fi

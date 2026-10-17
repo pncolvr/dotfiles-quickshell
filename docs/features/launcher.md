@@ -530,27 +530,52 @@ It reuses the Webapps collection controller, repository and UI components.
 Ctrl+M switches Manage, Ctrl+N adds a record while managing, and Ctrl+W toggles
 the work-status filter. Disabled records remain editable in Manage.
 
-Choose RDP through an SSH tunnel or a local libvirt VM. The form masks passwords;
+Choose an SSH terminal, RDP through an SSH tunnel or a local libvirt VM. The form masks passwords;
 Category is a Personal/Work combo; the form includes domain, window title
 and literal RDP arguments. Quoted arguments are parsed without shell evaluation.
 Shared legacy arguments are migrated into each record, including private paths.
+
+SSH terminal entries use port 22 by default, with an optional username, password
+and SSH key path. The optional jump host has its own port, username, password and
+key. SSH details use the same masked, read-only fields as the editor; RDP-only
+fields are hidden. Leaving the jump host empty connects directly; its other
+fields are not required or used. Saved passwords remain in the existing backed-up database.
+Both SSH and RDP jump settings are grouped under a disclosure that starts
+collapsed when an entry opens in details or edit mode. Expanding it reveals the
+existing values; collapsing it preserves them and masks any revealed jump password.
+Blank credentials use SSH configuration/agent defaults or a terminal prompt.
+The shared SSH helper handles each hop's password separately through OpenSSH
+askpass. It matches the resolved host/user before supplying a saved password;
+other challenges, missing passwords, passphrases and host-key confirmations are
+entered in the terminal. Host-key verification keeps normal OpenSSH behavior.
+
+The default terminal is a dedicated Ghostty instance, configured through
+`remoteTerminalCommand`. SSH and RDP argument lists remain separate. Arguments
+are literal values; use the form for connection settings, and keep SSH in the
+foreground so its terminal belongs to this managed session.
 
 A detached worker owns each managed connection across bar/theme/config reloads.
 Enter or clicking a row connects an idle host and disconnects an active one.
 The Enter hint follows the selected row. **Running only** (Ctrl+Shift+R) filters to
 running and connecting sessions, alongside the search query. It starts off each
-time Remotes opens. Disconnecting rows leave this view immediately so repeated
+time Remotes opens and is disabled without running or connecting sessions.
+When the last active session ends or starts disconnecting, the filter clears and
+the normal list returns. Disconnecting rows leave this view immediately so repeated
 Enter presses can disconnect several in a row. The picker stays open after
-disconnecting, including when the running list becomes empty. Pending control
+disconnecting. Pending control
 requests are queued individually. **Disconnect** also stops only the selected
-managed RDP connection and its own SSH tunnel; it leaves a VM running.
-**Shut down VM** requests shutdown for the selected VM. Active entries
+managed SSH terminal or RDP connection and its own SSH tunnel; it leaves a VM running.
+**Shut down VM** requests shutdown for the selected VM and is disabled when that
+VM is stopped or its state is unavailable. Libvirt state is checked while a VM
+is selected in the open picker, independently of the RDP client. Active entries
 cannot be deleted until disconnected. Active connections remain listed for control
 even if their entry is disabled or the work-status filter changes; this does not
 allow another connection to a disabled host. Other SSH/RDP processes are untouched.
-The list distinguishes Connecting, RDP running and Disconnecting; RDP running
-means the client process is alive, without claiming remote authentication succeeded.
-SSH resolves target names locally when possible, then falls back to jump-host DNS.
+The list distinguishes Connecting, SSH terminal running, RDP running and
+Disconnecting. Running means the terminal/client process is alive, without
+claiming remote authentication succeeded. Closing an SSH terminal clears its
+managed session. Both types can be controlled after a bar/config reload.
+RDP tunnels resolve target names locally when possible, then fall back to jump-host DNS.
 Absolute and `~/` SSH key paths are supported. Failures post a generic alert without logging credentials or private host details.
 
 The main database stores hosts and credentials and is included in encrypted backups.

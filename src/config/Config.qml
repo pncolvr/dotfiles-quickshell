@@ -196,6 +196,7 @@ Item {
     // Launcher: remotes. Managed hosts/credentials stay in the backed-up database.
     readonly property var remoteRdpCommand: ["sdl-freerdp3"]
     readonly property var remoteSshCommand: ["ssh"]
+    readonly property var remoteTerminalCommand: ["ghostty", "--gtk-single-instance=false", "--quit-after-last-window-closed=true", "-e"]
     readonly property var remoteVmCommand: ["virsh", "-c", "qemu:///system"]
     readonly property var remoteProbeCommand: ["nc"]
     readonly property int remoteVmWaitSeconds: 60

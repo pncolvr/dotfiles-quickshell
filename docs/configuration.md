@@ -387,7 +387,7 @@ Mode detection, timetable commands, and reports are described in
 
 ## Remotes
 
-Managed host names, endpoints, credentials, categories and literal RDP arguments
+Managed host names, endpoints, credentials, categories and literal RDP/SSH arguments
 live in SQLite and are covered by encrypted backups. There is no hosts JSON file.
 `remoteRdpCommand` selects the FreeRDP 3 client; it must support `/args-from:stdin`.
 `remoteSshCommand`, `remoteVmCommand` and `remoteProbeCommand` select SSH, libvirt
@@ -395,7 +395,23 @@ and a netcat-compatible readiness probe. Commands are literal argument arrays.
 `remoteVmWaitSeconds` bounds VM readiness waiting (1–300 seconds).
 `remoteRdpArguments` supplies initial arguments for newly created records; changing
 it does not overwrite existing records. SSH key paths belong to their managed host.
-SSH uses configured keys/agents in batch mode rather than prompting in a hidden terminal.
+RDP tunnels use configured keys/agents in batch mode rather than prompting in a
+hidden terminal.
+
+SSH terminal entries have separate destination and optional jump-host ports,
+usernames, passwords and key paths. Their default port is 22. Blank usernames
+and keys use SSH configuration/agent defaults. Passwords are optional and masked;
+OpenSSH askpass reads saved passwords from the existing database and returns them
+through a pipe. Missing passwords, key passphrases and host-key confirmation are
+prompted in the terminal. No sshpass dependency is required.
+
+`remoteTerminalCommand` is a literal command prefix. Its default is
+`["ghostty", "--gtk-single-instance=false", "--quit-after-last-window-closed=true", "-e"]`;
+the SSH session command is appended. A configured terminal must keep its process
+alive for the session and use a separate instance, so Disconnect cannot close
+unrelated terminal windows. SSH arguments are separate from RDP arguments;
+connection-field overrides, multiplexing controls and background detachment are
+rejected to preserve session ownership. See [Remotes](features/launcher.md#remotes).
 
 ## n8n
 

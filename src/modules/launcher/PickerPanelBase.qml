@@ -212,7 +212,7 @@ Rectangle {
             id: panelFooter
             objectName: "pickerFooter"
             width: parent.width
-            implicitHeight: actions.height + (actions.visible ? Theme.controlSpacing : 0) + hints.height
+            implicitHeight: actions.height + (actions.visible ? Theme.controlSpacing * 2 : 0) + hints.height
             height: implicitHeight
             anchors.bottom: parent.bottom
             Loader {
@@ -221,7 +221,7 @@ Rectangle {
                 anchors.right: parent.right
                 width: parent.width
                 height: (item as Item)?.implicitHeight ?? 0
-                y: 0
+                y: visible ? Theme.controlSpacing : 0
                 visible: sourceComponent !== null
                 sourceComponent: root.actionButtons
             }
@@ -230,7 +230,7 @@ Rectangle {
                 objectName: "pickerFooterHint"
                 width: parent.width
                 anchors.horizontalCenter: parent.horizontalCenter
-                y: actions.height + (actions.visible ? Theme.controlSpacing : 0)
+                y: actions.y + actions.height + (actions.visible ? Theme.controlSpacing : 0)
                 horizontalAlignment: Text.AlignHCenter
                 textFormat: Text.PlainText
                 hints: root.footerHint

@@ -58,6 +58,7 @@ QtObject {
     readonly property string imageIcon: "" // image
     readonly property string searchIcon: "" // magnifying-glass
     readonly property string filterIcon: "" // filter
+    readonly property string disconnectIcon: "" // plug-circle-xmark: disconnect
     readonly property string clearIcon: "" // broom
     readonly property string editIcon: "" // pen
     readonly property string eyeIcon: "" // eye: reveal a secret

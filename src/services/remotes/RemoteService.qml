@@ -22,25 +22,44 @@ ManagedCollectionService {
     readonly property string runtimeDatabase: Config.databasePath.slice(0,Config.databasePath.lastIndexOf('/'))+'/remotes-runtime.db'
     readonly property var selectedEntry: entries.find(entry=>entry.id===PickerService.currentItem?.result) ?? null
     readonly property var selectedSession: sessions.find(session=>session.id===selectedEntry?.id) ?? null
+    readonly property bool hasActiveSessions: activeFilterIds.length > 0
+    readonly property string selectedVmName: PickerService.visible && PickerService.mode === pickerMode
+        && !managing && selectedEntry?.type === 'vm' ? selectedEntry.vmName : ''
+    property string runningVmName: ''
+    readonly property bool canShutdownSelected: !!selectedVmName && runningVmName === selectedVmName && !busy
+    onSelectedVmNameChanged: { runningVmName = ''; refreshVmState() }
+    onHasActiveSessionsChanged: if (!hasActiveSessions) activeOnly = false
     activeEntryIds: sessions.map(session=>session.id)
     activeFilterIds: sessions.filter(session=>session.state!=='disconnecting').map(session=>session.id)
     itemForEntry: entry => {
         const session=root.sessions.find(session=>session.id===entry.id)
-        const subtitle=session ? root.stateLabel(session.state)+' · '+entry.endpoint : entry.endpoint
+        const subtitle=session ? root.stateLabel(session.state,entry.type)+' · '+entry.endpoint : entry.endpoint
         return {id:entry.id,title:entry.name,subtitle,search:entry.name+' '+entry.endpoint,result:entry.id}
     }
-    function stateLabel(state) {
+    function stateLabel(state, type = '') {
         switch (state) {
             case 'connecting': return Translations.text("remotes.states.connecting")
-            case 'running': return Translations.text("remotes.states.running")
+            case 'running': return Translations.text(type === 'ssh' ? "remotes.states.sshRunning" : "remotes.states.running")
             case 'disconnecting': return Translations.text("remotes.states.disconnecting")
             default: return ''
         }
     }
     function newEntry() { edit(Entries.empty(Config.remoteRdpArguments)) }
+    function toggleActiveOnly() {
+        if (!hasActiveSessions) return
+        activeOnly = !activeOnly
+        PickerService.opened()
+    }
+    function refreshVmState() {
+        if (!selectedVmName || vmProbe.running || busy) return
+        vmProbe.vmName = selectedVmName
+        vmProbe.command = ['timeout','3'].concat(Config.remoteVmCommand,['domid','--',selectedVmName])
+        vmProbe.running = true
+    }
     function workerOptions() {
         return JSON.stringify({rdp:Config.remoteRdpCommand,ssh:Config.remoteSshCommand,virsh:Config.remoteVmCommand,
-            probe:Config.remoteProbeCommand,waitSeconds:Config.remoteVmWaitSeconds})
+            probe:Config.remoteProbeCommand,waitSeconds:Config.remoteVmWaitSeconds,
+            terminal:Config.remoteTerminalCommand})
     }
     function accept(items) {
         if (managing || busy || !items.length) return
@@ -76,12 +95,13 @@ ManagedCollectionService {
     }
     function disconnectSelected() { disconnect(selectedEntry?.id) }
     function shutdownSelected() {
-        if (busy || selectedEntry?.type!=='vm') return
+        if (!canShutdownSelected) return
         shutdownTask.command=Config.remoteVmCommand.concat(['shutdown','--',selectedEntry.vmName])
         shutdownTask.running=true
     }
     onSessionsChanged: syncPicker()
     Timer { interval: root.sessions.length ? 1000 : 5000; running: DbService.ready; repeat:true; onTriggered: root.request() }
+    Timer { interval: 1000; running: !!root.selectedVmName; repeat:true; onTriggered: root.refreshVmState() }
     Connections { target: DbService; function onReadyChanged() { root.request() } }
     Component.onCompleted: request()
     Process {
@@ -116,13 +136,29 @@ ManagedCollectionService {
         // qmllint enable signal-handler-parameters
     }
     Process {
+        id: vmProbe
+        property string vmName: ''
+        stdout: StdioCollector { id: vmId; waitForEnd: true }
+        stderr: StdioCollector { waitForEnd: true }
+        // qmllint disable signal-handler-parameters
+        onExited: (code,status) => {
+            if (vmName !== root.selectedVmName) { Qt.callLater(root.refreshVmState); return }
+            root.runningVmName = !code && !status && /^[0-9]+$/.test(vmId.text.trim()) ? vmName : ''
+        }
+        // qmllint enable signal-handler-parameters
+    }
+    Process {
         id: shutdownTask
         stdout: StdioCollector { waitForEnd:true }
         stderr: StdioCollector { waitForEnd:true }
         // qmllint disable signal-handler-parameters
         onExited: (code,status) => {
             if (code || status) root.error=Translations.text("remotes.errors.shutdown")
-            else AlertService.post('remotes',Translations.text("remotes.status.shutdownRequested"),'info',3000)
+            else {
+                root.runningVmName = ''
+                AlertService.post('remotes',Translations.text("remotes.status.shutdownRequested"),'info',3000)
+            }
+            Qt.callLater(root.refreshVmState)
         }
         // qmllint enable signal-handler-parameters
     }
