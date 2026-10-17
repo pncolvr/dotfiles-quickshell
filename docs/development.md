@@ -342,6 +342,20 @@ It opens each picker with the pointer away from the panel, verifies keyboard
 focus and search (including masked input), then closes it with Escape. Native
 checks restore the original window focus and pointer position when they finish.
 
+## Directories
+
+`bash tests/directories/directories.sh` includes keyboard activation of unmatched
+absolute, home-prefixed, environment-prefixed and home-relative local folders.
+It covers symlinks, spaces and literal shell characters, invalid paths/files, unset
+variables, saved-match priority, retained error focus and cancellation during an
+actually delayed lookup after editing, Escape or replacement. Typed paths never
+change the saved collection. File-manager actions are mocked; the existing CRUD,
+virtual-location, status-filter and restart checks remain in the same suite.
+
+The configured `directoryResolveCommand` supports `--open PATH` for local-only
+validation/expansion, in addition to saved-location resolution and `--check` batches.
+
+
 ## Webapps
 
 `node tests/webapps/model.mjs` checks browser profiles/window modes, literal

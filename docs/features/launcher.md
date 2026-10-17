@@ -526,6 +526,15 @@ remain available; work folders appear while the status is `directoryWorkStatus`.
 editing a field it retains Select all. Both tabs show shortcut hints. Commands,
 status and shortcuts live in `src/config/Config.qml`.
 
+When no saved entry matches, press Enter to open the local folder path typed into
+search. Absolute paths, `~`, `~/…`, `$VAR` and `${VAR}` are supported;
+relative paths resolve from your home directory. Substitutions are processed once
+as path data; shell commands and glob patterns are never evaluated. Symlinks resolve
+to their canonical folder. Invalid paths, files and unset variables keep the picker
+open with its query and focus intact, showing an error that clears on editing.
+Saved matches take priority. Typed paths are never added to saved directories.
+Editing, closing or replacing the picker cancels a pending lookup.
+
 Add a local path, `~/` path, or choose a folder with the native browse button.
 The dialog returns focus to the input and keeps Manage open. Local folders must
 exist; symlinks resolve to their canonical path. File-manager locations such as

@@ -28,14 +28,38 @@ if [[ ${1:-} == --check ]]; then
                     elif .kind == "file" then "Workspace file missing or unavailable" else "Folder missing or unavailable" end))'
     exit 0
 fi
+# Typed opening uses environment substitutions as data, never shell evaluation.
+local_only=false
+if [[ ${1:-} == --open ]]; then local_only=true; shift; fi
 path=${1:?Folder path is required}
+if $local_only; then
+    expanded=''
+    case $path in
+        '~') expanded=$HOME; path='' ;;
+        '~/'*) expanded="$HOME/"; path=${path:2} ;;
+    esac
+    variable_pattern='\$(\{([a-zA-Z_][a-zA-Z0-9_]*)\}|([a-zA-Z_][a-zA-Z0-9_]*))'
+    while [[ $path =~ $variable_pattern ]]; do
+        token=${BASH_REMATCH[0]}
+        variable=${BASH_REMATCH[2]:-${BASH_REMATCH[3]}}
+        [[ -v $variable ]] || { printf 'Environment variable is not set: %s.\n' "$variable" >&2; exit 1; }
+        expanded+="${path%%"$token"*}${!variable}"
+        path=${path#*"$token"}
+    done
+    path="$expanded$path"
+    if [[ -z $path || $path =~ ^[a-zA-Z][a-zA-Z0-9+.-]*:// ]]; then
+        printf 'Choose an existing local folder.\n' >&2; exit 1
+    fi
+    [[ $path == /* ]] || path="$HOME/$path"
+fi
 if [[ $path =~ ^[a-zA-Z][a-zA-Z0-9+.-]*:// ]]; then
     name=${path%%:*}
     name=${name^}
 else
     [[ $path == '~' ]] && path=$HOME
     [[ $path == '~/'* ]] && path="$HOME/${path:2}"
-    path=$(realpath -e -- "$path")
+    IFS= read -r -d '' path < <(realpath -ez -- "$path" 2>/dev/null) \
+        || { printf 'Choose an existing folder.\n' >&2; exit 1; }
     [[ -d $path ]] || { printf 'Choose an existing folder.\n' >&2; exit 1; }
     name=$(basename -- "$path")
 fi

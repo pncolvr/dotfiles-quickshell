@@ -26,7 +26,8 @@ Singleton {
         pathCheck.stdinEnabled = true
         pathCheck.running = true
     }
-    onManagingChanged: if (managing) checkPaths()
+    onErrorChanged: if (PickerService.mode === PickerService.Mode.Directories) PickerService.error = error
+    onManagingChanged: if (managing) { cancelTyped(); checkPaths() }
     function open() {
         generation++; managing = false; showAll = false; draft = null; error = ""
         if (!DirectoryRepository.reload()) error = DirectoryRepository.error
@@ -46,7 +47,12 @@ Singleton {
     }
     function toggleShowAll() { showAll = !showAll; syncPicker(); PickerService.opened() }
     function edit(entry) { generation++; error = ""; draft = Object.assign({},entry) }
-    function cancel() { generation++; draft = null; error = "" }
+    function cancelTyped() {
+        if (!resolve.openOnly) return
+        generation++
+        if (resolve.running) resolve.signal(15)
+    }
+    function cancel() { cancelTyped(); generation++; draft = null; error = "" }
     function save(path, name, category) {
         if (busy) return
         path = path.trim()
@@ -56,6 +62,7 @@ Singleton {
         }
         if (!path) { error = "Choose a folder or enter a file-manager location."; return }
         error = ""
+        resolve.openOnly = false
         resolve.previousPath = draft?.path ?? ""
         resolve.entryName = name.trim()
         resolve.category = category
@@ -64,10 +71,28 @@ Singleton {
         resolve.running = true
     }
     function remove(path) { if (!DirectoryRepository.remove(path)) error = DirectoryRepository.error }
-    function accept(items) {
-        if (managing || !items.length) return
+    function openDirectory(path) {
         PickerService.close()
-        Quickshell.execDetached(Config.directoryOpenCommand.concat([items[0].result]))
+        Quickshell.execDetached(Config.directoryOpenCommand.concat([path]))
+    }
+    function accept(items) {
+        if (managing || busy || !items.length) return
+        if (items[0].id !== "typed") { openDirectory(items[0].result); return }
+        error = ""
+        resolve.openOnly = true
+        resolve.generation = ++root.generation
+        resolve.command = ["timeout", "10", ...Config.directoryResolveCommand, "--open", items[0].result]
+        resolve.running = true
+    }
+    Connections {
+        target: PickerService
+        function onQueryChanged() {
+            if (PickerService.mode !== PickerService.Mode.Directories || root.managing) return
+            root.cancelTyped()
+            root.error = ""
+        }
+        function onVisibleChanged() { if (!PickerService.visible) root.cancelTyped() }
+        function onModeChanged() { if (PickerService.mode !== PickerService.Mode.Directories) root.cancelTyped() }
     }
     Connections {
         target: DirectoryRepository
@@ -101,6 +126,7 @@ Singleton {
     }
     Process {
         id: resolve
+        property bool openOnly: false
         property string previousPath: ""
         property string entryName: ""
         property string category: "personal"
@@ -113,6 +139,7 @@ Singleton {
             if (exitCode !== 0 || exitStatus !== 0) { root.error = failures.text.trim() || "Could not resolve folder."; return }
             try {
                 const entry = JSON.parse(output.text)
+                if (openOnly) { root.openDirectory(entry.path); return }
                 if (!DirectoryRepository.save(previousPath,entry.path,entryName || entry.name,category)) {
                     root.error = DirectoryRepository.error; return
                 }

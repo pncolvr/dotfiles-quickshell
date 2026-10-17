@@ -169,6 +169,7 @@ Singleton {
     }
     function directories() {
         begin(PickerService.Mode.Directories, "Directories")
+        allowTyped = true
         DirectoryService.open()
         show()
     }

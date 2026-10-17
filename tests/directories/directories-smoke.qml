@@ -3,6 +3,7 @@ import QtQuick
 import QtQuick.Dialogs as Dialogs
 import QtTest as Test
 import Quickshell
+import Quickshell.Io
 import "../../src/services"
 import "../../src/modules/launcher"
 
@@ -14,6 +15,76 @@ Scope {
     property int ticks: 0
     property bool failed: false
     Test.TestEvent { id: events }
+    Test.TestCase { id: waiter; when: false }
+    FileView { id: actions; path: root.directory + "/actions"; preload: false; blockLoading: true; printErrors: false }
+    FileView { id: resolving; path: root.directory + "/resolving"; preload: false; blockLoading: true; blockWrites: true; printErrors: false }
+    function openedPaths() {
+        actions.reload()
+        return actions.text().trim().split("\n").filter(Boolean).map(line => JSON.parse(line)[0])
+    }
+    function until(predicate, message) {
+        const deadline = Date.now() + 4000
+        while (!predicate() && Date.now() < deadline) waiter.wait(10)
+        check(predicate(), message)
+        if (!predicate()) throw new Error(message)
+    }
+    function typedQuery(text) {
+        PickerService.directories()
+        const field = find("pickerSearch")
+        until(() => field.activeFocus, "directory search focuses")
+        field.text = text
+        check(PickerService.filteredItems.length === 0 && PickerService.canAccept, "unmatched path enables typed acceptance: " + text)
+        events.keyClick(Qt.Key_Return, Qt.NoModifier, 0)
+    }
+    function typedPaths() {
+        const initialEntries = JSON.stringify(DirectoryService.directories)
+        const home = Quickshell.env("HOME"), orange = home + "/orange folder"
+        for (const [input, expected] of [
+            [orange, orange], ["~/orange folder", orange], ["$HOME/orange folder", orange],
+            ["${HOME}/orange folder", orange], ["orange folder", orange],
+            ["~", home], ["$HOME", home], ["${HOME}", home],
+            [directory + "/folder-link", root.folder], ["$DIRECTORY_LITERAL", Quickshell.env("DIRECTORY_LITERAL")]
+        ]) {
+            const count = openedPaths().length
+            typedQuery(input)
+            until(() => !PickerService.visible && !DirectoryService.busy && openedPaths().length === count + 1, "typed folder opens: " + input)
+            check(openedPaths().slice(-1)[0] === expected, "typed path expands literally and resolves symlinks")
+        }
+        for (const input of [directory + "/missing", directory + "/plain-file", "$DIRECTORY_UNSET_FIXTURE", "smb://unmatched/typed"]) {
+            const count = openedPaths().length
+            typedQuery(input)
+            until(() => !DirectoryService.busy && !!DirectoryService.error, "invalid folder reports an error")
+            check(PickerService.visible && PickerService.query === input && find("pickerSearch").activeFocus, "invalid folder retains query and focus")
+            check(PickerService.error === DirectoryService.error && openedPaths().length === count, "invalid folder never launches")
+            find("pickerSearch").text = ""
+            check(!PickerService.error, "editing clears the error")
+        }
+        PickerService.directories()
+        find("pickerSearch").text = "Banana"
+        until(() => find("pickerSearch").activeFocus, "saved matching row remains focused")
+        check(PickerService.filteredItems.length === 1, "saved match keeps priority")
+        const count = openedPaths().length
+        events.keyClick(Qt.Key_Return, Qt.NoModifier, 0)
+        until(() => openedPaths().length === count + 1, "saved row opens")
+        check(openedPaths().slice(-1)[0] === root.folder && !DirectoryService.busy, "saved matches use the existing direct action")
+        for (const action of ["edit", "close", "replace"]) {
+            const count = openedPaths().length
+            resolving.setText("")
+            typedQuery("~/slow folder")
+            until(() => { resolving.reload(); return resolving.text() === "busy" }, "delayed lookup started")
+            switch (action) {
+              case "edit": find("pickerSearch").text = "new unmatched path"; break
+              case "close": events.keyClick(Qt.Key_Escape, Qt.NoModifier, 0); break
+              case "replace": PickerService.promptMenu("Replacement", [{title:"Keep working"}], () => {}); break
+            }
+            waiter.wait(450)
+            check(openedPaths().length === count, "stale lookup cannot open after " + action)
+            check(!PickerService.error, "stale lookup cannot replace current error state")
+        }
+        PickerService.close()
+        check(JSON.stringify(DirectoryService.directories) === initialEntries, "typed paths never change saved entries")
+        if (!failed) console.log("PASS: directories typed")
+    }
     FloatingWindow {
         id: window
         visible: true
@@ -34,6 +105,12 @@ Scope {
         onTriggered: {
             if (++root.ticks > 200 || root.failed) { console.error("DIRECTORY FAIL: timeout at " + root.step + ": " + DirectoryService.error); stop(); Qt.quit(); return }
             if (!DbService.ready || DirectoryService.busy || StatusService.status !== "personal") return
+            if (Quickshell.env("DIRECTORY_TEST_PHASE") === "typed") {
+                stop()
+                try { root.typedPaths() } catch (error) { root.check(false, String(error)) }
+                Qt.quit()
+                return
+            }
             if (Quickshell.env("DIRECTORY_TEST_PHASE") === "restart") {
                 root.check(DirectoryService.directories.length === 2,"directory entries survive restart")
                 PickerService.directories()
