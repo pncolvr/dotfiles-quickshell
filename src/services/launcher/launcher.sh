@@ -85,7 +85,7 @@ case ${1:-apps} in
             webapps) ipc call launcher webapps; exit ;;
         esac
         case $name in
-            power|screenshot|wallpaper) provider="$launcher_dir/providers/$name.sh" ;;
+            power|wallpaper) provider="$launcher_dir/providers/$name.sh" ;;
             n8n) ipc call launcher n8n; exit ;;
             remotes) ipc call launcher remotes; exit ;;
             *) fail "Unknown provider: $name" ;;

@@ -307,18 +307,24 @@ bash "$picker" provider bookmarks
 bash "$picker" provider code
 ```
 
-Providers live together in `src/services/launcher/providers/`, reusing the existing
-Bash actions and cache locations. Available
-names are `code`, `webapps`, `github`, `n8n`, `remotes`, `bookmarks`,
-`directories`, `power`, `screenshot`, `recording`, `encode-qrcode`, and `wallpaper`.
-Remaining interactive providers call `launcher.sh`; no Rofi adapter or PATH
-override is required. `_common/` holds the retained Bash helpers.
-The unused standalone Webapps, n8n and Remotes forwarding scripts are removed;
-the public `launcher.sh` aliases remain available for shell callers.
-Projects, GitHub, directories, Webapps, Remotes, n8n, Bookmarks, QR encoding and the interactive Power entry dispatch directly to native QML services; their
-former forwarding providers are removed; Power retains its noninteractive executor. The other providers are named `<provider>.sh`. Browser selection,
-work/personal filtering and editor profiles are preserved. The unused Books provider
-and its Meta+Shift+Period binding are retired.
+The public provider names are `code`, `webapps`, `github`, `n8n`, `remotes`,
+`bookmarks`, `directories`, `power`, `screenshot`, `recording`,
+`encode-qrcode`, and `wallpaper`. Interactive choices belong to native feature
+services and the shared picker; the compatibility CLI forwards to their IPC entry
+points. Browser selection, work/personal filtering and editor profiles are preserved.
+The unused Books provider and its Meta+Shift+Period binding are retired.
+
+Only noninteractive executors remain under `src/services/launcher/providers/`:
+Power executes allowed session actions, including offline idle Lock; Wallpaper
+handles filesystem discovery, assignment and offline restore; Screenshot runs the
+capture/decoder tools and detached Satty editing. Recording uses its detached
+worker under `src/services/recording/`, and QR encoding keeps its memory/pipe worker.
+`_common/utils.sh` supplies Config export and shared completed-file reveal.
+
+`launcher.sh` stays for the two Userscripts clients (`select_urls` and
+`lib/rbw_client.py`), JSON/dmenu request/reply transport, pinentry/secret transport,
+offline Config export and compatibility aliases. These are supported interfaces,
+not pending migrations. No Rofi adapter or PATH override is required.
 
 The tools-submap **E** binding dispatches `quickshell:launcher-encode-qr` to
 `QrEncodeService`. `launcher.sh provider encode-qrcode` remains a compatibility
@@ -754,9 +760,10 @@ Existing shortcuts retain their keys. Window-switching shortcuts use native glob
 actions. Meta+Shift+Escape preserves its existing notification DND toggle; the
 Notifications module shortcut opens its panel. CopyQ is no longer started automatically.
 
-`bash tests/launcher/providers.sh` checks every provider with synthetic configuration
-and mocked actions. `bash tests/launcher/launcher.sh` exercises actual Bash/QML
-IPC in an isolated offscreen shell. Neither test opens applications on the desktop.
+`bash tests/launcher/providers.sh` checks native compatibility dispatch, offline idle
+Lock and shared file reveal with mocked actions. Feature-specific suites cover the
+remaining capture, recording, Wallpaper and QR workers.
+`bash tests/launcher/launcher.sh` exercises actual Bash/QML IPC in an isolated offscreen shell. Neither test opens applications on the desktop.
 
 ## Clipboard
 

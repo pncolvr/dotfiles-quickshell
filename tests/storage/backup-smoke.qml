@@ -183,7 +183,7 @@ Scope {
                 if (ProjectService.checkingPaths || !ProjectService.pathStates[root.locations + "/project-missing"]) return
                 if (!root.check(root.warning("sourcePathWarning_" + root.locations + "/source")?.text === "Folder missing or unavailable", "source Manage warning")) return
                 if (!root.check(root.warning("projectPathWarning_" + root.locations + "/project-missing")?.text === "Folder missing or unavailable", "project Manage warning")) return
-                if (!root.check(root.warning("projectPathWarning_" + root.locations + "/project-present")?.text.includes("workspace file missing"), "workspace summary")) return
+                if (!root.check(root.warning("projectPathWarning_" + root.locations + "/project-present")?.text === "1 project file missing or unavailable", "workspace summary")) return
                 ProjectService.editProject(root.locations + "/project-present")
                 root.step++
                 break
