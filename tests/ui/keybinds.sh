@@ -7,7 +7,7 @@ trap 'rm -rf -- "$fixture"' EXIT
 mkdir -m700 "$fixture/runtime"
 mkdir "$fixture/home"
 tar -C "$repo" --exclude='*.env' --exclude='src/services/launcher/providers/*.json' -cf - src | tar -C "$fixture" -xf -
-sed -i 's/readonly property var keybinds:/property var keybinds:/;s/readonly property bool animationsEnabled:/property bool animationsEnabled:/;s/workModeEnabled: true/workModeEnabled: false/;s/clipboardMonitorEnabled: true/clipboardMonitorEnabled: false/' "$fixture/src/config/Config.qml"
+sed -i 's/readonly property var keybinds:/property var keybinds:/;s/readonly property var panelHints:/property var panelHints:/;s/readonly property bool animationsEnabled:/property bool animationsEnabled:/;s/workModeEnabled: true/workModeEnabled: false/;s/clipboardMonitorEnabled: true/clipboardMonitorEnabled: false/' "$fixture/src/config/Config.qml"
 cat > "$fixture/src/services/audio/AudioService.qml" <<'QML'
 pragma Singleton
 import QtQml

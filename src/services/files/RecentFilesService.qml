@@ -245,7 +245,7 @@ Singleton {
     }
     function openFile(file) {
         if (file.isDirectory) navigateFolder(file.path)
-        else Qt.openUrlExternally(file.uri)
+        else Quickshell.execDetached(Config.recentFileOpenCommand.concat([file.uri]))
     }
 
     Timer {

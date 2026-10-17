@@ -7,6 +7,7 @@ import ".." as UI
 ListView {
     id: root
     property bool blocksPanelShortcuts: true
+    property var cancelHandler: null
     property var options: []
     property string selectedName: ""
     property real rowHeight: Theme.controlHeight + Theme.controlSpacing
@@ -42,6 +43,7 @@ ListView {
     onOptionsChanged: Qt.callLater(revealSelected)
     Component.onCompleted: Qt.callLater(revealSelected)
     Keys.onPressed: event => {
+        if (root.cancelHandler && UI.Keybinds.handleCancel(event, root.cancelHandler)) return
         if (event.key === Qt.Key_Down) navigate(1)
         else if (event.key === Qt.Key_Up) navigate(-1)
         else if (event.key === Qt.Key_Home) navigate(1, true)

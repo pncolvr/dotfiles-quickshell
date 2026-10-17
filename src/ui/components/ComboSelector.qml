@@ -156,7 +156,7 @@ Item {
         dim: false
         focus: true
         margins: 0
-        closePolicy: QC.Popup.CloseOnEscape | QC.Popup.CloseOnPressOutside
+        closePolicy: QC.Popup.CloseOnPressOutside
         onAboutToShow: { root.placePopup(); choices.revealSelected() }
         onClosed: root.expanded = false
         enter: Transition {
@@ -174,6 +174,7 @@ Item {
         }
         contentItem: UI.SelectionList {
             id: choices
+            cancelHandler: () => { root.expanded = false }
             focus: true
             objectName: root.choicesObjectName
             options: root.options

@@ -27,12 +27,9 @@ PreviewPickerPanel {
     }
     function toggleImagesOnly() { setCriterion("kind",imagesOnly ? undefined : "image") }
     readonly property bool pinnedOnly: picker.itemCriteria.pinned === true
-    footerHint: Translations.text("clipboard.shortcuts.primary")
-        + "\n"
-        + [UI.Keybinds.describe("clipboard.pin",Translations.text(root.picker.currentItem?.pinned ? "clipboard.actions.unpinHint" : "clipboard.actions.pinHint")),
-            UI.Keybinds.describe("clipboard.pinnedOnly",Translations.text("clipboard.filter.pinnedHint")),
-            UI.Keybinds.describe("preview",Translations.text("clipboard.filter.images"))].filter(Boolean).join(" · ")
-
+    hintPanel: "clipboard"
+    hintOverrides: ({preview: {label: Translations.text("clipboard.filter.images")}})
+    hintActions: ["clipboard.pinnedOnly", "preview"].concat(root.picker.currentItem ? ["clipboard.pin", "copy", "clipboard.delete"] : [])
     function sizeListForOpening() {
         const entries = picker.items.slice(0, maximumListRows)
         openedListHeight = entries.length ? entries.reduce((height, entry) => height + (previewEnabled
@@ -53,9 +50,9 @@ PreviewPickerPanel {
     function acceptSelection(_modifiers) {
         picker.accept(false, false)
     }
-    Keys.onDeletePressed: event => { root.deleteCurrentEntry(); event.accepted = true }
     Keys.onPressed: event => {
-        if (event.matches(StandardKey.Copy)) root.picker.accept(false, true)
+        if (UI.Keybinds.matches(event, "copy")) root.picker.accept(false, true)
+        else if (UI.Keybinds.matches(event, "clipboard.delete")) root.deleteCurrentEntry()
         else { event.accepted = false; return }
         event.accepted = true
     }

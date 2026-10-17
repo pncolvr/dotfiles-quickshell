@@ -14,7 +14,7 @@ Item {
     readonly property bool moduleFocusSearch: true
     readonly property var modulePointerTarget: secret
     readonly property var actions: picker.secretActions ?? null
-    Keys.onEscapePressed: { root.clearSecret(); root.picker.close() }
+    Keys.onPressed: event => UI.Keybinds.handleCancel(event, () => { root.clearSecret(); root.picker.close() })
     Shortcut {
         sequences: ["Return", "Enter"]
         enabled: !!root.actions && root.picker.visible
@@ -89,7 +89,7 @@ Item {
             Accessible.name: root.picker.prompt
             Keys.onReturnPressed: root.accept()
             Keys.onEnterPressed: root.accept()
-            Keys.onEscapePressed: { root.clearSecret(); root.picker.close() }
+            Keys.onPressed: event => UI.Keybinds.handleCancel(event, () => { root.clearSecret(); root.picker.close() })
         }
         Column {
             width: parent.width
@@ -118,7 +118,8 @@ Item {
             }
             UI.ShortcutHints {
                 width: parent.width
-                hints: Translations.text(root.actions?.creating ? "backup.shortcuts.create" : "backup.shortcuts.restore")
+                panelKey: "default"
+                availableActions: []
             }
         }
     }

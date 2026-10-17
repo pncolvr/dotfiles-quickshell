@@ -20,6 +20,7 @@ Scope {
     property int tabActions: 0
     property int previousActions: 0
     property int muteActions: 0
+    property int cancellations: 0
     function check(ok, message) { if (!ok) { failed = true; console.error('KEYBINDS FAIL:',message) } }
     function key(group, action, sequence) {
         const value = Object.assign({},settings.keybinds)
@@ -35,10 +36,19 @@ Scope {
         color: Theme.tooltipBackground
         Column {
             id: panel
+            Keys.onPressed: event => UI.Keybinds.handleCancel(event, () => root.cancellations++)
             property bool nativeDialogOpen: false
             width: parent.width
             spacing: 6
             UI.TabBar { id: tabs; width: parent.width; labels: ['First','Second','Third']; onTabClicked: root.tabActions++ }
+            UI.PanelFocusScope {
+                id: cancelScope
+                width: parent.width
+                height: 30
+                onDismissRequested: root.cancellations++
+                UI.InputField { id: cancelInput; width: parent.width; text: "Child field" }
+            }
+            UI.ShortcutHints { id: cancelHint; width: parent.width; closingHint: UI.Keybinds.cancelHint() }
             UI.SearchField { id: search; objectName: 'search'; width: parent.width; text: 'Select this text' }
             UI.ActionButton { id: refresh; label: 'Refresh'; hint: 'Refresh data'; keyAction: 'refresh'; onClicked: root.refreshes++ }
             UI.ActionButton { id: add; label: 'Add'; keyAction: 'add'; onClicked: root.additions++ }
@@ -121,6 +131,41 @@ Scope {
             root.key('common','refresh','')
             events.keyClick(Qt.Key_F6)
             root.check(root.refreshes === 2,'empty binding disables shortcut')
+            root.settings.panelHints = Object.assign({}, root.settings.panelHints, {test: ['clipboard.pin', 'clipboard.pinnedOnly', 'preview', 'edit']})
+            cancelHint.panelKey = 'test'
+            cancelHint.availableActions = ['clipboard.pin', 'clipboard.pinnedOnly', 'preview', 'edit']
+            root.check(cancelHint.text.split(' · ').length === 4, 'explicit per-panel choices may exceed three')
+            root.check(cancelHint.text.startsWith('Ctrl+P:') && cancelHint.text.endsWith('Edit'), 'configuration preserves hint order')
+            root.key('clipboard','pin','F9')
+            root.check(cancelHint.text.startsWith('F9:'), 'panel hints follow configured bindings')
+            cancelHint.availableActions = ['edit']
+            root.check(cancelHint.text === 'Ctrl+E: Edit', 'unavailable options are omitted')
+            root.settings.panelHints = Object.assign({}, root.settings.panelHints, {test: []})
+            root.check(cancelHint.text === '' && cancelHint.height === 0 && !cancelHint.visible, 'empty panel list removes footer space')
+            cancelHint.panelKey = ''
+            root.key('common','cancel','F8')
+            root.check(cancelHint.text.includes('F8') && !cancelHint.text.includes('Esc'), 'cancel hint follows remapped binding')
+            search.text = 'Keep until cancel'; search.forceActiveFocus()
+            events.keyClick(Qt.Key_Escape)
+            root.check(search.text === 'Keep until cancel' && root.cancellations === 0, 'old Escape no longer clears search or dismisses panels')
+            events.keyClick(Qt.Key_F8)
+            root.check(search.text === '' && root.cancellations === 0, 'search consumes remapped cancel before its parent')
+            cancelInput.forceActiveFocus(); events.keyClick(Qt.Key_F8)
+            root.check(root.cancellations === 1, 'unhandled remapped cancel bubbles to the panel once')
+            combo.expanded = true; events.wait(30)
+            events.keyClick(Qt.Key_Escape); events.wait(20)
+            root.check(combo.expanded, 'popup no longer closes with hardcoded Escape')
+            events.keyClick(Qt.Key_F8); events.wait(20)
+            root.check(!combo.expanded && root.cancellations === 1, 'popup consumes configured cancel before panel dismissal')
+            root.key('common','cancel','')
+            root.check(cancelHint.text === '', 'disabled cancel hides its hint')
+            cancelInput.forceActiveFocus(); events.keyClick(Qt.Key_F8); events.keyClick(Qt.Key_Escape)
+            root.check(root.cancellations === 1, 'empty binding disables both old and remapped panel cancellation')
+            combo.expanded = true; events.wait(30)
+            events.keyClick(Qt.Key_F8); events.keyClick(Qt.Key_Escape); events.wait(20)
+            root.check(combo.expanded && root.cancellations === 1, 'disabled cancel also leaves popups open')
+            combo.expanded = false
+
             if (!root.failed) console.log('PASS: configured panel actions, dynamic hints, text editing, child scopes, focus feedback and scrolling')
             Qt.quit()
         }

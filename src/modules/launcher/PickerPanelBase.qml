@@ -32,7 +32,10 @@ Rectangle {
     readonly property real columnWidth: width - Theme.tooltipPaddingHeight * 2
     readonly property real normalHeight: panelHeader.height + list.implicitHeight + panelFooter.height + Theme.tooltipPaddingHeight + Theme.controlSpacing
     property var searchKeyHandler: null
-    property string footerHint: Translations.text(inputOnly ? "picker.shortcuts.input" : gridMode ? "picker.shortcuts.default" : "picker.shortcuts.list", [picker.acceptLabel.toLowerCase()])
+    property string hintPanel: "default"
+    property var hintActions: ["search"]
+    property var hintOverrides: ({})
+    property string footerHint: ""
     property real openedListHeight: Theme.pickerRowHeight
     property bool awaitingOpeningRows: false
     readonly property real measuredRowHeight: Math.ceil(Math.max(minimumRowHeight,
@@ -109,8 +112,8 @@ Rectangle {
         Keys.priority: Keys.BeforeItem
         Keys.forwardTo: [root]
         Keys.onPressed: event => {
+            if (UI.Keybinds.handleCancel(event, () => root.picker.close())) return
             switch (event.key) {
-                case Qt.Key_Escape: root.picker.close(); break
                 case Qt.Key_Down: root.picker.move(1); break
                 case Qt.Key_Up: root.picker.move(-1); break
                 case Qt.Key_Left: if (!root.gridMode) { event.accepted = false; return } root.picker.move(-1); break
@@ -146,7 +149,7 @@ Rectangle {
                 Keys.onPressed: event => {
                     if (root.searchKeyHandler && root.searchKeyHandler(event,true)) { event.accepted = true; return }
                     if (event.key === Qt.Key_Up || event.key === Qt.Key_Down || event.key === Qt.Key_Return
-                        || event.key === Qt.Key_Enter || event.key === Qt.Key_Escape || event.key === Qt.Key_PageDown || event.key === Qt.Key_PageUp) event.accepted = false
+                        || event.key === Qt.Key_Enter || UI.Keybinds.matches(event, "cancel") || event.key === Qt.Key_PageDown || event.key === Qt.Key_PageUp) event.accepted = false
                 }
             }
             Loader { width: parent.width; height: (item as Item)?.implicitHeight ?? 0; visible: !root.inputOnly || sourceComponent !== null; sourceComponent: root.searchControls }
@@ -219,6 +222,9 @@ Rectangle {
                 horizontalAlignment: Text.AlignHCenter
                 textFormat: Text.PlainText
                 hints: root.footerHint
+                panelKey: root.hintPanel
+                availableActions: root.hintActions
+                actionOverrides: root.hintOverrides
             }
         }
     }

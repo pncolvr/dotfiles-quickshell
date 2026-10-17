@@ -65,8 +65,8 @@ FocusScope {
                 return
             }
         }
+        if (UI.Keybinds.handleCancel(event, () => root.picker.close())) return
         switch (event.key) {
-            case Qt.Key_Escape: root.picker.close(); break
             case Qt.Key_Left: grid.moveHorizontal(-1); break
             case Qt.Key_Right: grid.moveHorizontal(1); break
             case Qt.Key_Up: grid.moveVertical(-1); break
@@ -171,11 +171,9 @@ FocusScope {
         anchors.bottom: parent.bottom
         width: parent.width
         horizontalAlignment: Text.AlignHCenter
-        hints: Translations.text("expose.shortcuts.primary",[root.picker.filteredItems.length])
-            + Translations.text("expose.shortcuts.workspaces",[UI.Keybinds.sequence("expose.all"),UI.Keybinds.sequence("expose.workspace"),UI.Keybinds.sequence("expose.move")])
-            + Translations.text("expose.shortcuts.drag")
+        panelKey: "expose"
+        availableActions: ["expose.all", "expose.workspace", "expose.move"]
         color: Theme.inactive
-        wrapMode: Text.WordWrap
     }
     Item { id: dragOverlay; anchors.fill: parent; z: 100 }
 }

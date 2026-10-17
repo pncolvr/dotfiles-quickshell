@@ -45,7 +45,7 @@ RowLayout {
         Accessible.name: Translations.text("totp.fields.name")
         onAccepted: tokenField.forceActiveFocus()
         onTextChanged: if (!root.destroying) root.draftChanged(text, tokenField.text)
-        Keys.onEscapePressed: root.cancelled()
+        Keys.onPressed: event => UI.Keybinds.handleCancel(event, () => root.cancelled())
     }
 
     UI.SecretField {
@@ -62,7 +62,7 @@ RowLayout {
         Accessible.name: Translations.text("totp.fields.secretAccessibleName")
         onAccepted: root.submit()
         onTextChanged: if (!root.destroying) root.draftChanged(nameField.text, text)
-        Keys.onEscapePressed: root.cancelled()
+        Keys.onPressed: event => UI.Keybinds.handleCancel(event, () => root.cancelled())
     }
 
     UI.EditorActions {

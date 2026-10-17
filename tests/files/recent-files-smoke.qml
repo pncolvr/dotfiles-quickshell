@@ -77,6 +77,9 @@ Scope {
             if (root.step === 0) {
                 root.check(RecentFilesService.error === "" && RecentFilesService.files.length === 1,
                     "recent-file service reads desktop XBEL records")
+                RecentFilesService.openFile(RecentFilesService.files[0])
+                RecentFilesService.openFile({uri: "file:///tmp/report%20%23.pdf"})
+                RecentFilesService.openFile({uri: "file:///tmp/settings%20file.conf"})
                 root.firstSnapshot = RecentFilesService.files
                 root.check(RecentFilesService.files[0]?.path === Quickshell.env("RECENT_FILES_TEST_FILE"),
                     "service preserves the real file path")

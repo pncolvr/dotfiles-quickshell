@@ -1,7 +1,8 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import ".." as UI
 
-// Controls and child popups consume Escape first; only unhandled keys close us.
+// Controls and child popups consume the configured cancel action first; only unhandled keys close us.
 FocusScope {
     id: root
     focus: true
@@ -13,5 +14,5 @@ FocusScope {
         if (panel && typeof panel.focusSearch === "function") panel.focusSearch()
         else root.forceActiveFocus()
     }
-    Keys.onEscapePressed: root.dismissRequested()
+    Keys.onPressed: event => UI.Keybinds.handleCancel(event, () => root.dismissRequested())
 }

@@ -7,8 +7,8 @@ import "../../ui" as UI
 
 PickerPanelBase {
     id: root
-    footerHint: Translations.text("picker.shortcuts.multiple", [picker.selectedIds.length,
-        picker.selectedIds.length ? Translations.text("picker.shortcuts.accept",[picker.acceptLabel.toLowerCase()]) : Translations.text("picker.shortcuts.highlighted"),UI.Keybinds.sequence("selection.toggle"),UI.Keybinds.sequence("selection.all"),UI.Keybinds.sequence("selection.clear")])
+    hintPanel: "multiple"
+    hintActions: ["selection.toggle", "selection.all", "selection.clear"]
     searchKeyHandler: root.handleSelectionKey
     Keys.onPressed: event => { event.accepted = root.handleSelectionKey(event,true) }
 

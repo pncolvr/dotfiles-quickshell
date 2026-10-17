@@ -10,9 +10,9 @@ PreviewPickerPanel {
     searchPlaceholder: Translations.text("images.search.placeholder")
     showThumbnails: false
     panelError: picker.error || ClipboardService.error
-    footerHint: Translations.text("picker.shortcuts.list", [picker.acceptLabel.toLowerCase()])
-        + (UI.Keybinds.sequence("copy") ? " · "
-            + UI.Keybinds.describe("copy", Translations.text("images.actions.copy")) : "")
+    hintPanel: "wallpaper"
+    hintOverrides: ({copy: {label: Translations.text("images.actions.copy")}})
+    hintActions: ["copy"]
     function copyCurrentImage() {
         if (picker.currentItem?.image) ClipboardService.copyImage(picker.currentItem.image)
     }

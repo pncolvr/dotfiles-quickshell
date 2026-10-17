@@ -91,7 +91,7 @@ Item {
         actionEnabled: root.sessionActive && !root.managing && StatusService.enabled
         onActivated: root.showAllRequested()
     }
-    Keys.onEscapePressed: root.escapeRequested()
+    Keys.onPressed: event => UI.Keybinds.handleCancel(event, () => root.escapeRequested())
     Connections {
         target: root.picker
         function onVisibleChanged() {

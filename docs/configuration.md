@@ -51,13 +51,14 @@ open modules, including Alt+Tab, remain in Hypr. These are the defaults:
 
 | Group | Actions and bindings |
 | --- | --- |
-| `common` | `add`: Ctrl+N; `edit`: Ctrl+E; `save`: Ctrl+S; `copy`: Ctrl+C; `refresh`: Ctrl+R; `search`: Ctrl+F |
+| `common` | `cancel`: Escape; `add`: Ctrl+N; `edit`: Ctrl+E; `save`: Ctrl+S; `copy`: Ctrl+C; `refresh`: Ctrl+R; `search`: Ctrl+F |
 | `common` | `manage`: Ctrl+M; `workFilter`: Ctrl+W; `nextTab`: Ctrl+Tab; `previousTab`: Ctrl+Shift+Tab; `preview`: Ctrl+Shift+I |
-| `clipboard` | `pin`: Ctrl+P; `pinnedOnly`: Ctrl+Shift+P |
-| `remotes` | `runningOnly`: Ctrl+Shift+R |
+| `clipboard` | `pin`: Ctrl+P; `pinnedOnly`: Ctrl+Shift+P; `delete`: Delete |
+| `vault` | `lock`: Ctrl+L |
+| `remotes` | `runningOnly`: Ctrl+Shift+R; `shutdown`: Ctrl+Shift+S |
 | `audio` | `mute`: Ctrl+Shift+M |
 | `notifications` | `dnd`: Ctrl+Shift+D |
-| `media` | `previousPlayer`: Left; `nextPlayer`: Right; `exit`: Escape; `closeWindow`: Alt+F4 |
+| `media` | `previousPlayer`: Left; `nextPlayer`: Right; `closeWindow`: Alt+F4 |
 | `expose` | `all`: Ctrl+Shift+A; `workspace`: Ctrl; `move`: Ctrl+Shift |
 | `selection` | `toggle`: Shift+Space; `all`: Ctrl+A; `clear`: Ctrl+Shift+A |
 
@@ -72,8 +73,43 @@ Shortcuts act only in the active owning panel and respect disabled actions,
 native child dialogs and selection popups. Standard field editing remains
 native, including Ctrl+A for Select all and Left/Right for cursor movement.
 Multi-selection Ctrl+A applies when the result list has focus. Tab/Shift+Tab,
-list arrows, Enter/Space activation and Escape dismissal keep their normal
-control behavior.
+list arrows and Enter/Space activation keep their normal control behavior.
+`common.cancel` controls app-owned cancel, back and close actions, including
+fullscreen media, search clearing and selection popups. It defaults to Escape;
+an empty string disables it and hides its hints. Popups/editors handle it before
+the outer panel. Native system dialogs retain their platform shortcuts. The old
+`media.exit` entry is replaced by this shared binding.
+
+## Panel footer hints
+
+`Config.panelHints` contains ordered action-ID lists, one per panel/context.
+It selects what to display; translations remain in `src/i18n/en.json` and
+`pt.json`, and shortcut bindings remain in `Config.keybinds`. Reorder IDs to
+change their display order. Use `[]` for no hints and no empty footer row.
+Explicit lists may contain more than three items; Vault uses four. Unsupported
+actions and disabled bindings are omitted. Routine Enter/Escape/opening
+instructions are excluded from the defaults.
+
+| Context | Default IDs |
+| --- | --- |
+| `clipboard` | `clipboard.pin`, `clipboard.pinnedOnly`, `preview` (Images) |
+| `manage` | `edit`, `add`, `refresh` where supported |
+| `editing` | `save` |
+| `vault` | `edit`, `add`, `refresh` (Sync), `vault.lock` |
+| `projects` | `selection.toggle`, `selection.clear` in multiple-selection mode |
+| `remotes` | `remotes.runningOnly`, `remotes.shutdown` when available |
+| `multiple` | `selection.toggle`, `selection.all`, `selection.clear` |
+| `expose` | `expose.all`, `expose.workspace`, `expose.move` |
+| `windows` | `preview` |
+| `default`, `webapps`, `n8n`, `directories`, `wallpaper`, `files` | None |
+
+Additional supported choices include Clipboard `copy`/`clipboard.delete`,
+Manage `search`/`manage` (return to list), Vault `search`, window-switcher
+`search`/`windows.previous`, Wallpaper `copy`, and Recent Files
+`files.multiple`/`files.drag`/`selection.all`. Collection list contexts also
+support `manage`, `search` and `workFilter` where work mode exists. Existing
+button guards still apply to shortcuts: VM shutdown requires a selected running
+VM, and Vault lock is blocked while busy.
 
 ## Launcher defaults
 
@@ -349,8 +385,9 @@ are active. Losing focus, saving or cancelling releases that protection.
 Native child dialogs temporarily retain their owner and release its keyboard
 focus/grab. Accepting or cancelling releases the hold and restores the appropriate
 input, without changing manual pinning. Bar panels then re-evaluate hover;
-launchers stay open. Escape goes to an editor or popup first, then closes the
-focused panel. Unfocused hover panels never intercept another app's Escape.
+launchers stay open. The configured cancel key goes to an editor or popup first,
+then closes the focused panel. Unfocused hover panels never intercept another
+app's cancel key.
 Explicit launcher or bar-shortcut invocation activates the input/root without
 moving the pointer. Pinning is always a manual action.
 
@@ -412,7 +449,7 @@ action glyphs such as add, cancel, delete, and check are defined once in `Theme.
 TOTP and the notification manager reuse `src/bar/PrivateTooltipWindow.qml` for
 their monitor selection, positioning, keyboard focus, and private layer namespace.
 `UI.WindowFocusHandler` shares activation, native-child handoff and outside-click
-policy with launchers and Vault; `UI.PanelFocusScope` supplies the outer Escape
+policy with launchers and Vault; `UI.PanelFocusScope` supplies the outer configured-cancel
 fallback. `UI.FolderDialog` shares native folder selection and path decoding.
 Both modules declare `ownsTooltipWindow`, so the shared tooltip window leaves
 their content to the dedicated window without checking module names.
@@ -421,6 +458,8 @@ Feature guides describe the individual controls and settings:
 [notifications](features/notifications.md), [Twitch](features/twitch.md),
 [TOTP](features/totp.md), [audio](features/audio.md), [batteries](features/batteries.md).
 Recent-file source and limits are described in [recent files](features/recent-files.md).
+`recentFileOpenCommand` defaults to `["gio", "open"]` for desktop-default file
+activation; the selected file URI is appended as one argument.
 Mode detection, timetable commands, and reports are described in
 [status and timecard](features/status.md).
 

@@ -70,7 +70,7 @@ QtObject {
     readonly property string folderOpenIcon: "" // folder-open: browse for a folder
     readonly property string lockIcon: "" // lock: lock the vault
     readonly property string refreshIcon: "" // arrows-rotate: refresh / sync
-    readonly property string rotateIcon: "" // arrows-rotate
+    readonly property string rotateIcon: refreshIcon
     readonly property string retryIcon: rotateIcon // arrows-rotate
     readonly property string chevronRightIcon: "" // chevron-right: collapsed
     readonly property string chevronLeftIcon: "" // chevron-left

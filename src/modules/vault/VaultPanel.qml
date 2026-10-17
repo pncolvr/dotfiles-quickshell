@@ -94,7 +94,7 @@ Item {
     }
     UI.PanelShortcut { owner: root; action: "search"; actionEnabled: !root.editing && !root.deleting; onActivated: root.focusSearch() }
     Keys.onPressed: event => {
-        if (event.key === Qt.Key_Escape) { root.back(); event.accepted = true }
+        UI.Keybinds.handleCancel(event, () => root.back())
     }
     Column {
         id: content
@@ -126,7 +126,7 @@ Item {
                 anchors.right: parent.right
                 spacing: Theme.controlSpacing
                 UI.ActionButton { keyAction: "refresh"; glyph: Theme.refreshIcon; hint: Translations.text("vault.actions.syncHint"); enabled: !RbwService.busy && !root.editing; onClicked: RbwService.reload(true) }
-                UI.ActionButton { objectName: "vaultLock"; glyph: Theme.lockIcon; hint: Translations.text("vault.actions.lockHint"); enabled: !RbwService.busy; onClicked: RbwService.lock() }
+                UI.ActionButton { objectName: "vaultLock"; keyAction: "vault.lock"; glyph: Theme.lockIcon; hint: Translations.text("vault.actions.lockHint"); enabled: !RbwService.busy; onClicked: RbwService.lock() }
                 UI.ActionButton { objectName: "vaultAdd"; keyAction: "add"; glyph: Theme.addIcon; hint: Translations.text("vault.actions.newLogin"); enabled: !RbwService.busy && !root.editing && !root.deleting; onClicked: root.newLogin() }
             }
         }
@@ -281,15 +281,17 @@ Item {
         Item {
             id: footerFeedback
             width: parent.width
-            height: Math.max(Theme.controlHeight, formHints.implicitHeight, status.visible ? status.implicitHeight : 0)
+            height: Math.max(formHints.visible ? Math.max(Theme.controlHeight, formHints.implicitHeight) : 0, status.visible ? Math.max(Theme.controlHeight, status.implicitHeight) : 0)
             UI.ShortcutHints {
                 id: formHints
                 objectName: "vaultFormHints"
                 width: parent.width
                 height: parent.height
-                visible: !status.visible
-                hints: Translations.text(root.editing || root.deleting ? "common.shortcuts.cancel" : "vault.shortcuts.details")
-                    + (!root.editing && !root.deleting && root.detailReady && root.editable && UI.Keybinds.sequence("edit") ? " · " + Translations.text("common.shortcuts.edit",[UI.Keybinds.sequence("edit")]) : "")
+                visible: !status.visible && text.length > 0
+                panelKey: root.editing ? "editing" : "vault"
+                availableActions: root.deleting ? [] : root.editing ? ["save"] : ["search", "add", "refresh", "vault.lock"]
+                    .concat(root.editable && root.detailReady ? ["edit"] : [])
+                actionOverrides: ({refresh: {label: Translations.text("hints.sync")}})
             }
             UI.Text {
                 id: status

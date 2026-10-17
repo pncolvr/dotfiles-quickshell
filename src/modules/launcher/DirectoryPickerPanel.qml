@@ -65,7 +65,9 @@ ManagedPickerFrame {
         picker: root.picker; backgroundVisible: root.backgroundVisible
         visible: !root.managing
         searchPlaceholder: Translations.text("directories.search.placeholder")
-        footerHint: StatusService.filterHint(Config.directoryShowAllShortcut,DirectoryService.showAll) + Config.directoryManageShortcut + Translations.text("directories.shortcuts.primary")
+        hintOverrides: ({manage: {sequence: Config.directoryManageShortcut}, workFilter: {sequence: Config.directoryShowAllShortcut}})
+        hintPanel: "directories"
+        hintActions: ["manage", "search"].concat(StatusService.enabled ? ["workFilter"] : [])
     }
     UI.ManagementView {
         id: manage
@@ -79,11 +81,11 @@ ManagedPickerFrame {
         showCategory: StatusService.enabled
         filterAvailability: true
         searchObjectName: "directoryManageSearch"
+        hintOverrides: ({add: {sequence: Config.directoryAddShortcut}, manage: {sequence: Config.directoryManageShortcut, label: Translations.text("hints.list")}})
         addObjectName: "beginAddDirectory"
         searchPlaceholder: Translations.text("directories.manage.searchPlaceholder")
         addHint: Translations.text("directories.actions.addShortcutHint",[Config.directoryAddShortcut])
         message: DirectoryService.error
-        hints: Translations.text("directories.shortcuts.manage",[Config.directoryManageShortcut])
         onEditRequested: root.edit(root.selectedEntry)
         onAddRequested: root.beginAdd()
         detailContent: [

@@ -1,6 +1,5 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import "../../i18n"
 import "../../config"
 import "../../ui" as UI
 
@@ -16,9 +15,8 @@ PickerPanelBase {
     maximumListRows: previewEnabled ? Math.max(1, Math.min(Config.pickerMaxRows, Config.pickerPreviewMaxRows)) : Config.pickerMaxRows
     uniformRows: previewEnabled
     readonly property bool floatingPreviewRequested: previewEnabled && picker.visible
-    footerHint: Translations.text("picker.shortcuts.list",[picker.acceptLabel.toLowerCase()])
-        + (previewShortcut && UI.Keybinds.sequence("preview") ? " · "
-            + UI.Keybinds.describe("preview",Translations.text("common.actions.preview")) : "")
+    hintPanel: "default"
+    hintActions: root.previewShortcut ? ["preview"] : []
     readonly property Component floatingPreviewComponent: Component {
         PickerPreviewContent { picker: root.picker; windowPreview: root.previewKind === "windows" }
     }

@@ -39,6 +39,7 @@ Item {
     // Panel keybinds. Desktop-opening shortcuts remain in Hypr.
     readonly property var keybinds: ({
         common: {
+            cancel: "Escape",
             add: "Ctrl+N",
             edit: "Ctrl+E",
             save: "Ctrl+S",
@@ -51,11 +52,16 @@ Item {
             previousTab: "Ctrl+Shift+Tab",
             preview: "Ctrl+Shift+I"
         },
+        vault: {
+            lock: "Ctrl+L"
+        },
         clipboard: {
+            delete: "Delete",
             pin: "Ctrl+P",
             pinnedOnly: "Ctrl+Shift+P"
         },
         remotes: {
+            shutdown: "Ctrl+Shift+S",
             runningOnly: "Ctrl+Shift+R"
         },
         audio: {
@@ -67,7 +73,6 @@ Item {
         media: {
             previousPlayer: "Left",
             nextPlayer: "Right",
-            exit: "Escape",
             closeWindow: "Alt+F4"
         },
         expose: {
@@ -80,6 +85,56 @@ Item {
             all: "Ctrl+A",
             clear: "Ctrl+Shift+A"
         }
+    })
+
+    // Ordered footer action IDs. Empty lists hide hints; explicit lists may exceed three.
+    readonly property var panelHints: ({
+        default: [],
+        clipboard: [
+            "clipboard.pin",
+            "clipboard.pinnedOnly",
+            "preview"
+        ],
+        manage: [
+            "edit",
+            "add",
+            "refresh"
+        ],
+        editing: [
+            "save"
+        ],
+        vault: [
+            "edit",
+            "add",
+            "refresh",
+            "vault.lock"
+        ],
+        projects: [
+            "selection.toggle",
+            "selection.clear"
+        ],
+        remotes: [
+            "remotes.runningOnly",
+            "remotes.shutdown"
+        ],
+        webapps: [],
+        n8n: [],
+        directories: [],
+        multiple: [
+            "selection.toggle",
+            "selection.all",
+            "selection.clear"
+        ],
+        expose: [
+            "expose.all",
+            "expose.workspace",
+            "expose.move"
+        ],
+        wallpaper: [],
+        windows: [
+            "preview"
+        ],
+        files: []
     })
 
     // Launcher: shared picker
@@ -355,6 +410,7 @@ Item {
     readonly property int recentFilesMaxItems: 20
     readonly property int recentFilesMaxDays: 7
     readonly property int recentFilesRefreshInterval: Timespan.fromSeconds(30)
+    readonly property var recentFileOpenCommand: ["gio", "open"]
     readonly property string recentFilesPath: `${_internal.dataHome}/recently-used.xbel`
     readonly property var recentFilesCommand: [
         "bash", Qt.resolvedUrl("../services/files/recent-files.sh").toString().replace("file://", ""),

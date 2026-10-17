@@ -29,6 +29,8 @@ Item {
     signal editRequested()
     property string message: ""
     property string hints: ""
+    property bool refreshHintEnabled: false
+    property var hintOverrides: ({})
     property alias searchField: search
     property alias query: search.text
     property alias listView: list
@@ -241,6 +243,9 @@ Item {
         x: Theme.projectManagePadding
         width: parent.width - Theme.projectManagePadding * 2
         anchors.bottom: parent.bottom
-        hints: root.hints + (root.editEnabled && UI.Keybinds.sequence("edit") ? " · " + Translations.text("common.shortcuts.edit",[UI.Keybinds.sequence("edit")]) : "")
+        actionOverrides: root.hintOverrides
+        panelKey: root.editing ? "editing" : "manage"
+        availableActions: root.editing ? (root.busy ? [] : ["save"]) : ["search", "manage"].concat(root.editEnabled ? ["edit"] : [])
+            .concat(!root.busy ? ["add"] : []).concat(root.refreshHintEnabled ? ["refresh"] : [])
     }
 }

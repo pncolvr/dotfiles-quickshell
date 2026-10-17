@@ -121,13 +121,16 @@ Scope {
                 }
                 case 52:
                     if(!RemoteService.canShutdownSelected)return
-                    RemoteService.shutdownSelected()
+                    panel.focusSearch()
+                    events.keyClick(Qt.Key_S, Qt.ControlModifier | Qt.ShiftModifier, 0)
                     root.step=6; break
                 case 6:
                     if(RemoteService.canShutdownSelected)return
                     root.check(RemoteService.sessions[0]?.state==='running'
                         && !(objects.findChild(panel,'remoteShutdown') as UI.ActionButton).enabled,
                         'shutdown is disabled for a stopped VM even while its RDP client remains listed')
+                    panel.focusSearch()
+                    events.keyClick(Qt.Key_S, Qt.ControlModifier | Qt.ShiftModifier, 0)
                     restartVm.running=true
                     root.step=61; break
                 case 61:

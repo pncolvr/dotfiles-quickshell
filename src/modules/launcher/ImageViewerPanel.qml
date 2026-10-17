@@ -18,7 +18,7 @@ Rectangle {
         Theme.tooltipBackground.b, Theme.tooltipBackground.a * Theme.pickerBackgroundOpacity) : "transparent"
 
     function focusSearch() { root.forceActiveFocus() }
-    Keys.onEscapePressed: picker.close()
+    Keys.onPressed: event => UI.Keybinds.handleCancel(event, () => root.picker.close())
     Keys.onReturnPressed: picker.accept(false, false)
     Keys.onEnterPressed: picker.accept(false, false)
 

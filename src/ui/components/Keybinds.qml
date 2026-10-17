@@ -1,6 +1,7 @@
 pragma Singleton
 import QtQml
 import "../../config"
+import "../../i18n"
 
 QtObject {
     function sequence(action) {
@@ -15,6 +16,28 @@ QtObject {
     function describe(action, label) {
         const key = sequence(action)
         return key ? key + ": " + label : ""
+    }
+    function panelHintText(panel, available, overrides = {}) {
+        const selected = Config.panelHints[panel]
+        if (!Array.isArray(selected)) return ""
+        return selected.filter((action, index) => selected.indexOf(action) === index && available.includes(action)).map(action => {
+            const option = overrides[action] ?? {}
+            let key = option.sequence ?? sequence(action)
+            if (action === "expose.workspace" && key) key += "+1–0"
+            if (action === "expose.move") key = [key ? key + "+1–0" : "", Translations.text("hints.drag")].filter(Boolean).join(" / ")
+            return key ? key + ": " + (option.label ?? Translations.text("hints." + action)) : ""
+        }).filter(Boolean).join(" · ")
+    }
+    function cancelHint(kind = "cancel") {
+        const key = sequence("cancel")
+        return key ? Translations.text("common.shortcuts." + kind, [key]) : ""
+    }
+    // Key events bubble from child controls before an outer panel dismisses.
+    function handleCancel(event, callback) {
+        if (!matches(event, "cancel")) return false
+        callback()
+        event.accepted = true
+        return true
     }
     function modifiers(action) {
         return modifierMask(sequence(action).split("+"))

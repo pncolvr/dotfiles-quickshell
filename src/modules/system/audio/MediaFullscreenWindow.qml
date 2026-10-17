@@ -154,7 +154,7 @@ PanelWindow {
         focus: true
         UI.PanelShortcut {
             owner: keys
-            action: "media.exit"
+            action: "cancel"
             actionEnabled: root.visible
             onActivated: root.dismiss()
         }
@@ -187,7 +187,7 @@ PanelWindow {
             height: width
             glyph: Theme.cancelIcon
             foreground: hovered || down ? Theme.foregroundOn(Theme.notificationCritical) : Theme.accent
-            hintAction: "media.exit"
+            hintAction: "cancel"
             hint: Translations.text("media.fullscreen.exitHint")
             background: Rectangle {
                 radius: width / 2

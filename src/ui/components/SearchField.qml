@@ -23,9 +23,8 @@ UI.InputField {
         function onVisibleChanged() { if (root.resetWithTooltip && !TooltipService.visible) root.resetSearch() }
     }
 
-    Keys.onEscapePressed: event => {
-        if (!handleEscape) { event.accepted = false; return }
-        resetSearch()
+    Keys.onPressed: event => {
+        if (root.handleEscape) UI.Keybinds.handleCancel(event, () => root.resetSearch())
     }
 
     UI.ActionButton {

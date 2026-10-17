@@ -67,7 +67,7 @@ Scope {
                 browserOptions: [{name:"one",description:"Browser one"},{name:"two",description:"Browser two"}]
                 typeOptions: [{name:"remote",description:"SSH"},{name:"vm",description:"VM"}]
                 filterAvailability: true
-                hints: "Esc Close · Ctrl+M Manage"
+                hints: "Ctrl+M: Manage"
                 searchPlaceholder: "Search entries"
                 entries: Array.from({length:30},(_,i) => ({id:String(i),title:"Entry " + String(i).padStart(2,"0"),subtitle:i ? "/fixture/entry/" + i : "",
                     category:i % 3 ? "work" : "personal",enabled:i % 3 !== 1,browser:i % 3 === 1 ? "two" : "one",
@@ -126,6 +126,7 @@ Scope {
                 root.check(!!filter && filter.visible && filter.width > filterWidth,"remaining filter expands without Work: " + key)
             }
             const hints = root.find("managementHints")
+            root.check(!hints.text.includes("Esc") && !hints.text.includes("Enter"), "Manage omits routine closing and opening hints")
             root.check(hints.verticalAlignment === Text.AlignVCenter && hints.height >= Theme.controlHeight
                 && hints.horizontalAlignment === Text.AlignHCenter && Math.abs(hints.mapToItem(view,hints.width / 2,0).x - view.width / 2) < 1
                 && Math.abs(hints.mapToItem(view,0,hints.height).y - view.height) < 1
@@ -164,9 +165,9 @@ Scope {
             PickerService.promptMenu("Plain list",[{title:"Example"}],()=>{})
             events.wait(30)
             const plainHints = root.find("pickerFooterHint")
-            root.check(plainHints.height === hints.height
-                && Math.abs(plainHints.mapToItem(plainList,0,plainHints.height).y - plainList.height) < 1,
-                "plain list and Manage share the same final hint-row height and bottom edge")
+            root.check(!plainHints.visible && plainHints.height === 0
+                && Math.abs(plainHints.mapToItem(plainList,0,0).y - plainList.height) < 1,
+                "plain lists without useful hints leave no empty footer row")
             PickerService.close()
             root.showList = false
             root.showWork = true

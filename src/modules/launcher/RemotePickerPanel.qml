@@ -6,8 +6,11 @@ import "../../theme"
 import "../../ui" as UI
 
 ManagedCollectionPanel {
+    listHintPanel: "remotes"
     managementTypes: [{name:'ssh',description:Translations.text("remotes.type.sshTerminal")},{name:'remote',description:Translations.text("remotes.type.sshTunnel")},{name:'vm',description:Translations.text("remotes.type.virtualMachine")}]
     id: root
+    listHintActions: (RemoteService.hasActiveSessions ? ["remotes.runningOnly"] : [])
+        .concat(RemoteService.canShutdownSelected ? ["remotes.shutdown"] : [])
     service: RemoteService
     collectionName: Translations.text("remotes.title")
     pickerMode: PickerService.Mode.Remotes
@@ -38,6 +41,7 @@ ManagedCollectionPanel {
                 }
                 UI.ActionButton {
                     objectName:'remoteShutdown'
+                    keyAction: "remotes.shutdown"
                     glyph: Theme.powerShutdownIcon
                     visible:RemoteService.selectedEntry?.type==='vm'
                     enabled:RemoteService.canShutdownSelected; fillColor:Theme.urgent

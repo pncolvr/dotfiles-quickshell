@@ -135,7 +135,10 @@ ManagedPickerFrame {
         visible: !ProjectService.managing
         searchPlaceholder: Translations.text(ProjectService.urls ? "projects.urls.searchPlaceholder" : "projects.search.placeholder")
         searchKeyHandler: root.handlePickerKey
-        footerHint: StatusService.filterHint(Config.projectShowAllShortcut,ProjectService.showAll) + Translations.text(ProjectService.urls ? "projects.shortcuts.urls" : "projects.shortcuts.list",[Config.projectManageShortcut,root.picker.selectedIds.length,UI.Keybinds.sequence("selection.toggle"),UI.Keybinds.sequence("selection.all"),UI.Keybinds.sequence("selection.clear")])
+        hintOverrides: ({manage: {sequence: Config.projectManageShortcut}, workFilter: {sequence: Config.projectShowAllShortcut}})
+        hintPanel: "projects"
+        hintActions: ["manage", "search"].concat(StatusService.enabled ? ["workFilter"] : [])
+            .concat(root.picker.multiple ? ["selection.toggle", "selection.all", "selection.clear"] : [])
     }
     UI.ManagementView {
         id: manage
@@ -153,11 +156,12 @@ ManagedPickerFrame {
         typeOptions: [{name:"folder",description:Translations.text("projects.source.singleFolder")},{name:"root",description:Translations.text("projects.source.repositoryRoot")}]
         searchObjectName: "projectManageSearch"
         listObjectName: "projectManageList"
+        refreshHintEnabled: !ProjectService.busy && ProjectService.sources.length > 0
+        hintOverrides: ({add: {sequence: Config.projectAddShortcut}, manage: {sequence: Config.projectManageShortcut, label: Translations.text("hints.list")}})
         addObjectName: "beginAddProjectSource"
         searchPlaceholder: Translations.text("projects.manage.searchPlaceholder")
         addHint: Translations.text("projects.actions.addHint",[Config.projectAddShortcut])
         message: ProjectService.busy ? Translations.text("projects.status.scanning") : ProjectService.error
-        hints: Translations.text("projects.shortcuts.manage",[Config.projectManageShortcut])
         onEditRequested: root.editSource(root.selectedSource.path)
         onAddRequested: root.beginAdd()
         toolbarContent: [UI.ActionButton {

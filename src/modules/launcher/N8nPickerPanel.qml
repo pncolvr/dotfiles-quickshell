@@ -6,6 +6,7 @@ import "../../theme"
 import "../../ui" as UI
 
 ManagedCollectionPanel {
+    listHintPanel: "n8n"
     filterBrowser: true
     id: root
     service:N8nService

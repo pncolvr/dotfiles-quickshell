@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import "../../i18n"
 import "../../services"
 ManagedCollectionPanel {
+    listHintPanel: "webapps"
     id: root
     filterBrowser: true
     service: WebappService

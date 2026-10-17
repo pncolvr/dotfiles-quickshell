@@ -44,6 +44,6 @@ for phase in setup restart connecting ssh sshrestart; do
     if ! rg -q 'PASS: remotes' "$fixture/log" || rg -q 'REMOTE FAIL:|TypeError:|ReferenceError:|Failed to load configuration|Binding loop' "$fixture/log"; then cat "$fixture/log"; exit 1; fi
     rg 'PASS: remotes' "$fixture/log"
 done
-jq -se 'any(.program=="virsh" and .args==["shutdown","--","fixture-vm"]) and ([.[]|select(.program=="rdp")]|length)==2' "$fixture/actions" >/dev/null
+jq -se '([.[]|select(.program=="virsh" and .args==["shutdown","--","fixture-vm"])]|length)==1 and ([.[]|select(.program=="rdp")]|length)==2' "$fixture/actions" >/dev/null
 [[ $(sqlite3 "$fixture/data/quickshell.db" 'PRAGMA user_version;') == 15 ]]
 printf 'PASS: only selected VM is shut down; detached clients across restart and sequential Enter disconnects; connecting cancellation launches no RDP\n'

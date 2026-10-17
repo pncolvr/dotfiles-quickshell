@@ -192,6 +192,6 @@ Scope {
         function back(): void { panel.forceActiveFocus(); events.keyClick(Qt.Key_Escape,Qt.NoModifier,0) }
         function copy(): void { RbwService.copy("SYNTHETIC_COPY_PASSWORD") }
         function expireCopy(): void { const timer=RbwService.clipboardOwner.expiryTimer as Timer; timer.interval=40; timer.restart() }
-        function lock(): void { RbwService.lock() }
+        function lock(): void { panel.forceActiveFocus(); events.keyClick(Qt.Key_L, Qt.ControlModifier, 0) }
     }
 }

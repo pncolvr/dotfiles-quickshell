@@ -123,7 +123,8 @@ panel refreshes it immediately, and the refresh button or
 The Bash helper reads the desktop's
 [XBEL bookmark store](https://wiki.freedesktop.org/www/Specifications/desktop-bookmark-spec/)
 using `xsltproc` for XML and `jq` for JSON. It requires Bash, GNU coreutils,
-`jq`, and `libxslt` (which supplies `xsltproc`). Folder scans also use GNU
+`jq`, `libxslt` (which supplies `xsltproc`), and GIO from GLib for the default
+file opener. Folder scans also use GNU
 `findutils`. It reads the existing store
 without modifying it. Only existing,
 readable local files are shown in Recent; directories, remote URLs, and records marked
@@ -137,3 +138,9 @@ desktop with a destination that supports file drops; the offscreen test backend
 cannot perform a cross-application drop.
 
 [Development checks](../development.md#recent-files)
+
+File activation uses `Config.recentFileOpenCommand` (default `["gio", "open"]`)
+with the file URI passed as one argument. GIO opens the desktop default handler
+without the portal's repeated application-choice prompt. Directories continue
+to navigate within the panel. This does not change MIME associations or portal
+preferences.

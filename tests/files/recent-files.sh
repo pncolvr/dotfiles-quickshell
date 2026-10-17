@@ -6,6 +6,21 @@ test_entry="$test_dir/shell.qml"
 trap 'rm -rf -- "$test_dir"' EXIT
 mkdir -m 700 "$test_dir/runtime"
 mkdir -p "$test_dir/data" "$test_dir/cache"
+mkdir "$test_dir/bin"
+export RECENT_FILES_REAL_GIO=$(command -v gio)
+export RECENT_FILES_OPEN_LOG="$test_dir/open-args.jsonl"
+cat > "$test_dir/bin/gio" <<'MOCK'
+#!/usr/bin/env bash
+set -euo pipefail
+if [[ ${1:-} == open ]]; then
+    jq -nc '$ARGS.positional' --args -- "$@" >> "$RECENT_FILES_OPEN_LOG"
+else
+    exec "$RECENT_FILES_REAL_GIO" "$@"
+fi
+MOCK
+chmod +x "$test_dir/bin/gio"
+export PATH="$test_dir/bin:$PATH"
+
 # Folder preferences use the real repository against a private shell database.
 tar -C "$project_root" --exclude='*.env' --exclude='src/services/launcher/providers/*.json' -cf - src | tar -C "$test_dir" -xf -
 bash "$project_root/tests/files/recent-files-helper.sh"
@@ -66,6 +81,13 @@ for test in recent-files-module-smoke recent-files-smoke recent-selection-smoke 
         exit 1
     }
     printf '%s\n' "$output"
+    if [[ $test == recent-files-smoke ]]; then
+        jq -se --arg uri "$uri" '
+            length == 3 and all(.[]; length == 2 and .[0] == "open")
+            and (map(.[1]) | sort) == ([$uri, "file:///tmp/report%20%23.pdf", "file:///tmp/settings%20file.conf"] | sort)
+        ' "$RECENT_FILES_OPEN_LOG" >/dev/null
+        printf 'PASS: default file opener receives intact text/PDF/conf URIs without opening desktop apps\n'
+    fi
     [[ $output == *'PASS: recent-file '* && $output != *'RECENT FILES FAIL:'* \
         && $output != *'Failed to load configuration'* && $output != *'Binding loop detected'* \
         && $output != *'TypeError:'* && $output != *'ReferenceError:'* ]]

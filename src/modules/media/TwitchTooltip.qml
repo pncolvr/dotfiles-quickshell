@@ -225,7 +225,7 @@ Item {
                         enabled: TwitchService.usersReady
                         Accessible.name: Translations.text("twitch.fields.channelAccessibleName")
                         onAccepted: root.addUser()
-                        Keys.onEscapePressed: root.cancelEditor()
+                        Keys.onPressed: event => UI.Keybinds.handleCancel(event, () => root.cancelEditor())
                     }
                     UI.InputField {
                         id: secondChannelField
@@ -236,7 +236,7 @@ Item {
                         enabled: TwitchService.usersReady
                         Accessible.name: Translations.text("twitch.fields.secondChannelAccessibleName")
                         onAccepted: root.addUser()
-                        Keys.onEscapePressed: root.cancelEditor()
+                        Keys.onPressed: event => UI.Keybinds.handleCancel(event, () => root.cancelEditor())
                     }
                     UI.EditorActions {
                         id: editorActions

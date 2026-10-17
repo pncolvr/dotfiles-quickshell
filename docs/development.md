@@ -78,7 +78,33 @@ remain selectable and selectors render read-only textboxes. Credentials stay
 masked until explicitly revealed. Folder details reuse `FolderForm` in the same
 mode. Enabled uses `UI.CheckBox`; source type and category use `UI.ComboSelector`.
 Always place shortcut hints horizontally centered at the bottom of the panel
-unless the user explicitly requests another placement.
+and vertically centered in their final row, with no content below, unless the
+user explicitly requests another placement. `UI.ShortcutHints` measures the
+rendered font and prefers one line. When necessary it wraps between complete
+shortcut/action groups, omitting the centered dot at a line boundary. Only when
+one group exceeds the available width may its description wrap; its keybind
+stays intact. Do not insert forced line breaks in hint translations or override
+wrapping in individual panels. Font size and panel width stay unchanged.
+Footer hints are an ordered selection of less obvious options from
+`Config.panelHints`. Keep translations in the catalogs and actual bindings in
+`Config.keybinds`; Config contains only the selected IDs, not hint text or key
+strings. Prefer roughly three hints, with explicit per-panel exceptions such as
+Vault's four. Do not silently truncate explicit lists. Empty lists collapse the
+hint row; ordinary Enter/Escape/mouse-opening instructions stay out of defaults.
+Feature components supply supported actions and contextual labels, while
+`Keybinds.panelHintText` resolves the configured selection/order once for all
+panels. Keep hint capabilities stable during transient Vault loading so the
+details pane does not jump; actual button/shortcut guards still block busy work.
+All app-owned cancellation uses `Keybinds.handleCancel`/`common.cancel` rather
+than hardcoded Escape handlers. Editors/popups handle it before the outer panel.
+Run `bash tests/ui/shortcut-hints.sh` for English/Portuguese catalogs, narrow and
+wide layouts, font changes, complete keybinds and centered final-row sizing.
+
+The shell releases `TooltipService` ownership references before the old root
+is destroyed on reload. `bash tests/ui/reload-warnings.sh` exercises twenty
+isolated generations and checks for undefined assignments during teardown.
+This check does not cover native Wayland input-surface warnings or establish a
+fix for the separately reported picker-height binding loop.
 Work rules reuse `LineListField.headerActions` without changing their stacked
 layout or width. Run `bash tests/launcher/manage-layout.sh` for selection, filters,
 draft context, form rendering, Work dirty-state controls and motion/sharing

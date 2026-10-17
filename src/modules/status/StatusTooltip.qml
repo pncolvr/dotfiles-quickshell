@@ -207,7 +207,7 @@ Column {
             periods: root.historyPeriods
             today: root.reportNow
             onSelected: date => root.selectPeriod(date)
-            Keys.onEscapePressed: event => { root.pickerExpanded = false; choosePeriod.forceActiveFocus(); event.accepted = true }
+            Keys.onPressed: event => UI.Keybinds.handleCancel(event, () => { root.pickerExpanded = false; choosePeriod.forceActiveFocus() })
         }
         UI.ColumnText {
             width: parent.width

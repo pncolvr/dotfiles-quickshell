@@ -318,7 +318,7 @@ Column {
                 placeholderText: Translations.text("files.tab.namePlaceholder")
                 Accessible.name: Translations.text("files.tab.nameAccessibleName")
                 onAccepted: root.saveFolderName()
-                Keys.onEscapePressed: root.cancelFolderName()
+                Keys.onPressed: event => UI.Keybinds.handleCancel(event, () => root.cancelFolderName())
             }
             UI.EditorActions {
                 id: renameActions
@@ -364,6 +364,16 @@ Column {
         onContentYChanged: if (pinnedDrop.containsDrag) root.updatePinDropPosition(root.pinDropPointerY)
         Keys.onPressed: event => {
             if (root.fileService.dragging) return
+            if (UI.Keybinds.matches(event, "cancel")) {
+                if (root.selectedUris.length) UI.Keybinds.handleCancel(event, () => root.clearSelection())
+                return
+            }
+            if (UI.Keybinds.matches(event, "selection.all")) {
+                root.selectedUris = root.fileService.files.map(file => file.uri)
+                root.selectionAnchor = root.selectedUris[0] || ""
+                event.accepted = true
+                return
+            }
             switch (event.key) {
             case Qt.Key_Up:
             case Qt.Key_Down:
@@ -380,15 +390,6 @@ Column {
             case Qt.Key_Space:
                 if (!root.fileService.files[currentIndex]) return
                 root.selectFile(root.fileService.files[currentIndex].uri,event.modifiers)
-                break
-            case Qt.Key_A:
-                if (!(event.modifiers & Qt.ControlModifier)) return
-                root.selectedUris = root.fileService.files.map(file => file.uri)
-                root.selectionAnchor = root.selectedUris[0] || ""
-                break
-            case Qt.Key_Escape:
-                if (!root.selectedUris.length) return
-                root.clearSelection()
                 break
             default:
                 return
@@ -455,12 +456,16 @@ Column {
     UI.ShortcutHints {
         id: hint
         width: parent.width
-        visible: root.fileService.files.length > 0
-        hints: (root.selectedUris.length > 0 ? Translations.text("files.shortcuts.selected",[],root.selectedUris.length) : "")
-            + (Translations.text(pinnedDrop.containsDrag ? "files.pin.dropHint" : "files.shortcuts.selection"))
+        visible: root.fileService.files.length > 0 && text.length > 0
+        panelKey: "files"
+        availableActions: ["files.multiple", "selection.all"].concat(root.selectedUris.length ? ["files.drag"] : [])
+        actionOverrides: ({
+            "files.multiple": {sequence: "Ctrl/Shift"},
+            "files.drag": {sequence: Translations.text("hints.drag")},
+            "selection.all": {label: Translations.text("hints.selectAll")}
+        })
         color: Theme.inactive
         font.pixelSize: 10
-        wrapMode: Text.Wrap
         horizontalAlignment: Text.AlignHCenter
     }
 }

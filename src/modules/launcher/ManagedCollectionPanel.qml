@@ -12,6 +12,8 @@ ManagedPickerFrame {
     required property var service
     required property string collectionName
     property Component listActionButtons: null
+    property string listHintPanel: "default"
+    property var listHintActions: []
     property var canRemoveEntry: entry => true
     property var managementTypes: []
     property bool filterBrowser: false
@@ -82,7 +84,9 @@ ManagedPickerFrame {
         visible: !root.managing
         actionButtons: root.listActionButtons
         searchPlaceholder: Translations.text("collections.search", [root.collectionName.toLowerCase()])
-        footerHint: StatusService.filterHint(Config.pickerShowAllShortcut,root.service.showAll) + Translations.text("collections.shortcuts.list",[Config.pickerManageShortcut,root.picker.acceptLabel.toLowerCase()])
+        hintOverrides: ({manage: {sequence: Config.pickerManageShortcut}, workFilter: {sequence: Config.pickerShowAllShortcut}})
+        hintPanel: root.listHintPanel
+        hintActions: ["manage", "search"].concat(StatusService.enabled ? ["workFilter"] : []).concat(root.listHintActions)
     }
     UI.ManagementView {
         id: manage
@@ -97,11 +101,11 @@ ManagedPickerFrame {
         browserOptions: root.filterBrowser ? Config.webappBrowsers.map(browser => ({name:browser.id,description:browser.name})) : []
         typeOptions: root.managementTypes
         searchObjectName: 'collectionManageSearch'
+        hintOverrides: ({add: {sequence: Config.pickerAddShortcut}, manage: {sequence: Config.pickerManageShortcut, label: Translations.text("hints.list")}})
         addObjectName: 'addCollectionEntry'
         searchPlaceholder: Translations.text("collections.manage.search",[root.collectionName.toLowerCase()])
         addHint: Translations.text("collections.actions.addHint",[Config.pickerAddShortcut])
         message: root.service.error
-        hints: Translations.text("collections.shortcuts.manage",[Config.pickerManageShortcut])
         onEditRequested: root.edit(root.selectedEntry)
         onAddRequested: root.beginAdd()
         detailContent: [

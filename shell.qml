@@ -14,6 +14,8 @@ import "src/services"
 import "src/config"
 
 Scope {
+  // Release references to this generation before its tooltip owners are destroyed.
+  Component.onDestruction: TooltipService.dismiss()
   // Register recording IPC and reconnect to any detached recording session.
   readonly property var recordingService: RecordingService
   IpcHandler {
