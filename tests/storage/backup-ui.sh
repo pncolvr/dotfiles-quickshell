@@ -5,6 +5,8 @@ fixture=$(mktemp -d /tmp/quickshell-backup-ui.XXXXXXXX)
 qs_pid=''
 trap 'if [[ -n $qs_pid ]]; then kill "$qs_pid" 2>/dev/null || true; wait "$qs_pid" 2>/dev/null || true; fi; rm -rf -- "$fixture"' EXIT
 mkdir -m700 "$fixture/runtime" "$fixture/keyring" "$fixture/bin"
+printf '%s\n' '{"version":1,"id":"11111111-1111-1111-1111-111111111111","name":"Public test token","token":"otpauth://totp/Test?secret=JBSWY3DPEHPK3PXP&algorithm=SHA256&digits=8&period=60"}' > "$fixture/expected-token.json"
+cp "$fixture/expected-token.json" "$fixture/keyring/11111111-1111-1111-1111-111111111111.json"
 mkdir -p "$fixture/locations/project-present" "$fixture/locations/directory-present"
 cat > "$fixture/fix-paths.sh" <<'SH'
 #!/usr/bin/env bash
@@ -15,7 +17,8 @@ SH
 tar -C "$repo" --exclude='*.env' --exclude='src/services/launcher/providers/*.json' -cf - src | tar -C "$fixture" -xf -
 mkdir -p "$fixture/tests/storage"
 cp "$repo/tests/storage/backup-smoke.qml" "$fixture/tests/storage/"
-sed -i 's/clipboardMonitorEnabled: true/clipboardMonitorEnabled: false/' "$fixture/src/config/Config.qml"
+# Full-state backup/restore and its secret prompt stay available with modules off.
+sed -i 's/clipboardMonitorEnabled: true/clipboardMonitorEnabled: false/;s/totpEnabled: true/totpEnabled: false/;s/vaultEnabled: true/vaultEnabled: false/' "$fixture/src/config/Config.qml"
 cat > "$fixture/bin/secret-tool" <<'MOCK'
 #!/usr/bin/env bash
 set -euo pipefail
@@ -42,6 +45,8 @@ if ! rg -q 'PASS: backup private prompt' "$fixture/ui.log" || rg -q 'BACKUP FAIL
     exit 1
 fi
 rg 'PASS:' "$fixture/ui.log"
+jq -e --slurpfile expected "$fixture/expected-token.json" '. == $expected[0]' "$fixture/keyring/11111111-1111-1111-1111-111111111111.json" >/dev/null
+printf 'PASS: TOTP tokens restore from backup with TOTP and Vault modules disabled\n'
 [[ $(cat "$fixture/copy-args") == $'--sensitive\n--type\ntext/plain;charset=utf-8' && $(stat -c %s "$fixture/copied") == 32 ]]
 cat > "$fixture/shell.qml" <<'QML'
 import Quickshell

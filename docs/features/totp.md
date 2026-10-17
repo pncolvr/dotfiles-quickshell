@@ -44,6 +44,11 @@ Adding a token uses a reserved footer row so the popup height stays stable.
 
 ## Configuration and secrets
 
+`Config.totpEnabled` defaults to `true`. Set it to `false` to hide the bar icon,
+disable panel opening and stop the token worker. Re-enabling it makes the stored
+tokens available again. Full-state backup and restore retain their TOTP behavior
+even while the module is disabled and still require the TOTP/keyring tools.
+
 Commands, keyring namespace, timing, and the height fraction are in `Config.qml`;
 glyphs, sizes, spacing, and colors are in `src/theme/Theme.qml`. Keyring attributes are
 `application=quickshell`, `type=totp`, `vault=<totpVault>`, and `id=<entry UUID>`.

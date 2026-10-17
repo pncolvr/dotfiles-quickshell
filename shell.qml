@@ -11,6 +11,7 @@ import "src/modules/launcher"
 import "src/modules/vault"
 import "src/modules/system/audio"
 import "src/services"
+import "src/config"
 
 Scope {
   // Register recording IPC and reconnect to any detached recording session.
@@ -27,11 +28,11 @@ Scope {
   Bar {}
   NotificationPopupWindow {}
   NotificationManagerWindow {}
-  TotpWindow {}
+  LazyLoader { active: Config.totpEnabled; TotpWindow {} }
   PickerWindow {}
   PickerWindow { picker: CaptureMenuService }
   PrivatePickerWindow {}
-  VaultWindow {}
+  LazyLoader { active: Config.vaultEnabled; VaultWindow {} }
   ExposeWindow {}
   MediaFullscreenWindow {}
   Connections {

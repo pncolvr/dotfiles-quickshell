@@ -6,8 +6,11 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Hyprland
 import "../"
+import "../../config"
 Singleton {
     id: root
+    readonly property bool enabled: Config.vaultEnabled
+    onEnabledChanged: if (!enabled) close()
     property bool visible: false
     property bool busy: false
     property string activeAction: ""
@@ -33,6 +36,7 @@ Singleton {
     signal copied()
     function clear() { detail = null; baseline = ""; selectedId = ""; cleared() }
     function open() {
+        if (!enabled) return
         if (visible) { close(); return }
         PickerService.close()
         targetScreen = Quickshell.screens.find(output => output.name === Hyprland.focusedMonitor?.name) || Quickshell.screens[0] || null
@@ -76,7 +80,7 @@ Singleton {
     }
     function lock() { if (busy) return; generation++; entries = []; clear(); request({action: "lock"}) }
     function checkLock() {
-        if (!visible || busy || checkingLock || !entries.length) return
+        if (!enabled || !visible || busy || checkingLock || !entries.length) return
         checkingLock = true
         startTask({action: "unlocked"})
     }
@@ -85,7 +89,7 @@ Singleton {
         process.running = true
     }
     function request(message) {
-        if (busy || !visible) return false
+        if (!enabled || busy || !visible) return false
         activeAction = message.action
         busy = true
         error = ""

@@ -11,8 +11,10 @@ Singleton {
     id: root
 
     property bool maintenance: false
+    readonly property bool enabled: Config.totpEnabled
+    onEnabledChanged: if (!enabled && TooltipService.source?.totpModule === true) TooltipService.dismiss()
     readonly property bool stopped: !worker.running
-    readonly property bool active: !maintenance && TooltipService.visible && TooltipService.source?.totpModule === true
+    readonly property bool active: enabled && !maintenance && TooltipService.visible && TooltipService.source?.totpModule === true
     readonly property bool ready: state.ready
     readonly property bool busy: state.busy
     readonly property string error: state.error
@@ -60,6 +62,7 @@ Singleton {
     }
 
     function start() {
+        if (!active) return
         state.stopping = false
         state.ready = false
         state.busy = true
@@ -77,6 +80,7 @@ Singleton {
     }
 
     function reload() {
+        if (!active) return
         if (!worker.running) start()
         else request({action: "load"})
     }

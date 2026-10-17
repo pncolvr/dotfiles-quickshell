@@ -23,6 +23,7 @@ Scope {
     Test.TestResult { id: objects }
     Test.TestEvent { id: events }
     Process { id: fixPaths; command: ["bash",Quickshell.env("BACKUP_UI_DIRECTORY") + "/fix-paths.sh"] }
+    Process { id: removeToken; command: ["rm", Quickshell.env("BACKUP_UI_DIRECTORY") + "/keyring/11111111-1111-1111-1111-111111111111.json"] }
     FloatingWindow {
         id: window
         visible: true
@@ -135,10 +136,12 @@ Scope {
                     "completion includes the output path and stays visible")) return
                 if (!root.check(ClipboardRepository.count() === 0, "copied password excluded from clipboard history")) return
                 PreferencesRepository.setValue("backup.fixture", "after")
+                removeToken.running = true
                 if (!root.check(BackupService.open("import", root.archive), "open restore")) return
                 root.step++
                 break
             case 7:
+                if (removeToken.running) return
                 if (!root.field()) return
                 if (!root.check(!root.button("generateBackupPassword").visible, "restore asks for existing password")) return
                 root.field().text = root.generatedPassword

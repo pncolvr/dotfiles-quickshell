@@ -275,6 +275,20 @@ Godot's project entry is normally `project.godot`, distinct from its generated
 shortcut, polling, browser suggestions and alerts while retaining saved channels
 and cached data. Config reload applies the choice. See [Twitch](features/twitch.md).
 
+## Optional TOTP and Vault modules
+
+`totpEnabled` and `vaultEnabled` both default to `true` and can be set
+independently. Setting `totpEnabled` to `false` hides its bar icon, prevents its
+panel from opening and stops its token worker. Setting `vaultEnabled` to `false`
+disables the Vault manager and its opening actions. Config reload applies these
+settings; disabled modules do not load their panel windows.
+
+Stored tokens and Vault entries are preserved. Vault password prompts and browser
+autofill remain available independently of the manager. Full-state backups still
+include and restore TOTP tokens when its module is disabled, so those operations
+still require the configured TOTP/keyring tools. See [TOTP](features/totp.md),
+[Vault](features/rbw.md) and [backups](storage.md#backups).
+
 ## Panels and search
 
 See the [panel behavior reference](features/panels.md) for the shared interaction rules.

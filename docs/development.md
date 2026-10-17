@@ -532,6 +532,13 @@ are used.
 
 ## TOTP
 
+Run `bash tests/security/optional-modules.sh` for the independent TOTP/Vault
+switches. It uses offscreen windows, private configuration and synthetic helpers
+to check enabled defaults, hidden/blocked entry points, worker shutdown, retained
+entries after re-enabling and password prompts with the manager disabled.
+`bash tests/storage/backup-ui.sh` exercises full-state backup/restore with both
+modules disabled; token backup and secret prompts remain independent.
+
 Verification uses public test seeds and a fake keyring, without accessing desktop
 secrets:
 

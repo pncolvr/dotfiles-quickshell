@@ -421,7 +421,11 @@ Item {
         `${qutebrowserSessionsDirectory}/default.yml`
     ]
 
+    // Vault manager. Password prompts and browser autofill remain independent.
+    readonly property bool vaultEnabled: true
+
     // TOTP
+    readonly property bool totpEnabled: true
     // TOTP secrets live in the desktop Secret Service, never in this config.
     readonly property string totpVault: "default"
     readonly property string totpVaultLabel: "Quickshell TOTP"
