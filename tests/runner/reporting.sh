@@ -24,6 +24,9 @@ run isolated example/skip bash -c 'printf "SKIP: optional device unavailable\n"'
 run isolated example/quiet true
 run isolated example/tap bash -c 'printf "TAP version 13\nok 1 - TAP success\nnot ok 2 - TAP failure\nok 3 - TAP skip # SKIP unavailable\n1..3\n# tests 3\n# pass 1\n# fail 1\n# skipped 1\n"; exit 1'
 run isolated example/qt bash -c 'printf "PASS   : QtCase::first()\nPASS   : QtCase::second()\nFAIL!  : QtCase::failure()\nSKIP   : QtCase::skip()\nTotals: 2 passed, 1 failed, 1 skipped\n"'
+for duration in '0|0s' '59|59s' '60|1m 0s' '3599|59m 59s' '3600|1h 0m 0s' '3661|1h 1m 1s'; do
+    [[ $(format_duration "${duration%%|*}") == "${duration#*|}" ]] || exit 2
+done
 SUITES
 awk '
     { lines[NR] = $0 }
@@ -38,6 +41,7 @@ QS_TEST_RUNNER_BUS=1 bash "$fixture/tests/run.sh" > "$fixture/plain.log" 2>&1 ||
 ! rg -q '^RUN|\x1b\[' "$fixture/plain.log"
 rg -q 'Suites: 1 passed, 5 failed, 1 skipped, 7 total' "$fixture/plain.log"
 rg -q 'Tests: 6 passed, 5 failed, 3 skipped, 14 total' "$fixture/plain.log"
+rg -q '^Total time: ([0-9]+h )?([0-9]+m )?[0-9]+s$' "$fixture/plain.log"
 for name in fail crash quiet tap qt; do
     rg -q "^  isolated/example/$name \(" "$fixture/plain.log"
 done
@@ -48,6 +52,7 @@ results=$(sed -n 's/^All test results: //p' "$fixture/plain.log")
 [[ $(wc -l < "$results") == 15 ]]
 rg -q $'^PASS\tisolated\texample/pass\tfirst check\t' "$results"
 printf 'PASS: one completed line per suite, separate suite/test totals, named failures, skips and complete TSV results\n'
+printf 'PASS: total runtime summary and readable second/minute/hour formatting\n'
 
 printf -v command 'env -u NO_COLOR QS_TEST_RUNNER_BUS=1 TERM=xterm bash %q' "$fixture/tests/run.sh"
 result=0

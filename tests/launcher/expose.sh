@@ -44,8 +44,6 @@ if [[ -n ${WAYLAND_DISPLAY:-} ]]; then
     while IFS= read -r line; do [[ $line != *'PASS:'* ]] || printf '%s\n' "$line"; done <<< "$output"
     [[ $output == *'PASS:'* && $output != *'EXPOSE FAIL:'* && $output != *'TypeError:'* && $output != *'ReferenceError:'* \
         && $output != *'Binding loop'* && $output != *'Failed to load configuration'* ]] || { printf '%s\n' "$output" >&2; exit 1; }
-else
-    printf 'SKIP: Exposé animation surface check requires Wayland\n'
 fi
 
 # Exercise the real picker synchronization without dispatching compositor commands.

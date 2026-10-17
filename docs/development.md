@@ -12,7 +12,10 @@ This runs the isolated suites sequentially on a private session bus and continue
 after failures. In a terminal, each suite starts with RUN and replaces that same
 line with green PASS or red FAIL; redirected output contains only the completed
 line. `NO_COLOR` disables colors. The summary gives separate suite and test totals
-and lists failed suites and test names with their logs.
+and lists failed suites and test names with their logs. Total runtime is shown
+as hours, minutes and seconds, including the native-check warning period.
+The Wayland-only Exposé animation check runs only in the native suite; isolated
+Exposé checks do not schedule it or report it as skipped.
 
 The printed `/tmp/quickshell-tests.*` directory retains a log for each suite,
 `results.tsv` with suite results and counts, and `tests.tsv` with every named test

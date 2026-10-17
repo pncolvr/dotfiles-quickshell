@@ -35,6 +35,7 @@ if ! $list && [[ ${QS_TEST_RUNNER_BUS:-0} != 1 ]]; then
             bash "$repo/tests/runner/session.sh" bash "$0" "$@"
 fi
 cd -- "$repo"
+run_started=$SECONDS
 limit=${TEST_TIMEOUT:-180}
 [[ $limit =~ ^[1-9][0-9]*$ ]] || { printf 'TEST_TIMEOUT must be a positive number of seconds.\n' >&2; exit 2; }
 passed=0
@@ -60,6 +61,16 @@ fi
 native_running=false
 native_notification_id=''
 desktop_bus=${QS_TEST_DESKTOP_BUS:-}
+
+format_duration() {
+    local seconds=$1 hours minutes
+    hours=$((seconds / 3600))
+    minutes=$((seconds / 60 % 60))
+    seconds=$((seconds % 60))
+    if ((hours > 0)); then printf '%sh %sm %ss' "$hours" "$minutes" "$seconds"
+    elif ((minutes > 0)); then printf '%sm %ss' "$minutes" "$seconds"
+    else printf '%ss' "$seconds"; fi
+}
 
 notify_native() {
     [[ -n $desktop_bus ]] && command -v notify-send >/dev/null 2>&1 || return 1
@@ -297,6 +308,7 @@ if ! $list; then
     printf '\nSuites: %s passed, %s failed, %s skipped, %s total.\n' "$passed" "$failed" "$skipped" "$total"
     printf 'Tests: %s passed, %s failed, %s skipped, %s total.\n' \
         "$tests_passed" "$tests_failed" "$tests_skipped" "$((tests_passed + tests_failed + tests_skipped))"
+    printf 'Total time: %s\n' "$(format_duration "$((SECONDS - run_started))")"
     if ((${#failed_suites[@]})); then
         printf '\nFailed suites:\n'
         printf '  %s\n' "${failed_suites[@]}"
