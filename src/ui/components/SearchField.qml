@@ -37,6 +37,7 @@ UI.InputField {
         height: parent.height - 2
         visible: root.text.length > 0
         focusPolicy: Qt.NoFocus
+        enabled: !root.readOnly
         glyph: Theme.cancelIcon
         foreground: hovered ? Theme.text : Theme.inactive
         fillColor: "transparent"

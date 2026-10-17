@@ -14,15 +14,28 @@ Singleton {
 
     function open() {
         cancel()
+        input()
+    }
+    function input(text = "") {
         PickerService.promptMenu(Translations.text("qr.fields.text"), [], rows => root.encode(rows[0].result), "list", {
-            allowTyped: true, acceptLabel: Translations.text("qr.actions.generate")
+            allowTyped: true, keepOpen: true, query: text, acceptLabel: Translations.text("qr.actions.generate")
         })
     }
     function encode(text) {
         if (typeof text !== "string" || !text.trim()) return
         cancel()
         const process = worker.createObject(root, {input: JSON.stringify({text}) + "\n"}) as Process
-        job = {process}
+        const operation = {process, text}
+        job = operation
+        const callback = () => {}
+        previewCallback = callback
+        PickerService.promptMenu(Translations.text("qr.fields.text"), [], callback, "list", {
+            allowTyped: true, keepOpen: true, query: text, busy: true,
+            acceptLabel: Translations.text("qr.actions.generate"),
+            onClosed: () => {
+                if (root.job === operation && root.previewCallback === callback) root.cancel()
+            }
+        })
         process.running = true
     }
     function release(operation, abort = false) {
@@ -44,7 +57,9 @@ Singleton {
     function fail(operation, message) {
         if (job !== operation) return
         AlertService.post("encode-qrcode", message, "error", 3000)
-        cancel()
+        const ownsPanel = previewCallback && PickerService.menuCallback === previewCallback
+        release(operation, true)
+        if (ownsPanel) input(operation.text)
     }
     function receive(process, data) {
         const operation = job
@@ -63,7 +78,7 @@ Singleton {
             AlertService.post("encode-qrcode", Translations.text("qr.status.copied"), "success", 3000)
             previewCallback = () => {}
             PickerService.promptMenu("", [{title: Translations.text("qr.title"), result: "close", image: response.image}], previewCallback, "list", {
-                imageOnly: true, acceptLabel: Translations.text("common.actions.close"), onClosed: () => root.release(operation)
+                imageOnly: true, keepOpen: true, acceptLabel: Translations.text("common.actions.close"), onClosed: () => root.release(operation)
             })
             break
           }

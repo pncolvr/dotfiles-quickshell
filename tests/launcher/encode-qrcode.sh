@@ -18,7 +18,7 @@ cat > "$fixture/bin/qrencode" <<'MOCK'
 #!/usr/bin/env bash
 printf '%s\n' "$@" > "$QR_TEST_DIR/encoder-args"
 printf '%s\n' "$$" > "$QR_TEST_DIR/encoder-pid"
-case ${QR_TEST_MODE:-} in encodeSlow|reopen) exec sleep 10 ;; esac
+case ${QR_TEST_MODE:-} in encodeSlow|reopen|cancelPending|outsidePending) exec sleep 10 ;; esac
 exec "$QR_TEST_ENCODER" "$@"
 MOCK
 cat > "$fixture/bin/wl-copy" <<'MOCK'
@@ -64,7 +64,7 @@ done
 QR_TEST_MODE=successEscape QR_TEST_TEXT='Escape keeps clipboard' run_fixture
 QR_TEST_MODE=replacePreview QR_TEST_TEXT='Replacement keeps clipboard' run_fixture
 cp "$fixture/clipboard" "$fixture/saved-clipboard"
-for mode in cancelInput emptyInput encodeSlow copySlow reopen; do
+for mode in cancelInput emptyInput encodeSlow copySlow reopen cancelPending outsidePending; do
     QR_TEST_MODE="$mode" QR_TEST_TEXT='cancel pending' run_fixture
     cmp "$fixture/saved-clipboard" "$fixture/clipboard"
 done

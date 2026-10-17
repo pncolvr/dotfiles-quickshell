@@ -357,7 +357,10 @@ clipboard and display it in a native image viewer. Enter or Escape closes the
 compact viewer and leaves the clipboard image available. The viewer has no footer
 hints and uses `Theme.qrPreviewSize` (360px by default). QR modules use sharp scaling
 without smoothing; input uses the field placeholder and footer without an extra
-empty-state label. Escape in the input cancels. Encoding uses `qrencode` with its original
+empty-state label. The picker stays open while generating, with its input read-only,
+then displays the image in the same window. Escape or outside dismissal cancels
+pending work. Failures restore the entered text for editing and retry.
+Encoding uses `qrencode` with its original
 defaults: error correction L, 3-pixel modules and a 4-module margin. Text is passed
 through stdin, preserving pipes, quotes, Unicode and leading dashes. Success and
 failure use native bar alerts; a failed encode leaves the clipboard untouched.

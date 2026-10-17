@@ -140,6 +140,7 @@ Rectangle {
                 retainPanelWhileEditing: false
                 resetWithTooltip: false
                 handleEscape: false
+                readOnly: root.picker.menuBusy ?? false
                 Keys.onShortcutOverride: event => {
                     if (root.searchKeyHandler && root.searchKeyHandler(event,false)) event.accepted = true
                 }

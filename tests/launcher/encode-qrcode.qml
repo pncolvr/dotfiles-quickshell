@@ -9,6 +9,8 @@ import "../../src/theme"
 
 Scope {
     id: root
+    property int closures: 0
+    Connections { target: PickerService; function onVisibleChanged() { if (!PickerService.visible) root.closures++ } }
     Test.TestCase { id: events; when: false }
     FloatingWindow {
         visible: true; implicitWidth: 640; implicitHeight: 500
@@ -62,20 +64,32 @@ Scope {
             return
         }
         field.text = Quickshell.env("QR_TEST_TEXT")
+        const initialClosures = closures
         events.keyClick(Qt.Key_Return, Qt.NoModifier, 0)
-        check(!PickerService.visible && QrEncodeService.job, "acceptance closes input before starting prepared worker")
+        check(PickerService.visible && QrEncodeService.job && closures === initialClosures,
+            "generation retains the same open picker")
+        check(field.readOnly && !PickerService.canAccept, "pending input cannot be edited or resubmitted")
         switch (mode) {
           case "encodeSlow":
           case "copySlow":
+          case "cancelPending":
+          case "outsidePending":
           case "reopen": {
             waitFor(() => {
                 const state = mode === "copySlow" ? copyArgs : encoderArgs
                 state.reload()
                 return state.text().length > 0
             }, "tool started before cancellation")
-            if (mode === "reopen") QrEncodeService.open()
+            if (mode === "cancelPending") events.keyClick(Qt.Key_Escape, Qt.NoModifier, 0)
+            else if (mode === "outsidePending") PickerService.close("outside")
+            else if (mode === "reopen") QrEncodeService.open()
             else PickerService.promptMenu("Replacement", [{title: "Keep working"}], () => {})
             events.wait(80)
+            if (mode === "cancelPending" || mode === "outsidePending") {
+                check(!QrEncodeService.job && !PickerService.visible && !alert(), "pending dismissal cancels work without reopening")
+                console.log("PASS: native QR pending dismissal", mode)
+                return
+            }
             check(!QrEncodeService.job && PickerService.visible && !alert(), "pending job cancels without late preview/clipboard/alerts")
             check(mode === "reopen" ? PickerService.prompt === "Text to encode" : PickerService.prompt === "Replacement", "new menu remains intact")
             PickerService.close()
@@ -86,7 +100,12 @@ Scope {
           case "copyFail":
           case "previewFail": {
             waitFor(() => alert()?.severity === "error", "failure has a native error alert")
-            waitFor(() => !QrEncodeService.job && !PickerService.visible, "failure releases job and preview")
+            waitFor(() => !QrEncodeService.job && PickerService.visible && !PickerService.imageOnly,
+                "failure restores input and releases job")
+            const retryField = events.findChild(panel, "pickerSearch")
+            check(retryField && !retryField.readOnly && retryField.text === Quickshell.env("QR_TEST_TEXT")
+                && PickerService.canAccept && closures === initialClosures,
+                "failure preserves editable text for retry without closing the panel")
             const expected = {
                 oversize: "Could not encode QR code", copyFail: "Could not copy QR code", previewFail: "Could not display QR code"
             }
@@ -96,6 +115,7 @@ Scope {
           }
         }
         waitFor(() => PickerService.imageOnly && events.findChild(panel, "imageViewer")?.status === Image.Ready, "shared preview loads generated PNG")
+        check(closures === initialClosures, "preview replaces pending input without unmapping the picker")
         const viewer = events.findChild(panel, "imageViewer")
         check(!viewer.smooth && !viewer.mipmap && viewer.width > 0 && viewer.width % viewer.implicitWidth === 0,
             "QR modules use whole-pixel scaling without smoothing")

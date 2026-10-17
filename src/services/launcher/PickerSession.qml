@@ -27,6 +27,7 @@ Scope {
     property var menuClosedCallback: null
     property bool menuKeepOpen: false
     property bool menuKeepOpenOnCancel: false
+    property bool menuBusy: false
     property string acceptLabel: Translations.text("common.actions.select")
     property string query: ""
     property string layout: "list"
@@ -74,7 +75,7 @@ Scope {
     readonly property var selectedItems: items.filter(item => selectedIds.includes(item.id))
     readonly property bool selectionToggleClears: filteredItems.length > 0
         ? filteredItems.every(item => selectedIds.includes(item.id)) : selectedIds.length > 0
-    readonly property bool canAccept: !clipboardRestoring && (!!currentItem || (multiple && selectedItems.length > 0)
+    readonly property bool canAccept: !menuBusy && !clipboardRestoring && (!!currentItem || (multiple && selectedItems.length > 0)
         || (allowTyped && query.trim().length > 0))
     signal opened()
     signal imagePreviewFailed()
@@ -146,6 +147,7 @@ Scope {
         begin(PickerService.Mode.Menu, title, options.keepOpen === true)
         menuKeepOpen = options.keepOpen === true
         menuKeepOpenOnCancel = options.keepOpenOnCancel === true
+        menuBusy = options.busy === true
         items = menuRows(rows, options.sort === true)
         menuCallback = callback
         menuClosedCallback = options.onClosed || null
@@ -364,6 +366,7 @@ Scope {
         menuCallback = null
         menuKeepOpen = false
         menuKeepOpenOnCancel = false
+        menuBusy = false
         const secretResult = secretCallback
         secretCallback = null
         openingClipboard = false
