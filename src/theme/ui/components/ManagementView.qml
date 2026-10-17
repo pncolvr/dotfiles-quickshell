@@ -192,6 +192,7 @@ Item {
                     leftPadding: Theme.controlFieldPadding
                     rightPadding: Theme.controlFieldPadding + Theme.scrollbarWidth
                     objectName: "managementEntry-" + modelData.id
+                    HoverHandler { cursorShape: Qt.PointingHandCursor }
                     onClicked: root.select(modelData.id)
                     Keys.onReturnPressed: root.select(modelData.id)
                     Keys.onEnterPressed: root.select(modelData.id)

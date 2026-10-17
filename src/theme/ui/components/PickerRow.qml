@@ -36,6 +36,7 @@ Rectangle {
     HoverHandler { id: hover; cursorShape: Qt.PointingHandCursor }
     MouseArea {
         anchors.fill: parent
+        cursorShape: Qt.PointingHandCursor
         onClicked: mouse => {
             root.chosen((mouse.modifiers & Qt.ControlModifier) !== 0)
             if (!root.clipboard) root.activated()

@@ -38,6 +38,7 @@ ListView {
         rightPadding: Theme.controlFieldPadding + Theme.scrollbarWidth
         height: Math.max(Theme.controlHeight, contentItem.implicitHeight + topPadding + bottomPadding)
         objectName: "vaultEntry-" + modelData.id
+        HoverHandler { cursorShape: Qt.PointingHandCursor }
         onClicked: { list.currentIndex = index; list.entrySelected(modelData.id) }
         background: Rectangle { color: entryRow.index === list.currentIndex ? Theme.alternateBackground : "transparent"; radius: Theme.iconButtonRadius }
         contentItem: Column {
