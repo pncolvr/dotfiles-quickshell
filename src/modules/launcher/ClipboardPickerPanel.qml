@@ -7,53 +7,17 @@ import "../../theme/ui" as UI
 import "../../services"
 import "../../config"
 
-PickerPanelBase {
+PreviewPickerPanel {
     id: root
     searchPlaceholder: Translations.text("clipboard.search.placeholder")
     panelError: picker.error || ClipboardService.error
     minimumRowHeight: Theme.clipboardRowHeight
     readonly property bool imagesOnly: picker.itemCriteria.kind === "image"
-    readonly property bool motionEnabled: UI.MotionPolicy.enabled
-    property real imageProgress: 0
-    property var exitPreviewEntry: null
-    readonly property var previewEntry: imagesOnly && picker.filteredItems[picker.currentIndex]?.image
-        ? picker.filteredItems[picker.currentIndex] : exitPreviewEntry
-    readonly property bool transitioning: imageProgress !== (imagesOnly ? 1 : 0)
-    readonly property bool sideBySide: availableContentWidth >= Theme.pickerWidth + 240
-    implicitWidth: sideBySide ? Math.min(Theme.pickerWidth,availableContentWidth) + Math.max(0,availableContentWidth - Theme.pickerWidth) * imageProgress : Math.min(Theme.pickerWidth,availableContentWidth)
-    implicitHeight: normalHeight + (Math.max(normalHeight,availableContentHeight) - normalHeight) * imageProgress
-    fixedListWidth: sideBySide && imageProgress > 0 ? Theme.pickerWidth - Theme.tooltipPaddingHeight * 2 : 0
-    previewOpacity: Math.max(0,Math.min(1,(imageProgress - 0.15) / 0.85))
-    previewScale: 0.94 + 0.06 * previewOpacity + 0.03 * Math.sin(Math.PI * previewOpacity)
-    stackedPreview: !sideBySide && imageProgress > 0
-    previewComponent: imageProgress > 0 ? imagePreview : null
-    function transition() {
-        layoutMotion.stop()
-        if (!picker.visible) { imageProgress = 0; return }
-        if (motionEnabled) {
-            layoutMotion.to = imagesOnly ? 1 : 0
-            layoutMotion.restart()
-        } else imageProgress = imagesOnly ? 1 : 0
-    }
-    onImagesOnlyChanged: { if (!imagesOnly) exitPreviewEntry = picker.filteredItems[picker.currentIndex] ?? null; transition() }
-    onImageProgressChanged: if (imageProgress === 0) exitPreviewEntry = null
-    onMotionEnabledChanged: transition()
-    UI.MotionAnimation { id: layoutMotion; target: root; property: "imageProgress"; animationDuration: Theme.clipboardLayoutDuration; easing.type: Easing.OutCubic }
-    Component {
-        id: imagePreview
-        ClipboardImagePreview {
-            entries: root.picker.filteredItems
-            entry: root.previewEntry
-            searching: root.picker.searchPending
-            decodeWidth: root.sideBySide ? Math.max(1,root.availableContentWidth - Theme.pickerWidth) : root.availableContentWidth
-            decodeHeight: root.sideBySide ? root.availableContentHeight : root.availableContentHeight * 0.5
-        }
-    }
-    Connections {
-        target: root.picker
-        function onVisibleChanged() { if (!root.picker.visible) { layoutMotion.stop(); root.imageProgress = 0; root.exitPreviewEntry = null } }
-        function onSearchPendingChanged() { if (!root.picker.searchPending && root.imagesOnly && !root.picker.filteredItems[root.picker.currentIndex]?.image) root.exitPreviewEntry = null }
-    }
+    previewKind: "clipboard"
+    compactImageRows: previewEnabled
+    onPreviewEnabledChanged: sizeListForOpening()
+    previewShortcut: false // The existing Images only action also toggles its preview.
+    onImagesOnlyChanged: previewEnabled = imagesOnly
     function setCriterion(name,value) {
         const criteria = Object.assign({},picker.itemCriteria)
         if (value === undefined) delete criteria[name]
@@ -63,17 +27,16 @@ PickerPanelBase {
     }
     function toggleImagesOnly() { setCriterion("kind",imagesOnly ? undefined : "image") }
     readonly property bool pinnedOnly: picker.itemCriteria.pinned === true
-    inlineFooter: imagesOnly && sideBySide
     footerHint: Translations.text("clipboard.shortcuts.primary")
-        + (imagesOnly && sideBySide ? " · " : "\n")
+        + "\n"
         + [UI.Keybinds.describe("clipboard.pin",Translations.text(root.picker.currentItem?.pinned ? "clipboard.actions.unpinHint" : "clipboard.actions.pinHint")),
             UI.Keybinds.describe("clipboard.pinnedOnly",Translations.text("clipboard.filter.pinnedHint")),
             UI.Keybinds.describe("preview",Translations.text("clipboard.filter.images"))].filter(Boolean).join(" · ")
 
     function sizeListForOpening() {
-        const entries = picker.items.slice(0, Config.pickerMaxRows)
-        openedListHeight = entries.length ? entries.reduce((height, entry) => height + (entry.image
-            ? Theme.clipboardImagePreviewHeight + Theme.pickerRowPadding * 2 : Theme.clipboardRowHeight), 0)
+        const entries = picker.items.slice(0, maximumListRows)
+        openedListHeight = entries.length ? entries.reduce((height, entry) => height + (previewEnabled
+            ? measuredRowHeight : entry.image ? Theme.clipboardImagePreviewHeight + Theme.pickerRowPadding * 2 : Theme.clipboardRowHeight), 0)
             + (entries.length - 1) * Theme.controlSpacing : Theme.clipboardRowHeight
     }
 

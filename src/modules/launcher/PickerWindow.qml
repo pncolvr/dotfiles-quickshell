@@ -17,6 +17,7 @@ TopPanelTooltip {
     readonly property bool restoringDialogFocus: behavior.restoringDialogFocus
     readonly property bool windowActive: contentItem.Window.active
     readonly property Item previewItem: contentItem
+    readonly property var floatingPreviewWindow: behavior.previewWindow
     requestedScreen: Quickshell.screens.includes(picker.targetScreen) ? picker.targetScreen : Quickshell.screens[0] ?? null
     requestedVisible: picker.visible && picker.layout !== "expose" && !!picker.targetScreen
         && !picker.privateWindow

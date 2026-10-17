@@ -42,6 +42,7 @@ Item {
             add: "Ctrl+N",
             edit: "Ctrl+E",
             save: "Ctrl+S",
+            copy: "Ctrl+C",
             refresh: "Ctrl+R",
             search: "Ctrl+F",
             manage: "Ctrl+M",
@@ -88,6 +89,13 @@ Item {
     readonly property string pickerShowAllShortcut: keybinds.common.workFilter
     readonly property string pickerWorkStatus: "work"
     readonly property int pickerMaxRows: 12
+    readonly property int pickerPreviewMaxRows: 4
+    readonly property bool pickerPreviewEnabled: false
+    // null inherits the global setting; explicit booleans override it.
+    readonly property var pickerPreviewDefaults: ({
+        clipboard: null,
+        windows: null
+    })
     readonly property bool pickerShowPrompt: false
     readonly property bool pickerFuzzySearch: true
     // Only mixed-case queries are case sensitive; lowercase and uppercase ignore case.

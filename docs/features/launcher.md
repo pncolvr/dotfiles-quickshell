@@ -104,9 +104,9 @@ activates an entry. Enter or a click confirms; Escape cancels. Refreshes preserv
 selection and cycle order where possible; closed windows disappear and new
 windows join the list.
 
-The switcher starts with previews off. **Ctrl+Shift+I** toggles a live preview,
-using the clipboard image-only layout: list left and preview right, or stacked
-on narrow screens. It reuses `WindowPreview` and its application-icon fallback
+The switcher starts with previews off. **Ctrl+Shift+I** toggles a live preview
+in a separate, larger floating window below the normally positioned list.
+It reuses `WindowPreview` and its application-icon fallback
 when capture is unavailable. Preview resizing follows the shared motion policy,
 including screen-sharing suppression. Disabling preview or closing releases its
 capture view.
@@ -380,14 +380,14 @@ applying, browsing resumes with the same image selected and the same search term
 Escape in either target step returns to image browsing; Escape in the image picker
 ends the session. Target choices use the standard picker without prompt labels.
 The wallpaper list shows filenames without thumbnails, so rows do not load or
-cache images. Only the highlighted image loads in the large preview, beside the
-list on wide screens or below it on narrow screens, using the same bounded loader
-as clipboard image previews. On wide screens the popup and preview pane fit the
-selected image’s aspect ratio within the available width/height, preserving the
-whole image without cropping or stretching. The popup uses a fixed placement
-footprint and list viewport height while browsing, so the search/list column
-stays in place as previews change shape; only the preview-side width/height adapts. This reuses header dimensions from the existing loader;
-the last known aspect is retained while the next image loads.
+cache images. Only the highlighted image loads in a separate, larger floating
+preview below the list, using the same bounded loader as clipboard image previews.
+The list stays at the standard picker position and width. Preview mode shows at
+most four uniform-height rows, with a further screen-height limit on small
+screens; the preview fits the remaining screen
+space and preserves the whole image without cropping or stretching. Wallpaper
+previews always stay enabled, with no hide shortcut or configurable off state.
+Ctrl+C copies the selected original image without closing the list or preview.
 Application errors show an alert
 and return to browsing with the same image and search.
 Image paths containing spaces, quotes, Unicode or newlines are passed literally.
@@ -896,12 +896,25 @@ Rapid typing replaces queued queries, and only the latest results are displayed.
 Enter and Ctrl+C pressed during a search wait for its results before pasting or
 copying; changing the query or closing the picker cancels that pending action.
 
-**Images only** or **Ctrl+Shift+I** filters images and expands the existing picker
-across the focused monitor. The list keeps its normal width and moves left; a
-large aspect-fit preview pops in on the right. Turning the filter off reverses
-the transition. Narrow monitors use a stacked preview. Pinned only and search
-compose with this filter. Image search covers MIME metadata, without OCR.
+**Images only** or **Ctrl+Shift+I** filters images and opens the separate floating
+preview below the list. The list retains the normal picker position and width,
+with compact image rows and at most four visible entries. The preview is wider
+than the list where screen space permits. Its height fits the image within the
+available screen space, using small top/bottom padding and larger side padding.
+The preview keeps its center while image dimensions change, including during resizing.
+Turning the filter off closes the preview. Pinned only and search compose with
+this filter. Image search covers MIME metadata, without OCR.
 Normal openings start with indexed search and both filters off.
+The shared `Config.pickerPreviewEnabled` default is false;
+`Config.pickerPreviewDefaults` supplies overrides for Clipboard and the window
+switcher, which inherit the global false. Wallpaper always shows its preview,
+without a hide shortcut or off setting. Ctrl+C (`keybinds.common.copy`) copies
+the selected original image with its detected MIME type, keeping the list and
+preview open.
+Previews share positioning, sizing, motion and content lifetime, retain their
+parent's capture/privacy policy, and never request keyboard focus. Clicking the
+preview remains within the list's focus group. Existing image/capture resources
+are released after closing; screen sharing suppresses decorative motion.
 Thumbnails and previews use shared smooth filtering and mipmaps, asynchronous
 loading and display-scale-aware source sizing. The large preview avoids image
 caching and has an eight-megapixel target budget (`Config.clipboardPreviewMaxPixels`).

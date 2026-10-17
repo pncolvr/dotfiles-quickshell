@@ -89,6 +89,13 @@ case ${1:-} in
         shift
         for id in "$@"; do validate_id "$id"; rm -f -- "$clipboard_dir/$id"; done
         ;;
+    copy-image)
+        image_path=${2:?}
+        [[ -f $image_path && -r $image_path ]]
+        mime=$(file --brief --mime-type -- "$image_path")
+        case $mime in image/*) ;; *) exit 2 ;; esac
+        exec wl-copy --type "$mime" < "$image_path"
+        ;;
     restore)
         id=${2:?}; mime=${3:?}; validate_id "$id"
         [[ -f $clipboard_dir/$id && ! -L $clipboard_dir/$id ]]
@@ -138,5 +145,5 @@ case ${1:-} in
             copyq read "$mime" "$row" | CLIPBOARD_STATE=data CLIPBOARD_TYPE="$mime" bash "${BASH_SOURCE[0]}" capture
         done
         ;;
-    *) printf 'Usage: clipboard.sh watch|capture|restore ID MIME|paste ID MIME ADDRESS CLASS|delete ID...|prune|import-copyq\n' >&2; exit 2 ;;
+    *) printf 'Usage: clipboard.sh watch|capture|copy-image PATH|restore ID MIME|paste ID MIME ADDRESS CLASS|delete ID...|prune|import-copyq\n' >&2; exit 2 ;;
 esac

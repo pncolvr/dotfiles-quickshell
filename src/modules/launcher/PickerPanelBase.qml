@@ -14,6 +14,9 @@ Rectangle {
     property bool backgroundVisible: true
     property real placementWidth: implicitWidth
     property bool showThumbnails: true
+    property bool compactImageRows: false
+    property bool uniformRows: false
+    property int maximumListRows: Config.pickerMaxRows
     readonly property bool gridMode: picker.layout === "grid"
     readonly property bool inputOnly: picker.mode === PickerService.Mode.Menu && picker.allowTyped && picker.items.length === 0
     readonly property var modulePointerTarget: search
@@ -23,35 +26,27 @@ Rectangle {
     property real minimumRowHeight: 0
     property int minimumListRows: 1
     property Component actionButtons: null
-    property bool inlineFooter: false
-    property Component previewComponent: null
-    property real maximumPreviewHeight: 0
-    readonly property real previewVerticalPadding: Theme.tooltipPaddingHeight + panelFooter.height + Theme.controlSpacing
     property Component searchControls: null
-    property real fixedListWidth: 0
-    property real previewOpacity: 1
-    property real previewScale: 1
-    property bool stackedPreview: false
     property real availableContentWidth: Theme.pickerWidth
     property real availableContentHeight: 800
-    readonly property real columnWidth: fixedListWidth > 0 ? Math.min(fixedListWidth,width - Theme.tooltipPaddingHeight * 2) : width - Theme.tooltipPaddingHeight * 2
+    readonly property real columnWidth: width - Theme.tooltipPaddingHeight * 2
     readonly property real normalHeight: panelHeader.height + list.implicitHeight + panelFooter.height + Theme.tooltipPaddingHeight + Theme.controlSpacing
     property var searchKeyHandler: null
     property string footerHint: Translations.text(inputOnly ? "picker.shortcuts.input" : gridMode ? "picker.shortcuts.default" : "picker.shortcuts.list", [picker.acceptLabel.toLowerCase()])
     property real openedListHeight: Theme.pickerRowHeight
     property bool awaitingOpeningRows: false
+    readonly property real measuredRowHeight: Math.ceil(Math.max(minimumRowHeight,
+        rowFont.height + Theme.pickerRowPadding * 2
+            + (picker.items.some(item => !!item.subtitle) ? subtitleFont.height + 2 : 0)))
     implicitWidth: Theme.pickerWidth
     implicitHeight: normalHeight
     function focusSearch() { search.forceActiveFocus() }
     function sizeListForOpening() {
-        const count = Math.max(1, Math.min(Config.pickerMaxRows,
+        const count = Math.max(1, Math.min(maximumListRows,
             picker.items.length || minimumListRows))
-        const hasSubtitle = picker.items.some(item => !!item.subtitle)
-        const textHeight = rowFont.height + Theme.pickerRowPadding * 2
-            + (hasSubtitle ? subtitleFont.height + 2 : 0)
-        const rowHeight = Math.max(textHeight, minimumRowHeight)
-        openedListHeight = count * rowHeight + (count - 1) * Theme.controlSpacing
+        openedListHeight = count * measuredRowHeight + (count - 1) * Theme.controlSpacing
     }
+    onMaximumListRowsChanged: sizeListForOpening()
     FontMetrics {
         id: rowFont
         font.family: Theme.fontFamily
@@ -59,6 +54,7 @@ Rectangle {
         font.bold: Theme.fontBold
         font.styleName: Theme.fontStyle
         font.weight: Theme.fontWeight
+        font.hintingPreference: Theme.fontHintingPreference
     }
     FontMetrics {
         id: subtitleFont
@@ -67,6 +63,7 @@ Rectangle {
         font.bold: Theme.fontBold
         font.styleName: Theme.fontStyle
         font.weight: Theme.fontWeight
+        font.hintingPreference: Theme.fontHintingPreference
     }
     function acceptSelection(modifiers) { picker.accept((modifiers & Qt.ControlModifier) !== 0, false) }
     function handleSelectionKey(event, activate) {
@@ -177,27 +174,15 @@ Rectangle {
             objectName: "pickerList"
             picker: root.picker
             showThumbnails: root.showThumbnails
+            compactImages: root.compactImageRows
+            rowHeight: root.uniformRows ? root.measuredRowHeight : 0
             width: root.columnWidth
             y: panelHeader.height + Theme.controlSpacing
             visible: !root.inputOnly
-            height: root.inputOnly ? 0 : Math.max(0, panelFooter.y - y) * (root.stackedPreview ? 0.4 : 1)
+            height: root.inputOnly ? 0 : Math.max(0, panelFooter.y - y)
             // Keep the opening size while filtering or deleting entries so the
             // panel and its footer do not move under keyboard focus.
             implicitHeight: root.inputOnly ? 0 : root.gridMode ? Theme.pickerGridHeight : root.openedListHeight
-        }
-        Loader {
-            objectName: "clipboardPreviewPane"
-            x: root.stackedPreview ? 0 : root.columnWidth + Theme.controlSpacing
-            y: root.stackedPreview ? list.y + list.height + Theme.controlSpacing : 0
-            width: root.stackedPreview ? root.columnWidth : Math.max(0,parent.width - x)
-            height: Math.min(Math.max(0,panelFooter.y - y - Theme.controlSpacing),
-                root.maximumPreviewHeight > 0 ? root.maximumPreviewHeight : Infinity)
-            active: root.previewComponent !== null && root.picker.visible
-            sourceComponent: root.previewComponent
-            opacity: root.previewOpacity
-            scale: root.previewScale
-            enabled: opacity === 1 && !root.picker.searchPending
-            clip: true
         }
         UI.Text {
             objectName: "pickerEmptyHint"

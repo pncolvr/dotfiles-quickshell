@@ -12,6 +12,8 @@ ListView {
     Rectangle { parent: root; anchors.fill: parent; z: 1; color: "transparent"; radius: Theme.iconButtonRadius; border.width: root.activeFocus ? 1 : 0; border.color: Theme.accent }
     required property var picker
     property bool showThumbnails: true
+    property bool compactImages: false
+    property real rowHeight: 0
     model: picker.filteredItems
     currentIndex: picker.currentIndex
     clip: true
@@ -33,6 +35,8 @@ ListView {
         required property int index
         entry: modelData
         showThumbnail: root.showThumbnails
+        compactImage: root.compactImages
+        height: root.rowHeight > 0 ? root.rowHeight : implicitHeight
         enabled: !root.picker.searchPending && !root.picker.searchFailed
         width: grid ? Math.max(80, (root.width - Theme.controlSpacing * 4) / 5) : root.width
         current: root.currentIndex === index

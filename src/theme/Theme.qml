@@ -119,6 +119,9 @@ QtObject {
 
     // Launcher, QR and clipboard previews
     readonly property int pickerWidth: 560
+    readonly property int pickerPreviewWidth: 1600
+    readonly property real pickerPreviewListHeightRatio: 0.32
+    readonly property int pickerPreviewGap: controlSpacing * 2
     readonly property int manageWidth: 780
     readonly property int manageHeight: 760
     readonly property FontMetrics manageRowFontMetrics: FontMetrics {

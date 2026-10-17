@@ -14,6 +14,8 @@ Item {
     property real availableContentHeight: 800
     readonly property bool focusReady: !!panel
     readonly property bool transitioning: panel?.transitioning ?? false
+    readonly property bool floatingPreviewRequested: panel?.floatingPreviewRequested ?? false
+    readonly property Component floatingPreviewComponent: panel?.floatingPreviewComponent ?? null
     readonly property real radius: Theme.tooltipRadius
     readonly property var panel: content.item
     readonly property bool moduleFocusSearch: true

@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import "../../src/theme/ui" as UI
 import QtTest as Test
 import Quickshell
 import "../../src/services"
@@ -39,13 +40,13 @@ Scope {
             events.wait(30)
             root.check(PickerService.visible && PickerService.currentItem.id === '0x2','opens with previous window selected')
             root.check(root.windows.focused.length === 0,'opening only previews the selection')
-            root.check(!panel.previewEnabled && panel.previewComponent === null && panel.fixedListWidth === 0,'starts with list only and no capture view')
+            root.check(!panel.previewEnabled && !panel.floatingPreviewRequested && panel.implicitWidth === Theme.pickerWidth,'starts with list only and no capture view')
             panel.focusSearch(); events.keyClick(Qt.Key_I,Qt.ControlModifier | Qt.ShiftModifier)
             events.wait(Theme.clipboardLayoutDuration + 50)
-            root.check(panel.previewEnabled && panel.previewComponent !== null && panel.fixedListWidth > 0,'Ctrl+Shift+I enables clipboard-style preview layout')
+            root.check(panel.previewEnabled && panel.floatingPreviewRequested && panel.implicitWidth === Theme.pickerWidth,'Ctrl+Shift+I requests a floating preview without widening the list')
             events.keyClick(Qt.Key_I,Qt.ControlModifier | Qt.ShiftModifier)
             events.wait(Theme.clipboardLayoutDuration + 50)
-            root.check(!panel.previewEnabled && panel.previewComponent === null,'toggle off releases preview')
+            root.check(!panel.previewEnabled && !panel.floatingPreviewRequested,'toggle off releases preview')
             PickerService.switchWindows()
             root.check(PickerService.currentItem.id === '0x3','repeated shortcut advances existing session')
             PickerService.switchWindows(); PickerService.switchWindows()
@@ -95,12 +96,12 @@ Scope {
             panel.availableContentWidth = 600
             panel.focusSearch(); events.keyClick(Qt.Key_I,Qt.ControlModifier | Qt.ShiftModifier)
             events.wait(Theme.clipboardLayoutDuration + 50)
-            root.check(!panel.sideBySide && panel.stackedPreview,'small screen stacks enabled preview')
+            root.check(panel.floatingPreviewRequested && panel.implicitWidth === Theme.pickerWidth,'small screen retains the normal list width')
             root.audio.screencastActive = true
             panel.focusSearch(); events.keyClick(Qt.Key_I,Qt.ControlModifier | Qt.ShiftModifier)
-            root.check(!panel.motionEnabled && panel.previewProgress === 0,'sharing disables preview transition and releases capture immediately')
+            root.check(!UI.MotionPolicy.enabled && !panel.floatingPreviewRequested,'sharing disables preview transition and releases capture immediately')
             events.keyClick(Qt.Key_I,Qt.ControlModifier | Qt.ShiftModifier)
-            root.check(panel.previewProgress === 1,'preview remains available without decorative motion while sharing')
+            root.check(panel.floatingPreviewRequested,'preview remains available without decorative motion while sharing')
             PickerService.close()
             if (!root.failed) console.log('PASS: window switcher cycling, reverse keys, explicit acceptance, preview toggle, stable updates and sharing policy')
             Qt.quit()

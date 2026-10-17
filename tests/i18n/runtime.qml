@@ -53,11 +53,11 @@ Scope {
             events.wait(20)
             root.check(Translations.language==='en','explicit English')
             root.check(Translations.text('common.actions.save')==='Save','English catalog loaded')
-            root.check(Translations.calendarMonthNames[2]==='march','English calendar')
+            root.check(Translations.calendarMonthNames[2]==='March','English calendar')
             root.settings.language='pt'
             events.wait(20)
             root.check(Translations.text('common.actions.save')==='Guardar','Portuguese catalog loaded')
-            root.check(Translations.calendarMonthNames[2]==='março','Portuguese calendar')
+            root.check(Translations.calendarMonthNames[2]==='Março','Portuguese calendar')
             root.check(Translations.calendarDayNames.length===7,'seven weekday headings')
             root.check(tabs.labels[0]==='Resumo','translated tab binding updates')
             root.check(input.text==='user content','user content preserved')

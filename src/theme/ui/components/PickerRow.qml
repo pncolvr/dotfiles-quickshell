@@ -15,7 +15,8 @@ Rectangle {
     property bool multiple: false
     property bool clipboard: false
     property bool showThumbnail: true
-    readonly property bool clipboardImage: showThumbnail && clipboard && !!entry.image
+    property bool compactImage: false
+    readonly property bool clipboardImage: showThumbnail && clipboard && !!entry.image && !compactImage
     property bool grid: false
     readonly property color foreground: current ? Theme.selectionText : Theme.text
     signal chosen(bool toggle)
@@ -28,7 +29,7 @@ Rectangle {
         textBlock.implicitHeight + Theme.pickerRowPadding * 2,
         thumbnail.visible ? thumbnail.height + Theme.pickerRowPadding * 2 : 0)
     height: implicitHeight
-    Accessible.name: entry.title || (clipboardImage ? Translations.text("clipboard.image.accessibleName") : "")
+    Accessible.name: entry.title || (clipboard && entry.image ? Translations.text("clipboard.image.accessibleName") : "")
     Accessible.role: multiple ? Accessible.CheckBox : Accessible.ListItem
     Accessible.checkable: multiple
     Accessible.checked: selected
@@ -97,7 +98,8 @@ Rectangle {
         UI.Text {
             centerVertical: false
             width: parent.width
-            text: root.entry.title
+            text: root.entry.title || (root.compactImage && root.clipboard && root.entry.image
+                ? Translations.text("clipboard.image.accessibleName") : "")
             color: root.foreground
             visible: text.length > 0
             textFormat: Text.PlainText

@@ -68,6 +68,14 @@ original Qt text control after clipboard restoration succeeds, preserving normal
 selection replacement without injecting keys into the underlying application.
 Native child-dialog handoff and capture visibility policy remain separate.
 
+Wallpaper, Clipboard images and the window switcher share a separate larger
+preview window below the standard picker. `PreviewPickerPanel` owns defaults and
+toggle state; `PickerPreviewSurface` owns bounded geometry, motion and content
+lifetime. A thin `PickerPreviewWindow` supplies the native layer surface with
+keyboard focus disabled and a fixed public/private namespace matching its host.
+The list's focus grab includes its preview companion. Both use the existing
+capture-visibility policy, and motion follows the shared screen-sharing rules.
+
 ## Keyboard entry points
 
 The companion Hypr modules submap uses native `quickshell:bar-NAME` global actions.

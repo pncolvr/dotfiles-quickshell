@@ -436,6 +436,8 @@
   "folders.actions.switchCategoryHint": "Switch category",
   "folders.actions.switchTypeHint": "Switch folder type",
   "folders.dialog.title": "Choose folder",
+  "images.errors.copy": "Could not copy the image.",
+  "images.actions.copy": "Copy image",
   "images.preview.empty": "No image selected",
   "images.preview.loading": "Loading image…",
   "images.preview.unavailable": "Image unavailable",

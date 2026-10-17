@@ -310,6 +310,22 @@ private detection rules alongside the other saved data.
 
 ## Clipboard validation
 
+`bash tests/launcher/floating-preview.sh` checks separate-window presentation,
+larger bounded geometry, stable list placement, aspect-fit image selection,
+four-row list capacity, global/per-picker initial states, manual toggles and
+sharing/close cleanup. Geometry cases cover small, large/4K and portrait screens,
+including margins for the same silhouette-blur shadow used by top panels. Run
+with `QT_SCALE_FACTOR=1.25` and `QT_SCALE_FACTOR=2` to check fractional/high DPI.
+It renders the production `PickerPreviewSurface` in offscreen Qt windows; the
+native layer host cannot be instantiated without Wayland and still needs user
+review for placement and shared focus-grab behavior. No real focus/capture is used.
+The switcher and Clipboard UI fixtures exercise the new floating-preview contract.
+
+Wallpaper preview regression also checks that its preview cannot be hidden with
+the Preview shortcut, and Ctrl+C from search focus copies without closing either
+window. Clipboard helper tests mock wl-copy to verify original image bytes,
+detected MIME type, literal special-character paths and rejected missing/non-image files.
+
 `PickerSession` contains the shared launcher state/behavior; `PickerService`
 retains the launcher IPC endpoint and forwards Clipboard opening to the independent
 `ClipboardPickerService`. Both use the existing `PickerWindow` and controls.
@@ -821,11 +837,12 @@ for the actual PickerWindow Enter/click handoffs with a delayed monitor read.
 It uses synthetic images and mocked setters, restores original focus, never moves
 the pointer and does not change the desktop wallpaper. The launcher IPC
 suite loads a synthetic image through the real bounded preview loader, checks
-wide/narrow layout, empty search and preview reset when ordinary menus open.
+normal list placement with a larger floating preview, empty search and preview
+reset when ordinary menus open.
 Rendered landscape, portrait and panoramic samples switch inside one session
-and verify filled previews with preserved aspect ratio and screen limits. They
+and verify aspect-fit previews with letterboxing and screen limits. They
 also verify stable placement footprint, search/list widths and list viewport
-height, so changing preview dimensions cannot recenter or resize the column. It
+height, so changing image aspect cannot recenter or resize the column. It
 checks that image-picker rows have empty image sources while ordinary menu rows
 retain their thumbnails. It also checks the full image → mode → monitor flow, including preserved search and
 image selection after setting or cancelling either target step. The wallpaper

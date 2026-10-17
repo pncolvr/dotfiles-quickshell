@@ -100,6 +100,14 @@ Singleton {
             if (completed) completed(success)
         })
     }
+    function copyImage(source) {
+        if (maintenance || !source || !source.startsWith("file://")) return
+        const path = decodeURIComponent(source.slice(7))
+        error = ""
+        run(Config.clipboardCommand.concat(["copy-image", path]), "", success => {
+            if (!success) error = Translations.text("images.errors.copy")
+        })
+    }
     function importCopyq() {
         if (maintenance || importer.running) return
         error = ""

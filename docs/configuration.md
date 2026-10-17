@@ -51,7 +51,7 @@ open modules, including Alt+Tab, remain in Hypr. These are the defaults:
 
 | Group | Actions and bindings |
 | --- | --- |
-| `common` | `add`: Ctrl+N; `edit`: Ctrl+E; `save`: Ctrl+S; `refresh`: Ctrl+R; `search`: Ctrl+F |
+| `common` | `add`: Ctrl+N; `edit`: Ctrl+E; `save`: Ctrl+S; `copy`: Ctrl+C; `refresh`: Ctrl+R; `search`: Ctrl+F |
 | `common` | `manage`: Ctrl+M; `workFilter`: Ctrl+W; `nextTab`: Ctrl+Tab; `previousTab`: Ctrl+Shift+Tab; `preview`: Ctrl+Shift+I |
 | `clipboard` | `pin`: Ctrl+P; `pinnedOnly`: Ctrl+Shift+P |
 | `remotes` | `runningOnly`: Ctrl+Shift+R |
@@ -120,6 +120,29 @@ saved in SQLite rather than Config. Webapps has no legacy-file reader or import
 settings; add and edit entries through Manage.
 
 ## Theme defaults
+
+Image-based picker previews use a separate larger window below the standard list.
+`Config.pickerPreviewEnabled` sets the shared initial state (false by default).
+In `Config.pickerPreviewDefaults`, `clipboard` and `windows` default to `null`
+(inherit). Set an entry to a boolean to override the global default, or to `null`
+to inherit it. Wallpaper always shows its preview and has no off setting.
+Manual preview toggles
+apply to the current opening. Clipboard's Images only action retains its combined
+image filter/preview behavior. Wallpaper uses `keybinds.common.copy` (Ctrl+C)
+to copy the selected original image without closing either window.
+
+`Config.pickerPreviewMaxRows` limits preview-mode lists to four entries; other
+entries remain scrollable and closing the preview restores `pickerMaxRows`.
+`Theme.pickerPreviewWidth` caps preview width at 1600 logical pixels, bounded to
+the screen with room for its shadow. `Theme.pickerPreviewListHeightRatio` adds a
+32% screen-height safety ceiling on smaller screens. `Theme.pickerPreviewGap`
+sets the minimum spacing above and below the preview. Both visible gaps use the
+same margin, increased together when needed to fit shadows and closing motion.
+Image previews shrink vertically to fit the image within the available height,
+with smaller top/bottom padding and larger side padding. The remaining outside
+space is split equally above and below the preview. Its center stays fixed when
+image dimensions change, including during resize animations.
+Dimensions use Qt logical coordinates; image decode sizes follow display scale.
 
 `config/Theme.qml` exposes one palette toggle:
 

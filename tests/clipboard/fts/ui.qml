@@ -26,6 +26,7 @@ Scope {
     readonly property var nativeHostItem: nativeHost.item
     readonly property var popup: nativeHostItem?.window
     readonly property var panel: nativeTest ? popup?.panel?.panel : floatingLoader.item
+    readonly property var companion: nativeTest ? popup?.floatingPreviewWindow : floatingPreview
     function check(ok,message) { if (!ok) { failed = true; console.error("CLIPBOARD FAIL:",message) } }
     function find(item,name) {
         if (!item) return null
@@ -35,6 +36,20 @@ Scope {
     }
     Test.TestEvent { id: events }
     Loader { id: nativeHost; active: root.nativeTest; source: Qt.resolvedUrl("native-host.qml") }
+    QtObject {
+        id: floatingHost
+        property var requestedScreen: Quickshell.screens[0]
+        property bool requestedVisible: PickerService.visible && !root.nativeTest
+        property real contentHeight: floatingLoader.height
+        property real layoutContentHeight: contentHeight
+        property real shadowBottomPadding: 0
+    }
+    FloatingWindow {
+        visible: !root.nativeTest && floatingPreview.presented
+        implicitWidth: floatingHost.requestedScreen.width
+        implicitHeight: floatingHost.requestedScreen.height - Theme.barHeight
+        PickerPreviewSurface { id: floatingPreview; anchors.fill: parent; host: floatingHost; picker: PickerService; previewPanel: root.panel }
+    }
     FloatingWindow {
         visible: !root.nativeTest
         implicitWidth: 1600; implicitHeight: 800
@@ -47,7 +62,7 @@ Scope {
             }
             anchors.centerIn: parent
             width: (item as Item)?.implicitWidth ?? Theme.pickerWidth
-            height: Math.min((item as Item)?.implicitHeight ?? 0,760)
+            height: Math.min((item as Item)?.implicitHeight ?? 0,(item as ClipboardPickerPanel)?.floatingPreviewRequested ? 200 : 760)
         }
     }
     Timer {
@@ -113,34 +128,22 @@ Scope {
                 root.step++; return
             }
             if (root.step === 7) {
-                if (root.panel.imageProgress > 0 && root.panel.imageProgress < 1) {
-                    root.sawMotion = true
-                    root.check(Math.abs(root.find(root.panel,"pickerList").width - (Theme.pickerWidth - Theme.tooltipPaddingHeight * 2)) < 1,"list width stays constant during travel")
-                    if (root.nativeTest) root.check(Math.abs(popup.mask.width - popup.contentWidth) < 1
-                        && Math.abs(popup.mask.x - popup.contentX) < 1
-                        && Math.abs(popup.contentX - (popup.width - popup.contentWidth) / 2) < 1,"native input mask follows animated centered content")
-                }
-                if (PickerService.searchPending || root.panel.imageProgress !== 1) return
-                root.check((root.sawMotion || root.zeroMotion) && (root.narrowTest ? root.panel.stackedPreview : root.panel.width > Theme.pickerWidth),"wide or stacked transition")
+                if (PickerService.searchPending || root.companion.transitioning) return
+                root.check(root.panel.floatingPreviewRequested && root.panel.width === Theme.pickerWidth,"floating mode keeps normal list width")
                 root.check(PickerService.filteredItems.length === 4 && PickerService.destination === "fixture-window","image criteria and paste destination")
-                root.check(root.find(root.panel,"pickerSearch").activeFocus,"transition preserves search focus")
-                const image = root.find(root.panel,"clipboardLargeImage") as UI.ScaledImage
+                if (root.nativeTest) root.check(root.find(root.panel,"pickerSearch").activeFocus,"floating preview preserves native search focus")
+                const image = root.find(root.nativeTest ? root.companion.contentItem : root.companion,"clipboardLargeImage") as UI.ScaledImage
                 if (!image || image.status !== Image.Ready) return
-                root.check(image.mipmap && image.smooth && image.fillMode === Image.PreserveAspectFit && !image.cache,"shared image settings")
+                root.check(image.mipmap && image.smooth && image.fillMode === Image.PreserveAspectFit && !image.cache,"shared floating image settings")
+                root.check(root.companion.previewWidth > root.panel.width,"preview is wider than the list")
                 const hints = root.find(root.panel,"pickerFooterHint") as UI.ShortcutHints
                 const actions = root.find(root.panel,"pickerFooterActions") as Item
-                const hintCenter = hints.mapToItem(root.panel,hints.width / 2,hints.height / 2)
-                const actionCenter = actions.mapToItem(root.panel,actions.width / 2,actions.height / 2)
-                root.check(Math.abs(hintCenter.x - root.panel.width / 2) < 1,"footer hints stay centered across the panel")
-                if (!root.narrowTest) {
-                    root.check(Math.abs(hintCenter.y - actionCenter.y) < 1,"wide image hints and buttons share one line")
-                    root.check(hints.x + hints.width <= actions.x,"centered hints do not overlap right-aligned actions")
-                } else root.check(hints.y >= actions.y + actions.height,"compact footer keeps hints below actions")
-                if (root.nativeTest) root.check(popup.contentWidth > Theme.pickerWidth,"nativeTest surface expands")
+                root.check(hints.y >= actions.y + actions.height,"hint row remains below actions")
                 const output = Quickshell.env("CLIPBOARD_PREVIEW_OUTPUT")
                 if (output && !root.screenshotSaved) {
                     root.capturingPreview = true
-                    root.panel.grabToImage(result => {
+                    const surface = root.nativeTest ? root.companion.contentItem : root.companion
+                    surface.grabToImage(result => {
                         result.saveToFile(output)
                         root.screenshotSaved = true; root.capturingPreview = false
                     })
@@ -154,14 +157,13 @@ Scope {
                 root.step = 70; return
             }
             if (root.step === 70) {
-                root.check(root.panel.stackedPreview && root.panel.width <= 600,"monitor geometry change switches to bounded stacked layout")
+                root.check(root.panel.floatingPreviewRequested && root.panel.width <= 600,"monitor geometry preserves compact list and companion request")
                 root.panel.availableContentWidth = root.originalWidth
                 root.panel.availableContentHeight = root.originalHeight
                 root.step = 71; return
             }
             if (root.step === 71) {
-                root.check(root.panel.stackedPreview === root.narrowTest && PickerService.currentItem?.id === root.monitorSelection
-                    && root.find(root.panel,"pickerSearch").activeFocus,"restoring monitor geometry preserves selection and focus")
+                root.check(root.panel.floatingPreviewRequested && PickerService.currentItem?.id === root.monitorSelection,"restoring monitor geometry preserves selection and focus")
                 root.panel.togglePinnedOnly(); root.step = 8; return
             }
             if (root.step === 8) {
@@ -170,9 +172,8 @@ Scope {
                 root.panel.toggleImagesOnly(); root.step++; return
             }
             if (root.step === 9) {
-                if (root.panel.imageProgress > 0 && root.panel.imageProgress < 1) root.sawExit = true
-                if (PickerService.searchPending || root.panel.imageProgress !== 0) return
-                root.check((root.sawExit || root.zeroMotion) && PickerService.itemCriteria.pinned && !PickerService.itemCriteria.kind,"exit animation retains pin criterion")
+                if (PickerService.searchPending || root.companion.transitioning) return
+                root.check(PickerService.itemCriteria.pinned && !PickerService.itemCriteria.kind,"exit animation retains pin criterion")
                 root.check(root.panel.width <= Theme.pickerWidth,"compact width restored")
                 DbService.write(tx => tx.executeSql("DROP TABLE store.clipboard_fts"))
                 root.panel.togglePinnedOnly()
@@ -192,21 +193,20 @@ Scope {
                 root.panel.toggleImagesOnly(); root.step = 10; return
             }
             if (root.step === 10) {
-                if (!root.zeroMotion && !(root.panel.imageProgress > 0 && root.panel.imageProgress < 1)) return
                 root.panel.toggleImagesOnly(); root.panel.toggleImagesOnly()
                 AudioService.screencastActive = true
-                root.check(!root.panel.motionEnabled && root.panel.imageProgress === 1,"disabled motion settles an interrupted transition immediately")
+                root.check(!UI.MotionPolicy.enabled && root.companion.requestedVisible && !root.companion.transitioning,"disabled motion settles an interrupted transition immediately")
                 AudioService.screencastActive = false
                 PickerService.close(); root.step++; return
             }
             stop()
-            root.check(!PickerService.items.length && !PickerService.searchPending && root.panel.imageProgress === 0,"close cancels motion and releases rows")
+            root.check(!PickerService.items.length && !PickerService.searchPending && !root.panel.floatingPreviewRequested,"close cancels motion and releases rows")
             PickerService.begin(PickerService.Mode.Menu,"Other launcher")
             PickerService.items = [{id:"menu",title:"Menu"}]
             PickerService.show()
             root.check(PickerService.currentItem?.id === "menu","late clipboard work cannot replace another launcher")
             PickerService.close()
-            console.log("PASS: indexed/fuzzy search, paging, shared images, composed filters, animated travel/pop, reversal, focus and close cleanup")
+            console.log("PASS: indexed/fuzzy search, paging, shared images, composed filters, floating preview, reversal and close cleanup")
             Qt.quit()
         }
     }

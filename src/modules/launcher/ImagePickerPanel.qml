@@ -1,40 +1,30 @@
 pragma ComponentBehavior: Bound
-
 import "../../i18n"
-import QtQuick
-import "../../theme"
+import "../../services"
+import "../../theme/ui" as UI
 
-PickerPanelBase {
+PreviewPickerPanel {
     id: root
+    previewKind: "wallpaper"
+    previewRequired: true
     searchPlaceholder: Translations.text("images.search.placeholder")
     showThumbnails: false
-    readonly property bool sideBySide: availableContentWidth >= Theme.pickerWidth + 240
-    placementWidth: sideBySide ? availableContentWidth : implicitWidth
-    // Keep the last known aspect while the shared loader reads the next header.
-    property real previewAspectRatio: 0
-    readonly property real previewPadding: Theme.controlSpacing * 2
-    readonly property real previewWidthLimit: Math.max(0, availableContentWidth - Theme.pickerWidth - Theme.controlSpacing - previewPadding)
-    readonly property real previewHeightLimit: Math.max(0, availableContentHeight - previewVerticalPadding - previewPadding)
-    readonly property real fittedPreviewWidth: previewAspectRatio > 0
-        ? Math.min(previewWidthLimit, previewHeightLimit * previewAspectRatio) : previewWidthLimit
-    readonly property real fittedPreviewHeight: previewAspectRatio > 0 ? fittedPreviewWidth / previewAspectRatio : previewHeightLimit
-    implicitWidth: sideBySide ? Math.min(availableContentWidth,
-        Theme.pickerWidth + Theme.controlSpacing + previewPadding + fittedPreviewWidth) : Math.min(Theme.pickerWidth, availableContentWidth)
-    // Keep the list viewport and scroll position steady across aspect changes.
-    implicitHeight: Math.max(normalHeight, availableContentHeight)
-    maximumPreviewHeight: sideBySide && previewAspectRatio > 0 ? fittedPreviewHeight + previewPadding : 0
-    fixedListWidth: sideBySide ? Theme.pickerWidth - Theme.tooltipPaddingHeight * 2 : 0
-    stackedPreview: !sideBySide
-    previewComponent: Component {
-        ClipboardImagePreview {
-            entries: root.picker.filteredItems
-            entry: root.picker.currentItem
-            decodeWidth: root.sideBySide ? Math.max(1, root.availableContentWidth - Theme.pickerWidth) : root.availableContentWidth
-            decodeHeight: root.sideBySide ? root.availableContentHeight : root.availableContentHeight * 0.5
-            onNaturalSizeChanged: {
-                if (naturalSize.width > 0 && naturalSize.height > 0)
-                    root.previewAspectRatio = naturalSize.width / naturalSize.height
-            }
-        }
+    panelError: picker.error || ClipboardService.error
+    footerHint: Translations.text("picker.shortcuts.list", [picker.acceptLabel.toLowerCase()])
+        + (UI.Keybinds.sequence("copy") ? " · "
+            + UI.Keybinds.describe("copy", Translations.text("images.actions.copy")) : "")
+    function copyCurrentImage() {
+        if (picker.currentItem?.image) ClipboardService.copyImage(picker.currentItem.image)
+    }
+    searchKeyHandler: (event, activate) => {
+        if (!UI.Keybinds.matches(event, "copy")) return false
+        if (activate) root.copyCurrentImage()
+        return true
+    }
+    UI.PanelShortcut {
+        owner: root
+        action: "copy"
+        actionEnabled: !!root.picker.currentItem?.image
+        onActivated: root.copyCurrentImage()
     }
 }

@@ -6,6 +6,7 @@ Item {
     id: root
     required property var host
     property var picker: PickerService
+    property bool privateHost: false
     readonly property var panel: panelLoader.item
     readonly property real availableContentWidth: Math.max(0, (host.geometryScreen?.width || 800) - Theme.tooltipRadius * 2 - Theme.tooltipPaddingWidth * 2)
     readonly property real availableContentHeight: Math.max(0, (host.geometryScreen?.height || 1080) * 0.75 - host.shadowBottomPadding)
@@ -13,14 +14,21 @@ Item {
     readonly property real boundedContentWidth: Math.min(panel?.implicitWidth ?? Theme.pickerWidth,
         Math.max(0, (host.geometryScreen?.width || 800) - Theme.tooltipRadius * 2 - Theme.tooltipPaddingWidth * 2))
     readonly property real boundedContentHeight: Math.min(panel?.implicitHeight ?? 0,
-        Math.max(0, (host.geometryScreen?.height || 1080) * 0.75 - host.shadowBottomPadding))
+        Math.max(0, (host.geometryScreen?.height || 1080)
+            * (panel?.floatingPreviewRequested ? Theme.pickerPreviewListHeightRatio : 0.75) - host.shadowBottomPadding))
     // A fitted preview can resize inside a stable placement footprint.
     readonly property real centeredContentX: (host.width - Math.min(panel?.placementWidth ?? boundedContentWidth, availableContentWidth)) / 2
     readonly property int keyboardFocusMode: focusHandler.keyboardFocusMode
     readonly property bool requestingKeyboardFocus: focusHandler.requestingKeyboardFocus
     readonly property bool secretPrompt: focusHandler.secretPrompt
     readonly property bool restoringDialogFocus: focusHandler.restoringDialogFocus
-    LauncherFocusHandler { id: focusHandler; host: root.host; panel: root.panel; picker: root.picker }
+    readonly property var previewWindow: preview
+    LauncherFocusHandler {
+        id: focusHandler
+        host: root.host; panel: root.panel; picker: root.picker
+        interactionWindows: preview.visible ? [root.host, preview] : [root.host]
+    }
+    PickerPreviewWindow { id: preview; host: root.host; picker: root.picker; previewPanel: root.panel; privateWindow: root.privateHost }
     Component.onCompleted: ClipboardService.initialize()
 
     Loader {

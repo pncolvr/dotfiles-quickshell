@@ -23,6 +23,22 @@ Scope {
         PickerPanel { id: panel }
         UI.InputField { id: pasteSource; visible: false; text: "Beta" }
     }
+    QtObject {
+        id: previewHost
+        property var requestedScreen: Quickshell.screens[0]
+        property bool requestedVisible: PickerService.visible
+        property real contentHeight: Math.min(panel.height,250)
+        property real layoutContentHeight: contentHeight
+        property real shadowBottomPadding: 0
+    }
+    FloatingWindow {
+        visible: previewSurface.presented
+        // Emulate the native companion's WlrKeyboardFocus.None offscreen.
+        onVisibleChanged: if (visible) Qt.callLater(() => window.contentItem.Window.window.requestActivate())
+        implicitWidth: previewHost.requestedScreen.width
+        implicitHeight: previewHost.requestedScreen.height - Theme.barHeight
+        PickerPreviewSurface { id: previewSurface; anchors.fill: parent; host: previewHost; picker: PickerService; previewPanel: panel }
+    }
     function check(condition, message) {
         if (!condition) { failed = true; console.error("PICKER FAIL: " + message) }
     }
@@ -171,7 +187,7 @@ Scope {
 
         function snapshot(): string {
             const viewer = objects.findChild(panel.panel, "imageViewer") as Image
-            const image = viewer ?? objects.findChild(panel.panel, "clipboardLargeImage") as Image
+            const image = viewer ?? objects.findChild(previewSurface, "clipboardLargeImage") as Image
             const hint = objects.findChild(panel.panel, "pickerEmptyHint") as UI.Text
             const search = objects.findChild(panel.panel, "pickerSearch") as UI.SearchField
             const list = objects.findChild(panel.panel, "pickerList") as UI.PickerList
@@ -189,7 +205,7 @@ Scope {
             viewerHints:viewer ? panel.panel.children.filter(child => child instanceof UI.ShortcutHints).length : 0,
             emptyHint:hint?.text ?? "",placeholder:search?.placeholderText ?? "",footerHint:panel.panel?.footerHint ?? "",
             previewImages:PickerService.previewImages,previewSource:image?.source.toString() ?? "",
-            previewStatus:image?.status ?? Image.Null,stackedPreview:panel.panel?.stackedPreview ?? false,
+            previewStatus:image?.status ?? Image.Null,floatingPreview:panel.floatingPreviewRequested,previewFrameWidth:previewSurface.previewWidth,
             searchPending:PickerService.searchPending,query:PickerService.query,items:PickerService.items,filtered:PickerService.filteredItems,currentIndex:PickerService.currentIndex,
             selected:PickerService.selectedIds,canAccept:PickerService.canAccept,acceptLabel:PickerService.acceptLabel,
             layout:PickerService.layout,itemCriteria:PickerService.itemCriteria,selectionKey:PickerService.selectionKey,

@@ -5,6 +5,7 @@ import Quickshell
 import Quickshell.Io
 import "../../src/services"
 import "../../src/config"
+import "../../src/theme"
 import "../../src/modules/launcher"
 
 Scope {
@@ -18,10 +19,27 @@ Scope {
     Connections { target: PickerService; function onVisibleChanged() { if (!PickerService.visible) root.closures++ } }
     Test.TestCase { id: events; when: false }
     FloatingWindow {
+        id: listWindow
         visible: true
         implicitWidth: 1100
         implicitHeight: 700
         PickerPanel { id: panel; anchors.fill: parent; availableContentWidth: 1100; availableContentHeight: 700 }
+    }
+    QtObject {
+        id: previewHost
+        property var requestedScreen: Quickshell.screens[0]
+        property bool requestedVisible: PickerService.visible
+        property real contentHeight: 250
+        property real layoutContentHeight: contentHeight
+        property real shadowBottomPadding: 0
+    }
+    FloatingWindow {
+        visible: previewSurface.presented
+        // Match the native non-activating companion inside the offscreen fixture.
+        onVisibleChanged: if (visible) Qt.callLater(() => listWindow.contentItem.Window.window.requestActivate())
+        implicitWidth: previewHost.requestedScreen.width
+        implicitHeight: previewHost.requestedScreen.height - Theme.barHeight
+        PickerPreviewSurface { id: previewSurface; anchors.fill: parent; host: previewHost; picker: PickerService; previewPanel: panel }
     }
     FileView {
         id: control
@@ -104,7 +122,7 @@ Scope {
         check(selectedIndex > 0, "regression selects a row beyond the first match")
         PickerService.select(selectedIndex, false)
         waitFor(() => {
-            const preview = events.findChild(panel, "clipboardLargeImage")
+            const preview = events.findChild(previewSurface, "clipboardLargeImage")
             return preview?.status === Image.Ready
         }, "shared preview loads literal/reserved-character image path")
         chooseTarget()

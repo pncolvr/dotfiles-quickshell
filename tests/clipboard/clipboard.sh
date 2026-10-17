@@ -42,6 +42,12 @@ printf '%s' 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwM
 image_entry=$(CLIPBOARD_TYPE=image/png bash "$helper" capture < "$test_dir/image.png")
 image_id=$(jq -r '.id' <<< "$image_entry")
 [[ $(jq -r '.kind' <<< "$image_entry") == image ]]
+cp "$test_dir/image.png" "$test_dir/image with # % and spaces.png"
+bash "$helper" copy-image "$test_dir/image with # % and spaces.png"
+cmp "$test_dir/image.png" "$test_dir/restored"
+[[ $(<"$test_dir/mime") == '--type image/png' ]]
+if bash "$helper" copy-image "$test_dir/text"; then exit 1; fi
+if bash "$helper" copy-image "$test_dir/missing.png"; then exit 1; fi
 bash "$helper" restore "$image_id" image/png
 cmp "$test_dir/image.png" "$test_dir/restored"
 [[ -z $(CLIPBOARD_TYPE=image/png bash "$helper" capture < "$test_dir/text") ]]

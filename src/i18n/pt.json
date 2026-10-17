@@ -436,6 +436,8 @@
   "folders.actions.switchCategoryHint": "Alternar categoria",
   "folders.actions.switchTypeHint": "Alternar tipo de pasta",
   "folders.dialog.title": "Escolher pasta",
+  "images.errors.copy": "Não foi possível copiar a imagem.",
+  "images.actions.copy": "Copiar imagem",
   "images.preview.empty": "Nenhuma imagem selecionada",
   "images.preview.loading": "A carregar imagem…",
   "images.preview.unavailable": "Imagem indisponível",

@@ -222,7 +222,7 @@ ipc call pickertest pressEscape
 [[ ! -f $test_dir/copied ]]
 printf 'PASS: QR input has no redundant hint, displays the copied PNG sharply and preserves clipboard content after viewer dismissal\n'
 
-# Wallpaper image previews use bounded native image loading on wide and narrow screens.
+# Wallpaper uses the shared larger floating preview on wide and narrow list viewports.
 mkdir "$test_dir/wallpapers"
 magick -size 1600x900 xc:red "$test_dir/wallpapers/one.png"
 jq -n --arg image "file://$test_dir/wallpapers/one.png" '{
@@ -237,7 +237,7 @@ for viewport in 500 1000; do
         sleep 0.025
     done
     snapshot | jq -e --arg image "file://$test_dir/wallpapers/one.png" --argjson viewport "$viewport" \
-        '.previewStatus == 1 and .previewSource == $image and .stackedPreview == ($viewport < 800)
+        '.previewStatus == 1 and .previewSource == $image and .floatingPreview and .panelWidth == 560 and .previewFrameWidth > .panelWidth
             and (.rowImageSources | length == 2 and all(.[]; . == ""))' >/dev/null
     ipc call pickertest query 'missing image'
     snapshot | jq -e '.filtered == [] and .previewSource == ""' >/dev/null
@@ -261,13 +261,13 @@ for sample in landscape portrait panorama; do
     ipc call pickertest select "$index"
     for ((try=0;try<100;try++)); do
         if snapshot | jq -e --arg sample "$sample.png" '.previewStatus==1 and (.previewSource|endswith($sample))
-            and ((.previewPaintedWidth-.previewContentWidth)|fabs)<1 and ((.previewPaintedHeight-.previewContentHeight)|fabs)<1' >/dev/null; then break; fi
+            and (.previewPaintedWidth > 0 and .previewPaintedWidth <= .previewContentWidth + 1) and (.previewPaintedHeight > 0 and .previewPaintedHeight <= .previewContentHeight + 1)' >/dev/null; then break; fi
         sleep 0.025
     done
     rendered=$(snapshot)
-    jq -e '.previewStatus==1 and .panelWidth<=1000 and .panelHeight<=400
-        and ((.previewPaintedWidth-.previewContentWidth)|fabs)<1
-        and ((.previewPaintedHeight-.previewContentHeight)|fabs)<1
+    jq -e '.previewStatus==1 and .panelWidth<=1000 and .panelWidth == 560
+        and (.previewPaintedWidth > 0 and .previewPaintedWidth <= .previewContentWidth + 1)
+        and (.previewPaintedHeight > 0 and .previewPaintedHeight <= .previewContentHeight + 1)
         and ((.searchWidth-.listWidth)|fabs)<1' <<< "$rendered" >/dev/null
     geometry=$(jq -c '[.placementWidth,.searchWidth,.listWidth,.listHeight]' <<< "$rendered")
     if [[ -z $baseline ]]; then baseline=$geometry; else [[ $geometry == "$baseline" ]]; fi
@@ -276,7 +276,7 @@ for sample in landscape portrait panorama; do
 done
 ipc call pickertest pressEscape
 wait_client 1
-printf 'PASS: fitted landscape/portrait/panoramic previews retain search/list placement, width and viewport height across selections\n'
+printf 'PASS: floating landscape/portrait/panoramic previews fit without moving the search/list placement, width or viewport height\n'
 
 jq '.previewImages = false' "$test_dir/images.json" > "$test_dir/row-images.json"
 bash "$picker" --json "$test_dir/row-images.json" > "$test_dir/result" 2> "$test_dir/client-error" & client_pid=$!
