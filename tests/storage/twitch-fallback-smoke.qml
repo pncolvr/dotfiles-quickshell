@@ -7,6 +7,7 @@ import Quickshell.Io
 import "../../src/services"
 import "../../src/modules/media"
 import "../../src/theme/ui" as UI
+import "../../src/theme"
 
 Scope {
     id: root
@@ -32,6 +33,7 @@ Scope {
         implicitWidth: panel.implicitWidth
         implicitHeight: panel.implicitHeight
         TwitchTooltip { id: panel; width: implicitWidth; height: implicitHeight }
+        Twitch { id: indicator }
     }
     function check(condition, message) {
         if (condition) return
@@ -167,6 +169,13 @@ Scope {
                 return
             }
             if (!DbService.ready || !TwitchService.available || !NetworkService.online) return
+            if (root.step === 0) {
+                root.check(indicator.normalIconColor.toString() === (TwitchService.hasOnline ? Theme.twitchColor : Theme.text).toString(), "idle/live icon uses shared normal/live colors")
+                events.mouseClick(indicator, indicator.width / 2, indicator.height / 2, Qt.LeftButton, Qt.NoModifier, 0)
+                root.check(indicator.pinned && indicator.moduleIconColor.toString() === Theme.accent.toString(), "pinning retains the shared accent")
+                events.mouseClick(indicator, indicator.width / 2, indicator.height / 2, Qt.LeftButton, Qt.NoModifier, 0)
+                root.check(!indicator.pinned && indicator.moduleIconColor.toString() === indicator.normalIconColor.toString(), "unpinning restores normal/live color")
+            }
             if (root.step === 0) {
                 if (root.phase === "batch") {
                     root.check(TwitchRepository.channelLogins().length === 102, "batch fixture has more than 100 channels")

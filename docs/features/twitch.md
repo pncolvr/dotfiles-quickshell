@@ -1,5 +1,16 @@
 # Twitch
 
+## Optional module and icon colors
+
+`Config.twitchEnabled` defaults to `true`. Set it to `false` to hide Twitch and
+make its bar shortcut inactive after the Config reload. This disables Twitch CLI
+detection, clock-aligned polling, browser-session suggestions and Twitch alerts;
+Twitch service actions also become inactive. Saved channels and cached data stay in
+SQLite, and re-enabling resumes polling with those saved entries.
+
+The idle icon uses `Theme.text`, matching other bar modules. Live channels use
+`Theme.twitchColor`; manual pinning takes precedence with `Theme.accent`.
+
 ## Following streamers
 
 Twitch checks on startup, then at clock-aligned intervals configured by

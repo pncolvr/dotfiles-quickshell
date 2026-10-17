@@ -7,7 +7,7 @@ UI.TooltipArea {
     id: root
     moduleName: "twitch"
 
-    normalIconColor: TwitchService.hasOnline ? Theme.twitchColor : Theme.inactive
+    normalIconColor: TwitchService.hasOnline ? Theme.twitchColor : Theme.text
     tooltipSource: root
     visible: TwitchService.available
     tooltip: Component { TwitchTooltip {} }

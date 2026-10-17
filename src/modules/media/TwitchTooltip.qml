@@ -102,7 +102,7 @@ Item {
 
     Timer {
         interval: 3000
-        running: root.adding && !root.editingLogin && !secondChannelField.text.trim()
+        running: TwitchService.enabled && root.adding && !root.editingLogin && !secondChannelField.text.trim()
         repeat: true
         triggeredOnStart: true
         onTriggered: TwitchService.refreshBrowserSuggestions()

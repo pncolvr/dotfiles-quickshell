@@ -189,6 +189,12 @@ configuration directories, generated `.godot` directories and Git metadata.
 Godot's project entry is normally `project.godot`, distinct from its generated
 `.godot` directory; see the [Godot CLI documentation](https://docs.godotengine.org/en/stable/tutorials/editor/command_line_tutorial.html#setting-the-project-path).
 
+## Optional Twitch module
+
+`twitchEnabled` defaults to `true`. Disable it to hide the icon and deactivate its
+shortcut, polling, browser suggestions and alerts while retaining saved channels
+and cached data. Config reload applies the choice. See [Twitch](features/twitch.md).
+
 ## Panels and search
 
 See the [panel behavior reference](features/panels.md) for the shared interaction rules.

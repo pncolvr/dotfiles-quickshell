@@ -50,12 +50,12 @@ cat > "$test_dir/bin/notify-send" <<'MOCK'
 jq -cn --args '$ARGS.positional' -- "$@" >> "$TWITCH_FALLBACK_STATE/alerts"
 MOCK
 chmod 700 "$test_dir/bin/"*
+tar -C "$project_root" --exclude='*.env' --exclude='src/services/launcher/providers/*.json' -cf - src | tar -C "$test_dir/config" -xf -
+sed -i 's/clipboardMonitorEnabled: true/clipboardMonitorEnabled: false/' "$test_dir/config/src/config/Config.qml"
+sed 's@"../../src@"src@g' "$project_root/tests/storage/twitch-fallback-smoke.qml" > "$test_dir/config/fallback.qml"
 sqlite3 "$test_dir/config/data/quickshell.db" "CREATE TABLE twitch_users (login TEXT PRIMARY KEY COLLATE NOCASE, added_at INTEGER NOT NULL); INSERT INTO twitch_users VALUES ('banana',1),('tomato',2); PRAGMA user_version=6;"
-cat > "$test_dir/config/shell.qml" <<QML
-import QtQuick
-import Quickshell
-Scope { Loader { source: "file://$project_root/tests/storage/twitch-fallback-smoke.qml" } }
-QML
+cp "$test_dir/config/fallback.qml" "$test_dir/config/shell.qml"
+
 for phase in link both main fallback fallback-restart neither edit; do
     output=$(TWITCH_FALLBACK_PHASE="$phase" timeout 12 qs -p "$test_dir/config/shell.qml" 2>&1) || { printf '%s\n' "$output" >&2; exit 1; }
     printf '%s\n' "$output"
@@ -79,3 +79,67 @@ printf '%s\n' "$output"
 jq -se 'any(.[]; .path == "streams" and (.logins | index("potato"))) and any(.[]; .path == "users" and (.logins | index("potato")))' "$test_dir/queries" >/dev/null
 [[ $(sqlite3 "$test_dir/config/data/quickshell.db" 'PRAGMA integrity_check;') == ok ]]
 printf 'PASS: fallback migration, selection, metadata, silent transitions, persistence, editor, linking, removal, Undo, unlinking, conflicts and API batches\n'
+
+# Disabled startup retains saved channels/cache and performs no Twitch work.
+twitch_snapshot() {
+    for table in twitch_users twitch_schedules twitch_avatars twitch_notified_streams; do
+        sqlite3 "$test_dir/config/data/quickshell.db" ".dump $table"
+    done
+}
+twitch_snapshot > "$test_dir/before-disabled.sql"
+query_count=$(wc -l < "$test_dir/queries")
+alert_count=$(wc -l < "$test_dir/alerts")
+cat > "$test_dir/bin/which" <<'MOCK'
+#!/usr/bin/env bash
+printf 'CLI detection\n' >> "$TWITCH_FALLBACK_STATE/disabled-actions"
+exit 0
+MOCK
+chmod +x "$test_dir/bin/which"
+cat > "$test_dir/config/src/services/twitch/qutebrowser-channels.sh" <<'MOCK'
+#!/usr/bin/env bash
+printf 'browser discovery\n' >> "$TWITCH_FALLBACK_STATE/disabled-actions"
+printf '[]\n'
+MOCK
+sed -i 's/twitchEnabled: true/twitchEnabled: false/' "$test_dir/config/src/config/Config.qml"
+cat > "$test_dir/config/disabled.qml" <<'QML'
+import QtQuick
+import Quickshell
+import "src/services"
+import "src/modules/media"
+Scope {
+    id: root
+    property int ticks: 0
+    property bool failed: false
+    function check(ok, message) { if (!ok) { failed = true; console.error("FALLBACK FAIL:", message) } }
+    FloatingWindow { visible: true; implicitWidth: 300; implicitHeight: 100; Twitch { id: indicator } }
+    Timer {
+        interval: 25; running: true; repeat: true
+        onTriggered: {
+            if (!DbService.ready) return
+            if (++root.ticks === 1) {
+                root.check(!TwitchService.enabled && !TwitchService.available && !TwitchService.usersReady, "disabled service is unavailable")
+                root.check(!indicator.visible && !BarModuleService.open("twitch"), "disabled icon/shortcut cannot open")
+                TwitchService.refresh(); TwitchService.reload(); TwitchService.refreshBrowserSuggestions()
+                TwitchService.notifyChanges({online:[{login:"must-not-notify"}],offline:[]})
+                root.check(!TwitchService.addUser("must-not-save") && !TwitchService.removeUser(TwitchRepository.users[0].login), "disabled actions cannot edit saved channels")
+            }
+            if (root.ticks === 20) {
+                root.check(TwitchRepository.users.length === 51, "saved channels remain loaded and intact")
+                if (!root.failed) console.log("PASS: disabled Twitch hides icon/shortcut and blocks refresh, discovery, alerts and edits")
+                stop(); Qt.quit()
+            }
+        }
+    }
+}
+QML
+output=$(timeout 10 qs -p "$test_dir/config/disabled.qml" 2>&1) || { printf '%s\n' "$output" >&2; exit 1; }
+printf '%s\n' "$output"
+[[ $output == *'PASS: disabled Twitch'* && $output != *'FALLBACK FAIL:'* && $output != *'TypeError:'* && $output != *'ReferenceError:'* ]]
+[[ ! -e $test_dir/disabled-actions && $(wc -l < "$test_dir/queries") == "$query_count" && $(wc -l < "$test_dir/alerts") == "$alert_count" ]]
+twitch_snapshot > "$test_dir/after-disabled.sql"
+cmp "$test_dir/before-disabled.sql" "$test_dir/after-disabled.sql"
+sed -i 's/twitchEnabled: false/twitchEnabled: true/' "$test_dir/config/src/config/Config.qml"
+rm -- "$test_dir/bin/which" "$test_dir/fail-batch"
+output=$(TWITCH_FALLBACK_PHASE=batch timeout 12 qs -p "$test_dir/config/shell.qml" 2>&1) || { printf '%s\n' "$output" >&2; exit 1; }
+[[ $output == *'PASS: fallback batch'* && $output != *'FALLBACK FAIL:'* && $output != *'TypeError:'* && $output != *'ReferenceError:'* ]]
+printf 'PASS: disabling preserves Twitch tables with no detection/API/browser/alert work; re-enabling resumes saved channels\n'

@@ -458,6 +458,11 @@ persistence, and main-only alerts. It also checks requests across the
 [Helix 100-channel limit](https://dev.twitch.tv/docs/api/reference/#get-streams)
 and preserves the previous live list when a later batch fails. Both storage
 suites use Bash, jq, sqlite3, and isolated QML fixtures.
+It also checks idle/live/pinned icon colors and an isolated disabled startup: no CLI
+detection, Twitch API calls, browser discovery or alerts; unchanged Twitch tables;
+and saved-channel polling after re-enabling. The disabled icon cannot be opened
+through the shared bar-module shortcut handler. No native focus or real accounts
+are used.
 
 ## TOTP
 

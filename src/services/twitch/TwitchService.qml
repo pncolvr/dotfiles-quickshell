@@ -9,6 +9,7 @@ import "../"
 Singleton {
     id: root
 
+    readonly property bool enabled: Config.twitchEnabled
     readonly property var entries: selectUsers(TwitchRepository.users, state.streams)
     readonly property var onlineUsers: entries.filter(user => user.online)
     readonly property var offlineUsers: {
@@ -18,8 +19,8 @@ Singleton {
     }
     readonly property var allUsers: [...onlineUsers, ...offlineUsers].sort((a, b) => a.login.localeCompare(b.login))
     readonly property bool hasOnline: onlineUsers.length > 0
-    readonly property bool available: state.available
-    readonly property bool usersReady: DbService.ready
+    readonly property bool available: enabled && state.available
+    readonly property bool usersReady: enabled && DbService.ready
     readonly property string error: TwitchRepository.error
     readonly property var removedUsers: TwitchRepository.removedUsers.map(entry => ({login: entry.user.login, expiresAt: entry.expiresAt}))
     readonly property var browserSuggestions: {
@@ -46,7 +47,7 @@ Singleton {
         readonly property int scheduleCacheDuration: 60 * 60 * 1000
     }
 
-    function openUrl(login) { Qt.openUrlExternally(`${Config.twitchBaseUrl}${login}`) }
+    function openUrl(login) { if (enabled) Qt.openUrlExternally(`${Config.twitchBaseUrl}${login}`) }
     function streamNotification(changes) {
         const sections = []
         let summary = ""
@@ -60,13 +61,13 @@ Singleton {
     }
 
     function notifyChanges(changes) {
-        if (!changes.online.length && !changes.offline.length) return
+        if (!enabled || (!changes.online.length && !changes.offline.length)) return
         state.notificationQueue.push(streamNotification(changes))
         processNotificationQueue()
     }
 
     function processNotificationQueue() {
-        if (notifyProcess.running || !state.notificationQueue.length) return
+        if (!enabled || notifyProcess.running || !state.notificationQueue.length) return
         const notification = state.notificationQueue.shift()
         notifyProcess.command = ["notify-send", "--app-name=Twitch", "--urgency=normal",
             "--icon",
@@ -91,7 +92,7 @@ Singleton {
     }
 
     function refreshBrowserSuggestions() {
-        if (!browserSessionProcess.running) browserSessionProcess.running = true
+        if (enabled && !browserSessionProcess.running) browserSessionProcess.running = true
     }
 
     function selectUsers(users, streams) {
@@ -119,7 +120,7 @@ Singleton {
     }
 
     function reload() {
-        if (TwitchRepository.reload()) refresh()
+        if (enabled && TwitchRepository.reload()) refresh()
     }
 
     function isRefreshMinute(now, interval = Config.twitchInterval) {
@@ -240,7 +241,7 @@ Singleton {
 
     Process {
         command: ["which", Config.twitchCli]
-        running: true
+        running: root.enabled
         // Quickshell.Io omits QProcess::ExitStatus from its qmltypes.
         // qmllint disable signal-handler-parameters
         onExited: (exitCode, exitStatus) => { state.available = exitCode === 0 && exitStatus === 0 }
@@ -368,6 +369,7 @@ Singleton {
     }
 
     SystemClock {
+        enabled: root.enabled
         precision: SystemClock.Enum.Minutes
         onDateChanged: if (root.isRefreshMinute(date.getTime())) root.refresh()
     }
