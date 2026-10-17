@@ -11,6 +11,7 @@ Singleton {
     id: root
 
     readonly property bool enabled: Config.twitchEnabled
+    readonly property bool browserIntegrationEnabled: enabled && Config.twitchQutebrowserEnabled
     readonly property var entries: selectUsers(TwitchRepository.users, state.streams)
     readonly property var onlineUsers: entries.filter(user => user.online)
     readonly property var offlineUsers: {
@@ -25,8 +26,15 @@ Singleton {
     readonly property string error: TwitchRepository.error
     readonly property var removedUsers: TwitchRepository.removedUsers.map(entry => ({login: entry.user.login, expiresAt: entry.expiresAt}))
     readonly property var browserSuggestions: {
+        if (!browserIntegrationEnabled) return []
         const followed = TwitchRepository.channelLogins()
         return state.browserLogins.filter(login => !followed.includes(login))
+    }
+    onBrowserIntegrationEnabledChanged: {
+        if (!browserIntegrationEnabled) {
+            browserSessionProcess.running = false
+            state.browserLogins = []
+        }
     }
     onUsersReadyChanged: if (usersReady) Qt.callLater(root.refresh)
     onAvailableChanged: if (available) Qt.callLater(root.refresh)
@@ -93,7 +101,7 @@ Singleton {
     }
 
     function refreshBrowserSuggestions() {
-        if (enabled && !browserSessionProcess.running) browserSessionProcess.running = true
+        if (browserIntegrationEnabled && !browserSessionProcess.running) browserSessionProcess.running = true
     }
 
     function selectUsers(users, streams) {
@@ -230,7 +238,7 @@ Singleton {
         // qmllint disable signal-handler-parameters
         onExited: (exitCode, exitStatus) => {
             state.browserLogins = []
-            if (exitCode !== 0 || exitStatus !== 0) return
+            if (!root.browserIntegrationEnabled || exitCode !== 0 || exitStatus !== 0) return
             try {
                 const logins = JSON.parse(browserSessionOutput.text)
                 if (Array.isArray(logins))

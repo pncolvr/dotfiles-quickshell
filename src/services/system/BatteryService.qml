@@ -12,9 +12,11 @@ import "../"
 Singleton {
     id: root
 
+    readonly property bool enabled: Config.batteriesEnabled
+
     // Reading device properties inside this binding also tracks their live changes.
-    readonly property var batteries: mergeReceiverBatteries(
-        collectBatteries(UPower.devices.values, Bluetooth.devices.values, UPower.onBattery), receiverBatteries)
+    readonly property var batteries: enabled ? mergeReceiverBatteries(
+        collectBatteries(UPower.devices.values, Bluetooth.devices.values, UPower.onBattery), receiverBatteries) : []
     readonly property var receiverBatteries: JSON.parse(_internal.receiverSnapshotJson)
     readonly property bool scanningReceivers: receiverProcess.running
     readonly property string receiverError: _internal.receiverError
@@ -37,10 +39,10 @@ Singleton {
         objectName: "batteryReceiverTimer"
         interval: Config.batteryReceiverInterval
         // The bar needs current levels even when the tooltip has never been opened.
-        running: DbService.ready
+        running: root.enabled && DbService.ready
         repeat: true
         triggeredOnStart: true
-        onTriggered: if (!receiverProcess.running) receiverProcess.running = true
+        onTriggered: if (root.enabled && !receiverProcess.running) receiverProcess.running = true
     }
 
     Connections {
@@ -49,11 +51,19 @@ Singleton {
     }
 
     function restoreReceiverSnapshot() {
-        if (!DbService.ready || _internal.receiverCacheRestored) return
+        if (!enabled || !DbService.ready || _internal.receiverCacheRestored) return
         _internal.receiverSnapshotJson = JSON.stringify(BatteryRepository.receiverSnapshot())
         _internal.receiverCacheRestored = true
     }
 
+    onEnabledChanged: {
+        if (enabled) restoreReceiverSnapshot()
+        else {
+            receiverProcess.discardResult = true
+            if (receiverProcess.running) receiverProcess.signal(15)
+            _internal.receiverError = ""
+        }
+    }
     Component.onCompleted: restoreReceiverSnapshot()
 
     function levelStatus(level) {
@@ -65,6 +75,8 @@ Singleton {
 
     Process {
         id: receiverProcess
+        property bool discardResult: false
+        onStarted: discardResult = false
         command: Config.batteryReceiverCommand
         stdout: StdioCollector {
             id: receiverOutput
@@ -73,6 +85,7 @@ Singleton {
         // Quickshell.Io omits QProcess::ExitStatus from its qmltypes.
         // qmllint disable signal-handler-parameters
         onExited: (exitCode, exitStatus) => {
+            if (!root.enabled || receiverProcess.discardResult) return
             if (exitCode !== 0 || exitStatus !== 0) {
                 _internal.receiverError = Translations.text("batteries.errors.read")
                 return

@@ -16,7 +16,7 @@ ManagedCollectionService {
     itemForEntry: entry => ({id:entry.id,title:entry.name,subtitle:entry.url,
         search:entry.name+' '+entry.url,result:entry.id})
     busy: launchTask.running
-    function newEntry() { edit(Entries.empty()) }
+    function newEntry() { edit(Entries.empty(Config.webappDefaultBrowser)) }
     function accept(items) {
         if (managing || busy || !items.length) return
         const entry=entries.find(entry => entry.id === items[0].result)

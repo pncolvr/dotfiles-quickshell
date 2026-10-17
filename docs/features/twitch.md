@@ -26,8 +26,10 @@ is capped to fit the screen; streamer and suggestion grids scroll while add
 controls stay visible. A divider separates the footer, where the search and add
 inputs use the available width.
 Click **+** to enter a streamer login or Twitch URL, then **+** or Enter to save;
-**×** or Escape cancels. While adding, channels open in qutebrowser appear below
-the field in a compact grid of buttons you can click to follow. Adding one keeps
+**×** or Escape cancels. When `Config.twitchQutebrowserEnabled` is true,
+channels open in qutebrowser appear below the field while adding, in a compact
+grid of buttons beside Add all, without a separate heading. Click one to follow.
+Adding one keeps
 the editor and search text open while other suggestions remain. **Add all (N)**
 shows how many currently displayed suggestions it will follow. Already followed
 channels are hidden. Suggestions are available while the optional second channel
@@ -92,6 +94,12 @@ Search matches both associated logins, categories, and stream titles, temporaril
 Offline to show results. See [shared panel behavior](../configuration.md#panels-and-search).
 
 ## qutebrowser suggestions
+
+`Config.twitchQutebrowserEnabled` controls this opt-in integration. Enable it
+if you use qutebrowser and want suggestions from its saved sessions. When disabled, Twitch
+does not read session files or run the suggestion refresh timer, and existing
+suggestions are cleared. Twitch's channel management, playback and API updates
+remain available. `Config.twitchEnabled` still controls the whole Twitch module.
 
 Suggestions read current tab entries from whichever of `_autosave.yml` or
 `default.yml` was saved most recently in `$XDG_DATA_HOME/qutebrowser/sessions`

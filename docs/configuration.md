@@ -95,13 +95,25 @@ different purposes remain independent.
 
 ## Bookmarks
 
-`bookmarkFile` defaults to Qutebrowser's existing `~/.config/qutebrowser/bookmarks/urls`.
+`bookmarksEnabled` controls the launcher (true in this setup). When false,
+opening requests do nothing, its own open picker closes, and the source is not
+read. An empty `bookmarkFile` also disables the launcher. Other open panels are
+preserved. `bookmarkFile` accepts any plain text file containing one URL and an
+optional title per line, separated by whitespace. In this setup it points to
+`~/.config/qutebrowser/bookmarks/urls`.
 `bookmarkBrowserCommand` inherits `projectBrowserCommand`, which defaults to
 `["xdg-open"]`. Both use the desktop's default browser association. Override either
 with a literal argv array to choose another opener. These are public path/command settings; bookmark contents stay in the
 existing local file and are read when the picker opens.
 
 ## Webapp browsers
+
+`webappDefaultBrowser` selects the browser ID for new Webapps and n8n entries
+and their shared Browser fields. This setup explicitly selects `"qutebrowser"`;
+choose another ID from `webappBrowsers`, such as `"default"` for `xdg-open`.
+Saved entries and active drafts keep their browser IDs; changing the default
+only affects new entries. Removing a browser definition does not migrate saved
+entries: edit their Browser choice before launching them again.
 
 `webappBrowsers` follows the configurable application pattern: each item has an
 `id`, visible `name`, and argv `command`. Each browser's `profiles` array defines
@@ -450,3 +462,20 @@ instance's cached workflow list are stored in SQLite and encrypted backups.
 Browser commands and available profile choices reuse `Config.webappBrowsers`;
 work filtering reuses `pickerWorkStatus`. No API key or instance address belongs
 in public Config, provider JSON or environment files. Refresh is explicit only.
+
+## Optional battery and browser integrations
+
+`Config.batteriesEnabled` defaults to `true`. Disabling it hides the Batteries
+module, closes its tooltip and stops battery collection and receiver scans,
+while retaining cached readings.
+
+Enable `Config.twitchQutebrowserEnabled` to show Twitch
+channel suggestions from qutebrowser's saved sessions. When off, no session-file
+reader or suggestion refresh timer runs. Other Twitch features remain available;
+`Config.twitchEnabled` controls the Twitch module independently.
+
+Qutebrowser is optional: disable Twitch session suggestions, disable Bookmarks
+or select another plain-text source, choose another `webappDefaultBrowser` and
+remove its definition from `webappBrowsers` if unused. Existing entries must use
+a remaining browser ID. Browser autofill userscripts/bindings are an optional
+browser-side installation; Vault and password prompts do not require them.

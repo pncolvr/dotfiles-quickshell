@@ -6,10 +6,12 @@ import Quickshell.Io
 import "../../src/services"
 import "../../src/config"
 import "../../src/theme"
+import "../../src/ui" as UI
 import "../../src/modules/launcher"
 
 Scope {
     id: root
+    readonly property var settings: Config
     property int replacementCalls: 0
     property var field: null
     Test.TestCase { id: events; when: false }
@@ -64,7 +66,33 @@ Scope {
         check(parsed.length === 3 && parsed[0].title === "Café name" && parsed[1].title === parsed[1].result
             && parsed[2].title === "Last line", "parse whitespace, Unicode, URL-only, CRLF and final unterminated lines")
         writer.setText("https://example.test/z Zulu\nhttps://example.test/a Alpha\nhttps://example.test/b Alpha\n")
+        root.settings.bookmarksEnabled = false
+        PickerService.promptMenu("Other panel",[{title:"Keep"}],() => {})
+        BookmarkService.open()
+        BookmarkService.launch([{result:"https://example.test/must-not-open"}])
+        events.wait(30)
+        check(PickerService.prompt === "Other panel" && browserCalls().length === 0,
+            "disabled bookmarks preserve other panels and never launch")
+        root.settings.bookmarksEnabled = true
+        const sourcePath = root.settings.bookmarkFile
+        root.settings.bookmarkFile = ""
+        BookmarkService.open()
+        check(!BookmarkService.enabled && PickerService.prompt === "Other panel",
+            "blank source disables bookmarks without disturbing another menu")
+        root.settings.bookmarkFile = sourcePath
+        PickerService.close()
+        openList()
+        root.settings.bookmarksEnabled = false
+        check(!PickerService.visible && !BookmarkService.enabled,"disabling closes its own menu")
+        root.settings.bookmarksEnabled = true
         openList("Alpha")
+        const selectButton = events.findChild(panel,"pickerSelectVisible") as UI.ActionButton
+        const acceptButton = events.findChild(panel,"pickerAccept") as UI.ActionButton
+        check(!selectButton.label && !acceptButton.label && selectButton.glyph === Theme.selectVisibleIcon
+            && acceptButton.glyph === Theme.openLinksIcon && selectButton.hint.length > 0
+            && acceptButton.hint === PickerService.acceptLabel,"icon-only selection and open actions retain tooltips")
+        check(Math.abs(acceptButton.parent.x + acceptButton.x + acceptButton.width - acceptButton.parent.parent.width) < 1,
+            "selection actions are right-aligned")
         check(PickerService.query === "Alpha", "typing during loading is retained")
         check(panel.panel.openedListHeight > Theme.pickerRowHeight * 2, "async rows receive the shared list height without refocusing")
         check(field.activeFocus, "native menu focuses the shared search")

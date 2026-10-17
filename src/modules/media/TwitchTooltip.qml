@@ -35,7 +35,7 @@ Item {
         (TooltipService.screen?.height ?? 1080) * Theme.twitchTooltipMaxHeightRatio,
         (TooltipService.screen?.height ?? 1080) - Theme.barHeight - Theme.tooltipPaddingHeight * 2))
     readonly property real fixedHeight: divider.height + editor.height + spacing * 2
-        + (hasSuggestions ? suggestionsHeader.height + spacing * 2 : 0)
+        + (hasSuggestions ? spacing : 0)
         + (hasUndo ? undoHeader.height + spacing * 2 : 0)
         + (errorText.visible ? errorText.height + spacing : 0)
     readonly property real scrollBudget: Math.max(0, maximumHeight - fixedHeight)
@@ -102,8 +102,9 @@ Item {
     }
 
     Timer {
+        objectName: "twitchBrowserSuggestionsTimer"
         interval: 3000
-        running: TwitchService.enabled && root.adding && !root.editingLogin && !secondChannelField.text.trim()
+        running: TwitchService.browserIntegrationEnabled && root.adding && !root.editingLogin && !secondChannelField.text.trim()
         repeat: true
         triggeredOnStart: true
         onTriggered: TwitchService.refreshBrowserSuggestions()
@@ -273,26 +274,21 @@ Item {
         }
 
         Item {
-            id: suggestionsHeader
+            id: suggestionsRow
             width: root.width
-            height: Theme.twitchEditorHeight
+            height: root.suggestionsHeight
             visible: root.hasSuggestions
 
-            UI.ColumnText {
-                id: browserHeading
+            TwitchActionGrid {
+                id: suggestionsView
+                objectName: "twitchBrowserSuggestions"
                 anchors.left: parent.left
-                anchors.verticalCenterOffset: (height - headingMetrics.tightBoundingRect.height) / 2
-                    - baselineOffset - headingMetrics.tightBoundingRect.y
-                width: parent.width - addAllButton.width - root.spacing
-                text: Translations.text("twitch.sections.browser")
-                color: Theme.inactive
-                elide: Text.ElideRight
-                centerVertical: true
-            }
-            TextMetrics {
-                id: headingMetrics
-                font: browserHeading.font
-                text: browserHeading.text
+                width: Math.max(0, parent.width - addAllButton.width - root.spacing)
+                height: parent.height
+                logins: root.browserSuggestions
+                gridObjectName: "twitchSuggestionsGrid"
+                enabled: TwitchService.usersReady
+                onSelected: login => root.addSuggestion(login)
             }
             UI.ActionButton {
                 id: addAllButton
@@ -306,18 +302,6 @@ Item {
                 enabled: TwitchService.usersReady && root.browserSuggestions.length > 0
                 onClicked: root.addAllSuggestions()
             }
-        }
-
-        TwitchActionGrid {
-            id: suggestionsView
-            objectName: "twitchBrowserSuggestions"
-            width: root.width
-            height: root.suggestionsHeight
-            visible: root.hasSuggestions
-            logins: root.browserSuggestions
-            gridObjectName: "twitchSuggestionsGrid"
-            enabled: TwitchService.usersReady
-            onSelected: login => root.addSuggestion(login)
         }
 
         Item {

@@ -145,6 +145,7 @@ Item {
     readonly property string projectDotfilesWorkTree: _internal.home
 
     // Launcher: bookmarks. Share the project URL opener by default.
+    readonly property bool bookmarksEnabled: true
     readonly property string bookmarkFile: _internal.home + "/.config/qutebrowser/bookmarks/urls"
     readonly property var bookmarkBrowserCommand: projectBrowserCommand
 
@@ -157,6 +158,7 @@ Item {
     readonly property var directoryOpenCommand: ["pcmanfm-qt"]
 
     // Launcher: managed webapps. Browser commands are literal argv templates.
+    readonly property string webappDefaultBrowser: "qutebrowser"
     readonly property var webappBrowsers: [
         {
             id: "qutebrowser",
@@ -410,6 +412,7 @@ Item {
     readonly property var powerProfiles: ["power-saver", "balanced", "performance"]
 
     // Batteries
+    readonly property bool batteriesEnabled: true
     readonly property int batteryReceiverInterval: Timespan.fromMinutes(1)
     readonly property int batteryLowThreshold: 20
     readonly property int batteryCriticalThreshold: 10
@@ -419,6 +422,7 @@ Item {
 
     // Twitch and browser sessions
     readonly property bool twitchEnabled: true
+    readonly property bool twitchQutebrowserEnabled: true
     // Whole minutes, aligned to the minute of the hour (:00, :05, :10, ...).
     readonly property int twitchInterval: Timespan.fromMinutes(5)
     readonly property int twitchUndoDuration: Timespan.fromSeconds(6)

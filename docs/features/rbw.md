@@ -1,9 +1,15 @@
-# rbw password prompts and qutebrowser autofill
+# rbw password prompts and optional qutebrowser autofill
 
 `Config.vaultEnabled` defaults to `true` and controls the Vault manager only.
 Set it to `false` to disable the manager window and its opening actions, retaining
 stored entries. The password prompts and browser autofill described here remain
 available independently of that setting.
+
+The qutebrowser autofill setup is optional and browser-owned. Install/register
+its userscripts and bindings only if you want that integration; without them,
+Quickshell performs no browser autofill work. Vault management and rbw password
+prompts remain available without qutebrowser. No browser files are read by these
+features merely because the bar is running.
 
 The `>bw` qutebrowser binding starts a browser-owned operation, opens this shell's
 entry picker, then fills the selected login into the original form. Every entry

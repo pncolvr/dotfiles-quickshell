@@ -89,10 +89,18 @@ read_batteries() {
         printf '%s\n' '{"devices":[],"error":"Some device batteries could not be read (jq is missing)"}'
         return
     fi
-    local errors output devices
+    local errors output devices output_file scan_pid='' scan_status=0
     errors=$(mktemp /tmp/quickshell-battery-errors.XXXXXX)
-    trap 'rm -f -- "$errors"' EXIT
-    if output=$(LC_ALL=C timeout 45 solaar show 2>"$errors"); then
+    output_file=$(mktemp /tmp/quickshell-battery-output.XXXXXXXX)
+    # Disabling the module must stop both the helper and its active device scan.
+    trap 'if [[ -n $scan_pid ]]; then kill -- "-$scan_pid" 2>/dev/null || true; wait "$scan_pid" 2>/dev/null || true; fi; rm -f -- "$errors" "$output_file"' EXIT
+    trap 'exit 0' TERM INT HUP
+    LC_ALL=C setsid timeout 45 solaar show >"$output_file" 2>"$errors" &
+    scan_pid=$!
+    wait "$scan_pid" || scan_status=$?
+    scan_pid=''
+    if ((scan_status == 0)); then
+        output=$(<"$output_file")
         devices=$(parse_devices <<< "$output")
         jq -cn --argjson devices "$devices" '{devices: $devices, error: ""}'
     elif [[ $(<"$errors") == *'No supported device found'* ]]; then
@@ -100,8 +108,8 @@ read_batteries() {
     else
         printf '%s\n' '{"devices":[],"error":"Some device batteries could not be read"}'
     fi
-    rm -f -- "$errors"
-    trap - EXIT
+    rm -f -- "$errors" "$output_file"
+    trap - EXIT TERM INT HUP
 }
 
 if [[ ${BASH_SOURCE[0]} == "$0" ]]; then

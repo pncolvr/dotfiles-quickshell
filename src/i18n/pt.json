@@ -1003,7 +1003,6 @@
   "twitch.fields.secondChannelAccessibleName": "Segundo canal opcional; limpe para desassociar",
   "twitch.link.replaces": "Isto substitui a entrada separada de %1 por um segundo canal.",
   "twitch.search.placeholder": "Pesquisar canais…",
-  "twitch.sections.browser": "Abrir no qutebrowser",
   "twitch.sections.live": "Em direto",
   "twitch.sections.offline": "Offline",
   "twitch.sections.removed": "Removidos recentemente",

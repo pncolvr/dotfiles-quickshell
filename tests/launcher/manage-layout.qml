@@ -138,7 +138,7 @@ Scope {
             view.searchField.forceActiveFocus()
             events.keyClick(Qt.Key_E,Qt.ControlModifier,0)
             root.check(view.editing,"Ctrl+E edits the selected entry from search")
-            webappForm.load(Object.assign(Webapps.empty(),{name:"Example webapp",url:"https://example.test",arguments:["--example"]}))
+            webappForm.load(Object.assign(Webapps.empty(Config.webappDefaultBrowser),{name:"Example webapp",url:"https://example.test",arguments:["--example"]}))
             events.wait(30)
             root.check(!view.searchField.enabled && !view.listView.enabled && !root.find("managementCategory").enabled
                 && !root.find("managementAdd").enabled && !root.find("managementFilter-enabled").enabled,"draft locks toolbar, filters and list")
@@ -157,7 +157,7 @@ Scope {
             remoteForm.load(Object.assign(Remotes.empty(),{name:"Example remote",endpoint:"fixture.test",hopHost:"jump.test",hopUsername:"user",domain:"Example",password:"synthetic"}))
             events.wait(30); root.preview("remote-edit")
             root.formType = 2
-            n8nForm.load(Object.assign(N8n.empty(),{name:"Example n8n",url:"https://n8n.example.test",apiKey:"synthetic"}))
+            n8nForm.load(Object.assign(N8n.empty(Config.webappDefaultBrowser),{name:"Example n8n",url:"https://n8n.example.test",apiKey:"synthetic"}))
             events.wait(30); root.preview("n8n-edit")
             view.editing = false
             root.showList = true

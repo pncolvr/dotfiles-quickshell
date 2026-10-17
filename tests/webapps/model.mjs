@@ -15,8 +15,8 @@ const window={...Entries.empty(),name:'Window',browser:'qutebrowser',profile:'qu
 const app={...Entries.empty(),name:'App',browser:'vivaldi',profile:'Original profile',windowMode:'app',url:'https://example.test/app'}
 assert.deepEqual(Entries.launch(window,browsers),['qutebrowser','--desktop-file-name','qutebrowser-webapp','-B','/data/qutebrowser-webapp','--target','window','https://example.test/a?x=1&y=2'])
 assert.deepEqual(Entries.launch({...window,windowMode:'normal'},browsers),['qutebrowser','--desktop-file-name','qutebrowser-webapp','-B','/data/qutebrowser-webapp','--target','tab','https://example.test/a?x=1&y=2'])
-assert.equal(Entries.windowOptions(browsers[0])[0].description,'Reuse profile window')
-assert.equal(Entries.windowOptions(browsers[1])[0].description,'Browser default')
+assert.equal(Entries.windowOptions(browsers[0])[0].description,'browser.window.reuse')
+assert.equal(Entries.windowOptions(browsers[1])[0].description,'browser.profile.default')
 assert.deepEqual(Entries.launch({...window,windowMode:'normal',profile:''},browsers),['qutebrowser','--target','tab','https://example.test/a?x=1&y=2'])
 assert.deepEqual(Entries.launch(app,browsers),['vivaldi','--profile-directory=Original profile','--app=https://example.test/app'])
 const strange={...app,url:'https://example.test/?literal={profile}&x=$(touch)',profile:'$(literal)',windowMode:'normal'}
@@ -26,7 +26,9 @@ for (const change of [{url:'javascript:alert(1)'},{profile:'../escape'},{browser
 assert.deepEqual(Args.command('docker start "literal $(not-executed)"'),['docker','start','literal $(not-executed)'])
 assert.deepEqual(Entries.launch({...Entries.empty(),name:'Default',browser:'default',url:'https://example.test'},browsers),['xdg-open','https://example.test'])
 assert.throws(()=>Entries.validate({...window,browser:'default'},browsers))
-assert.deepEqual(Entries.profileOptions(browsers[0]),[{name:'',description:'Browser default'},{name:'qutebrowser-webapp',description:'Webapps'}])
-assert.deepEqual(Entries.profileOptions(browsers[2]),[{name:'',description:'Browser default'}])
+assert.deepEqual(Entries.profileOptions(browsers[0]),[{name:'',description:'browser.profile.default'},{name:'qutebrowser-webapp',description:'Webapps'}])
+assert.deepEqual(Entries.profileOptions(browsers[2]),[{name:'',description:'browser.profile.default'}])
 assert.throws(()=>Entries.launch(window,[{...browsers[0],profiles:[]}]))
+assert.equal(Entries.empty('custom').browser,'custom')
+assert.deepEqual(Entries.launch({...Entries.empty('custom'),name:'Custom',url:'https://example.test'},[{id:'custom',command:['fixture-browser']}]),['fixture-browser','https://example.test'])
 console.log('PASS: webapp browser profiles/window modes, literal command arguments and input validation')

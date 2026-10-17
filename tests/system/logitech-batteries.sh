@@ -4,7 +4,8 @@ set -euo pipefail
 project_root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)
 source "$project_root/src/services/system/logitech-batteries.sh"
 test_dir=$(mktemp -d /tmp/quickshell-battery-reader-test.XXXXXX)
-trap 'rm -rf -- "$test_dir"' EXIT
+helper_pid=''
+trap 'if [[ -n $helper_pid ]]; then kill -TERM "$helper_pid" 2>/dev/null || true; wait "$helper_pid" 2>/dev/null || true; fi; rm -rf -- "$test_dir"' EXIT
 export BATTERY_SYSFS_ROOT=$test_dir/sys
 mkdir -p "$BATTERY_SYSFS_ROOT/class/hidraw/hidraw11/device/power_supply/hidpp_battery_0"
 printf 'Logitech\n' > "$BATTERY_SYSFS_ROOT/class/hidraw/hidraw11/device/manufacturer"
@@ -60,3 +61,31 @@ jq -e '
 ' <<< "$devices" >/dev/null
 [[ $(parse_devices <<< '') == '[]' ]]
 printf 'PASS: Bash Solaar reader includes mice/headsets, charging, unknown levels, excludes offline devices, and resolves kernel identity\n'
+
+# Cancel a synthetic in-flight device command; no receiver/hardware is accessed.
+mkdir "$test_dir/bin"
+export BATTERY_SCAN_PID_FILE="$test_dir/scan-pid"
+cat > "$test_dir/bin/solaar" <<'MOCK'
+#!/usr/bin/env bash
+printf '%s\n' "$$" > "$BATTERY_SCAN_PID_FILE"
+exec sleep 30
+MOCK
+chmod +x "$test_dir/bin/solaar"
+PATH="$test_dir/bin:$PATH" bash "$project_root/src/services/system/logitech-batteries.sh" > "$test_dir/output" &
+helper_pid=$!
+for ((attempt=0;attempt<100;attempt++)); do
+    [[ ! -s $BATTERY_SCAN_PID_FILE ]] || break
+    sleep 0.01
+done
+[[ -s $BATTERY_SCAN_PID_FILE ]]
+scan_pid=$(<"$BATTERY_SCAN_PID_FILE")
+kill -TERM "$helper_pid"
+wait "$helper_pid"
+helper_pid=''
+for ((attempt=0;attempt<100;attempt++)); do
+    if ! kill -0 "$scan_pid" 2>/dev/null; then break; fi
+    sleep 0.01
+done
+! kill -0 "$scan_pid" 2>/dev/null
+[[ ! -s $test_dir/output ]]
+printf 'PASS: cancelling the receiver helper also stops its in-flight device scan\n'

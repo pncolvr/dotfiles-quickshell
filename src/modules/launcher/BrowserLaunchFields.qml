@@ -10,7 +10,7 @@ Column {
     id: root
     property bool readOnly: false
     property string objectNamePrefix: 'webapp'
-    property string browser: 'qutebrowser'
+    property string browser: Config.webappDefaultBrowser
     property string browserProfile: ''
     property string windowMode: 'normal'
     readonly property var configuredBrowser: Config.webappBrowsers.find(browser=>browser.id===root.browser)

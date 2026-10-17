@@ -1,5 +1,5 @@
-export function empty() {
-    return {id:'',name:'',url:'',browser:'qutebrowser',profile:'',windowMode:'normal',enabled:true,
+export function empty(defaultBrowser = "") {
+    return {id:'',name:'',url:'',browser:defaultBrowser,profile:'',windowMode:'normal',enabled:true,
         category:'',arguments:[],before:[],after:[]}
 }
 export function profileOptions(browser) {

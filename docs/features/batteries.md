@@ -1,5 +1,10 @@
 # Batteries
 
+`Config.batteriesEnabled` defaults to `true`. Set it to `false` to hide the
+module, close its tooltip and stop battery-list collection and receiver scans.
+Cached receiver readings remain stored and can be reused after re-enabling.
+Other modules, including power profiles, keep their existing behavior.
+
 ## Levels and warnings
 
 Hover the battery icon immediately to the right of TOTP to see all detected

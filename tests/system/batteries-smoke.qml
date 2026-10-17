@@ -110,7 +110,7 @@ Scope {
                 root.check(BatteryService.collectBatteries([root.powerDevice({type: UPowerDeviceType.Ups, isLaptopBattery: false, isPresent: false})], [], true).length === 1, "UPS included")
                 root.check(BatteryService.percentage(0) === 0 && BatteryService.percentage(1) === 100 && BatteryService.percentage(NaN) === null, "empty, full and unknown levels distinguished")
                 root.check(BatteryService.percentage(-1) === 0 && BatteryService.percentage(2) === 100, "out-of-range levels clamped")
-                root.check(BatteryService.durationText(30) === "less than a minute" && BatteryService.durationText(0) === "", "short and unavailable estimates")
+                root.check(BatteryService.durationText(30) === "Less than a minute" && BatteryService.durationText(0) === "", "short and unavailable estimates")
                 root.check(BatteryService.timeText({state: "charging", timeToFull: 0}) === "", "missing charge estimate omitted")
                 root.check(BatteryService.timeText({state: "discharging", timeToEmpty: 0}) === "", "missing discharge estimate omitted")
                 root.check(BatteryService.timeText({state: "unknown"}) === "", "unknown estimate omitted")

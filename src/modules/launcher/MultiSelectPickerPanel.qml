@@ -16,19 +16,20 @@ PickerPanelBase {
         Item {
             implicitHeight: Theme.controlHeight
             Row {
-                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.right: parent.right
                 spacing: Theme.controlSpacing
                 UI.ActionButton {
                     objectName: "pickerSelectVisible"
-                    label: Translations.text(root.picker.selectionToggleClears ? "picker.actions.clearSelection" : "picker.actions.selectVisible")
-                    implicitWidth: 125; width: implicitWidth
+                    glyph: root.picker.selectionToggleClears ? Theme.clearIcon : Theme.selectVisibleIcon
                     enabled: root.picker.filteredItems.length > 0 || root.picker.selectedIds.length > 0
-                    hint: Translations.text("picker.actions.selectVisibleHint",[UI.Keybinds.sequence("selection.all"),UI.Keybinds.sequence("selection.clear")])
+                    hint: Translations.text(root.picker.selectionToggleClears ? "picker.actions.clearSelection" : "picker.actions.selectVisible")
+                        + " · " + Translations.text("picker.actions.selectVisibleHint",[UI.Keybinds.sequence("selection.all"),UI.Keybinds.sequence("selection.clear")])
                     onClicked: root.picker.toggleVisibleSelection()
                 }
                 UI.ActionButton {
                     objectName: "pickerAccept"
-                    label: root.picker.acceptLabel; implicitWidth: 115; width: implicitWidth
+                    glyph: Theme.openLinksIcon
+                    hint: root.picker.acceptLabel
                     enabled: root.picker.canAccept
                     fillColor: Theme.accent
                     onClicked: root.picker.accept(false, false)

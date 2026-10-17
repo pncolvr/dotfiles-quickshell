@@ -1,7 +1,7 @@
 import * as Browser from '../webapps/WebappEntries.mjs'
 
-export function empty() {
-    return Object.assign(Browser.empty(),{category:'personal',apiKey:''})
+export function empty(defaultBrowser = "") {
+    return Object.assign(Browser.empty(defaultBrowser),{category:'personal',apiKey:''})
 }
 export function baseUrl(value) {
     const url=String(value ?? '').trim().replace(/\/+$/,'')

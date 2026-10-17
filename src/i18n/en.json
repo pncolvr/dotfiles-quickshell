@@ -1003,7 +1003,6 @@
   "twitch.fields.secondChannelAccessibleName": "Optional second channel; clear to unlink",
   "twitch.link.replaces": "This replaces the separate %1 entry with a second channel.",
   "twitch.search.placeholder": "Search streamers…",
-  "twitch.sections.browser": "Open in qutebrowser",
   "twitch.sections.live": "Live",
   "twitch.sections.offline": "Offline",
   "twitch.sections.removed": "Recently removed",

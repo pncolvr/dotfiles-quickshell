@@ -113,11 +113,18 @@ capture view.
 
 ## Bookmarks
 
+`Config.bookmarksEnabled` controls this launcher (true in this setup). Disabling
+it blocks opening, closes its own picker and prevents source reads. An empty
+`bookmarkFile` disables it too. The source can be any plain text file with one
+URL and optional title per line; qutebrowser is not required.
+
 Meta+B dispatches `quickshell:launcher-bookmarks` to `BookmarkService`. It reads
 `Config.bookmarkFile` (`~/.config/qutebrowser/bookmarks/urls` by default) each time
 it opens, using an asynchronous FileView without generating JSON or waiting for
 shell replies. The existing shared picker supports sorted titles, search, typed
-URLs and multiple selection. A single bookmark opens directly; an empty file
+URLs and multiple selection. Select visible and Open links use right-aligned
+icon-only buttons, with their action text in tooltips; selection shortcuts follow
+the configured bindings. A single bookmark opens directly; an empty file
 performs no action. Missing/unreadable sources show an error and still allow a
 typed URL. Cancelled or replaced menus ignore late file reads.
 
@@ -1045,3 +1052,8 @@ closing. Background lock checks do not interrupt the controls or move the list.
 With `Config.workModeEnabled: false`, category controls and status-filter shortcuts
 are hidden across native pickers. All categories remain visible; explicit saved
 browser profiles are preserved. Wallpaper skips mode selection and uses Personal.
+
+New Webapps and n8n entries use `Config.webappDefaultBrowser`, an ID from
+`Config.webappBrowsers`. Changing it leaves saved entries and current drafts
+unchanged. Browser definitions are optional configuration entries; qutebrowser
+can be removed after choosing another default and updating entries that use it.

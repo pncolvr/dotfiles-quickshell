@@ -25,7 +25,7 @@ ManagedCollectionService {
     property int succeeded: 0
     property int failed: 0
     busy: refreshing
-    function newEntry() { edit(Entries.empty()) }
+    function newEntry() { edit(Entries.empty(Config.webappDefaultBrowser)) }
     function accept(items) {
         if (managing || !items.length) return
         const result=items[0].result

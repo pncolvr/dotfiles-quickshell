@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import * as Entries from '../../src/services/n8n/N8nEntries.mjs'
 const browsers=[{id:'qutebrowser',command:['browser'],profileArguments:['--profile','{profile}'],
     profiles:[{id:'test'}],reuseArguments:['--target','tab']}]
-const first=Entries.validate({...Entries.empty(),id:'a',name:'Personal',url:'https://example.test/base/',apiKey:'fixture',profile:'test'},browsers)
+const first=Entries.validate({...Entries.empty(browsers[0].id),id:'a',name:'Personal',url:'https://example.test/base/',apiKey:'fixture',profile:'test'},browsers)
 const second={...first,id:'b',name:'Work',category:'work'}
 assert.equal(first.url,'https://example.test/base')
 assert.equal(Entries.apiUrl(first,'next +&?'), 'https://example.test/base/api/v1/workflows?limit=25&cursor=next%20%2B%26%3F')
@@ -29,3 +29,5 @@ assert.equal(Entries.items([{...first,url:'https://changed.test'}],rows).length,
 assert.deepEqual(Entries.launch(first,Entries.workflowUrl(first,'same'),browsers),
     ['browser','--profile','test','--target','tab','https://example.test/base/workflow/same'])
 console.log('PASS: n8n connection validation, minimal pages, base paths and independent instance/workflow identities')
+
+assert.equal(Entries.empty('custom').browser,'custom')

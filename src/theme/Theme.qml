@@ -51,6 +51,8 @@ QtObject {
     readonly property string notesIcon: "" // file-lines: update notes
     readonly property string addIcon: "" // plus
     readonly property string cancelIcon: "" // xmark
+    readonly property string selectVisibleIcon: "" // square-check: select visible entries
+    readonly property string openLinksIcon: "" // arrow-up-right-from-square: open links
     readonly property string checkIcon: "" // check: saved or selected
     readonly property string deleteIcon: "" // trash-can
     readonly property string upIcon: "" // arrow-up

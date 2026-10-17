@@ -718,6 +718,13 @@ bash tests/system/batteries.sh
 bash tests/system/batteries.sh --native-imports
 ```
 
+Run `bash tests/system/optional-integrations.sh` for isolated offscreen checks of
+Twitch's qutebrowser opt-in and optional Batteries. It uses synthetic session and
+receiver helpers, verifies disabled startup, cancellation/late replies, timer
+shutdown, tooltip closure, retained cache and re-enabling. It explicitly sets
+fixture options independently of the user's Config values. The receiver helper
+regression also checks that cancelling a scan terminates its device subprocess.
+
 Run `bash tests/system/batteries.sh` for the headless battery discovery and QML
 card checks, including live updates, duplicates, disconnection, and scrolling.
 Add `--native-imports` to verify the complete bar and live tooltip on Wayland.
@@ -1208,3 +1215,13 @@ indexes, input focus, user text, shared selectors, memory labels and unchanged
 power action codes in Portuguese. It uses isolated data and never takes native
 keyboard focus. Existing test fixtures must include these public catalogs when
 excluding private JSON. Run `bash tests/qml/lint.sh` after changing imports.
+
+Bookmarks opt-out is enforced in BookmarkService so keyboard and IPC entry
+points share the same guard. The bookmark regression verifies disabled requests
+preserve other panels, cannot launch a browser and close only their own menu.
+WebappEntries/N8nEntries accept an explicit browser default for new records;
+services and shared Browser fields read Config.webappDefaultBrowser. The
+optional-integrations fixture removes qutebrowser from its configured browser
+list and checks both services, fields and unchanged drafts with two generic IDs.
+Browser autofill remains an optional browser-side installation, with no new
+runtime gate or modification of external browser files.
