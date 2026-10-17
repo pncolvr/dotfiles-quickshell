@@ -10,6 +10,7 @@ import "../../config"
 Rectangle {
     id: root
     property var picker: PickerService
+    property bool hideForCapture: picker.hideForCapture ?? false
     property bool backgroundVisible: true
     property real placementWidth: implicitWidth
     property bool showThumbnails: true
@@ -25,7 +26,7 @@ Rectangle {
     property bool inlineFooter: false
     property Component previewComponent: null
     property real maximumPreviewHeight: 0
-    readonly property real previewVerticalPadding: Theme.tooltipPaddingHeight * 2 + panelFooter.height + Theme.controlSpacing
+    readonly property real previewVerticalPadding: Theme.tooltipPaddingHeight + panelFooter.height + Theme.controlSpacing
     property Component searchControls: null
     property real fixedListWidth: 0
     property real previewOpacity: 1
@@ -34,7 +35,7 @@ Rectangle {
     property real availableContentWidth: Theme.pickerWidth
     property real availableContentHeight: 800
     readonly property real columnWidth: fixedListWidth > 0 ? Math.min(fixedListWidth,width - Theme.tooltipPaddingHeight * 2) : width - Theme.tooltipPaddingHeight * 2
-    readonly property real normalHeight: panelHeader.height + list.implicitHeight + panelFooter.height + Theme.tooltipPaddingHeight * 2 + (inputOnly ? Theme.controlSpacing : 12)
+    readonly property real normalHeight: panelHeader.height + list.implicitHeight + panelFooter.height + Theme.tooltipPaddingHeight + Theme.controlSpacing
     property var searchKeyHandler: null
     property string footerHint: Translations.text(inputOnly ? "picker.shortcuts.input" : gridMode ? "picker.shortcuts.default" : "picker.shortcuts.list", [picker.acceptLabel.toLowerCase()])
     property real openedListHeight: Theme.pickerRowHeight
@@ -107,6 +108,7 @@ Rectangle {
     FocusScope {
         anchors.fill: parent
         anchors.margins: Theme.tooltipPaddingHeight
+        anchors.bottomMargin: 0
         focus: true
         Keys.priority: Keys.BeforeItem
         Keys.forwardTo: [root]
@@ -179,7 +181,7 @@ Rectangle {
             width: root.columnWidth
             y: panelHeader.height + Theme.controlSpacing
             visible: !root.inputOnly
-            height: root.inputOnly ? 0 : Math.max(0, panelFooter.y - y - Theme.controlSpacing) * (root.stackedPreview ? 0.4 : 1)
+            height: root.inputOnly ? 0 : Math.max(0, panelFooter.y - y) * (root.stackedPreview ? 0.4 : 1)
             // Keep the opening size while filtering or deleting entries so the
             // panel and its footer do not move under keyboard focus.
             implicitHeight: root.inputOnly ? 0 : root.gridMode ? Theme.pickerGridHeight : root.openedListHeight
@@ -211,29 +213,25 @@ Rectangle {
             id: panelFooter
             objectName: "pickerFooter"
             width: parent.width
-            readonly property bool inlineLayout: root.inlineFooter && width >= hints.implicitWidth
-                + 2 * (((actions.item as Item)?.implicitWidth ?? 0) + Theme.controlSpacing)
-            implicitHeight: inlineLayout ? Math.max(actions.height,hints.implicitHeight)
-                : actions.height + (actions.visible ? Theme.controlSpacing : 0) + hints.implicitHeight
+            implicitHeight: actions.height + (actions.visible ? Theme.controlSpacing : 0) + hints.height
             height: implicitHeight
             anchors.bottom: parent.bottom
             Loader {
                 id: actions
                 objectName: "pickerFooterActions"
                 anchors.right: parent.right
-                width: panelFooter.inlineLayout ? (item as Item)?.implicitWidth ?? 0 : parent.width
+                width: parent.width
                 height: (item as Item)?.implicitHeight ?? 0
-                y: panelFooter.inlineLayout ? (panelFooter.height - height) / 2 : 0
+                y: 0
                 visible: sourceComponent !== null
                 sourceComponent: root.actionButtons
             }
             UI.ShortcutHints {
                 id: hints
                 objectName: "pickerFooterHint"
-                width: panelFooter.inlineLayout ? Math.max(0,parent.width - 2 * (actions.width + Theme.controlSpacing)) : parent.width
+                width: parent.width
                 anchors.horizontalCenter: parent.horizontalCenter
-                y: panelFooter.inlineLayout ? (panelFooter.height - height) / 2
-                    : actions.height + (actions.visible ? Theme.controlSpacing : 0)
+                y: actions.height + (actions.visible ? Theme.controlSpacing : 0)
                 horizontalAlignment: Text.AlignHCenter
                 textFormat: Text.PlainText
                 hints: root.footerHint

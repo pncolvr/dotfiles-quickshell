@@ -155,6 +155,7 @@ Item {
         "- Google Search", "- Twitch", "- Microsoft Azure"
     ]
     readonly property string submapParserCommand: _internal.home +  "/.config/hypr/scripts/keybinds/parser.sh"
+    readonly property var hyprlandCaptureCloseStateCommand: ["bash", Quickshell.shellPath("src/services/hyprland/capture-close-state.sh")]
     readonly property var hyprlandGetWindowsCommand: ["hyprctl", "clients", "-j"]
     // Authoritative compositor setting; sharing temporarily suppresses animations.
     readonly property bool hyprlandAnimationsEnabled: true

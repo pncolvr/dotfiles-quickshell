@@ -71,11 +71,11 @@ if [[ ${RECORD_SETUP_NATIVE:-0} == 1 ]]; then
 const fs=require('fs'),p=process.argv[2];let s=fs.readFileSync(p,'utf8');
 const start=s.indexOf('    FloatingWindow {'),end=s.indexOf('    FileView {',start);
 if(start<0||end<0)throw Error('Native host marker missing');
-s=s.slice(0,start)+`    PickerWindow { id: nativePicker }
+s=s.slice(0,start)+`    PickerWindow { id: nativePicker; picker: CaptureMenuService }
     PrivatePickerWindow {}
     property var panel: nativePicker.panel
 `+s.slice(end);
-s=s.replace('PickerService.items.length > 0, "native "','PickerService.items.length > 0 && !!panel, "native "');
+s=s.replace('CaptureMenuService.items.length > 0, "native "','CaptureMenuService.items.length > 0 && !!panel, "native "');
 s=s.replace('const field = events.findChild(panel,"pickerSearch")', 'waitFor(() => nativePicker.visible && nativePicker.windowActive, "native picker activated"); const field = events.findChild(panel,"pickerSearch")');
 fs.writeFileSync(p,s);
 NATIVE
@@ -131,14 +131,14 @@ Scope {
             switch (phase.text().trim()) {
               case "": setup.open(); phase.setText("open"); break
               case "open":
-                if (!PickerService.visible || !setup.active) return
-                PickerService.query = "reg"
+                if (!CaptureMenuService.visible || !setup.active) return
+                CaptureMenuService.query = "reg"
                 phase.setText("reloaded")
                 stop() // The old generation must not validate the new generation while it loads.
                 Qt.callLater(()=>Quickshell.reload(true))
                 break
               case "reloaded":
-                if (setup.active || PickerService.visible) { console.error("SETUP FAIL: unfinished choices survived reload"); Qt.quit(); return }
+                if (setup.active || CaptureMenuService.visible) { console.error("SETUP FAIL: unfinished choices survived reload"); Qt.quit(); return }
                 console.log("PASS: config reload cancels unfinished native recording setup without handing options to a worker")
                 stop(); Qt.quit()
             }

@@ -10,23 +10,33 @@ import "../../config"
 Singleton {
     id: root
     property var job: null
+    property bool choosing: false
     property var lastAttempt: ({})
     function snapshot() {
         return JSON.stringify({busy, ready: CaptureHandoffService.ready, attempt: lastAttempt})
     }
     readonly property bool busy: job !== null
+    onBusyChanged: if (!busy) CaptureHandoffService.end(root)
     function open(method = "") {
-        if (busy) return
+        if (busy || (!method && choosing)) return
         if (!method) {
-            PickerService.promptMenu("", ["ocr", "output", "qrcode", "region", "window"].map(method => ({title:Translations.text("screenshot.modes."+method),result:method})),
-                rows => root.open(rows[0].result))
+            choosing = true
+            CaptureHandoffService.begin(root)
+            CaptureMenuService.promptMenu("", ["ocr", "output", "qrcode", "region", "window"].map(method => ({title:Translations.text("screenshot.modes."+method),result:method})),
+                rows => root.open(rows[0].result), "list", {
+                    onClosed: reason => {
+                        root.choosing = false
+                        if (reason !== "accepted" && !root.busy) CaptureHandoffService.end(root)
+                    }
+                })
             return
         }
         if (!["region", "output", "window", "ocr", "qrcode"].includes(method)) return
+        CaptureHandoffService.begin(root)
         const operation = {method, process: null, replied: false}
         job = operation
         lastAttempt = {method, phase: "waiting"}
-        PickerService.close()
+        CaptureHandoffService.prepare()
         operation.waiter = () => {
             if (root.job !== operation) return
             const process = worker.createObject(root, {method: operation.method}) as Process
@@ -66,12 +76,22 @@ Singleton {
         const operation = job
         if (operation?.waiter) CaptureHandoffService.cancel(operation.waiter)
         job = null
+        if (choosing) CaptureMenuService.close()
+        CaptureHandoffService.end(root)
         if (operation?.process?.running) operation.process.signal(15)
     }
     Component.onDestruction: cancel()
     Connections {
-        target: PickerService
+        target: CaptureMenuService
         function onOpened() { if (root.busy) root.cancel() }
+    }
+    Connections {
+        target: CaptureHandoffService
+        function onFailed() {
+            if (!root.job?.waiter) return
+            root.cancel()
+            AlertService.post("screenshot", Translations.text("capture.errors.compositorState"), "error", 4000)
+        }
     }
     Component {
         id: worker

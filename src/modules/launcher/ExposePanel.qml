@@ -164,12 +164,13 @@ FocusScope {
         text: Translations.text(search.text ? "expose.empty.filtered" : "expose.empty.workspace")
         color: Theme.inactive
     }
-    UI.ColumnText {
+    UI.ShortcutHints {
         id: footer
+        font.pixelSize: Theme.fontSize
         anchors.bottom: parent.bottom
         width: parent.width
         horizontalAlignment: Text.AlignHCenter
-        text: Translations.text("expose.shortcuts.primary",[root.picker.filteredItems.length])
+        hints: Translations.text("expose.shortcuts.primary",[root.picker.filteredItems.length])
             + Translations.text("expose.shortcuts.workspaces")
             + Translations.text("expose.shortcuts.drag")
         color: Theme.inactive

@@ -14,7 +14,11 @@ Intervals split at local midnight and use elapsed time across daylight-saving
 changes. The current session ends with “now”. Long reports scroll within the
 panel. Automatic detection evidence appears on Today, separately from history.
 
-Manage edits work folders and process patterns, each with one entry per line.
+Manage retains its original panel width and two stacked text areas for work
+folders and process patterns, each with one entry per line. Cancel and Apply sit
+immediately to the right of the folder-picker button and are enabled only while
+there are unsaved changes (and no folder dialog is open). Apply saves both lists;
+Cancel restores the saved values.
 The folder button appends the chosen folder to the list; existing entries remain.
 Duplicate folders are ignored. Remove a folder by deleting its line. Patterns match full process names with `pgrep` regular
 expressions. Processes whose working directory or open files are inside any configured

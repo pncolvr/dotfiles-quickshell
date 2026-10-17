@@ -65,6 +65,11 @@ Scope {
                 formActionsRight: actions.parent.parent === details
                     && Math.abs(actions.x + actions.width - actions.parent.width) < 1
                     && actions.mapToItem(details,0,actions.height).y <= details.height,
+                hintsCentered: hints.verticalAlignment === Text.AlignVCenter && hints.height === hints.parent.height
+                    && hints.height >= Theme.controlHeight
+                    && Math.abs(hints.mapToItem(panel,0,hints.height).y - panel.height) < 1,
+                hintsSpaceBalanced: Math.abs(hints.mapToItem(panel,0,hints.height / 2).y
+                    - (details.mapToItem(panel,0,details.height).y + panel.height) / 2) < 1,
                 hintsBelowActions: hints.mapToItem(panel,0,0).y >= actions.mapToItem(panel,0,0).y + actions.height,
                 notesMaskClean: !!notes && mask.visible && notes.height >= Theme.controlHeight * 6,
                 notesRevealed: notes?.revealed ?? false, notesEditable: !!notes && !notes.readOnly,
@@ -176,8 +181,8 @@ Scope {
             events.mouseClick(button,button.width/2,button.height/2,Qt.LeftButton,Qt.NoModifier,0)
         }
         function edit(): void {
-            const button = objects.findChild(panel,"vaultEdit") as UI.ActionButton
-            events.mouseClick(button,button.width/2,button.height/2,Qt.LeftButton,Qt.NoModifier,0)
+            panel.focusSearch()
+            events.keyClick(Qt.Key_E,Qt.ControlModifier,0)
         }
         function deleteEntry(): void {
             const button = objects.findChild(panel,"vaultDelete") as UI.ActionButton

@@ -60,12 +60,28 @@ under `src/services/time`, exported through both local and parent service module
 The update helper lives at `src/services/system/update-check.sh`; cron and pacman
 hooks must point there, rather than under `config/`.
 
-Projects and Directories use `ManagedPickerFrame` for their outer geometry,
+Webapps, Remotes, n8n, Projects and Directories use `ManagedPickerFrame` for their outer geometry,
 management shortcuts, focus restoration and close cleanup. Each feature supplies
 its own list/form, focus target and service callbacks; draft validation and
 persistence stay in those services. Ordinary and private picker hosts share their
 size calculations through `PickerWindowContent`, while each host keeps its fixed
 layer namespace.
+
+`UI.ManagementView` owns the shared Manage toolbar, filter row, fixed-height
+list, selection, framed details, independent scrolling and action slots. Feature
+panels own the data mappings, details and editors; repositories still own writes.
+Ctrl+E edits the selected entry in Manage and Vault; it is disabled while busy,
+editing, or without an editable selection. Details/edit panes omit duplicate titles.
+Collection details reuse the editor forms with `readOnly` enabled; text fields
+remain selectable and selectors render read-only textboxes. Credentials stay
+masked until explicitly revealed. Folder details reuse `FolderForm` in the same
+mode. Enabled uses `UI.CheckBox`; source type and category use `UI.ComboSelector`.
+Always place shortcut hints horizontally centered at the bottom of the panel
+unless the user explicitly requests another placement.
+Work rules reuse `LineListField.headerActions` without changing their stacked
+layout or width. Run `bash tests/launcher/manage-layout.sh` for selection, filters,
+draft context, form rendering, Work dirty-state controls and motion/sharing
+checks. Set `MANAGE_PREVIEWS=/tmp/manage-previews` to save synthetic previews.
 
 Vault UI uses feature-owned `VaultEntryList`, `VaultEntryDetails` and
 `VaultEntryEditor` components. `VaultPanel` coordinates selection and editing;
@@ -715,9 +731,25 @@ process-group termination, invalid internal handoffs and offline Config. A separ
 windowless fixture verifies that the prepared annotation worker survives an actual
 Quickshell reload and reveals the saved file; unrelated clipboard WorkerScripts are
 excluded from that fixture. The offscreen QML handoff fixture runs the
-production native menu/service and panel motion: capture waits for both picker and
-submap closing, other panels stay open, replacement cancels queued work, and native
-alerts report results. With the keyboard idle,
+production capture menu/service and panel motion: capture waits only for panels
+whose `hideForCapture` property is true. Ordinary launcher state and rendered
+panels remain intact; flipping the property opts a panel into closure and its
+closing-motion wait. After native unmap, the fixture verifies capture is still
+blocked through the configured compositor close animation. Run
+`node tests/launcher/capture-close-timing.mjs` for inherited layer/fade durations,
+disabled animations and monitor refresh timing. The bounded read-only
+`capture-close-state.sh` helper reads active Hypr settings in one `hyprctl --batch`
+request and combines its three JSON results; unavailable timing
+cancels the pending capture rather than starting it before the panel clears.
+`MenuSession` provides independent choice state and delegates matching/row
+normalization to PickerService. CaptureMenuService sets hideForCapture true and
+reuses PickerWindow/PickerPanelBase; recording and screenshots use that session.
+CaptureHandoffService owns capture sessions and panel registrations. Shared
+focus/hover handling preserves other panels while capture controls take focus.
+Cancellation and completion release
+the hold without requesting tooltip closure. Replacement cancels queued work, and
+native alerts report results. The plain-list and Manage layout fixture verifies
+equal final hint-row heights and bottom alignment. With the keyboard idle,
 `SCREENSHOT_TEST_NATIVE=1 bash tests/launcher/screenshot.sh` runs the same handoff
 against the real public/private picker and SubmapWindow, without real capture,
 pointer movement or clipboard access, then restores the previously focused window.

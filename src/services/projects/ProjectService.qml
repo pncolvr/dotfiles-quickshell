@@ -19,6 +19,7 @@ Singleton {
     property bool pathCheckPending: false
     readonly property bool checkingPaths: pathCheck.running
     signal sourceAdded()
+    signal saved(string path)
     signal sourcePathResolved(string path)
     enum Operation { None, Add, Refresh, Edit, Discard }
     property int operation: ProjectService.Operation.None
@@ -36,7 +37,7 @@ Singleton {
     }
     function pathWarning(path, workspaces = []) {
         const state = pathStates[path]
-        if (state?.message) return state.message
+        if (state?.message) return Translations.text(state.message)
         const missing = workspaces.filter(workspace => pathStates[workspace.path]?.status === "unavailable").length
         return missing ? Translations.text("projects.files.missing",[],missing) : ""
     }
@@ -273,12 +274,14 @@ Singleton {
             })}))
         }
         const adding = !draft.review && !draft.previousPath && !draft.workspaceEdit
+        const savedPath = draft.path ?? ""
         const saved = draft.workspaceEdit ? ProjectRepository.saveWorkspaces(draft.projects)
             : draft.previousPath ? ProjectRepository.apply([draft],draft.path !== draft.previousPath,draft.path !== draft.previousPath ? draft.previousPath : "")
             : draft.review ? ProjectRepository.apply(results) : ProjectRepository.apply([draft],true)
         if (!saved) { error = ProjectRepository.error; return false }
         const refreshErrors = results?.filter(source => source.error).map(source => source.path + ": " + Translations.message(source.error)).join("\n") || ""
         cancelDraft(); error = refreshErrors; syncPicker()
+        root.saved(savedPath)
         if (adding) sourceAdded()
         return true
     }
@@ -317,6 +320,7 @@ Singleton {
                     if (root.sources.some(existing => existing.path === source.path)) throw new Error(Translations.text("projects.errors.duplicateSource"))
                     if (!source.projects.some(project => project.workspaces.length > 0)) {
                         if (!ProjectRepository.apply([source],true)) throw new Error(ProjectRepository.error)
+                        root.saved(source.path)
                         root.sourceAdded()
                     } else {
                         root.draft = Object.assign({},source,{projects:source.projects.map(project => Object.assign({},project,{workspaces:project.workspaces.map(workspace => Object.assign({},workspace,{included:true}))}))})

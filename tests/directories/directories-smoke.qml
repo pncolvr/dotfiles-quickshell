@@ -129,7 +129,8 @@ Scope {
                 root.step = 1
             } else if (root.step === 1) {
                 root.check(events.keyClick(Qt.Key_M,Qt.ControlModifier,0),"Ctrl+M reaches directories")
-                root.check(DirectoryService.managing && root.find("directoryForm").visible,"empty Manage shows add form")
+                root.check(DirectoryService.managing && !root.find("directoryForm").visible && root.find("beginAddDirectory").enabled,"empty Manage offers Add without opening an editor")
+                panel.beginAdd()
                 root.find("directoryPath").text = "~/banana folder"
                 root.find("directoryName").text = "Banana"
                 root.find("saveDirectory").clicked()
@@ -144,7 +145,7 @@ Scope {
                 root.check(events.keyClick(Qt.Key_A,Qt.ControlModifier,0),"Ctrl+A reaches Manage")
                 root.check(root.find("directoryForm").visible,"Ctrl+A opens Add only in Manage")
                 root.find("directoryPath").text = "computer:///"
-                root.find("directoryCategory").clicked()
+                root.find("directoryCategory").selected(root.find("directoryCategory").selectedName === "work" ? "personal" : "work")
                 root.step = 4
             } else if (root.step === 4) {
                 root.check(root.find("directoryPath").activeFocus,"Add focuses path")
@@ -156,7 +157,7 @@ Scope {
                 root.check(DirectoryService.directories.length === 2 && !DirectoryService.draft,"system URI saved without filesystem validation")
                 root.check(PickerService.items.length === 1,"work directories hidden outside work")
                 root.find("directoryManageSearch").text = "cmptr"
-                root.check(root.find("managedDirectory_computer:///") && !root.find("managedDirectory_" + root.folder),"Manage uses shared fuzzy search")
+                root.check(panel.managementView.filteredEntries.length === 1 && panel.managementView.selectedEntry?.path === "computer:///","Manage uses shared fuzzy search")
                 root.find("directoryManageSearch").clear()
                 root.find("directoryTabs").itemAt(0).clicked()
                 root.step = 6
@@ -168,13 +169,15 @@ Scope {
                 PickerService.directories()
                 root.check(!DirectoryService.showAll && !DirectoryService.managing && PickerService.items.length === 1,"reopening resets view and filter")
                 panel.management(true)
+                panel.managementView.select("computer:///")
                 root.find("editDirectory_computer:///").clicked()
-                root.find("directoryCategory").clicked()
+                root.find("directoryCategory").selected(root.find("directoryCategory").selectedName === "work" ? "personal" : "work")
                 root.find("directoryName").text = "Tomato"
                 root.find("cancelDirectory").clicked()
                 root.check(DirectoryService.directories.find(entry => entry.path === "computer:///").category === "work","Cancel discards category changes")
+                panel.managementView.select("computer:///")
                 root.find("editDirectory_computer:///").clicked()
-                root.find("directoryCategory").clicked()
+                root.find("directoryCategory").selected(root.find("directoryCategory").selectedName === "work" ? "personal" : "work")
                 root.find("directoryName").text = "Tomato"
                 root.find("directoryPath").text = "trash:///"
                 root.find("saveDirectory").clicked()
@@ -182,6 +185,7 @@ Scope {
             } else if (root.step === 7) {
                 root.check(DirectoryService.directories.length === 2 && PickerService.items.length === 2,"editing atomically replaces path and category")
                 root.check(!DirectoryService.directories.some(entry => entry.path === "computer:///"),"old location removed on rename")
+                root.check(panel.managementView.selectedEntry?.path === "trash:///","renaming keeps the saved directory selected")
                 panel.beginAdd()
                 root.find("directoryPath").text = root.folder
                 root.find("saveDirectory").clicked()
@@ -211,6 +215,7 @@ Scope {
                 root.step = 10
             } else {
                 root.check(DirectoryService.directories.length === 3,"additional virtual location can be added")
+                panel.managementView.select("network:///")
                 root.find("removeDirectory_network:///").clicked()
                 root.check(DirectoryService.directories.length === 2,"remove deletes only picker entry")
                 PickerService.close()

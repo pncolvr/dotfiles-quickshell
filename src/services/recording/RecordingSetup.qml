@@ -20,6 +20,7 @@ Scope {
         if (active) return
         const current = {options: {}, callback: null, task: null, waiter: null}
         operation = current
+        CaptureHandoffService.begin(root)
         menu(current, Translations.text("recording.setup.capture"), ["output", "region"].map(mode => ({title:Translations.text("recording.modes."+mode),result:mode})), rows => {
             current.options.capture = rows[0].result
             switch (current.options.capture) {
@@ -34,14 +35,15 @@ Scope {
         operation = null
         if (current.waiter) CaptureHandoffService.cancel(current.waiter)
         if (current.task?.running) current.task.signal(15)
-        if (PickerService.menuCallback === current.callback) PickerService.close()
+        if (CaptureMenuService.menuCallback === current.callback) CaptureMenuService.close()
+        CaptureHandoffService.end(root)
         cancelled()
     }
     function fail(message) { cancel(); failed(message) }
     function menu(current, title, rows, callback) {
         if (operation !== current) return
         current.callback = callback
-        PickerService.promptMenu(title, rows, callback, "list", {
+        CaptureMenuService.promptMenu(title, rows, callback, "list", {
             keepOpen: true,
             onClosed: reason => { if (root.operation === current && current.callback === callback && reason !== "accepted") root.cancel() }
         })
@@ -63,12 +65,12 @@ Scope {
             try {
                 const monitors = JSON.parse(output)
                 if (!Array.isArray(monitors) || !monitors.length || !monitors.every(item => typeof item.name === "string" && item.name)) throw new Error(Translations.text("recording.errors.noOutputs"))
-                PickerService.items = PickerService.menuRows(monitors.sort((a,b) => a.name.localeCompare(b.name)).map(item => ({title:item.name})))
+                CaptureMenuService.items = CaptureMenuService.menuRows(monitors.sort((a,b) => a.name.localeCompare(b.name)).map(item => ({title:item.name})))
             } catch (_) { fail(Translations.text("recording.errors.outputs")) }
         })
     }
     function chooseRegion(current) {
-        PickerService.close()
+        CaptureMenuService.close()
         current.waiter = () => {
             if (root.operation !== current) return
             current.waiter = null
@@ -83,6 +85,7 @@ Scope {
                 chooseFramerate(current)
             })
         }
+        CaptureHandoffService.prepare()
         CaptureHandoffService.wait(current.waiter)
     }
     function chooseFramerate(current) {
@@ -127,7 +130,7 @@ Scope {
                     try {
                         const rows = Options.deviceRows(devices, JSON.parse(output), defaultName, name => Translations.text("recording.device.default",[name]))
                         if (!rows.length) throw new Error(Translations.text("recording.errors.noDevices"))
-                        PickerService.items = PickerService.menuRows(rows)
+                        CaptureMenuService.items = CaptureMenuService.menuRows(rows)
                     } catch (error) { fail(Translations.message(error) || Translations.text("recording.errors.readDevices")) }
                 })
             })
@@ -139,14 +142,25 @@ Scope {
         try { options = Options.prepared(current.options, Config.recordingDirectory, Config.recordingEncoderArguments) }
         catch (error) { fail(String(error)); return }
         operation = null
-        PickerService.close()
+        CaptureMenuService.close()
+        CaptureHandoffService.prepare()
         prepared(options)
+        CaptureHandoffService.end(root)
     }
     Connections {
-        target: PickerService
-        function onOpened() { if (root.operation && PickerService.menuCallback !== root.operation.callback) root.cancel() }
+        target: CaptureMenuService
+        function onOpened() { if (root.operation && CaptureMenuService.menuCallback !== root.operation.callback) root.cancel() }
     }
-    Component.onDestruction: if (operation?.task?.running) operation.task.signal(15)
+    Connections {
+        target: CaptureHandoffService
+        function onFailed() {
+            if (root.operation?.waiter) root.fail(Translations.text("capture.errors.compositorState"))
+        }
+    }
+    Component.onDestruction: {
+        if (operation?.task?.running) operation.task.signal(15)
+        CaptureHandoffService.end(root)
+    }
     Component {
         id: task
         Process {

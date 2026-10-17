@@ -11,6 +11,7 @@ Column {
     property alias text: input.text
     property alias inputObjectName: input.objectName
     property alias folderPicker: dialog
+    property alias headerActions: headerActions.data
     property bool chooseFolders: false
     property string browseObjectName: ''
     property string browseHint: Translations.text("folders.actions.add")
@@ -35,10 +36,12 @@ Column {
         width: parent.width
         spacing: Theme.controlSpacing
         UI.ColumnText {
-            width: parent.width - (browse.visible ? browse.width + parent.spacing : 0)
+            width: Math.max(0,parent.width - (browse.visible ? browse.width + parent.spacing : 0)
+                - (headerActions.visible ? headerActions.width + parent.spacing : 0))
             anchors.verticalCenter: parent.verticalCenter
             text: field.label
             color: Theme.inactive
+            elide: Text.ElideRight
         }
         UI.ActionButton {
             id: browse
@@ -47,6 +50,11 @@ Column {
             glyph: Theme.folderOpenIcon
             hint: field.browseHint
             onClicked: dialog.open()
+        }
+        Row {
+            id: headerActions
+            visible: children.length > 0
+            spacing: Theme.controlSpacing
         }
     }
     QC.ScrollView {

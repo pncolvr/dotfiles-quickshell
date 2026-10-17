@@ -5,13 +5,13 @@ import Quickshell
 import Quickshell.Wayland
 import "../../bar"
 import "../../theme"
-import "../../theme/ui" as UI
 import "../../services"
 import "../../config"
 
 TopPanelTooltip {
     id: root
-    UI.CaptureOverlay { host: root; requested: root.requestedVisible }
+    capturePanel: panel
+    onCaptureHideRequested: picker.close()
     property var picker: PickerService
     readonly property var panel: behavior.panel
     readonly property bool restoringDialogFocus: behavior.restoringDialogFocus

@@ -6,6 +6,7 @@ import "../" as UI
 
 Row {
     id: root
+    property bool readOnly: false
     property alias text: input.text
     property alias placeholderText: input.placeholderText
     property alias inputObjectName: input.objectName
@@ -19,12 +20,14 @@ Row {
     function clear() { input.clear() }
     UI.InputField {
         id: input
-        width: Math.max(0,root.width - browse.width - root.spacing)
+        readOnly: root.readOnly
+        width: Math.max(0,root.width - (browse.visible ? browse.width + root.spacing : 0))
         retainPanelWhileEditing: false
         onAccepted: root.accepted()
     }
     UI.ActionButton {
         id: browse
+        visible: !root.readOnly
         glyph: Theme.folderOpenIcon
         hint: Translations.text("folders.actions.chooseHint")
         onClicked: dialog.open()

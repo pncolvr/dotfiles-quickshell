@@ -2,9 +2,14 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import "../theme"
+import "../theme/ui" as UI
 // qmllint disable uncreatable-type
 PanelWindow {
     id: root
+    property var capturePanel: null
+    property bool hideForCapture: capturePanel?.hideForCapture ?? false
+    signal captureHideRequested()
+    UI.CaptureOverlay { host: root; requested: root.requestedVisible }
     default property alias contentData: surface.contentData
     property alias contentKey: surface.contentKey
     property alias contentX: surface.contentX

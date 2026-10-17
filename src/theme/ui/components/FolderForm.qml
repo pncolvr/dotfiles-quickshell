@@ -7,6 +7,7 @@ import "../" as UI
 
 Column {
     id: root
+    property bool readOnly: false
     property alias text: pathField.text
     property alias displayName: nameField.text
     property alias inputObjectName: pathField.inputObjectName
@@ -32,6 +33,7 @@ Column {
 
     UI.FolderPathField {
         id: pathField
+        readOnly: root.readOnly
         width: parent.width
         onAccepted: root.accepted()
     }
@@ -40,27 +42,35 @@ Column {
         spacing: Theme.controlSpacing
         UI.InputField {
             id: nameField
+            readOnly: root.readOnly
             visible: root.showName
             Layout.fillWidth: true
             placeholderText: Translations.text("timers.fields.nameOptional")
             retainPanelWhileEditing: false
             onAccepted: root.accepted()
         }
-        UI.ActionButton {
+        UI.ComboSelector {
             id: kindButton
             visible: root.showKind
-            label: Translations.text(root.kind === "root" ? "projects.source.repositoryRoot" : "projects.source.singleFolder")
+            readOnly: root.readOnly
+            compact: true
+            selectedName: root.kind
+            options: [
+                {name: "folder", description: Translations.text("projects.source.singleFolder")},
+                {name: "root", description: Translations.text("projects.source.repositoryRoot")}
+            ]
+            Layout.fillWidth: true
             Layout.preferredWidth: Theme.projectOptionButtonWidth
-            hint: Translations.text("folders.actions.switchTypeHint")
-            onClicked: root.kindRequested(root.kind === "root" ? "folder" : "root")
+            onSelected: name => root.kindRequested(name)
         }
-        UI.FolderCategoryButton {
+        UI.FolderCategorySelector {
             id: categoryButton
             visible: root.showCategory
             category: root.category
+            readOnly: root.readOnly
+            Layout.fillWidth: true
             Layout.preferredWidth: Theme.projectOptionButtonWidth
             onCategoryRequested: category => root.categoryRequested(category)
         }
-        Item { visible: !root.showName; Layout.fillWidth: true }
     }
 }

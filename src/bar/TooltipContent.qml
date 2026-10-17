@@ -7,6 +7,7 @@ import "../services"
 UI.PanelFocusScope {
     id: root
     required property var host
+    property bool hideForCapture: loadedContent?.hideForCapture ?? false
     property Component retainedContent: null
     readonly property var loadedContent: loader.item
     implicitWidth: loader.implicitWidth

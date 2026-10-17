@@ -2,6 +2,8 @@ pragma ComponentBehavior: Bound
 import "../../i18n"
 import "../../services"
 ManagedCollectionPanel {
+    id: root
+    filterBrowser: true
     service: WebappService
     collectionName: Translations.text("webapps.title")
     pickerMode: PickerService.Mode.Webapps

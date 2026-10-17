@@ -19,6 +19,7 @@ Singleton {
     readonly property bool ownsTooltipWindow: source?.ownsTooltipWindow === true
     readonly property bool interactionHeld: _internal.holds.length > 0
     readonly property bool interactionBlocksReplacement: _internal.holds.some(hold => hold.blocksReplacement)
+    readonly property bool captureHeld: _internal.captureOwners.length > 0
     readonly property bool dragging: _internal.dragging
 
     QtObject {
@@ -32,6 +33,7 @@ Singleton {
         property var source: null
         property var screen: null
         property var holds: []
+        property var captureOwners: []
         property bool dragging: false
         property bool triggerHovered: false
         property bool panelHovered: false
@@ -57,7 +59,7 @@ Singleton {
     }
 
     function hide() {
-        if (_internal.pinned || root.interactionHeld || _internal.dragging) return
+        if (_internal.pinned || root.interactionHeld || root.captureHeld || _internal.dragging) return
         if (_internal.triggerHovered || _internal.panelHovered) return
         hideTimer.start()
     }
@@ -107,6 +109,14 @@ Singleton {
         _internal.screen = null
     }
 
+    // Capture tools temporarily take focus/hover. Keep the existing panel through
+    // that handoff; releasing capture does not itself request a panel closure.
+    function setCaptureHold(owner, active) {
+        const others = _internal.captureOwners.filter(item => item !== owner)
+        _internal.captureOwners = active ? others.concat([owner]) : others
+        hideTimer.stop()
+    }
+
     function cancelHide() {
         hideTimer.stop()
     }
@@ -149,6 +159,6 @@ Singleton {
         interval: Config.tooltipHideDelay
         // A queued expiry can outlive a hover, pin, interaction or drag transition.
         onTriggered: if (!_internal.pinned && !root.interactionHeld && !_internal.dragging
-            && !_internal.triggerHovered && !_internal.panelHovered) root.dismiss()
+            && !root.captureHeld && !_internal.triggerHovered && !_internal.panelHovered) root.dismiss()
     }
 }

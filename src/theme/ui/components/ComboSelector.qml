@@ -14,6 +14,7 @@ Item {
     property string label: selectedDescription
     property string hint: ""
     property int hintDelay: 500
+    property bool readOnly: false
     property bool compact: false
     property real controlHeight: Theme.controlHeight
     property real contentPadding: Theme.controlFieldPadding
@@ -30,10 +31,11 @@ Item {
     readonly property Flickable scrollHost: findScrollHost()
     signal selected(string name)
     implicitHeight: selector.implicitHeight
+    onReadOnlyChanged: if (readOnly) expanded = false
     onEnabledChanged: if (!enabled) expanded = false
     onVisibleChanged: if (!visible) expanded = false
     onExpandedChanged: {
-        if (expanded && enabled && visible && options.length) {
+        if (expanded && enabled && visible && !readOnly && options.length) {
             selector.forceActiveFocus(Qt.PopupFocusReason)
             selectionPopup.open()
         }
@@ -93,8 +95,16 @@ Item {
         function onContentYChanged() { root.expanded = false }
         function onMovingChanged() { if (root.scrollHost.moving) root.expanded = false }
     }
+    UI.InputField {
+        width: parent.width
+        visible: root.readOnly
+        readOnly: true
+        text: root.label
+        retainPanelWhileEditing: false
+    }
     QC.Button {
         id: selector
+        visible: !root.readOnly
         UI.PointerFocus {}
         objectName: root.toggleObjectName
         width: parent.width

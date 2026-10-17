@@ -115,9 +115,19 @@ QtObject {
 
     // Launcher, QR and clipboard previews
     readonly property int pickerWidth: 560
+    readonly property int manageWidth: 780
+    readonly property int manageHeight: 760
+    readonly property FontMetrics manageRowFontMetrics: FontMetrics {
+        font.family: root.fontFamily
+        font.pixelSize: root.fontSize
+        font.bold: root.fontBold
+        font.styleName: root.fontStyle
+        font.weight: root.fontWeight
+    }
+    readonly property int manageRowHeight: Math.ceil(manageRowFontMetrics.height) * 2 + pickerRowPadding * 2
     readonly property int qrPreviewSize: 360
     readonly property int imagePreviewFadeDuration: 140
-    readonly property real pickerBackgroundOpacity: 0.7 // 0–1; text and controls stay opaque.
+    readonly property real pickerBackgroundOpacity: 0.85 // 0–1; text and controls stay opaque.
     readonly property int pickerRowHeight: 36
     readonly property int clipboardRowHeight: 52
     readonly property int clipboardImagePreviewHeight: 200

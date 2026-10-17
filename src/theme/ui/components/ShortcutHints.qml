@@ -5,6 +5,8 @@ import "../" as UI
 UI.Text {
     property string hints: ""
     centerVertical: false
+    height: Math.max(Theme.controlHeight, implicitHeight)
+    verticalAlignment: Text.AlignVCenter
     font.pixelSize: Theme.fontSize - 1
     horizontalAlignment: Text.AlignHCenter
     wrapMode: Text.WordWrap

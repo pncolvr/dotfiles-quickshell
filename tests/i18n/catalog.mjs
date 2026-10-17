@@ -6,6 +6,11 @@ const folder=fileURLToPath(new URL('../../src/i18n/',import.meta.url))
 const en=JSON.parse(fs.readFileSync(folder+'en.json','utf8'))
 const pt=JSON.parse(fs.readFileSync(folder+'pt.json','utf8'))
 assert.deepEqual(Object.keys(en).sort(),Object.keys(pt).sort(),'catalog coverage matches')
+function checkInitialCapital(value, key) {
+    if (typeof value === 'string') assert.doesNotMatch(value, /^\p{Ll}/u, 'initial capital: '+key)
+    else for (const [part, child] of Object.entries(value)) checkInitialCapital(child,key+'.'+part)
+}
+for (const [locale, catalog] of Object.entries({en,pt})) checkInitialCapital(catalog,locale)
 const placeholders=value=>String(value).match(/%n|%[1-9]\d*/g)?.sort() ?? []
 for(const key of Object.keys(en)) {
     assert.match(key,/^[a-z][a-zA-Z0-9]*(?:\.[a-z][a-zA-Z0-9]*)+$/,'stable semantic ID: '+key)

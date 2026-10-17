@@ -7,11 +7,6 @@ import "../services"
 
 TopPanelTooltip {
     id: root
-    UI.CaptureOverlay {
-        host: root
-        requested: AlertService.messages.some(message => message.captureBlocking)
-        presentationPending: root.transitioning
-    }
     requestedVisible: AlertService.messages.length > 0
     // Status must remain visible over fullscreen apps without taking focus.
     WlrLayershell.layer: WlrLayer.Overlay

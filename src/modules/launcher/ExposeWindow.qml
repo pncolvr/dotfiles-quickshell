@@ -13,6 +13,10 @@ import "../../config"
 PanelWindow {
     // qmllint enable uncreatable-type
     id: root
+    property var capturePanel: contentLoader.item
+    property bool hideForCapture: capturePanel?.hideForCapture ?? false
+    signal captureHideRequested()
+    onCaptureHideRequested: picker.close()
     UI.CaptureOverlay { host: root; requested: root.requested }
     property var picker: PickerService
     LauncherFocusHandler { id: focusHandler; host: root; panel: contentLoader.item; picker: root.picker; ready: root.requested && !!contentLoader.item }

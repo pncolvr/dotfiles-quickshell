@@ -5,6 +5,8 @@ import "../services"
 
 PrivateTopPanelTooltip {
     id: root
+    capturePanel: focusPanel
+    onCaptureHideRequested: TooltipService.dismiss()
     readonly property var targetScreen: Quickshell.screens.includes(TooltipService.screen)
         ? TooltipService.screen : Quickshell.screens[0] ?? null
     requestedScreen: targetScreen

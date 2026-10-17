@@ -6,6 +6,7 @@ import "../../theme"
 import "../../theme/ui" as UI
 
 ManagedCollectionPanel {
+    managementTypes: [{name:'remote',description:Translations.text("remotes.type.sshTunnel")},{name:'vm',description:Translations.text("remotes.type.virtualMachine")}]
     id: root
     service: RemoteService
     collectionName: Translations.text("remotes.title")

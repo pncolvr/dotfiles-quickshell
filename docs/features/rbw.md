@@ -227,6 +227,9 @@ During an entry switch, the previous entry stays visible with its secrets masked
 and controls disabled until the new entry loads, keeping the pane and action row stable. Quick reads do not
 flash a status message; reads lasting over 200 ms show Working. Failed reads,
 locking and closing clear the displayed entry.
+Details and editing omit the duplicate item title. Ctrl+E edits the selected
+editable entry when no operation or draft is active.
+
 Single-click another entry to open its details; Enter remains available for keyboard
 navigation. New sits to the right of Lock in the top row and remains visible but
 disabled while editing or confirming deletion. Edit and Delete actions are available in this same view. Copy and

@@ -19,7 +19,7 @@ Scope {
     Test.TestEvent { id: events }
     FloatingWindow {
         visible: true
-        implicitWidth: Theme.pickerWidth
+        implicitWidth: panel.implicitWidth
         implicitHeight: Math.min(panel.implicitHeight,650)
         ProjectPickerPanel { id: panel; width: parent.width; height: parent.height }
     }
@@ -32,16 +32,15 @@ Scope {
     function highlighted(text,query,fuzzy=true) { return Search.highlight(text,Search.searchPattern(query,true),fuzzy,"#abcdef") }
     function plain(text) { return text.replace(/<font[^>]*>|<\/font>/g,"") }
     function checkFooter(editing) {
-        const hints = find("projectManageHints"), add = find("beginAddProjectSource")
-        const center = item => item.mapToItem(panel,0,item.height / 2).y
-        check(hints.lineCount === 1 && Math.abs(center(hints) - center(add)) < 1,"Manage hints and Add share one line")
-        check(add.visible && add.enabled === !editing,"Add stays visible and is disabled while editing")
+        const view = panel.managementView
+        const add = find("beginAddProjectSource")
+        const search = find("projectManageSearch")
+        check(add.visible && add.enabled === !editing,"Add stays in the toolbar and disables during editing")
+        check(search.enabled === !editing && view.listView.enabled === !editing,"search and source selection lock while editing")
+        check(view.selectedEntry?.path === "/fixture/repos","source identity remains selected")
         if (editing) {
             const cancel = find("cancelProjectDraft"), apply = find("saveProjectDraft")
-            check(Math.abs(center(cancel) - center(add)) < 1 && Math.abs(center(apply) - center(add)) < 1,
-                "editor actions share the footer line")
-            check(add.mapToItem(panel,add.width,0).x < cancel.mapToItem(panel,0,0).x
-                && cancel.mapToItem(panel,cancel.width,0).x < apply.mapToItem(panel,0,0).x,"Cancel and Apply follow Add")
+            check(cancel.mapToItem(panel,0,0).x < apply.mapToItem(panel,0,0).x,"Cancel precedes Apply in the right pane")
         }
     }
     Timer {
@@ -49,7 +48,7 @@ Scope {
         onTriggered: {
             if (++root.ticks > 250 || root.failed) { console.error("MANAGE FAIL: timeout step=" + root.step); stop(); Qt.quit(); return }
             if (!DbService.ready || ProjectService.busy) return
-            const scroll = root.find("projectManageScroll").contentItem
+            const scroll = panel.managementView.listView
             const search = root.find("projectManageSearch")
             switch (root.step++) {
             case 0:
@@ -117,9 +116,9 @@ Scope {
                 root.step = 5
                 break
             case 5:
-                scroll.contentY = scroll.contentHeight - scroll.height - 10
+                scroll.contentY = Math.max(0,scroll.contentHeight - scroll.height - 10)
                 root.savedPosition = scroll.contentY
-                root.check(root.savedPosition > 100,"fixture has a scrolled list")
+                root.check(panel.managementView.detailScroll.contentHeight > panel.managementView.detailScroll.height,"project details have independent scrolling")
                 root.find("editProject_" + root.projectPath).clicked()
                 break
             case 6:
@@ -128,7 +127,8 @@ Scope {
                 break
             case 7:
                 root.check(Math.abs(scroll.contentY - root.savedPosition) < 1,"cancel and search refocus preserve scroll")
-                root.find("editSource_/fixture/repos").clicked()
+                panel.managementView.searchField.forceActiveFocus()
+                events.keyClick(Qt.Key_E,Qt.ControlModifier,0)
                 break
             case 8:
                 root.check(Math.abs(scroll.contentY - root.savedPosition) < 1,"opening source edit preserves scroll")
@@ -146,7 +146,7 @@ Scope {
                 root.find("editProject_" + root.projectPath).clicked()
                 break
             case 12:
-                root.find("projectManageSearch").forceActiveFocus()
+                root.find("projectWorkspaceScroll").forceActiveFocus()
                 root.check(events.keyClick(Qt.Key_Escape,Qt.NoModifier,0),"Escape reaches editor")
                 break
             case 13:
@@ -165,7 +165,7 @@ Scope {
                 break
             case 16:
                 root.check(!root.find("managedProject_/fixture/single"),"unfiltered single-folder sources retain their compact presentation")
-                if (!root.failed) console.log("PASS: project management highlights name/path/workspace matches and preserves editor/list scroll")
+                if (!root.failed) console.log("PASS: project management highlights name/path/workspace matches and preserves editor/list scroll in the shared source/details layout")
                 stop(); Qt.quit()
             }
         }

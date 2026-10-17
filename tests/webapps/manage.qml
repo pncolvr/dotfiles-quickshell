@@ -47,6 +47,12 @@ Scope {
                 case 2:
                     root.check(panel.panel instanceof ManagedCollectionPanel,'shared management component')
                     root.check(!objects.findChild(panel,'collectionImportPath') && !objects.findChild(panel,'previewCollectionImport'),'Manage has no import controls')
+                    root.check(panel.panel.entryForm.readOnly,'selected details reuse the read-only form')
+                    root.check((objects.findChild(panel,'webappBrowserSelector') as UI.ComboSelector).readOnly,'browser details are read-only textboxes')
+                    const selectedName = root.field('webappName').text
+                    root.field('webappName').forceActiveFocus()
+                    events.keyClick(Qt.Key_Z,Qt.NoModifier,0)
+                    root.check(root.field('webappName').text === selectedName,'details reject typing')
                     panel.panel.beginAdd()
                     root.step=3; break
                 case 3:
@@ -68,12 +74,13 @@ Scope {
                     root.check(profiles.selectedName==='' && profiles.options.length===3 && profiles.options[1].description==='Work','browser switch resets incompatible profile and updates options')
                     profiles.selected('Test Profile')
                     root.check(panel.panel.entryForm.value().profile==='Test Profile','configured profile is saved as its stable ID')
-                    for (const id of ['webappEnabled','webappAdvanced']) {
-                        const button=objects.findChild(panel,id) as UI.ActionButton
-                        root.check(button.width>=button.implicitContentWidth,'text control fits its label: '+id)
-                    }
+                    const enabled=objects.findChild(panel,'webappEnabled') as UI.CheckBox
+                    root.check(enabled.checked,'Enabled is a checked checkbox')
+                    enabled.checked=false; enabled.toggled()
+                    root.check(!panel.panel.entryForm.value().enabled,'checkbox changes the draft')
+                    enabled.checked=true; enabled.toggled()
                     const category=objects.findChild(panel,'webappCategorySelector') as UI.ComboSelector
-                    root.check(!!category && category.visible && !panel.panel.entryForm.advanced,'category dropdown is visible outside Advanced')
+                    root.check(!!category && category.visible,'category dropdown is visible')
                     root.check(category.selectedName==='personal' && category.options.map(option=>option.name).join(',')==='personal,work','category offers Personal and Work')
                     category.selected('work')
                     root.check(panel.panel.entryForm.value().category==='work','category choice enters the draft')

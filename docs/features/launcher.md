@@ -407,6 +407,36 @@ searching/rendering. Original labels remain available for dmenu replies and
 action results. Other requests display labels literally, including grid views.
 Shared browser/status helpers remain in Zsh, and URL cleaning remains in Qutebrowser.
 
+### Shared Manage layout
+
+Webapps, Remotes, n8n, Projects and Directories expand to a Vault-style two-pane
+Manage view, 780 px wide before screen bounds. The existing panel motion policy
+controls expansion and content changes; screen sharing disables decorative motion
+by default. Work Manage keeps its original compact, stacked rules editor.
+
+The toolbar below the tabs spans both panes, with search and Add on the right.
+The next row holds category (only with work mode enabled) and feature filters,
+all initially set to All. Webapps/n8n offer enabled state and browser; Remotes
+offers enabled state and connection type; Projects offers source type and path availability;
+Directories offers availability. Manage includes disabled entries.
+
+Fixed-height rows fill the left pane, with the first matching entry selected by
+default. Details reuse the edit forms with read-only textboxes and Edit/Delete
+controls in the right pane. Add and Edit use the same pane without a duplicate
+title; Cancel/Apply stay at its bottom right. Ctrl+E edits the selected entry.
+Search, filters, Add and item selection are disabled during editing.
+Lists and details scroll independently; empty results clear selection and details.
+Empty collections offer Add without opening an editor automatically. Saving keeps
+the affected entry selected when it remains in the current filter.
+
+Forms retain native folder selection and masked credentials. Browser/profile
+controls share a row, with the full-width window-mode selector below. All fields
+remain visible without an Advanced toggle. Enabled uses a checkbox; source type
+and Personal/Work category use combos. Turning Work mode off removes only the
+category filter, and the other filters expand to fill the row. Shortcut hints are
+always horizontally centered at the bottom of the panel and vertically centered
+in their final row, with no content below them.
+
 ### Webapps
 
 Open with `launcher.sh provider webapps` (or `launcher.sh webapps`). The existing
@@ -416,7 +446,7 @@ Editing, search, Escape and focus reuse the shared managed-picker components.
 
 Entries have a name, HTTP(S) URL, browser, optional browser profile, window mode
 and enabled state. Category is a Personal/Work dropdown in the main form; Work
-follows the current work-status filter. Advanced options expose literal browser arguments,
+follows the current work-status filter. The form includes literal browser arguments,
 and optional before/after commands. Quote arguments containing spaces; variables,
 command substitutions and shell operators are never evaluated. The before command
 must succeed before the browser is dispatched; after means after dispatch, without
@@ -485,7 +515,7 @@ Ctrl+M switches Manage, Ctrl+A adds a record while managing, and Ctrl+W toggles
 the work-status filter. Disabled records remain editable in Manage.
 
 Choose RDP through an SSH tunnel or a local libvirt VM. The form masks passwords;
-Category is a Personal/Work combo, and Advanced contains domain, window title
+Category is a Personal/Work combo; the form includes domain, window title
 and literal RDP arguments. Quoted arguments are parsed without shell evaluation.
 Shared legacy arguments are migrated into each record, including private paths.
 
@@ -522,7 +552,7 @@ readers, import controls, global process-kill actions or hardcoded VM names.
 starts in **Directories**, with the work-status filter enabled. Personal folders
 remain available; work folders appear while the status is `directoryWorkStatus`.
 **Ctrl+W** toggles all directories for the current opening. **Ctrl+M** toggles
-**Manage**. **Ctrl+A** opens the bottom-right Add form only in Manage; while
+**Manage**. **Ctrl+A** opens the right-pane Add form only in Manage; while
 editing a field it retains Select all. Both tabs show shortcut hints. Commands,
 status and shortcuts live in `src/config/Config.qml`.
 
@@ -543,13 +573,12 @@ automatically and kept as URIs, without checking or connecting to them on Add.
 Opening sends the stored location directly to the configured file manager.
 No administrative permission or separate system-folder setting is needed.
 
-The form offers an optional display name and a Personal/Work button. Save hides
-the form; Edit lets you change the path, name and category together, and Cancel
-discards changes. Duplicate paths are rejected. Manage searches names and paths
-with the shared fuzzy matcher and shows both categories, with row dividers and
-hover highlighting. Each row has a copy button for its full path or location URI.
-Removing an entry removes only the shortcut, leaving the
-folder intact. Empty lists show the add form immediately.
+The form offers an optional display name and a Personal/Work button. Save returns
+to the selected folder's details; Edit changes path, name and category together,
+and Cancel discards changes. Duplicate paths are rejected. Manage searches names
+and paths with the shared fuzzy matcher. Copy/Edit/Delete actions belong to the
+selected folder's details pane. Removing an entry removes only the shortcut,
+leaving the folder intact.
 
 Manage checks local folder availability without changing saved entries. Missing or
 inaccessible folders show "Folder missing or unavailable" below the path. Remote
@@ -558,7 +587,7 @@ Manage after a folder or mount returns to clear its availability warning.
 
 Entries live in SQLite. The former JSON provider is removed, and there is no
 automatic import or migration script. `FolderForm`, `ManagementActions` and
-`FolderCategoryButton` share the path/name fields, browse dialog, category colors
+`FolderCategorySelector` share the path/name fields, browse dialog, category combos
 and copy/edit/refresh/remove controls with project management. They build on
 `FolderPathField`, `ManagementRow` and the existing tabs and editor actions.
 Panels supply their own service callbacks and enable only relevant controls.
@@ -576,19 +605,17 @@ Projects use the work-status filter by default on every opening. **Ctrl+W**
 toggles between that filter and all projects, including in the GitHub URL picker
 (`projectShowAllShortcut`). The footer shows the current filter and shortcuts.
 
-In Manage, the add form starts with the folder path and browse, cancel and add
-buttons. Use the folder-open button to choose a path in the native folder picker.
+In Manage, the right-pane Add form starts with the folder path and browse button.
+Cancel and Apply remain anchored below the form. Use the folder-open button to choose a path in the native folder picker.
 Accepting or cancelling the folder picker keeps Manage open and returns focus
 to the path field; selecting a folder does not start a scan.
 Two buttons show the current options: **Single folder** / **Repositories root**
 and **Personal** / **Work**. Clicking a button switches to its other option.
-Once sources exist, the plus button at the bottom right expands into the add
-controls in the footer, while search and projects remain above. **Ctrl+A** opens
-the same controls only in Manage (`projectAddShortcut` in Config.qml).
-Both views show shortcut hints. In the GitHub Projects picker, Ctrl+A selects
-visible URLs or clears the selection; it never opens the add form. While the add
-form is open, Ctrl+A retains the input field's Select all behavior. Save or Cancel
-collapses the form. With no sources, the form appears immediately.
+The plus button next to search opens the Add form in the right pane. **Ctrl+A**
+opens the same controls only in Manage (`projectAddShortcut` in Config.qml).
+In the GitHub Projects picker, Ctrl+A retains its URL-selection behavior; in an
+editor it remains Select all. Save or Cancel returns to source details. Empty
+source lists offer Add without opening a form automatically.
 A repositories root includes each immediate
 child directory; neither kind requires Git. The add action scans the source.
 If no project files are found, it saves immediately without a checklist. Otherwise
@@ -596,13 +623,12 @@ it shows the project-file choices before Save. Detected `.code-workspace` and `.
 start included. Deselect any, select none, or Cancel without adding the source.
 With no included project files, the folder opens in the configured default app. Paths can start with `~/` and retain spaces.
 
-Manage groups projects under each added path. Repository roots list subfolders
-by name, with dividers and hover highlighting. Added paths have edit, refresh and
-remove buttons. Edit opens the bottom form while keeping the source list, search
-and scroll position visible. It supports the folder path, native folder picker,
-folder type, category and included project files. Add and Edit reuse the same form.
-Manage keeps hints and actions on one footer line. Add stays visible but disabled
-while a form is open; Cancel and Apply follow it on the right.
+Manage lists added source folders on the left. The selected source's right pane
+shows its projects, path warnings and project-file choices. Edit opens the same
+right-pane form used by Add, keeping the selected source identity visible. It
+supports path, native folder selection, source type, category and included project
+files. Add stays visible but disabled while editing; Cancel and Apply sit at the
+bottom right of the details pane.
 Changing Single folder / Repositories root rescans before saving. Repository
 subfolders have project-file edit
 buttons; their paths are derived from the configured root. Both added paths and
@@ -699,7 +725,8 @@ so Enter accepts them immediately. Capture, output, framerate and audio choices
 keep their existing order and defaults; choosing no audio skips the device pickers.
 Devices belonging to cards with an off profile are excluded from both pickers.
 The [bar alert](alerts.md) for starting lasts one second and is explicitly dismissed
-after one second; shared capture readiness then waits for its closing animation. The stopped alert and file-manager
+after one second; shared readiness waits only for panels opting into
+`hideForCapture`, without waiting for notice animations. The stopped alert and file-manager
 action follow only after the recorder exits successfully. Errors show an error
 alert instead. The finishing alert can appear in the final captured frames;
 see [recording](recording.md) for the detached lifecycle and bar indicator.
@@ -723,20 +750,38 @@ external so it remains possible when the bar is not running.
 
 The native service-backed bindings, Bookmarks, QR encoding, Power, Wallpaper and
 Screenshot/OCR/QR and Recording setup orchestration are migrated. RecordingSetup
-uses the existing native picker and passes prepared options to the detached worker;
+uses the shared independent capture-menu session and existing picker controls,
+and passes prepared options to the detached worker;
 its former interactive provider and --prepare round trip are removed. Unfinished
 recording setup cancels on reload. Detached recording/session lifetimes and offline
 wallpaper restore remain supported.
 
-ScreenshotService presents the original five capture choices in the shared picker.
+ScreenshotService presents the original five capture choices through
+CaptureMenuService, an independent MenuSession rendered by the existing picker
+window and controls. This preserves another launcher or Manage view, including
+its query, selection and draft. Meta+Print opens this capture chooser and follows
+the same capture policy as the direct screenshot shortcuts.
 The main screenshot shortcuts and tools-submap OCR/QR bindings call it through the
 native registry. `launcher.sh provider screenshot [METHOD]` is a compatibility IPC
 entry. The prepared executor `providers/screenshot.sh METHOD` remains available for
 explicit noninteractive/offline use through the shared Config exporter.
 
-Capture waits for explicitly marked capture notices and participating picker, private-picker, Exposé and submap surfaces
-to finish closing through CaptureOverlay/CaptureHandoffService. Unrelated panels
-are preserved. There is no fixed picker-dismissal delay; the existing short
+Panels have one `hideForCapture` property for both screenshots and recording.
+It defaults to false: ordinary launchers, Manage and bar panels remain visible.
+Capture controls set it to true. CaptureHandoffService closes only opted-in panels
+and waits for actual closing motion/native unmap through CaptureOverlay.
+CaptureHandoffService then reads the active compositor animation settings and
+waits for layer/fade-out completion plus a display refresh before capture starts.
+Inherited durations and disabled animations are respected. No transparent frame
+is inserted. Panel hosts
+route captureHideRequested to the owning service close action; the shared top-panel
+host reads the property from its capturePanel. Private namespace exclusions are
+separate compositor rules and are unchanged.
+
+Capture sessions protect ordinary panels from focus/hover dismissal while capture
+controls or selectors take focus. Completion and cancellation release that
+protection without requesting another panel closure.
+There is no fixed picker-dismissal delay; the existing short
 hyprpicker freeze-initialization delay is separate. The worker bounds selection and
 capture to 30 seconds, validates geometry, accounts for monitor scale/rotation when
 clipping windows, and stops only its own process groups. Escape cancels quietly;

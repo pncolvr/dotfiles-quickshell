@@ -8,6 +8,7 @@ import "../../services"
 Item {
     id: root
     property var picker: PickerService
+    property bool hideForCapture: false
     property bool backgroundVisible: true
     property bool adding: false
     required property int pickerMode
@@ -24,16 +25,15 @@ Item {
     required property Item footerItem
     property var managementFocusTarget: null
     property var managementScroll: null
+    property var managementView: null
     property var pendingScrollPositions: []
     required property UI.SearchField managementSearch
     readonly property bool sessionActive: visible && picker.visible && picker.mode === pickerMode
     readonly property real contentTop: headerItem.height + Theme.controlSpacing
     readonly property real listHeight: height - contentTop
     readonly property real manageHeight: Math.max(0, listHeight - (footerItem.visible ? footerItem.height + Theme.controlSpacing : 0))
-    implicitWidth: Theme.pickerWidth
-    implicitHeight: contentTop + (managing
-        ? manageItem.implicitHeight + (footerItem.visible ? footerItem.height + Theme.controlSpacing : 0)
-        : listItem.implicitHeight)
+    implicitWidth: managing ? Theme.manageWidth : Theme.pickerWidth
+    implicitHeight: managing ? Theme.manageHeight : contentTop + listItem.implicitHeight
     signal managementRequested(bool value)
     signal addRequested()
     signal showAllRequested()
@@ -67,7 +67,11 @@ Item {
         }
         pendingScrollPositions = []
     }
-    function management(value) { managementRequested(value); Qt.callLater(root.focusSearch) }
+    function management(value) {
+        if (value === managing) return
+        managementRequested(value)
+        Qt.callLater(root.focusSearch)
+    }
     function beginAdd() { addRequested(); Qt.callLater(root.focusSearch) }
     function handleAddKey(event, activate) {
         if (!addShortcut.enabled || addShortcut.portableText !== "Ctrl+A" || !event.matches(StandardKey.SelectAll)) return false

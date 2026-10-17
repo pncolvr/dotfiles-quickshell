@@ -67,3 +67,6 @@ singleton StatusRepository 1.0 storage/StatusRepository.qml
 
 singleton CaptureHandoffService 1.0 ui/CaptureHandoffService.qml
 singleton ScreenshotService 1.0 launcher/ScreenshotService.qml
+
+MenuSession 1.0 launcher/MenuSession.qml
+singleton CaptureMenuService 1.0 launcher/CaptureMenuService.qml

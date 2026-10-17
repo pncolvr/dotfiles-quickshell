@@ -39,6 +39,17 @@ Column {
         browseObjectName: 'addStatusWorkFolder'
         browseHint: Translations.text("status.rules.addFolder")
         dialogTitle: Translations.text("status.rules.addFolder")
+        headerActions: [
+            UI.EditorActions {
+                objectName: 'statusRulesActions'
+                submitHint: Translations.text("status.rules.saveHint")
+                cancelHint: Translations.text("status.rules.resetHint")
+                submitEnabled: root.dirty && !root.nativeDialogOpen
+                cancelEnabled: root.dirty && !root.nativeDialogOpen
+                onSubmitted: if (root.statusService.saveRules({workDirectories:folders.values(),processes:patterns.values()})) root.load()
+                onCancelled: root.load()
+            }
+        ]
     }
     UI.LineListField {
         id: patterns
@@ -52,17 +63,5 @@ Column {
         visible: !!text
         color: Theme.urgent
         wrapMode: Text.Wrap
-    }
-    UI.EditorActions {
-        objectName: 'statusRulesActions'
-        anchors.right: parent.right
-        submitHint: Translations.text("status.rules.saveHint")
-        cancelHint: Translations.text("status.rules.resetHint")
-        onSubmitted: if (root.statusService.saveRules({
-            workDirectories: folders.values(),
-            processes: patterns.values()
-        }))
-            root.load()
-        onCancelled: root.load()
     }
 }

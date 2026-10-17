@@ -8,6 +8,8 @@ import "../../theme/ui" as UI
 import "../../theme"
 PrivateTopPanelTooltip {
     id: root
+    capturePanel: panel
+    onCaptureHideRequested: RbwService.close()
     requestedScreen: Quickshell.screens.includes(RbwService.targetScreen) ? RbwService.targetScreen : Quickshell.screens[0] ?? null
     readonly property VaultPanel panel: loader.item as VaultPanel
     requestedVisible: RbwService.visible && !!requestedScreen

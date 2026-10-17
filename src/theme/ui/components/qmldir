@@ -4,10 +4,11 @@ BarIcon 1.0 BarIcon.qml
 ActivityIndicator 1.0 ActivityIndicator.qml
 BatchedListModel 1.0 BatchedListModel.qml
 ColumnText 1.0 ColumnText.qml
+CheckBox 1.0 CheckBox.qml
 ComboSelector 1.0 ComboSelector.qml
 EditorActions 1.0 EditorActions.qml
 FixedIconText 1.0 FixedIconText.qml
-FolderCategoryButton 1.0 FolderCategoryButton.qml
+FolderCategorySelector 1.0 FolderCategorySelector.qml
 FolderForm 1.0 FolderForm.qml
 WindowFocusHandler 1.0 WindowFocusHandler.qml
 PanelFocusScope 1.0 PanelFocusScope.qml
@@ -19,6 +20,9 @@ IconButton 1.0 IconButton.qml
 InputField 1.0 InputField.qml
 ManagementActions 1.0 ManagementActions.qml
 ManagementRow 1.0 ManagementRow.qml
+ManagementView 1.0 ManagementView.qml
+RightAlignedText 1.0 RightAlignedText.qml
+RightAlignedTooltipText 1.0 RightAlignedTooltipText.qml
 PanelWindow 1.0 PanelWindow.qml
 PickerList 1.0 PickerList.qml
 PickerRow 1.0 PickerRow.qml

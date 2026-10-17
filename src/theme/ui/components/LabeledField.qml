@@ -8,6 +8,7 @@ Column {
     property alias text: input.text
     property alias placeholderText: input.placeholderText
     property alias inputObjectName: input.objectName
+    property alias readOnly: input.readOnly
     property alias echoMode: input.echoMode
     signal accepted()
     spacing: Theme.controlSpacing

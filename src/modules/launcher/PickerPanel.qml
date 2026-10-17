@@ -8,6 +8,7 @@ import "../../config"
 Item {
     id: root
     property var picker: PickerService
+    property bool hideForCapture: panel?.hideForCapture ?? false
     property bool backgroundVisible: true
     property real availableContentWidth: Theme.pickerWidth
     property real availableContentHeight: 800

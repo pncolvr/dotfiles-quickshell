@@ -124,12 +124,12 @@ Scope {
                 break
             case 6:
                 if (BackupService.busy) return
-                if (!root.check(!BackupService.error && BackupService.phase === "backup created", "create completes")) return
+                if (!root.check(!BackupService.error && BackupService.phase === "Backup created", "create completes")) return
                 if (!root.check(!ClipboardService.maintenance && !DbService.maintenance && !TotpService.maintenance,
                     "maintenance released after export")) return
                 if (!root.check(AlertService.messages.some(message => message.id === "backup" && message.severity === "success"),
                     "shared alert reports completion")) return
-                if (!root.check(root.backupPhases.includes("backup: encrypting archive"), "helper streams progress stages")) return
+                if (!root.check(root.backupPhases.includes("Backup: encrypting archive"), "helper streams progress stages")) return
                 if (!root.check(BackupService.outputPath === root.archive && AlertService.messages.some(message =>
                     message.id === "backup" && message.text === "Backup created: " + root.archive && message.expiresAt > Date.now() + 10000),
                     "completion includes the output path and stays visible")) return
@@ -165,10 +165,13 @@ Scope {
                 break
             case 9:
                 if (DirectoryService.checkingPaths || !DirectoryService.pathStates[root.locations + "/directory-missing"]) return
+                panel.panel.managementView.select(root.locations + "/directory-missing")
                 if (!root.check(root.warning("directoryPathWarning_" + root.locations + "/directory-missing")?.text === "Folder missing or unavailable",
                     "directory Manage warning: " + JSON.stringify(DirectoryService.pathStates[root.locations + "/directory-missing"])
                         + " / " + root.warning("directoryPathWarning_" + root.locations + "/directory-missing")?.text)) return
+                panel.panel.managementView.select("smb://server/share")
                 if (!root.check(root.warning("directoryPathWarning_smb://server/share")?.text === "Location not checked", "remote location unchecked")) return
+                panel.panel.managementView.select(root.locations + "/directory-missing")
                 if (Quickshell.env("BACKUP_WARNINGS_SCREENSHOT") && !root.warningsCaptured) {
                     if (!root.warningsCaptureRequested) {
                         root.warningsCaptureRequested = true
@@ -181,7 +184,8 @@ Scope {
                 break
             case 10:
                 if (ProjectService.checkingPaths || !ProjectService.pathStates[root.locations + "/project-missing"]) return
-                if (!root.check(root.warning("sourcePathWarning_" + root.locations + "/source")?.text === "Folder missing or unavailable", "source Manage warning")) return
+                panel.panel.managementView.select(root.locations + "/source")
+                if (!root.check(root.warning("sourcePathWarning_" + root.locations + "/source")?.text === "Folder missing or unavailable", "source Manage warning: " + JSON.stringify({sources:ProjectService.sources,selected:panel.panel.managementView.selectedId,state:ProjectService.pathStates[root.locations + "/source"],warning:root.warning("sourcePathWarning_" + root.locations + "/source")?.text}))) return
                 if (!root.check(root.warning("projectPathWarning_" + root.locations + "/project-missing")?.text === "Folder missing or unavailable", "project Manage warning")) return
                 if (!root.check(root.warning("projectPathWarning_" + root.locations + "/project-present")?.text === "1 project file missing or unavailable", "workspace summary")) return
                 ProjectService.editProject(root.locations + "/project-present")

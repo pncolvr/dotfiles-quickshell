@@ -86,6 +86,11 @@ Item {
             else detailBusyDelay.stop()
         }
     }
+    Shortcut {
+        sequence: "Ctrl+E"
+        enabled: root.visible && RbwService.visible && root.detailReady && root.editable && !RbwService.busy && !root.editing && !root.deleting
+        onActivated: root.edit()
+    }
     Keys.onPressed: event => {
         if (event.key === Qt.Key_Escape) { root.back(); event.accepted = true }
     }
@@ -93,6 +98,7 @@ Item {
         id: content
         anchors.fill: parent
         anchors.margins: Theme.tooltipPaddingWidth
+        anchors.bottomMargin: footer.height
         spacing: Theme.controlSpacing
         Item {
             width: parent.width
@@ -153,7 +159,7 @@ Item {
         }
         Row {
             width: parent.width
-            height: Math.max(100, content.height - y - footer.height - Theme.controlSpacing)
+            height: Math.max(100, content.height - y)
             spacing: Theme.controlSpacing * 2
             VaultEntryList {
                 id: list
@@ -194,7 +200,6 @@ Item {
                         y: Theme.controlSpacing
                         width: details.width - 10 - Theme.controlSpacing * 2
                         spacing: Theme.controlSpacing
-                        UI.Text { centerVertical: false; width: parent.width; textFormat: Text.PlainText; wrapMode: Text.Wrap; text: root.adding ? Translations.text("vault.actions.newLogin") : RbwService.detail?.name ?? Translations.text("vault.empty.details") }
                         UI.Text { centerVertical: false; width: parent.width; textFormat: Text.PlainText; wrapMode: Text.Wrap; visible: !!RbwService.detail; color: Theme.inactive; text: RbwService.detail?.folder ?? Translations.text("vault.folder.none") }
                         VaultEntryDetails {
                             width: parent.width
@@ -262,36 +267,41 @@ Item {
                 }
             }
         }
-        Column {
-            id: footer
-            objectName: "vaultFooter"
+    }
+    Column {
+        id: footer
+        objectName: "vaultFooter"
+        x: Theme.tooltipPaddingWidth
+        width: parent.width - Theme.tooltipPaddingWidth * 2
+        anchors.bottom: parent.bottom
+        spacing: Theme.controlSpacing
+        Item {
+            id: footerFeedback
             width: parent.width
-            spacing: Theme.controlSpacing
-            Item {
-                id: footerFeedback
+            height: Math.max(Theme.controlHeight, formHints.implicitHeight, status.visible ? status.implicitHeight : 0)
+            UI.ShortcutHints {
+                id: formHints
+                objectName: "vaultFormHints"
                 width: parent.width
-                height: Math.max(formHints.implicitHeight, status.visible ? status.implicitHeight : 0)
-                UI.ShortcutHints {
-                    id: formHints
-                    objectName: "vaultFormHints"
-                    width: parent.width
-                    visible: !status.visible
-                    hints: Translations.text(root.editing || root.deleting ? "common.shortcuts.cancel" : "vault.shortcuts.details")
-                }
-                UI.Text {
-                    id: status
-                    objectName: "vaultStatus"
-                    anchors.right: parent.right
-                    width: parent.width
-                    centerVertical: false
-                    font.pixelSize: Theme.fontSize - 1
-                    textFormat: Text.PlainText
-                    horizontalAlignment: Text.AlignRight
-                    wrapMode: Text.WordWrap
-                    visible: text.length > 0
-                    text: (RbwService.busy && !RbwService.selecting) || root.detailBusyShown ? Translations.text("common.status.working") : RbwService.error || root.notice
-                    color: RbwService.error ? Theme.warning : Theme.inactive
-                }
+                height: parent.height
+                visible: !status.visible
+                hints: Translations.text(root.editing || root.deleting ? "common.shortcuts.cancel" : "vault.shortcuts.details")
+                    + (!root.editing && !root.deleting && root.detailReady && root.editable ? " · " + Translations.text("common.shortcuts.edit") : "")
+            }
+            UI.Text {
+                id: status
+                objectName: "vaultStatus"
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.right: parent.right
+                width: parent.width
+                centerVertical: false
+                font.pixelSize: Theme.fontSize - 1
+                textFormat: Text.PlainText
+                horizontalAlignment: Text.AlignRight
+                wrapMode: Text.WordWrap
+                visible: text.length > 0
+                text: (RbwService.busy && !RbwService.selecting) || root.detailBusyShown ? Translations.text("common.status.working") : RbwService.error || root.notice
+                color: RbwService.error ? Theme.warning : Theme.inactive
             }
         }
     }

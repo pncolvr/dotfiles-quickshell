@@ -14,7 +14,9 @@ ManagedPickerFrame {
     objectName: "projectPickerPanel"
     property string sourceKind: "folder"
     property string sourceCategory: "personal"
-    readonly property bool showAddForm: adding || ProjectService.sources.length === 0
+    readonly property var selectedSource: manage.selectedEntry
+    readonly property bool showForm: adding || !!ProjectService.draft
+    readonly property bool showAddForm: adding
     property alias folderPicker: sourceForm.folderPicker
     nativeDialogOpen: sourceForm.nativeDialogOpen
     pickerMode: PickerService.Mode.Projects
@@ -27,20 +29,21 @@ ManagedPickerFrame {
     headerItem: header
     listItem: list
     manageItem: manage
-    footerItem: manageFooter
-    managementSearch: manageSearch
-    managementScroll: manage.contentItem
-    managementFocusTarget: root.showAddForm && !ProjectService.draft ? sourceForm : !ProjectService.draft ? manageSearch : null
+    managementView: manage
+    footerItem: footer
+    managementSearch: manage.searchField
+    managementScroll: manage.listView
+    managementFocusTarget: root.showAddForm && !ProjectService.draft ? sourceForm : ProjectService.draft ? draftScroll : manage
     onAddRequested: { ProjectService.setManaging(true); adding = true }
     onManagementRequested: value => { if (!value) cancelAdd(); ProjectService.setManaging(value) }
     onShowAllRequested: ProjectService.toggleShowAll()
     onSessionClosed: { root.adding = false; sourceForm.clear() }
 
     function matchesManagement(text) {
-        return !manageSearch.text.trim() || root.picker.filter([{title:text}],manageSearch.text).length > 0
+        return !manage.searchField.text.trim() || root.picker.filter([{title:text}],manage.searchField.text).length > 0
     }
     function highlighted(text) {
-        return Search.highlight(text, root.picker.searchPattern(manageSearch.text), Config.pickerFuzzySearch, Theme.accent)
+        return Search.highlight(text, root.picker.searchPattern(manage.searchField.text), Config.pickerFuzzySearch, Theme.accent)
     }
     function projectsForSource(source) {
         const projects = ProjectService.projects.filter(project => project.sourcePaths.includes(source.path))
@@ -50,7 +53,7 @@ ManagedPickerFrame {
     }
     function matchingWorkspaces(project) {
         const repository = project.name + " " + project.path
-        if (!manageSearch.text.trim() || matchesManagement(repository)) return []
+        if (!manage.searchField.text.trim() || matchesManagement(repository)) return []
         return project.workspaces.filter(workspace => matchesManagement(repository + " " + ProjectService.fileLabel(workspace) + " " + workspace.path))
     }
     readonly property var managedSources: ProjectService.sources.filter(source => matchesManagement(source.path) || projectsForSource(source).length > 0)
@@ -64,7 +67,10 @@ ManagedPickerFrame {
             Qt.callLater(sourceForm.focusInput)
         }
     }
-    function editProject(path) { root.preserveManagementScroll(() => ProjectService.editProject(path)) }
+    function editProject(path) {
+        root.preserveManagementScroll(() => ProjectService.editProject(path))
+        Qt.callLater(root.focusSearch)
+    }
     function setIncluded(project,workspace,included) {
         root.preserveScroll(() => ProjectService.setIncluded(project,workspace,included),draftScroll.contentItem)
     }
@@ -91,6 +97,7 @@ ManagedPickerFrame {
     Connections {
         target: ProjectService
         function onSourceAdded() { root.cancelAdd() }
+        function onSaved(path: string) { if (path) manage.selectSaved(path) }
         function onSourcePathResolved(path: string) { sourceForm.text = path }
     }
 
@@ -116,14 +123,7 @@ ManagedPickerFrame {
             hint: Translations.text("projects.actions.backHint")
             onClicked: ProjectService.back()
         }
-        UI.ActionButton {
-            objectName: "refreshProjects"
-            visible: ProjectService.managing
-            glyph: Theme.refreshIcon
-            hint: Translations.text("projects.actions.refreshHint")
-            enabled: !ProjectService.busy && !ProjectService.draft && ProjectService.sources.length > 0
-            onClicked: ProjectService.refresh()
-        }
+
     }
     PickerPanelBase {
         id: list
@@ -137,121 +137,62 @@ ManagedPickerFrame {
         searchKeyHandler: root.handlePickerKey
         footerHint: StatusService.filterHint(Config.projectShowAllShortcut,ProjectService.showAll) + Translations.text(ProjectService.urls ? "projects.shortcuts.urls" : "projects.shortcuts.list",[Config.projectManageShortcut,root.picker.selectedIds.length])
     }
-    QC.ScrollView {
+    UI.ManagementView {
         id: manage
-        objectName: "projectManageScroll"
-        y: root.contentTop
-        width: parent.width
-        height: root.manageHeight
-        implicitHeight: Math.min(content.implicitHeight + Theme.projectManagePadding * 2, Theme.pickerRowHeight * Config.pickerMaxRows)
-        visible: ProjectService.managing
-        clip: true
-        contentWidth: availableWidth
-        contentHeight: content.implicitHeight + Theme.projectManagePadding * 2
-        QC.ScrollBar.horizontal.policy: QC.ScrollBar.AlwaysOff
-        QC.ScrollBar.vertical: UI.ScrollBar {}
-        Column {
-            id: content
-            x: Theme.projectManagePadding
-            y: Theme.projectManagePadding
-            width: Math.max(0,manage.availableWidth - Theme.projectManagePadding * 2)
-            spacing: Theme.projectManageSectionSpacing
-            UI.ColumnText {
-                text: ProjectService.busy ? Translations.text("projects.status.scanning") : ProjectService.error
-                visible: !!text
-                width: parent.width
-                wrapMode: Text.Wrap
-                color: Theme.urgent
-            }
-            Column {
-                width: parent.width
-                spacing: Theme.projectManageSectionSpacing
-                UI.SearchField {
-                    id: manageSearch
-                    objectName: "projectManageSearch"
-                    width: parent.width
-                    visible: ProjectService.sources.length > 0
-                    placeholderText: Translations.text("projects.manage.searchPlaceholder")
-                    retainPanelWhileEditing: false
-                    resetWithTooltip: false
-                    handleEscape: false
-                    Keys.onShortcutOverride: event => {
-                        if (root.handleAddKey(event,false)) event.accepted = true
-                    }
-                    Keys.onPressed: event => {
-                        if (root.handleAddKey(event,true)) event.accepted = true
-                    }
-                }
-                UI.ColumnText {
-                    text: Translations.text("projects.empty.sources")
-                    visible: ProjectService.sources.length === 0
-                    color: Theme.inactive
-                }
-                UI.ColumnText {
-                    text: Translations.text("projects.empty.filtered")
-                    visible: ProjectService.sources.length > 0 && root.managedSources.length === 0
-                    color: Theme.inactive
-                }
-                Repeater {
-                    model: root.managedSources
-                    delegate: Rectangle {
+        objectName: "projectManageView"
+        y: root.contentTop; width: parent.width; height: root.manageHeight
+        visible: root.managing
+        entries: root.managedSources.map(source => Object.assign({},source,{id:source.path,title:source.path,
+            subtitle:Translations.text(source.kind === "root" ? "projects.source.repositoryRoot" : "projects.source.singleFolder"),
+            type:source.kind,availability:ProjectService.pathStates[source.path]?.status ?? "unchecked"}))
+        searchEntries: (entries,query) => entries
+        editing: root.showForm
+        busy: ProjectService.busy || root.nativeDialogOpen
+        showCategory: StatusService.enabled
+        filterAvailability: true
+        typeOptions: [{name:"folder",description:Translations.text("projects.source.singleFolder")},{name:"root",description:Translations.text("projects.source.repositoryRoot")}]
+        searchObjectName: "projectManageSearch"
+        listObjectName: "projectManageList"
+        addObjectName: "beginAddProjectSource"
+        searchPlaceholder: Translations.text("projects.manage.searchPlaceholder")
+        addHint: Translations.text("projects.actions.addHint",[Config.projectAddShortcut])
+        message: ProjectService.busy ? Translations.text("projects.status.scanning") : ProjectService.error
+        hints: Translations.text("projects.shortcuts.manage",[Config.projectManageShortcut])
+        onEditRequested: root.editSource(root.selectedSource.path)
+        onAddRequested: root.beginAdd()
+        onAddKey: (event,activate) => { if (root.handleAddKey(event,activate)) event.accepted = true }
+        toolbarContent: [UI.ActionButton {
+            objectName: "refreshProjects"
+            visible: ProjectService.managing
+            glyph: Theme.refreshIcon
+            hint: Translations.text("projects.actions.refreshHint")
+            enabled: !ProjectService.busy && !root.showForm && ProjectService.sources.length > 0
+            onClicked: ProjectService.refresh()
+        }]
+        detailContent: [Rectangle {
                         id: sourceRow
-                        required property var modelData
+                        readonly property var modelData: root.selectedSource ?? {path:"",kind:"folder",category:"personal"}
                         readonly property var projects: root.projectsForSource(modelData)
                         objectName: "projectSource_" + modelData.path
-                        width: content.width
-                        implicitHeight: sourceContent.implicitHeight + Theme.projectManagePadding * 2
+                        width: parent.width
+                        visible: !root.showForm && !!root.selectedSource
+                        implicitHeight: sourceContent.implicitHeight
                         color: "transparent"
                         radius: Theme.iconButtonRadius
-                        border.width: 1
-                        border.color: Theme.empty
                         Column {
                             id: sourceContent
-                            x: Theme.projectManagePadding
-                            y: Theme.projectManagePadding
-                            width: parent.width - Theme.projectManagePadding * 2
+                            x: 0
+                            y: 0
+                            width: parent.width
                             spacing: Theme.controlSpacing
-                            RowLayout {
+                            UI.FolderForm {
                                 width: parent.width
-                                UI.ColumnText {
-                                    objectName: "managedSourcePath_" + sourceRow.modelData.path
-                                    text: root.highlighted(sourceRow.modelData.path)
-                                    textFormat: Text.StyledText
-                                    Accessible.name: sourceRow.modelData.path
-                                    elide: Text.ElideMiddle
-                                    Layout.fillWidth: true
-                                    UI.HoverTooltip { text: sourceRow.modelData.path }
-                                }
-                                UI.ManagementActions {
-                                    path: sourceRow.modelData.path
-                                    copyObjectName: "copySourcePath_" + path
-                                    editObjectName: "editSource_" + path
-                                    refreshObjectName: "refreshSource_" + path
-                                    editHint: Translations.text("projects.actions.editSourceHint")
-                                    removeHint: Translations.text("projects.actions.removeSourceHint")
-                                    removeColor: Theme.urgent
-                                    showRefresh: true
-                                    editEnabled: !ProjectService.busy && !ProjectService.draft
-                                    refreshEnabled: !ProjectService.busy && !ProjectService.draft
-                                    removeEnabled: !ProjectService.busy
-                                    onEditRequested: root.editSource(path)
-                                    onRefreshRequested: ProjectService.refresh(path)
-                                    onRemoveRequested: ProjectService.removeSource(path)
-                                }
-                            }
-                            RowLayout {
-                                width: parent.width
-                                spacing: Theme.controlSpacing
-                                UI.ColumnText {
-                                    text: (Translations.text(sourceRow.modelData.kind === "root" ? "projects.source.repositoryRoot" : "projects.source.singleFolder")) + " ·"
-                                    color: Theme.inactive
-                                }
-                                UI.ColumnText {
-                                    visible: StatusService.enabled
-                                    text: Translations.text(sourceRow.modelData.category === "work" ? "status.modes.work" : "status.modes.personal")
-                                    color: sourceRow.modelData.category === "work" ? Theme.accent : Theme.active
-                                    Layout.fillWidth: true
-                                }
+                                readOnly: true
+                                showKind: true
+                                showCategory: StatusService.enabled
+                                text: sourceRow.modelData.path
+                                kind: sourceRow.modelData.kind
+                                category: sourceRow.modelData.category
                             }
                             UI.ColumnText {
                                 width: parent.width
@@ -270,7 +211,7 @@ ManagedPickerFrame {
                                 wrapMode: Text.Wrap
                             }
                             Repeater {
-                                model: sourceRow.modelData.kind === "root" || (manageSearch.text.trim() && !root.matchesManagement(sourceRow.modelData.path)) ? sourceRow.projects : []
+                                model: sourceRow.modelData.kind === "root" || (manage.searchField.text.trim() && !root.matchesManagement(sourceRow.modelData.path)) ? sourceRow.projects : []
                                 delegate: UI.ManagementRow {
                                     id: projectRow
                                     required property var modelData
@@ -292,7 +233,7 @@ ManagedPickerFrame {
                                         UI.ColumnText {
                                             objectName: "managedProjectPath_" + projectRow.modelData.path
                                             width: parent.width
-                                            visible: !!manageSearch.text.trim() && !root.matchesManagement(projectRow.modelData.name)
+                                            visible: !!manage.searchField.text.trim() && !root.matchesManagement(projectRow.modelData.name)
                                             text: root.highlighted(projectRow.modelData.path)
                                             textFormat: Text.StyledText
                                             Accessible.name: projectRow.modelData.path
@@ -343,35 +284,13 @@ ManagedPickerFrame {
                                 color: Theme.inactive
                             }
                         }
-                    }
-                }
-            }
-
-        }
-    }
-    Item {
-        id: manageFooter
-        anchors.bottom: parent.bottom
-        width: parent.width
-        height: footerDivider.height + Theme.controlSpacing
-            + (sourceForm.visible ? sourceForm.implicitHeight + Theme.controlSpacing : 0)
-            + (draftScroll.visible ? draftScroll.height + Theme.controlSpacing : 0)
-            + footerRow.implicitHeight + Theme.projectManagePadding
-        visible: ProjectService.managing
-        Rectangle {
-            id: footerDivider
-            x: Theme.projectManagePadding
-            width: Math.max(0,parent.width - Theme.projectManagePadding * 2)
-            height: 1
-            color: Theme.empty
-        }
-        UI.FolderForm {
+                    }, UI.FolderForm {
             showCategory: StatusService.enabled
             id: sourceForm
             objectName: "projectAddForm"
-            x: Theme.projectManagePadding
-            y: footerDivider.height + Theme.controlSpacing
-            width: Math.max(0,parent.width - Theme.projectManagePadding * 2)
+            x: 0
+            y: 0
+            width: parent.width
             visible: !!ProjectService.draft?.previousPath || (!ProjectService.draft && root.showAddForm)
             enabled: !ProjectService.busy
             inputObjectName: ProjectService.draft?.previousPath ? "editProjectSourcePath" : "projectSourcePath"
@@ -386,14 +305,13 @@ ManagedPickerFrame {
             onKindRequested: kind => root.sourceKind = kind
             onCategoryRequested: category => root.sourceCategory = category
             onAccepted: root.submitForm()
-        }
-        QC.ScrollView {
+        }, QC.ScrollView {
             id: draftScroll
             objectName: "projectWorkspaceScroll"
-            x: Theme.projectManagePadding
-            y: footerDivider.height + Theme.controlSpacing + (sourceForm.visible ? sourceForm.implicitHeight + Theme.controlSpacing : 0)
-            width: parent.width - Theme.projectManagePadding * 2
-            height: visible ? Math.min(draftContent.implicitHeight, Theme.pickerRowHeight * 4) : 0
+            x: 0
+            y: 0
+            width: parent.width
+            height: visible ? Math.min(draftContent.implicitHeight, Math.max(Theme.pickerRowHeight * 4, manage.detailScroll.height - (sourceForm.visible ? sourceForm.height : 0) - Theme.controlSpacing)) : 0
             contentWidth: availableWidth
             contentHeight: draftContent.implicitHeight
             visible: !!ProjectService.draft
@@ -464,32 +382,24 @@ ManagedPickerFrame {
                     }
                 }
             }
-        }
-        RowLayout {
-            id: footerRow
-            x: Theme.projectManagePadding
-            width: Math.max(0,parent.width - Theme.projectManagePadding * 2)
-            anchors.bottom: parent.bottom
-            anchors.bottomMargin: Theme.projectManagePadding
-            spacing: Theme.controlSpacing
-            UI.ShortcutHints {
-                objectName: "projectManageHints"
-                Layout.fillWidth: true
-                Layout.alignment: Qt.AlignVCenter
-                wrapMode: Text.NoWrap
-                elide: Text.ElideRight
-                hints: Translations.text("projects.shortcuts.manage",[Config.projectManageShortcut])
-                    + (!root.showAddForm && !ProjectService.draft ? " · " + Translations.text("common.shortcuts.addFolder",[Config.projectAddShortcut]) : "")
-                    + " · Esc: " + (root.adding || ProjectService.draft ? "cancel" : "close")
-            }
-            UI.ActionButton {
-                objectName: "beginAddProjectSource"
-                glyph: Theme.addIcon
-                hint: Translations.text("projects.actions.addHint",[Config.projectAddShortcut])
-                enabled: root.addAllowed
-                onClicked: root.beginAdd()
-            }
-            UI.EditorActions {
+        }]
+        actionContent: [UI.ManagementActions {
+                visible: !root.showForm && !!root.selectedSource
+                                    path: root.selectedSource?.path ?? ""
+                                    copyObjectName: "copySourcePath_" + path
+                                    editObjectName: "editSource_" + path
+                                    refreshObjectName: "refreshSource_" + path
+                                    editHint: Translations.text("projects.actions.editSourceHint")
+                                    removeHint: Translations.text("projects.actions.removeSourceHint")
+                                    removeColor: Theme.urgent
+                                    showRefresh: true
+                                    editEnabled: !ProjectService.busy && !ProjectService.draft
+                                    refreshEnabled: !ProjectService.busy && !ProjectService.draft
+                                    removeEnabled: !ProjectService.busy
+                                    onEditRequested: root.editSource(path)
+                                    onRefreshRequested: ProjectService.refresh(path)
+                                    onRemoveRequested: ProjectService.removeSource(path)
+                                }, UI.EditorActions {
                 visible: !!ProjectService.draft || sourceForm.visible
                 cancelObjectName: ProjectService.draft ? "cancelProjectDraft" : "cancelAddProjectSource"
                 submitObjectName: ProjectService.draft ? "saveProjectDraft" : "addProjectSource"
@@ -500,7 +410,7 @@ ManagedPickerFrame {
                 cancelEnabled: !ProjectService.busy
                 onCancelled: root.cancelDraft()
                 onSubmitted: root.submitForm()
-            }
-        }
+            }]
     }
+    Item { id: footer; visible: false }
 }

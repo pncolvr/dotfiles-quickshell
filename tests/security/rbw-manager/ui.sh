@@ -168,7 +168,7 @@ wait_state '(.checking|not) and (.busy|not) and .details and .listEnabled'
 [[ $(snapshot | jq -c '[.statusHeight,.listHeight]') == "$layout_before" ]]
 rm "$test_dir/slow-poll"
 ipc edit
-wait_state '.editing and .masked and (.draftEmpty|not) and .formActionsRight and .hintsBelowActions and .addVisible and (.addEnabled|not)'
+wait_state '.editing and .masked and (.draftEmpty|not) and .formActionsRight and .hintsBelowActions and .hintsCentered and .hintsSpaceBalanced and .addVisible and (.addEnabled|not)'
 if [[ -n ${RBW_STYLE_PREVIEW_OUTPUT:-} ]]; then
     ipc preview
     for ((i=0;i<100;i++)); do [[ -s $test_dir/form.png ]] && break; sleep 0.02; done

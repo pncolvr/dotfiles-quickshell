@@ -8,3 +8,6 @@ singleton WallpaperService 1.0 WallpaperService.qml
 ManagedCollectionService 1.0 ManagedCollectionService.qml
 
 singleton ScreenshotService 1.0 ScreenshotService.qml
+
+MenuSession 1.0 MenuSession.qml
+singleton CaptureMenuService 1.0 CaptureMenuService.qml

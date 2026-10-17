@@ -3,14 +3,16 @@ import QtQml
 import Quickshell
 import "../../../services"
 
-// Reusable presentation registration: follow the actual closing animation as well as requests.
+// Follow logical requests and actual panel closing motion/native visibility.
 Scope {
     id: root
     required property var host
     property bool requested: false
+    property bool hideForCapture: host.hideForCapture ?? false
     property bool presentationPending: host.visible
-    readonly property bool presented: requested || presentationPending
+    readonly property bool presented: hideForCapture && (requested || presentationPending)
     onPresentedChanged: CaptureHandoffService.update(root, presented)
-    Component.onCompleted: CaptureHandoffService.update(root, presented)
-    Component.onDestruction: CaptureHandoffService.update(root, false)
+    function hide() { host.captureHideRequested() }
+    Component.onCompleted: { CaptureHandoffService.registerPanel(root); CaptureHandoffService.update(root, presented) }
+    Component.onDestruction: CaptureHandoffService.unregisterPanel(root)
 }

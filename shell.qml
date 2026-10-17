@@ -29,6 +29,7 @@ Scope {
   NotificationManagerWindow {}
   TotpWindow {}
   PickerWindow {}
+  PickerWindow { picker: CaptureMenuService }
   PrivatePickerWindow {}
   VaultWindow {}
   ExposeWindow {}

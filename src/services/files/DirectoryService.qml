@@ -19,7 +19,7 @@ Singleton {
     readonly property bool busy: resolve.running
     readonly property var directories: DirectoryRepository.directories
     readonly property var availableDirectories: directories.filter(entry => StatusService.includesCategory(entry.category,showAll,Config.directoryWorkStatus))
-    signal saved()
+    signal saved(string path)
     function checkPaths() {
         if (pathCheck.running) { pathCheckPending = true; return }
         pathCheckPending = false
@@ -144,7 +144,7 @@ Singleton {
                 if (!DirectoryRepository.save(previousPath,entry.path,entryName || entry.name,category)) {
                     root.error = DirectoryRepository.error; return
                 }
-                root.draft = null; root.error = ""; root.saved()
+                root.draft = null; root.error = ""; root.saved(entry.path)
             } catch (error) { root.error = Translations.message(error) ?? String(error) }
         }
         // qmllint enable signal-handler-parameters

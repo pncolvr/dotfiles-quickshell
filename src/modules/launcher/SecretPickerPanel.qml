@@ -91,22 +91,13 @@ Item {
             Keys.onEnterPressed: root.accept()
             Keys.onEscapePressed: { root.clearSecret(); root.picker.close() }
         }
-        Item {
+        Column {
             width: parent.width
-            height: Theme.controlHeight
+            spacing: Theme.controlSpacing
             visible: !!root.actions
-            UI.ColumnText {
-                anchors.centerIn: parent
-                width: Math.max(0, parent.width - (passwordActions.width + Theme.controlSpacing) * 2)
-                horizontalAlignment: Text.AlignHCenter
-                text: Translations.text(root.actions?.creating ? "backup.shortcuts.create" : "backup.shortcuts.restore")
-                color: Theme.inactive
-                elide: Text.ElideRight
-            }
             Row {
                 id: passwordActions
                 anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
                 spacing: Theme.controlSpacing
                 UI.ActionButton {
                     objectName: "generateBackupPassword"
@@ -124,6 +115,10 @@ Item {
                     enabled: secret.text.length > 0
                     onClicked: { root.actions.copy(secret.text); root.focusSearch() }
                 }
+            }
+            UI.ShortcutHints {
+                width: parent.width
+                hints: Translations.text(root.actions?.creating ? "backup.shortcuts.create" : "backup.shortcuts.restore")
             }
         }
     }

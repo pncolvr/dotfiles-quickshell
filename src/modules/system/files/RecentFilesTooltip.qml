@@ -429,11 +429,11 @@ Column {
             }
         }
     }
-    UI.ColumnText {
+    UI.ShortcutHints {
         id: hint
         width: parent.width
         visible: root.fileService.files.length > 0
-        text: (root.selectedUris.length > 0 ? Translations.text("files.shortcuts.selected",[],root.selectedUris.length) : "")
+        hints: (root.selectedUris.length > 0 ? Translations.text("files.shortcuts.selected",[],root.selectedUris.length) : "")
             + (Translations.text(pinnedDrop.containsDrag ? "files.pin.dropHint" : "files.shortcuts.selection"))
         color: Theme.inactive
         font.pixelSize: 10

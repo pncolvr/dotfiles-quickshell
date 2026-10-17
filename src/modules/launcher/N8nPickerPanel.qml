@@ -6,6 +6,7 @@ import "../../theme"
 import "../../theme/ui" as UI
 
 ManagedCollectionPanel {
+    filterBrowser: true
     id: root
     service:N8nService
     collectionName:'n8n'

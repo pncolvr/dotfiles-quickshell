@@ -93,3 +93,14 @@ retains the surface for closing. `TooltipContent` retains outgoing hover content
 until the roll-up ends, while services and secret-state cleanup follow logical
 closure. Theme timings are `panelOpenDuration`, `panelCloseDuration` and
 `panelResizeDuration`.
+
+Panels default to `hideForCapture: false`. Screenshots and recording share this
+property; capture controls opt in. Shared top-panel hosts forward the panel
+property and route `captureHideRequested` to its owning close action. Only opted-in
+panels close and participate in capture readiness; other panels keep their state.
+Private compositor capture exclusions remain independent of this close policy.
+
+Capture waits for the panel's visual closing motion and native unmap, then for
+the compositor's configured layer/fade-out animation and a display refresh.
+CaptureCloseTiming resolves inherited active Hypr animation settings; disabled
+animations add no animation wait. No synthetic transparent frame is rendered.

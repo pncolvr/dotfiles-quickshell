@@ -58,7 +58,7 @@ Scope {
                     form.load(Object.assign(Entries.empty(),{name:'Added',type:'vm',endpoint:'127.0.0.1',vmName:'new-vm',password:'fixture secret'}))
                     const secret=objects.findChild(panel,'remotePassword') as UI.SecretField
                     root.check(secret.echoMode===TextInput.Password,'password is masked')
-                    root.check((objects.findChild(panel,'remoteCategorySelector') as UI.ComboSelector).visible && !form.advanced,'category outside Advanced')
+                    root.check((objects.findChild(panel,'remoteCategorySelector') as UI.ComboSelector).visible,'category is visible')
                     panel.panel.submit()
                     root.check(RemoteRepository.entries.length===4 && !RemoteService.draft,'new entry saved')
                     panel.panel.edit(RemoteRepository.entries.find(entry=>entry.name==='Added'))

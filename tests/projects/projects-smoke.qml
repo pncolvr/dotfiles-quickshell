@@ -45,6 +45,7 @@ Scope {
                     PickerService.projects()
                     root.check(!ProjectService.managing && PickerService.currentIndex === 0, "opening always starts at picker first row")
                     ProjectService.setManaging(true)
+                    panel.managementView.select(root.directory + "/single folder")
                     root.find("refreshSource_" + root.directory + "/single folder").clicked()
                     root.step=10
                     return
@@ -65,6 +66,7 @@ Scope {
                     if (root.step === 1) {
                         root.find("cancelProjectDraft").clicked()
                         root.check(!ProjectService.draft && root.banana().workspaces.length === 2, "cancel refresh preserves previous list")
+                        panel.managementView.select(root.directory + "/repos")
                         root.find("refreshSource_" + root.directory + "/repos").clicked()
                         root.step=2
                     } else {
@@ -108,9 +110,10 @@ Scope {
                 root.check(root.find("projectTabs").currentIndex === 0, "Projects tab follows shortcut")
                 root.find("projectTabs").itemAt(1).clicked()
                 root.check(ProjectService.managing, "Manage control opens management")
-                root.check(root.find("projectAddForm").visible, "empty management shows the add form")
-                root.find("projectSourceKind").clicked()
-                root.check(root.find("projectSourceKind").label === "Repositories root", "folder button labels its current state")
+                root.check(!root.find("projectAddForm").visible && root.find("beginAddProjectSource").enabled, "empty management offers Add")
+                panel.beginAdd()
+                root.find("projectSourceKind").selected(root.find("projectSourceKind").selectedName === "root" ? "folder" : "root")
+                root.check(root.find("projectSourceKind").label === "Repositories root", "source combo labels its current state")
                 panel.folderPicker.options = Dialogs.FolderDialog.ReadOnly | Dialogs.FolderDialog.DontUseNativeDialog
                 panel.folderPicker.currentFolder = "file://" + root.directory + "/single%20folder"
                 root.find("browseProjectSource").clicked()
@@ -121,10 +124,10 @@ Scope {
                 root.check(root.find("projectSourcePath").text === root.directory + "/single folder", "folder picker fills decoded path without adding a source: " + root.find("projectSourcePath").text)
                 root.check(!ProjectService.busy && ProjectService.sources.length === 0, "folder selection waits for scan action")
                 root.find("projectSourcePath").text=root.directory + "/repos"
-                root.find("projectSourceCategory").clicked()
-                root.check(root.find("projectSourceCategory").label === "Work", "category button switches to Work")
-                root.find("projectSourceCategory").clicked()
-                root.check(root.find("projectSourceCategory").label === "Personal", "category button switches back to Personal")
+                root.find("projectSourceCategory").selected(root.find("projectSourceCategory").selectedName === "work" ? "personal" : "work")
+                root.check(root.find("projectSourceCategory").label === "Work", "category combo switches to Work")
+                root.find("projectSourceCategory").selected(root.find("projectSourceCategory").selectedName === "work" ? "personal" : "work")
+                root.check(root.find("projectSourceCategory").label === "Personal", "category combo switches back to Personal")
                 root.find("addProjectSource").clicked()
                 root.step=1
             } else if (root.step === 1) {
@@ -146,7 +149,7 @@ Scope {
                 root.find("projectManageSearch").text="banana"
                 root.check(root.find("projectManageSearch").activeFocus, "management search has keyboard focus")
                 root.check(events.keyClick(Qt.Key_A,Qt.ControlModifier,0), "add shortcut receives key in management search")
-                root.check(root.find("projectAddForm").visible && root.find("projectManageSearch").visible, "Ctrl+A opens the bottom add form while keeping search visible")
+                root.check(root.find("projectAddForm").visible && root.find("projectManageSearch").visible, "Ctrl+A opens the right-pane add form while keeping search visible")
                 root.find("projectSourcePath").text = root.directory + "/cancelled"
                 root.find("projectSourcePath").forceActiveFocus()
                 root.step=12
@@ -188,8 +191,9 @@ Scope {
                 root.check(ProjectService.draft.category === "work", "single folder uses explicitly chosen category")
                 ProjectService.saveDraft()
                 root.check(ProjectService.sources.length === 2 && ProjectRepository.projects.length === 3, "single non-Git folder saved")
+                panel.managementView.select(root.directory + "/single folder")
                 const singleGroup = root.find("projectSource_" + root.directory + "/single folder")
-                root.check(!!singleGroup && !!root.find("editSource_" + root.directory + "/single folder",singleGroup)
+                root.check(!!singleGroup && !!root.find("editSource_" + root.directory + "/single folder")
                     && !root.find("managedProject_" + root.directory + "/single folder"), "single folder has edit without a duplicate project row")
                 root.find("projectManageSearch").text="single folder"
                 root.check(!root.find("projectSource_" + root.directory + "/repos")
@@ -199,8 +203,9 @@ Scope {
                 root.step=3
             } else if (root.step === 3) {
                 root.check(!root.banana().workspaces.find(workspace=>workspace.name === "Tomato").included, "refresh preserves deselection")
+                panel.managementView.select(root.directory + "/single folder")
                 root.find("editSource_" + root.directory + "/single folder").clicked()
-                root.check(root.find("projectManageSearch").visible && !!root.find("projectSource_" + root.directory + "/repos"), "bottom editor keeps source list and search visible")
+                root.check(root.find("projectManageSearch").visible && !root.find("projectManageSearch").enabled && panel.managementView.filteredEntries.some(entry => entry.path === root.directory + "/repos"), "right editor keeps source list and disabled search visible")
                 root.find("editProjectSourcePath").text = root.directory + "/repos"
                 root.find("saveProjectDraft").clicked()
                 root.check(!!ProjectService.error && ProjectService.sources.length === 2, "duplicate edit is rejected without changing sources")
@@ -218,6 +223,7 @@ Scope {
                 root.check(!ProjectService.draft && ProjectService.sources.some(source => source.path === root.directory + "/renamed folder")
                     && !ProjectService.sources.some(source => source.path === root.directory + "/single folder"), "path edit replaces source after successful scan")
                 root.check(ProjectRepository.projects.find(project => project.path === root.directory + "/renamed folder").workspaces[0].included, "moved workspace retains inclusion by relative path")
+                panel.managementView.select(root.directory + "/renamed folder")
                 root.find("editSource_" + root.directory + "/renamed folder").clicked()
                 root.find("editProjectSourcePath").text = root.directory + "/single folder"
                 root.find("saveProjectDraft").clicked()
@@ -225,17 +231,19 @@ Scope {
                 return
             } else if (root.step === 32) {
                 root.check(!ProjectService.draft && ProjectService.sources.length === 2, "restoring path leaves one source record")
+                panel.managementView.select(root.directory + "/single folder")
                 root.find("editSource_" + root.directory + "/single folder").clicked()
                 root.check(root.find("projectSourceKind").label === "Single folder", "edit reuses add form and exposes source kind")
-                root.find("projectSourceKind").clicked()
+                root.find("projectSourceKind").selected(root.find("projectSourceKind").selectedName === "root" ? "folder" : "root")
                 root.find("saveProjectDraft").clicked()
                 root.step=34
                 return
             } else if (root.step === 34) {
                 root.check(!ProjectService.draft && ProjectService.sources.find(source => source.path === root.directory + "/single folder").kind === "root"
                     && ProjectRepository.projects.length === 2, "switching folder type rescans and saves source kind")
+                panel.managementView.select(root.directory + "/single folder")
                 root.find("editSource_" + root.directory + "/single folder").clicked()
-                root.find("projectSourceKind").clicked()
+                root.find("projectSourceKind").selected(root.find("projectSourceKind").selectedName === "root" ? "folder" : "root")
                 root.find("saveProjectDraft").clicked()
                 root.step=35
                 return
@@ -244,16 +252,19 @@ Scope {
                 root.find("saveProjectDraft").clicked()
                 root.check(ProjectService.sources.find(source => source.path === root.directory + "/single folder").kind === "folder"
                     && ProjectRepository.projects.length === 3, "same form saves folder type and workspace choices")
+                panel.managementView.select(root.directory + "/repos")
                 root.find("editSource_" + root.directory + "/repos").clicked()
-                root.find("editSourceCategory").clicked()
+                root.find("editSourceCategory").selected(root.find("editSourceCategory").selectedName === "work" ? "personal" : "work")
                 root.find("cancelProjectDraft").clicked()
                 root.check(ProjectService.sources.find(source => source.kind === "root").category === "personal", "cancel discards edit category")
+                panel.managementView.select(root.directory + "/repos")
                 root.find("editSource_" + root.directory + "/repos").clicked()
-                root.find("editSourceCategory").clicked()
+                root.find("editSourceCategory").selected(root.find("editSourceCategory").selectedName === "work" ? "personal" : "work")
                 root.find("saveProjectDraft").clicked()
                 root.check(root.banana().category === "work", "source edit updates category")
+                panel.managementView.select(root.directory + "/repos")
                 root.find("editSource_" + root.directory + "/repos").clicked()
-                root.find("editSourceCategory").clicked()
+                root.find("editSourceCategory").selected(root.find("editSourceCategory").selectedName === "work" ? "personal" : "work")
                 root.find("saveProjectDraft").clicked()
                 root.find("editProject_" + root.banana().path).clicked()
                 const workspace = ProjectService.draft.projects[0].workspaces.find(item => item.name === "Tomato")
@@ -263,6 +274,7 @@ Scope {
                 ProjectService.editProject(root.banana().path)
                 ProjectService.setIncluded(root.banana().path,workspace.path,false)
                 ProjectService.saveDraft()
+                panel.managementView.select(root.directory + "/single folder")
                 root.find("editSource_" + root.directory + "/single folder").clicked()
                 root.find("editProjectSourcePath").text = root.directory + "/other folder"
                 root.find("saveProjectDraft").clicked()
@@ -287,7 +299,7 @@ Scope {
                 root.check(!ProjectService.managing, "default always picker even after management")
                 ProjectService.setManaging(true)
                 root.find("beginAddProjectSource").clicked()
-                if (root.find("projectSourceKind").label !== "Single folder") root.find("projectSourceKind").clicked()
+                if (root.find("projectSourceKind").label !== "Single folder") root.find("projectSourceKind").selected(root.find("projectSourceKind").selectedName === "root" ? "folder" : "root")
                 root.find("projectSourcePath").text = root.directory + "/no workspaces"
                 root.find("addProjectSource").clicked()
                 root.step=5

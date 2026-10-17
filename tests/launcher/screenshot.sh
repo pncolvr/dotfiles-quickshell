@@ -53,7 +53,14 @@ case $name in
         cat "$input" > "$output" ;;
     hyprctl)
         case ${2:-} in
-            monitors) echo '[{"x":0,"y":0,"width":1920,"height":1080,"scale":1.5,"transform":0,"activeWorkspace":{"id":1},"specialWorkspace":{"id":-99}}]' ;;
+            --batch)
+                [[ ! -s "$CAPTURE_TEST_DIR/close-state-fail" ]] || exit 1
+                [[ ${3:-} == 'animations; getoption animations:enabled; monitors' ]] || exit 1
+                printf '%s\n' \
+                    '[[{"name":"global","overridden":true,"enabled":true,"speed":2,"bezier":"default"}],[]]' \
+                    '{"bool":true}' \
+                    '[{"x":0,"y":0,"width":1920,"height":1080,"scale":1.5,"refreshRate":144,"transform":0,"activeWorkspace":{"id":1},"specialWorkspace":{"id":-99}}]' ;;
+            monitors) echo '[{"x":0,"y":0,"width":1920,"height":1080,"scale":1.5,"refreshRate":144,"transform":0,"activeWorkspace":{"id":1},"specialWorkspace":{"id":-99}}]' ;;
             clients) echo '[{"at":[-100,10],"size":[1400,900],"workspace":{"id":1},"mapped":true},{"at":[0,0],"size":[30,30],"workspace":{"id":2},"mapped":true}]' ;;
         esac ;;
     qs)
@@ -137,6 +144,27 @@ NODE
 qs_bin=$(command -v /usr/bin/qs)
 real_hyprctl=/usr/bin/hyprctl
 tar -C "$repo_dir" --exclude='*.env' --exclude='src/services/launcher/providers/*.json' -cf - src | tar -C "$fixture" -xf -
+# Capture never enters clipboard mode; exclude its unrelated Qt WorkerScript teardown.
+cat > "$fixture/src/services/launcher/ClipboardSearchSession.qml" <<'CLIPBOARD_SEARCH_MOCK'
+import QtQml
+QtObject {
+    required property var owner
+    property bool fuzzy: false
+    readonly property bool pending: false
+    readonly property bool failed: false
+    readonly property bool busy: false
+    readonly property bool hasMore: false
+    readonly property var results: []
+    readonly property var statistics: ({})
+    property int request: 0
+    property var pendingAccept: null
+    signal published(var rows)
+    function refresh(_preserve = true) {}
+    function seed() {}
+    function run() {}
+    function more() {}
+}
+CLIPBOARD_SEARCH_MOCK
 sed -i 's/clipboardMonitorEnabled: true/clipboardMonitorEnabled: false/;s/workModeEnabled: true/workModeEnabled: false/;s/readonly property bool animationsEnabled:.*/readonly property bool animationsEnabled: true/' "$fixture/src/config/Config.qml"
 sed -i 's/readonly property bool screencastActive:.*/property bool screencastActive: false/' "$fixture/src/services/audio/AudioService.qml"
 sed 's@"../../src@"src@g' "$repo_dir/tests/launcher/screenshot.qml" > "$fixture/shell.qml"
@@ -148,10 +176,14 @@ if [[ ${SCREENSHOT_TEST_NATIVE:-0} == 1 ]]; then
 const fs=require('fs'),p=process.argv[2];let s=fs.readFileSync(p,'utf8');
 s=s.replace('import Quickshell\n','import Quickshell\nimport Quickshell.Wayland\nimport "src/modules/launcher"\n');
 const start=s.indexOf('    component Surface:'),end=s.indexOf('    function check(',start);
-s=s.slice(0,start)+`    PickerWindow { id: picker }
+s=s.slice(0,start)+`    PickerWindow { id: picker; picker: CaptureMenuService }
+    PickerWindow { id: launcher }
     PrivatePickerWindow {}
     SubmapWindow { id: submap; requestedVisible: root.submapRequested }
     AlertWindow { id: notice }
+    QtObject { id: tooltipSource }
+    Component { id: tooltipContents; Item {} }
+    TooltipFocusHandler { id: tooltipFocus; tooltipWindow: other; ready: TooltipService.visible }
     TopPanelTooltip {
         id: other
         requestedVisible: root.otherPanelRequested
@@ -169,7 +201,7 @@ NODE_NATIVE
 fi
 env QT_QPA_PLATFORM="$platform" QT_QUICK_BACKEND=software QT_NO_XDG_DESKTOP_PORTAL=1 QS_NO_RELOAD_POPUP=1 \
     HOME="$fixture/home" XDG_DATA_HOME="$fixture/data" XDG_CACHE_HOME="$fixture/cache" \
-    timeout -k 1 15 "$qs_bin" -p "$fixture" > "$fixture/log" 2>&1 || { cat "$fixture/log"; exit 1; }
+    timeout -k 1 15 "$qs_bin" -p "$fixture" > "$fixture/log" 2>&1 || { result=$?; printf "Screenshot fixture exited %s\n" "$result"; cat "$fixture/log"; exit 1; }
 if ! rg -q 'PASS: native screenshot' "$fixture/log" || rg -q 'CAPTURE FAIL:|TypeError:|ReferenceError:|Binding loop|Failed to load configuration' "$fixture/log"; then
     cat "$fixture/log"; exit 1
 fi
@@ -181,8 +213,12 @@ cat > "$fixture/src/services/launcher/PickerService.qml" <<'PICKER_MOCK'
 pragma Singleton
 import QtQml
 QtObject {
+    enum Mode { None, Menu }
     signal opened()
     function close() {}
+    function menuRows(rows) { return rows.map((row,index) => Object.assign({},row,{id:String(index)})) }
+    function filter(rows, query) { return rows }
+    function chooseScreen() { return null }
 }
 PICKER_MOCK
 rm -f -- "$fixture/revealed"

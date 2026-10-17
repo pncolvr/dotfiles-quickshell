@@ -13,7 +13,7 @@ UI.WindowFocusHandler {
     // The trigger remains clickable while interacting with its panel.
     interactionWindows: [host, TooltipService.source?.tooltipWindow].filter(window => !!window)
     // Hover never activates a focus grab. Explicit field/control interaction can.
-    dismissOnOutside: !TooltipService.pinned
+    dismissOnOutside: !TooltipService.pinned && !TooltipService.captureHeld && !CaptureHandoffService.active
     readonly property var editor: nativeWindow?.activeFocusItem
     readonly property bool holdingFocusedControl: windowActive && keyboardEnabled && editor?.retainPanelWhileFocused === true
     readonly property bool protectingEditor: windowActive && editor?.retainPanelWhileEditing === true

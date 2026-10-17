@@ -33,10 +33,15 @@ arguments; it never reopens a picker. The old providers/recording.sh is removed;
 `launcher.sh provider recording` remains a direct native compatibility entry.
 
 Starting and stopped alerts expire after one second; errors after three seconds.
-The starting notice is marked as capture-blocking. After its one-second display,
+After the starting notice's one-second display,
 the worker waits for the same CaptureHandoffService readiness used by screenshots:
-picker/submap closing and the notice's closing animation must finish before the
-recorder starts. Other persistent alerts and panels remain open without blocking.
+only panels opting into `hideForCapture` must finish closing before the recorder
+starts. The capture controls opt in; ordinary launcher/Manage views and bar
+panels default to staying visible. Recording setup uses its own shared capture
+menu session, preserving another launcher’s query, selection and draft. Submap
+hints and notice animations do not block readiness. The same property governs
+screenshots, including the Meta+Print chooser. Private namespace exclusions remain
+a separate compositor policy.
 This follows the centralized motion policy automatically, including when animations
 are disabled. The detached worker retries missing readiness replies through a bar
 restart for up to ten seconds; a repeated shortcut cancels during this wait. If

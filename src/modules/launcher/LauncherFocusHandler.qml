@@ -10,7 +10,7 @@ UI.WindowFocusHandler {
     readonly property bool secretPrompt: picker.mode === PickerService.Mode.Secret
     focusSession: panel?.panel ?? panel
     ready: !!panel && (panel.focusReady ?? true)
-    dismissOnOutside: !secretPrompt
+    dismissOnOutside: !secretPrompt && (!CaptureHandoffService.active || panel?.hideForCapture === true)
     onDismissRequested: picker.close()
     Connections { target: root.picker; function onOpened() { root.requestFocus() } }
 }
