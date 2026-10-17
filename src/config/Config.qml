@@ -236,6 +236,7 @@ Item {
 
     // Optional work mode; private detection rules and tracking live in SQLite.
     readonly property bool workModeEnabled: true
+    readonly property int workHistoryRetentionMonths: 36
 
     // Notifications
     readonly property int notificationLowTimeout: 2000

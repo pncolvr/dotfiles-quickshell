@@ -270,14 +270,16 @@ cannot transfer a native drag between applications.
 ## Status and timecard
 
 Run `bash tests/status/status.sh` for native SQLite sessions, stale-writer
-protection, restart gaps, lock/suspend/inactive pauses, rolling twelve-month
+protection, restart gaps, lock/suspend/inactive pauses, configurable calendar-month
 retention, disabled mode and Today/week/month reports. The suite also checks
 local-midnight/DST boundaries, app profiles and read-only desktop-state handling.
 History checks cover whole-week mouse/keyboard selection, the year/month grid,
 picker closure and focus return, recorded-data selection, gap-skipping arrows,
 empty data, Today availability and previous-week/latest-recorded fallback.
 Model checks include stored records older than twelve months to verify selection
-has no independent age limit; database cleanup is tested separately.
+has no independent age limit. Database cleanup is checked with the default
+36-month setting and an isolated six-month override, including crossing sessions;
+model checks cover leap-day/month-end clamping and invalid retention values.
 `STATUS_PREVIEWS=/tmp/status-previews`
 saves synthetic Week/Month picker images if the destination directory exists.
 The suite uses isolated databases and mocked desktop commands. Calendar date

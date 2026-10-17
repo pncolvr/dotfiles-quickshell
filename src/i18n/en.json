@@ -845,6 +845,7 @@
   "status.errors.invalidDetection": "Invalid detection",
   "status.errors.invalidMode": "Invalid tracking mode",
   "status.errors.readDetection": "Could not read automatic detection.",
+  "status.errors.retentionMonths": "Work history retention must be a positive number of whole months.",
   "status.errors.saveRules": "Could not save detection rules.",
   "status.errors.trackingBoundary": "Invalid tracking boundary.",
   "status.errors.writerChanged": "Writer changed",

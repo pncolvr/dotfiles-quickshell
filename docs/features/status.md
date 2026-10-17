@@ -20,7 +20,7 @@ range type, and is disabled when that period has no records. Only weeks/months
 with stored activity can be selected, including when there are gaps between
 records. Report arrows skip empty periods; picker arrows skip empty calendar
 pages. Available periods come from stored records, with no separate retention
-limit in the picker. The existing twelve-month database cleanup remains in place.
+limit in the picker. Database cleanup follows `Config.workHistoryRetentionMonths`.
 The oldest period shows the first recorded date when it begins partway through
 that period. With no recorded activity, History shows an empty state and its
 selection controls are disabled.
@@ -54,8 +54,9 @@ Sessions are checkpointed every ten seconds and on mode/lifecycle changes.
 Restart starts a new session without filling the gap when the bar was absent.
 An abrupt process termination can lose the last ten seconds; a delayed heartbeat
 never counts a long sleep or stopped process as activity. Tracking therefore
-requires the bar to be running. History is retained for a rolling twelve calendar
-months: startup and hourly maintenance delete expired sessions and trim any
+requires the bar to be running. `Config.workHistoryRetentionMonths` controls
+retention in whole calendar months, defaulting to 36. It must be a positive integer.
+Startup and hourly maintenance delete expired sessions and trim any
 session crossing the cutoff. History and detection rules use the existing
 SQLite backup/restore flow.
 

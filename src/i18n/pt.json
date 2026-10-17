@@ -845,6 +845,7 @@
   "status.errors.invalidDetection": "Deteção inválida",
   "status.errors.invalidMode": "Modo de registo inválido",
   "status.errors.readDetection": "Não foi possível ler a deteção automática.",
+  "status.errors.retentionMonths": "A retenção do histórico de trabalho deve ser um número inteiro positivo de meses.",
   "status.errors.saveRules": "Não foi possível guardar as regras de deteção.",
   "status.errors.trackingBoundary": "Limite de registo inválido.",
   "status.errors.writerChanged": "O escritor mudou",

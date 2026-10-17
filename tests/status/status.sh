@@ -41,6 +41,9 @@ run() {
 }
 sed 's@"../../src@"src@g' "$project_root/tests/status/native.qml" > "$fixture/shell.qml"
 run repository 'native status repository'
+sed -i 's/workHistoryRetentionMonths: 36/workHistoryRetentionMonths: 6/' "$fixture/src/config/Config.qml"
+run repository 'native status repository'
+sed -i 's/workHistoryRetentionMonths: 6/workHistoryRetentionMonths: 36/' "$fixture/src/config/Config.qml"
 # Repository tests deliberately use future timestamps; start the service with fresh sessions.
 sqlite3 "$fixture/data/quickshell.db" 'DELETE FROM status_sessions; DELETE FROM status_writer;'
 run seed 'native status seed'

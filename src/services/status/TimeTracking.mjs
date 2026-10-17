@@ -1,8 +1,10 @@
 import * as Dates from '../time/CalendarDates.mjs'
 
-export function cutoff(now=Date.now()) {
-    const date=new Date(now),year=date.getFullYear()-1,month=date.getMonth()
-    return new Date(year,month,Math.min(date.getDate(),new Date(year,month+1,0).getDate()),
+export function cutoff(now,months) {
+    if (!Number.isInteger(months) || months < 1) throw Error("status.errors.retentionMonths")
+    const date=new Date(now),target=new Date(date.getFullYear(),date.getMonth()-months,1)
+    const year=target.getFullYear(),month=target.getMonth()
+    return new Date(year,month,Math.min(date.getDate(),Dates.daysInMonth(month,year)),
         date.getHours(),date.getMinutes(),date.getSeconds(),date.getMilliseconds()).getTime()
 }
 export function dateKey(date) {

@@ -1,5 +1,6 @@
 pragma Singleton
 import "../../i18n"
+import "../../config"
 import "../"
 import "../status/TimeTracking.mjs" as Tracking
 import QtQml
@@ -84,7 +85,13 @@ Singleton {
     }
 
     function prune(now = Date.now()) {
-        const boundary = Tracking.cutoff(now);
+        let boundary;
+        try {
+            boundary = Tracking.cutoff(now, Config.workHistoryRetentionMonths);
+        } catch (exception) {
+            error = Translations.message(exception);
+            return false;
+        }
         if (!write(tx => {
             tx.executeSql('DELETE FROM status_sessions WHERE end_ms<=?', [boundary]);
             tx.executeSql('UPDATE status_sessions SET start_ms=? WHERE start_ms<?', [boundary, boundary]);

@@ -101,7 +101,7 @@ Scope {
             if (root.phase === 'repository') {
                 StatusService.pause();
                 root.check(StatusRepository.claim('first'), 'claim tracking writer');
-                const now = Date.now(), boundary = Tracking.cutoff(now);
+                const now = Date.now(), boundary = Tracking.cutoff(now, Config.workHistoryRetentionMonths);
                 root.check(DbService.write(tx => {
                     tx.executeSql('DELETE FROM status_sessions');
                     tx.executeSql('INSERT INTO status_sessions(start_ms,end_ms,mode) VALUES(?,?,?)', [boundary - 2000, boundary - 1000, 'work']);

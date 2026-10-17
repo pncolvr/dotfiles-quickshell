@@ -132,6 +132,7 @@ Equal numbers with unrelated purposes remain separate settings.
 Review these defaults when adapting the configuration:
 
 - `workModeEnabled` controls native work/personal detection, tracking and shared category UI.
+- `workHistoryRetentionMonths` sets stored work/personal history retention in whole calendar months (default `36`; positive integers only). Cleanup runs at startup and hourly, trimming sessions that cross the cutoff. The History picker follows actual stored records.
   Rules and manual mode are saved privately in SQLite through Status → Manage.
 - `wallpaperDirectory` sets the wallpaper picker root, defaulting to `~/Pictures/wallpapers`.
   An explicit directory argument overrides it for one picker session.
