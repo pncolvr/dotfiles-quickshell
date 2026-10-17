@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import "../../../i18n"
 import QtQuick
 import QtQuick.Controls as QC
+import QtQuick.Layouts
 import "../../../theme"
 import "../../../ui" as UI
 import "../../../services"
@@ -85,33 +86,32 @@ Item {
                     id: row
                     required property var modelData
                     width: rows.width
-                    implicitHeight: content.height + 20
+                    implicitHeight: content.implicitHeight + Theme.controlSpacing * 2
                     radius: 10
                     color: Theme.alternateBackground
-                    Column {
+                    RowLayout {
                         id: content
-                        x: 10; y: 10
+                        x: 10; y: Theme.controlSpacing
                         width: parent.width - 20
-                        spacing: 8
-                        UI.Text { centerVertical: false; width: parent.width; text: row.modelData.name; wrapMode: Text.Wrap; textFormat: Text.PlainText }
-                        Item {
-                            width: parent.width
-                            height: Math.max(sourceControls.height, deleteButton.height)
-                            NotificationSourceControls {
-                                id: sourceControls
-                                width: parent.width - deleteButton.width - Theme.controlSpacing
-                                emitterKey: row.modelData.key
-                            }
-                            NotificationButton {
-                                id: deleteButton
-                                objectName: "notificationDeleteEmitter_" + row.modelData.key
-                                anchors.right: parent.right
-                                implicitWidth: Theme.controlHeight
-                                glyph: Theme.deleteIcon
-                                fillColor: Theme.notificationCritical
-                                hint: Translations.text("notifications.actions.deleteEmitterHint")
-                                onClicked: NotificationService.deleteEmitter(row.modelData.key)
-                            }
+                        spacing: Theme.controlSpacing
+                        UI.Text {
+                            Layout.fillWidth: true
+                            text: row.modelData.name
+                            elide: Text.ElideRight
+                            textFormat: Text.PlainText
+                        }
+                        NotificationSourceControls {
+                            Layout.minimumWidth: naturalWidth
+                            Layout.preferredWidth: naturalWidth
+                            emitterKey: row.modelData.key
+                        }
+                        NotificationButton {
+                            objectName: "notificationDeleteEmitter_" + row.modelData.key
+                            implicitWidth: Theme.controlHeight
+                            glyph: Theme.deleteIcon
+                            fillColor: Theme.notificationCritical
+                            hint: Translations.text("notifications.actions.deleteEmitterHint")
+                            onClicked: NotificationService.deleteEmitter(row.modelData.key)
                         }
                     }
                 }

@@ -365,6 +365,8 @@ QtObject {
     // Notifications
     readonly property string notificationsDndEnabledIcon: ""
     readonly property string notificationsDndDisabledIcon: ""
+    readonly property string notificationsHistoryIcon: "" // clock-rotate-left: saved notification history
+    readonly property string notificationsBlockedIcon: "" // ban: notification history disabled
     readonly property int notificationWidth: 500
     readonly property int notificationManagerWidth: 560
     readonly property int notificationRadius: 16

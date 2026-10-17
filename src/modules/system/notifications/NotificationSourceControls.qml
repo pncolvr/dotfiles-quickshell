@@ -13,7 +13,7 @@ Flow {
     NotificationButton {
         id: muteButton
         objectName: "notificationMute"
-        label: Translations.text(root.emitter?.muted ? "common.actions.hide" : "common.actions.show")
+        glyph: root.emitter?.muted ? Theme.eyeSlashIcon : Theme.eyeIcon
         hint: Translations.text(root.emitter?.muted ? "notifications.popups.mutedHint" : "notifications.popups.enabledHint")
         foreground: root.emitter?.muted ? Theme.accent : Theme.text
         onClicked: NotificationService.setEmitterPreference(root.emitterKey, "muted", !root.emitter?.muted)
@@ -21,7 +21,7 @@ Flow {
     NotificationButton {
         id: dndButton
         objectName: "notificationDndWhitelist"
-        label: Translations.text(root.emitter?.allowDuringDnd ? "notifications.dnd.allowed" : "notifications.dnd.blocked")
+        glyph: root.emitter?.allowDuringDnd ? Theme.notificationsDndDisabledIcon : Theme.notificationsDndEnabledIcon
         hint: Translations.text(root.emitter?.allowDuringDnd ? "notifications.dnd.allowedHint" : "notifications.dnd.blockedHint")
         foreground: root.emitter?.allowDuringDnd ? Theme.accent : Theme.text
         onClicked: NotificationService.setEmitterPreference(root.emitterKey, "allowDuringDnd", !root.emitter?.allowDuringDnd)
@@ -29,7 +29,7 @@ Flow {
     NotificationButton {
         id: historyButton
         objectName: "notificationHistoryExclude"
-        label: Translations.text(root.emitter?.excludeFromHistory ? "notifications.history.disabled" : "notifications.history.enabled")
+        glyph: root.emitter?.excludeFromHistory ? Theme.notificationsBlockedIcon : Theme.notificationsHistoryIcon
         hint: Translations.text(root.emitter?.excludeFromHistory ? "notifications.history.disabledHint" : "notifications.history.enabledHint")
         foreground: root.emitter?.excludeFromHistory ? Theme.accent : Theme.text
         onClicked: NotificationService.setEmitterPreference(root.emitterKey, "excludeFromHistory", !root.emitter?.excludeFromHistory)

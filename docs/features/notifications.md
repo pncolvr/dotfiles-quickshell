@@ -25,7 +25,9 @@ Low, normal, and critical notifications are saved in SQLite until manually delet
 transient notifications are popup-only. Each emitter header shows
 a shared chevron (right when collapsed, down when expanded), its count, and its name, followed by **Show/Hide**,
 **DND blocked/allowed**, **History on/off**, and a trash button to clear history.
-These buttons show the current state; clicking toggles it. New emitters start
+The shared controls in History and Emitters use icons: eye/eye-slash for popups,
+bell/bell-slash for DND permission, and clock-rotate-left/ban for history.
+Tooltips describe the current state and action. Clicking toggles it. New emitters start
 with notifications shown, DND blocked, and history on. The visibility filter is **Hidden**.
 Groups with one notification hide the expand marker and leave their heading passive.
 The same source settings are available in the Emitters tab. Its trash button
