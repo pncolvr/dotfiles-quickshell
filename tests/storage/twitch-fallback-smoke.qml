@@ -17,6 +17,13 @@ Scope {
     property bool failed: false
     property int streamResponses: 0
     property int responseBaseline: 0
+    property bool awaitingBrowserLinks: false
+    FileView {
+        id: openedUrls
+        path: Quickshell.env("TWITCH_FALLBACK_STATE") + "/opened-urls"
+        blockLoading: true
+        printErrors: false
+    }
     Test.TestResult { id: objects }
     Test.TestEvent { id: events }
     Connections {
@@ -168,6 +175,18 @@ Scope {
                 Qt.quit()
                 return
             }
+            if (root.awaitingBrowserLinks) {
+                openedUrls.reload()
+                const urls = openedUrls.text().trim().split("\n").filter(Boolean)
+                if (urls.length < 3 || BrowserRoutingService.launching || BrowserRoutingService.launchQueue.length) return
+                root.check(urls.length === 3 && urls.filter(url => url === "https://www.twitch.tv/banana").length === 1
+                    && urls.filter(url => url === "https://www.twitch.tv/potato").length === 2,
+                    "main label, fallback details and avatar use the browser router with their own channel")
+                if (!root.failed) console.log("PASS: fallback " + root.phase)
+                stop()
+                Qt.quit()
+                return
+            }
             if (!DbService.ready || !TwitchService.available || !NetworkService.online) return
             if (root.step === 0) {
                 root.check(indicator.normalIconColor.toString() === (TwitchService.hasOnline ? Theme.twitchColor : Theme.text).toString(), "idle/live icon uses shared normal/live colors")
@@ -211,6 +230,10 @@ Scope {
             // Allow row delegates and queued notifications to settle.
             if (++root.step < 5) return
             root.selection()
+            if (root.phase === "fallback" && !root.failed) {
+                root.awaitingBrowserLinks = true
+                return
+            }
             if (root.phase === "edit") root.editing()
             if (root.phase === "both" && !root.failed) {
                 stop()

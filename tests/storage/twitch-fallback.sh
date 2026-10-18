@@ -49,6 +49,11 @@ cat > "$test_dir/bin/notify-send" <<'MOCK'
 #!/usr/bin/env bash
 jq -cn --args '$ARGS.positional' -- "$@" >> "$TWITCH_FALLBACK_STATE/alerts"
 MOCK
+cat > "$test_dir/bin/qutebrowser" <<'MOCK'
+#!/usr/bin/env bash
+printf '%s\n' "${@: -1}" >> "$TWITCH_FALLBACK_STATE/opened-urls"
+MOCK
+cp "$test_dir/bin/qutebrowser" "$test_dir/bin/vivaldi"
 chmod 700 "$test_dir/bin/"*
 tar -C "$project_root" --exclude='*.env' --exclude='src/services/launcher/providers/*.json' -cf - src | tar -C "$test_dir/config" -xf -
 sed -i 's/clipboardMonitorEnabled: true/clipboardMonitorEnabled: false/' "$test_dir/config/src/config/Config.qml"
@@ -66,9 +71,8 @@ for phase in link both main fallback fallback-restart neither edit; do
     fi
     if [[ $phase == fallback ]]; then
         fallback_alerts=$(wc -l < "$test_dir/alerts")
-        # Offscreen Qt reports URL requests instead of opening a real browser.
-        [[ $(rg -Fc "QPlatformServices::openUrl() for 'https://www.twitch.tv/banana'" <<< "$output") == 1 ]]
-        [[ $(rg -Fc "QPlatformServices::openUrl() for 'https://www.twitch.tv/potato'" <<< "$output") == 2 ]]
+        [[ $(rg -xc 'https://www.twitch.tv/banana' "$test_dir/opened-urls") == 1 ]]
+        [[ $(rg -xc 'https://www.twitch.tv/potato' "$test_dir/opened-urls") == 2 ]]
     fi
     if [[ $phase == fallback-restart || $phase == neither ]]; then [[ $(wc -l < "$test_dir/alerts") == "$fallback_alerts" ]]; fi
 done
