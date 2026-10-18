@@ -15,9 +15,21 @@ Scope {
     property int deliveredKeys: 0
     property bool checkingReturn: false
     property bool returnedWhileClosing: false
+    property int centeredFrames: 0
     property string phase: "setup"
     PickerWindow { id: main }
     PickerWindow { id: clipboard; picker: ClipboardPickerService }
+    FrameAnimation {
+        running: ClipboardPickerService.visible && clipboard.visible
+        onTriggered: {
+            const motion = clipboard.surfaceComponent.motion
+            if (motion.fraction <= 0 || motion.displayedHeight <= 0) return
+            root.centeredFrames++
+            if (Math.abs(motion.displayedX + motion.displayedWidth / 2 - clipboard.geometryScreen.width / 2) > 1)
+                driver.failed("Clipboard opening must remain horizontally centered on every visible frame: "
+                    + JSON.stringify({x:motion.displayedX,width:motion.displayedWidth,screen:clipboard.geometryScreen.width,progress:motion.fraction}))
+        }
+    }
     Connections {
         target: root.field ? root.field.Keys : null
         function onPressed(event) { if (event.key === Qt.Key_X) root.deliveredKeys++ }
@@ -122,6 +134,7 @@ Scope {
             root.scenario(true, position)
         }
         driver.add("verify closing overlap and close form", () => {
+            driver.check(root.centeredFrames > 0, "native Clipboard centering was sampled while visible")
             if (UI.MotionPolicy.enabled) driver.check(root.returnedWhileClosing,
                 "native return must be exercised while Clipboard is still closing")
             PickerService.close()

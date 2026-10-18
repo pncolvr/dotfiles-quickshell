@@ -21,7 +21,10 @@ Item {
         Math.max(0, (host.geometryScreen?.height || 1080)
             * (panel?.floatingPreviewRequested ? Theme.pickerPreviewListHeightRatio : 0.75) - host.shadowBottomPadding))
     // A fitted preview can resize inside a stable placement footprint.
-    readonly property real centeredContentX: (host.width - Math.min(panel?.placementWidth ?? boundedContentWidth, availableContentWidth)) / 2
+    // The screen size is known before the native layer is mapped. Its initial
+    // host.width can be zero; correcting that anchor mid-reveal slides sideways.
+    readonly property real centeredContentX: ((host.geometryScreen?.width || host.width)
+        - Math.min(panel?.placementWidth ?? boundedContentWidth, availableContentWidth)) / 2
     readonly property int keyboardFocusMode: focusHandler.keyboardFocusMode
     readonly property bool requestingKeyboardFocus: focusHandler.requestingKeyboardFocus
     readonly property bool secretPrompt: focusHandler.secretPrompt
