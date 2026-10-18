@@ -39,6 +39,6 @@ for phase in setup restart; do
 done
 jq -se 'all(.[]; .method=="GET" and .keyCorrect and (.path|endswith("/api/v1/workflows"))) and any(.cursor=="next +&?")' "$fixture/requests" >/dev/null
 jq -se 'length==1 and (.[0][-1]|endswith("/a/workflow/same"))' "$fixture/actions" >/dev/null
-[[ $(sqlite3 "$fixture/data/quickshell.db" 'PRAGMA user_version; PRAGMA integrity_check;') == $'15\nok' ]]
+[[ $(sqlite3 "$fixture/data/quickshell.db" 'PRAGMA user_version; PRAGMA integrity_check;') == $'16\nok' ]]
 if rg -q 'fixture-a|fixture-b|discard-me' "$fixture/log"; then printf 'FAIL: private response/key leaked to logs\n'; exit 1; fi
 printf 'PASS: bounded GET pagination, independent instance failures, no redirects, cached launches and private persistence\n'

@@ -93,3 +93,9 @@ and prints its described bindings as `key;description` lines. Use
 
 See [onboarding](../docs/onboarding.md) and [capture setup](../docs/setup.md#screen-sharing)
 for the remaining feature settings and manual checks.
+
+## Browser routing
+
+See [the optional browser desktop integration](browser/README.md) for installation,
+fallback configuration and explicit default-browser commands. It does not replace
+any existing desktop entry or association automatically.

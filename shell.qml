@@ -18,6 +18,7 @@ Scope {
   Component.onDestruction: TooltipService.dismiss()
   // Register recording IPC and reconnect to any detached recording session.
   readonly property var recordingService: RecordingService
+  readonly property var browserRoutingService: BrowserRoutingService
   IpcHandler {
     target: "shell"
     function reload(): void {

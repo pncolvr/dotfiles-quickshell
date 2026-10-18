@@ -1,3 +1,10 @@
+export function target(value) {
+    const url=String(value ?? '').trim()
+    if (!url || /[\x00-\x1f\x7f]/.test(url)) throw new Error('webapps.errors.invalidUrl')
+    if (url.startsWith('/')) return 'file://' + url.split('/').map(encodeURIComponent).join('/')
+    if (/^https?:\/\/[^\s/?#]+(?:[/?#][^\s]*)?$/i.test(url) || /^file:\/\/\/[^\s]*$/i.test(url)) return url
+    throw new Error('webapps.errors.invalidUrl')
+}
 export function empty(defaultBrowser = "") {
     return {id:'',name:'',url:'',browser:defaultBrowser,profile:'',windowMode:'normal',enabled:true,
         category:'',arguments:[],before:[],after:[]}
@@ -12,12 +19,11 @@ export function windowOptions(browser) {
     if (browser?.appArguments) options.push({name:'app',description:'browser.window.app'})
     return options
 }
-export function validate(value, browsers) {
+export function validate(value, browsers, normalizeTarget = target) {
     const entry = Object.assign(empty(),value)
     entry.name = String(entry.name ?? '').trim()
-    entry.url = String(entry.url ?? '').trim()
+    entry.url = normalizeTarget(entry.url)
     if (!entry.name) throw new Error("validation.name.required")
-    if (!/^https?:\/\/[^\s/?#]+(?:[/?#][^\s]*)?$/i.test(entry.url)) throw new Error("webapps.errors.invalidUrl")
     const browser = browsers.find(browser => browser.id === entry.browser)
     if (!browser || !Array.isArray(browser.command) || !browser.command.length)
         throw new Error("webapps.errors.browser")
@@ -44,8 +50,8 @@ function expand(words, entry) {
     const values = {url:entry.url,profile:entry.profile}
     return words.map(word => String(word).replace(/\{(url|profile)\}/g, (_,key) => values[key]))
 }
-export function launch(entry, browsers) {
-    entry = validate(entry,browsers)
+export function launch(entry, browsers, normalizeTarget = target) {
+    entry = validate(entry,browsers,normalizeTarget)
     const browser = browsers.find(browser => browser.id === entry.browser)
     let windowArguments = []
     switch (entry.windowMode) {
@@ -54,6 +60,6 @@ export function launch(entry, browsers) {
         case 'window': windowArguments = expand(browser.windowArguments ?? [],entry); break
     }
     const profile = entry.profile ? expand(browser.profileArguments,entry) : []
-    const target = entry.windowMode === 'app' ? [] : [entry.url]
-    return browser.command.concat(profile,windowArguments,entry.arguments,target)
+    const targets = entry.windowMode === 'app' ? [] : (entry.url.startsWith('-') ? ['--',entry.url] : [entry.url])
+    return browser.command.concat(profile,windowArguments,entry.arguments,targets)
 }

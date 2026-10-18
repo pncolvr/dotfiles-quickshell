@@ -20,7 +20,10 @@ ManagedPickerFrame {
     property var listHintActions: []
     property var canRemoveEntry: entry => true
     property var managementTypes: []
+    property var entrySubtitle: entry=>entry.url ?? entry.endpoint ?? ''
     property bool filterBrowser: false
+    property bool filterCategory: true
+    property bool tabsVisible: true
     required property var entryForm
     readonly property bool showForm: !!service.draft
     readonly property var selectedEntry: manage.selectedEntry
@@ -65,7 +68,7 @@ ManagedPickerFrame {
         if (!showForm && selectedEntry) entryForm.load(selectedEntry)
     }
     onSelectedEntryChanged: loadDetails()
-    onShowFormChanged: loadDetails()
+    onShowFormChanged: { if(showForm) entryForm.load(service.draft); else loadDetails() }
     Component.onCompleted: {
         entryForm.parent = formHolder
         entryForm.width = Qt.binding(() => formHolder.width)
@@ -75,6 +78,8 @@ ManagedPickerFrame {
     Connections { target: root.entryForm; function onAccepted() { if (root.showForm) root.submit() } }
     UI.TabBar {
         id: header
+        visible: root.tabsVisible
+        height: visible ? implicitHeight : 0
         width: parent.width
         labels: [root.collectionName,Translations.text("common.tabs.manage")]
         currentIndex: root.managing ? 1 : 0
@@ -96,11 +101,11 @@ ManagedPickerFrame {
         id: manage
         y: root.contentTop; width: parent.width; height: root.manageHeight
         visible: root.managing
-        entries: root.service.entries.map(entry => Object.assign({},entry,{title:entry.name,subtitle:entry.url ?? entry.endpoint ?? '',search:entry.name + ' ' + (entry.url ?? entry.endpoint ?? '')}))
+        entries: root.service.entries.map(entry => Object.assign({},entry,{title:entry.name,subtitle:root.entrySubtitle(entry),search:entry.name + ' ' + root.entrySubtitle(entry)}))
         searchEntries: (entries, query) => root.picker.filter(entries,query)
         editing: root.showForm
         busy: root.service.busy
-        showCategory: StatusService.enabled
+        showCategory: root.filterCategory && StatusService.enabled
         filterEnabled: true
         browserOptions: root.filterBrowser ? Config.webappBrowsers.map(browser => ({name:browser.id,description:browser.name})) : []
         typeOptions: root.managementTypes

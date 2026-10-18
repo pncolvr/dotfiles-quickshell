@@ -151,7 +151,7 @@ Scope {
                 cursorHovered:root.cursorControl?.hovered ?? false,cursorLeaves:root.cursorLeaves,
                 cursorHintReady:!!root.cursorHint(),cursorHintOpened:root.cursorHint()?.opened ?? false,
                 pinned:TooltipService.pinned,paused:TooltipService.interactionHeld,
-                sameOverlay:!!selector && selector.popup.parent === observer?.overlayItem,
+                sameOverlay:!!selector && selector.popup.contentItem.parent?.parent === observer?.overlayItem,
                 rowsReady:rowHover.length === 3 && rowHover.every(value => value !== undefined),rowHover,
                 private:root.privateCase,namespace:root.privateCase ? privateHost.WlrLayershell.namespace : publicHost.WlrLayershell.namespace,
                 toggleReady:!!toggle,

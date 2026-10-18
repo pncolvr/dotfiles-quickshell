@@ -7,13 +7,14 @@ import Quickshell
 import Quickshell.Io
 import "../../config"
 import "ClipboardIndex.mjs" as ClipboardIndex
+import "BrowserRoutingStore.mjs" as BrowserRoutingStore
 
 Singleton {
     id: root
 
     readonly property string name: Config.databaseName
     readonly property string path: Config.databasePath
-    readonly property int schemaVersion: 15
+    readonly property int schemaVersion: 16
     readonly property bool ready: state.ready
     readonly property string error: state.error
     property bool maintenance: false
@@ -121,6 +122,7 @@ Singleton {
                 tx.executeSql("CREATE INDEX IF NOT EXISTS store.status_sessions_time ON status_sessions(start_ms,end_ms)")
                 tx.executeSql("CREATE TABLE IF NOT EXISTS store.status_writer (id INTEGER PRIMARY KEY CHECK(id=1), token TEXT NOT NULL, session_id INTEGER)")
                 ClipboardIndex.migrate(tx, version)
+                BrowserRoutingStore.migrate(tx)
                 tx.executeSql("PRAGMA store.user_version = " + schemaVersion)
             })
             state.database = database

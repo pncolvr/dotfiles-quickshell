@@ -84,9 +84,7 @@ The old streamer launcher and its automatic `twitch_online_<uid>` JSON export
 are removed. qutebrowser's `,mm` (current page) and `,mM` (hinted link) call the
 separate `to_mpv` userscript in `~/.local/share/qutebrowser/userscripts/` for
 direct Twitch/YouTube playback in mpv, including Twitch chat. URL cleaning and
-logging live in that script; chat still opens through Zsh's
-`scripts/default-browser/default-browser.sh`. The Quickshell media provider is
-removed.
+logging live in that script. The Quickshell media provider is removed.
 
 ## Search
 

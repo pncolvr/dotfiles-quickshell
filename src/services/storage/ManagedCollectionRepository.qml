@@ -11,11 +11,12 @@ Singleton {
     required property var validateEntry
     property var removeRelated: (tx,id) => {}
     property var entries: []
+    property var sortEntries: items => items
     property string error: ''
     function reload() {
         const rows=DbService.read('SELECT id,payload_json FROM '+tableName+' ORDER BY name COLLATE NOCASE,id')
         if (rows===null) { error=DbService.error; return false }
-        try { entries=rows.map(row=>Object.assign(JSON.parse(row.payload_json),{id:row.id})) }
+        try { entries=sortEntries(rows.map(row=>Object.assign(JSON.parse(row.payload_json),{id:row.id}))) }
         catch (_) { error=Translations.text("collections.errors.read",[Translations.text(entryLabel)]); return false }
         error=''; return true
     }

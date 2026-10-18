@@ -18,6 +18,7 @@ qs ipc call bar open twitch      # open panel, focus search and move pointer
 qs ipc call bar open totp        # open TOTP panel and focus search
 qs ipc call bar open batteries   # open panel and move pointer to icon
 qs ipc call twitch reload
+qs ipc call browser open 'https://example.com/' # route a URL, or use fallback when disabled
 qs ipc call twitch addUser streamer_login
 qs ipc call twitch removeUser streamer_login
 qs ipc call backup create /absolute/path/backup.7z # private password prompt
@@ -39,6 +40,12 @@ qs ipc call clipboard togglePause # pause/resume history capture
 The submap exits after selection. Reload closes open panels and rebuilds the shell.
 
 See [bar alerts](features/alerts.md) for severities, replacement and expiration.
+
+`browser open` accepts HTTP(S), local file URLs and absolute file paths. It returns
+whether the target was accepted for asynchronous dispatch. Rules and history are
+used only with `browserRoutingEnabled`; disabled routing uses the concrete
+configured fallback. Use the [desktop wrapper](../integrations/browser/README.md)
+when fallback must also work while Quickshell is stopped.
 
 `qs ipc call recording toggle` starts setup, cancels the starting delay, or stops
 the current owned recorder. `qs ipc call recording status` returns its state,

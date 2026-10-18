@@ -17,6 +17,9 @@ Item {
 
     // Optional modules and integrations. Configure these before first launch.
     readonly property bool bookmarksEnabled: true
+    readonly property bool browserRoutingEnabled: true
+    readonly property bool browserHistoryEnabled: true
+    readonly property bool browserWorkspaceFocusEnabled: true
     readonly property bool clipboardMonitorEnabled: true
     readonly property bool workModeEnabled: true
     readonly property bool statsNetworkEnabled: true
@@ -69,6 +72,9 @@ Item {
         },
         vault: {
             lock: "Ctrl+L"
+        },
+        bookmarks: {
+            history: "Ctrl+H"
         },
         clipboard: {
             delete: "Delete",
@@ -209,14 +215,17 @@ Item {
     readonly property string projectManageShortcut: pickerManageShortcut
     readonly property string projectAddShortcut: pickerAddShortcut
     readonly property string projectShowAllShortcut: pickerShowAllShortcut
-    readonly property var projectBrowserCommand: ["xdg-open"]
+    readonly property var projectBrowserCommand: bookmarkBrowserCommand
     readonly property string projectSshConfig: _internal.home + "/.ssh/config"
     readonly property string projectDotfilesGitDirectory: _internal.home + "/.cfg"
     readonly property string projectDotfilesWorkTree: _internal.home
 
-    // Launcher: bookmarks. Share the project URL opener by default.
+    // Browser routing. Desktop integration is installed separately from integrations/browser/.
+    readonly property int browserHistoryLimit: 100
+    readonly property var browserCommand: ["bash", Quickshell.shellPath("src/services/browser/browser.sh")]
+    // Launcher: bookmarks. Browser commands are shared with project URLs.
     readonly property string bookmarkFile: _internal.home + "/.config/qutebrowser/bookmarks/urls"
-    readonly property var bookmarkBrowserCommand: ["qutebrowser"]
+    readonly property var bookmarkBrowserCommand: browserRoutingEnabled ? browserCommand.concat(["open", "--fallback", JSON.stringify(browserFallbackCommand), "--"]) : browserFallbackCommand
 
     // Launcher: directories
     readonly property string directoryManageShortcut: pickerManageShortcut
@@ -228,6 +237,7 @@ Item {
 
     // Launcher: managed webapps. Browser commands are literal argv templates.
     readonly property string webappDefaultBrowser: "qutebrowser"
+    readonly property var browserFallbackCommand: webappBrowsers.find(browser=>browser.id===webappDefaultBrowser)?.command ?? []
     readonly property var webappBrowsers: [
         {
             id: "qutebrowser",

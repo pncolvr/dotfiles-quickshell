@@ -82,7 +82,7 @@ Item {
                 root.check((combo.popup.background as Rectangle).color.a === 1 && (combo.popup.background as Rectangle).border.width === 1,
                     "popup has a continuous opaque framed surface")
                 if (Quickshell.env("SELECTION_TEST_PREVIEW")) {
-                    const snapshot = images.grabImage(combo.popup.parent)
+                    const snapshot = images.grabImage(body.Window.window.contentItem)
                     // QtTest snapshot methods are absent from its qmltypes.
                     // qmllint disable missing-property
                     snapshot.save(Quickshell.env("SELECTION_TEST_PREVIEW"))
@@ -103,6 +103,19 @@ Item {
                     "Escape dismisses only the dropdown without applying")
                 const comboToggle = events.findChild(combo, combo.toggleObjectName) as QC.Button
                 root.check(comboToggle !== null && comboToggle.activeFocus, "Escape returns focus to the trigger")
+                events.mouseClick(comboToggle, 20, 15)
+                events.wait(250)
+                root.check(combo.expanded, "clicking a closed selector opens it")
+                events.mouseClick(comboToggle, 20, 15)
+                root.check(!combo.expanded && !combo.popup.visible && body.commits === 1,
+                    "clicking an open selector closes it without reopening or applying a choice")
+                combo.searchable = true
+                events.mouseClick(comboToggle, 20, 15)
+                events.wait(250)
+                root.check(combo.expanded && combo.searchInput.activeFocus, "searchable selector opens with input focus")
+                events.mouseClick(comboToggle, 20, 15)
+                root.check(!combo.expanded && !combo.popup.visible, "clicking an open searchable selector closes it")
+                combo.searchable = false
                 combo.expanded = true
                 events.wait(250)
                 combo.expanded = false

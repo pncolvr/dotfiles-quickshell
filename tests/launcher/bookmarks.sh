@@ -11,6 +11,7 @@ node - "$fixture" <<'CONFIG'
 const fs=require('node:fs'), fixture=process.argv[2];
 const file=fixture+'/src/config/Config.qml';
 let text=fs.readFileSync(file,'utf8');
+text=text.replace(/readonly property bool browserRoutingEnabled: .*/, 'readonly property bool browserRoutingEnabled: false');
 text=text.replace('clipboardMonitorEnabled: true','clipboardMonitorEnabled: false').replace(/readonly property bool bookmarksEnabled: .*/, 'property bool bookmarksEnabled: true').replace('workModeEnabled: true','workModeEnabled: false');
 text=text.replace(/(readonly property string bookmarkFile:)[^\n]*/,()=> 'property string bookmarkFile: '+JSON.stringify(fixture+'/bookmarks'));
 text=text.replace(/(readonly property var bookmarkBrowserCommand:)[^\n]*/,(_,prefix)=>prefix+' '+JSON.stringify([fixture+'/bin/browser with space','--profile=unchanged']));

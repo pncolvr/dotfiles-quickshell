@@ -204,6 +204,9 @@ run isolated launcher/bridge bash tests/launcher/launcher.sh
 run isolated launcher/providers bash tests/launcher/providers.sh
 run isolated launcher/provider-config bash tests/launcher/provider-config.sh
 run isolated launcher/bookmarks bash tests/launcher/bookmarks.sh
+run isolated browser/model node tests/browser/model.mjs
+run isolated browser/desktop bash tests/browser/desktop.sh
+run isolated browser/routing bash tests/browser/routing.sh
 run isolated launcher/clipboard-search bash tests/launcher/clipboard-search.sh
 run isolated launcher/clipboard-handoff bash tests/launcher/clipboard-handoff.sh
 run isolated launcher/encode-qrcode bash tests/launcher/encode-qrcode.sh

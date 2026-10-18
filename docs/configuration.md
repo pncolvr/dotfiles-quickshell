@@ -35,6 +35,7 @@ have not been introduced.
 | Setting | When false |
 | --- | --- |
 | `bookmarksEnabled` | Hide/disable the Bookmarks picker and skip bookmark-file reads |
+| `browserRoutingEnabled` | Enable browser routing and the Bookmarks History/Manage tabs; enabled in this setup |
 | `clipboardMonitorEnabled` | Stop automatic history collection; existing history remains available |
 | `workModeEnabled` | Stop work detection/tracking and remove category filters; retain saved data |
 | `statsNetworkEnabled` | Hide Stats Network and stop bandwhich sampling; retain Overview totals, CPU and Memory |
@@ -168,20 +169,69 @@ different purposes remain independent.
 
 `bookmarksEnabled` controls the launcher (true in this setup). When false,
 opening requests do nothing, its own open picker closes, and the source is not
-read. An empty `bookmarkFile` also disables the launcher. Other open panels are
+read. An empty `bookmarkFile` disables the launcher unless routing is enabled,
+which keeps History/Manage available without a bookmark source. Other open panels are
 preserved. `bookmarkFile` accepts any plain text file containing one URL and an
 optional title per line, separated by whitespace. In this setup it points to
 `~/.config/qutebrowser/bookmarks/urls`.
-`bookmarkBrowserCommand` inherits `projectBrowserCommand`, which defaults to
-`["xdg-open"]`. Both use the desktop's default browser association. Override either
-with a literal argv array to choose another opener. These are public path/command settings; bookmark contents stay in the
-existing local file and are read when the picker opens.
+`bookmarkBrowserCommand` uses the browser selected by `webappDefaultBrowser` and
+`webappBrowsers`; `projectBrowserCommand` shares it. These actions open a browser,
+including for local HTML targets. With routing enabled, they use the shared
+router instead. Both remain overridable literal argv arrays. Bookmark contents
+stay in the local file; use encoded file URLs for paths containing spaces in
+that source, or type an absolute path into the picker. HTML is opened, not parsed.
+
+## Browser routing
+
+`browserRoutingEnabled` is enabled in this setup. It adds Bookmarks / History /
+Manage tabs and activates routing for generic URLs. The default browser always
+comes from `Config.webappDefaultBrowser`; Manage edits ordered rules using the
+browser definitions below. Host/subdomain, literal Contains, wildcard and
+regular-expression patterns match rules. Contains accepts one value per line and
+matches when any value occurs in the URL. Each
+rule opens a browser, follows redirects, unwraps a named query parameter or runs
+a literal application command. Transformations re-evaluate the resulting URL;
+the first matching terminal action in the displayed list order wins. Use the
+Move up / Move down buttons in Manage to change that order. New rules append to
+the end, and their order is saved. History can prefill a new rule.
+Explicit Webapp/n8n browser choices remain authoritative and bypass routing.
+
+`browserHistoryEnabled` defaults to `true`, and `browserHistoryLimit` to `100`
+distinct URLs. Recording occurs only while routing is enabled. SQLite FTS5 indexes
+history searches. Disabling recording retains existing history for viewing/removal;
+reducing the limit prunes older rows, and zero clears/stops history. Rules and
+history are included in encrypted backups.
+
+There are no built-in domain/application URL handlers. Configure redirect and
+query-unwrapping actions in Manage. Application rules accept literal argv with
+`{url}` and numbered regex captures (`{1}`, `{2}`, …), plus an optional
+running-application checkbox. When checked and the process is absent, the
+matching browser rule/default is used. Manage can select an installed desktop application and optional extra
+arguments instead of entering a command. A missing desktop entry or executable
+opens the URL in the configured default browser and posts an alert naming the app.
+Redirect requests are bounded, and URL transformations stop after eight
+steps or a detected cycle. Unchanged transformations continue through other rules.
+
+`browserWorkspaceFocusEnabled` is enabled in this setup. When enabled, terminal rules
+use their workspace number and respect the existing runtime `hypr-autofocus`
+toggle. See the [editable rule examples](../integrations/browser/README.md#rule-examples)
+for Microsoft wrappers and Steam; these examples are not loaded automatically.
+
+The optional [desktop integration](../integrations/browser/README.md) includes a
+desktop entry, installer and explicit default-browser commands. Installation does
+not change associations. When disabled or unavailable, the handler opens a concrete
+fallback without routing/history. `browserFallbackCommand` derives from the
+configured default browser; avoid `xdg-open` as a router destination to prevent
+recursion.
 
 ## Webapp browsers
 
 `webappDefaultBrowser` selects the browser ID for new Webapps and n8n entries
 and their shared Browser fields. This setup explicitly selects `"qutebrowser"`;
 choose another ID from `webappBrowsers`, such as `"default"` for `xdg-open`.
+When routing is enabled, new Webapp/n8n entries use the default selected in
+Bookmarks Manage instead. Router defaults require a concrete browser; `default`
+remains available for explicitly configured Webapp/n8n entries.
 Saved entries and active drafts keep their browser IDs; changing the default
 only affects new entries. Removing a browser definition does not migrate saved
 entries: edit their Browser choice before launching them again.

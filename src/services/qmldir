@@ -74,3 +74,5 @@ singleton CaptureMenuService 1.0 launcher/CaptureMenuService.qml
 PickerSession 1.0 launcher/PickerSession.qml
 singleton ClipboardPickerService 1.0 launcher/ClipboardPickerService.qml
 singleton PanelFocusService 1.0 ui/PanelFocusService.qml
+singleton BrowserRoutingService 1.0 browser/BrowserRoutingService.qml
+singleton BrowserRoutingRepository 1.0 storage/BrowserRoutingRepository.qml

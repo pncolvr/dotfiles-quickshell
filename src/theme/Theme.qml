@@ -55,6 +55,7 @@ QtObject {
     readonly property string checkIcon: "" // check: saved or selected
     readonly property string deleteIcon: "" // trash-can
     readonly property string upIcon: "" // arrow-up
+    readonly property string downIcon: "" // arrow-down
     readonly property string rightIcon: "" // arrow-right
     readonly property string copyIcon: "" // copy
     readonly property string pasteIcon: "" // paste

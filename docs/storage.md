@@ -15,6 +15,12 @@ uses `Quickshell.shellPath("data/quickshell.db")` and `Config.databaseName` is
 the fixed name `quickshell`. Tests run their entrypoint in a temporary config
 folder so their databases stay isolated.
 
+Schema 16 adds browser routing rules and history keyed by the original target.
+Each entry retains its final URL, browser and matched rule names. History has an
+external-content FTS5 index maintained transactionally by triggers. Rules and
+retained history are part of the existing encrypted backup.
+Older supported backups acquire these tables when opened by the current shell.
+
 Recent-file folder tabs, aliases and default selection use preferences. Pinned
 document metadata is stored separately under `files.pinned`, so removing a folder
 tab leaves its document pins intact. No schema migration is needed for document pins.

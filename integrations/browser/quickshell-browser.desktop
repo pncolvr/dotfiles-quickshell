@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Quickshell Browser Router
+Name[pt]=Encaminhamento de navegador Quickshell
+Comment=Open links with configured browser routing rules
+Comment[pt]=Abrir ligações com regras de encaminhamento de navegador
+Exec=quickshell-browser %U
+Icon=web-browser
+Terminal=false
+Categories=Network;WebBrowser;
+MimeType=x-scheme-handler/http;x-scheme-handler/https;text/html;application/xhtml+xml;

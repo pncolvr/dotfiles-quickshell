@@ -24,6 +24,7 @@ Scope {
             anchors.fill: parent
             property bool focusReady: false
             property bool nativeDialogOpen: false
+            property bool dismissOnOutside: false
             function focusSearch() { root.focusCalls++; search.forceActiveFocus() }
             UI.InputField { id: search; width: 380 }
         }
@@ -34,7 +35,6 @@ Scope {
         panel: contentPanel
         picker: fakePicker
         windowActive: root.simulatedActive
-        dismissOnOutside: false
     }
     UI.WindowFocusHandler {
         id: hover
@@ -50,6 +50,13 @@ Scope {
         running: true
         onTriggered: {
             try {
+                root.check(!behavior.dismissOnOutside, "persistent panel opts out of outside dismissal")
+                contentPanel.dismissOnOutside = true
+                root.check(behavior.dismissOnOutside, "ordinary panels retain outside dismissal")
+                fakePicker.mode = PickerService.Mode.Secret
+                root.check(!behavior.dismissOnOutside, "secret prompts remain persistent")
+                fakePicker.mode = PickerService.Mode.Menu
+                contentPanel.dismissOnOutside = false
                 root.check(behavior.keyboardFocusMode === WlrKeyboardFocus.None, "closed launcher cannot take keyboard input")
                 window.requestedVisible = true
                 root.check(!behavior.ready && behavior.keyboardFocusMode === WlrKeyboardFocus.Exclusive,

@@ -128,10 +128,13 @@ the configured bindings. A single bookmark opens directly; an empty file
 performs no action. Missing/unreadable sources show an error and still allow a
 typed URL. Cancelled or replaced menus ignore late file reads.
 
-Each accepted URL is passed as a literal argument to `Config.bookmarkBrowserCommand`,
-which inherits `projectBrowserCommand` (`["xdg-open"]`) by default. Projects and
-Bookmarks therefore use the desktop's default browser association. The configured command is
-launched directly, preserving its arguments and normal inherited environment.
+Accepted targets use the shared configured browser definitions, with the
+`bookmarkBrowserCommand` and `projectBrowserCommand` overrides available. Local
+HTML targets open in a browser. With `browserRoutingEnabled`, Bookmarks has
+Bookmarks / History / Manage tabs, ordered browser routing rules and optional
+FTS5 URL history. Its picker remains open for empty or single-entry sources so
+those tabs stay available. See [browser routing configuration](../configuration.md#browser-routing)
+and the [desktop integration](../../integrations/browser/README.md).
 The service assumes no shell configuration directory; any additional environment
 setup belongs in the configured command. Selection closes the menu before opening
 URLs; Escape opens nothing.
@@ -432,7 +435,6 @@ may finish after replacement, without reopening browsing.
 Legacy `-markup-rows` requests are normalized by the launcher bridge before
 searching/rendering. Original labels remain available for dmenu replies and
 action results. Other requests display labels literally, including grid views.
-Shared browser/status helpers remain in Zsh, and URL cleaning remains in Qutebrowser.
 
 ### Shared Manage layout
 

@@ -98,15 +98,35 @@ UI.SelectableRow {
             maximumLineCount: root.clipboard ? 3 : 1
             elide: Text.ElideRight
         }
-        UI.Text {
-            centerVertical: false
+        Row {
             width: parent.width
-            text: root.entry.subtitle || ""
-            visible: text.length > 0 && !root.grid
-            textFormat: Text.PlainText
-            color: root.secondaryForeground
-            font.pixelSize: Theme.fontSize - 1
-            elide: Text.ElideRight
+            visible: !root.grid && (!!root.entry.subtitle || !!root.entry.annotation)
+            spacing: subtitle.visible && annotation.visible ? Theme.controlSpacing * 2 : 0
+            UI.Text {
+                id: subtitle
+                centerVertical: false
+                width: Math.max(0,parent.width - (annotation.visible ? annotation.width + parent.spacing : 0))
+                text: root.entry.subtitle || ""
+                visible: text.length > 0
+                textFormat: Text.PlainText
+                color: root.secondaryForeground
+                font.pixelSize: Theme.fontSize - 1
+                elide: Text.ElideRight
+            }
+            UI.Text {
+                id: annotation
+                objectName: "pickerRowAnnotation"
+                readonly property string labelText: root.entry.annotation || ""
+                centerVertical: false
+                width: Math.min(implicitWidth,parent.width * 0.65)
+                text: labelText.split(' → ').map(value=>value.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'))
+                    .join(' <font face="'+Theme.fontFamilyIcons+'">'+Theme.rightIcon+'</font> ')
+                visible: text.length > 0
+                textFormat: Text.StyledText
+                color: root.current ? Theme.selectionText : Theme.warning
+                font.pixelSize: Theme.fontSize - 1
+                elide: Text.ElideRight
+            }
         }
     }
     UI.IconText {
@@ -120,5 +140,11 @@ UI.SelectableRow {
         text: Theme.filePinIcon
         color: root.current ? Theme.selectionText : Theme.accent
         horizontalAlignment: Text.AlignHCenter
+    }
+    UI.HoverTooltip {
+        hoverTarget: root
+        text: root.entry.hint || root.entry.annotation || ""
+        textFormat: Text.PlainText
+        maximumWidth: Math.min(640,Math.max(80,(root.Window.window?.width ?? 800)-32))
     }
 }

@@ -21,6 +21,7 @@ Item {
     readonly property bool moduleFocusSearch: true
     readonly property var modulePointerTarget: panel?.modulePointerTarget ?? panel ?? root
     readonly property bool nativeDialogOpen: panel?.nativeDialogOpen ?? false
+    readonly property bool dismissOnOutside: panel?.dismissOnOutside ?? true
     readonly property real placementWidth: panel?.placementWidth ?? implicitWidth
     implicitWidth: panel?.implicitWidth ?? Theme.pickerWidth
     implicitHeight: panel?.implicitHeight ?? 0
@@ -31,6 +32,7 @@ Item {
         id: content
         anchors.fill: parent
         sourceComponent: {
+            if (root.picker === PickerService && BrowserRoutingService.enabled && BookmarkService.ownsMenu()) return bookmarkPanel
             if (root.picker.layout === "switcher") return windowSwitcher
             switch (root.picker.mode) {
                 case PickerService.Mode.Projects: return projectPanel
@@ -48,6 +50,10 @@ Item {
                 default: return standardPanel
             }
         }
+    }
+    Component {
+        id: bookmarkPanel
+        BookmarkPickerPanel { picker:root.picker; backgroundVisible:root.backgroundVisible }
     }
     Component {
         id: windowSwitcher
