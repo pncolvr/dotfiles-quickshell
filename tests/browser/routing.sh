@@ -12,6 +12,11 @@ cat > "$fixture/bin/browser" <<'MOCK'
 jq -nc --args '$ARGS.positional' -- "$@" >> "$BROWSER_TEST_DIR/actions"
 MOCK
 chmod +x "$fixture/bin/browser"
+cat > "$fixture/bin/twitch" <<'MOCK'
+#!/usr/bin/env bash
+exit 1
+MOCK
+chmod +x "$fixture/bin/twitch"
 cat > "$fixture/bin/curl" <<'MOCK'
 #!/usr/bin/env bash
 case ${@: -1} in
@@ -24,7 +29,7 @@ chmod +x "$fixture/bin/curl"
 node - "$fixture" <<'JS'
 const fs=require('node:fs'),dir=process.argv[2],file=dir+'/src/config/Config.qml';
 let text=fs.readFileSync(file,'utf8').replace('clipboardMonitorEnabled: true','clipboardMonitorEnabled: false');
-for(const [key,value] of Object.entries({browserRoutingEnabled:'true',browserHistoryEnabled:'true',browserWorkspaceFocusEnabled:'false',browserHistoryLimit:'100'}))
+for(const [key,value] of Object.entries({browserRoutingEnabled:'true',browserHistoryEnabled:'true',browserWorkspaceFocusEnabled:'false',browserHistoryLimit:'100',twitchEnabled:'true'}))
  text=text.replace(new RegExp('readonly property (bool|int) '+key+':[^\\n]*'),(_,type)=>'property '+type+' '+key+': '+value);
 text=text.replace(/readonly property string bookmarkFile:[^\n]*/,'property string bookmarkFile: '+JSON.stringify(dir+'/bookmarks'));
 text=text.replace(/readonly property string webappDefaultBrowser:[^\n]*/,'property string webappDefaultBrowser: "b"');

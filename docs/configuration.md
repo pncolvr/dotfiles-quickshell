@@ -186,7 +186,11 @@ that source, or type an absolute path into the picker. HTML is opened, not parse
 `browserRoutingEnabled` is enabled in this setup. It adds Bookmarks / History /
 Manage tabs and activates routing for generic URLs. The default browser always
 comes from `Config.webappDefaultBrowser`; Manage edits ordered rules using the
-browser definitions below. Host/subdomain, literal Contains, wildcard and
+browser definitions below. Twitch links, saved Twitch notification actions,
+calendar events and package pages use this same opener directly. They do not
+require the desktop integration or default-browser associations. With routing
+disabled, they open the configured browser without routing or history.
+Host/subdomain, literal Contains, wildcard and
 regular-expression patterns match rules. Contains accepts one value per line and
 matches when any value occurs in the URL. Each
 rule opens a browser, follows redirects, unwraps a named query parameter or runs

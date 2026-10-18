@@ -55,7 +55,7 @@ Singleton {
 
     function openPackage(update) {
         if (update.repository === "unknown") return
-        Qt.openUrlExternally(packageUrl(update))
+        BrowserRoutingService.open(packageUrl(update))
     }
 
     function markdownRow(update) {

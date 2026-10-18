@@ -12,6 +12,8 @@ trap 'rm -rf -- "$test_dir"' EXIT
 mkdir -p "$test_dir/config/data" "$test_dir/bin" "$test_dir/data" "$test_dir/cache"
 mkdir -p "$test_dir/config/src/services/notifications"
 cp -- "$project_root/src/services/notifications/encode-image.sh" "$test_dir/config/src/services/notifications/encode-image.sh"
+mkdir -p "$test_dir/config/src/services/browser"
+cp -- "$project_root/src/services/browser/browser.sh" "$test_dir/config/src/services/browser/browser.sh"
 mkdir -m 700 "$test_dir/runtime"
 cat > "$test_dir/bin/hyprctl" <<'MOCK'
 #!/usr/bin/env bash
@@ -21,10 +23,11 @@ cat > "$test_dir/bin/ping" <<'MOCK'
 #!/usr/bin/env bash
 exit 1
 MOCK
-cat > "$test_dir/bin/xdg-open" <<'MOCK'
+cat > "$test_dir/bin/qutebrowser" <<'MOCK'
 #!/usr/bin/env bash
-printf '%s\n' "$1" >> "$NOTIFICATION_TEST_DIR/opened-urls"
+printf '%s\n' "${@: -1}" >> "$NOTIFICATION_TEST_DIR/opened-urls"
 MOCK
+cp -- "$test_dir/bin/qutebrowser" "$test_dir/bin/vivaldi"
 chmod +x "$test_dir/bin/"*
 while IFS= read -r line; do
     line=${line//@NATIVE_WINDOWS@/file://$project_root/tests/notifications/notification-wayland-smoke.qml}

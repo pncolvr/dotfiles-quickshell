@@ -28,6 +28,27 @@ Scope {
     }
     function calls() { actions.reload(); return actions.text().trim().split('\n').filter(value=>value).map(value=>JSON.parse(value)) }
     function settled() { return !browser.requests.length && !browser.currentRequest && !browser.launchQueue.length && !browser.launching }
+    function serviceLinks(recorded) {
+        const date = new Date(2026, 0, 15)
+        const update = {repository: 'extra', architecture: 'x86_64', name: 'fixture-package'}
+        const saved = {emitterKey: 'app:twitch', actionHandler: 'twitch', actions: [{identifier: 'open-twitch', text: 'Open'}]}
+        const links = [
+            {url: Config.twitchBaseUrl + 'fixture_channel', open: () => TwitchService.openUrl('fixture_channel')},
+            {url: Config.twitchBaseUrl, open: () => check(NotificationService.invoke(saved, 'open-twitch'), 'saved Twitch action accepted')},
+            {url: CalendarService.eventUrlFor(date), open: () => CalendarService.openDate(date)},
+            {url: UpdatesService.packageUrl(update), open: () => UpdatesService.openPackage(update)}
+        ]
+        const history = JSON.stringify(BrowserRoutingRepository.history())
+        for (const link of links) {
+            const before = calls().length
+            link.open()
+            waitFor(() => calls().length === before + 1 && settled(), 'service browser link dispatched')
+            check(calls()[before][0] === '--browser=b' && calls()[before].slice(-1)[0] === link.url,
+                'service link uses the configured browser and literal target without desktop integration')
+            if (recorded) check(BrowserRoutingRepository.history().some(row => row.url === link.url), 'service link recorded')
+        }
+        if (!recorded) check(JSON.stringify(BrowserRoutingRepository.history()) === history, 'disabled routing does not record service links')
+    }
     function run() {
         if(started || !DbService.ready) return
         started=true
@@ -216,6 +237,8 @@ Scope {
                 && BrowserRoutingRepository.history()[0].final_url==='https://final.test/second' && BrowserRoutingRepository.history()[0].rule_name==='Renamed','reopening original deduplicates and updates final URL and rule label')
             BrowserRoutingRepository.clearHistory()
             check(BrowserRoutingRepository.history().length===0,'clear history and FTS')
+            serviceLinks(true)
+            BrowserRoutingRepository.clearHistory()
             check(BrowserRoutingRepository.record('https://persisted.test/','b','Saved rule','https://resolved.test/persisted'),'seed persisted history')
             PickerService.close()
             setOption('bookmarkFile','')
@@ -227,6 +250,7 @@ Scope {
             check(!PickerService.canAccept,'Manage does not launch a stale history selection')
             setOption('browserRoutingEnabled',false)
             check(!PickerService.visible,'disabling routing restores empty-source disabled behavior')
+            serviceLinks(false)
             console.log('PASS: browser routing, profile/default/fallback, local HTML, history retention/FTS, opt-outs and shared bookmark tabs')
         } catch(exception) { console.error('BROWSER FAIL:',String(exception)) }
         Qt.callLater(() => Qt.quit())

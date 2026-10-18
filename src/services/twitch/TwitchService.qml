@@ -56,7 +56,7 @@ Singleton {
         readonly property int scheduleCacheDuration: 60 * 60 * 1000
     }
 
-    function openUrl(login) { if (enabled) Qt.openUrlExternally(`${Config.twitchBaseUrl}${login}`) }
+    function openUrl(login) { if (enabled) BrowserRoutingService.open(`${Config.twitchBaseUrl}${login}`) }
     function streamNotification(changes) {
         const sections = []
         let summary = ""

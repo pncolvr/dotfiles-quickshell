@@ -100,7 +100,7 @@ Singleton {
     property var _holidaysByYear: ({})
 
     function openDate(date) {
-        Qt.openUrlExternally(eventUrlFor(date));
+        BrowserRoutingService.open(eventUrlFor(date));
     }
 
     function eventUrlFor(date) {

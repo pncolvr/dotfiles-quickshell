@@ -207,7 +207,7 @@ Singleton {
             action.invoke()
             return true
         }
-        if (hasSavedAction(entry, identifier)) return Qt.openUrlExternally(Config.twitchBaseUrl)
+        if (hasSavedAction(entry, identifier)) return BrowserRoutingService.open(Config.twitchBaseUrl)
         return false
     }
     function activate(entry) {

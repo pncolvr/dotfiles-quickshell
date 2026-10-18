@@ -82,12 +82,7 @@ action_count() { rg -c "org.freedesktop.Notifications.ActionInvoked \\(uint32 $1
 reload_seen() { [[ $(rg -c 'Configuration Loaded' "$log") -ge 2 ]]; }
 native_is() { ipc nativeUi 2>/dev/null | json_is "$1" 2>/dev/null; }
 legacy_opened() {
-    if [[ ${NOTIFICATION_TEST_WAYLAND:-0} == 1 ]]; then
-        [[ -f $NOTIFICATION_TEST_DIR/opened-urls && $(cat "$NOTIFICATION_TEST_DIR/opened-urls") == https://www.twitch.tv/ ]]
-    else
-        # Offscreen Qt records the requested URL but cannot invoke platform services.
-        rg -Fq "QPlatformServices::openUrl() for 'https://www.twitch.tv/'" "$log"
-    fi
+    [[ -f $NOTIFICATION_TEST_DIR/opened-urls && $(cat "$NOTIFICATION_TEST_DIR/opened-urls") == https://www.twitch.tv/ ]]
 }
 
 QT_QPA_PLATFORM=offscreen QT_QUICK_BACKEND=software timeout 15 /usr/lib/qt6/bin/qmltestrunner \
