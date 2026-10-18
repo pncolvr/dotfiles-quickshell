@@ -67,10 +67,11 @@ Singleton {
             generator.running = true
         }
     }
-    function copy(password) {
-        if (!visible || !password) return
+    function copy(password, completed = null) {
+        if (!visible || !password) { if (completed) completed(false); return }
         SensitiveClipboardService.copy(password, 0, success => {
             if (visible) PickerService.error = success === false ? Translations.text("secrets.errors.copyPassword") : ""
+            if (completed) completed(success)
         })
     }
     function submit(password) {

@@ -157,6 +157,9 @@ Item {
         files: []
     })
 
+    // Shared copy-button success feedback
+    readonly property int copyFeedbackDuration: Timespan.fromSeconds(2)
+
     // Launcher: shared picker
     // Shared defaults; feature-specific settings below can override these bindings.
     readonly property string pickerManageShortcut: keybinds.common.manage
@@ -522,7 +525,6 @@ Item {
     readonly property int totpListMinRows: 9
     readonly property real totpListMaxScreenHeight: 0.45
     readonly property int totpTickInterval: Timespan.fromMilliseconds(250)
-    readonly property int totpCopiedDuration: Timespan.fromSeconds(2)
     readonly property var totpCommand: [
         "bash", Qt.resolvedUrl("../services/security/totp.sh").toString().replace("file://", ""),
         "--vault", totpVault, "--label", totpVaultLabel, "--secret-tool", totpSecretTool,

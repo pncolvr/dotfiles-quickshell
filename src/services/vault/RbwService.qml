@@ -67,16 +67,17 @@ Singleton {
     }
     function remove() { if (detail && detail.id === selectedId) request({action: "remove", id: detail.id, baseline}) }
     function generate(length) { request({action: "generate", length}) }
-    function copyTotp() {
-        if (!detail || detail.id !== selectedId || !detail.data?.totp) return
-        request({action: "totp", id: selectedId})
+    function copyTotp(completed = null) {
+        if (!detail || detail.id !== selectedId || !detail.data?.totp) { if (completed) completed(false); return }
+        if (!request({action: "totp", id: selectedId}, completed) && completed) completed(false)
     }
-    function copy(value) {
-        if (!value) return
+    function copy(value, completed = null) {
+        if (!value) { if (completed) completed(false); return }
         clipboardOwner = SensitiveClipboardService.copy(value, 30000, success => {
             if (success === false) root.error = Translations.text("vault.errors.copy")
+            if (success === true) root.copied()
+            if (completed) completed(success)
         })
-        copied()
     }
     function lock() { if (busy) return; generation++; entries = []; clear(); request({action: "lock"}) }
     function checkLock() {
@@ -84,23 +85,24 @@ Singleton {
         checkingLock = true
         startTask({action: "unlocked"})
     }
-    function startTask(message) {
-        const process = task.createObject(root, {input: JSON.stringify(message) + "\n", action: message.action, entryId: message.id || "", epoch: generation, selectionEpoch: selectionGeneration}) as Process
+    function startTask(message, completed = null) {
+        const process = task.createObject(root, {input: JSON.stringify(message) + "\n", action: message.action, entryId: message.id || "", epoch: generation, selectionEpoch: selectionGeneration, completed}) as Process
         process.running = true
     }
-    function request(message) {
+    function request(message, completed = null) {
         if (!enabled || busy || !visible) return false
         activeAction = message.action
         busy = true
         error = ""
-        startTask(message)
+        startTask(message, completed)
         return true
     }
-    function receive(message, action, epoch, entryId, selectionEpoch) {
+    function receive(message, action, epoch, entryId, selectionEpoch, completed = null) {
         const background = action === "unlocked"
         if (background) checkingLock = false
         else { activeAction = ""; busy = false }
         if (!visible || epoch !== generation) {
+            if (completed) completed(false)
             if (!background && visible && reloadAfterPending) { reloadAfterPending = false; request({action: "list"}) }
             return
         }
@@ -108,10 +110,12 @@ Singleton {
         // Discard its reply and load only the latest selected entry.
         if ((action === "detail" || action === "totp")
             && (entryId !== selectedId || (action === "totp" && selectionEpoch !== selectionGeneration))) {
+            if (completed) completed(false)
             if (selectedId) request({action: "detail", id: selectedId})
             return
         }
         if (!message || message.ok !== true) {
+            if (completed) completed(false)
             if (background) { generation++; reloadAfterPending = false; entries = []; clear(); error = Translations.text("vault.errors.lockState") }
             else {
                 if (action === "detail") clear()
@@ -121,10 +125,12 @@ Singleton {
         }
         if (action === "totp") {
             if (typeof message.token !== "string" || !/^(?:[0-9]{1,10}|[23456789BCDFGHJKMNPQRTVWXY]{5})$/.test(message.token)) {
+                if (completed) completed(false)
                 error = Translations.text("vault.errors.totpResponse")
                 return
             }
-            if (detail?.id === entryId) copy(message.token)
+            if (detail?.id === entryId) copy(message.token, completed)
+            else if (completed) completed(false)
             return
         }
         if (message.entries) entries = message.entries
@@ -152,6 +158,7 @@ Singleton {
             property string entryId: ""
             property int epoch: 0
             property int selectionEpoch: 0
+            property var completed: null
             command: ["bash", Quickshell.shellPath("src/services/vault/rbw-manager.sh")]
             environment: root.workerEnvironment
             stdinEnabled: true
@@ -164,7 +171,7 @@ Singleton {
                 if (exitCode === 0 && exitStatus === 0) {
                     try { response = JSON.parse(output.text) } catch (_) {}
                 }
-                root.receive(response, action, epoch, entryId, selectionEpoch)
+                root.receive(response, action, epoch, entryId, selectionEpoch, completed)
                 process.destroy()
             }
             // qmllint enable signal-handler-parameters

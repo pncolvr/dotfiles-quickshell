@@ -176,7 +176,7 @@ Singleton {
 
     Timer {
         id: copiedTimer
-        interval: Config.totpCopiedDuration
+        interval: Config.copyFeedbackDuration
         onTriggered: state.copiedId = ""
     }
 

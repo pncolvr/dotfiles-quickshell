@@ -183,6 +183,7 @@ run isolated qml/button-focus bash tests/qml/button-focus.sh
 run isolated qml/batched-model bash tests/qml/batched-model.sh
 run isolated qml/pulse-clock bash tests/qml/pulse-clock.sh
 run isolated qml/alerts bash tests/qml/alerts.sh
+run isolated ui/copy-button bash tests/ui/copy-button.sh
 run isolated i18n bash tests/i18n/run.sh
 run isolated audio/controls bash tests/audio/audio.sh
 run isolated audio/media bash tests/audio/media.sh

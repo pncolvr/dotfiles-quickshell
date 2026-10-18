@@ -107,13 +107,12 @@ Item {
                     enabled: !root.actions?.generating
                     onClicked: root.actions.generate()
                 }
-                UI.ActionButton {
+                UI.CopyButton {
                     objectName: "copyBackupPassword"
                     visible: root.actions?.creating ?? false
-                    glyph: Theme.copyIcon
-                    hint: Translations.text("secrets.actions.copyPassword")
+                    copyHint: Translations.text("secrets.actions.copyPassword")
                     enabled: secret.text.length > 0
-                    onClicked: { root.actions.copy(secret.text); root.focusSearch() }
+                    copyAction: completed => { root.actions.copy(secret.text, completed); root.focusSearch() }
                 }
             }
             UI.ShortcutHints {

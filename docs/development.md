@@ -197,6 +197,13 @@ sources/bundles under `shaders/`. `src/theme/` contains appearance settings and
 palettes. Import the UI module with an `as UI` alias; both the root and local
 component metadata export the same types and singleton instances.
 
+`UI.CopyButton` shares TOTP-style copy feedback: a checkmark, active color and
+translated Copied tooltip for `Config.copyFeedbackDuration` milliseconds.
+Its `copyAction(completed)` operation reports success with `completed(true)`;
+pending or failed copies do not show confirmation. `copyContext` invalidates late
+callbacks when a row changes, and hiding the button clears local feedback.
+TOTP supplies its confirmed service state through `externallyConfirmed`.
+
 `UI.SelectableRow` owns pointer cursors, hover/selection backgrounds, foreground
 colors, pointer activation and Enter activation. Picker, Manage, Vault and
 selection rows reuse it while retaining their own content and sizing. Picker

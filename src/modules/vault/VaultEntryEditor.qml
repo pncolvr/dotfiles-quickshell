@@ -9,7 +9,7 @@ Column {
     id: root
     property bool adding: false
     readonly property bool validTitle: title.text.trim().length > 0
-    signal copyRequested(string value)
+    signal copyRequested(string value, var completed)
     function clear() {
         title.clear()
         username.clear()
@@ -61,7 +61,7 @@ Column {
             anchors.right: parent.right
             spacing: Theme.controlSpacing
             UI.ActionButton { glyph: Theme.retryIcon; hint: Translations.text("secrets.actions.generatePassword"); onClicked: RbwService.generate(Number(length.text)) }
-            UI.ActionButton { glyph: Theme.copyIcon; hint: Translations.text("secrets.actions.copyPassword"); onClicked: root.copyRequested(password.text) }
+            UI.CopyButton { copyContext: RbwService.detail; copyHint: Translations.text("secrets.actions.copyPassword"); copyAction: completed => root.copyRequested(password.text, completed) }
         }
     }
     UI.SecretField { revealObjectName: "vaultEye"; id: password; objectName: "vaultPassword"; width: parent.width; visible: root.adding || RbwService.detail?.data !== null; placeholderText: Translations.text("common.fields.password") }

@@ -1,5 +1,6 @@
 # Local type metadata; parent exports refer to the same QML files.
 ActionButton 1.0 ActionButton.qml
+CopyButton 1.0 CopyButton.qml
 BarIcon 1.0 BarIcon.qml
 ActivityIndicator 1.0 ActivityIndicator.qml
 BatchedListModel 1.0 BatchedListModel.qml

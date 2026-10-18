@@ -58,9 +58,11 @@ Scope {
                 {pid: 30, name: "QtWebEngineProc", appPid: 29, appName: "qutebrowser", down: 10, up: 10}]})
             root.check(StatsService.processes[0].value === 60 && StatsService.processes[0].down === 24
                 && StatsService.processes[0].up === 36 && StatsService.processes[0].pid === 10, "network adds app traffic before sorting")
-            StatsService.copyPid(2345)
-            console.log(root.failed ? "STATS FAIL: collectors" : "PASS: Stats native file parsing, process deltas, PID reuse, resource sorting and clipboard command")
-            Qt.quit()
+            StatsService.copyPid(2345, success => {
+                root.check(success, "PID clipboard write completes")
+                console.log(root.failed ? "STATS FAIL: collectors" : "PASS: Stats native file parsing, process deltas, PID reuse, resource sorting and clipboard command")
+                Qt.quit()
+            })
         }
     }
 }

@@ -26,11 +26,11 @@ Row {
     signal removeRequested()
     spacing: Theme.controlSpacing
 
-    UI.ActionButton {
+    UI.CopyButton {
         id: copyButton
-        glyph: Theme.copyIcon
-        hint: Translations.text("folders.actions.copyPathHint")
-        onClicked: Quickshell.clipboardText = root.path
+        copyContext: root.path
+        copyHint: Translations.text("folders.actions.copyPathHint")
+        copyAction: completed => { Quickshell.clipboardText = root.path; completed(true) }
     }
     UI.ActionButton {
         id: editButton

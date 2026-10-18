@@ -8,7 +8,7 @@ import "../../services"
 Column {
     id: root
     required property var fields
-    signal copyRequested(string value)
+    signal copyRequested(string value, var completed)
     spacing: Theme.controlSpacing
     Repeater {
         model: root.fields
@@ -82,19 +82,20 @@ Column {
                     Keys.onShortcutOverride: event => { if (event.matches(StandardKey.Copy) || event.matches(StandardKey.Cut)) event.accepted = true }
                     Keys.onPressed: event => { if (event.matches(StandardKey.Copy) || event.matches(StandardKey.Cut)) event.accepted = true }
                 }
-                UI.ActionButton {
+                UI.CopyButton {
                     objectName: valueRow.modelData.totp ? "vaultCopyTotpSecret" : ""
-                    glyph: Theme.copyIcon
-                    hint: Translations.text("common.actions.copyField",[valueRow.modelData.label])
-                    onClicked: root.copyRequested(valueRow.modelData.value)
+                    copyContext: valueRow.modelData
+                    copyHint: Translations.text("common.actions.copyField",[valueRow.modelData.label])
+                    copyAction: completed => root.copyRequested(valueRow.modelData.value, completed)
                 }
-                UI.ActionButton {
+                UI.CopyButton {
                     objectName: valueRow.modelData.totp ? "vaultCopyTotp" : ""
+                    copyContext: valueRow.modelData
                     visible: valueRow.modelData.totp === true
-                    glyph: Theme.totpIcon
-                    hint: Translations.text("vault.actions.copyTotpHint")
+                    copyGlyph: Theme.totpIcon
+                    copyHint: Translations.text("vault.actions.copyTotpHint")
                     enabled: !RbwService.busy
-                    onClicked: RbwService.copyTotp()
+                    copyAction: completed => RbwService.copyTotp(completed)
                 }
             }
         }

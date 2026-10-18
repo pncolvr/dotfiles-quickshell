@@ -65,9 +65,8 @@ Item {
     function save() {
         RbwService.save(editor.draft(adding ? "" : RbwService.detail?.id))
     }
-    function copy(value) {
-        if (!value) return
-        RbwService.copy(value)
+    function copy(value, completed = null) {
+        RbwService.copy(value, completed)
     }
     function back() { if (editing || deleting) { discard(); focusSearch() } else RbwService.close() }
     Component.onDestruction: discard()
@@ -208,7 +207,7 @@ Item {
                             visible: !root.editing && !root.deleting
                             enabled: root.detailReady && !RbwService.busy
                             fields: root.detailRows
-                            onCopyRequested: value => root.copy(value)
+                            onCopyRequested: (value, completed) => root.copy(value, completed)
                         }
                         Column {
                             width: parent.width
@@ -222,7 +221,7 @@ Item {
                             visible: root.editing
                             enabled: !RbwService.busy
                             adding: root.adding
-                            onCopyRequested: value => root.copy(value)
+                            onCopyRequested: (value, completed) => root.copy(value, completed)
                         }
                     }
                 }

@@ -36,7 +36,7 @@ Scope {
         property string processError: ""
         property bool processesLoading: false
         property int copiedPid: 0
-        function copyPid(pid) { copiedPid = pid }
+        function copyPid(pid, completed = null) { copiedPid = pid; if (completed) completed(true) }
         function sample() {
             processes = Array.from({length: 64}, (_, index) => ({pid: 1000 + index, name: index === 0 ? "Browser" : "worker-" + index,
                 value: (64 - index) * (processResource === "memory" ? 1048576 : processResource === "network" ? 1100 : 1),
@@ -159,9 +159,11 @@ Scope {
                     "child roles are readable with quieter text")
                 root.check((view.itemAtIndex(1) as StatsProcessRow).process.label === "Main process",
                     "expanded main process has its own readable label")
-                const copy = mouse.findChild(child, "statsCopyPid") as UI.ActionButton
+                const copy = mouse.findChild(child, "statsCopyPid") as UI.CopyButton
                 mouse.mouseClick(copy, copy.width / 2, copy.height / 2)
-                root.check(backend.copiedPid === 1001 && copy.hint === "Copy PID 1001", "subprocess copies its own PID")
+                root.check(backend.copiedPid === 1001 && copy.copyHint === "Copy PID 1001", "subprocess copies its own PID")
+                root.check(copy.copied && copy.glyph === Theme.checkIcon && copy.foreground.toString() === Theme.active.toString()
+                    && copy.hint === "Copied", "subprocess copy shows shared success feedback")
                 backend.sample()
             } else if (root.step === 4) {
                 root.check(view.count === 4 && (view.itemAtIndex(0) as StatsProcessRow).isExpanded, "refresh preserves expanded groups")

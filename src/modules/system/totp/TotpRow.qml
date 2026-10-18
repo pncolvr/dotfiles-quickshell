@@ -52,16 +52,17 @@ Item {
             UI.HoverTooltip { text: root.name }
         }
 
-        UI.ActionButton {
+        UI.CopyButton {
             id: copyButton
             objectName: "totpCopyCode"
             Layout.preferredWidth: Theme.totpCodeWidth
-            glyph: TotpService.copiedId === root.entryId ? Theme.checkIcon : Theme.copyIcon
+            copyContext: root.entryId
+            externallyConfirmed: TotpService.copiedId === root.entryId
             label: root.code.replace(/(.{3})(?=.)/g, "$1 ")
-            hint: TotpService.copiedId === root.entryId ? "copied" : Translations.text("totp.actions.copyHint")
-            foreground: TotpService.copiedId === root.entryId ? Theme.active : Theme.text
+            copyHint: Translations.text("totp.actions.copyHint")
+            normalForeground: Theme.text
             enabled: !TotpService.busy
-            onClicked: TotpService.copy(root.entryId)
+            copyAction: completed => TotpService.copy(root.entryId)
 
             contentItem: Item {
                 TotpCode {

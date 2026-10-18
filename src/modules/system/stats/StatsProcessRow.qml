@@ -101,7 +101,7 @@ Item {
             font.weight: Font.Normal
         }
     }
-    UI.ActionButton {
+    UI.CopyButton {
         id: pid
         objectName: "statsCopyPid"
         anchors.right: usage.left
@@ -109,12 +109,12 @@ Item {
         width: Theme.statsPidWidth
         height: parent.height
         label: root.process.pid > 0 ? String(root.process.pid) : "—"
-        glyph: Theme.copyIcon
-        foreground: Theme.inactive
+        copyContext: root.process.pid
+        normalForeground: Theme.inactive
         fillColor: "transparent"
-        hint: root.process.pid > 0 ? Translations.text(root.canExpand || root.process.count > 1 ? "stats.processes.copyParentPid" : "stats.processes.copyPid",[root.process.pid]) : Translations.text("stats.processes.pidUnavailable")
+        copyHint: root.process.pid > 0 ? Translations.text(root.canExpand || root.process.count > 1 ? "stats.processes.copyParentPid" : "stats.processes.copyPid",[root.process.pid]) : Translations.text("stats.processes.pidUnavailable")
         enabled: root.process.pid > 0
-        onClicked: root.statsService.copyPid(root.process.pid)
+        copyAction: completed => root.statsService.copyPid(root.process.pid, completed)
     }
     Item {
         id: usage

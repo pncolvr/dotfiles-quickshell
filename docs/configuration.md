@@ -181,6 +181,13 @@ router instead. The opener remains an overridable literal argv array. Bookmark c
 stay in the local file; use encoded file URLs for paths containing spaces in
 that source, or type an absolute path into the picker. HTML is opened, not parsed.
 
+## Copy feedback
+
+Copy buttons show a checkmark, active color and Copied tooltip after a successful
+clipboard write. `copyFeedbackDuration` controls the confirmation duration in
+milliseconds (2000 in this setup), including TOTP. Changing the copied row or
+hiding a button clears its local confirmation.
+
 ## Browser routing
 
 `browserRoutingEnabled` is enabled in this setup. It adds Bookmarks / History /

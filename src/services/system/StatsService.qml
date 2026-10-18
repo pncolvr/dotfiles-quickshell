@@ -109,9 +109,23 @@ Singleton {
         processSample.resource = processResource
         processSample.running = true
     }
-    function copyPid(pid) {
-        if (!Number.isInteger(pid) || pid <= 0) return
-        Quickshell.execDetached(["wl-copy", "--", String(pid)])
+    function copyPid(pid, completed = null) {
+        if (!Number.isInteger(pid) || pid <= 0) { if (completed) completed(false); return }
+        const task = pidCopy.createObject(root, {command: ["wl-copy", "--", String(pid)], completed})
+        task.running = true
+    }
+    Component {
+        id: pidCopy
+        Process {
+            id: task
+            property var completed: null
+            stdout: SplitParser { onRead: _data => {} }
+            stderr: SplitParser { onRead: _data => {} }
+            onExited: (code, status) => {
+                if (completed) completed(code === 0 && status === 0)
+                task.destroy()
+            }
+        }
     }
     onProcessResourceChanged: {
         processSample.discardResult = true

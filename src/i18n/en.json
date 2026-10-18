@@ -1,4 +1,6 @@
 {
+  "common.status.copied": "Copied",
+  "common.actions.copy": "Copy",
   "arguments.errors.executableRequired": "Enter an executable followed by its arguments.",
   "arguments.errors.nul": "Arguments cannot contain NUL characters.",
   "arguments.errors.unclosedQuote": "Close all quotes and finish the escaped argument.",
