@@ -33,7 +33,7 @@ Item {
     readonly property real listHeight: height - contentTop
     readonly property real manageHeight: Math.max(0, listHeight - (footerItem.visible ? footerItem.height + Theme.controlSpacing : 0))
     implicitWidth: managing ? Theme.manageWidth : Theme.pickerWidth
-    implicitHeight: managing ? Theme.manageHeight : contentTop + listItem.implicitHeight
+    implicitHeight: managing ? Theme.manageHeight : Theme.pickerHeight
     signal managementRequested(bool value)
     signal addRequested()
     signal showAllRequested()

@@ -268,6 +268,11 @@ settings; add and edit entries through Manage.
 
 ## Theme defaults
 
+Webapps, n8n, Remotes, Projects and Directories share `Theme.pickerHeight`
+(450 logical pixels) for their list views. Empty results and Work/Running-only
+filters keep that height; additional rows scroll inside the list. Window sizing
+still respects the available screen space. Manage views use `Theme.manageHeight`.
+
 Image-based picker previews use a separate larger window below the standard list.
 `Config.pickerPreviewEnabled` sets the shared initial state (false by default).
 In `Config.pickerPreviewDefaults`, `clipboard` and `windows` default to `null`

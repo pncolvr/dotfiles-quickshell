@@ -121,6 +121,8 @@ QtObject {
 
     // Launcher, QR and clipboard previews
     readonly property int pickerWidth: 560
+    // Shared collection-list height; native hosts clamp it to the available screen.
+    readonly property int pickerHeight: 450
     readonly property int pickerPreviewWidth: 1600
     readonly property real pickerPreviewListHeightRatio: 0.32
     readonly property int pickerPreviewGap: controlSpacing * 2

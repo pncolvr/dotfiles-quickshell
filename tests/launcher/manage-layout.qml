@@ -8,6 +8,7 @@ import "../../src/theme"
 import "../../src/config"
 import "../../src/services"
 import "../../src/modules/launcher" as Launcher
+import "../../src/services/launcher" as LauncherServices
 import "../../src/modules/status"
 import "../../src/services/webapps/WebappEntries.mjs" as Webapps
 import "../../src/services/remotes/RemoteEntries.mjs" as Remotes
@@ -20,6 +21,7 @@ Scope {
     property bool showList: false
     property int formType: 0
     property bool expanded: false
+    property int openingSignals: 0
     property var settings: Config
     property var audio: AudioService
     function check(ok, message) { if (!ok) { failed = true; console.error("MANAGE FAIL:",message) } }
@@ -36,6 +38,22 @@ Scope {
         if (directory) events.grabImage(window.contentItem).save(directory + "/" + name + ".png")
     }
     Test.TestCase { id: events; when: false }
+    Connections { target: PickerService; function onOpened() { root.openingSignals++ } }
+    QtObject {
+        id: filterRepository
+        property var entries: Array.from({length:20}, (_,i) => ({id:String(i), name:"Filter row " + i,
+            url:"https://example.test/" + i, enabled:true, category:i ? "work" : "personal"}))
+        property string error: ""
+        function reload() { return true }
+    }
+    LauncherServices.ManagedCollectionService {
+        id: filterService
+        repository: filterRepository
+        pickerMode: PickerService.Mode.Webapps
+        collectionName: "Synthetic filters"
+        itemForEntry: entry => ({id:entry.id,title:entry.name,subtitle:entry.url,result:entry.id})
+    }
+    Launcher.WebappPickerPanel { id: filterPanel; visible: false; service: filterService }
     QtObject {
         id: rulesBackend
         property var rules: ({workDirectories:["/fixture/work"],processes:["fixture-process"]})
@@ -168,6 +186,38 @@ Scope {
             root.check(!plainHints.visible && plainHints.height === 0
                 && Math.abs(plainHints.mapToItem(plainList,0,0).y - plainList.height) < 1,
                 "plain lists without useful hints leave no empty footer row")
+            PickerService.begin(PickerService.Mode.Webapps,"Filter geometry")
+            filterService.open()
+            PickerService.show()
+            events.wait(20)
+            const filterHeight = plainList.implicitHeight
+            root.check(filterPanel.implicitHeight === Theme.pickerHeight,"collection lists use the shared fixed height")
+            const openings = root.openingSignals
+            root.check(PickerService.items.length === 1,"Work rows start hidden outside work status")
+            filterService.toggleShowAll()
+            events.wait(20)
+            root.check(PickerService.items.length === 20 && plainList.implicitHeight === filterHeight
+                && filterPanel.implicitHeight === Theme.pickerHeight && root.openingSignals === openings,
+                "Work override reveals rows without reopening or expanding the list")
+            filterService.toggleShowAll()
+            filterService.activeFilterIds = ["0"]
+            filterService.toggleActiveOnly()
+            events.wait(20)
+            root.check(PickerService.items.length === 1 && plainList.implicitHeight === filterHeight
+                && root.openingSignals === openings,"Running-only filtering keeps the same opening geometry")
+            filterRepository.entries = []
+            events.wait(20)
+            root.check(!PickerService.items.length && filterPanel.implicitHeight === Theme.pickerHeight,
+                "empty collections reserve the same panel height")
+            for (const test of [{service:ProjectService,mode:PickerService.Mode.Projects},
+                {service:DirectoryService,mode:PickerService.Mode.Directories}]) {
+                PickerService.begin(test.mode,"Filter geometry")
+                PickerService.items = [{id:"fixture",title:"Synthetic row",result:"fixture"}]
+                PickerService.show()
+                const initialOpenings = root.openingSignals
+                test.service.toggleShowAll()
+                root.check(root.openingSignals === initialOpenings,"Projects/Directories Work filters do not reopen the panel")
+            }
             PickerService.close()
             root.showList = false
             root.showWork = true

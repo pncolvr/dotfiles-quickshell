@@ -19,8 +19,10 @@ Scope {
     Test.TestEvent { id: events }
     FloatingWindow {
         visible: true
-        implicitWidth: panel.implicitWidth
-        implicitHeight: Math.min(panel.implicitHeight,650)
+        // This fixture exercises Manage, with a stable viewport independent of
+        // the user's launch-list height and asynchronous offscreen window resize.
+        implicitWidth: Theme.manageWidth
+        implicitHeight: Math.min(Theme.manageHeight,650)
         ProjectPickerPanel { id: panel; width: parent.width; height: parent.height }
     }
     function find(name,item=panel) {
@@ -29,6 +31,11 @@ Scope {
         return null
     }
     function check(ok,message) { if (!ok) { failed = true; console.error("MANAGE FAIL:",message) } }
+    function scrollRestored(scroll, retryStep) {
+        if (!panel.pendingScrollPositions.length && Math.abs(scroll.contentY - savedPosition) < 1) return true
+        step = retryStep
+        return false
+    }
     function highlighted(text,query,fuzzy=true) { return Search.highlight(text,Search.searchPattern(query,true),fuzzy,"#abcdef") }
     function plain(text) { return text.replace(/<font[^>]*>|<\/font>/g,"") }
     function checkFooter(editing) {
@@ -46,7 +53,13 @@ Scope {
     Timer {
         interval: 50; running: true; repeat: true
         onTriggered: {
-            if (++root.ticks > 250 || root.failed) { console.error("MANAGE FAIL: timeout step=" + root.step); stop(); Qt.quit(); return }
+            if (++root.ticks > 250 || root.failed) {
+                console.error("MANAGE FAIL: stopped step=" + root.step, JSON.stringify({
+                    expectedScroll:root.savedPosition, actualScroll:panel.managementView.listView.contentY,
+                    pendingRestorations:panel.pendingScrollPositions.length, editing:!!ProjectService.draft
+                }))
+                stop(); Qt.quit(); return
+            }
             if (!DbService.ready || ProjectService.busy) return
             const scroll = panel.managementView.listView
             const search = root.find("projectManageSearch")
@@ -61,6 +74,11 @@ Scope {
                 root.check(root.highlighted("Banana","missing") === "Banana", "unmatched terms stay uncolored")
                 root.check(DbService.write(tx => {
                     tx.executeSql("INSERT INTO store.project_sources(path,kind,category) VALUES('/fixture/repos','root','personal')")
+                    // Exercise actual source-list scrolling, not the top margin
+                    // of a two-row list that fits entirely in its viewport.
+                    for (let index = 0; index < 30; index++) tx.executeSql(
+                        "INSERT INTO store.project_sources(path,kind,category) VALUES(?,'folder','personal')",
+                        ["/fixture/zzz-source-" + String(index).padStart(2,"0")])
                     for (let index = 0; index < 80; index++) {
                         const suffix = String(index).padStart(2,"0")
                         tx.executeSql("INSERT INTO store.projects(source_path,path,name,remote_url) VALUES(?,?,?,?)",
@@ -116,25 +134,37 @@ Scope {
                 root.step = 5
                 break
             case 5:
+                // Clearing search rebuilds the project rows. Wait for their
+                // layout before measuring or saving a scroll position.
+                if (panel.managementView.detailScroll.contentHeight <= panel.managementView.detailScroll.height
+                    || scroll.contentHeight <= scroll.height) {
+                    root.step = 5
+                    return
+                }
                 scroll.contentY = Math.max(0,scroll.contentHeight - scroll.height - 10)
                 root.savedPosition = scroll.contentY
+                root.check(root.savedPosition > 100,"source fixture has a real scroll offset to preserve")
                 root.check(panel.managementView.detailScroll.contentHeight > panel.managementView.detailScroll.height,"project details have independent scrolling")
                 root.find("editProject_" + root.projectPath).clicked()
                 break
             case 6:
+                if (!root.scrollRestored(scroll,6)) return
                 root.check(Math.abs(scroll.contentY - root.savedPosition) < 1,"opening workspace edit preserves scroll")
                 root.find("cancelProjectDraft").clicked()
                 break
             case 7:
+                if (!root.scrollRestored(scroll,7)) return
                 root.check(Math.abs(scroll.contentY - root.savedPosition) < 1,"cancel and search refocus preserve scroll")
                 panel.managementView.searchField.forceActiveFocus()
                 events.keyClick(Qt.Key_E,Qt.ControlModifier,0)
                 break
             case 8:
+                if (!root.scrollRestored(scroll,8)) return
                 root.check(Math.abs(scroll.contentY - root.savedPosition) < 1,"opening source edit preserves scroll")
                 root.find("cancelProjectDraft").clicked()
                 break
             case 9:
+                if (!root.scrollRestored(scroll,9)) return
                 root.check(Math.abs(scroll.contentY - root.savedPosition) < 1,"source cancel preserves scroll")
                 root.find("editProject_" + root.projectPath).clicked()
                 break
@@ -142,6 +172,10 @@ Scope {
                 root.find("saveProjectDraft").clicked()
                 break
             case 11:
+                // Saving rebuilds the source model before the queued focus and
+                // scroll restoration finish. The fixture's timeout bounds this wait.
+                if (ProjectService.draft) { root.step = 11; return }
+                if (!root.scrollRestored(scroll,11)) return
                 root.check(!ProjectService.draft && Math.abs(scroll.contentY - root.savedPosition) < 1,"saving and reloading keep scroll")
                 root.find("editProject_" + root.projectPath).clicked()
                 break
@@ -150,6 +184,8 @@ Scope {
                 root.check(events.keyClick(Qt.Key_Escape,Qt.NoModifier,0),"Escape reaches editor")
                 break
             case 13:
+                if (ProjectService.draft) { root.step = 13; return }
+                if (!root.scrollRestored(scroll,13)) return
                 root.check(!ProjectService.draft && Math.abs(scroll.contentY - root.savedPosition) < 1,"Escape cancellation preserves scroll")
                 search.text = "&"
                 break

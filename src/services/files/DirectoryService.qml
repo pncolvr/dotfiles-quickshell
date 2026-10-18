@@ -46,7 +46,7 @@ Singleton {
         managing = value
         if (!value) { cancel(); syncPicker(); PickerService.opened() }
     }
-    function toggleShowAll() { showAll = !showAll; syncPicker(); PickerService.opened() }
+    function toggleShowAll() { showAll = !showAll; syncPicker() }
     function edit(entry) { generation++; error = ""; draft = Object.assign({},entry) }
     function cancelTyped() {
         if (!resolve.openOnly) return

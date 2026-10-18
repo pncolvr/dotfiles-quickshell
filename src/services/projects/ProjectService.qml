@@ -85,7 +85,6 @@ Singleton {
     function toggleShowAll() {
         showAll = !showAll
         syncPicker()
-        PickerService.opened()
     }
     function setManaging(value) {
         managing = value

@@ -37,8 +37,8 @@ Singleton {
         PickerService.acceptLabel=acceptLabel; PickerService.error=error
     }
     function setManaging(value) { managing=value; cancel(); if (!value) { syncPicker(); PickerService.opened() } }
-    function toggleActiveOnly() { activeOnly=!activeOnly; PickerService.opened() }
-    function toggleShowAll() { showAll=!showAll; syncPicker(); PickerService.opened() }
+    function toggleActiveOnly() { activeOnly=!activeOnly }
+    function toggleShowAll() { showAll=!showAll; syncPicker() }
     function edit(entry) { draft=Object.assign({},entry); error='' }
     function cancel() { draft=null; error='' }
     function save(value) {
