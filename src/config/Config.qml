@@ -143,7 +143,6 @@ Item {
         directories: [],
         multiple: [
             "selection.toggle",
-            "selection.all",
             "selection.clear"
         ],
         expose: [

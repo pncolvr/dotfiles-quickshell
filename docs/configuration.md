@@ -127,7 +127,7 @@ instructions are excluded from the defaults.
 | `vault` | `edit`, `add`, `refresh` (Sync), `vault.lock` |
 | `projects` | `selection.toggle`, `selection.clear` in multiple-selection mode |
 | `remotes` | `remotes.runningOnly`, `remotes.shutdown` when available |
-| `multiple` | `selection.toggle`, `selection.all`, `selection.clear` |
+| `multiple` | `selection.toggle`, `selection.clear` |
 | `expose` | `expose.all`, `expose.workspace`, `expose.move` |
 | `windows` | `preview` |
 | `default`, `webapps`, `n8n`, `directories`, `wallpaper`, `files` | None |
