@@ -129,6 +129,7 @@ hl = {
     dsp = {
         group = {active = function(options) return function()
             local group = options.window.group
+            assert(#group.members > 1, "Only one window in group")
             group.current = group.members[options.index]
             table.insert(calls, "tab:" .. group.current.address)
         end end},
@@ -150,6 +151,9 @@ assert(table.concat(calls, ",") == "tab:0x2,focus:0x2", "selected group tab")
 calls, group.members, group.current = {}, {target, sibling}, sibling
 focus()
 assert(table.concat(calls, ",") == "tab:0x2,focus:0x2", "live reordered group membership")
+calls, group.members, group.current = {}, {target}, target
+focus()
+assert(table.concat(calls, ",") == "focus:0x2", "single-member group must focus without switching tabs")
 calls, target.group = {}, nil
 focus()
 assert(table.concat(calls, ",") == "focus:0x2", "ungrouped window")
@@ -159,7 +163,7 @@ assert(#calls == 0, "closed window must not focus a sibling")
 clients, target.mapped = {target}, false
 focus()
 assert(#calls == 0, "unmapped window must not be focused")
-print("PASS: window activation selects the exact group member before focus, resolves reordered groups, and skips closed/unmapped windows")
+print("PASS: window activation selects the exact group member before focus, resolves reordered/single-member groups, and skips closed/unmapped windows")
 LUA
 printf '%s\n' '{"allowTyped":false,"items":[{"title":"Same","result":"first"},{"title":"Same","result":{"path":"second"}}]}' > "$test_dir/options.json"
 bash "$picker" --json "$test_dir/options.json" > "$test_dir/result" 2> "$test_dir/client-error" & client_pid=$!

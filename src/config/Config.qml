@@ -351,7 +351,7 @@ Item {
     readonly property var hyprlandFocusWindowByAddress: (address) => `function()
         for _, window in ipairs(hl.get_windows()) do
             if window.address == "${address}" and window.mapped then
-                if window.group then
+                if window.group and #window.group.members > 1 then
                     for index, member in ipairs(window.group.members) do
                         if member.address == window.address then
                             hl.dispatch(hl.dsp.group.active({ index = index, window = window }))
