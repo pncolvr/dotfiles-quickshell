@@ -5,7 +5,7 @@ import QtTest as Test
 import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
-import "../../src/bar"
+import "../../src/ui/panels"
 import "../../src/services"
 import "../../src/theme"
 import "../../src/ui" as UI

@@ -26,7 +26,7 @@ cat > "$test_dir/shell.qml" <<QML
 import QtQuick
 import Quickshell
 import Quickshell.Wayland
-import "file://$project_root/src/bar"
+import "file://$project_root/src/ui/panels"
 Scope { PrivateTopPanelTooltip {
     id: host
     requestedVisible: true

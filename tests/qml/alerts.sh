@@ -72,7 +72,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Wayland
-import "src/bar"
+import "src/ui/panels"
 import "src/services"
 Scope {
     id: root

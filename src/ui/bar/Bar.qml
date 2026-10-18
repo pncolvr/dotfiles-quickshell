@@ -1,11 +1,11 @@
 import QtQuick
 import Quickshell
+import "../panels"
 import Quickshell.Wayland
-import "theme"
-import "ui" as UI
-import "bar"
-import "services"
-import "modules/system/notifications"
+import "../../theme"
+import ".." as UI
+import "../../services"
+import "../../modules/system/notifications"
 
 Scope {
   Variants {

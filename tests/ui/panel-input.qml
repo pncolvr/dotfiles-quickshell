@@ -3,7 +3,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Wayland
 import "../../src/config"
-import "../../src/bar"
+import "../../src/ui/panels"
 import "../../src/ui" as UI
 import "../../src/services"
 import "../../src/modules/system/timers"

@@ -6,7 +6,7 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Hyprland
 import Quickshell.Wayland
-import "../../src/bar"
+import "../../src/ui/panels"
 import "../../src/modules/media"
 import "../../src/modules/system/totp"
 import "../../src/modules/system"

@@ -98,7 +98,7 @@ fi
 cat > "$imports_entry" <<'QML'
 import QtQml
 import Quickshell
-import "src/bar"
+import "src/ui/bar"
 Scope {
     Component { RightModules {} }
     Timer {

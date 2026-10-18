@@ -3,7 +3,7 @@ import QtQuick
 import QtQuick.Controls as QC
 import QtTest as Test
 import Quickshell
-import "../../src/bar"
+import "../../src/ui/panels"
 import "../../src/services"
 import "../../src/config"
 

@@ -1,7 +1,7 @@
 import QtQuick
 import Quickshell.Wayland
-import "../theme"
-import "../services"
+import "../../theme"
+import "../../services"
 
 TopPanelTooltip {
     id: root

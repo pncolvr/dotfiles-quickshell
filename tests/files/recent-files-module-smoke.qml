@@ -2,7 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import Quickshell
-import "../../src/bar"
+import "../../src/ui/bar"
 import "../../src/modules/system"
 
 Scope {

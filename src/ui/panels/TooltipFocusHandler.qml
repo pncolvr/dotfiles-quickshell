@@ -1,7 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import "../ui" as UI
-import "../services"
+import ".." as UI
+import "../../services"
 
 UI.WindowFocusHandler {
     id: root

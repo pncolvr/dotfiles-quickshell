@@ -1,8 +1,8 @@
 import QtQuick
 import Quickshell
 import Quickshell.Wayland
-import "../../src"
-import "../../src/bar"
+import "../../src/ui/bar"
+import "../../src/ui/panels"
 import "../../src/modules/system/notifications"
 import "../../src/services"
 

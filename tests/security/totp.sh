@@ -163,8 +163,8 @@ import QtQuick
 import Quickshell
 import Quickshell.Wayland
 import "src/modules/system/totp"
-import "src"
-import "src/bar"
+import "src/ui/bar"
+import "src/ui/panels"
 import "src/services"
 Scope {
     id: root

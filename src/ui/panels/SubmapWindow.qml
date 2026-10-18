@@ -1,9 +1,9 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
-import "../theme"
-import "../ui" as UI
-import "../services"
+import "../../theme"
+import ".." as UI
+import "../../services"
 
 TopPanelTooltip {
     id: root

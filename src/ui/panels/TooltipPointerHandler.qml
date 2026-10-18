@@ -3,7 +3,7 @@ import QtQuick
 import QtQuick.Window
 import QtQuick.Controls as QC
 import QtQml.Models
-import "../services"
+import "../../services"
 
 Item {
     id: root

@@ -4,7 +4,7 @@ import QtQuick
 import QtQuick.Controls as QC
 import QtTest as Test
 import Quickshell
-import "../../src/bar"
+import "../../src/ui/bar"
 import "../../src/modules/system"
 import "../../src/services"
 import "../../src/services/time/timers"

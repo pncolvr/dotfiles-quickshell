@@ -1,5 +1,5 @@
 import Quickshell.Wayland
-import "../config"
+import "../../config"
 
 // Same presentation and lifetime; privacy remains fixed on the native window.
 TopPanelTooltip {

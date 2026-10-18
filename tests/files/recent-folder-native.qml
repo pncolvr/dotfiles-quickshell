@@ -4,7 +4,7 @@ import QtQuick.Dialogs as Dialogs
 import QtQuick.Controls as QC
 import QtTest as Test
 import Quickshell
-import "../../src/bar"
+import "../../src/ui/panels"
 import "../../src/modules/system/files"
 import "../../src/services"
 import "../../src/ui" as UI

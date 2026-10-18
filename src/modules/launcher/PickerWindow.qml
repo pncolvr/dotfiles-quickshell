@@ -3,7 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Wayland
-import "../../bar"
+import "../../ui/panels"
 import "../../theme"
 import "../../services"
 import "../../config"

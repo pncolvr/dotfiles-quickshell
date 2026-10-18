@@ -1,8 +1,8 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import "../ui" as UI
-import "../theme"
-import "../services"
+import ".." as UI
+import "../../theme"
+import "../../services"
 
 UI.PanelFocusScope {
     id: root

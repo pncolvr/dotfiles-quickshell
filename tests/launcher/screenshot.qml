@@ -4,7 +4,7 @@ import Quickshell
 import Quickshell.Io
 import "../../src/services"
 import "../../src/ui" as UI
-import "../../src/bar"
+import "../../src/ui/panels"
 
 Scope {
     id: root

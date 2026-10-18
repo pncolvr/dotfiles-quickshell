@@ -2,7 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtTest as Test
 import Quickshell
-import "../../src/bar"
+import "../../src/ui/panels"
 import "../../src/ui" as UI
 import "../../src/services"
 import "../../src/config"

@@ -7,14 +7,17 @@
 | [`src/config/Config.qml`](../src/config/Config.qml) | Commands, intervals, defaults, namespaces and feature settings |
 | [`config/Theme.qml`](../config/Theme.qml) → [`src/theme/Theme.qml`](../src/theme/Theme.qml) | Fonts, glyphs, colors, dimensions and spacing |
 | [`config/ThemePalette.qml`](../config/ThemePalette.qml) → [`src/theme/ThemePalette.qml`](../src/theme/ThemePalette.qml) | Dark/light palette colors and contrast policy |
-| [`src/bar/LeftModules.qml`](../src/bar/LeftModules.qml) | Workspaces and windows |
-| [`src/bar/CenterModules.qml`](../src/bar/CenterModules.qml) | Clock, package updates and recent files |
-| [`src/bar/RightModules.qml`](../src/bar/RightModules.qml) | System, Twitch, status, TOTP, batteries, notifications and tray |
+| [`src/ui/bar/LeftModules.qml`](../src/ui/bar/LeftModules.qml) | Workspaces and windows |
+| [`src/ui/bar/CenterModules.qml`](../src/ui/bar/CenterModules.qml) | Clock, package updates and recent files |
+| [`src/ui/bar/RightModules.qml`](../src/ui/bar/RightModules.qml) | System, Twitch, status, TOTP, batteries, notifications and tray |
 | [`shell.qml`](../shell.qml) | Entry point, startup environment and dedicated windows |
 
 The root `config/` link exposes `Config.qml` and relative links to `Theme.qml`
 and `ThemePalette.qml` under `src/theme/`. Editing either path updates the same file; both QML
 modules export the same singleton. Reusable UI components remain under `src/ui`.
+Bar composition, including `Bar.qml`, lives in `src/ui/bar/`. Shared top-panel
+surfaces, tooltip windows and handlers, alerts and the submap window live in
+`src/ui/panels/`.
 
 `Config.qml` groups settings by component: shared UI/privacy and storage;
 launcher pickers, projects, directories and wallpapers; screenshots/recording;
@@ -478,7 +481,7 @@ Config changes online; offline exports read the current file on every invocation
 Twitch and TOTP use shared `UI.ActionButton` and `UI.InputField` controls. Shared
 action glyphs such as add, cancel, delete, and check are defined once in `Theme.qml`.
 
-TOTP and the notification manager reuse `src/bar/PrivateTooltipWindow.qml` for
+TOTP and the notification manager reuse `src/ui/panels/PrivateTooltipWindow.qml` for
 their monitor selection, positioning, keyboard focus, and private layer namespace.
 `UI.WindowFocusHandler` shares activation, native-child handoff and outside-click
 policy with launchers and Vault; `UI.PanelFocusScope` supplies the outer configured-cancel

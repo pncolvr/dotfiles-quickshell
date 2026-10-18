@@ -28,8 +28,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Services.Pipewire
 import "src/modules/system/audio"
-import "src"
-import "src/bar"
+import "src/ui/bar"
 import "src/services"
 import "src/theme"
 Scope {

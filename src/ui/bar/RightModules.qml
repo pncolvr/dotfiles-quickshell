@@ -1,9 +1,9 @@
 import QtQuick
-import "../modules/system"
-import "../modules/media"
-import "../modules/status"
-import "../modules/hyprland"
-import "../ui"
+import "../../modules/system"
+import "../../modules/media"
+import "../../modules/status"
+import "../../modules/hyprland"
+import ".."
 
 Row {
     id: root

@@ -1,8 +1,8 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
-import "../theme"
-import "../ui" as UI
+import "../../theme"
+import ".." as UI
 // qmllint disable uncreatable-type
 PanelWindow {
     id: root

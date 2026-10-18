@@ -107,9 +107,9 @@ if [[ ${1:-} == --native-imports ]]; then
 import QtQuick
 import Quickshell
 import "file://$project_root/src/modules/system/batteries"
-import "file://$project_root/src/bar"
+import "file://$project_root/src/ui/panels"
 import "file://$project_root/src/services"
-import "file://$project_root/src" as Project
+import "file://$project_root/src/ui/bar" as Project
 Scope {
     id: root
     property int step: 0

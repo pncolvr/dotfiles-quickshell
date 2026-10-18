@@ -1,5 +1,5 @@
 import QtQuick
-import "../../../bar"
+import "../../../ui/panels"
 import "../../../theme"
 import "../../../services"
 

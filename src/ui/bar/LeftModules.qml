@@ -1,6 +1,6 @@
 import QtQuick
-import "../modules/hyprland"
-import "../ui"
+import "../../modules/hyprland"
+import ".."
 
 Row {
     height: parent.height

@@ -4,7 +4,7 @@
 import Quickshell
 import QtQml
 import Quickshell.Io
-import "src"
+import "src/ui/bar"
 import "src/modules/system/notifications"
 import "src/modules/system/totp"
 import "src/modules/launcher"

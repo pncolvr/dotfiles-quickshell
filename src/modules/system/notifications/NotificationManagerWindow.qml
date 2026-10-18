@@ -3,7 +3,7 @@ pragma ComponentBehavior: Bound
 import "../../../i18n"
 import QtQuick
 import QtQuick.Controls as QC
-import "../../../bar"
+import "../../../ui/panels"
 import "../../../theme"
 import "../../../ui" as UI
 import "../../../config"

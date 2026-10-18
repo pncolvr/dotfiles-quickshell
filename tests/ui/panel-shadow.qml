@@ -3,7 +3,7 @@ import QtQuick
 import Quickshell
 import QtTest as Test
 import Quickshell.Wayland
-import "../../src/bar"
+import "../../src/ui/panels"
 import "../../src/theme"
 import "../../src/ui" as UI
 Scope {

@@ -1,7 +1,7 @@
 import QtQuick
-import "../modules/clock"
-import "../modules/system"
-import "../modules/updates"
+import "../../modules/clock"
+import "../../modules/system"
+import "../../modules/updates"
 Row {
     id: root
     required property var window

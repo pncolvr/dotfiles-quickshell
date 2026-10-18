@@ -2,7 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Wayland
-import "../../bar"
+import "../../ui/panels"
 import "../../services"
 import "../../ui" as UI
 import "../../theme"

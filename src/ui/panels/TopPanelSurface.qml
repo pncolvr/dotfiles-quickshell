@@ -1,8 +1,8 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Effects
-import "../theme"
-import "../ui" as UI
+import "../../theme"
+import ".." as UI
 
 Item {
     id: root
