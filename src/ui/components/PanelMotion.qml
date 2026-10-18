@@ -10,6 +10,7 @@ Item {
     property bool motionEnabled: true
     readonly property bool motionAllowed: motionEnabled && MotionPolicy.enabled
     property bool continuousGeometry: false
+    property bool centeredResize: false
     property var contentKey: null
     property real contentOpacity: 1
     property real targetX: 0
@@ -58,12 +59,14 @@ Item {
         layoutWidth = Math.max(0,targetWidth)
         layoutHeight = Math.max(0,targetHeight)
         if (!motionAllowed || preparing || continuousGeometry || progress === 0) { snapGeometry(); return }
-        // Module positions are anchors, not travel destinations. Only size eases.
-        displayedX = targetX
+        // Centered pickers resize both edges together. Other module anchors move
+        // immediately, preserving their dropdown placement behavior.
+        if (!centeredResize || (displayedWidth === layoutWidth && displayedHeight === layoutHeight)) displayedX = targetX
         if (displayedWidth === layoutWidth && displayedHeight === layoutHeight) return
         resize.stop()
         reservedHeight = Math.max(displayedHeight, layoutHeight, reserveHeight)
         fadeContent()
+        moveX.to = targetX
         growWidth.to = layoutWidth
         growHeight.to = layoutHeight
         resize.start()
@@ -161,6 +164,7 @@ Item {
     ParallelAnimation {
         id: resize
         objectName: "panelResize"
+        MotionAnimation { id: moveX; target: root; property: "displayedX"; animationDuration: Theme.panelResizeDuration; easing.type: Easing.OutCubic }
         MotionAnimation { id: growWidth; target: root; property: "displayedWidth"; animationDuration: Theme.panelResizeDuration; easing.type: Easing.OutCubic }
         MotionAnimation { id: growHeight; target: root; property: "displayedHeight"; animationDuration: Theme.panelResizeDuration; easing.type: Easing.OutCubic }
         onStopped: root.settleReservation()

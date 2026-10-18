@@ -23,6 +23,7 @@ PrivateTopPanelTooltip {
     contentWidth: behavior.boundedContentWidth
     contentHeight: behavior.boundedContentHeight
     continuousGeometry: panel?.transitioning ?? false
+    centeredResize: true
     reservedContentHeight: behavior.reservedHostHeight - shadowBottomPadding
     contentX: behavior.centeredContentX
     backgroundOpacity: Theme.pickerBackgroundOpacity

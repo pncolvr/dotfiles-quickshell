@@ -12,6 +12,7 @@ Item {
     property real contentHeight: 0
     property bool requestedVisible: false
     property bool continuousGeometry: false
+    property alias centeredResize: presentation.centeredResize
     property alias contentKey: presentation.contentKey
     property real reservedContentHeight: 0
     property var requestedScreen: null

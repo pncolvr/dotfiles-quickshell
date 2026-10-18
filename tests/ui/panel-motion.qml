@@ -14,6 +14,11 @@ Scope {
     property bool failed: false
     property var fakeAudio: AudioService
     property var fakeConfig: Config
+    property bool trackingCenteredResize: false
+    property int resizeDirection: 1
+    property int resizeSamples: 0
+    property real previousWidth: 0
+    property real previousHeight: 0
     function check(ok, message) { if (!ok) { failed = true; console.error("MOTION FAIL:", message) } }
     QtObject { id: tweenTarget; property real value: 0 }
     UI.MotionAnimation { id: tween; target: tweenTarget; property: "value"; from: 0; to: 100; animationDuration: 200 }
@@ -26,6 +31,36 @@ Scope {
     QtObject { id: loopTarget; property real value: 0 }
     UI.MotionAnimation { id: looping; target: loopTarget; property: "value"; from: 0; to: 100; animationDuration: 200; loops: Animation.Infinite }
     Test.TestCase { id: events; when: false }
+    UI.PanelMotion {
+        id: centered
+        centeredResize: true
+        targetX: (1000 - targetWidth) / 2
+        targetWidth: Theme.pickerWidth
+        targetHeight: Theme.pickerHeight
+    }
+    function trackResize(direction) {
+        resizeDirection = direction
+        previousWidth = centered.displayedWidth
+        previousHeight = centered.displayedHeight
+        resizeSamples = 0
+        trackingCenteredResize = true
+    }
+    FrameAnimation {
+        running: root.trackingCenteredResize
+        onTriggered: {
+            root.resizeSamples++
+            root.check(Math.abs(centered.displayedX + centered.displayedWidth / 2 - 500) < 0.01,
+                "centered resizing keeps both edges symmetric on every frame")
+            root.check(centered.displayedWidth >= Theme.pickerWidth && centered.displayedWidth <= Theme.manageWidth
+                && centered.displayedHeight >= Theme.pickerHeight && centered.displayedHeight <= Theme.manageHeight,
+                "Manage expansion/contraction never exceeds either endpoint")
+            root.check((centered.displayedWidth - root.previousWidth) * root.resizeDirection >= -0.01
+                && (centered.displayedHeight - root.previousHeight) * root.resizeDirection >= -0.01,
+                "dimensions move monotonically toward the requested view")
+            root.previousWidth = centered.displayedWidth
+            root.previousHeight = centered.displayedHeight
+        }
+    }
     FloatingWindow {
         id: host
         readonly property var surfaceComponent: surface
@@ -83,6 +118,39 @@ Scope {
             try {
                 root.check(UI.MotionPolicy.allowsMotion(false,false) && UI.MotionPolicy.allowsMotion(true,true)
                     && !UI.MotionPolicy.allowsMotion(false,true), "sharing gate honors config and active sharing")
+                centered.requested = true
+                events.tryCompare(centered,"transitioning",false,500)
+                root.trackResize(1)
+                centered.targetWidth = Theme.manageWidth
+                centered.targetHeight = Theme.manageHeight
+                events.wait(35)
+                root.check(centered.displayedWidth > Theme.pickerWidth && centered.displayedWidth < Theme.manageWidth,
+                    "list to Manage interpolates its width")
+                events.tryCompare(centered,"transitioning",false,500)
+                root.check(root.resizeSamples > 0 && centered.displayedWidth === Theme.manageWidth
+                    && centered.displayedHeight === Theme.manageHeight,"Manage expansion reaches its exact dimensions")
+                root.trackResize(-1)
+                centered.targetWidth = Theme.pickerWidth
+                centered.targetHeight = Theme.pickerHeight
+                events.wait(35)
+                root.check(centered.displayedWidth > Theme.pickerWidth && centered.displayedWidth < Theme.manageWidth,
+                    "Manage to list interpolates its width")
+                events.tryCompare(centered,"transitioning",false,500)
+                root.check(root.resizeSamples > 0 && centered.displayedWidth === Theme.pickerWidth
+                    && centered.displayedHeight === Theme.pickerHeight,"list contraction reaches its exact dimensions")
+                root.trackResize(1)
+                centered.targetWidth = Theme.manageWidth
+                centered.targetHeight = Theme.manageHeight
+                events.wait(35)
+                root.trackResize(-1)
+                centered.targetWidth = Theme.pickerWidth
+                centered.targetHeight = Theme.pickerHeight
+                events.wait(1)
+                events.tryCompare(centered,"transitioning",false,500)
+                root.check(centered.displayedWidth === Theme.pickerWidth && centered.displayedHeight === Theme.pickerHeight,
+                    "reversing a Manage resize settles on the latest view")
+                root.trackingCenteredResize = false
+                centered.requested = false
                 const shadowSource = events.findChild(surface, "topPanelShadowSource") as Item
                 const shadow = events.findChild(surface, "topPanelShadow") as Item
                 const shadowTop = shadow.mapToItem(surface, 0, 0).y

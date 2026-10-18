@@ -17,6 +17,7 @@ PanelWindow {
     property alias contentHeight: surface.contentHeight
     property alias requestedVisible: surface.requestedVisible
     property alias continuousGeometry: surface.continuousGeometry
+    property alias centeredResize: surface.centeredResize
     property alias reservedContentHeight: surface.reservedContentHeight
     property alias requestedScreen: surface.requestedScreen
     readonly property bool transitioning: surface.motion.transitioning
