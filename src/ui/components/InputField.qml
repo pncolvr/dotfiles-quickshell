@@ -12,7 +12,7 @@ QC.TextField {
     implicitHeight: Theme.controlHeight
     leftPadding: Theme.controlFieldPadding
     rightPadding: Theme.controlFieldPadding
-    color: Theme.text
+    color: root.readOnly ? Theme.inactive : Theme.text
     placeholderTextColor: Theme.inactive
     selectionColor: Theme.accent
     selectedTextColor: Theme.selectionText
@@ -23,9 +23,9 @@ QC.TextField {
     font.hintingPreference: Theme.fontHintingPreference
     selectByMouse: true
     background: Rectangle {
-        color: Theme.alternateBackground
+        color: root.readOnly ? Theme.background : Theme.alternateBackground
         radius: Theme.iconButtonRadius
         border.width: 1
-        border.color: root.activeFocus ? Theme.accent : Theme.empty
+        border.color: root.activeFocus ? Theme.accent : root.readOnly ? Theme.selectionBorder : Theme.empty
     }
 }

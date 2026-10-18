@@ -5,6 +5,7 @@ import ".." as UI
 Column {
     id: root
     property string label: ""
+    property string hint: ""
     property alias text: input.text
     property alias placeholderText: input.placeholderText
     property alias inputObjectName: input.objectName
@@ -13,7 +14,11 @@ Column {
     signal accepted()
     spacing: Theme.controlSpacing
     function focusInput() { input.forceActiveFocus(); input.selectAll() }
-    UI.ColumnText { text: root.label; color: Theme.inactive }
+    UI.ColumnText {
+        text: root.label
+        color: Theme.inactive
+        UI.HoverTooltip { text: root.hint; textFormat: Text.PlainText }
+    }
     UI.InputField {
         id: input
         width: parent.width

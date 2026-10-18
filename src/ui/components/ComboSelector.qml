@@ -16,6 +16,9 @@ Item {
     property int hintDelay: 500
     property bool readOnly: false
     property bool compact: false
+    property bool searchable: false
+    readonly property var filteredOptions: !searchable || !search.query ? options
+        : options.filter(option => (option.description + ' ' + option.name).toLowerCase().includes(search.query))
     property real controlHeight: Theme.controlHeight
     property real contentPadding: Theme.controlFieldPadding
     property real optionRowHeight: compact ? controlHeight + Theme.controlSpacing : controlHeight * 2
@@ -25,6 +28,7 @@ Item {
     property string toggleObjectName: "selectorToggle"
     property string choicesObjectName: "selectorChoices"
     property alias choicesView: choices
+    property alias searchInput: search
     property alias popup: selectionPopup
     readonly property string selectedDescription: options.find(option => option.name === selectedName)?.description ?? placeholder
     readonly property var nativeWindow: root.Window.window
@@ -59,7 +63,7 @@ Item {
             const bounds = hostBounds(item)
             if (bounds) return bounds
         }
-        return selectionPopup.parent
+        return QC.Overlay.overlay
     }
     function placePopup() {
         if (!selectionPopup.parent) return
@@ -73,7 +77,9 @@ Item {
         const bottom = corner.y + bounds.height - margin
         const below = Math.max(0, bottom - control.y - root.height - root.spacing)
         const above = Math.max(0, control.y - root.spacing - top)
-        const desired = Math.min(root.options.length, root.maxVisibleRows) * root.optionRowHeight + selectionPopup.padding * 2
+        const searchHeight = root.searchable ? search.implicitHeight + root.spacing : 0
+        const desired = Math.max(1, Math.min(root.filteredOptions.length, root.maxVisibleRows)) * root.optionRowHeight
+            + searchHeight + selectionPopup.padding * 2
         const opensAbove = below < desired && above > below
         selectionPopup.width = Math.max(0, Math.min(root.width, right - left))
         selectionPopup.height = Math.min(desired, Math.max(0, opensAbove ? above : below))
@@ -148,7 +154,10 @@ Item {
     }
     QC.Popup {
         id: selectionPopup
-        parent: QC.Overlay.overlay
+        // Parent the popup to its trigger while Popup.Item still renders it in
+        // the window overlay. An outside press on the trigger must reach its
+        // toggle without first auto-closing and then reopening the popup.
+        parent: selector
         enabled: root.expanded
         popupType: QC.Popup.Item
         padding: Theme.selectionPopupPadding
@@ -156,8 +165,9 @@ Item {
         dim: false
         focus: true
         margins: 0
-        closePolicy: QC.Popup.CloseOnPressOutside
-        onAboutToShow: { root.placePopup(); choices.revealSelected() }
+        closePolicy: QC.Popup.CloseOnPressOutsideParent
+        onAboutToShow: { search.clear(); root.placePopup(); choices.revealSelected() }
+        onOpened: if (root.searchable) search.forceActiveFocus(Qt.PopupFocusReason)
         onClosed: root.expanded = false
         enter: Transition {
             UI.MotionAnimation { property: "opacity"; from: 0; to: 1; animationDuration: Theme.selectionAnimationDuration }
@@ -172,17 +182,40 @@ Item {
             border.width: 1
             border.color: Theme.selectionBorder
         }
-        contentItem: UI.SelectionList {
-            id: choices
-            cancelHandler: () => { root.expanded = false }
-            focus: true
-            objectName: root.choicesObjectName
-            options: root.options
-            selectedName: root.selectedName
-            rowHeight: root.optionRowHeight
-            contentPadding: root.contentPadding
-            wrapDescriptions: !root.compact
-            onSelected: name => { root.expanded = false; if (name !== root.selectedName) root.selected(name) }
+        contentItem: Item {
+            UI.SearchField {
+                id: search
+                width: parent.width
+                visible: root.searchable
+                placeholderText: Translations.text("common.actions.search")
+                resetWithTooltip: false
+                handleEscape: false
+                property bool blocksPanelShortcuts: true
+                onQueryChanged: if (root.expanded) Qt.callLater(() => { root.placePopup(); choices.revealSelected() })
+                onAccepted: choices.activateCurrent()
+                Keys.onPressed: event => {
+                    if (UI.Keybinds.handleCancel(event, () => { root.expanded = false })) return
+                    if (event.key === Qt.Key_Down || event.key === Qt.Key_Up) {
+                        choices.forceActiveFocus(Qt.TabFocusReason)
+                        choices.navigate(event.key === Qt.Key_Down ? 1 : -1, true)
+                        event.accepted = true
+                    }
+                }
+            }
+            UI.SelectionList {
+                id: choices
+                anchors.fill: parent
+                anchors.topMargin: root.searchable ? search.height + root.spacing : 0
+                cancelHandler: () => { root.expanded = false }
+                focus: true
+                objectName: root.choicesObjectName
+                options: root.filteredOptions
+                selectedName: root.selectedName
+                rowHeight: root.optionRowHeight
+                contentPadding: root.contentPadding
+                wrapDescriptions: !root.compact
+                onSelected: name => { root.expanded = false; if (name !== root.selectedName) root.selected(name) }
+            }
         }
     }
 }

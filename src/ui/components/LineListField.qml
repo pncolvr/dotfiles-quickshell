@@ -8,8 +8,10 @@ import ".." as UI
 Column {
     id: field
     required property string label
+    property string hint: ''
     property alias text: input.text
     property alias inputObjectName: input.objectName
+    property alias readOnly: input.readOnly
     property alias folderPicker: dialog
     property alias headerActions: headerActions.data
     property bool chooseFolders: false
@@ -42,11 +44,13 @@ Column {
             text: field.label
             color: Theme.inactive
             elide: Text.ElideRight
+            UI.HoverTooltip { text: field.hint; textFormat: Text.PlainText }
         }
         UI.ActionButton {
             id: browse
             objectName: field.browseObjectName
             visible: field.chooseFolders
+            enabled: !field.readOnly
             glyph: Theme.folderOpenIcon
             hint: field.browseHint
             onClicked: dialog.open()

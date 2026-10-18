@@ -21,6 +21,7 @@ Item {
     property int textFormat: Q.Text.AutoText
     property int delay: 500
     property int cursorShape: Qt.ArrowCursor
+    property real maximumWidth: 0
     // Controls already handle pointer input; use their hover state without covering clicks.
     property var hoverTarget: null
 
@@ -35,6 +36,7 @@ Item {
     }
 
     QC.ToolTip {
+        width: root.maximumWidth > 0 ? Math.min(implicitWidth,root.maximumWidth) : implicitWidth
         enabled: root.enabled
         visible: root.enabled && (root.hoverTarget ? root.hoverTarget.hovered : mouseArea.containsMouse) && root.text.length > 0
         text: root.text
@@ -47,6 +49,7 @@ Item {
         contentItem: Text {
             text: root.text
             textFormat: root.textFormat
+            wrapMode: root.maximumWidth > 0 ? Text.WrapAnywhere : Text.NoWrap
             color: Theme.accent
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSize

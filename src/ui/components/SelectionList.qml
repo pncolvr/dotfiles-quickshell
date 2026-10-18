@@ -39,7 +39,7 @@ ListView {
         const preserveViewport = modelOptions.length > 0
         const generation = ++viewportGeneration
         modelOptions = next
-        if (!preserveViewport) { Qt.callLater(revealSelected); return }
+        if (!preserveViewport) { reveal.restart(); return }
         currentIndex = next.findIndex(option => option.name === currentName && option.available)
         if (currentIndex < 0) currentIndex = next.findIndex(option => option.name === selectedName && option.available)
         Qt.callLater(() => {
@@ -63,9 +63,12 @@ ListView {
         const option = options[currentIndex]
         if (option && option.available !== false) selected(option.name)
     }
-    onSelectedNameChanged: Qt.callLater(revealSelected)
+    // Keep deferred selection work owned by this view so closing its form
+    // cancels it instead of invoking methods on a destroyed QML context.
+    Timer { id: reveal; interval: 0; onTriggered: root.revealSelected() }
+    onSelectedNameChanged: reveal.restart()
     onOptionsChanged: synchronizeOptions()
-    Component.onCompleted: { synchronizeOptions(); Qt.callLater(revealSelected) }
+    Component.onCompleted: { synchronizeOptions(); reveal.restart() }
     Keys.onPressed: event => {
         if (root.cancelHandler && UI.Keybinds.handleCancel(event, root.cancelHandler)) return
         if (event.key === Qt.Key_Down) navigate(1)
