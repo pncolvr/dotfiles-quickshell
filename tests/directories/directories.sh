@@ -46,5 +46,5 @@ for phase in setup restart typed; do
     [[ $output == *"PASS: directories $phase"* && $output != *'DIRECTORY FAIL:'* && $output != *'TypeError:'* && $output != *'ReferenceError:'* && $output != *'Binding loop detected'* ]]
 done
 jq -se 'any(.[]; . == ["trash:///"])' "$test_dir/actions" >/dev/null
-[[ $(sqlite3 "$test_dir/config/data/quickshell.db" 'PRAGMA user_version; PRAGMA integrity_check;') == $'16\nok' ]]
+[[ $(sqlite3 "$test_dir/config/data/quickshell.db" 'PRAGMA user_version; PRAGMA integrity_check;') == $'17\nok' ]]
 printf 'PASS: native directories CRUD, virtual locations, status filtering, focused shortcuts, typed paths and restart persistence\n'

@@ -14,7 +14,7 @@ Singleton {
 
     readonly property string name: Config.databaseName
     readonly property string path: Config.databasePath
-    readonly property int schemaVersion: 16
+    readonly property int schemaVersion: 17
     readonly property bool ready: state.ready
     readonly property string error: state.error
     property bool maintenance: false

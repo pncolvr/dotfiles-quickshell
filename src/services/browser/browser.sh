@@ -9,8 +9,13 @@ case $mode in
         [[ ${1:-} == --fallback && $# -ge 4 && ${3:-} == -- ]] || exit 2
         fallback=$2
         shift 3
-        jq -e 'type=="array" and length>0 and all(.[];type=="string" and (contains("\u0000")|not)) and (.[0]|length>0 and (startswith("-")|not))' <<< "$fallback" >/dev/null || exit 2
-        mapfile -d '' -t fallback_argv < <(jq -j '.[]|.,"\u0000"' <<< "$fallback")
+        # Validate and decode in one process; the marker also catches jq failure.
+        mapfile -d '' -t fallback_argv < <(jq -j '
+            if type=="array" and length>0 and all(.[];type=="string" and (contains("\u0000")|not))
+                and (.[0]|length>0 and (startswith("-")|not))
+            then ("ok", .[]) | ., "\u0000" else error("Invalid fallback argv") end' <<< "$fallback")
+        [[ ${#fallback_argv[@]} -gt 1 && ${fallback_argv[0]} == ok ]] || exit 2
+        fallback_argv=("${fallback_argv[@]:1}")
         case ${fallback_argv[0]##*/} in xdg-open|quickshell-browser|default-browser.sh) printf 'Choose a concrete fallback browser.\n' >&2; exit 2;; esac
         repo=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../../.." && pwd)
         for url in "$@"; do
@@ -61,39 +66,61 @@ case $mode in
         ;;
     dispatch)
         IFS= read -r request
-        jq -e '.argv|type=="array" and length>0 and all(.[];type=="string" and (contains("\u0000")|not))' <<< "$request" >/dev/null
-        missing=''
-        executable=$(jq -er '.argv[0]|select(length>0 and (startswith("-")|not))' <<< "$request")
-        if [[ $(jq -r '.application==true' <<< "$request") == true ]] \
-            && { [[ $(jq -r '.applicationAvailable==false' <<< "$request") == true ]] || ! command -v "$executable" >/dev/null; }; then
-            missing=$(jq -r '.applicationName // .argv[0]' <<< "$request")
-            request=$(jq -c '.argv=.missingArgv | .browser=.missingBrowser | .workspace=0 | .onlyWhenRunning="" | .ruleNames=(.missingRuleNames // [])' <<< "$request")
-            jq -e '.argv|type=="array" and length>0 and all(.[];type=="string" and (contains("\u0000")|not))' <<< "$request" >/dev/null
+        # Extract routing checks together; only the selected argv is launched.
+        mapfile -d '' -t fields < <(jq -j '
+            def word: type=="string" and (contains("\u0000")|not);
+            if (.argv|type=="array" and length>0 and all(.[];word)
+                and (.[0]|length>0 and (startswith("-")|not)))
+                and ((.onlyWhenRunning // "")|word)
+                and ((.applicationName // .argv[0])|word)
+            then ["ok", .argv[0], (.application==true|tostring),
+                (.applicationAvailable==false|tostring), (.applicationName // .argv[0]), (.onlyWhenRunning // "")]
+                | .[] | ., "\u0000"
+            else error("Invalid dispatch request") end' <<< "$request")
+        [[ ${#fields[@]} == 6 && ${fields[0]} == ok ]] || exit 2
+        executable=${fields[1]} missing='' choice=primary process=${fields[5]}
+        if [[ ${fields[2]} == true ]] \
+            && { [[ ${fields[3]} == true ]] || ! command -v "$executable" >/dev/null; }; then
+            missing=${fields[4]} choice=missing process=''
         fi
-        process=$(jq -r '.onlyWhenRunning // ""' <<< "$request")
         if [[ -n $process ]]; then
             [[ $process =~ ^[A-Za-z0-9_.+-]+$ ]] || exit 2
             process_pattern=${process//./\\.}; process_pattern=${process_pattern//+/\\+}
-            if ! pgrep -u "$(id -u)" -x -- "$process_pattern" >/dev/null; then
-                request=$(jq -c '.argv=.fallbackArgv | .browser=.fallbackBrowser | .workspace=(.fallbackWorkspace // 0) | .ruleNames=(.fallbackRuleNames // [])' <<< "$request")
-            fi
+            if ! pgrep -u "$UID" -x -- "$process_pattern" >/dev/null; then choice=fallback; fi
         fi
-        executable=$(jq -er '.argv[0]|select(length>0 and (startswith("-")|not))' <<< "$request")
-        command -v "$executable" >/dev/null || exit 1
-        jq -nc --arg browser "$(jq -r '.browser // ""' <<< "$request")" --arg missing "$missing" \
-            --argjson rules "$(jq -c '.ruleNames // []' <<< "$request")" '{browser:$browser,missingApplication:$missing,ruleNames:$rules}'
-        (printf '%s\n' "$request" | nohup bash "${BASH_SOURCE[0]}" launch) >/dev/null 2>&1 &
+        # Prepare the selected request and response in one pass, preserving argv.
+        mapfile -d '' -t selected < <(jq -j --arg choice "$choice" --arg missing "$missing" '
+            if $choice=="missing" then
+                .argv=.missingArgv | .browser=.missingBrowser | .workspace=0 | .onlyWhenRunning="" | .ruleNames=(.missingRuleNames // [])
+            elif $choice=="fallback" then
+                .argv=.fallbackArgv | .browser=.fallbackBrowser | .workspace=(.fallbackWorkspace // 0) | .ruleNames=(.fallbackRuleNames // [])
+            else . end
+            | if (.argv|type=="array" and length>0 and all(.[];type=="string" and (contains("\u0000")|not))
+                and (.[0]|length>0 and (startswith("-")|not))) then
+                ["ok", .argv[0], tojson,
+                    ({browser:(.browser // ""),missingApplication:$missing,ruleNames:(.ruleNames // [])}|tojson)]
+                | .[] | ., "\u0000"
+            else error("Invalid selected argv") end' <<< "$request")
+        [[ ${#selected[@]} == 4 && ${selected[0]} == ok ]] || exit 2
+        command -v "${selected[1]}" >/dev/null || exit 1
+        printf '%s\n' "${selected[3]}"
+        (printf '%s\n' "${selected[2]}" | nohup bash "${BASH_SOURCE[0]}" launch) >/dev/null 2>&1 &
         ;;
     launch)
         IFS= read -r request
-        jq -e '.argv|type=="array" and length>0 and all(.[];type=="string" and (contains("\u0000")|not))' <<< "$request" >/dev/null
-        mapfile -d '' -t argv < <(jq -j '.argv[]|.,"\u0000"' <<< "$request")
-        workspace=$(jq -r '.workspace // 0' <<< "$request")
-        if [[ $(jq -r '.focusWorkspace==true' <<< "$request") == true && $workspace =~ ^[1-9][0-9]{0,3}$ \
+        mapfile -d '' -t fields < <(jq -j '
+            if (.argv|type=="array" and length>0 and all(.[];type=="string" and (contains("\u0000")|not))
+                and (.[0]|length>0 and (startswith("-")|not))) then
+                ["ok", ((.workspace // 0)|tostring), (.focusWorkspace==true|tostring)] + .argv
+                | .[] | ., "\u0000"
+            else error("Invalid launch argv") end' <<< "$request")
+        [[ ${#fields[@]} -ge 4 && ${fields[0]} == ok ]] || exit 2
+        workspace=${fields[1]}
+        if [[ ${fields[2]} == true && $workspace =~ ^[1-9][0-9]{0,3}$ \
             && $(cat "${XDG_RUNTIME_DIR:-/tmp}/hypr-autofocus" 2>/dev/null || true) != 0 ]]; then
             hyprctl dispatch "hl.dsp.focus({ workspace = $workspace})" >/dev/null 2>&1 || true
         fi
-        exec "${argv[@]}"
+        exec "${fields[@]:3}"
         ;;
     *) exit 2 ;;
 esac

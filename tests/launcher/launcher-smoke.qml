@@ -55,7 +55,7 @@ Scope {
             return
         }
         const legacy = ClipboardRepository.entries()[0]
-        check(DbService.schemaVersion === 16 && legacy?.text === "legacy" && legacy.pinned === 0, "v5 migration preserves history and defaults existing entries to unpinned")
+        check(DbService.schemaVersion === 17 && legacy?.text === "legacy" && legacy.pinned === 0, "v5 migration preserves history and defaults existing entries to unpinned")
         check(DbService.read("SELECT name FROM store.sqlite_master WHERE type = 'index' AND name = 'clipboard_updated_at'")?.length === 1,
             "migration creates the clipboard ordering index")
         ClipboardRepository.clear()

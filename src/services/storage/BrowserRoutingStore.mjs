@@ -4,15 +4,18 @@ export function migrate(tx) {
     const columns=tx.executeSql('PRAGMA store.table_info(browser_history)').rows
     let hasRuleName=false
     let hasFinalUrl=false
+    let hasResolveMs=false
     for(let index=0;index<columns.length;index++) {
         if(columns.item(index).name==='rule_name') hasRuleName=true
         if(columns.item(index).name==='final_url') hasFinalUrl=true
+        if(columns.item(index).name==='resolve_ms') hasResolveMs=true
     }
     if(!hasRuleName) tx.executeSql("ALTER TABLE store.browser_history ADD COLUMN rule_name TEXT NOT NULL DEFAULT ''")
     if(!hasFinalUrl) {
         tx.executeSql("ALTER TABLE store.browser_history ADD COLUMN final_url TEXT NOT NULL DEFAULT ''")
         tx.executeSql('UPDATE store.browser_history SET final_url=url')
     }
+    if(!hasResolveMs) tx.executeSql('ALTER TABLE store.browser_history ADD COLUMN resolve_ms INTEGER')
     tx.executeSql('CREATE INDEX IF NOT EXISTS store.browser_history_time ON browser_history(handled_at DESC)')
     const present=tx.executeSql("SELECT name FROM store.sqlite_master WHERE name='browser_history_fts'").rows.length>0
     tx.executeSql("CREATE VIRTUAL TABLE IF NOT EXISTS store.browser_history_fts USING fts5(url,browser,content='browser_history',content_rowid='rowid',tokenize='unicode61',prefix='2 3')")

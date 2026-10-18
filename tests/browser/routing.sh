@@ -20,6 +20,10 @@ chmod +x "$fixture/bin/twitch"
 cat > "$fixture/bin/curl" <<'MOCK'
 #!/usr/bin/env bash
 case ${@: -1} in
+    https://blocked.test/link)
+        printf started > "$BROWSER_TEST_DIR/redirect-started"
+        while [[ ! -e $BROWSER_TEST_DIR/redirect-release ]]; do sleep 0.01; done
+        printf 'https://resolved.test/unblocked';;
     */cycle-a) printf 'https://jump.test/cycle-b';;
     */cycle-b) printf 'https://jump.test/cycle-a';;
     *) printf 'https://wrapped.test/?destination=https%%3A%%2F%%2Fsub.work.test%%2Fredirected';;
@@ -49,7 +53,10 @@ Categories=Utility;
 DESKTOP
 : > "$fixture/actions"
 sed 's@"../../src@"src@g' "$repo/tests/browser/routing.qml" > "$fixture/shell.qml"
-for phase in setup restart; do
+for phase in setup restart migration; do
+if [[ $phase == migration ]]; then
+    sqlite3 "$fixture/data/quickshell.db" 'ALTER TABLE browser_history DROP COLUMN resolve_ms; PRAGMA user_version=16;'
+fi
 env -u WAYLAND_DISPLAY -u HYPRLAND_INSTANCE_SIGNATURE -u DISPLAY \
     BROWSER_TEST_PHASE="$phase" \
     PATH="$fixture/bin:$PATH" BROWSER_TEST_DIR="$fixture" HOME="$fixture/home" XDG_RUNTIME_DIR="$fixture/runtime" \
@@ -59,5 +66,5 @@ env -u WAYLAND_DISPLAY -u HYPRLAND_INSTANCE_SIGNATURE -u DISPLAY \
 if ! rg -q 'PASS: browser' "$fixture/log" || rg -q 'BROWSER FAIL:|TypeError:|ReferenceError:|Binding loop|Failed to load configuration' "$fixture/log"; then cat "$fixture/log"; exit 1; fi
 rg 'PASS:' "$fixture/log"
 done
-[[ $(sqlite3 "$fixture/data/quickshell.db" 'PRAGMA user_version; PRAGMA integrity_check;') == $'16\nok' ]]
+[[ $(sqlite3 "$fixture/data/quickshell.db" 'PRAGMA user_version; PRAGMA integrity_check;') == $'17\nok' ]]
 sqlite3 "$fixture/data/quickshell.db" "INSERT INTO browser_history_fts(browser_history_fts,rank) VALUES('integrity-check',1);"

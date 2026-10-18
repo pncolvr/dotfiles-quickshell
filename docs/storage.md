@@ -19,6 +19,10 @@ Schema 16 adds browser routing rules and history keyed by the original target.
 Each entry retains its final URL, browser and matched rule names. History has an
 external-content FTS5 index maintained transactionally by triggers. Rules and
 retained history are part of the existing encrypted backup.
+Schema 17 adds nullable `resolve_ms` timing to history. Existing entries have no
+timing until reopened. Timing covers routing acceptance through launch dispatch,
+including queue waits and transformations; browser startup and page loading are
+outside that measurement.
 Older supported backups acquire these tables when opened by the current shell.
 
 Recent-file folder tabs, aliases and default selection use preferences. Pinned

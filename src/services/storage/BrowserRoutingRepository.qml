@@ -32,15 +32,15 @@ ManagedCollectionRepository {
         const search=Routing.historyQuery(query)
         if (query.trim() && !search) return []
         return DbService.read(search
-            ? 'SELECT h.url,h.browser,h.handled_at,h.rule_name,h.final_url FROM browser_history h JOIN browser_history_fts ON browser_history_fts.rowid=h.rowid WHERE browser_history_fts MATCH ? ORDER BY h.handled_at DESC,h.url LIMIT ?'
-            : 'SELECT url,browser,handled_at,rule_name,final_url FROM browser_history ORDER BY handled_at DESC,url LIMIT ?',
+            ? 'SELECT h.url,h.browser,h.handled_at,h.rule_name,h.final_url,h.resolve_ms FROM browser_history h JOIN browser_history_fts ON browser_history_fts.rowid=h.rowid WHERE browser_history_fts MATCH ? ORDER BY h.handled_at DESC,h.url LIMIT ?'
+            : 'SELECT url,browser,handled_at,rule_name,final_url,resolve_ms FROM browser_history ORDER BY handled_at DESC,url LIMIT ?',
             search ? [search,root.historyLimit()] : [root.historyLimit()]) ?? []
     }
     function historyLimit() { return Math.max(0,Math.floor(Config.browserHistoryLimit)) }
-    function record(url,browser,ruleName='',finalUrl=url) {
+    function record(url,browser,ruleName='',finalUrl=url,resolveMs=null) {
         if (!Config.browserRoutingEnabled || !Config.browserHistoryEnabled || historyLimit()===0) return true
         const success=DbService.write(tx=>{
-            tx.executeSql("INSERT INTO browser_history(url,browser,handled_at,rule_name,final_url) VALUES(?,?,?,COALESCE(?,''),?) ON CONFLICT(url) DO UPDATE SET browser=excluded.browser,handled_at=excluded.handled_at,rule_name=excluded.rule_name,final_url=excluded.final_url",[url,browser,Date.now(),ruleName,finalUrl])
+            tx.executeSql("INSERT INTO browser_history(url,browser,handled_at,rule_name,final_url,resolve_ms) VALUES(?,?,?,COALESCE(?,''),?,?) ON CONFLICT(url) DO UPDATE SET browser=excluded.browser,handled_at=excluded.handled_at,rule_name=excluded.rule_name,final_url=excluded.final_url,resolve_ms=excluded.resolve_ms",[url,browser,Date.now(),ruleName,finalUrl,Number.isFinite(resolveMs) && resolveMs>=0 ? Math.round(resolveMs) : null])
             prune(tx)
         })
         if (success) revision++

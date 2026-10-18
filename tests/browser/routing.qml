@@ -19,6 +19,8 @@ Scope {
     Test.TestResult { id:objects }
     FloatingWindow { visible:true; implicitWidth:800; implicitHeight:700; PickerPanel { id:panel; anchors.fill:parent } }
     FileView { id:actions; path:Quickshell.env('BROWSER_TEST_DIR')+'/actions'; blockLoading:true; printErrors:false }
+    FileView { id:redirectStarted; path:Quickshell.env('BROWSER_TEST_DIR')+'/redirect-started'; blockLoading:true; printErrors:false }
+    FileView { id:redirectRelease; path:Quickshell.env('BROWSER_TEST_DIR')+'/redirect-release'; blockWrites:true; printErrors:false }
     function setOption(key,value) { settings[key]=value }
     function check(ok: bool,message: string): void { if(!ok) throw new Error(message) }
     function waitFor(predicate: var,message: string): void {
@@ -53,13 +55,14 @@ Scope {
         if(started || !DbService.ready) return
         started=true
         try {
-            check(DbService.schemaVersion===16,'schema migrated')
-            if(Quickshell.env('BROWSER_TEST_PHASE')==='restart') {
+            check(DbService.schemaVersion===17,'schema migrated')
+            if(['restart','migration'].includes(Quickshell.env('BROWSER_TEST_PHASE'))) {
                 check(browser.defaultBrowser===Config.defaultBrowserId && browser.entries.length===1 && browser.entries[0].id==='work','configured default and saved rules apply after restart')
                 check(BrowserRoutingRepository.history('persisted').length===1,'history and FTS survive restart')
                 check(BrowserRoutingRepository.history('persisted')[0].rule_name==='Saved rule','matched rule name survives restart')
                 check(BrowserRoutingRepository.history('persisted')[0].final_url==='https://resolved.test/persisted','final URL survives restart separately from original')
-                BrowserRoutingRepository.clearHistory()
+                const expectedTiming=Quickshell.env('BROWSER_TEST_PHASE')==='migration' ? null : 123
+                check(BrowserRoutingRepository.history('persisted')[0].resolve_ms===expectedTiming,'timing persists; migration leaves old timing unknown')
                 console.log('PASS: browser default comes from Config after restart; rules, history and FTS survive')
                 Qt.quit()
                 return
@@ -73,6 +76,8 @@ Scope {
             check(BrowserRoutingRepository.save(Object.assign(Routing.empty('a'),{id:'work',name:'Work',pattern:'work.test',match:'host',profile:'work'})),'save route')
             check(browser.open('https://sub.work.test/hello'),'accept routed request')
             waitFor(()=>calls().length===1 && settled(),'dispatch first browser')
+            check(Number.isInteger(BrowserRoutingRepository.history()[0].resolve_ms)
+                && BrowserRoutingRepository.history()[0].resolve_ms>=0,'dispatch records nonnegative resolving milliseconds')
             check(calls()[0][0]==='--profile=work','route uses selected profile')
             check(BrowserRoutingRepository.history()[0].rule_name==='Work','history records matched browser rule')
             check(browser.open('/tmp/Local page.html'),'accept local HTML')
@@ -230,16 +235,31 @@ Scope {
             check(BrowserRoutingRepository.history()[0].url===youtube && BrowserRoutingRepository.history()[0].rule_name==='','unmatched URL is recorded without a rule label')
             check(calls()[beforeYoutube][0]==='--target' && calls()[beforeYoutube].slice(-1)[0]===youtube,'default browser receives its reuse flags and the YouTube URL')
             setOption('defaultBrowserId','b')
-            check(BrowserRoutingRepository.record('https://original.test/link','b','First','https://final.test/first'),'record original and final URL')
+            check(BrowserRoutingRepository.record('https://original.test/link','b','First','https://final.test/first',50),'record original and final URL')
             const historyCount=BrowserRoutingRepository.history().length
-            check(BrowserRoutingRepository.record('https://original.test/link','b','Renamed','https://final.test/second'),'update same original URL')
+            check(BrowserRoutingRepository.record('https://original.test/link','b','Renamed','https://final.test/second',75),'update same original URL')
+            check(BrowserRoutingRepository.history()[0].resolve_ms===75,'reopening updates resolving time')
             check(BrowserRoutingRepository.history().length===historyCount && BrowserRoutingRepository.history()[0].url==='https://original.test/link'
                 && BrowserRoutingRepository.history()[0].final_url==='https://final.test/second' && BrowserRoutingRepository.history()[0].rule_name==='Renamed','reopening original deduplicates and updates final URL and rule label')
             BrowserRoutingRepository.clearHistory()
             check(BrowserRoutingRepository.history().length===0,'clear history and FTS')
+            const slowRule=Object.assign(Routing.empty('b'),{id:'slow',name:'Slow redirect',action:'redirect',match:'host',pattern:'blocked.test'})
+            check(BrowserRoutingRepository.save(slowRule),'save delayed redirect fixture')
+            const beforeDelayed=calls().length
+            check(browser.open('https://blocked.test/link'),'accept delayed redirect')
+            waitFor(()=>{ redirectStarted.reload(); return redirectStarted.text()==='started' },'redirect worker started')
+            check(browser.open('https://ordinary.test/link'),'accept ordinary link during redirect')
+            waitFor(()=>calls().length===beforeDelayed+1 && !browser.launching,'ordinary link bypasses pending redirect')
+            check(!!browser.currentRequest && calls()[beforeDelayed].slice(-1)[0]==='https://ordinary.test/link',
+                'ordinary browser dispatch completes while redirect is still blocked')
+            redirectRelease.setText('release')
+            waitFor(()=>calls().length===beforeDelayed+2 && settled(),'redirect finishes after release')
+            check(calls()[beforeDelayed+1].slice(-1)[0]==='https://resolved.test/unblocked','released redirect retains its own target')
+            check(BrowserRoutingRepository.remove('slow'),'remove delayed redirect fixture')
+            BrowserRoutingRepository.clearHistory()
             serviceLinks(true)
             BrowserRoutingRepository.clearHistory()
-            check(BrowserRoutingRepository.record('https://persisted.test/','b','Saved rule','https://resolved.test/persisted'),'seed persisted history')
+            check(BrowserRoutingRepository.record('https://persisted.test/','b','Saved rule','https://resolved.test/persisted',123),'seed persisted history')
             PickerService.close()
             setOption('bookmarkFile','')
             BookmarkService.open()

@@ -117,6 +117,13 @@ jq -c '.argv=["application","fixture://should-not-launch"] | .applicationAvailab
 for ((attempt=0;attempt<200;attempt++)); do [[ -s $fixture/actions ]] && break; sleep .01; done
 jq -e '.missingApplication=="Removed App"' "$fixture/dispatched" >/dev/null
 jq -se '.[-1]==["https://missing.test/"]' "$fixture/actions" >/dev/null
+# Batched decoding must reject invalid argv before emitting an accepted response.
+for invalid in '{"argv":[]}' '{"argv":["browser",null]}' '{"argv":["-browser"]}' '{"argv":["browser","bad\u0000argument"]}'; do
+    if printf '%s\n' "$invalid" | bash "$repo/src/services/browser/browser.sh" dispatch > "$fixture/rejected" 2>/dev/null; then
+        printf 'Invalid browser dispatch was accepted.\n' >&2; exit 1
+    fi
+    [[ ! -s $fixture/rejected ]]
+done
 printf 'PASS: interactive browser desktop discovery, literal profile arguments and unavailable-application fallback diagnostics\n'
 printf 'PASS: desktop installation, literal fallback argv, IPC handoff, recursion guard and generic redirect/query actions\n'
 printf 'PASS: configurable application dispatch, literal process matching, browser fallback and workspace autofocus toggle\n'

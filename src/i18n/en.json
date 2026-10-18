@@ -1160,6 +1160,7 @@
   "hints.selectAll": "Select all",
   "hints.windows.previous": "Previous window",
   "browser.routing.rules": "Browser routing",
+  "browser.routing.resolvingTime": "Resolving: %1",
   "browser.routing.historyDetails": "Original: %1\nFinal: %2\nBrowser: %3\nRules: %4",
   "browser.routing.history": "History",
   "browser.routing.containsList": "Contains any (one value per line)",

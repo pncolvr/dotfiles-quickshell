@@ -1160,6 +1160,7 @@
   "hints.selectAll": "Selecionar todos",
   "hints.windows.previous": "Janela anterior",
   "browser.routing.rules": "Encaminhamento do navegador",
+  "browser.routing.resolvingTime": "Resolução: %1",
   "browser.routing.historyDetails": "Original: %1\nFinal: %2\nNavegador: %3\nRegras: %4",
   "browser.routing.history": "Histórico",
   "browser.routing.containsList": "Contém qualquer valor (um por linha)",

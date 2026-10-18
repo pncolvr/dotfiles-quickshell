@@ -81,8 +81,11 @@ Singleton {
         if(!ownsMenu() || tab!==1) return
         PickerService.items=BrowserRoutingRepository.history(PickerService.query).map(row=>{
             const browser=Config.browsers.find(entry=>entry.id===row.browser)?.name || row.browser
-            return {id:row.url,title:row.url,subtitle:browser,annotation:row.rule_name,result:row.url,search:row.url+' '+row.browser,
-                hint:Translations.text('browser.routing.historyDetails',[row.url,row.final_url,browser,row.rule_name || '—'])}
+            const duration=typeof row.resolve_ms==='number' && row.resolve_ms>=0
+                ? row.resolve_ms<1000 ? row.resolve_ms+' ms' : (row.resolve_ms/1000).toFixed(2)+' s' : ''
+            const timing=duration ? Translations.text('browser.routing.resolvingTime',[duration]) : ''
+            return {id:row.url,title:row.url,subtitle:[browser,duration].filter(Boolean).join(' · '),annotation:row.rule_name,result:row.url,search:row.url+' '+row.browser,
+                hint:[Translations.text('browser.routing.historyDetails',[row.url,row.final_url,browser,row.rule_name || '—']),timing].filter(Boolean).join('\n')}
         })
     }
     Connections { target:PickerService; function onQueryChanged() { if(root.tab===1) root.publishHistory() } }

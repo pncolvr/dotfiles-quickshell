@@ -36,20 +36,26 @@ ManagedCollectionService {
         edit(value)
     }
     function open(url) {
+        const startedAt=Date.now()
         let normalized
         try { normalized=Routing.target(url) }
         catch(exception) { error=Translations.message(exception); return false }
         if (!enabled) return launch(normalized,false)
         if (!DbService.ready || DbService.maintenance || requests.length>=100) return false
-        requests=requests.concat([normalized])
+        // Ordinary links do not need the network resolver or its pending queue.
+        const selected=Routing.choose(normalized,entries,defaultBrowser)
+        if (!['redirect','query'].includes(Routing.action(selected)))
+            return launch(normalized,true,selected,entries,[],normalized,startedAt)
+        requests=requests.concat([{url:normalized,startedAt}])
         next()
         return true
     }
     function next() {
         if (currentRequest || resolver.running || !requests.length) return
-        const url=requests[0]
+        const pending=requests[0]
+        const url=pending.url
         requests=requests.slice(1)
-        currentRequest={url,originalUrl:url,rules:JSON.parse(JSON.stringify(entries)),used:[],visited:[url],steps:0,rule:null,ruleNames:[]}
+        currentRequest={url,originalUrl:url,startedAt:pending.startedAt,rules:JSON.parse(JSON.stringify(entries)),used:[],visited:[url],steps:0,rule:null,ruleNames:[]}
         advance()
     }
     function advance() {
@@ -67,10 +73,10 @@ ManagedCollectionService {
     function finish(entry) {
         const request=currentRequest
         currentRequest=null
-        if (request && enabled) launch(request.url,true,entry,request.rules,request.ruleNames,request.originalUrl)
+        if (request && enabled) launch(request.url,true,entry,request.rules,request.ruleNames,request.originalUrl,request.startedAt)
         Qt.callLater(next)
     }
-    function launch(url,routing=true,selected=null,rules=entries,transformationNames=[],originalUrl=url) {
+    function launch(url,routing=true,selected=null,rules=entries,transformationNames=[],originalUrl=url,startedAt=Date.now()) {
         try {
             const entry=selected ?? (routing ? Routing.choose(url,rules,defaultBrowser) : Routing.empty(Config.defaultBrowserId))
             if (routing) Routing.validate(Object.assign({},entry,{name:entry.name || 'Default',pattern:entry.pattern || '*'}),Config.browsers)
@@ -79,7 +85,7 @@ ManagedCollectionService {
             const fallback=Routing.browserRule(url,rules,defaultBrowser)
             const application=routing && Routing.action(entry)==='command'
             const defaultEntry=Routing.empty(defaultBrowser)
-            launchQueue=launchQueue.concat([{url,originalUrl,argv,workspace:entry.workspace,
+            launchQueue=launchQueue.concat([{url,originalUrl,startedAt,argv,workspace:entry.workspace,
                 focusWorkspace:routing && Config.browserWorkspaceFocusEnabled,
                 onlyWhenRunning:application ? entry.onlyWhenRunning : '',
                 fallbackArgv:application ? Routing.command(url,fallback,Config.browsers) : argv,
@@ -152,7 +158,8 @@ ManagedCollectionService {
                 ruleNames=result.ruleNames ?? ruleNames
                 if (result.missingApplication) AlertService.post('browser',Translations.text('browser.routing.applicationUnavailable',[result.missingApplication]),'error')
             } catch(_) {}
-            if (code===0 && root.launching?.record) BrowserRoutingRepository.record(root.launching.originalUrl,browser,ruleNames.join(' → '),root.launching.url)
+            if (code===0 && root.launching?.record) BrowserRoutingRepository.record(root.launching.originalUrl,browser,ruleNames.join(' → '),root.launching.url,
+                Math.max(0,Date.now()-root.launching.startedAt))
             if (code!==0) {
                 root.error=Translations.text('webapps.errors.browser')
                 AlertService.post('browser',root.error,'error')

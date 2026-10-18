@@ -190,6 +190,9 @@ browser definitions below. Twitch links, saved Twitch notification actions,
 calendar events and package pages use this same opener directly. They do not
 require the desktop integration or default-browser associations. With routing
 disabled, they open the configured browser without routing or history.
+Ordinary browser/application links dispatch independently of pending URL
+transformations, so a slow redirect does not hold up those links. Redirect/query
+requests retain their bounded, sequential transformation queue.
 Host/subdomain, literal Contains, wildcard and
 regular-expression patterns match rules. Contains accepts one value per line and
 matches when any value occurs in the URL. Each
