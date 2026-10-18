@@ -64,25 +64,14 @@ For terminal and authentication options, see [Remotes setup](setup.md#remotes).
 ## Submap hints
 
 The parser receives a submap name and prints `key;description` lines. This example
-reads Hyprland's configured bind descriptions:
+reads Hyprland's configured bind descriptions. Install the shared sample:
 
 ```sh
-mkdir -p "$HOME/.local/bin"
-cat > "$HOME/.local/bin/quickshell-submap-hints" <<'SH'
-#!/usr/bin/env bash
-set -euo pipefail
-hyprctl binds -j | jq -r --arg submap "${1:-}" '
-  .[] | select(.has_description and .submap == $submap and .catch_all == false)
-  | . as $bind
-  | ([if (.modmask / 64 | floor % 2) == 1 then "Super" else empty end,
-      if (.modmask / 8 | floor % 2) == 1 then "Alt" else empty end,
-      if (.modmask / 4 | floor % 2) == 1 then "Ctrl" else empty end,
-      if (.modmask % 2) == 1 then "Shift" else empty end,
-      .key] | join("+")) + ";" + $bind.description'
-SH
-chmod +x "$HOME/.local/bin/quickshell-submap-hints"
+install -Dm755 integrations/hyprland/submap-hints.sh "$HOME/.local/bin/quickshell-submap-hints"
 "$HOME/.local/bin/quickshell-submap-hints" tools
 ```
+
+Run this from the repository root. See [integration instructions](../integrations/README.md#hyprland).
 
 Configure its path:
 
@@ -133,11 +122,12 @@ the cache as your desktop user:
 bash "$HOME/.config/quickshell/src/services/system/update-check.sh"
 ```
 
-For an optional hourly schedule, edit your user crontab with `crontab -e` and add:
-
-```cron
-0 * * * * /bin/bash "$HOME/.config/quickshell/src/services/system/update-check.sh"
-```
+For an optional hourly schedule, fill in the path in the
+[cron template](../integrations/cron/updates.crontab), then add its entry to your
+user crontab with `crontab -e`. The
+[pacman hook template](../integrations/arch/95-quickshell-updates.hook) can also
+request refreshes after package transactions. Follow the
+[installation instructions](../integrations/README.md#arch-updates).
 
 Install/start your chosen cron service if using that schedule. The bar's
 Check now button works without a cron schedule.

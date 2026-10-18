@@ -85,27 +85,15 @@ run. Keep that directory writable.
    ```
 
 9. Add desktop bindings after startup works. The repository registers actions;
-   it does not install the author's Hypr keybinds or submaps. For example, in a
-   Hypr Lua configuration:
-
-   ```lua
-   hl.bind("SUPER + D", hl.dsp.global("quickshell:launcher-apps"), { desc = "Applications" })
-   hl.bind("SUPER + V", hl.dsp.global("quickshell:launcher-clipboard"), { desc = "Clipboard" })
-   hl.bind("ALT + TAB", hl.dsp.global("quickshell:window-switch"), { desc = "Switch window" })
-   hl.bind("SUPER + PRINT", hl.dsp.global("quickshell:launcher-screenshot"), { desc = "Screenshot" })
-   hl.bind("SUPER + R", hl.dsp.global("quickshell:recording-toggle"), { desc = "Recording" })
-   ```
+   it does not install the author's Hypr keybinds or submaps. Review and copy the
+   [binding example](../integrations/hyprland/bindings.lua) using the
+   [integration instructions](../integrations/README.md#hyprland).
 
    `Config.keybinds` configures actions inside panels; it does not register these
    desktop shortcuts. See [IPC](ipc.md) for alternatives and action names.
-10. Enable and configure optional features one at a time. Once stable, add this
-    [startup hook](https://wiki.hypr.land/configuring/core/autostart/) to Hypr Lua:
-
-    ```lua
-    hl.on("hyprland.start", function()
-        hl.exec_cmd('qs -p "' .. os.getenv("HOME") .. '/.config/quickshell"')
-    end)
-    ```
+10. Enable and configure optional features one at a time. Once stable, review and
+    load the [autostart example](../integrations/hyprland/autostart.lua) following
+    the [integration instructions](../integrations/README.md#hyprland).
 
     Avoid also starting a second shell through a user service or another startup file.
 
@@ -214,21 +202,9 @@ not configured it; compositor animation synchronization still runs through
 
 Notification popups/manager, TOTP, Vault and private picker windows use
 `quickshell-private` (`Config.screenShareHiddenNamespace`). Here is a minimal
-Lua example for that namespace, to load before starting the shell:
-
-```lua
-local privatePanelsHidden = hl.layer_rule({
-    name = "quickshell_private_capture",
-    match = { namespace = "quickshell-private" },
-    no_screen_share = true,
-})
-privatePanelsHidden:set_enabled(false)
-
-function HideApplications(active, animationsEnabled)
-    privatePanelsHidden:set_enabled(active)
-    hl.config({ animations = { enabled = animationsEnabled } })
-end
-```
+[Lua example](../integrations/hyprland/capture-privacy.lua) for that namespace.
+Follow the [integration instructions](../integrations/README.md#hyprland) and
+load it before starting the shell.
 
 This covers private Quickshell layers only. The author's additional communication
 application/Vault-client rules are desktop policy and are not prerequisites for

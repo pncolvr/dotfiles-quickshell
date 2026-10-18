@@ -307,11 +307,10 @@ Review these defaults when adapting the configuration:
   connectivity status is offline. The button is disabled while a check runs;
   repeated service requests reuse that check. A new failure or package-database
   lock can still schedule the normal retry afterward.
-  See the helper's comments for cron and pacman hook examples.
-  In the installed hook's `Exec`, use `sudo -H -u pncolvr --` instead of
-  `sudo -u pncolvr -i`: `-H` sets the user's home without loading the zsh login
-  profile, which starts an SSH agent and prints `Agent pid ...`. Script comments
-  do not update `/etc/pacman.d/hooks/95-quickshell-updates.hook` automatically.
+  See the [integration templates and installation instructions](../integrations/README.md#arch-updates)
+  for cron and pacman hooks. Fill in your username and absolute checkout path.
+  The hook uses `sudo -H -u` to set the user's home without loading a login
+  profile. Updating repository templates does not update installed copies.
 - The temperature command reads `/sys/class/thermal/thermal_zone1/temp`.
 - `calendarEventUrl` opens Google Calendar. `mixerCommand` opens `pavucontrol`.
 

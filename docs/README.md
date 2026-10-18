@@ -5,6 +5,7 @@
 - [Setup](setup.md): dependencies, starting the shell and screen sharing.
 - [Arch installation](install-arch.md): core and optional package groups, versions and external installation steps. Other distributions are outside the current installation scope.
 - [Onboarding](onboarding.md): sample commands and configuration for paths, applications, submaps, capture privacy and optional services.
+- [Integration templates](../integrations/README.md): editable pacman hook, cron entry and Hyprland examples with installation instructions.
 - [Configuration](configuration.md): settings, styling, module placement and desktop integrations.
 - [IPC](ipc.md): commands for Hyprland bindings and scripts.
 

@@ -1,0 +1,3 @@
+# Replace @QUICKSHELL_DIR@ with the absolute checkout path. See ../README.md.
+# Add this entry with crontab -e; retain your other jobs. Run as your desktop user.
+0 * * * * /bin/bash "@QUICKSHELL_DIR@/src/services/system/update-check.sh"

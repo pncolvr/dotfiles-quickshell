@@ -1,0 +1,13 @@
+# Replace @USER@ and @QUICKSHELL_DIR@ before installing. See ../README.md.
+[Trigger]
+Operation = Install
+Operation = Upgrade
+Operation = Remove
+Type = Package
+Target = *
+
+[Action]
+Description = Updating Quickshell package update cache...
+When = PostTransaction
+Exec = /usr/bin/sudo -H -u @USER@ -- /usr/bin/bash "@QUICKSHELL_DIR@/src/services/system/update-check.sh"
+Depends = sudo
