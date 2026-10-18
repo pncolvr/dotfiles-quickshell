@@ -100,6 +100,15 @@ wait_for 'signal monitor starts' rg -q 'Monitoring signals' "$signals"
 sqlite3 "$database" "CREATE TABLE preferences (key TEXT PRIMARY KEY, value_json TEXT NOT NULL); INSERT INTO preferences VALUES ('preserve', '42'); PRAGMA user_version=1;"
 start
 check_state '.dnd == false and (.groups | length) == 0'
+sticky_first=$(notify 'First sticky' desktop popup-order)
+timed_first=$(notify 'First timed' desktop popup-order timeout 60000)
+sticky_second=$(notify 'Second sticky' desktop popup-order)
+timed_second=$(notify 'Second timed' desktop popup-order timeout 60000)
+check_state "[.popups[].id] == [$sticky_first,$sticky_second,$timed_second,$timed_first]" 'sticky popups stay above newer timed popups in arrival order'
+notify 'Updated sticky' desktop popup-order replacement "$sticky_first" >/dev/null
+check_state "[.popups[].id] == [$sticky_first,$sticky_second,$timed_second,$timed_first]" 'replacement preserves sticky position'
+ipc clearEmitter desktop:popup-order
+wait_for 'popup ordering fixtures dismissed' state_is '(.live | length) == 0'
 low=$(notify Low urgency 0)
 transient=$(notify Transient transient true)
 normal=$(notify Normal)

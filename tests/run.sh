@@ -94,7 +94,7 @@ finish_native() {
     native_running=false
     local status=${1:-0} summary='Native tests finished' body
     if ((status != 0)); then summary='Native tests stopped'; fi
-    body="You can use the keyboard and mouse now. Suites: $passed passed, $failed failed. Tests: $tests_passed passed, $tests_failed failed. Logs: $logs"
+    body="You can use the keyboard and mouse now."$'\n'"Tests: $tests_passed passed, $tests_failed failed."
     if [[ $native_notification_id =~ ^[1-9][0-9]*$ ]]; then
         notify_native --replace-id="$native_notification_id" --urgency=normal \
             --expire-time=8000 "$summary" "$body" >/dev/null 2>&1 || true
@@ -277,18 +277,18 @@ fi
 if $native; then
     if ! $list && $native_checks; then
         native_running=true
-        printf '\nNative tests will start in the next 60 seconds.\nLeave the keyboard and mouse idle until the completion notice.\n'
+        printf '\nNative tests will start within 60 seconds.\nLeave keyboard and mouse idle.\n'
         native_notification_id=$(notify_native --print-id --urgency=critical --expire-time=0 \
-            'Native tests starting' $'Tests will start in the next 60 seconds.\nLeave the keyboard and mouse idle until the completion notice.') \
+            'Native tests starting' $'Tests will start within 60 seconds.\nLeave keyboard and mouse idle.') \
             || printf 'Desktop notification unavailable; follow the status in this terminal.\n' >&2
         sleep 60
-        printf 'Native tests are now running.\nLeave the keyboard and mouse idle until the completion notice.\n'
+        printf 'Native tests are now running.\nLeave keyboard and mouse idle.\n'
         notification_options=()
         if [[ $native_notification_id =~ ^[1-9][0-9]*$ ]]; then
             notification_options+=(--replace-id="$native_notification_id")
         fi
         native_notification_id=$(notify_native --print-id "${notification_options[@]}" --urgency=critical --expire-time=0 \
-            'Native tests running' $'Tests are now running.\nLeave the keyboard and mouse idle until the completion notice.') \
+            'Native tests running' $'Tests are now running.\nLeave keyboard and mouse idle.') \
             || printf 'Desktop notification unavailable; follow the status in this terminal.\n' >&2
     fi
     # Explicit opt-in: these checks can take focus, move the pointer or use GPU capture.

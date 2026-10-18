@@ -133,7 +133,14 @@ Singleton {
     }
     function refreshPopups() {
         state.popups = Object.values(state.liveEntries).filter(entry => entry.popupVisible)
-            .sort((a, b) => b.updatedAt - a.updatedAt || b.liveId - a.liveId)
+            .sort((a, b) => {
+                const aSticky = a.duration === 0
+                const bSticky = b.duration === 0
+                if (aSticky !== bSticky) return aSticky ? -1 : 1
+                // Sticky cards retain their arrival order, including on replacement.
+                if (aSticky) return a.receivedAt - b.receivedAt || a.liveId - b.liveId
+                return b.updatedAt - a.updatedAt || b.liveId - a.liveId
+            })
     }
     function closed(id) {
         if (state.pendingNotifications[id]) {
