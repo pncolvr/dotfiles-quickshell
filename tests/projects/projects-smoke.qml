@@ -13,6 +13,7 @@ Scope {
     property int step: 0
     property int ticks: 0
     property bool failed: false
+    property bool dispatching: false
     Test.TestEvent { id: events }
     FloatingWindow {
         id: testWindow
@@ -31,10 +32,17 @@ Scope {
     }
     function banana() { return ProjectRepository.projects.find(project => project.name === "banana") }
     Timer {
+        id: ticker
         interval: 50
-        running: true
+        running: !root.dispatching
         repeat: true
         onTriggered: {
+            if (root.dispatching) return
+            root.dispatching = true
+            try { ticker.runStep() }
+            finally { root.dispatching = false }
+        }
+        function runStep() {
             if (++root.ticks > 400 || root.failed) { console.error("PROJECT FAIL: timeout step=" + root.step + " error=" + ProjectService.error); stop(); Qt.quit(); return }
             if (ProjectService.busy || !DbService.ready) return
             if (root.phase === "restart") {
@@ -46,20 +54,21 @@ Scope {
                     root.check(!ProjectService.managing && PickerService.currentIndex === 0, "opening always starts at picker first row")
                     ProjectService.setManaging(true)
                     panel.managementView.select(root.directory + "/single folder")
-                    root.find("refreshSource_" + root.directory + "/single folder").clicked()
                     root.step=10
+                    root.find("refreshSource_" + root.directory + "/single folder").clicked()
                     return
                 }
                 if (root.step === 10) {
                     root.check(!ProjectService.draft && ProjectRepository.projects.length === 3 && root.banana().workspaces.length === 2,
                         "refreshing one source does not scan the root's newly added projects and workspaces")
                     root.check(root.find("refreshProjects").visible,"refresh all is visible in Manage")
-                    root.find("refreshProjects").clicked()
                     root.step=1
+                    root.find("refreshProjects").clicked()
                     return
                 }
                 if (root.step === 1 || root.step === 2) {
                     root.check(ProjectService.managing && ProjectService.draft?.review, "refresh asks about new workspaces in Manage")
+                    if (root.failed) return
                     root.check(ProjectRepository.projects.length === 3 && root.banana().workspaces.length === 2, "refresh snapshot awaits confirmation")
                     const review = ProjectService.draft.projects[0]
                     root.check(review.workspaces.length === 2 && review.workspaces.every(workspace=>workspace.included), "checklist shows only new choices, checked by default")
@@ -67,8 +76,8 @@ Scope {
                         root.find("cancelProjectDraft").clicked()
                         root.check(!ProjectService.draft && root.banana().workspaces.length === 2, "cancel refresh preserves previous list")
                         panel.managementView.select(root.directory + "/repos")
-                        root.find("refreshSource_" + root.directory + "/repos").clicked()
                         root.step=2
+                        root.find("refreshSource_" + root.directory + "/repos").clicked()
                     } else {
                         const optional = review.workspaces.find(workspace=>workspace.name === "Optional")
                         root.find("projectWorkspace_" + optional.path).clicked()
@@ -77,8 +86,8 @@ Scope {
                         root.check(root.banana().workspaces.find(workspace=>workspace.name === "New").included
                             && !root.banana().workspaces.find(workspace=>workspace.name === "Optional").included
                             && !root.banana().workspaces.find(workspace=>workspace.name === "Tomato").included, "approved choices and previous inclusions persist")
-                        ProjectService.refresh()
                         root.step=3
+                        ProjectService.refresh()
                     }
                     return
                 }

@@ -30,6 +30,21 @@ fs.writeFileSync(file, fs.readFileSync(file, 'utf8')
     .replace(/readonly property var clipboardCommand:.*/, () => 'readonly property var clipboardCommand: ' + JSON.stringify([dir + '/clipboard']))
     .replace('clipboardMonitorEnabled: true', 'clipboardMonitorEnabled: false')
     .replace(/readonly property bool animationsEnabled:.*/, 'readonly property bool animationsEnabled: Quickshell.env("HANDOFF_ANIMATIONS") === "true"'));
+// Always retain dismissal evidence in the private logs; successful runs print
+// only the result. Instrumentation never touches the production source.
+{
+    const focus = dir + '/src/ui/components/WindowFocusHandler.qml';
+    const state = 'JSON.stringify({clipboard:root.host.picker?.independentClipboard,requested:root.hostRequestedVisible,active:root.windowActive,settled:root.activationSettled,requesting:root.requestingKeyboardFocus,held:root.handoffHeld})';
+    fs.writeFileSync(focus, fs.readFileSync(focus, 'utf8')
+        .replace('    onWindowActiveChanged: {', () => '    onWindowActiveChanged: {\n        console.log("HANDOFF TRACE active",' + state + ')')
+        .replace('    function desktopActivated(event) {', () => '    function desktopActivated(event) {\n        if (event.name === "activewindowv2") console.log("HANDOFF TRACE desktop",event.data,' + state + ')')
+        .replace('        onCleared: if (root.hostRequestedVisible', () => '        onCleared: { console.log("HANDOFF TRACE grab cleared",' + state + '); handleClear() }\n        function handleClear() { if (root.hostRequestedVisible')
+        .replace('            root.dismissRequested()\n    }\n}', '            root.dismissRequested()\n        }\n    }\n}'));
+    const session = dir + '/src/services/launcher/PickerSession.qml';
+    fs.writeFileSync(session, fs.readFileSync(session, 'utf8').replace(
+        '    function close(reason = "cancelled", keepVisible = false, pasteToPanel = false) {',
+        '    function close(reason = "cancelled", keepVisible = false, pasteToPanel = false) {\n        console.log("HANDOFF TRACE close",independentClipboard,reason,visible)'));
+}
 JS
 cp "$repo/tests/launcher/NativeFocusDriver.qml" "$fixture/NativeFocusDriver.qml"
 sed 's@"../../src@"src@g' "$repo/tests/launcher/clipboard-handoff-native.qml" > "$fixture/shell.qml"

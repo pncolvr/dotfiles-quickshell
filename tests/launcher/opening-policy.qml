@@ -11,7 +11,8 @@ Scope {
     id: root
     property bool simulatedActive: false
     property int focusCalls: 0
-    QtObject { id: fakePicker; property int mode: PickerService.Mode.Menu; signal opened() }
+    property int dismissals: 0
+    QtObject { id: fakePicker; property int mode: PickerService.Mode.Menu; signal opened(); function close(reason) {} }
     Test.TestCase { id: events; when: false }
     FloatingWindow {
         id: window
@@ -34,6 +35,7 @@ Scope {
         host: window
         panel: contentPanel
         picker: fakePicker
+        onDismissRequested: root.dismissals++
         windowActive: root.simulatedActive
     }
     UI.WindowFocusHandler {
@@ -71,6 +73,53 @@ Scope {
                 events.wait(30)
                 root.check(behavior.activationSettled && behavior.keyboardFocusMode === WlrKeyboardFocus.OnDemand,
                     "activation settles back to on-demand")
+                contentPanel.dismissOnOutside = true
+                behavior.desktopActivated({name: "workspacev2", data: "1,main"})
+                behavior.desktopActivated({name: "activewindowv2", data: ""})
+                root.check(root.dismissals === 0 && behavior.activationSettled,
+                    "unrelated events and layer-shell activation do not dismiss a focused panel")
+                root.simulatedActive = false
+                root.check(behavior.restoreFocus(search) && behavior.requestingKeyboardFocus,
+                    "returning to the original field requests native activation")
+                behavior.desktopActivated({name: "activewindowv2", data: "1234"})
+                root.check(root.dismissals === 0 && behavior.requestingKeyboardFocus
+                    && behavior.keyboardFocusMode === WlrKeyboardFocus.Exclusive,
+                    "transient desktop activation cannot cancel a pending native return")
+                root.simulatedActive = true
+                events.wait(30)
+                root.check(!behavior.requestingKeyboardFocus && behavior.activationSettled,
+                    "native return protection ends after activation settles")
+                behavior.desktopActivated({name: "activewindowv2", data: "1234"})
+                root.check(root.dismissals === 0 && behavior.desktopActivationPending,
+                    "late desktop IPC cannot dismiss a surface that still owns native focus")
+                root.simulatedActive = false
+                events.wait(20)
+                root.check(root.dismissals === 1 && !behavior.desktopActivationPending,
+                    "native deactivation confirms an earlier desktop IPC event")
+                root.simulatedActive = true
+                events.wait(20)
+                behavior.desktopActivated({name: "activewindowv2", data: "1234"})
+                behavior.desktopActivated({name: "activewindowv2", data: ""})
+                root.simulatedActive = false
+                events.wait(20)
+                root.check(root.dismissals === 1 && !behavior.desktopActivationPending,
+                    "a superseding layer-shell event invalidates pending desktop activation")
+                behavior.desktopActivated({name: "activewindowv2", data: "1234"})
+                root.check(root.dismissals === 2,
+                    "desktop IPC arriving after native deactivation also dismisses")
+                contentPanel.dismissOnOutside = false
+                behavior.passive = true
+                root.simulatedActive = true
+                behavior.requestInteraction()
+                events.wait(20)
+                root.check(behavior.keyboardFocusMode === WlrKeyboardFocus.OnDemand,
+                    "persistent tooltip has native keyboard interaction before desktop activation")
+                behavior.desktopActivated({name: "activewindowv2", data: "1234"})
+                root.check(root.dismissals === 2 && behavior.keyboardFocusMode === WlrKeyboardFocus.None,
+                    "desktop activation releases a persistent tooltip's keyboard before native blur")
+                behavior.passive = false
+                behavior.requestFocus()
+                events.wait(20)
                 const focusCalls = root.focusCalls
                 root.simulatedActive = false
                 events.wait(20)

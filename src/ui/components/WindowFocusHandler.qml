@@ -50,6 +50,7 @@ Item {
         }
     }
     property bool requestingKeyboardFocus: false
+    property bool desktopActivationPending: false
     property bool restoringDialogFocus: false
     signal dismissRequested()
     visible: false
@@ -68,6 +69,7 @@ Item {
     }
 
     function release() {
+        desktopActivationPending = false
         activationGeneration++
         activationSettled = false
         focusPanelPending = false
@@ -83,6 +85,7 @@ Item {
     }
     function requestFocus() {
         if (!hostRequestedVisible || !ready || blocked || handoffHeld || nativeDialogOpen || !panel) return
+        desktopActivationPending = false
         keyboardEnabled = true
         focusPanelPending = true
         // Subview changes need field focus, not another layer-shell activation.
@@ -106,6 +109,7 @@ Item {
     }
     function requestInteraction() {
         if (!hostRequestedVisible || !ready || blocked || handoffHeld || nativeDialogOpen) return
+        desktopActivationPending = false
         keyboardEnabled = true
         focusPanelPending = false // Preserve the clicked control, rather than refocusing Search.
         if (windowActive && grab.active) return
@@ -179,28 +183,51 @@ Item {
     }
 
     onWindowActiveChanged: {
-        if (windowActive) Qt.callLater(root.settleFocus)
+        if (windowActive) { desktopActivationPending = false; Qt.callLater(root.settleFocus) }
         else {
             // Initial map/deactivation must not cancel a pending explicit open.
             // After activation, blur releases focus without taking it back.
             if (!requestingKeyboardFocus) { activationGeneration++; focusPanelPending = false }
             if (!dismissOnOutside) grab.active = false
+            Qt.callLater(root.finishDesktopActivation)
         }
+    }
+    function desktopActivated(event) {
+        // The activeToplevel property also changes when IPC's initial snapshot
+        // arrives. Only a compositor event represents a desktop focus change.
+        if (event.name !== "activewindowv2") return
+        desktopActivationPending = false
+        // Closing the borrowed surface can briefly activate the desktop before
+        // the compositor completes our explicit request to restore the parent.
+        if (!event.data.trim() || !activationSettled || requestingKeyboardFocus || !hostRequestedVisible || !ready
+            || blocked || handoffHeld || nativeDialogOpen) return
+        desktopActivationPending = true
+        // Persistent panels never close here. Release their grab immediately:
+        // retaining it until keyboard leave can prevent the desktop gaining focus.
+        if (!dismissOnOutside) {
+            keyboardEnabled = !passive
+            grab.active = false
+        }
+        finishDesktopActivation()
+    }
+    function finishDesktopActivation() {
+        // IPC and Wayland events arrive independently. An IPC event alone can
+        // describe an earlier desktop focus while this surface owns the keyboard.
+        // If IPC arrives first, wait for Qt's native deactivation to confirm it.
+        if (!desktopActivationPending || windowActive || requestingKeyboardFocus
+            || !activationSettled || !hostRequestedVisible || !ready
+            || blocked || handoffHeld || nativeDialogOpen) return
+        desktopActivationPending = false
+        activationGeneration++
+        focusPanelPending = false
+        requestingKeyboardFocus = false
+        keyboardEnabled = !passive
+        grab.active = false
+        if (dismissOnOutside) dismissRequested()
     }
     Connections {
         target: Hyprland
-        function onActiveToplevelChanged() {
-            // An explicit desktop activation must be able to leave a layer-shell
-            // grab, including persistent panels and password prompts.
-            if (!Hyprland.activeToplevel || !root.activationSettled || !root.hostRequestedVisible
-                || !root.ready || root.blocked || root.handoffHeld || root.nativeDialogOpen) return
-            root.activationGeneration++
-            root.focusPanelPending = false
-            root.requestingKeyboardFocus = false
-            root.keyboardEnabled = !root.passive
-            grab.active = false
-            if (root.dismissOnOutside) root.dismissRequested()
-        }
+        function onRawEvent(event) { root.desktopActivated(event) }
     }
     onNativeDialogOpenChanged: {
         if (nativeDialogOpen) { restoringDialogFocus = hostRequestedVisible; release() }

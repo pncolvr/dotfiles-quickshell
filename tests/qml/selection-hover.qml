@@ -126,6 +126,13 @@ Scope {
     Component { id: privateFixture; Fixture {} }
     Test.TestResult { id: objects }
     Test.TestEvent { id: events }
+    function pointerTarget(item: Item, x: real, y: real): string {
+        // Layer-shell global positioning is compositor-owned. The shell driver
+        // adds the actual layer origin to these surface-local coordinates.
+        const point = item.mapToItem(root.activeHost.contentItem, x, y)
+        return JSON.stringify({x:point.x,y:point.y,pid:Quickshell.processId,
+            namespace:root.activeHost.WlrLayershell.namespace})
+    }
     IpcHandler {
         target: "selectionhover"
         function begin(mode: string, above: bool): void {
@@ -154,26 +161,43 @@ Scope {
                 sameOverlay:!!selector && selector.popup.contentItem.parent?.parent === observer?.overlayItem,
                 rowsReady:rowHover.length === 3 && rowHover.every(value => value !== undefined),rowHover,
                 private:root.privateCase,namespace:root.privateCase ? privateHost.WlrLayershell.namespace : publicHost.WlrLayershell.namespace,
-                toggleReady:!!toggle,
+                toggleReady:!!toggle,toggleHovered:toggle?.hovered ?? false,
                 opensAbove:!!selector?.expanded && selector.popup.y < selector.mapToItem(selector.popup.parent,0,0).y})
         }
-        function hoverToggle(): void {
+        function geometry(): string {
+            const selector = root.selector()
+            if (!selector) return JSON.stringify({unloaded:true})
+            const rect = item => {
+                if (!item) return null
+                const point = item.mapToItem(root.activeHost.contentItem, 0, 0)
+                return {x:point.x,y:point.y,width:item.width,height:item.height}
+            }
+            return JSON.stringify({surface:{width:root.activeHost.width,height:root.activeHost.height},
+                toggle:rect(selector),popup:rect(selector.popup.contentItem),
+                rows:selector.options.map((value,index) => rect(selector.choicesView.itemAtIndex(index)))})
+        }
+        function syncPointer(target: string): void {
+            // A compositor warp positions the real cursor; the click/move stream
+            // injected by QtTest must agree with it for stationary hover checks.
+            const point = JSON.parse(target)
+            events.mouseMove(root.activeHost.contentItem,point.x,point.y,0,Qt.NoButton,Qt.NoModifier)
+        }
+        function hoverToggle(): string {
             const selector = root.selector()
             const toggle = objects.findChild(selector,selector.toggleObjectName) as QC.Button
-            events.mouseMove(toggle,toggle.width/2,toggle.height/2,0,Qt.NoButton,Qt.NoModifier)
+            return root.pointerTarget(toggle,toggle.width/2,toggle.height/2)
         }
-        function hoverAction(lower: bool, reset: bool): void {
+        function hoverAction(lower: bool, reset: bool): string {
             root.cursorControl = objects.findChild(root.panel,lower ? "cursorLowerButton" : "cursorTopButton") as QC.Button
-            events.mouseMove(root.cursorControl,root.cursorControl.width/2 + (reset ? 0 : 1),root.cursorControl.height/2,
-                0,Qt.NoButton,Qt.NoModifier)
             if (reset) root.cursorLeaves = 0
+            return root.pointerTarget(root.cursorControl,root.cursorControl.width/2 + (reset ? 0 : 1),root.cursorControl.height/2)
         }
-        function hover(index: int): void {
+        function hover(index: int): string {
             const row = root.selector().choicesView.itemAtIndex(index) as QC.ItemDelegate
-            events.mouseMove(row,row.width/2,row.height/2,0,Qt.NoButton,Qt.NoModifier)
+            return root.pointerTarget(row,row.width/2,row.height/2)
         }
-        function leave(): void {
-            events.mouseMove(root.activeHost.contentItem,0,root.activeHost.contentItem.height + 20,0,Qt.NoButton,Qt.NoModifier)
+        function leave(): string {
+            return root.pointerTarget(root.activeHost.contentItem,0,root.activeHost.contentItem.height - 1)
         }
         function leaveTrigger(): void { TooltipService.setTriggerHovered(origin, false) }
         function open(): void {

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Native tooltip lifecycle and popup hover, using deterministic Qt mouse events.
+# Native tooltip lifecycle and popup hover, using the compositor pointer.
 set -euo pipefail
 project_root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)
 test_dir=$(mktemp -d /tmp/quickshell-selection-hover.XXXXXXXX)
@@ -25,8 +25,26 @@ QT_QPA_PLATFORM=wayland QT_NO_XDG_DESKTOP_PORTAL=1 XDG_DATA_HOME="$test_dir/data
 shell_pid=$!
 ipc() { timeout 2 qs ipc -p "$test_dir/shell.qml" call selectionhover "$@"; }
 snapshot() { ipc snapshot; }
+last_pointer_target=''
+last_pointer_command=''
+move_pointer() {
+    local target position
+    target=$(ipc "$@") || return
+    position=$(hyprctl layers -j | jq -er --argjson target "$target" '
+        [.[] | .levels[][] | select(.pid == $target.pid and .namespace == $target.namespace)]
+        | if length != 1 then error("expected one fixture layer") else .[0] end
+        | "hl.dsp.cursor.move({ x = \((.x + $target.x) | round), y = \((.y + $target.y) | round) })"
+    ') || return
+    last_pointer_target=$target
+    last_pointer_command=$position
+    hyprctl dispatch "$position" >/dev/null
+    ipc syncPointer "$target" >/dev/null
+}
 fail() {
     snapshot >&2 2>/dev/null || true
+    printf 'Last pointer target: %s\nLast pointer command: %s\n' "$last_pointer_target" "$last_pointer_command" >&2
+    hyprctl cursorpos -j >&2 2>/dev/null || true
+    ipc geometry >&2 2>/dev/null || true
     printf 'FAIL: %s\n' "$*" >&2
     rg 'TypeError|ReferenceError|Failed to load|WARN scene' "$test_dir/log" >&2 || true
     exit 1
@@ -44,17 +62,19 @@ for mode in volume mic profile folder type private-folder; do
     for above in true false; do
         ipc begin "$mode" "$above" >/dev/null
         wait_state '.visible and .toggleReady and .settled'
-        ipc hoverToggle >/dev/null
+        move_pointer hoverToggle
+        wait_state '.toggleHovered'
         ipc open >/dev/null
         wait_state ".expanded and .popupOpened and .opensAbove==$above and .rowsReady"
         ipc leaveTrigger >/dev/null
         for index in 0 1 2; do
-            ipc hover "$index" >/dev/null
+            move_pointer hover "$index"
+            wait_state ".hovered and .rowHover[$index]"
             sleep 0.45
             snapshot | jq -e ".visible and .expanded and .popupVisible and .hovered and .rowHover[$index] and .sameOverlay and (.pinned|not) and (.paused|not) and .writes==0 and ((.private|not) or .namespace==\"quickshell-private\")" >/dev/null \
                 || fail "$mode dropdown or panel disappeared while hovering option $index (opensAbove=$above)"
         done
-        ipc leave >/dev/null
+        move_pointer leave
         wait_state '(.visible|not) and (.expanded|not)'
     done
     printf 'PASS: %s popup rows preserve unpinned panel hover above and below, then dismiss after leaving\n' "$mode"
@@ -63,19 +83,19 @@ for mode in folder private-folder; do
     for lower in false true; do
         ipc begin "$mode" false >/dev/null
         wait_state '.visible and .toggleReady and .settled'
-        ipc hoverAction "$lower" true >/dev/null
+        move_pointer hoverAction "$lower" true
         ipc leaveTrigger >/dev/null
         wait_state '.cursorHovered and .cursorHintReady and .cursorHintOpened'
         sleep 1
         snapshot | jq -e '.visible and .hovered and .cursorHovered and .cursorHintOpened and .cursorLeaves==0' >/dev/null \
             || fail "$mode button loses stationary hover when its hint appears (lower=$lower)"
         for ((movement=0;movement<8;movement++)); do
-            ipc hoverAction "$lower" false >/dev/null
+            move_pointer hoverAction "$lower" false
             sleep 0.05
         done
         snapshot | jq -e '.visible and .hovered and .cursorHovered and .cursorHintOpened and .cursorLeaves==0' >/dev/null \
             || fail "$mode button loses moving hover when its hint appears (lower=$lower)"
-        ipc leave >/dev/null
+        move_pointer leave
         wait_state '(.visible|not)'
     done
     printf 'PASS: %s upper/lower button hints preserve stationary and moving hover without cursor churn\n' "$mode"

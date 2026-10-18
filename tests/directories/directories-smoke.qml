@@ -14,6 +14,18 @@ Scope {
     property int step: 0
     property int ticks: 0
     property bool failed: false
+    property bool dispatching: false
+    property bool waitingForSave: false
+    property bool saveShouldSucceed: true
+    Connections {
+        target: DirectoryService
+        function onSaved(path) { root.waitingForSave = false }
+        function onErrorChanged() {
+            if (!root.waitingForSave || !DirectoryService.error) return
+            root.waitingForSave = false
+            if (root.saveShouldSucceed) root.check(false, "save at " + root.step + ": " + DirectoryService.error)
+        }
+    }
     Test.TestEvent { id: events }
     Test.TestCase { id: waiter; when: false }
     FileView { id: actions; path: root.directory + "/actions"; preload: false; blockLoading: true; printErrors: false }
@@ -98,13 +110,27 @@ Scope {
         return null
     }
     function check(condition,message) { if (!condition) { failed = true; console.error("DIRECTORY FAIL: " + message) } }
+    function save(nextStep, expectSuccess = true) {
+        waitingForSave = true
+        saveShouldSucceed = expectSuccess
+        step = nextStep
+        find("saveDirectory").clicked()
+    }
     Timer {
+        id: ticker
         interval: 80
         repeat: true
-        running: true
+        running: !root.dispatching
         onTriggered: {
+            if (root.dispatching) return
+            root.dispatching = true
+            try { ticker.runStep() }
+            finally { root.dispatching = false }
+        }
+        function runStep() {
             if (++root.ticks > 200 || root.failed) { console.error("DIRECTORY FAIL: timeout at " + root.step + ": " + DirectoryService.error); stop(); Qt.quit(); return }
             if (!DbService.ready || DirectoryService.busy || StatusService.status !== "personal") return
+            if (root.waitingForSave) return
             if (Quickshell.env("DIRECTORY_TEST_PHASE") === "typed") {
                 stop()
                 try { root.typedPaths() } catch (error) { root.check(false, String(error)) }
@@ -133,8 +159,7 @@ Scope {
                 panel.beginAdd()
                 root.find("directoryPath").text = "~/banana folder"
                 root.find("directoryName").text = "Banana"
-                root.find("saveDirectory").clicked()
-                root.step = 2
+                root.save(2)
             } else if (root.step === 2) {
                 root.check(DirectoryService.directories.length === 1 && DirectoryService.directories[0].path === root.folder,"local folder saved canonically")
                 root.check(!root.find("directoryForm").visible && root.find("beginAddDirectory").visible,"saved folder collapses footer")
@@ -151,8 +176,7 @@ Scope {
                 root.check(root.find("directoryPath").activeFocus,"Add focuses path")
                 root.check(events.keyClick(Qt.Key_A,Qt.ControlModifier,0),"Ctrl+A reaches open path")
                 root.check(root.find("directoryPath").selectedText === "computer:///","Ctrl+A selects path text while adding")
-                root.find("saveDirectory").clicked()
-                root.step = 5
+                root.save(5)
             } else if (root.step === 5) {
                 root.check(DirectoryService.directories.length === 2 && !DirectoryService.draft,"system URI saved without filesystem validation")
                 root.check(PickerService.items.length === 1,"work directories hidden outside work")
@@ -180,23 +204,20 @@ Scope {
                 root.find("directoryCategory").selected(root.find("directoryCategory").selectedName === "work" ? "personal" : "work")
                 root.find("directoryName").text = "Tomato"
                 root.find("directoryPath").text = "trash:///"
-                root.find("saveDirectory").clicked()
-                root.step = 7
+                root.save(7)
             } else if (root.step === 7) {
                 root.check(DirectoryService.directories.length === 2 && PickerService.items.length === 2,"editing atomically replaces path and category")
                 root.check(!DirectoryService.directories.some(entry => entry.path === "computer:///"),"old location removed on rename")
                 root.check(panel.managementView.selectedEntry?.path === "trash:///","renaming keeps the saved directory selected")
                 panel.beginAdd()
                 root.find("directoryPath").text = root.folder
-                root.find("saveDirectory").clicked()
-                root.step = 8
+                root.save(8, false)
             } else if (root.step === 8) {
                 root.check(!!DirectoryService.error && DirectoryService.directories.length === 2,"duplicate folder rejected without overwriting")
                 root.find("cancelDirectory").clicked()
                 panel.beginAdd()
                 root.find("directoryPath").text = root.directory + "/missing"
-                root.find("saveDirectory").clicked()
-                root.step = 9
+                root.save(9, false)
             } else if (root.step === 9) {
                 root.check(!!DirectoryService.error && DirectoryService.directories.length === 2,"missing folder rejected without saving")
                 root.find("cancelDirectory").clicked()
@@ -211,10 +232,10 @@ Scope {
                 root.find("cancelDirectory").clicked()
                 panel.beginAdd()
                 root.find("directoryPath").text = "network:///"
-                root.find("saveDirectory").clicked()
-                root.step = 10
+                root.save(10)
             } else {
                 root.check(DirectoryService.directories.length === 3,"additional virtual location can be added")
+                if (root.failed) { stop(); Qt.quit(); return }
                 panel.managementView.select("network:///")
                 root.find("removeDirectory_network:///").clicked()
                 root.check(DirectoryService.directories.length === 2,"remove deletes only picker entry")

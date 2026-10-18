@@ -44,6 +44,7 @@ Scope {
         onFailed: message => {
             console.error("HANDOFF NATIVE FAIL:", message, JSON.stringify({
                 mainActive: main.windowActive, clipboardActive: clipboard.windowActive,
+                mainRequested: PickerService.visible, animationMode: Quickshell.env("HANDOFF_ANIMATIONS"),
                 clipboardVisible: clipboard.visible, requested: ClipboardPickerService.visible,
                 field: main.contentItem.Window.window?.activeFocusItem?.objectName,
                 text: root.field?.text, selection: root.field?.selectedText,
