@@ -15,6 +15,7 @@ Scope {
         const handler = driver.find(window.contentItem, "windowFocusHandler")
         return JSON.stringify({visible: PickerService.visible, hostVisible: window.visible,
             active: window.windowActive, field: window.contentItem.Window.window?.activeFocusItem?.objectName,
+            transitioning: window.transitioning,
             ready: handler?.ready, requesting: handler?.requestingKeyboardFocus,
             settled: handler?.activationSettled, retaining: handler?.retainingNativeFocus})
     }
@@ -68,6 +69,11 @@ Scope {
     Component.onCompleted: {
         driver.add("open applications", () => PickerService.apps())
         driver.waitFor("native application index and focus", () => PickerService.items.length > 0 && root.inputReady())
+        // This fixture checks geometry and focus of two separate openings.
+        // Observe the native close before reopening; rapid replacements have
+        // their own coverage in opening-focus.qml.
+        driver.add("close applications", () => PickerService.close())
+        driver.waitFor("applications native close and focus release", () => !window.visible && !window.windowActive)
         driver.add("open preview", () => root.openPreview())
         driver.waitFor("preview geometry and focus", () => root.inputReady() && !window.transitioning, () => {
             const screen = window.geometryScreen
