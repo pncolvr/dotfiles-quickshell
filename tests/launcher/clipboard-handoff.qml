@@ -73,7 +73,14 @@ Scope {
         repeat: true
         onTriggered: {
             if (root.failed || ++root.ticks > 240) {
-                console.error("HANDOFF FAIL: stopped at", root.step)
+                console.error("HANDOFF FAIL: stopped at", root.step, JSON.stringify({
+                    windowActive: main.contentItem.Window.active,
+                    field: main.contentItem.Window.window.activeFocusItem?.objectName,
+                    usernameFocused: root.originalField?.activeFocus,
+                    selection: root.originalField?.selectedText,
+                    focusPending: mainFocus.focusPanelPending,
+                    clipboardVisible: ClipboardPickerService.visible
+                }))
                 Qt.quit(); return
             }
             if (!DbService.ready) return
@@ -88,12 +95,27 @@ Scope {
                 root.originalDraft = RemoteService.draft
                 mainPanel.panel.entryForm.load(Object.assign(Entries.empty([], "ssh"), {name:"Unsaved SSH", endpoint:"test.example", username:"before", password:"PUBLIC_FORM_FIXTURE"}))
                 root.originalField = objects.findChild(mainPanel, "remoteUsername")
-                root.originalField.selectAll()
                 TooltipService.openForKeyboard(0, tooltipContent, tooltipSource, false, null)
                 ClipboardRepository.add({id:"a".repeat(64), mime:"text/plain", kind:"text", bytes:6, text:"pasted"})
-                root.openClipboard()
+                main.contentItem.Window.window.requestActivate()
                 root.step++; break
             case 2:
+                if (!main.contentItem.Window.active) return
+                // Finish pending form-opening focus before simulating field interaction.
+                mainFocus.requestInteraction()
+                root.originalField.forceActiveFocus()
+                root.step++; break
+            case 3:
+                if (!root.originalField.activeFocus) return
+                root.originalField.selectAll()
+                root.step++; break
+            case 4:
+                root.check(root.originalField.activeFocus, "username focused before handoff")
+                root.check(root.originalField.selectedText === "before", "username selection established before handoff")
+                if (root.failed) return
+                root.openClipboard()
+                root.step++; break
+            case 5:
                 if (!ClipboardPickerService.visible || ClipboardPickerService.searchPending) return
                 root.preserved()
                 root.check(PanelFocusService.target?.item === root.originalField, "handoff captures original field: " + PanelFocusService.target?.item?.objectName)
@@ -104,28 +126,28 @@ Scope {
                 root.check(ClipboardPickerService.query === "pasted" && PanelFocusService.hasTarget(ClipboardPickerService), "repeated Meta+V preserves query and return target")
                 ClipboardPickerService.close()
                 root.step++; break
-            case 3:
+            case 6:
                 root.preserved()
                 root.check(!PanelFocusService.active && !mainFocus.handoffHeld, "Escape releases handoff")
                 root.check(main.contentItem.Window.window.activeFocusItem === root.originalField, "Escape restores the original field: " + main.contentItem.Window.window.activeFocusItem?.objectName)
                 root.openClipboard()
                 root.step++; break
-            case 4:
+            case 7:
                 if (ClipboardPickerService.searchPending || !ClipboardPickerService.canAccept) return
                 ClipboardPickerService.accept(false, true)
                 root.step++; break
-            case 5:
+            case 8:
                 if (ClipboardPickerService.visible) return
                 root.preserved()
                 root.check(!PanelFocusService.active, "Copy releases handoff without editing the field")
                 copySource.selectAll(); copySource.copy()
                 root.openClipboard()
                 root.step++; break
-            case 6:
+            case 9:
                 if (ClipboardPickerService.searchPending || !ClipboardPickerService.canAccept) return
                 ClipboardPickerService.accept(false, false)
                 root.step++; break
-            case 7:
+            case 10:
                 if (ClipboardPickerService.visible) return
                 root.check(root.originalField.text === "pasted", "Paste replaces the original field selection")
                 root.check(main.contentItem.Window.window.activeFocusItem === root.originalField, "Paste restores the original field")
@@ -133,21 +155,21 @@ Scope {
                 root.originalField.text = "before"; root.originalField.selectAll()
                 root.openClipboard()
                 root.step++; break
-            case 8:
+            case 11:
                 ClipboardPickerService.close("outside")
                 root.step++; break
-            case 9:
+            case 12:
                 root.preserved()
                 root.check(!mainFocus.openingFocus && !mainFocus.requestingKeyboardFocus, "outside dismissal does not reactivate the old panel")
                 root.openClipboard()
                 root.step++; break
-            case 10:
+            case 13:
                 if (ClipboardPickerService.searchPending || !ClipboardPickerService.canAccept) return
                 PickerService.close()
                 root.check(!PanelFocusService.hasTarget(ClipboardPickerService), "closed parent invalidates paste target")
                 ClipboardPickerService.accept(false, false)
                 root.step++; break
-            case 11:
+            case 14:
                 if (ClipboardPickerService.visible) return
                 root.check(!PanelFocusService.active && !PickerService.visible, "stale return target never reopens a closed parent")
                 TooltipService.dismiss()
