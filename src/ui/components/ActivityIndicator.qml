@@ -36,7 +36,6 @@ TooltipArea {
 
     BarIcon {
         centerGlyphVertically: true
-        font.pixelSize: Theme.fontSize
         color: root.moduleIconColor
         animationEnabled: root.animationEnabled
         pulsing: !root.pinned

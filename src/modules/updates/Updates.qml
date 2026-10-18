@@ -21,11 +21,5 @@ UI.TooltipArea {
             text: Theme.updatesIcon
             color: root.moduleIconColor
         }
-
-        UI.ColumnText {
-            visible: UpdatesService.hasPriority
-            text: `${UpdatesService.priorityUpdates.length}`
-            color: Theme.warning
-        }
     }
 }

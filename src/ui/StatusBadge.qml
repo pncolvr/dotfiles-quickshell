@@ -2,15 +2,22 @@ import QtQuick
 import "../theme"
 import "./components" as UI
 
-Rectangle {
+Item {
+    id: root
     property alias text: label.text
     property color badgeColor: Theme.urgent
     anchors.verticalCenter: parent ? parent.verticalCenter : undefined
 
-    radius: Theme.statusBadgeRadius
-    color: badgeColor
-    implicitWidth: label.implicitWidth + Theme.statusBadgePaddingWidth
+    implicitWidth: label.implicitWidth + Theme.statusBadgePaddingWidth + Theme.workspaceSpacing
     implicitHeight: label.implicitHeight + Theme.statusBadgePaddingHeight
+
+    Rectangle {
+        anchors.fill: parent
+        anchors.leftMargin: Theme.workspaceSpacing / 2
+        anchors.rightMargin: Theme.workspaceSpacing / 2
+        radius: Theme.statusBadgeRadius
+        color: root.badgeColor
+    }
 
     UI.Text {
         id: label

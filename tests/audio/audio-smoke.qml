@@ -217,13 +217,15 @@ Scope {
                 root.check(!AudioService.hasDeviceRequest(output, false, [browser], [playbackLink])
                     && !AudioService.hasDeviceRequest(input, true, [], [captureLink]),
                     "paused links and excluded monitor streams do not request a pulse")
-                const glyphWidth = barGlyph.implicitWidth
                 const glyphHeight = barGlyph.implicitHeight
-                root.check(glyphWidth < Theme.iconButtonWidth, "bar audio glyph uses compact spacing instead of the button slot")
+                root.check(barGlyph.font.pixelSize === Theme.fontSizeWorkspaces,
+                    "bar icons use the shared workspace glyph size")
                 for (const glyph of [Theme.micMutedIcon, Theme.volumeMutedIcon, ...Theme.volumeIcons]) {
                     barGlyph.text = glyph
-                    root.check(barGlyph.implicitWidth === glyphWidth && barGlyph.implicitHeight === glyphHeight,
-                        "bar audio icon dimensions remain stable across mute and volume states")
+                    root.check(barGlyph.implicitWidth + Theme.tooltipHoverPaddingWidth * 2
+                        === Math.ceil(barGlyph.glyphWidth) + Math.max(Theme.moduleSpacing, Theme.tooltipHoverPaddingWidth * 2)
+                        && barGlyph.implicitHeight === glyphHeight,
+                        "bar audio slot and tooltip padding preserve module spacing and height")
                 }
                 const screenshot = Quickshell.env("AUDIO_TEST_SCREENSHOT")
                 if (screenshot && !root.screenshotTaken) {

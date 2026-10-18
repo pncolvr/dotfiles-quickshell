@@ -247,9 +247,14 @@ metadata: runtime-selected `PanelWindow` backends, the missing
 Other warnings remain enabled, including signal checks outside those handlers.
 
 Changing audio glyphs use `UI.FixedIconText`, with a centered icon in a fixed
-slot. `AudioButton` uses `Theme.iconButtonWidth`; bar icons use `UI.BarIcon` and
-the compact `Theme.barIconWidth` slot. All bar module icons share that width, so
-their centers remain evenly spaced and state changes do not resize controls.
+slot. `AudioButton` uses `Theme.iconButtonWidth`; bar icons use `UI.BarIcon`,
+which renders at `Theme.fontSizeWorkspaces` (13px) and reserves
+`Theme.moduleSpacing` around each visible glyph, including the tooltip
+trigger's padding. Glyph bearings are accounted for when centering, and status
+badges reserve `Theme.workspaceSpacing` outside their colored backgrounds. The right bar
+row uses zero row spacing so glyph slots own their gaps; the center row uses
+`Theme.centerModulesSpacing` independently. The audio and module-pinning smoke
+tests check slot sizing and shared bar-module behavior.
 
 `UI.RightAlignedText` aligns rendered text with the right edge of its allotted
 width, including spare space left by styled-text elision. It extends `UI.ColumnText`.

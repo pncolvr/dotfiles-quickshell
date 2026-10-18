@@ -2,6 +2,8 @@ import ".."
 import "../../theme"
 
 FixedIconText {
-    slotWidth: Theme.barIconWidth
+    // TooltipArea already contributes padding on both sides of each module.
+    slotWidth: Math.ceil(glyphWidth) + Math.max(0, Theme.moduleSpacing - Theme.tooltipHoverPaddingWidth * 2)
+    centerGlyphHorizontally: true
     font.pixelSize: Theme.fontSizeWorkspaces
 }

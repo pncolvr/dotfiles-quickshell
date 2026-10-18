@@ -32,7 +32,6 @@ TooltipArea {
 
     Row {
         BarIcon {
-            font.pixelSize: Theme.fontSize
             color: root.moduleIconColor
             animationEnabled: MotionPolicy.volumePulseEnabled
             pulsing: !root.pinned && AudioService.outputMutePulse

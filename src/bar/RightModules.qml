@@ -3,13 +3,12 @@ import "../modules/system"
 import "../modules/media"
 import "../modules/status"
 import "../modules/hyprland"
-import "../theme"
 import "../ui"
 
 Row {
     id: root
     required property var window
-    spacing: Theme.moduleSpacing
+    spacing: 0
 
     ActiveWindowNoScreenShare {}
     Submap {}

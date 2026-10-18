@@ -18,6 +18,15 @@ Scope {
     property bool failed: false
     readonly property var recordingService: RecordingService
     function check(ok, message) { if (!ok) { failed = true; console.error("PIN FAIL:", message) } }
+    function barIcon(item) {
+        if (item instanceof UI.BarIcon) return item
+        for (const child of item.children ?? []) {
+            const icon = barIcon(child)
+            if (icon) return icon
+        }
+        return null
+    }
+    TextMetrics { id: iconMetrics }
     Test.TestCase { id: events; when: false }
     Test.TestResult { id: objects }
     FloatingWindow {
@@ -40,6 +49,11 @@ Scope {
         }
         UpdatesModule.UpdatesTooltip { id: updatesPanel; x: 20; y: 70 }
         System.Tray { window: host; x: 400; y: 70 }
+        Row {
+            y: 300
+            UI.StatusBadge { id: firstBadge; text: "Hidden" }
+            UI.StatusBadge { id: secondBadge; text: "Submap" }
+        }
     }
     Component { id: clock; ClockModule.Clock {} }
     Component { id: updates; UpdatesModule.Updates {} }
@@ -62,6 +76,27 @@ Scope {
         onTriggered: {
             if (root.step < triggers.count) {
                 const trigger = (triggers.itemAt(root.step) as Loader).item as UI.TooltipArea
+                const icon = root.barIcon(trigger)
+                if (icon) {
+                    root.check(icon.font.pixelSize === Theme.workspaceIconSize,
+                        trigger.moduleName + " uses the workspace icon size")
+                    root.check(Math.abs(icon.width + trigger.leftMargin + trigger.rightMargin
+                        - Math.ceil(icon.glyphWidth) - Math.max(Theme.moduleSpacing, Theme.tooltipHoverPaddingWidth * 2)) < 0.01,
+                        trigger.moduleName + " uses module spacing including trigger padding")
+                    iconMetrics.font = icon.font
+                    iconMetrics.text = icon.text
+                    const glyph = icon.children[0]
+                    const center = glyph.x + iconMetrics.tightBoundingRect.x + iconMetrics.tightBoundingRect.width / 2
+                    root.check(Math.abs(center - icon.width / 2) < 0.01,
+                        trigger.moduleName + " centers visible glyph ink")
+                }
+                if (root.step === 0) {
+                    const firstBackground = firstBadge.children[0]
+                    const secondBackground = secondBadge.children[0]
+                    root.check(Math.abs(secondBadge.x + secondBackground.x
+                        - firstBadge.x - firstBackground.x - firstBackground.width - Theme.workspaceSpacing) < 0.01,
+                        "adjacent status badge backgrounds retain workspace spacing")
+                }
                 const oldMuted = AudioService.muted
                 const oldMicMuted = AudioService.micMuted
                 TooltipService.dismiss()

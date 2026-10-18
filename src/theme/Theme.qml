@@ -39,8 +39,8 @@ QtObject {
     readonly property int actionButtonWidth: 30
     readonly property int controlSpacing: 6
     readonly property int controlFieldPadding: 8
-    readonly property int moduleSpacing: 3
-    readonly property int barIconWidth: 13
+    readonly property int moduleSpacing: 4
+    readonly property int centerModulesSpacing: 4
     readonly property int groupedModuleSpacing: 16
     readonly property int iconButtonWidth: 18
     readonly property int iconButtonHeight: 22
