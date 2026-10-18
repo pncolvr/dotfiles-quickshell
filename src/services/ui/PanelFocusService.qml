@@ -21,12 +21,28 @@ QtObject {
         return active && handler.handoffOwner !== owner
             && heldSessions.some(saved => saved.handler === handler && saved.session === handler.focusSession)
     }
+    function textPosition(item) {
+        if (typeof item?.text !== "string" || typeof item.cursorPosition !== "number"
+            || typeof item.select !== "function") return null
+        return {text:item.text, cursor:item.cursorPosition, start:item.selectionStart, end:item.selectionEnd}
+    }
+    function restoreTextPosition(item, saved) {
+        // A form may update while Clipboard is open. Never reapply positions to
+        // changed text, or restore a selection belonging to another field.
+        if (!saved || item.text !== saved.text) return
+        item.cursorPosition = saved.cursor
+        if (saved.start !== saved.end) {
+            const backwards = saved.cursor === saved.start
+            item.select(backwards ? saved.end : saved.start, backwards ? saved.start : saved.end)
+        }
+    }
     function begin(session) {
         if (owner === session) return
         returnHandler = null
         const handler = handlers.find(item => item.hostRequestedVisible && item.windowActive
             && item.ready && !item.blocked && !item.nativeDialogOpen)
-        target = handler ? {handler, session:handler.focusSession, item:handler.nativeWindow?.activeFocusItem} : null
+        const item = handler?.nativeWindow?.activeFocusItem
+        target = handler ? {handler, session:handler.focusSession, item, position:textPosition(item)} : null
         heldSessions = handlers.filter(item => item.hostRequestedVisible)
             .map(item => ({handler:item, session:item.focusSession}))
         // Set the hold before the new window can clear the old native focus grab.
@@ -64,6 +80,7 @@ QtObject {
                 && previous.handler.hostRequestedVisible && previous.handler.focusSession === previous.session) {
                 root.returnHandler = previous.handler
                 const restored = previous.handler.restoreFocus(previous.item)
+                if (restored) root.restoreTextPosition(previous.item, previous.position)
                 // Qt's text controls paste from the clipboard directly, including
                 // normal selection replacement. No payload is read into this service.
                 if (paste && restored && previous.item?.visible && previous.item.enabled

@@ -479,7 +479,17 @@ of an unsaved SSH form, preserved username/password and selection, repeated
 opening, Escape/Copy focus return, selected-field paste, outside dismissal and
 closed-parent safety. The test simulates compositor activation in offscreen Qt
 windows and stubs clipboard commands; it does not take desktop focus or use
-real credentials. Native focus/grab behavior still needs user review.
+real credentials.
+
+Run `bash tests/run.sh --native native/launcher/clipboard-handoff` for the
+dedicated native return-path regression. It uses actual picker windows and
+compositor activation, synthetic SSH form data and mocked clipboard commands.
+With animations enabled and disabled, it repeats Escape/Copy returns and checks
+the original field, forward/backward selection, caret, unsaved form and delivery
+of the next keystroke. The handoff saves the original editing position before
+releasing focus and restores it only if the field's text is unchanged.
+The animated case also checks return while the Clipboard window is closing.
+This test takes desktop focus; leave the keyboard and mouse idle until it ends.
 
 ```sh
 bash tests/clipboard/fts/run.sh

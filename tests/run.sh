@@ -306,6 +306,7 @@ if $native; then
     run native launcher/expose bash tests/launcher/expose.sh
     run native launcher/shortcuts bash tests/launcher/global-shortcuts.sh
     run native launcher/pointer bash tests/launcher/native-pointer.sh
+    run native launcher/clipboard-handoff bash tests/launcher/clipboard-handoff-native.sh
     run native launcher/focus bash tests/launcher/opening-focus.sh
     run native launcher/wayland bash tests/launcher/wayland.sh
     run native launcher/screenshot env SCREENSHOT_TEST_NATIVE=1 bash tests/launcher/screenshot.sh

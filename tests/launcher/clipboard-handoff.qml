@@ -124,6 +124,7 @@ Scope {
                 ClipboardPickerService.query = "pasted"
                 PickerService.clipboard()
                 root.check(ClipboardPickerService.query === "pasted" && PanelFocusService.hasTarget(ClipboardPickerService), "repeated Meta+V preserves query and return target")
+                root.originalField.deselect() // Native Qt can clear selection during the handoff.
                 ClipboardPickerService.close()
                 root.step++; break
             case 6:
@@ -134,6 +135,7 @@ Scope {
                 root.step++; break
             case 7:
                 if (ClipboardPickerService.searchPending || !ClipboardPickerService.canAccept) return
+                root.originalField.deselect()
                 ClipboardPickerService.accept(false, true)
                 root.step++; break
             case 8:
@@ -145,6 +147,7 @@ Scope {
                 root.step++; break
             case 9:
                 if (ClipboardPickerService.searchPending || !ClipboardPickerService.canAccept) return
+                root.originalField.deselect()
                 ClipboardPickerService.accept(false, false)
                 root.step++; break
             case 10:
@@ -165,11 +168,24 @@ Scope {
                 root.step++; break
             case 13:
                 if (ClipboardPickerService.searchPending || !ClipboardPickerService.canAccept) return
+                root.originalField.text = "updated"
+                root.originalField.cursorPosition = 3
+                ClipboardPickerService.close()
+                root.step++; break
+            case 14:
+                if (ClipboardPickerService.visible) return
+                root.check(root.originalField.text === "updated" && root.originalField.cursorPosition === 3
+                    && root.originalField.selectedText === "", "changed text must not receive stale selection/caret")
+                root.originalField.text = "before"; root.originalField.selectAll()
+                root.openClipboard()
+                root.step++; break
+            case 15:
+                if (ClipboardPickerService.searchPending || !ClipboardPickerService.canAccept) return
                 PickerService.close()
                 root.check(!PanelFocusService.hasTarget(ClipboardPickerService), "closed parent invalidates paste target")
                 ClipboardPickerService.accept(false, false)
                 root.step++; break
-            case 14:
+            case 16:
                 if (ClipboardPickerService.visible) return
                 root.check(!PanelFocusService.active && !PickerService.visible, "stale return target never reopens a closed parent")
                 TooltipService.dismiss()
