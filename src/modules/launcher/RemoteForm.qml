@@ -77,7 +77,8 @@ Column {
             checkable: true
             Accessible.name: Translations.text("remotes.fields.jumpHost")
             Accessible.expanded: checked
-            UI.PointerFocus {}
+            readonly property bool keyboardFocusVisible: pointerFocus.keyboardFocusVisible
+            UI.PointerFocus { id: pointerFocus }
             UI.FocusReveal { owner: jumpToggle }
             HoverHandler { cursorShape: Qt.PointingHandCursor }
             Keys.onReturnPressed: click()
@@ -86,7 +87,7 @@ Column {
             background: Rectangle {
                 radius: Theme.iconButtonRadius
                 color: jumpToggle.hovered || jumpToggle.checked ? Theme.alternateBackground : "transparent"
-                border.width: jumpToggle.visualFocus ? 1 : 0
+                border.width: jumpToggle.keyboardFocusVisible ? 1 : 0
                 border.color: Theme.accent
             }
             contentItem: RowLayout {

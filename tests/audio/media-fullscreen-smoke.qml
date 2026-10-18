@@ -264,7 +264,7 @@ Scope {
                 const selected = effects.view.itemAtIndex(effects.view.currentIndex) as UI.SelectionRow;
                 root.check(selected.selected
                     && String((selected.contentItem.children[0] as Text).color) === String(Theme.accent)
-                    && String((selected.background as Rectangle).color) === String(selected.hovered || selected.visualFocus
+                    && String((selected.background as Rectangle).color) === String(selected.hovered || selected.keyboardFocusVisible
                         ? Theme.selectionHoverBackground : Theme.selectionSelectedBackground),
                     "selection uses the shared accent text and background styles");
                 root.find(card, "mediaPlayPause").clicked();

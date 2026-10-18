@@ -20,7 +20,8 @@ Column {
 
     QC.Button {
         id: heading
-        UI.PointerFocus {}
+        readonly property bool keyboardFocusVisible: pointerFocus.keyboardFocusVisible
+        UI.PointerFocus { id: pointerFocus }
         objectName: "toggleTwitchUserSection"
         width: parent.width
         implicitHeight: Math.max(label.implicitHeight, arrow.implicitHeight)
@@ -34,7 +35,7 @@ Column {
 
         background: Rectangle {
             radius: Theme.iconButtonRadius
-            color: heading.hovered || heading.visualFocus ? Theme.alternateBackground : "transparent"
+            color: heading.hovered || heading.keyboardFocusVisible ? Theme.alternateBackground : "transparent"
         }
         contentItem: Item {
             UI.IconText {

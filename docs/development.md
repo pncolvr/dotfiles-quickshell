@@ -197,6 +197,11 @@ sources/bundles under `shaders/`. `src/theme/` contains appearance settings and
 palettes. Import the UI module with an `as UI` alias; both the root and local
 component metadata export the same types and singleton instances.
 
+Controls using `UI.PointerFocus` draw their keyboard ring through
+`keyboardFocusVisible`. Pointer and keyboard events update that visual state
+without clearing or restoring focus; the native control retains its keyboard
+navigation and activation behavior.
+
 `UI.CopyButton` shares TOTP-style copy feedback: a checkmark, active color and
 translated Copied tooltip for `Config.copyFeedbackDuration` milliseconds.
 Its `copyAction(completed)` operation reports success with `completed(true)`;

@@ -7,7 +7,8 @@ import ".." as UI
 QC.CheckBox {
     id: root
     UI.FocusReveal { owner: root }
-    UI.PointerFocus {}
+    readonly property bool keyboardFocusVisible: pointerFocus.keyboardFocusVisible
+    UI.PointerFocus { id: pointerFocus }
     padding: Theme.controlFieldPadding
     spacing: Theme.controlSpacing
     implicitHeight: Theme.controlHeight
@@ -22,7 +23,7 @@ QC.CheckBox {
         radius: Theme.iconButtonRadius
         color: Theme.alternateBackground
         border.width: 1
-        border.color: root.visualFocus ? Theme.accent : Theme.empty
+        border.color: root.keyboardFocusVisible ? Theme.accent : Theme.empty
         UI.IconText { anchors.centerIn: parent; text: root.checked ? Theme.checkIcon : ""; color: Theme.accent }
     }
     contentItem: UI.ColumnText {

@@ -111,7 +111,7 @@ Singleton {
     }
     function copyPid(pid, completed = null) {
         if (!Number.isInteger(pid) || pid <= 0) { if (completed) completed(false); return }
-        const task = pidCopy.createObject(root, {command: ["wl-copy", "--", String(pid)], completed})
+        const task = pidCopy.createObject(root, {command: ["wl-copy", "--", String(pid)], completed}) as Process
         task.running = true
     }
     Component {

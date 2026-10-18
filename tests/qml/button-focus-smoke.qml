@@ -16,6 +16,7 @@ Scope {
     function check(condition, message) {
         if (!condition) { failed = true; console.error("BUTTON FOCUS FAIL: " + message) }
     }
+    function keyboardRing(control: var): bool { return control.keyboardFocusVisible }
     function find(item, name) {
         if (item.objectName === name) return item
         if (item instanceof UI.ComboSelector && item.choicesObjectName === name) return item.choicesView
@@ -27,9 +28,15 @@ Scope {
     }
     function checkButton(button, persistentBorder = false) {
         button.forceActiveFocus(Qt.TabFocusReason)
-        check(button.visualFocus && button.background.border.width === 1, "keyboard focus has a visible border")
+        check(button.keyboardFocusVisible && button.background.border.width === 1, "keyboard focus has a visible border")
+        let focusChanges = 0
+        const changed = () => { focusChanges++ }
+        button.activeFocusChanged.connect(changed)
         events.mouseClick(button, button.width / 2, button.height / 2, Qt.LeftButton, Qt.NoModifier, 0)
-        check(!button.visualFocus && button.background.border.width === (persistentBorder ? 1 : 0),
+        button.activeFocusChanged.disconnect(changed)
+        if (!persistentBorder)
+            check(button.activeFocus && focusChanges === 0, "clicking a focused button never clears and restores focus")
+        check(!button.keyboardFocusVisible && button.background.border.width === (persistentBorder ? 1 : 0),
             "click removes keyboard focus while preserving the control's normal border")
     }
     function checkSelector(combo) {
@@ -89,8 +96,15 @@ Scope {
             root.check(root.actionClicks === 1 && root.audioClicks === 1, "focus handling preserves mouse activation")
             action.forceActiveFocus(Qt.TabFocusReason)
             events.keyClick(Qt.Key_Space, Qt.NoModifier, 0)
-            root.check(root.actionClicks === 2 && action.visualFocus && (action.background as Rectangle).border.width === 1,
+            root.check(root.actionClicks === 2 && action.keyboardFocusVisible && (action.background as Rectangle).border.width === 1,
                 "keyboard activation preserves its focus indicator")
+            events.mouseClick(action, action.width / 2, action.height / 2, Qt.LeftButton, Qt.NoModifier, 0)
+            events.mouseClick(action, action.width / 2, action.height / 2, Qt.LeftButton, Qt.NoModifier, 0)
+            root.check(root.actionClicks === 4 && action.activeFocus && !action.keyboardFocusVisible,
+                "repeated pointer activation keeps focus without a keyboard ring")
+            events.keyClick(Qt.Key_Space, Qt.NoModifier, 0)
+            root.check(root.actionClicks === 5 && action.keyboardFocusVisible && (action.background as Rectangle).border.width === 1,
+                "keyboard use restores the ring without refocusing the control")
             const toggle = root.find(selector, "selectorToggle")
             // ComboSelector deliberately keeps its normal one-pixel outline.
             root.checkButton(toggle, true)
@@ -100,17 +114,17 @@ Scope {
             root.checkSelector(selector)
             root.checkSelector(profile)
             slider.forceActiveFocus(Qt.TabFocusReason)
-            root.check(slider.visualFocus && (slider.handle as Rectangle).border.width === 2, "slider keyboard focus remains visible")
+            root.check(slider.keyboardFocusVisible && (slider.handle as Rectangle).border.width === 2, "slider keyboard focus remains visible")
             events.mouseClick(slider, slider.width / 2, slider.height / 2, Qt.LeftButton, Qt.NoModifier, 0)
-            root.check(!slider.visualFocus && (slider.handle as Rectangle).border.width === 0, "slider click leaves no focus outline")
+            root.check(!slider.keyboardFocusVisible && (slider.handle as Rectangle).border.width === 0, "slider click leaves no focus outline")
             const heading = root.find(section, "toggleTwitchUserSection")
             heading.forceActiveFocus(Qt.TabFocusReason)
             events.mouseClick(heading, heading.width / 2, heading.height / 2, Qt.LeftButton, Qt.NoModifier, 0)
-            root.check(!heading.visualFocus && section.expanded, "Twitch header toggles without keeping keyboard highlighting")
+            root.check(!heading.keyboardFocusVisible && section.expanded, "Twitch header toggles without keeping keyboard highlighting")
             const tab = tabs.itemAt(1) as QC.TabButton
             tab.forceActiveFocus(Qt.TabFocusReason)
             events.mouseClick(tab, tab.width / 2, tab.height / 2, Qt.LeftButton, Qt.NoModifier, 0)
-            root.check(!tab.visualFocus && tab.checked, "tab selection works without a mouse focus outline")
+            root.check(!root.keyboardRing(tab) && tab.checked, "tab selection works without a mouse focus outline")
             if (!root.failed) console.log("PASS: pointer clicks clear focus decorations while keyboard focus and control states remain available")
             Qt.quit()
         }

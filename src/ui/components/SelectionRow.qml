@@ -13,12 +13,13 @@ UI.SelectableRow {
     hoverEnabled: true
     opacity: enabled ? 1 : 0.4
     Accessible.name: description
-    UI.PointerFocus {}
+    readonly property bool keyboardFocusVisible: pointerFocus.keyboardFocusVisible
+    UI.PointerFocus { id: pointerFocus }
     background: Rectangle {
         radius: Theme.iconButtonRadius
-        color: root.pointerHovered || root.visualFocus ? Theme.selectionHoverBackground
+        color: root.pointerHovered || root.keyboardFocusVisible ? Theme.selectionHoverBackground
             : root.selected ? Theme.selectionSelectedBackground : Theme.selectionBackground
-        border.width: root.highlighted || root.visualFocus ? 1 : 0
+        border.width: root.highlighted || root.keyboardFocusVisible ? 1 : 0
         border.color: Theme.accent
     }
     contentItem: Item {

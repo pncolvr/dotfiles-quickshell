@@ -22,12 +22,13 @@ QC.Button {
     opacity: enabled ? 1 : 0.45
     Accessible.name: shortcutHint || label
     UI.PanelShortcut { owner: root; action: root.keyAction; onActivated: root.clicked() }
-    UI.PointerFocus {}
+    readonly property bool keyboardFocusVisible: pointerFocus.keyboardFocusVisible
+    UI.PointerFocus { id: pointerFocus }
 
     background: Rectangle {
         color: root.down ? Qt.darker(root.fillColor, 1.2) : root.hovered ? Qt.lighter(root.fillColor, 1.4) : root.fillColor
         radius: Theme.iconButtonRadius
-        border.width: root.visualFocus ? 1 : 0
+        border.width: root.keyboardFocusVisible ? 1 : 0
         border.color: Theme.accent
     }
 

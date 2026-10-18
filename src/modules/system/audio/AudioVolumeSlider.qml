@@ -17,7 +17,8 @@ QC.Slider {
     stepSize: Config.audioVolumeStep
     wheelEnabled: true
     onMoved: root.volumeMoved(value)
-    UI.PointerFocus {}
+    readonly property bool keyboardFocusVisible: pointerFocus.keyboardFocusVisible
+    UI.PointerFocus { id: pointerFocus }
     HoverHandler {
         enabled: root.enabled
         cursorShape: Qt.PointingHandCursor
@@ -49,8 +50,8 @@ QC.Slider {
         width: Theme.audioSliderHandleSize
         height: width
         radius: width / 2
-        color: root.pressed || root.visualFocus ? Theme.accent : Theme.text
+        color: root.pressed || root.keyboardFocusVisible ? Theme.accent : Theme.text
         border.color: Theme.accent
-        border.width: root.visualFocus ? 2 : 0
+        border.width: root.keyboardFocusVisible ? 2 : 0
     }
 }

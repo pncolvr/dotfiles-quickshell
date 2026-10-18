@@ -81,7 +81,8 @@ QC.TabBar {
         model: root.labels
         QC.TabButton {
             id: tabButton
-            UI.PointerFocus {}
+            readonly property bool keyboardFocusVisible: pointerFocus.keyboardFocusVisible
+            UI.PointerFocus { id: pointerFocus }
             required property string modelData
             required property int index
             text: modelData
@@ -138,7 +139,7 @@ QC.TabBar {
                 color: tabButton.down ? Qt.darker(Theme.alternateBackground, 1.2)
                     : tabButton.hovered || tabDrop.containsDrag ? Theme.alternateBackground : "transparent"
                 radius: Theme.iconButtonRadius
-                border.width: tabButton.visualFocus || tabDrop.containsDrag ? 1 : 0
+                border.width: tabButton.keyboardFocusVisible || tabDrop.containsDrag ? 1 : 0
                 border.color: Theme.accent
                 Rectangle {
                     anchors.bottom: parent.bottom

@@ -111,7 +111,8 @@ Item {
     QC.Button {
         id: selector
         visible: !root.readOnly
-        UI.PointerFocus {}
+        readonly property bool keyboardFocusVisible: pointerFocus.keyboardFocusVisible
+        UI.PointerFocus { id: pointerFocus }
         objectName: root.toggleObjectName
         width: parent.width
         implicitHeight: root.compact ? root.controlHeight
@@ -128,7 +129,7 @@ Item {
             color: selector.hovered ? Theme.selectionHoverBackground : Theme.selectionBackground
             radius: Theme.iconButtonRadius
             border.width: 1
-            border.color: selector.visualFocus || root.expanded ? Theme.accent : Theme.selectionBorder
+            border.color: selector.keyboardFocusVisible || root.expanded ? Theme.accent : Theme.selectionBorder
         }
         contentItem: Item {
             UI.ColumnText {

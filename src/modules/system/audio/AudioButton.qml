@@ -16,7 +16,7 @@ UI.ActionButton {
     background: Rectangle {
         radius: Theme.iconButtonRadius
         color: root.down ? Theme.empty : root.hovered ? Qt.lighter(Theme.alternateBackground, 1.5) : Theme.alternateBackground
-        border.width: root.visualFocus ? 1 : 0
+        border.width: root.keyboardFocusVisible ? 1 : 0
         border.color: Theme.accent
     }
     contentItem: Item {
