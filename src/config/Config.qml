@@ -16,6 +16,7 @@ Item {
     readonly property string language: "system"
 
     // Optional modules and integrations. Configure these before first launch.
+    readonly property bool adaptiveBarEnabled: true
     readonly property bool bookmarksEnabled: true
     readonly property bool browserRoutingEnabled: true
     readonly property bool browserHistoryEnabled: true
@@ -34,6 +35,7 @@ Item {
     readonly property bool totpEnabled: true
 
     // Shared UI and privacy
+    readonly property var adaptiveBarSampleCommand: ["bash", Quickshell.shellPath("src/services/ui/adaptive-color.sh")]
     // Decorative motion follows both switches below.
     readonly property bool animationsEnabled: true
     readonly property bool animateDuringScreenShare: false

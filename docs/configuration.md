@@ -28,12 +28,12 @@ audio/media; network/statistics/power; batteries; Twitch/browser sessions; and T
 ## Optional modules and integrations
 
 The switches are grouped immediately below `language` at the top of
-`config/Config.qml`. The tracked configuration currently enables all ten; review
-this block before first launch. Personal overrides and different clone defaults
+`config/Config.qml`. Review this block before first launch. Personal overrides and different clone defaults
 have not been introduced.
 
 | Setting | When false |
 | --- | --- |
+| `adaptiveBarEnabled` | Keep the fixed palette and continuous bar; unload the optional color sampler (default `false`) |
 | `bookmarksEnabled` | Hide/disable the Bookmarks picker and skip bookmark-file reads |
 | `browserRoutingEnabled` | Enable browser routing and the Bookmarks History/Manage tabs; enabled in this setup |
 | `clipboardMonitorEnabled` | Stop automatic history collection; existing history remains available |
@@ -50,6 +50,35 @@ Without the custom capture helper, this configuration does not install or toggle
 compositor privacy rules. Review the [sample Hypr Lua code](setup.md#screen-sharing)
 before enabling it. Screenshot/recording control closure uses the separate
 per-panel `hideForCapture` policy; this switch does not change that policy.
+
+## Adaptive bar and panel backgrounds
+
+`adaptiveBarEnabled` defaults to `false`. Enable it to sample the most common color
+of a narrow strip immediately below each monitor's bar. Workspace, focus and
+window-layout events request a new sample; there is no continuous capture loop.
+The bar, its panels and launcher previews share that monitor's approved color.
+Unreadable colors, missing capture tools and capture failures use the configured
+theme background. Color animation follows the shared motion and screen-sharing
+policy. Samples stay in memory; no screenshots or color history are saved.
+Contrast checks include visible bar and panel labels; hidden urgent indicators
+and deliberately dim decorative markers do not reject otherwise readable colors.
+
+Empty workspaces and workspaces with only floating windows use three palette-
+colored islands. The left island rounds its bottom-right corner, the middle
+rounds both bottom corners, and the right rounds its bottom-left corner. The bar
+keeps its reserved height; transparent gaps pass pointer input to the desktop.
+An open panel adds matching backing behind the bar across its own width, so a
+panel wider than its island still has a continuous attachment. In island mode,
+panels have straight top edges and rounded bottom corners. Sampling pauses
+while Quickshell panels or notifications could cover the strip and resumes after
+they close, retaining the last accepted color meanwhile.
+
+Install `grim` and `imagemagick` for sampling. `Theme.adaptiveBarSampleHeight`
+sets the strip height (12 logical pixels), and `Theme.adaptiveBarColorDuration`
+sets color-transition duration (280 ms). `adaptiveBarSampleCommand` is the
+capture/color helper command; disabling the feature unloads its sampler.
+Run `qs ipc -p . call adaptivebar status` from the repository to inspect each
+monitor's sampled color, chosen background and sampling status.
 
 ## Display language
 

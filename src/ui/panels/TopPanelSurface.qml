@@ -20,6 +20,8 @@ Item {
     readonly property bool presented: presentation.presented
     readonly property Item popupContentBounds: contentClip
     property real backgroundOpacity: 1
+    property color backgroundColor: Theme.tooltipBackground
+    property bool islandMode: false
     property real shadowVisibility: requestedVisible ? 1 : 0
     UI.MotionBehavior on shadowVisibility {
         motionEnabled: presentation.motionAllowed
@@ -58,14 +60,17 @@ Item {
         height: barExtent + presentation.reservedHeight
         visible: false
         Rectangle {
-            width: parent.width
+            x: root.islandMode ? presentation.displayedX : 0
+            width: root.islandMode ? presentation.displayedWidth : parent.width
             height: shadowSource.barExtent
-            color: Theme.background
+            color: root.backgroundColor
         }
         UI.TooltipBackground {
             x: background.x
             y: shadowSource.barExtent + presentation.offsetY
             panelWidth: presentation.displayedWidth
+            backgroundColor: root.backgroundColor
+            barJoin: !root.islandMode
             height: presentation.displayedHeight
         }
     }
@@ -92,7 +97,9 @@ Item {
         UI.TooltipBackground {
             id: background
             backgroundOpacity: root.backgroundOpacity
-            x: presentation.displayedX - curveRadius
+            backgroundColor: root.backgroundColor
+            barJoin: !root.islandMode
+            x: presentation.displayedX - joinRadius
             panelWidth: presentation.displayedWidth
             height: presentation.displayedHeight
         }

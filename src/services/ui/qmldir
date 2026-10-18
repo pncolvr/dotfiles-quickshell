@@ -1,6 +1,7 @@
 # Local type metadata; parent exports refer to the same QML files.
 singleton AlertService 1.0 AlertService.qml
 singleton BarModuleService 1.0 BarModuleService.qml
+singleton AdaptiveBarService 1.0 AdaptiveBarService.qml
 singleton TooltipService 1.0 TooltipService.qml
 
 singleton CaptureHandoffService 1.0 CaptureHandoffService.qml

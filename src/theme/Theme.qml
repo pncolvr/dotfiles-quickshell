@@ -35,6 +35,8 @@ QtObject {
 
     // Bar and shared controls
     readonly property int barHeight: 30
+    readonly property int adaptiveBarSampleHeight: 12
+    readonly property int adaptiveBarColorDuration: 280
     readonly property int controlHeight: 34
     readonly property int actionButtonWidth: 30
     readonly property int controlSpacing: 6

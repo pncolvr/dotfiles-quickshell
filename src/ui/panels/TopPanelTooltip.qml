@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import "../../theme"
+import "../../services"
 import ".." as UI
 // qmllint disable uncreatable-type
 PanelWindow {
@@ -38,5 +39,10 @@ PanelWindow {
     implicitHeight: Math.max(1, (geometryScreen?.height ?? 1080) - Theme.barHeight)
     color: "transparent"
     mask: Region { x: surface.inputRect.x; y: surface.inputRect.y; width: surface.inputRect.width; height: surface.inputRect.height }
-    property TopPanelSurface surfaceComponent: TopPanelSurface { id: surface; parent: root.contentItem; width: root.width; height: root.height }
+    property TopPanelSurface surfaceComponent: TopPanelSurface {
+        id: surface
+        parent: root.contentItem; width: root.width; height: root.height
+        backgroundColor: AdaptiveBarService.backgroundFor(root.screen)
+        islandMode: AdaptiveBarService.islandsFor(root.screen)
+    }
 }

@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Effects
 import "../../theme"
+import "../../services"
 import "../../ui" as UI
 
 // Shared floating geometry, content lifetime and motion; the native host stays thin.
@@ -11,6 +12,7 @@ Item {
     required property var picker
     required property var previewPanel
     property var requestedScreen: host.requestedScreen
+    readonly property color backgroundColor: AdaptiveBarService.backgroundFor(requestedScreen)
     readonly property bool hideForCapture: previewPanel?.hideForCapture ?? false
     readonly property real shadowRadius: Theme.tooltipShadowEnabled
         ? Math.max(2, Math.min(64, Theme.tooltipShadowBlurRadius)) : 0
@@ -70,7 +72,7 @@ Item {
         visible: false
         width: card.width
         height: card.height
-        Rectangle { anchors.fill: parent; radius: Theme.tooltipRadius; color: Theme.background }
+        Rectangle { anchors.fill: parent; radius: Theme.tooltipRadius; color: root.backgroundColor }
     }
     MultiEffect {
         objectName: "floatingPickerShadow"
@@ -96,8 +98,8 @@ Item {
         height: presentation.displayedHeight
         opacity: presentation.fraction
         radius: Theme.tooltipRadius
-        color: Qt.rgba(Theme.tooltipBackground.r, Theme.tooltipBackground.g,
-            Theme.tooltipBackground.b, Theme.tooltipBackground.a * Theme.pickerBackgroundOpacity)
+        color: Qt.rgba(root.backgroundColor.r, root.backgroundColor.g,
+            root.backgroundColor.b, root.backgroundColor.a * Theme.pickerBackgroundOpacity)
         enabled: root.requestedVisible
         Loader {
             id: preview

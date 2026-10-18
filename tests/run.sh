@@ -264,6 +264,7 @@ run isolated ui/folder-dialog bash tests/ui/folder-dialog.sh
 run isolated ui/keybinds bash tests/ui/keybinds.sh
 run isolated ui/module-pins bash tests/ui/module-pins.sh
 run isolated ui/panel-motion bash tests/ui/panel-motion.sh
+run isolated ui/adaptive-bar bash tests/ui/adaptive-bar.sh
 run isolated ui/reload bash tests/ui/reload-warnings.sh
 run isolated ui/rows bash tests/ui/rows.sh
 run isolated ui/hints bash tests/ui/shortcut-hints.sh
@@ -327,6 +328,7 @@ if $native; then
     run native ui/panel-host bash tests/ui/panel-host.sh
     run native ui/panel-input bash tests/ui/panel-input.sh
     run native ui/panel-shadow bash tests/ui/panel-shadow.sh
+    run native ui/adaptive-bar env ADAPTIVE_NATIVE=1 bash tests/ui/adaptive-bar.sh
     run native ui/twitch bash tests/ui/twitch-panel.sh
     run native ui/unlock bash tests/ui/unlock-focus.sh
     finish_native

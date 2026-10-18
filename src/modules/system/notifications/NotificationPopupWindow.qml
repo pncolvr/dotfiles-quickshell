@@ -15,6 +15,14 @@ import "../../../config"
 UI.PrivatePanelWindow {
     // qmllint enable uncreatable-type
     id: root
+    QtObject {
+        id: samplingObstruction
+        readonly property var host: root
+        readonly property bool requested: root.visible
+        readonly property bool presentationPending: root.visible
+        Component.onCompleted: AdaptiveBarService.registerOverlay(samplingObstruction)
+        Component.onDestruction: AdaptiveBarService.unregisterOverlay(samplingObstruction)
+    }
     property var lastScreen: null
     property var targetScreen: null
     property bool animationsEnabled: UI.MotionPolicy.enabled

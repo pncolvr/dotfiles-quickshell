@@ -35,6 +35,7 @@ singleton StatusService 1.0 status/StatusService.qml
 singleton TwitchService 1.0 twitch/TwitchService.qml
 singleton TooltipService 1.0 ui/TooltipService.qml
 singleton BarModuleService 1.0 ui/BarModuleService.qml
+singleton AdaptiveBarService 1.0 ui/AdaptiveBarService.qml
 singleton AlertService 1.0 ui/AlertService.qml
 singleton TotpService 1.0 security/TotpService.qml
 singleton ClipboardRepository 1.0 storage/ClipboardRepository.qml

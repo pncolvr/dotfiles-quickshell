@@ -26,6 +26,9 @@ Scope {
     readonly property bool presented: captureParticipant && (requested || presentationPending)
     onPresentedChanged: CaptureHandoffService.update(root, presented)
     function hide() { host.captureHideRequested() }
-    Component.onCompleted: { synchronizeParticipation(); CaptureHandoffService.registerPanel(root); CaptureHandoffService.update(root, presented) }
-    Component.onDestruction: CaptureHandoffService.unregisterPanel(root)
+    Component.onCompleted: {
+        synchronizeParticipation(); CaptureHandoffService.registerPanel(root); CaptureHandoffService.update(root, presented)
+        AdaptiveBarService.registerOverlay(root)
+    }
+    Component.onDestruction: { CaptureHandoffService.unregisterPanel(root); AdaptiveBarService.unregisterOverlay(root) }
 }

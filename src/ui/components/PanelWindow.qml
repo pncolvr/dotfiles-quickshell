@@ -1,10 +1,10 @@
 import QtQuick
 import Quickshell
-import "../../theme"
+import "../../services"
 
 // Quickshell selects a creatable PanelWindow backend at runtime.
 // qmllint disable uncreatable-type
 PanelWindow {
     // qmllint enable uncreatable-type
-    color: Theme.background
+    color: AdaptiveBarService.backgroundFor(screen)
 }

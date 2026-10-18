@@ -1,5 +1,11 @@
 # Panels and focus
 
+The optional [adaptive bar](../configuration.md#adaptive-bar-and-panel-backgrounds)
+shares a readable sampled background with panels on the same monitor. In island
+mode, panels extend matching backing behind the bar across their width. This
+changes presentation only; pinning, keyboard focus and dismissal retain the
+policies below.
+
 All bar panels use left-click to pin/unpin and accent coloring for the pinned
 icon: Calendar, Updates, Recent Files, Timers, Microphone, Volume, Stats, Twitch,
 Status, TOTP, Batteries, Notifications, Screen sharing and Screen recording. Hover panels use native keyboard mode None, so opening one neither takes

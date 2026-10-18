@@ -1129,6 +1129,14 @@ open/close transitions, and reserves the larger native render area during resize
 Clipboard's own interpolated geometry uses `continuousGeometry` to avoid easing
 it twice. Private hosts reuse the same implementation and private namespace.
 
+Run `bash tests/ui/adaptive-bar.sh` for synthetic strip dominant-color sampling, contrast
+fallback, workspace/monitor classification, rounded islands, panel backing,
+overlay freeze, stale-result rejection and disabled sampler lifecycle. It uses
+an isolated mock capture command and never captures the desktop. The runner
+registers it as `isolated/ui/adaptive-bar`. `native/ui/adaptive-bar` repeats the
+pixel checks on Wayland/GPU with synthetic colors and no keyboard focus or
+pointer movement. `ADAPTIVE_PREVIEWS=/tmp/adaptive-previews` saves fixture images.
+
 Run `bash tests/ui/panel-motion.sh` for reveal, roll-up, resize, retargeting,
 reversal, immediate input release, render-area cleanup, clipboard pass-through
 and global policy interruption. `bash tests/ui/folder-dialog.sh` checks path

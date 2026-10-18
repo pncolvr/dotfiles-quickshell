@@ -35,6 +35,7 @@ repositories; the Twitch CLI and `yay` are handled separately.
 | Feature | Install command |
 | --- | --- |
 | Screenshots and annotation | `sudo pacman -S --needed grim slurp hyprpicker satty` |
+| Adaptive bar backgrounds | `sudo pacman -S --needed grim imagemagick` |
 | OCR, QR decoding and QR generation | `sudo pacman -S --needed tesseract tesseract-data-por zbar qrencode` |
 | Recording | `sudo pacman -S --needed wf-recorder slurp` |
 | Wallpaper | `sudo pacman -S --needed awww` |
