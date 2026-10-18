@@ -201,6 +201,7 @@ WALL_TEST_STATE="$test_dir/custom-state" bash "$picker" provider wallpaper set D
 reset_actions
 WALL_TEST_WORK_MODE=false bash "$picker" provider wallpaper set DP-1 work "$second_image"
 [[ $(readlink "$state/wallpaper_personal_1"; printf '.') == "$second_image"$'\n.' ]]
+jq -se 'length == 1 and .[0].message == "wallpaper.status.savedOutput"' "$test_dir/alerts" >/dev/null
 reset_actions
 if WALL_TEST_CONFIG_FAIL=1 bash "$picker" provider wallpaper restore personal 2> "$test_dir/error"; then exit 1; fi
 [[ ! -f $test_dir/commands ]]

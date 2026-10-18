@@ -1106,6 +1106,7 @@
   "wallpaper.mode.title": "Modo do papel de parede",
   "wallpaper.monitor.title": "Monitor do papel de parede",
   "wallpaper.status.saved": "Papel de parede guardado para %1 em %2",
+  "wallpaper.status.savedOutput": "Papel de parede guardado em %1",
   "wallpaper.worker.errors.configuration": "Não foi possível ler a configuração do papel de parede",
   "wallpaper.worker.errors.daemon": "O serviço de papel de parede está indisponível",
   "wallpaper.worker.errors.file": "O ficheiro do papel de parede está indisponível",

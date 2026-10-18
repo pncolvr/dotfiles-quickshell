@@ -1106,6 +1106,7 @@
   "wallpaper.mode.title": "Wallpaper mode",
   "wallpaper.monitor.title": "Wallpaper monitor",
   "wallpaper.status.saved": "Wallpaper saved for %1 on %2",
+  "wallpaper.status.savedOutput": "Wallpaper saved on %1",
   "wallpaper.worker.errors.configuration": "Could not read wallpaper configuration",
   "wallpaper.worker.errors.daemon": "Wallpaper daemon is unavailable",
   "wallpaper.worker.errors.file": "Wallpaper file is unavailable",

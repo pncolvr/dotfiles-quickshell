@@ -69,7 +69,11 @@ set_wallpaper() {
         || fail wallpaper.errors.apply
     ln -s -- "$path" "$work_dir/saved" || fail "wallpaper.worker.errors.save"
     mv -Tf -- "$work_dir/saved" "$target" || fail "wallpaper.worker.errors.save"
-    alert "Wallpaper saved for $mode on $output" success
+    if [[ $WORK_MODE_ENABLED == true ]]; then
+        alert "Wallpaper saved for $mode on $output" success
+    else
+        alert wallpaper.status.savedOutput success "$(jq -nc --arg output "$output" '[$output]')"
+    fi
 }
 restore_wallpapers() {
     local mode=${1:-personal} outputs output target ready=false

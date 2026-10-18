@@ -6,6 +6,7 @@ import Quickshell.Io
 import "../../src/services"
 import "../../src/config"
 import "../../src/theme"
+import "../../src/i18n"
 import "../../src/modules/launcher"
 
 Scope {
@@ -142,6 +143,10 @@ Scope {
         enter()
         restored()
         waitFor(() => commandList().length === 1, "first wallpaper applied")
+        waitFor(() => wallpaperAlert()?.text === (Config.workModeEnabled
+            ? Translations.text("wallpaper.status.saved", [Translations.text("status.modes.work"), "DP-1"])
+            : Translations.text("wallpaper.status.savedOutput", ["DP-1"])),
+            "wallpaper alert shows a profile only when work mode is enabled")
         check(commandList()[0][1] === image && commandList()[0][3] === "DP-1", "literal image and monitor passed exactly once")
 
         // Child Escape returns to the same image; image Escape ends the session.

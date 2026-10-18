@@ -108,7 +108,9 @@ Singleton {
     function apply(operation, output, mode) {
         if (!Config.workModeEnabled) mode = "personal"
         run(["--configured", "set", output, mode, operation.selectedResult], (success, _output, error) => {
-            if (success) AlertService.post("wallpaper", Translations.text("wallpaper.status.saved",[Translations.text("status.modes."+mode),output]), "success", 3000)
+            if (success) AlertService.post("wallpaper", Config.workModeEnabled
+                ? Translations.text("wallpaper.status.saved",[Translations.text("status.modes."+mode),output])
+                : Translations.text("wallpaper.status.savedOutput",[output]), "success", 3000)
             else fail(error || Translations.text("wallpaper.errors.apply"))
             if (session === operation) browse(operation)
         })
