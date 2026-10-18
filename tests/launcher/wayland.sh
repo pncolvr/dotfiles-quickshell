@@ -12,6 +12,7 @@ cleanup() {
 }
 trap cleanup EXIT
 cp -a "$project_root/src" "$test_dir/src"
+cp "$project_root/tests/launcher/NativeFocusDriver.qml" "$test_dir/NativeFocusDriver.qml"
 mkdir "$test_dir/data"
 # This test must never read or capture the real clipboard.
 sed -i 's/readonly property bool clipboardMonitorEnabled: true/readonly property bool clipboardMonitorEnabled: false/' "$test_dir/src/config/Config.qml"
