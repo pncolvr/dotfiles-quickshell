@@ -9,6 +9,8 @@ import "../../theme"
 TooltipArea {
   moduleName: "clock"
   id: root
+  leftMargin: Math.max(Theme.tooltipHoverPaddingWidth, Theme.moduleSpacing / 2)
+  rightMargin: leftMargin
   acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
 
   enum View { Month, Year }

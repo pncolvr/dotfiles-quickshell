@@ -8,13 +8,13 @@ Item {
     property color badgeColor: Theme.urgent
     anchors.verticalCenter: parent ? parent.verticalCenter : undefined
 
-    implicitWidth: label.implicitWidth + Theme.statusBadgePaddingWidth + Theme.workspaceSpacing
+    implicitWidth: label.implicitWidth + Theme.statusBadgePaddingWidth + Theme.moduleSpacing
     implicitHeight: label.implicitHeight + Theme.statusBadgePaddingHeight
 
     Rectangle {
         anchors.fill: parent
-        anchors.leftMargin: Theme.workspaceSpacing / 2
-        anchors.rightMargin: Theme.workspaceSpacing / 2
+        anchors.leftMargin: Theme.moduleSpacing / 2
+        anchors.rightMargin: Theme.moduleSpacing / 2
         radius: Theme.statusBadgeRadius
         color: root.badgeColor
     }

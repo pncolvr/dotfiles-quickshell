@@ -35,7 +35,14 @@ ownership and process identity; desktop-session services are left alone.
 bash tests/run.sh --benchmarks             # include performance benchmarks
 bash tests/run.sh --native --benchmarks    # also include native desktop checks
 bash tests/run.sh --list                   # print suite names and commands
+bash tests/run.sh ui/module-pins audio/controls # run only these two isolated suites
 ```
+
+Optional suite names select an exact subset, run in the normal suite order.
+With no names, the runner retains its full default selection. Use `--list` to
+find names; qualify a name as `isolated/NAME` or `native/NAME` to select its mode.
+Native suites still require `--native`, and benchmarks require `--benchmarks`.
+Unknown or disabled suite names are rejected before any tests start.
 
 Run `--native` only with the keyboard and mouse idle: those checks can take focus,
 move the pointer, open native dialogs or use GPU capture. Default runs unset the
@@ -251,9 +258,9 @@ slot. `AudioButton` uses `Theme.iconButtonWidth`; bar icons use `UI.BarIcon`,
 which renders at `Theme.fontSizeWorkspaces` (13px) and reserves
 `Theme.moduleSpacing` around each visible glyph, including the tooltip
 trigger's padding. Glyph bearings are accounted for when centering, and status
-badges reserve `Theme.workspaceSpacing` outside their colored backgrounds. The right bar
-row uses zero row spacing so glyph slots own their gaps; the center row uses
-`Theme.centerModulesSpacing` independently. The audio and module-pinning smoke
+badges reserve that gap outside their colored backgrounds. All three bar groups
+use zero row spacing; workspace glyphs, window labels, bar icons and clock text
+reserve their own portions of the shared `Theme.moduleSpacing` gap. The audio and module-pinning smoke
 tests check slot sizing and shared bar-module behavior.
 
 `UI.RightAlignedText` aligns rendered text with the right edge of its allotted

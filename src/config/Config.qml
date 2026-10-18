@@ -216,7 +216,7 @@ Item {
 
     // Launcher: bookmarks. Share the project URL opener by default.
     readonly property string bookmarkFile: _internal.home + "/.config/qutebrowser/bookmarks/urls"
-    readonly property var bookmarkBrowserCommand: projectBrowserCommand
+    readonly property var bookmarkBrowserCommand: ["qutebrowser"]
 
     // Launcher: directories
     readonly property string directoryManageShortcut: pickerManageShortcut

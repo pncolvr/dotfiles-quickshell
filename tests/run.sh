@@ -5,20 +5,32 @@ repo=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
 native=false
 benchmarks=false
 list=false
+selected_suites=()
+declare -A matched_suites=()
 for option in "$@"; do
     case "$option" in
         --native) native=true ;;
         --benchmarks) benchmarks=true ;;
         --list) list=true ;;
         --help|-h)
-            printf 'Usage: bash tests/run.sh [--native] [--benchmarks] [--list]\n'
+            printf 'Usage: bash tests/run.sh [--native] [--benchmarks] [--list] [SUITE ...]\n'
             printf 'Default: isolated suites. --native adds desktop checks; leave keyboard/mouse idle.\n'
+            printf 'Optional exact suite names (e.g. ui/module-pins audio/controls) select a subset.\n'
+            printf 'Use isolated/NAME or native/NAME to select a specific mode; native still requires --native.\n'
             printf 'Logs are retained under /tmp. TEST_TIMEOUT sets the per-suite limit (default 180 seconds).\n'
             exit 0 ;;
-        *) printf 'Unknown option: %s\n' "$option" >&2; exit 2 ;;
+        -*) printf 'Unknown option: %s\n' "$option" >&2; exit 2 ;;
+        *) selected_suites+=("$option") ;;
     esac
 done
-if $native && ! $list && [[ -z ${WAYLAND_DISPLAY:-} ]]; then
+native_checks=$native
+if ! $list && ((${#selected_suites[@]})); then
+    # Validate every name before starting any suite or creating a private bus.
+    selection_catalog=$(bash "$0" --list "$@") || exit 2
+    native_checks=false
+    if [[ $selection_catalog == native$'\t'* || $selection_catalog == *$'\nnative\t'* ]]; then native_checks=true; fi
+fi
+if $native_checks && ! $list && [[ -z ${WAYLAND_DISPLAY:-} ]]; then
     printf 'Native suites require a running Wayland session.\n' >&2
     exit 2
 fi
@@ -101,6 +113,16 @@ fi
 run() {
     local mode=$1 name=$2
     shift 2
+    if ((${#selected_suites[@]})); then
+        local selector selected=false
+        for selector in "${selected_suites[@]}"; do
+            if [[ $selector == "$name" || $selector == "$mode/$name" ]]; then
+                matched_suites["$selector"]=1
+                selected=true
+            fi
+        done
+        $selected || return 0
+    fi
     if $list; then
         printf '%s\t%s\t' "$mode" "$name"
         printf '%q ' "$@"
@@ -250,7 +272,7 @@ if $benchmarks; then
     run isolated benchmark/projects bash tests/projects/grouping-benchmark.sh
 fi
 if $native; then
-    if ! $list; then
+    if ! $list && $native_checks; then
         native_running=true
         printf '\nNative tests will start in the next 60 seconds.\nLeave the keyboard and mouse idle until the completion notice.\n'
         native_notification_id=$(notify_native --print-id --urgency=critical --expire-time=0 \
@@ -304,6 +326,12 @@ if $native; then
     run native ui/unlock bash tests/ui/unlock-focus.sh
     finish_native
 fi
+for selector in "${selected_suites[@]}"; do
+    if [[ ! -v matched_suites["$selector"] ]]; then
+        printf 'Unknown or disabled suite: %s. Use --list, --native or --benchmarks as appropriate.\n' "$selector" >&2
+        exit 2
+    fi
+done
 if ! $list; then
     printf '\nSuites: %s passed, %s failed, %s skipped, %s total.\n' "$passed" "$failed" "$skipped" "$total"
     printf 'Tests: %s passed, %s failed, %s skipped, %s total.\n' \

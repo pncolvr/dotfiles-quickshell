@@ -8,7 +8,6 @@ import "../../ui" as UI
 UI.Row {
     id: root
     // Each button contributes half the visible gap on either side.
-    spacing: 0
 
     Repeater {
         model: {
@@ -23,7 +22,7 @@ UI.Row {
 
             text: Theme.workspaceIcons[window.workspace.id - 1] ?? Theme.workspaceUnknownIcon
             font.pixelSize: Theme.workspaceIconSize
-            implicitWidth: Math.ceil(glyphWidth) + Theme.workspaceSpacing
+            implicitWidth: Math.ceil(glyphWidth) + Theme.moduleSpacing
             iconColor: getTextColour()
             onClicked: workspace.activate()
 

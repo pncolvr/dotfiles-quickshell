@@ -4,7 +4,7 @@ set -euo pipefail
 repo=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)
 fixture=$(mktemp -d /tmp/quickshell-runner-reporting.XXXXXXXX)
 cleanup() {
-    for output in "$fixture"/plain.log "$fixture"/tty.log; do
+    for output in "$fixture"/*.log; do
         [[ -f $output ]] || continue
         while IFS= read -r directory; do
             [[ $directory == /tmp/quickshell-tests.* && -d $directory ]] && rm -rf -- "$directory"
@@ -53,6 +53,27 @@ results=$(sed -n 's/^All test results: //p' "$fixture/plain.log")
 rg -q $'^PASS\tisolated\texample/pass\tfirst check\t' "$results"
 printf 'PASS: one completed line per suite, separate suite/test totals, named failures, skips and complete TSV results\n'
 printf 'PASS: total runtime summary and readable second/minute/hour formatting\n'
+
+QS_TEST_RUNNER_BUS=1 bash "$fixture/tests/run.sh" example/pass isolated/example/skip example/pass > "$fixture/selected.log" 2>&1
+rg -q 'Suites: 1 passed, 0 failed, 1 skipped, 2 total' "$fixture/selected.log"
+! rg -q '^FAIL ' "$fixture/selected.log"
+catalog=$(bash "$repo/tests/run.sh" --list ui/module-pins isolated/audio/controls)
+[[ $(printf '%s\n' "$catalog" | wc -l) == 2 ]]
+[[ $catalog == *$'isolated\taudio/controls\t'* && $catalog == *$'isolated\tui/module-pins\t'* ]]
+native_catalog=$(bash "$repo/tests/run.sh" --native --list native/qml/pulse)
+[[ $native_catalog == $'native\tqml/pulse\t'* && $native_catalog != *$'\n'* ]]
+result=0
+bash "$repo/tests/run.sh" --list ui/module-pins no-such-suite > "$fixture/invalid.log" 2>&1 || result=$?
+[[ $result == 2 ]]
+rg -q 'Unknown or disabled suite: no-such-suite' "$fixture/invalid.log"
+result=0
+bash "$repo/tests/run.sh" ui/module-pins no-such-suite > "$fixture/invalid-run.log" 2>&1 || result=$?
+[[ $result == 2 ]]
+! rg -q '^Logs:|^(RUN|PASS|FAIL) ' "$fixture/invalid-run.log"
+result=0
+bash "$repo/tests/run.sh" --list native/qml/pulse > "$fixture/disabled.log" 2>&1 || result=$?
+[[ $result == 2 ]]
+printf 'PASS: exact suite lists, mode selection, duplicate suppression and invalid-name preflight\n'
 
 printf -v command 'env -u NO_COLOR QS_TEST_RUNNER_BUS=1 TERM=xterm bash %q' "$fixture/tests/run.sh"
 result=0

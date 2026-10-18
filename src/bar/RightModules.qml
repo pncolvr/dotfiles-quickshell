@@ -8,7 +8,6 @@ import "../ui"
 Row {
     id: root
     required property var window
-    spacing: 0
 
     ActiveWindowNoScreenShare {}
     Submap {}

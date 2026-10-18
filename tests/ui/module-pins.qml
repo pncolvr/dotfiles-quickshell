@@ -94,8 +94,11 @@ Scope {
                     const firstBackground = firstBadge.children[0]
                     const secondBackground = secondBadge.children[0]
                     root.check(Math.abs(secondBadge.x + secondBackground.x
-                        - firstBadge.x - firstBackground.x - firstBackground.width - Theme.workspaceSpacing) < 0.01,
-                        "adjacent status badge backgrounds retain workspace spacing")
+                        - firstBadge.x - firstBackground.x - firstBackground.width - Theme.moduleSpacing) < 0.01,
+                        "adjacent status badge backgrounds retain module spacing")
+                    root.check(trigger.leftMargin + trigger.rightMargin
+                        === Math.max(Theme.moduleSpacing, Theme.tooltipHoverPaddingWidth * 2),
+                        "clock text reserves module spacing without extra row gaps")
                 }
                 const oldMuted = AudioService.muted
                 const oldMicMuted = AudioService.micMuted

@@ -37,7 +37,6 @@ Column {
                 anchors.left: parent.left
                 anchors.right: actions.left
                 anchors.rightMargin: Theme.controlSpacing
-                spacing: 0
                 UI.ColumnText {
                     width: parent.width
                     text: UpdatesService.hasUpdates ? Translations.text("updates.status.available",[],UpdatesService.count) : Translations.text("updates.empty")

@@ -39,9 +39,8 @@ QtObject {
     readonly property int actionButtonWidth: 30
     readonly property int controlSpacing: 6
     readonly property int controlFieldPadding: 8
-    readonly property int moduleSpacing: 4
-    readonly property int centerModulesSpacing: 4
-    readonly property int groupedModuleSpacing: 16
+    readonly property int moduleSpacing: 6 // Visible gap between bar modules, workspace glyphs and window labels.
+    readonly property int groupedModuleSpacing: 10
     readonly property int iconButtonWidth: 18
     readonly property int iconButtonHeight: 22
     readonly property int iconButtonRadius: 3
@@ -173,7 +172,6 @@ QtObject {
     readonly property string exposeIcon: "" // Exposé: window grid
 
     // Workspaces and submaps
-    readonly property int workspaceSpacing: 6 // Visible gap between workspace glyphs.
     readonly property int workspaceIconSize: 13
     readonly property var workspaceIcons: [
         "", // 1: globe — qutebrowser

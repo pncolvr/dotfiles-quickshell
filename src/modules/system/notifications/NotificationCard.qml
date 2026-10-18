@@ -201,7 +201,6 @@ Rectangle {
                 Column {
                     id: headingText
                     width: parent.width - dismissButton.width - 8
-                    spacing: 0
                     Row {
                         width: parent.width
                         spacing: 8

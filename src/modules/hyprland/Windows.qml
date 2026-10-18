@@ -8,7 +8,6 @@ import "../../services"
 
 Row {
     id: root
-    spacing: 0
     height: parent.height
     HoverHandler {
         onHoveredChanged: {
