@@ -14,7 +14,7 @@ already displayed cards in place while the expanded list builds up. Both groups 
 are ordered newest first; **Load older** controls keep older records accessible.
 **Clear emitter** and **Clear all** delete history and dismiss current notifications
 while preserving source settings and DND. The manager uses the shared tooltip
-panel with underlined tabs on the left and icon buttons on the right. The bell
+panel with underlined tabs centered on their header line and icon buttons on the right. The bell
 toggles DND; a slashed bell in the accent color means DND is enabled. The broom
 clears all notifications. Hover the buttons for their action descriptions.
 Left-click the notification icon on the bar to pin or unpin the panel.

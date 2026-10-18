@@ -31,17 +31,27 @@ Scope {
     QtObject { id: loopTarget; property real value: 0 }
     UI.MotionAnimation { id: looping; target: loopTarget; property: "value"; from: 0; to: 100; animationDuration: 200; loops: Animation.Infinite }
     Test.TestCase { id: events; when: false }
-    UI.PanelMotion {
-        id: centered
-        centeredResize: true
-        targetX: (1000 - targetWidth) / 2
-        targetWidth: Theme.pickerWidth
-        targetHeight: Theme.pickerHeight
+    readonly property var centered: centeredSurface.motion
+    FloatingWindow {
+        visible: true
+        implicitWidth: 1000
+        implicitHeight: 900
+        readonly property var surfaceComponent: centeredSurface
+        TopPanelSurface {
+            id: centeredSurface
+            anchors.fill: parent
+            centeredResize: true
+            contentX: (width - contentWidth) / 2
+            contentWidth: Theme.pickerWidth
+            contentHeight: Theme.pickerHeight
+            UI.TabBar { id: centeredTabs; width: parent.width; labels: ["Projects", "Manage"] }
+            UI.TabBar { id: sideActionTabs; y: Theme.controlHeight; width: parent.width - 40; labels: ["History", "Emitters"] }
+        }
     }
     function trackResize(direction) {
         resizeDirection = direction
-        previousWidth = centered.displayedWidth
-        previousHeight = centered.displayedHeight
+        previousWidth = root.centered.displayedWidth
+        previousHeight = root.centered.displayedHeight
         resizeSamples = 0
         trackingCenteredResize = true
     }
@@ -49,16 +59,23 @@ Scope {
         running: root.trackingCenteredResize
         onTriggered: {
             root.resizeSamples++
-            root.check(Math.abs(centered.displayedX + centered.displayedWidth / 2 - 500) < 0.01,
+            root.check(Math.abs(root.centered.displayedX + root.centered.displayedWidth / 2 - 500) < 0.01,
                 "centered resizing keeps both edges symmetric on every frame")
-            root.check(centered.displayedWidth >= Theme.pickerWidth && centered.displayedWidth <= Theme.manageWidth
-                && centered.displayedHeight >= Theme.pickerHeight && centered.displayedHeight <= Theme.manageHeight,
+            for (const header of [{tabs:centeredTabs,center:500},{tabs:sideActionTabs,center:480}]) {
+                const first = header.tabs.itemAt(0), last = header.tabs.itemAt(header.tabs.count - 1)
+                const left = first.mapToItem(centeredSurface,0,0).x
+                const right = last.mapToItem(centeredSurface,last.width,0).x
+                root.check(Math.abs((left + right) / 2 - header.center) < 1,
+                    "tabs stay centered on their displayed header line throughout resizing")
+            }
+            root.check(root.centered.displayedWidth >= Theme.pickerWidth && root.centered.displayedWidth <= Theme.manageWidth
+                && root.centered.displayedHeight >= Theme.pickerHeight && root.centered.displayedHeight <= Theme.manageHeight,
                 "Manage expansion/contraction never exceeds either endpoint")
-            root.check((centered.displayedWidth - root.previousWidth) * root.resizeDirection >= -0.01
-                && (centered.displayedHeight - root.previousHeight) * root.resizeDirection >= -0.01,
+            root.check((root.centered.displayedWidth - root.previousWidth) * root.resizeDirection >= -0.01
+                && (root.centered.displayedHeight - root.previousHeight) * root.resizeDirection >= -0.01,
                 "dimensions move monotonically toward the requested view")
-            root.previousWidth = centered.displayedWidth
-            root.previousHeight = centered.displayedHeight
+            root.previousWidth = root.centered.displayedWidth
+            root.previousHeight = root.centered.displayedHeight
         }
     }
     FloatingWindow {
@@ -118,39 +135,39 @@ Scope {
             try {
                 root.check(UI.MotionPolicy.allowsMotion(false,false) && UI.MotionPolicy.allowsMotion(true,true)
                     && !UI.MotionPolicy.allowsMotion(false,true), "sharing gate honors config and active sharing")
-                centered.requested = true
-                events.tryCompare(centered,"transitioning",false,500)
+                centeredSurface.requestedVisible = true
+                events.tryCompare(root.centered,"transitioning",false,500)
                 root.trackResize(1)
-                centered.targetWidth = Theme.manageWidth
-                centered.targetHeight = Theme.manageHeight
+                centeredSurface.contentWidth = Theme.manageWidth
+                centeredSurface.contentHeight = Theme.manageHeight
                 events.wait(35)
-                root.check(centered.displayedWidth > Theme.pickerWidth && centered.displayedWidth < Theme.manageWidth,
+                root.check(root.centered.displayedWidth > Theme.pickerWidth && root.centered.displayedWidth < Theme.manageWidth,
                     "list to Manage interpolates its width")
-                events.tryCompare(centered,"transitioning",false,500)
-                root.check(root.resizeSamples > 0 && centered.displayedWidth === Theme.manageWidth
-                    && centered.displayedHeight === Theme.manageHeight,"Manage expansion reaches its exact dimensions")
+                events.tryCompare(root.centered,"transitioning",false,500)
+                root.check(root.resizeSamples > 0 && root.centered.displayedWidth === Theme.manageWidth
+                    && root.centered.displayedHeight === Theme.manageHeight,"Manage expansion reaches its exact dimensions")
                 root.trackResize(-1)
-                centered.targetWidth = Theme.pickerWidth
-                centered.targetHeight = Theme.pickerHeight
+                centeredSurface.contentWidth = Theme.pickerWidth
+                centeredSurface.contentHeight = Theme.pickerHeight
                 events.wait(35)
-                root.check(centered.displayedWidth > Theme.pickerWidth && centered.displayedWidth < Theme.manageWidth,
+                root.check(root.centered.displayedWidth > Theme.pickerWidth && root.centered.displayedWidth < Theme.manageWidth,
                     "Manage to list interpolates its width")
-                events.tryCompare(centered,"transitioning",false,500)
-                root.check(root.resizeSamples > 0 && centered.displayedWidth === Theme.pickerWidth
-                    && centered.displayedHeight === Theme.pickerHeight,"list contraction reaches its exact dimensions")
+                events.tryCompare(root.centered,"transitioning",false,500)
+                root.check(root.resizeSamples > 0 && root.centered.displayedWidth === Theme.pickerWidth
+                    && root.centered.displayedHeight === Theme.pickerHeight,"list contraction reaches its exact dimensions")
                 root.trackResize(1)
-                centered.targetWidth = Theme.manageWidth
-                centered.targetHeight = Theme.manageHeight
+                centeredSurface.contentWidth = Theme.manageWidth
+                centeredSurface.contentHeight = Theme.manageHeight
                 events.wait(35)
                 root.trackResize(-1)
-                centered.targetWidth = Theme.pickerWidth
-                centered.targetHeight = Theme.pickerHeight
+                centeredSurface.contentWidth = Theme.pickerWidth
+                centeredSurface.contentHeight = Theme.pickerHeight
                 events.wait(1)
-                events.tryCompare(centered,"transitioning",false,500)
-                root.check(centered.displayedWidth === Theme.pickerWidth && centered.displayedHeight === Theme.pickerHeight,
+                events.tryCompare(root.centered,"transitioning",false,500)
+                root.check(root.centered.displayedWidth === Theme.pickerWidth && root.centered.displayedHeight === Theme.pickerHeight,
                     "reversing a Manage resize settles on the latest view")
                 root.trackingCenteredResize = false
-                centered.requested = false
+                centeredSurface.requestedVisible = false
                 const shadowSource = events.findChild(surface, "topPanelShadowSource") as Item
                 const shadow = events.findChild(surface, "topPanelShadow") as Item
                 const shadowTop = shadow.mapToItem(surface, 0, 0).y

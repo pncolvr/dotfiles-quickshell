@@ -28,6 +28,12 @@ Scope {
         settings.keybinds = value
     }
     function focusBorder(item: var): int { return item.background.border.width }
+    function tabsCentered() {
+        const first = tabs.itemAt(0), last = tabs.itemAt(tabs.count - 1)
+        const left = first.mapToItem(tabs,0,0).x
+        const right = last.mapToItem(tabs,last.width,0).x
+        return Math.abs((left + right) / 2 - tabs.width / 2) < 1
+    }
     Test.TestCase { id: events; when: false }
     FloatingWindow {
         id: window
@@ -72,6 +78,35 @@ Scope {
     Timer {
         interval: 200; running: true
         onTriggered: {
+            root.check(root.tabsCentered(),'normal tab buttons center as a compact group on their header line')
+            tabs.actionTabs = true
+            tabs.width = Qt.binding(() => tabs.implicitWidth)
+            events.wait(20)
+            root.check(tabs.leftPadding === 0 && tabs.rightPadding === 0
+                && tabs.width === tabs.contentWidth
+                && Math.abs(tabs.itemAt(0).mapToItem(tabs,0,0).x) < 1,'window action tabs retain their natural width and original alignment')
+            tabs.actionTabs = false
+            tabs.width = Qt.binding(() => panel.width)
+            tabs.closeableTabs = [true]
+            events.wait(20)
+            root.check(root.tabsCentered(),'close buttons participate in centered tab sizing')
+            tabs.width = 100
+            events.wait(20)
+            const tabView = tabs.contentItem as ListView
+            root.check(tabs.leftPadding === 0 && tabs.rightPadding === 0 && tabView.contentWidth > tabView.width,
+                'overflowing tabs use the header width without centering padding')
+            tabs.navigateTab(tabs.count - 1)
+            events.wait(20)
+            const finalTab = tabs.itemAt(tabs.count - 1)
+            const finalX = finalTab.mapToItem(tabs,0,0).x
+            root.check(finalX >= -1 && finalX + finalTab.width <= tabs.width + 1,
+                'keyboard navigation scrolls the last overflowing tab fully into view')
+            tabs.width = Qt.binding(() => panel.width)
+            tabs.closeableTabs = []
+            tabs.setCurrentIndex(0)
+            root.tabActions = 0
+            events.wait(20)
+            root.check(root.tabsCentered(),'tabs recenter when the header has room again')
             search.forceActiveFocus()
             events.keyClick(Qt.Key_A,Qt.ControlModifier)
             root.check(search.selectedText === search.text && root.additions === 0,'Ctrl+A selects text, never adds')

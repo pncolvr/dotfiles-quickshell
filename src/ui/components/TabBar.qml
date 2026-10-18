@@ -28,6 +28,15 @@ QC.TabBar {
     property var dropEnabledTabs: []
     property bool interactionEnabled: true
     property bool actionTabs: false
+    property bool centerTabs: !actionTabs
+    readonly property var panelMotion: transitionHost?.surfaceComponent?.motion ?? null
+    // Content adopts its destination width before the frame finishes resizing.
+    // Keep the tab group on the currently displayed header line throughout.
+    readonly property real displayedLineWidth: Math.max(0, width
+        + (panelMotion ? panelMotion.displayedWidth - panelMotion.layoutWidth : 0))
+    implicitWidth: contentWidth
+    leftPadding: centerTabs ? Math.max(0, Math.min(width - contentWidth, (displayedLineWidth - contentWidth) / 2)) : 0
+    rightPadding: centerTabs ? Math.max(0, width - contentWidth - leftPadding) : 0
     function activateTab(index) {
         if (!interactionEnabled || index < 0 || index >= count) return
         setCurrentIndex(index)

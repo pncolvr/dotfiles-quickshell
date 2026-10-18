@@ -88,8 +88,13 @@ IPC interfaces with arguments and results. Both entry points reuse feature servi
 
 ## Motion
 
+View tabs form a compact group centered on their existing header line, including
+during resizing. Headers keep their right-side actions in place; overflowing tabs
+scroll horizontally. Window action tabs retain their original alignment.
+
 Top panels drop down from the bar in 150ms and roll up in 100ms. Size changes settle in 160ms, retargeting the current frame when content changes
-again. Horizontal anchors update immediately. Changing modules reveals the new
+again. Module anchors update immediately; centered pickers resize both edges together.
+Changing modules reveals the new
 content from its own anchor rather than sliding across the bar. Content fades
 during size changes so calendar and other layout changes do not stretch it.
 The shared native host keeps a viewport-sized transparent buffer while mapped;
