@@ -166,13 +166,13 @@ support enabled. Test-only dependencies are listed in [development](development.
 Add Webapps entries in its Manage tab. Entries and browser profile choices live
 in the local database and restore through the existing encrypted backup. No
 provider JSON or browser environment file is required. Browser executable/argument
-defaults live in `Config.webappBrowsers`.
+defaults live in `Config.browsers`.
 
 ## n8n
 
 Open **Meta+Shift+N** and Manage to configure instances. Create each API key in
 that instance's Settings → n8n API, then enter it in the masked field. Configure
-browser/profile defaults in `Config.webappBrowsers`. Install `curl` for explicit
+browser/profile defaults in `Config.browsers`. Install `curl` for explicit
 Refresh; cached links open without a network request. Multiple Personal/Work
 connections and their caches restore through the encrypted database backup.
 

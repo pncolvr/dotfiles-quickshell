@@ -9,7 +9,7 @@ ManagedCollectionRepository {
     id: root
     tableName: 'n8n_instances'
     entryLabel: "n8n.instance.label"
-    validateEntry: value => Entries.validate(value,Config.webappBrowsers)
+    validateEntry: value => Entries.validate(value,Config.browsers)
     removeRelated: (tx,id) => tx.executeSql('DELETE FROM n8n_workflows WHERE instance_id=?',[id])
     property var workflows: []
     function reloadWorkflows() {

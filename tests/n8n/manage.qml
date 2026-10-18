@@ -44,7 +44,7 @@ Scope {
                     }
                     for (const entry of [{id:'a',name:'Personal',category:'personal'},{id:'b',name:'Work',category:'work'},
                         {id:'disabled',name:'Disabled',category:'personal',enabled:false}]) {
-                        root.check(N8nRepository.save(Object.assign(Entries.empty(Config.webappDefaultBrowser),entry,{url:root.base+'/'+entry.id,apiKey:'fixture-'+entry.id})),'seed private instance')
+                        root.check(N8nRepository.save(Object.assign(Entries.empty(Config.defaultBrowserId),entry,{url:root.base+'/'+entry.id,apiKey:'fixture-'+entry.id})),'seed private instance')
                     }
                     root.check(PickerService.items.length===1,'disabled/work instances hidden from personal list')
                     root.check(PickerService.items[0].title==='Open Personal','instance home available before refresh')
@@ -133,10 +133,10 @@ Scope {
                     root.check(N8nRepository.save(Object.assign({},root.instance('a'),{apiKey:'fixture-a'})),'restore synthetic key')
                     root.refresh('changed'); root.step=11; break
                 case 11:
-                    root.check(N8nRepository.save(Object.assign(Entries.empty(Config.webappDefaultBrowser),{id:'remove',name:'Remove',url:root.base+'/remove'})),'create removal fixture')
+                    root.check(N8nRepository.save(Object.assign(Entries.empty(Config.defaultBrowserId),{id:'remove',name:'Remove',url:root.base+'/remove'})),'create removal fixture')
                     root.check(N8nRepository.replaceWorkflows(root.instance('remove'),[{id:'x',name:'Removed workflow'}]),'seed related cache')
                     root.check(N8nRepository.remove('remove') && !N8nRepository.workflows.some(row=>row.instance_id==='remove'),'remove instance and cache together')
-                    root.check(!N8nRepository.save(Object.assign(Entries.empty(Config.webappDefaultBrowser),{name:'personal',url:root.base+'/other'})),'duplicate instance name rejected')
+                    root.check(!N8nRepository.save(Object.assign(Entries.empty(Config.defaultBrowserId),{name:'personal',url:root.base+'/other'})),'duplicate instance name rejected')
                     N8nService.toggleShowAll()
                     root.check(PickerService.items.length===3,'status filtering applies to whole instance cache')
                     PickerService.query='Renamed a'

@@ -2,8 +2,8 @@
 
 This integration is optional. Set `browserRoutingEnabled: true` in Config to
 activate routing and the Bookmarks / History / Manage tabs. It is enabled in this setup.
-Choose a concrete browser in `webappDefaultBrowser` and configure its command
-and profiles in `webappBrowsers`. Do not use `xdg-open` as the router's destination
+Choose a concrete browser in `defaultBrowserId` and configure its command
+and profiles in `browsers`. Do not use `xdg-open` as the router's destination
 or fallback: after activation it would call this handler again.
 
 From the repository root, install the wrapper and desktop entry as your user:
@@ -113,9 +113,9 @@ Actions are:
 The first matching browser/application action ends routing. Transformations are
 limited to eight steps and stop on cycles; an unchanged transformation is skipped
 for that URL so another rule/default can handle it. Unmatched targets use the
-default browser set by `Config.webappDefaultBrowser`. Explicit saved Webapp/n8n
+default browser set by `Config.defaultBrowserId`. Explicit saved Webapp/n8n
 browser choices bypass these rules. New Webapp/n8n entries use
-`Config.webappDefaultBrowser`. Local HTML files are targets to open; they are not
+`Config.defaultBrowserId`. Local HTML files are targets to open; they are not
 parsed as a bookmark source. Plain-text bookmark sources retain `URL title` per line; use an
 encoded `file:///...` URL for filenames containing spaces, or type an absolute
 path into the picker.

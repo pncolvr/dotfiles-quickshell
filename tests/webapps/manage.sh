@@ -17,8 +17,8 @@ const browsers=[
         profileArguments:['--profile-directory={profile}'],windowArguments:['--new-window'],appArguments:['--app={url}']},
     {id:'default',name:'System default',command:['xdg-open']}
 ];
-fs.writeFileSync(file,fs.readFileSync(file,'utf8').replace(/readonly property var webappBrowsers: \[[\s\S]*?\n    \]/,
-    ()=> 'readonly property var webappBrowsers: '+JSON.stringify(browsers)));
+fs.writeFileSync(file,fs.readFileSync(file,'utf8').replace(/readonly property var browsers: \[[\s\S]*?\n    \]/,
+    ()=> 'readonly property var browsers: '+JSON.stringify(browsers)));
 JS
 sed 's@"../../src@"src@g' "$repo/tests/webapps/manage.qml" > "$fixture/shell.qml"
 cat > "$fixture/bin/browser" <<'SH'

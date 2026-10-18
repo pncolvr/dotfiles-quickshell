@@ -32,8 +32,8 @@ let text=fs.readFileSync(file,'utf8').replace('clipboardMonitorEnabled: true','c
 for(const [key,value] of Object.entries({browserRoutingEnabled:'true',browserHistoryEnabled:'true',browserWorkspaceFocusEnabled:'false',browserHistoryLimit:'100',twitchEnabled:'true'}))
  text=text.replace(new RegExp('readonly property (bool|int) '+key+':[^\\n]*'),(_,type)=>'property '+type+' '+key+': '+value);
 text=text.replace(/readonly property string bookmarkFile:[^\n]*/,'property string bookmarkFile: '+JSON.stringify(dir+'/bookmarks'));
-text=text.replace(/readonly property string webappDefaultBrowser:[^\n]*/,'property string webappDefaultBrowser: "b"');
-text=text.replace(/readonly property var webappBrowsers: \[[\s\S]*?\n    \]/,'readonly property var webappBrowsers: '+JSON.stringify([
+text=text.replace(/readonly property string defaultBrowserId:[^\n]*/,'property string defaultBrowserId: "b"');
+text=text.replace(/readonly property var browsers: \[[\s\S]*?\n    \]/,'readonly property var browsers: '+JSON.stringify([
 {id:'a',name:'A',command:[dir+'/bin/browser'],profiles:[{id:'work',name:'Work'}],profileArguments:['--profile={profile}'],reuseArguments:['--target','tab']},
 {id:'b',name:'B',command:[dir+'/bin/browser','--browser=b']} ]));
 fs.writeFileSync(file,text);

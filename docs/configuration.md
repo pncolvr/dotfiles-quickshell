@@ -174,10 +174,10 @@ which keeps History/Manage available without a bookmark source. Other open panel
 preserved. `bookmarkFile` accepts any plain text file containing one URL and an
 optional title per line, separated by whitespace. In this setup it points to
 `~/.config/qutebrowser/bookmarks/urls`.
-`bookmarkBrowserCommand` uses the browser selected by `webappDefaultBrowser` and
-`webappBrowsers`; `projectBrowserCommand` shares it. These actions open a browser,
+`browserOpenCommand` is shared by Bookmarks and Project URLs, using the browser
+selected by `defaultBrowserId` and `browsers`. These actions open a browser,
 including for local HTML targets. With routing enabled, they use the shared
-router instead. Both remain overridable literal argv arrays. Bookmark contents
+router instead. The opener remains an overridable literal argv array. Bookmark contents
 stay in the local file; use encoded file URLs for paths containing spaces in
 that source, or type an absolute path into the picker. HTML is opened, not parsed.
 
@@ -185,7 +185,7 @@ that source, or type an absolute path into the picker. HTML is opened, not parse
 
 `browserRoutingEnabled` is enabled in this setup. It adds Bookmarks / History /
 Manage tabs and activates routing for generic URLs. The default browser always
-comes from `Config.webappDefaultBrowser`; Manage edits ordered rules using the
+comes from `Config.defaultBrowserId`; Manage edits ordered rules using the
 browser definitions below. Twitch links, saved Twitch notification actions,
 calendar events and package pages use this same opener directly. They do not
 require the desktop integration or default-browser associations. With routing
@@ -224,23 +224,23 @@ for Microsoft wrappers and Steam; these examples are not loaded automatically.
 The optional [desktop integration](../integrations/browser/README.md) includes a
 desktop entry, installer and explicit default-browser commands. Installation does
 not change associations. When disabled or unavailable, the handler opens a concrete
-fallback without routing/history. `browserFallbackCommand` derives from the
+fallback without routing/history. `defaultBrowserCommand` derives from the
 configured default browser; avoid `xdg-open` as a router destination to prevent
 recursion.
 
-## Webapp browsers
+## Shared browsers
 
-`webappDefaultBrowser` selects the browser ID for new Webapps and n8n entries
+`defaultBrowserId` selects the browser ID for new Webapps and n8n entries
 and their shared Browser fields. This setup explicitly selects `"qutebrowser"`;
-choose another ID from `webappBrowsers`, such as `"default"` for `xdg-open`.
-When routing is enabled, new Webapp/n8n entries use the default selected in
-Bookmarks Manage instead. Router defaults require a concrete browser; `default`
-remains available for explicitly configured Webapp/n8n entries.
+choose another concrete browser ID from `browsers`. The default always comes
+from Config. The `"default"` definition uses `xdg-open` and remains available for
+explicitly configured Webapp/n8n entries; do not use it as `defaultBrowserId`,
+because routing and direct fallback require a concrete browser.
 Saved entries and active drafts keep their browser IDs; changing the default
 only affects new entries. Removing a browser definition does not migrate saved
 entries: edit their Browser choice before launching them again.
 
-`webappBrowsers` follows the configurable application pattern: each item has an
+`browsers` follows the configurable application pattern: each item has an
 `id`, visible `name`, and argv `command`. Each browser's `profiles` array defines
 its profile choices as `{id: "profile-directory", name: "Visible label"}`. Manage
 shows these profiles in a combo, alongside Browser default. The stable profile
@@ -586,7 +586,7 @@ rejected to preserve session ownership. See [Remotes](features/launcher.md#remot
 Use n8n's Manage tab for multiple private instance connections: address, API key,
 browser/profile, enabled state and Personal/Work category. Connections and each
 instance's cached workflow list are stored in SQLite and encrypted backups.
-Browser commands and available profile choices reuse `Config.webappBrowsers`;
+Browser commands and available profile choices reuse `Config.browsers`;
 work filtering reuses `pickerWorkStatus`. No API key or instance address belongs
 in public Config, provider JSON or environment files. Refresh is explicit only.
 
@@ -602,7 +602,7 @@ reader or suggestion refresh timer runs. Other Twitch features remain available;
 `Config.twitchEnabled` controls the Twitch module independently.
 
 Qutebrowser is optional: disable Twitch session suggestions, disable Bookmarks
-or select another plain-text source, choose another `webappDefaultBrowser` and
-remove its definition from `webappBrowsers` if unused. Existing entries must use
+or select another plain-text source, choose another `defaultBrowserId` and
+remove its definition from `browsers` if unused. Existing entries must use
 a remaining browser ID. Browser autofill userscripts/bindings are an optional
 browser-side installation; Vault and password prompts do not require them.

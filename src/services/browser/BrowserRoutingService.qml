@@ -15,7 +15,7 @@ ManagedCollectionService {
     collectionName: Translations.text('browser.routing.rules')
     itemForEntry: entry=>({id:entry.id,title:entry.name,result:entry})
     readonly property bool enabled: Config.browserRoutingEnabled
-    readonly property string defaultBrowser: Config.webappDefaultBrowser
+    readonly property string defaultBrowser: Config.defaultBrowserId
     property var requests: []
     property var currentRequest: null
     property string response: ''
@@ -59,7 +59,7 @@ ManagedCollectionService {
         if (!['redirect','query'].includes(Routing.action(entry))) { finish(entry); return }
         // Bound rule chains and retry unchanged targets only through other rules.
         if (request.steps>=8) { finish(Routing.browserRule(request.url,request.rules,defaultBrowser)); return }
-        try { request.rule=Routing.validate(entry,Config.webappBrowsers) }
+        try { request.rule=Routing.validate(entry,Config.browsers) }
         catch(exception) { error=Translations.message(exception); finish(Routing.browserRule(request.url,request.rules,defaultBrowser)); return }
         request.steps++
         response=''; resolver.stdinEnabled=true; resolver.running=true
@@ -72,21 +72,21 @@ ManagedCollectionService {
     }
     function launch(url,routing=true,selected=null,rules=entries,transformationNames=[],originalUrl=url) {
         try {
-            const entry=selected ?? (routing ? Routing.choose(url,rules,defaultBrowser) : Routing.empty(Config.webappDefaultBrowser))
-            if (routing) Routing.validate(Object.assign({},entry,{name:entry.name || 'Default',pattern:entry.pattern || '*'}),Config.webappBrowsers)
-            const argv=routing ? Routing.command(url,entry,Config.webappBrowsers)
-                : Routing.concreteCommand(Config.browserFallbackCommand).concat(url.startsWith('-') ? ['--',url] : [url])
+            const entry=selected ?? (routing ? Routing.choose(url,rules,defaultBrowser) : Routing.empty(Config.defaultBrowserId))
+            if (routing) Routing.validate(Object.assign({},entry,{name:entry.name || 'Default',pattern:entry.pattern || '*'}),Config.browsers)
+            const argv=routing ? Routing.command(url,entry,Config.browsers)
+                : Routing.concreteCommand(Config.defaultBrowserCommand).concat(url.startsWith('-') ? ['--',url] : [url])
             const fallback=Routing.browserRule(url,rules,defaultBrowser)
             const application=routing && Routing.action(entry)==='command'
             const defaultEntry=Routing.empty(defaultBrowser)
             launchQueue=launchQueue.concat([{url,originalUrl,argv,workspace:entry.workspace,
                 focusWorkspace:routing && Config.browserWorkspaceFocusEnabled,
                 onlyWhenRunning:application ? entry.onlyWhenRunning : '',
-                fallbackArgv:application ? Routing.command(url,fallback,Config.webappBrowsers) : argv,
+                fallbackArgv:application ? Routing.command(url,fallback,Config.browsers) : argv,
                 fallbackBrowser:fallback.browser,fallbackWorkspace:fallback.workspace,
                 application,desktopId:application ? entry.desktopId : '',
                 applicationName:application ? (entry.applicationName || entry.command[0]) : '',
-                missingArgv:application ? Routing.command(url,defaultEntry,Config.webappBrowsers) : argv,
+                missingArgv:application ? Routing.command(url,defaultEntry,Config.browsers) : argv,
                 missingBrowser:defaultBrowser,
                 ruleNames:transformationNames.concat(entry.id ? [entry.name] : []),
                 fallbackRuleNames:transformationNames.concat(fallback.id ? [fallback.name] : []),
@@ -109,7 +109,7 @@ ManagedCollectionService {
     }
     Process {
         id: resolver
-        command: Config.browserCommand.concat(['resolve'])
+        command: Config.browserRouterCommand.concat(['resolve'])
         onStarted: {
             const request=root.currentRequest
             write(JSON.stringify({url:request.url,action:request.rule.action,parameter:request.rule.parameter})+'\n')
@@ -136,7 +136,7 @@ ManagedCollectionService {
     }
     Process {
         id: launcher
-        command: Config.browserCommand.concat(['dispatch'])
+        command: Config.browserRouterCommand.concat(['dispatch'])
         onStarted: {
             const request=Object.assign({},root.launching)
             request.applicationAvailable=!request.desktopId || !!DesktopEntries.byId(request.desktopId)

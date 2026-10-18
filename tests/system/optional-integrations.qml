@@ -116,14 +116,14 @@ Scope {
             root.settings.batteriesEnabled = true
             root.check(batteries.visible && BatteryService.receiverBatteries.length === 1,"re-enable reuses cached readings")
             root.settings.batteriesEnabled = false
-            root.settings.webappBrowsers = [{id:"custom",name:"Custom",command:["true"]},
+            root.settings.browsers = [{id:"custom",name:"Custom",command:["true"]},
                 {id:"other",name:"Other",command:["true"]}]
-            root.settings.webappDefaultBrowser = "custom"
+            root.settings.defaultBrowserId = "custom"
             WebappService.newEntry()
             N8nService.newEntry()
             root.check(WebappService.draft.browser === "custom" && N8nService.draft.browser === "custom"
                 && browserFields.browser === "custom","one browser default configures both new-entry services and fields without qutebrowser")
-            root.settings.webappDefaultBrowser = "other"
+            root.settings.defaultBrowserId = "other"
             root.check(WebappService.draft.browser === "custom" && N8nService.draft.browser === "custom",
                 "changing defaults preserves existing draft browser choices")
             WebappService.newEntry()

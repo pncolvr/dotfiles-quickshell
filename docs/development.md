@@ -1328,7 +1328,7 @@ Bookmarks opt-out is enforced in BookmarkService so keyboard and IPC entry
 points share the same guard. The bookmark regression verifies disabled requests
 preserve other panels, cannot launch a browser and close only their own menu.
 WebappEntries/N8nEntries accept an explicit browser default for new records;
-services and shared Browser fields read Config.webappDefaultBrowser. The
+services and shared Browser fields read Config.defaultBrowserId. The
 optional-integrations fixture removes qutebrowser from its configured browser
 list and checks both services, fields and unchanged drafts with two generic IDs.
 Browser autofill remains an optional browser-side installation, with no new

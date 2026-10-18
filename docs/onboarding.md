@@ -48,12 +48,11 @@ command -v xdg-open pcmanfm-qt ghostty code godot qutebrowser
 xdg-settings get default-web-browser
 ```
 
-To use the desktop's default browser for new Webapps/n8n entries, select the
-existing `default` browser definition, which runs `xdg-open`:
+Choose an installed browser ID from `browsers` for shared browser links and new
+Webapps/n8n entries. For example, with Qutebrowser installed:
 
 ```qml
-readonly property string webappDefaultBrowser: "default"
-readonly property var projectBrowserCommand: ["xdg-open"]
+readonly property string defaultBrowserId: "qutebrowser"
 readonly property var directoryOpenCommand: ["pcmanfm-qt"]
 ```
 

@@ -63,7 +63,7 @@ Singleton {
         if (!enabled) return
         for (const row of rows) {
             if (!row.result) continue
-            Quickshell.execDetached(Config.bookmarkBrowserCommand.concat([row.result]))
+            Quickshell.execDetached(Config.browserOpenCommand.concat([row.result]))
         }
     }
     function setTab(index) {
@@ -80,7 +80,7 @@ Singleton {
     function publishHistory() {
         if(!ownsMenu() || tab!==1) return
         PickerService.items=BrowserRoutingRepository.history(PickerService.query).map(row=>{
-            const browser=Config.webappBrowsers.find(entry=>entry.id===row.browser)?.name || row.browser
+            const browser=Config.browsers.find(entry=>entry.id===row.browser)?.name || row.browser
             return {id:row.url,title:row.url,subtitle:browser,annotation:row.rule_name,result:row.url,search:row.url+' '+row.browser,
                 hint:Translations.text('browser.routing.historyDetails',[row.url,row.final_url,browser,row.rule_name || '—'])}
         })

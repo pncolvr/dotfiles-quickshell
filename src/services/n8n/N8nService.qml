@@ -25,7 +25,7 @@ ManagedCollectionService {
     property int succeeded: 0
     property int failed: 0
     busy: refreshing
-    function newEntry() { edit(Entries.empty(Config.webappDefaultBrowser)) }
+    function newEntry() { edit(Entries.empty(Config.defaultBrowserId)) }
     function accept(items) {
         if (managing || !items.length) return
         const result=items[0].result
@@ -36,7 +36,7 @@ ManagedCollectionService {
         const workflow=cached.find(row=>row.id===result.workflowId)
         if (result.workflowId && (!workflow || source?.url!==instance.url)) return
         let command
-        try { command=Entries.launch(instance,result.workflowId ? workflow.url : instance.url,Config.webappBrowsers) }
+        try { command=Entries.launch(instance,result.workflowId ? workflow.url : instance.url,Config.browsers) }
         catch (exception) { error=Translations.message(exception); return }
         PickerService.close()
         Quickshell.execDetached(command)

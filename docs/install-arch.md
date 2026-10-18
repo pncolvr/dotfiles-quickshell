@@ -82,7 +82,7 @@ installer launches `ghostty -e yay`; the check helper needs `checkupdates` from
 pacman-contrib and `yay -Qua`.
 
 Code, Godot, Vivaldi and browser profile paths are configurable application
-choices, not core dependencies. Adjust `projectApps`, `webappBrowsers`,
-`webappDefaultBrowser` and the opener commands to installed applications.
+choices, not core dependencies. Adjust `projectApps`, `browsers`,
+`defaultBrowserId` and the opener commands to installed applications.
 
 Next: [first-run checklist and optional service activation](setup.md#first-run-checklist).

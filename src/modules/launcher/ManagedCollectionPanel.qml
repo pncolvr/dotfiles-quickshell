@@ -107,7 +107,7 @@ ManagedPickerFrame {
         busy: root.service.busy
         showCategory: root.filterCategory && StatusService.enabled
         filterEnabled: true
-        browserOptions: root.filterBrowser ? Config.webappBrowsers.map(browser => ({name:browser.id,description:browser.name})) : []
+        browserOptions: root.filterBrowser ? Config.browsers.map(browser => ({name:browser.id,description:browser.name})) : []
         typeOptions: root.managementTypes
         searchObjectName: 'collectionManageSearch'
         hintOverrides: ({add: {sequence: Config.pickerAddShortcut}, manage: {sequence: Config.pickerManageShortcut, label: Translations.text("hints.list")}})

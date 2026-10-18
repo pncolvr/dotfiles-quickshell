@@ -41,7 +41,7 @@ Scope {
                         {name:'Window',browser:'qutebrowser',profile:'qutebrowser-webapp',windowMode:'normal',url:'https://example.test/window?x=1&y=2'},
                         {name:'App',browser:'vivaldi',profile:'Test Profile',windowMode:'app',url:'https://example.test/app'},
                         {name:'Hook',enabled:false,url:'https://example.test/disabled'}
-                    ]) root.check(WebappRepository.save(Object.assign(Entries.empty(Config.webappDefaultBrowser),entry)),'seed managed webapp')
+                    ]) root.check(WebappRepository.save(Object.assign(Entries.empty(Config.defaultBrowserId),entry)),'seed managed webapp')
                     WebappService.setManaging(true)
                     root.check(PickerService.items.length===2,'disabled entries excluded from launch list')
                     root.step=2; break
@@ -116,7 +116,7 @@ Scope {
                     root.check(DbService.read('SELECT name FROM webapps WHERE id=?',[renamed.id])[0].name==='Renamed','failed update preserves the saved entry')
                     DbService.write(tx=>tx.executeSql('DROP TRIGGER store.reject_webapp_update'))
                     WebappService.newEntry()
-                    WebappService.save(Object.assign(Entries.empty(Config.webappDefaultBrowser),{name:'window',url:'https://example.test'}))
+                    WebappService.save(Object.assign(Entries.empty(Config.defaultBrowserId),{name:'window',url:'https://example.test'}))
                     root.check(!!WebappService.error && WebappRepository.entries.length===4,'duplicate names rejected without data loss')
                     WebappService.cancel()
                     WebappService.remove(WebappRepository.entries.find(e=>e.name==='Renamed').id)
@@ -137,14 +137,14 @@ Scope {
                     root.check(PickerService.filteredItems.length===0,'disabled record stays unavailable')
                     PickerService.close()
                     WebappService.newEntry()
-                    WebappService.save(Object.assign(Entries.empty(Config.webappDefaultBrowser),{name:'Before hook',url:'https://example.test/hook',
+                    WebappService.save(Object.assign(Entries.empty(Config.defaultBrowserId),{name:'Before hook',url:'https://example.test/hook',
                         before:[Quickshell.env('WEBAPP_TEST_DIR')+'/bin/beforetest','literal $(not-executed)'],
                         after:[Quickshell.env('WEBAPP_TEST_DIR')+'/bin/aftertest','literal;argument']}))
                     PickerService.webapps(); PickerService.query='Before hook'; PickerService.accept(false,false)
                     root.step=8; break
                 case 8:
                     WebappService.newEntry()
-                    WebappService.save(Object.assign(Entries.empty(Config.webappDefaultBrowser),{name:'Failed hook',url:'https://example.test/must-not-open',
+                    WebappService.save(Object.assign(Entries.empty(Config.defaultBrowserId),{name:'Failed hook',url:'https://example.test/must-not-open',
                         before:[Quickshell.env('WEBAPP_TEST_DIR')+'/bin/beforetest','fail']}))
                     PickerService.webapps(); PickerService.query='Failed hook'; PickerService.accept(false,false)
                     root.step=9; break

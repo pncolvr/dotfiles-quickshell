@@ -16,13 +16,13 @@ ManagedCollectionService {
     itemForEntry: entry => ({id:entry.id,title:entry.name,subtitle:entry.url,
         search:entry.name+' '+entry.url,result:entry.id})
     busy: launchTask.running
-    function newEntry() { edit(Entries.empty(Config.webappDefaultBrowser)) }
+    function newEntry() { edit(Entries.empty(Config.defaultBrowserId)) }
     function accept(items) {
         if (managing || busy || !items.length) return
         const entry=entries.find(entry => entry.id === items[0].result)
         if (!entry || !entry.enabled) return
         let command
-        try { command=Entries.launch(entry,Config.webappBrowsers) }
+        try { command=Entries.launch(entry,Config.browsers) }
         catch (exception) { error=Translations.message(exception); syncPicker(); return }
         launchTask.browserCommand=command
         launchTask.afterCommand=entry.after

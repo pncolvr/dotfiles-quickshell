@@ -214,30 +214,15 @@ Item {
     readonly property string projectManageShortcut: pickerManageShortcut
     readonly property string projectAddShortcut: pickerAddShortcut
     readonly property string projectShowAllShortcut: pickerShowAllShortcut
-    readonly property var projectBrowserCommand: bookmarkBrowserCommand
     readonly property string projectSshConfig: _internal.home + "/.ssh/config"
     readonly property string projectDotfilesGitDirectory: _internal.home + "/.cfg"
     readonly property string projectDotfilesWorkTree: _internal.home
 
-    // Browser routing. Desktop integration is installed separately from integrations/browser/.
-    readonly property int browserHistoryLimit: 100
-    readonly property var browserCommand: ["bash", Quickshell.shellPath("src/services/browser/browser.sh")]
-    // Launcher: bookmarks. Browser commands are shared with project URLs.
-    readonly property string bookmarkFile: _internal.home + "/.config/qutebrowser/bookmarks/urls"
-    readonly property var bookmarkBrowserCommand: browserRoutingEnabled ? browserCommand.concat(["open", "--fallback", JSON.stringify(browserFallbackCommand), "--"]) : browserFallbackCommand
-
-    // Launcher: directories
-    readonly property string directoryManageShortcut: pickerManageShortcut
-    readonly property string directoryAddShortcut: pickerAddShortcut
-    readonly property string directoryShowAllShortcut: pickerShowAllShortcut
-    readonly property string directoryWorkStatus: pickerWorkStatus
-    readonly property var directoryResolveCommand: ["bash", Quickshell.shellPath("src/services/files/resolve-folder.sh")]
-    readonly property var directoryOpenCommand: ["pcmanfm-qt"]
-
-    // Launcher: managed webapps. Browser commands are literal argv templates.
-    readonly property string webappDefaultBrowser: "qutebrowser"
-    readonly property var browserFallbackCommand: webappBrowsers.find(browser=>browser.id===webappDefaultBrowser)?.command ?? []
-    readonly property var webappBrowsers: [
+    // Shared browsers and routing. Commands are literal argv templates.
+    // Desktop integration is installed separately from integrations/browser/.
+    readonly property string defaultBrowserId: "qutebrowser"
+    readonly property var defaultBrowserCommand: browsers.find(browser=>browser.id===defaultBrowserId)?.command ?? []
+    readonly property var browsers: [
         {
             id: "qutebrowser",
             name: "Qutebrowser",
@@ -280,6 +265,20 @@ Item {
             command: ["xdg-open"]
         }
     ]
+    readonly property int browserHistoryLimit: 100
+    readonly property var browserRouterCommand: ["bash", Quickshell.shellPath("src/services/browser/browser.sh")]
+    readonly property var browserOpenCommand: browserRoutingEnabled ? browserRouterCommand.concat(["open", "--fallback", JSON.stringify(defaultBrowserCommand), "--"]) : defaultBrowserCommand
+
+    // Launcher: bookmarks
+    readonly property string bookmarkFile: _internal.home + "/.config/qutebrowser/bookmarks/urls"
+
+    // Launcher: directories
+    readonly property string directoryManageShortcut: pickerManageShortcut
+    readonly property string directoryAddShortcut: pickerAddShortcut
+    readonly property string directoryShowAllShortcut: pickerShowAllShortcut
+    readonly property string directoryWorkStatus: pickerWorkStatus
+    readonly property var directoryResolveCommand: ["bash", Quickshell.shellPath("src/services/files/resolve-folder.sh")]
+    readonly property var directoryOpenCommand: ["pcmanfm-qt"]
 
     // Launcher: remotes. Managed hosts/credentials stay in the backed-up database.
     readonly property var remoteRdpCommand: ["sdl-freerdp3"]

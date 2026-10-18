@@ -55,7 +55,7 @@ Scope {
         try {
             check(DbService.schemaVersion===16,'schema migrated')
             if(Quickshell.env('BROWSER_TEST_PHASE')==='restart') {
-                check(browser.defaultBrowser===Config.webappDefaultBrowser && browser.entries.length===1 && browser.entries[0].id==='work','configured default and saved rules apply after restart')
+                check(browser.defaultBrowser===Config.defaultBrowserId && browser.entries.length===1 && browser.entries[0].id==='work','configured default and saved rules apply after restart')
                 check(BrowserRoutingRepository.history('persisted').length===1,'history and FTS survive restart')
                 check(BrowserRoutingRepository.history('persisted')[0].rule_name==='Saved rule','matched rule name survives restart')
                 check(BrowserRoutingRepository.history('persisted')[0].final_url==='https://resolved.test/persisted','final URL survives restart separately from original')
@@ -67,9 +67,9 @@ Scope {
             BrowserRoutingRepository.clearHistory()
             check(PreferencesRepository.setValue('browser.defaultBrowser','a'),'seed obsolete saved browser preference')
             check(browser.defaultBrowser==='b','configured default ignores obsolete saved preference')
-            setOption('webappDefaultBrowser','a')
+            setOption('defaultBrowserId','a')
             check(browser.defaultBrowser==='a','default follows changes in Config')
-            setOption('webappDefaultBrowser','b')
+            setOption('defaultBrowserId','b')
             check(BrowserRoutingRepository.save(Object.assign(Routing.empty('a'),{id:'work',name:'Work',pattern:'work.test',match:'host',profile:'work'})),'save route')
             check(browser.open('https://sub.work.test/hello'),'accept routed request')
             waitFor(()=>calls().length===1 && settled(),'dispatch first browser')
@@ -210,7 +210,7 @@ Scope {
             up.clicked()
             check(browser.entries[0].id===later.id && manager.selectedEntry.id===later.id,'move up reorders rules and retains selection')
             check(!up.enabled && down.enabled,'first rule can move down but not up')
-            check(Routing.choose('https://work.test/',browser.entries,Config.webappDefaultBrowser).id===later.id,'execution follows visible rule order')
+            check(Routing.choose('https://work.test/',browser.entries,Config.defaultBrowserId).id===later.id,'execution follows visible rule order')
             check(BrowserRoutingRepository.reload() && browser.entries[0].id===later.id,'moved order persists in storage')
             check(browser.entries[0].patterns.length===2 && Routing.matches(browser.entries[0],'https://second-work.test/'),'Contains values survive storage reload and each can match')
             down.clicked()
@@ -222,14 +222,14 @@ Scope {
             for(const text of ['www.google.com','search with spaces']) check(browser.open(text),'accept browser address-bar text')
             waitFor(()=>calls().length===textCalls+2 && settled(),'dispatch domain and search text')
             check(calls()[textCalls].slice(-1)[0]==='www.google.com' && calls()[textCalls+1].slice(-1)[0]==='search with spaces','browser receives unchanged domains and search text as single arguments')
-            setOption('webappDefaultBrowser','a')
+            setOption('defaultBrowserId','a')
             const youtube='https://www.youtube.com/watch?v=3c0MnSBJqR4'
             const beforeYoutube=calls().length
             BookmarkService.launch([{result:youtube}])
             waitFor(()=>calls().length===beforeYoutube+1 && settled(),'wrapper hands unmatched YouTube URL to the router')
             check(BrowserRoutingRepository.history()[0].url===youtube && BrowserRoutingRepository.history()[0].rule_name==='','unmatched URL is recorded without a rule label')
             check(calls()[beforeYoutube][0]==='--target' && calls()[beforeYoutube].slice(-1)[0]===youtube,'default browser receives its reuse flags and the YouTube URL')
-            setOption('webappDefaultBrowser','b')
+            setOption('defaultBrowserId','b')
             check(BrowserRoutingRepository.record('https://original.test/link','b','First','https://final.test/first'),'record original and final URL')
             const historyCount=BrowserRoutingRepository.history().length
             check(BrowserRoutingRepository.record('https://original.test/link','b','Renamed','https://final.test/second'),'update same original URL')

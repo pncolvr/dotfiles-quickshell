@@ -10,10 +10,10 @@ Column {
     id: root
     property bool readOnly: false
     property string objectNamePrefix: 'webapp'
-    property string browser: Config.webappDefaultBrowser
+    property string browser: Config.defaultBrowserId
     property string browserProfile: ''
     property string windowMode: 'normal'
-    readonly property var configuredBrowser: Config.webappBrowsers.find(browser=>browser.id===root.browser)
+    readonly property var configuredBrowser: Config.browsers.find(browser=>browser.id===root.browser)
     spacing: Theme.controlSpacing
     Row {
         width: parent.width
@@ -22,11 +22,11 @@ Column {
         objectName:root.objectNamePrefix+'BrowserSelector'
         toggleObjectName:root.objectNamePrefix+'BrowserToggle'
         width: profilePicker.visible ? (parent.width - parent.spacing) / 2 : parent.width; compact:true; label: Translations.text("browser.selector.label", [selectedDescription])
-        options: Config.webappBrowsers.map(browser => ({name:browser.id,description:browser.name}))
+        options: Config.browsers.map(browser => ({name:browser.id,description:browser.name}))
         selectedName: root.browser
         onSelected: name => {
             root.browser=name
-            const browser=Config.webappBrowsers.find(browser=>browser.id===name)
+            const browser=Config.browsers.find(browser=>browser.id===name)
             if (!browser?.profileArguments || !Entries.profileOptions(browser).some(profile=>profile.name===root.browserProfile)) root.browserProfile=''
             if (root.windowMode==='app' && !browser?.appArguments) root.windowMode='normal'
         }

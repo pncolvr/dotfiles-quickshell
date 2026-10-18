@@ -129,7 +129,7 @@ Singleton {
         const item = items[0]
         if (urls) {
             PickerService.close()
-            for (const selected of items) Quickshell.execDetached(Config.projectBrowserCommand.concat([selected.result]))
+            for (const selected of items) Quickshell.execDetached(Config.browserOpenCommand.concat([selected.result]))
             return
         }
         if (!projectPath) {

@@ -11,7 +11,7 @@ ManagedCollectionRepository {
     sortEntries: items=>Routing.ordered(items)
     validateEntry: entry=>Routing.validate(Object.assign({},entry,{
         priority:entry.id ? (entry.priority ?? 0) : Math.max(-1,...entries.map(row=>row.priority ?? 0))+1
-    }),Config.webappBrowsers)
+    }),Config.browsers)
     property int revision: 0
     readonly property int historyCount: count(revision)
     function move(id,direction) {

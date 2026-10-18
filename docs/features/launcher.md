@@ -129,7 +129,7 @@ performs no action. Missing/unreadable sources show an error and still allow a
 typed URL. Cancelled or replaced menus ignore late file reads.
 
 Accepted targets use the shared configured browser definitions, with the
-`bookmarkBrowserCommand` and `projectBrowserCommand` overrides available. Local
+the shared `browserOpenCommand` override available. Local
 HTML targets open in a browser. With `browserRoutingEnabled`, Bookmarks has
 Bookmarks / History / Manage tabs, ordered browser routing rules and optional
 FTS5 URL history. Its picker remains open for empty or single-entry sources so
@@ -481,7 +481,7 @@ command substitutions and shell operators are never evaluated. The before comman
 must succeed before the browser is dispatched; after means after dispatch, without
 waiting for the browser window to close. Browsers run detached from the bar.
 
-`Config.webappBrowsers` defines browser commands, argument templates and profile
+`Config.browsers` defines browser commands, argument templates and profile
 choices (`profiles: [{id, name}]`). Manage selects a profile from the browser's
 combo rather than entering a profile name. Browser default uses no explicit
 profile arguments. A removed profile is reported as unavailable until another
@@ -509,7 +509,7 @@ Search matches workflow names, instance names and editor URLs.
 **Ctrl+M** switches to Manage; **Ctrl+N** adds an instance there. Store each
 instance's name, address (including any base path), API key, browser/profile,
 window mode, Personal/Work category and enabled state. Browser fields are shared
-with Webapps and use `Config.webappBrowsers`. Keys use the shared masked secret
+with Webapps and use `Config.browsers`. Keys use the shared masked secret
 field. Private connection settings and workflow caches live in the main SQLite
 database and its encrypted backup, with no provider JSON or Grimoire dependency.
 
@@ -1061,7 +1061,7 @@ With `Config.workModeEnabled: false`, category controls and status-filter shortc
 are hidden across native pickers. All categories remain visible; explicit saved
 browser profiles are preserved. Wallpaper skips mode selection and uses Personal.
 
-New Webapps and n8n entries use `Config.webappDefaultBrowser`, an ID from
-`Config.webappBrowsers`. Changing it leaves saved entries and current drafts
+New Webapps and n8n entries use `Config.defaultBrowserId`, an ID from
+`Config.browsers`. Changing it leaves saved entries and current drafts
 unchanged. Browser definitions are optional configuration entries; qutebrowser
 can be removed after choosing another default and updating entries that use it.
