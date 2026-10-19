@@ -274,15 +274,6 @@ Singleton {
         onTriggered: root.heartbeat()
     }
     Timer {
-        interval: 60000
-        running: root.enabled
-        repeat: true
-        onTriggered: {
-            root.reload();
-            root.refreshTimecard();
-        }
-    }
-    Timer {
         interval: 3600000
         running: root.initialized
         repeat: true
