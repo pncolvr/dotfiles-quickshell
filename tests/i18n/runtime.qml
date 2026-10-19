@@ -55,6 +55,8 @@ Scope {
             root.check(Translations.text('common.actions.save')==='Save','English catalog loaded')
             root.check(Translations.locale.name==='en_GB','English locale metadata retained')
             root.check(Translations.calendarMonthNames[2]==='March','English calendar')
+            tabs.currentIndex = 1
+            const selectedTab = tabs.itemAt(1)
             root.settings.language='pt'
             events.wait(20)
             root.check(Translations.text('common.actions.save')==='Guardar','Portuguese catalog loaded')
@@ -62,6 +64,8 @@ Scope {
             root.check(Translations.calendarMonthNames[2]==='Março','Portuguese calendar')
             root.check(Translations.calendarDayNames.length===7,'seven weekday headings')
             root.check(tabs.labels[0]==='Resumo','translated tab binding updates')
+            root.check(tabs.currentIndex===1 && tabs.itemAt(1)===selectedTab,
+                'catalog updates preserve selected tab and its control')
             root.check(input.text==='user content','user content preserved')
             root.check(selector.selectedName==='user-profile' && selector.label==='Perfil: Perfil %2 pessoal','selected ID and literal placeholder-like user data preserved')
             root.check(PowerService.actions[0].result==='Reboot' && PowerService.actions[0].title==='Reiniciar','translated action label preserves dispatch code')
@@ -90,6 +94,8 @@ Scope {
                     language.id+' catalog discovered with regional locale')
                 root.check(Translations.text('common.actions.save')===language.save
                     && Translations.calendarMonthNames[2]===language.month,language.id+' labels and calendar translate')
+                root.check(tabs.currentIndex===1 && tabs.itemAt(1)===selectedTab,
+                    language.id+' switch preserves selected tab and its control')
                 root.check(Translations.text('updates.status.available',[],1)===language.one
                     && Translations.text('updates.status.available',[],2)===language.other,language.id+' singular and plural forms')
                 root.check(input.text===enteredText && input.activeFocus,

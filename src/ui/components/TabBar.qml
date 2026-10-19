@@ -87,13 +87,14 @@ QC.TabBar {
         }
     }
     Repeater {
-        model: root.labels
+        // Translation updates change labels, not tab identity or selection.
+        model: root.labels.length
         QC.TabButton {
             id: tabButton
             readonly property bool keyboardFocusVisible: pointerFocus.keyboardFocusVisible
             UI.PointerFocus { id: pointerFocus }
-            required property string modelData
             required property int index
+            readonly property string modelData: root.labels[index]
             text: modelData
             width: implicitWidth
             implicitWidth: tabLabel.implicitWidth + root.tabPadding * 2

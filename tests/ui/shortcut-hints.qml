@@ -51,7 +51,7 @@ Scope {
                 hints.closingHint = ""
                 hints.hints = ""
                 root.check(hints.text === "" && hints.height === 0 && !hints.visible, "empty hints collapse their row")
-                console.log("PASS: bilingual shortcut groups, no stranded dots, responsive widths/fonts and centered hint rows")
+                console.log("PASS: multilingual shortcut groups, no stranded dots, responsive widths/fonts and centered hint rows")
                 stop()
                 Qt.quit()
                 return

@@ -1,12 +1,14 @@
 import QtQuick
 import Quickshell
 import "../../src/services"
+import "../../src/i18n"
 Scope {
     id: root
     property bool failed: false
     function check(ok, message) { if (!ok) { failed = true; console.error("STATS FAIL:", message) } }
     Timer {
-        interval: 1; running: true
+        interval: 0
+        running: Translations.messages["stats.processes.main"] !== undefined
         onTriggered: {
             StatsService.applyCpu("cpu 100 0 0 100 0 0 0 0\ncpu0 100 0 0 100 0 0 0 0")
             StatsService.applyCpu("cpu 150 0 0 150 0 0 0 0\ncpu0 150 0 0 150 0 0 0 0")
