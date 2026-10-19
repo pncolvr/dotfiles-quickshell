@@ -11,6 +11,7 @@ MediaPanel 1.0 MediaPanel.qml
 MediaPlayerCard 1.0 MediaPlayerCard.qml
 MediaFullscreenWindow 1.0 MediaFullscreenWindow.qml
 MediaFullscreenView 1.0 MediaFullscreenView.qml
+MediaFullscreenArtwork 1.0 MediaFullscreenArtwork.qml
 MediaEffectList 1.0 MediaEffectList.qml
 MediaPosition 1.0 MediaPosition.qml
 MediaVisualizer 1.0 MediaVisualizer.qml

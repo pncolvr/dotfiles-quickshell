@@ -758,6 +758,14 @@ the all-player list, timeline dragging and capability checks, screen-height
 limits, track metadata changes, late position responses, elapsed-time limits,
 preserved scroll position, stream-control visibility and safe association with app audio streams
 using isolated player fixtures without controlling desktop playback.
+`bash tests/audio/media-artwork.sh` checks fullscreen Plain/Cassette/CD/Disc decoration,
+several display sizes, missing artwork, configuration fallback and direct entry
+with playing, paused or unavailable players. It uses synthetic data offscreen.
+Set `MEDIA_ARTWORK_PREVIEW=/tmp/media-artwork` to save synthetic previews of each
+style. Native global-shortcut tests cover the `media-fullscreen` callback.
+`bash tests/audio/media-artwork.sh --gpu` uses a passive native surface to verify
+the disc's transparent corners and centre hole on the GPU, capturing only its
+own viewport without taking focus or moving the pointer.
 `bash tests/audio/media-visualizer.sh` checks both flip directions, effect
 selection of all 17 presets, stable card sizing, independent frequency bands, PCM
 waveforms, opaque scrolling effect rows, full-card layers on both faces, and

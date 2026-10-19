@@ -38,6 +38,7 @@ const services={
   'function clipboard() { Calls.record("clipboard", []) }'
  ],
  RecordingService:['function toggle() { Calls.record("recording", []) }'],
+ MediaFullscreenService:['function openPreferred(screen) { Calls.record("media-fullscreen", []) }'],
  ScreenshotService:['function open(method = "") { Calls.record("screenshot", [method]) }'],
  QrEncodeService:['function open() { Calls.record("encode-qr", []) }'],
  WallpaperService:['function open() { Calls.record("wallpaper", []) }'],
@@ -90,6 +91,7 @@ const expected={
  'launcher-expose-current':['expose',['current']], 'launcher-clipboard':['clipboard',[]],
  'launcher-wallpaper':['wallpaper',[]], 'launcher-encode-qr':['encode-qr',[]], 'launcher-bookmarks':['bookmarks',[]], 'launcher-power':['power',[]], 'recording-toggle':['recording',[]], 'vault-toggle':['vault',[]],
  'notifications-toggle-dnd':['dnd',[]], 'shell-reload':['shell-reload',[]],
+ 'media-fullscreen':['media-fullscreen',[]],
  'windows-next':['windows-next',[]], 'windows-prev':['windows-prev',[]]
 };
 expected['launcher-screenshot']=['screenshot',['']];

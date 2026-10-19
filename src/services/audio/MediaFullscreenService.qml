@@ -19,6 +19,16 @@ Singleton {
     readonly property int playerIndex: players.indexOf(player)
     signal closed(var player, bool flipped)
 
+    function openPreferred(screen, audioService = AudioService, mediaService = MediaService) {
+        if (root.requested) return true;
+        const candidates = mediaService.players.filter(candidate => MediaService.showPlayer(candidate));
+        const player = candidates.find(candidate => candidate.isPlaying) ?? candidates[0];
+        if (!player) return false;
+        root.open(player, audioService, mediaService, false, screen);
+        TooltipService.dismiss();
+        return true;
+    }
+
     function open(player, audioService, mediaService, flipped, screen, sourceRect = Qt.rect(0, 0, 0, 0), snapshot = null) {
         if (!player) return;
         root.audioService = audioService;

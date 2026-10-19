@@ -187,6 +187,7 @@ run isolated ui/copy-button bash tests/ui/copy-button.sh
 run isolated i18n bash tests/i18n/run.sh
 run isolated audio/controls bash tests/audio/audio.sh
 run isolated audio/media bash tests/audio/media.sh
+run isolated audio/artwork bash tests/audio/media-artwork.sh
 run isolated audio/spectrum bash tests/audio/spectrum.sh
 run isolated audio/visualizer bash tests/audio/media-visualizer.sh
 run isolated audio/screencast bash tests/audio/screencast.sh
@@ -296,6 +297,7 @@ if $native; then
     # Explicit opt-in: these checks can take focus, move the pointer or use GPU capture.
     run native audio/imports bash tests/audio/audio.sh --native-imports
     run native audio/fullscreen bash tests/audio/media-fullscreen.sh
+    run native audio/artwork bash tests/audio/media-artwork.sh --gpu
     run native audio/visualizer bash tests/audio/media-visualizer.sh --native
     run native audio/visualizer-gpu bash tests/audio/media-visualizer.sh --gpu
     run native audio/screencast bash tests/audio/screencast.sh --native

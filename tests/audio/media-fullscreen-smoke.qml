@@ -7,6 +7,7 @@ import Quickshell
 import Quickshell.Services.Mpris
 import Quickshell.Wayland
 import "../../src/theme"
+import "../../src/config"
 import "../../src/ui" as UI
 import "../../src/modules/system/audio"
 import "../../src/services"
@@ -235,6 +236,12 @@ Scope {
                         && image.decodedSize.width >= image.paintedWidth * Screen.devicePixelRatio,
                         "fullscreen artwork trims its frame and renders vector detail at the full device resolution");
                 }
+                const cover = root.find(card, "mediaFullscreenArtwork") as MediaFullscreenArtwork;
+                root.check(!!cover && cover.style === Config.mediaFullscreenArtworkStyle
+                    && cover.width === card.artworkSize
+                    && cover.height === cover.implicitHeight
+                    && cover.y + cover.height < controls.y,
+                    "configured artwork stays in the fullscreen artwork slot above controls");
                 const effects = root.find(card, "mediaEffectSelector") as MediaEffectList;
                 root.check(effects.view.visible && effects.view.count === 17 && effects.view.clip,
                     "all effects are available in a permanent scrollable list");

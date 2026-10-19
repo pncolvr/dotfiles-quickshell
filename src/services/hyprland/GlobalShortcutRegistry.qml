@@ -34,6 +34,8 @@ Scope {
             activate: () => ScreenshotService.open(method)
         })),
         {name: "recording-toggle", description: Translations.text("shortcuts.recording"), activate: () => RecordingService.toggle()},
+        {name: "media-fullscreen", description: Translations.text("media.actions.fullscreen"), activate: () => MediaFullscreenService.openPreferred(
+            Quickshell.screens.find(screen => screen.name === Hyprland.focusedMonitor?.name) ?? Quickshell.screens[0])},
         {name: "vault-toggle", description: Translations.text("shortcuts.vault"), activate: () => RbwService.open()},
         {name: "notifications-toggle-dnd", description: Translations.text("shortcuts.dnd"), activate: () => NotificationService.toggle()},
         {name: "shell-reload", description: Translations.text("shortcuts.reload"), activate: () => root.reloadShell()},

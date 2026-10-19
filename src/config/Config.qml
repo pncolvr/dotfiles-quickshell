@@ -474,6 +474,8 @@ Item {
         serial, String(bands), String(fps)
     ]
     readonly property real mediaUnmuteVolume: 1.0 // Fallback when the player's previous volume is unknown.
+    // Fullscreen artwork only: plain, cassette, cd (jewel case) or disc (round CD).
+    readonly property string mediaFullscreenArtworkStyle: "cassette"
     readonly property string mediaFullscreenNamespace: "quickshell-media"
     readonly property var screencastSoundCommand: sound => ["canberra-gtk-play", "-i", sound]
     readonly property string screencastStartSound: "device-added"

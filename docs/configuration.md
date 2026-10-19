@@ -536,6 +536,20 @@ app's cancel key.
 Explicit launcher or bar-shortcut invocation activates the input/root without
 moving the pointer. Pinning is always a manual action.
 
+## Fullscreen media artwork
+
+`mediaFullscreenArtworkStyle` selects `plain` (the current artwork), `cassette`
+(artwork printed on a cassette label), `cd` (a jewel case with a ribbed spine),
+or `disc` (round printed artwork with a metallic rim/hub and transparent centre hole).
+It defaults to `plain`; unknown values also use `plain`. This changes only the
+fullscreen artwork decoration. Compact cards, playback controls and visualizer
+behavior keep their existing settings. Reload the bar after editing Config.
+
+The native Hyprland action `quickshell:media-fullscreen` opens the first playing
+player, or the first available player when none is playing, on the focused
+monitor. It needs no open media panel. Bind it in your tools submap; Escape
+retains its existing close behavior.
+
 ## Animation policy
 
 Set `animationsEnabled: false` to disable decorative UI motion. It defaults to

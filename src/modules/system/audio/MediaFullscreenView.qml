@@ -92,37 +92,16 @@ Rectangle {
         enabled: root.monitorPosition && !!root.app
     }
     Connections { target: effects; function onSelected(name) { visualizer.selectEffect(name); } }
-    Rectangle {
+    MediaFullscreenArtwork {
         anchors.right: parent.right
         anchors.rightMargin: root.horizontalMargin
         anchors.bottom: controls.top
         anchors.bottomMargin: Theme.audioSpacing * 2
         width: root.artworkSize
-        height: width
-        color: artwork.status === Image.Ready ? "transparent" : Theme.background
-        radius: Theme.audioDeviceRadius
-        UI.CroppedImage {
-            id: artwork
-            objectName: "mediaArtwork"
-            anchors.fill: parent
-            source: root.player?.trackArtUrl || ""
-            asynchronous: true
-        }
-        UI.ScaledImage {
-            id: appArtwork
-            anchors.centerIn: parent
-            width: root.artworkSize * 0.18
-            height: width
-            source: root.appIcon ? Quickshell.iconPath(root.appIcon, true) : ""
-            visible: artwork.status !== Image.Ready
-        }
-        UI.IconText {
-            anchors.centerIn: parent
-            text: Theme.mediaIcon
-            font.pixelSize: root.artworkSize * 0.18
-            color: Theme.accent
-            visible: artwork.status !== Image.Ready && appArtwork.status !== Image.Ready
-        }
+        height: implicitHeight
+        source: root.player?.trackArtUrl || ""
+        fallbackSource: root.appIcon ? Quickshell.iconPath(root.appIcon, true) : ""
+        title: root.player?.trackTitle || root.player?.identity || ""
     }
     Column {
         anchors.centerIn: parent
