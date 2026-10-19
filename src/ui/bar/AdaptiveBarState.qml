@@ -19,21 +19,44 @@ Item {
     readonly property bool islands: !!monitor && !Colors.hasTiledWindow(windowService.allWindows,
         monitor.id, monitor.activeWorkspace?.id, monitor.lastIpcObject.specialWorkspace?.id ?? 0)
     readonly property bool blocked: AdaptiveBarService.blocked(screen)
+    property int borderSize: 0
+    property bool borderReady: false
+    property bool borderRefreshPending: false
+    readonly property var samplingRegion: Colors.sampleRegion(screen, Theme.barHeight, Theme.adaptiveBarSampleHeight,
+        windowService.allWindows, monitor?.id, monitor?.activeWorkspace?.id,
+        monitor?.lastIpcObject.specialWorkspace?.id ?? 0, borderSize)
     readonly property var indicators: [Theme.inactive, Theme.accent].concat(AdaptiveBarService.foregrounds(screen))
     property color sample: Theme.background
     property color targetColor: islands ? Theme.background : sample
     property color animatedColor: targetColor
-    readonly property color background: Colors.readable(animatedColor, Theme.background, Theme.text, indicators)
-        ? animatedColor : Theme.background
+    property color approvedBackground: Theme.background
+    readonly property color background: approvedBackground
     property int generation: 0
     property bool dirty: true
     readonly property bool sampling: capture.running
     property string capturedColor: ""
     property string lastResult: "waiting"
-    readonly property string status: islands ? "islands" : blocked ? "blocked" : sampling ? "sampling" : lastResult
+    readonly property string status: islands ? "islands" : blocked ? "blocked"
+        : !borderReady ? "checking-borders" : sampling ? "sampling" : lastResult
     visible: false
     UI.MotionBehavior on animatedColor {
         ColorAnimation { duration: Theme.adaptiveBarColorDuration; easing.type: Easing.InOutCubic }
+    }
+    function approveBackground() {
+        // A control may derive its foreground from our published background.
+        // Publish after foreground bindings finish, rather than reevaluating
+        // them recursively inside the background's own binding.
+        const candidate = Colors.readable(animatedColor, Theme.background, Theme.text, indicators)
+            ? animatedColor : Theme.background
+        if (!Qt.colorEqual(approvedBackground, candidate)) approvedBackground = candidate
+    }
+    onIndicatorsChanged: Qt.callLater(root.approveBackground)
+    onAnimatedColorChanged: Qt.callLater(root.approveBackground)
+    function refreshBorderSize() {
+        borderReady = false
+        invalidate()
+        if (borderProbe.running) borderRefreshPending = true
+        else borderProbe.running = true
     }
     function invalidate() {
         generation++
@@ -43,13 +66,22 @@ Item {
     onWorkspaceKeyChanged: invalidate()
     onIslandsChanged: invalidate()
     onBlockedChanged: invalidate()
-    Component.onCompleted: { AdaptiveBarService.register(root); windowService.buildWindows(); invalidate() }
+    Component.onCompleted: {
+        AdaptiveBarService.register(root); windowService.buildWindows(); refreshBorderSize()
+        Qt.callLater(root.approveBackground)
+    }
     Component.onDestruction: AdaptiveBarService.unregister(root)
     Connections { target: root.windowService; function onAllWindowsChanged() { root.invalidate() } }
     Connections {
+        target: Theme
+        function onBackgroundChanged() { Qt.callLater(root.approveBackground) }
+        function onTextChanged() { Qt.callLater(root.approveBackground) }
+    }
+    Connections {
         target: Hyprland
         function onRawEvent(event) {
-            if (["activewindowv2", "workspacev2", "focusedmonv2", "activespecialv2", "configreloaded", "monitoraddedv2", "monitorremoved"].includes(event.name))
+            if (event.name === "configreloaded") { root.refreshBorderSize(); return }
+            if (["activewindowv2", "workspacev2", "focusedmonv2", "activespecialv2", "monitoraddedv2", "monitorremoved"].includes(event.name))
                 root.invalidate()
         }
     }
@@ -62,14 +94,31 @@ Item {
         id: settle
         interval: Math.max(80, Config.debounceInterval * 2)
         onTriggered: {
-            if (root.blocked || root.islands || capture.running || !root.monitor) return
+            if (root.blocked || root.islands || !root.borderReady || capture.running || !root.monitor) return
             root.dirty = false
+            const region = root.samplingRegion
+            if (!region) { root.lastResult = "invalid-geometry"; root.sample = Theme.background; return }
             capture.generation = root.generation
             capture.command = Config.adaptiveBarSampleCommand.concat([root.screen.name,
-                String(Math.round(root.screen.x)), String(Math.round(root.screen.y + Theme.barHeight + 1)),
-                String(Math.floor(root.screen.width)), String(Math.max(1, Math.min(Theme.adaptiveBarSampleHeight,
-                    Math.floor(root.screen.height - Theme.barHeight - 1))))])
+                String(region.x), String(region.y), String(region.width), String(region.height)])
             capture.running = true
+        }
+    }
+    Process {
+        id: borderProbe
+        command: ["hyprctl", "getoption", "general:border_size", "-j"]
+        stdout: StdioCollector { id: borderResult; waitForEnd: true }
+        stderr: StdioCollector { waitForEnd: true }
+        onExited: code => {
+            let size = 0
+            try { size = JSON.parse(borderResult.text).int } catch (_) {}
+            root.borderSize = code === 0 && Number.isInteger(size) && size >= 0 ? size : 0
+            root.borderReady = true
+            root.invalidate()
+            if (root.borderRefreshPending) {
+                root.borderRefreshPending = false
+                Qt.callLater(root.refreshBorderSize)
+            }
         }
     }
     Process {

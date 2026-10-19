@@ -54,7 +54,10 @@ per-panel `hideForCapture` policy; this switch does not change that policy.
 ## Adaptive bar and panel backgrounds
 
 `adaptiveBarEnabled` defaults to `false`. Enable it to sample the most common color
-of a narrow strip immediately below each monitor's bar. Workspace, focus and
+of a narrow strip below each monitor's bar. Hyprland's configured border size and
+visible window geometry move the strip below horizontal borders it would cross.
+Border size is read at startup and compositor configuration reload; window
+geometry updates follow the existing window model. Workspace, focus and
 window-layout events request a new sample; there is no continuous capture loop.
 The bar, its panels and launcher previews share that monitor's approved color.
 Unreadable colors, missing capture tools and capture failures use the configured
@@ -81,6 +84,11 @@ sets color-transition duration (280 ms). `adaptiveBarSampleCommand` is the
 capture/color helper command; disabling the feature unloads its sampler.
 Run `qs ipc -p . call adaptivebar status` from the repository to inspect each
 monitor's sampled color, chosen background and sampling status.
+The result also includes the detected border size and logical capture region.
+This skips compositor horizontal borders, not application-drawn title bars or
+vertical border columns. If the border query fails, sampling uses a zero-border
+fallback. Per-window border-size overrides are not exposed by the client snapshot;
+placement uses the global size and reported content rectangles.
 
 ## Display language
 

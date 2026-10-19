@@ -53,6 +53,7 @@ Singleton {
         function status(): string {
             return JSON.stringify(root.providers.map(provider => ({screen:provider.screen.name,
                 workspace:provider.workspaceKey,status:provider.status,sampled:provider.capturedColor,
+                borderSize:provider.borderSize,region:provider.samplingRegion,
                 background:String(provider.background),foregrounds:provider.indicators.length})));
         }
     }

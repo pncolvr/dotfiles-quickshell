@@ -21,6 +21,21 @@ assert.ok(!colors.hasTiledWindow(windows,1,4));
 assert.ok(colors.hasTiledWindow([{monitor:2,workspace:{id:-1},floating:false}],2,8,-1));
 assert.ok(!colors.hasTiledWindow([{monitor:2,workspace:{id:8},floating:false,hidden:true}],2,8));
 console.log('PASS: adaptive contrast, monitor/workspace isolation and special/hidden window classification');
+const screen={x:-1000,y:40,width:1000,height:800};
+const top={monitor:2,workspace:{id:7},at:[-998,72],size:[996,700]};
+const region=(clients,border=2,height=12)=>colors.sampleRegion(screen,30,height,clients,2,7,0,border);
+assert.deepEqual(region([top]),{x:-1000,y:72,width:1000,height:12});
+assert.equal(region([top],0).y,71);
+assert.equal(region([{...top,at:[-998,80]}]).y,80);
+assert.equal(region([{...top,at:[-998,100]}]).y,71);
+assert.equal(region([top,{...top,at:[-500,82]}]).y,82);
+assert.equal(region([{...top,hidden:true}]).y,71);
+assert.equal(region([{...top,workspace:{id:8}}]).y,71);
+assert.equal(region([{...top,monitor:1}]).y,71);
+assert.equal(region([{...top,at:[100,72]}]).y,71);
+assert.equal(region([{...top,floating:true,pinned:true,workspace:{id:8}}]).y,72);
+assert.equal(colors.sampleRegion({...screen,height:31},30,12,[],2,7,0,2),null);
+console.log('PASS: border-aware strips handle gaps, staggered windows, disabled borders, monitor/workspace isolation and bounds');
 JS
 mkdir "$fixture/bin"
 cat > "$fixture/bin/grim" <<'MOCK'
@@ -30,6 +45,12 @@ printf '%s\n' "$*" > "$ADAPTIVE_TEST_DIR/capture-arguments"
 printf 'P6\n3 1\n255\n\x24\x24\x24\xff\xff\xff\x24\x24\x24'
 MOCK
 chmod +x "$fixture/bin/grim"
+cat > "$fixture/bin/hyprctl" <<'MOCK'
+#!/usr/bin/env bash
+[[ $* == 'getoption general:border_size -j' ]] || exit 1
+printf '{"int":2}\n'
+MOCK
+chmod +x "$fixture/bin/hyprctl"
 sample=$(ADAPTIVE_TEST_DIR="$fixture" PATH="$fixture/bin:$PATH" bash "$repo/src/services/ui/adaptive-color.sh" fixture -1000 71 1000 12)
 [[ ${sample,,} == '#242424' ]]
 [[ $(cat "$fixture/capture-arguments") == '-g -1000,71 1000x12 -s 1 -t ppm -' ]]
@@ -64,7 +85,7 @@ if [[ ${ADAPTIVE_NATIVE:-0} == 1 ]]; then
     platform=(env -u QT_QUICK_BACKEND QT_QPA_PLATFORM=wayland WAYLAND_DISPLAY="$display")
 fi
 "${platform[@]}" \
-    ADAPTIVE_TEST_DIR="$fixture" XDG_RUNTIME_DIR="$fixture/r" XDG_DATA_HOME="$fixture/data" XDG_CACHE_HOME="$fixture/cache" \
+    PATH="$fixture/bin:$PATH" ADAPTIVE_TEST_DIR="$fixture" XDG_RUNTIME_DIR="$fixture/r" XDG_DATA_HOME="$fixture/data" XDG_CACHE_HOME="$fixture/cache" \
     timeout 12 qs -p "$fixture" > "$fixture/log" 2>&1 || { cat "$fixture/log"; exit 1; }
 if ! rg -q 'PASS: adaptive bar' "$fixture/log" || rg -q 'ADAPTIVE FAIL:|TypeError:|ReferenceError:|Binding loop|Failed to load configuration' "$fixture/log"; then
     cat "$fixture/log"; exit 1

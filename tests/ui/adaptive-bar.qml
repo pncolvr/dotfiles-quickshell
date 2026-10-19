@@ -24,7 +24,7 @@ Scope {
     QtObject { id: fakeMonitor; property int id: 2; property var activeWorkspace: ({id:7}); property var lastIpcObject: ({specialWorkspace:{id:0}}) }
     QtObject {
         id: backend
-        property var allWindows: [{monitor:2,workspace:{id:7},mapped:true,hidden:false,floating:false}]
+        property var allWindows: [{monitor:2,workspace:{id:7},mapped:true,hidden:false,floating:false,at:[-998,72],size:[996,700]}]
         function buildWindows() {}
     }
     QtObject {
@@ -122,6 +122,11 @@ Scope {
                     if (!root.provider || !Qt.colorEqual(AdaptiveBarService.backgroundFor(output), "#08121c")) return
                     root.check(!root.provider.islands && AdaptiveBarService.backgroundFor(other) === Theme.background,
                         "each monitor keeps its own approved color")
+                    root.check(root.provider.borderReady && root.provider.borderSize === 2
+                        && root.provider.samplingRegion.y === 72, "native border metadata places the strip inside window content")
+                    requests.reload()
+                    root.check(requests.text().trim().split("\n")[0] === "fixture -1000 72 1000 12",
+                        "capture command uses the border-adjusted full-width strip")
                     root.check(AdaptiveBarService.foregrounds(output).length === 1,
                         "hidden and deliberately dim indicators do not veto sampled colors")
                     urgent.visible = true
