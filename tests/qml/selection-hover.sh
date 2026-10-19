@@ -21,7 +21,9 @@ import QtQuick
 import Quickshell
 Scope { Loader { source: "file://$project_root/tests/qml/selection-hover.qml" } }
 QML
-QT_QPA_PLATFORM=wayland QT_NO_XDG_DESKTOP_PORTAL=1 XDG_DATA_HOME="$test_dir/data" XDG_CACHE_HOME="$test_dir/cache" PIPEWIRE_REMOTE=selection-hover-test timeout 50 qs -p "$test_dir/shell.qml" > "$test_dir/log" 2>&1 &
+# IPC calls and state waits have their own deadlines. A total lifetime limit
+# would also count successful hover checks and can kill a progressing fixture.
+QT_QPA_PLATFORM=wayland QT_NO_XDG_DESKTOP_PORTAL=1 XDG_DATA_HOME="$test_dir/data" XDG_CACHE_HOME="$test_dir/cache" PIPEWIRE_REMOTE=selection-hover-test qs -p "$test_dir/shell.qml" > "$test_dir/log" 2>&1 &
 shell_pid=$!
 ipc() { timeout 2 qs ipc -p "$test_dir/shell.qml" call selectionhover "$@"; }
 snapshot() { ipc snapshot; }
@@ -46,12 +48,20 @@ fail() {
     hyprctl cursorpos -j >&2 2>/dev/null || true
     ipc geometry >&2 2>/dev/null || true
     printf 'FAIL: %s\n' "$*" >&2
-    rg 'TypeError|ReferenceError|Failed to load|WARN scene' "$test_dir/log" >&2 || true
+    if ! kill -0 "$shell_pid" 2>/dev/null; then
+        local shell_status=0
+        wait "$shell_pid" || shell_status=$?
+        printf 'Fixture exited with status %s; complete fixture log follows:\n' "$shell_status" >&2
+        cat "$test_dir/log" >&2
+    else
+        rg 'TypeError|ReferenceError|Failed to load|WARN scene' "$test_dir/log" >&2 || true
+    fi
     exit 1
 }
 wait_state() {
-    local query=$1 state
-    for ((attempt=0;attempt<80;attempt++)); do
+    local query=$1 state deadline=$((SECONDS + 8))
+    while ((SECONDS < deadline)); do
+        kill -0 "$shell_pid" 2>/dev/null || fail "fixture exited while waiting for: $query"
         if state=$(snapshot 2>/dev/null) && jq -e "$query" <<< "$state" >/dev/null; then return 0; fi
         sleep 0.025
     done

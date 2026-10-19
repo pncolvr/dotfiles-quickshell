@@ -101,7 +101,7 @@ Scope {
             const dark = {background:"#000000",text:"#d8dadc",alternateBackground:"#be1b1a1a",accent:"#6B8FB3",
                 urgent:"#B80F0A",ok:"#3E8E5A",active:"#5C9E7E",warning:"#fd6d37",inactive:"#b0b3b8",empty:"#8080804d",
                 selectionBackground:"#1b1b1b",selectionHoverBackground:"#30343a",selectionSelectedBackground:"#273441",selectionBorder:"#454a50",
-                updatesUnchangedColor:"#62666b",batteryEmptyColor:"#232323",twitchColor:"#A970FF",notificationBorder:"#2a2d38",notificationCritical:"#d32f2f"}
+                updatesUnchangedColor:"#b0b3b8",batteryEmptyColor:"#232323",twitchColor:"#A970FF",notificationBorder:"#2a2d38",notificationCritical:"#d32f2f"}
             root.check(Theme.darkMode,"dark is the default")
             for (const key of Object.keys(dark)) root.same(Theme[key],dark[key],"original dark color: " + key)
             root.same(Theme.notificationBackground,Qt.rgba(33/255,34/255,44/255,0.95),"original notification alpha")
@@ -112,6 +112,7 @@ Scope {
                 root.fixtureTheme.darkMode = false
                 events.wait(100)
                 root.verify(true)
+                root.same(Theme.updatesUnchangedColor,"#5b626a","light unchanged-version color")
                 root.check(JSON.stringify(geometry) === JSON.stringify([Theme.barHeight,Theme.fontSize,Theme.pickerWidth,Theme.controlHeight,apply.width,calendar.width]),"mode does not change dimensions")
                 root.check(Settings.Config.animationsEnabled === motion,"mode does not change motion policy")
                 root.fixtureTheme.darkMode = true

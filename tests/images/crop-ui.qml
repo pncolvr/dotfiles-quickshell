@@ -13,6 +13,8 @@ Scope {
     property int ticks: 0
     property int settledComputations: 0
     property int guiTicks: 0
+    property bool awaitingRender: false
+    property bool captureStarted: false
     readonly property url ringSource: "file://" + Quickshell.env("CROP_TEST_DIR") + "/ring.png"
     readonly property url plainSource: "file://" + Quickshell.env("CROP_TEST_DIR") + "/plain.svg"
     readonly property url blackSource: "file://" + Quickshell.env("CROP_TEST_DIR") + "/black.svg"
@@ -21,6 +23,26 @@ Scope {
         if (value) return true
         console.error("IMAGE CROP FAIL: " + message)
         ticker.stop(); Qt.quit(); return false
+    }
+    function captureRenderedScene() {
+        if (captureStarted) return
+        captureStarted = true
+        // Capture the parent to include the children's layer/mask effects.
+        const accepted = scene.grabToImage(result => {
+            if (!root.check(result.saveToFile(Quickshell.env("CROP_TEST_DIR") + "/rendered.png"),
+                "could not save the rendered crop scene")) return
+            root.step++
+        }, Qt.size(scene.width, scene.height))
+        root.check(accepted, "could not request the rendered crop scene")
+    }
+    Connections {
+        target: scene.Window.window
+        function onFrameSwapped() {
+            if (!root.awaitingRender) return
+            root.awaitingRender = false
+            // Schedule the grab after the completed frame's notification.
+            Qt.callLater(root.captureRenderedScene)
+        }
     }
     Component {
         id: deletedOwner
@@ -66,14 +88,19 @@ Scope {
                 if (!root.check(large.smooth && large.mipmap && small.layer.mipmap,"shared texture settings remain active")) return
                 root.settledComputations = UI.ImageCropCache.computations
                 root.step++
+                if (Quickshell.env("QT_QPA_PLATFORM") === "wayland") {
+                    // Analysis updates layer geometry and mask textures. Wait
+                    // for the native scene to render before checking GPU pixels.
+                    root.awaitingRender = true
+                    scene.Window.window.requestUpdate()
+                } else {
+                    // Offscreen windows do not swap frames. Their grab drives
+                    // rendering; this path checks analysis, not GPU mask pixels.
+                    Qt.callLater(root.captureRenderedScene)
+                }
                 break
             case 1:
-                // Capture a parent so Qt includes each child's layer/mask effect.
-                ticker.stop()
-                scene.grabToImage(result => {
-                    result.saveToFile(Quickshell.env("CROP_TEST_DIR") + "/rendered.png")
-                    root.step++; ticker.start()
-                })
+                // The frame notification and grab callback advance this step.
                 break
             case 2:
                 if (!root.check(UI.ImageCropCache.computations === root.settledComputations,"idle and repeated drawing do not rerun detection")) return

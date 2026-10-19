@@ -20,7 +20,7 @@ QtObject {
             selectionHoverBackground: "#30343a",
             selectionSelectedBackground: "#273441",
             selectionBorder: "#454a50",
-            updatesUnchangedColor: "#62666b",
+            updatesUnchangedColor: "#b0b3b8",
             batteryEmptyColor: "#232323",
             twitchColor: "#A970FF",
             notificationBackground: Qt.rgba(33 / 255, 34 / 255, 44 / 255, 0.95),
@@ -44,7 +44,7 @@ QtObject {
             selectionHoverBackground: "#eceff3",
             selectionSelectedBackground: "#d6e4f5", // clearer blue tint
             selectionBorder: "#c3cad2",         // thin and light instead of heavy
-            updatesUnchangedColor: "#5f6770",
+            updatesUnchangedColor: "#5b626a",
             batteryEmptyColor: "#e3e6ea",
             twitchColor: "#A970FF",
             notificationBackground: Qt.rgba(1, 1, 1, 0.97),

@@ -35,7 +35,7 @@ TestCase {
             if(color.a>0 && color.a<255) softEdge++
         }
         compare(green,0)
-        verify(softEdge>100,"large circular masks preserve fractional edge alpha instead of thresholding to a jagged silhouette")
+        verify(softEdge>100,"large circular masks preserve fractional edge alpha instead of thresholding to a jagged silhouette (fractional pixels=" + softEdge + ", DPR=" + Screen.devicePixelRatio + ")")
         compare(pixel(100,10).a,0)
         verify(pixel(300,260).r>150)
         verify(pixel(300,190).r<20,"enclosed black portrait detail is preserved")
@@ -46,7 +46,7 @@ TestCase {
             if(color.a>0 && color.a<255) smallSoftEdge++
             verify(color.a<25 || color.g<=color.r+38 || color.g<=color.b+38,"no green fringe in small avatar at " + x + "," + y)
         }
-        verify(smallSoftEdge>10,"small avatar masks preserve antialiasing too")
+        verify(smallSoftEdge>10,"small avatar masks preserve antialiasing too (fractional pixels=" + smallSoftEdge + ")")
         // Unframed artwork remains opaque and rectangular.
         compare(pixel(550,90).a,255)
         compare(pixel(849,239).a,255)
