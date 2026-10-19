@@ -12,6 +12,7 @@ import "../"
 
 Singleton {
     id: root
+    readonly property bool enabled: Config.updatesEnabled
 
     readonly property var updates: _internal.updates
     readonly property var priorityUpdates: _internal.priorityUpdates
@@ -36,6 +37,7 @@ Singleton {
     }
 
     function install() {
+        if (!enabled) return
         installProcess.command = Config.updatesInstallCommand
         installProcess.running = true
     }
@@ -54,7 +56,7 @@ Singleton {
     }
 
     function openPackage(update) {
-        if (update.repository === "unknown") return
+        if (!enabled || update.repository === "unknown") return
         BrowserRoutingService.open(packageUrl(update))
     }
 
@@ -63,10 +65,12 @@ Singleton {
     }
 
     function openMarkdown() {
+        if (!enabled) return
         openMarkdownProcess.running = true
     }
 
     function writeMarkdown() {
+        if (!enabled) return
         const priority = root.priorityUpdates.map(root.markdownRow).join("\n")
         const normal = root.normalUpdates.map(root.markdownRow).join("\n")
         const markdown = `# ${Translations.text("updates.report.title")}\n\n## ${Translations.text("updates.report.priority")}\n\n${priority || Translations.text("updates.empty.priority")}\n\n## ${Translations.text("updates.report.other")}\n\n${normal || Translations.text("updates.empty.other")}\n`
@@ -88,17 +92,41 @@ Singleton {
     }
 
     function refresh() {
-        if (updatesProcess.running) return
+        if (!enabled || updatesProcess.running) return
+        updatesProcess.discardResult = false
         updatesProcess.running = true
     }
 
     function checkNow() {
+        if (!enabled) return
         scheduleTimer.stop()
-        if (!checking) refreshScriptProcess.running = true
+        startRefresh()
     }
 
     function schedule() {
+        if (!enabled) return
         scheduleTimer.restart()
+    }
+
+    function startRefresh() {
+        if (!enabled || checking) return
+        refreshScriptProcess.discardResult = false
+        refreshScriptProcess.running = true
+    }
+
+    onEnabledChanged: {
+        if (enabled) {
+            refresh()
+            refreshIfOnline()
+        } else {
+            scheduleTimer.stop()
+            for (const process of [updatesProcess, refreshScriptProcess]) {
+                process.discardResult = true
+                if (process.running) process.signal(15)
+            }
+            if (markdownProcess.running) markdownProcess.signal(15)
+            _internal.error = ""
+        }
     }
 
     function isPriority(line) {
@@ -111,10 +139,15 @@ Singleton {
 
     Process {
         id: updatesProcess
+        property bool discardResult: false
         command: Config.updatesCheckCommand
         // Quickshell.Io omits QProcess::ExitStatus from its qmltypes.
         // qmllint disable signal-handler-parameters
         onExited: (exitCode, exitStatus) => {
+            if (!root.enabled || updatesProcess.discardResult) {
+                if (root.enabled) Qt.callLater(root.refresh)
+                return
+            }
             if (exitCode !== 0 || exitStatus !== 0) {
                 _internal.error = Translations.text("updates.errors.read")
                 return
@@ -144,9 +177,14 @@ Singleton {
     }
     Process {
         id: refreshScriptProcess
+        property bool discardResult: false
         command: Config.updatesRefreshCommand
         // qmllint disable signal-handler-parameters
         onExited: (exitCode, exitStatus) => {
+            if (!root.enabled || refreshScriptProcess.discardResult) {
+                if (root.enabled) Qt.callLater(root.refreshIfOnline)
+                return
+            }
             if (exitCode !== 0 || exitStatus !== 0) {
                 _internal.error = Translations.text("updates.errors.refresh")
                 return
@@ -157,7 +195,7 @@ Singleton {
     }
 
     function refreshIfOnline() {
-        if (NetworkService.online) refreshScriptProcess.running = true
+        if (enabled && NetworkService.online) startRefresh()
     }
 
     Connections {

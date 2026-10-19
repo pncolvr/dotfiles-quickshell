@@ -40,11 +40,21 @@ have not been introduced.
 | `workModeEnabled` | Stop work detection/tracking and remove category filters; retain saved data |
 | `statsNetworkEnabled` | Hide Stats Network and stop bandwhich sampling; retain Overview totals, CPU and Memory |
 | `batteriesEnabled` | Hide Batteries and stop collection/receiver scans; retain cached readings |
+| `updatesEnabled` | Hide Updates and stop Quickshell checks, refreshes and scheduled retries; retain the external update cache |
+| `recentFilesEnabled` | Hide Recent Files and stop history/folder scans and pin checks; retain pins, folders and preferences |
 | `twitchEnabled` | Disable Twitch UI and module work; retain saved channels/cache |
 | `twitchQutebrowserEnabled` | Skip Twitch browser-session suggestions; other Twitch features remain available |
 | `hyprlandHideApplicationsEnabled` | Skip the custom `HideApplications(...)` helper; still synchronize compositor animations |
 | `vaultEnabled` | Disable Vault management; password prompts and explicitly installed browser autofill remain independent |
 | `totpEnabled` | Disable TOTP UI/module work; full-state backup/restore still includes tokens and needs the TOTP tools |
+
+`updatesEnabled` and `recentFilesEnabled` default to `true`. Disabling either
+closes its panel and makes its bar shortcut inactive. Updates stops its own
+checks and retry timer; separately installed cron jobs, pacman hooks and manually
+invoked `update-check.sh` still run independently. An installation already opened
+in a terminal continues. Recent Files stops history/folder scans and pin checking
+without deleting its saved pins, folder tabs, aliases or default tab. Shared
+directory pickers and other file-opening features remain available.
 
 Without the custom capture helper, this configuration does not install or toggle
 compositor privacy rules. Review the [sample Hypr Lua code](setup.md#screen-sharing)

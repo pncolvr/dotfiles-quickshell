@@ -25,6 +25,8 @@ Item {
     readonly property bool workModeEnabled: true
     readonly property bool statsNetworkEnabled: true
     readonly property bool batteriesEnabled: true
+    readonly property bool updatesEnabled: true
+    readonly property bool recentFilesEnabled: true
     readonly property bool twitchEnabled: true
     readonly property bool twitchQutebrowserEnabled: true
     // Calls the custom Hypr Lua helper; compositor animations also work without it.

@@ -258,6 +258,7 @@ run isolated system/batteries bash tests/system/batteries.sh
 run isolated system/stats bash tests/system/stats.sh
 run isolated system/stats-optional bash tests/system/stats-optional.sh
 run isolated system/optional-integrations bash tests/system/optional-integrations.sh
+run isolated system/optional-collections bash tests/system/optional-collections.sh
 run isolated time/calendar bash tests/time/calendar.sh
 run isolated time/timers bash tests/time/timers.sh
 run isolated recording/setup bash tests/recording/setup.sh

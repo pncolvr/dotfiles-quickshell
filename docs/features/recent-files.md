@@ -1,5 +1,9 @@
 # Recent files
 
+Set `recentFilesEnabled: false` in `config/Config.qml` to hide this module and
+stop its history/folder scans and pin checks. Pins, folder tabs, aliases and the
+default tab are retained for re-enabling it.
+
 Hover the file icon beside the clock to see recently used files. Click the
 icon to pin the list. Each row shows the filename, its folder, and when it was
 last used. Click a row to select it, double-click to open it with its default application, or drag it

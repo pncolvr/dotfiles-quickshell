@@ -9,6 +9,7 @@ import "../"
 
 Singleton {
     id: root
+    readonly property bool enabled: Config.recentFilesEnabled
     property var files: []
     readonly property string error: state.error || PinnedFilesService.error
     readonly property bool loading: scan.running || state.pendingPanel
@@ -57,7 +58,7 @@ Singleton {
     }
 
     function initializePanel() {
-        if (!state.pendingPanel || !DbService.ready || state.panels === 0) return
+        if (!enabled || !state.pendingPanel || !DbService.ready || state.panels === 0) return
         state.navigationFolders = []
         state.showingPinned = defaultTab === "pinned"
         state.activeFolder = defaultTab === "folder" ? defaultFolder : ""
@@ -73,6 +74,7 @@ Singleton {
         function onReadyChanged() { if (DbService.ready) Qt.callLater(root.initializePanel) }
     }
     function beginPanel() {
+        if (!enabled) return
         if (state.panels === 0) state.pendingPanel = true
         state.panels++
         PinnedFilesService.active = true
@@ -82,9 +84,9 @@ Singleton {
     function endPanel() {
         state.panels = Math.max(0, state.panels - 1)
         if (state.panels === 0) state.pendingPanel = false
-        PinnedFilesService.active = state.panels > 0
+        PinnedFilesService.active = enabled && state.panels > 0
     }
-    function beginDrag() { state.dragging = true; PinnedFilesService.beginDrag() }
+    function beginDrag() { if (enabled) { state.dragging = true; PinnedFilesService.beginDrag() } }
     function endDrag() {
         state.dragging = false
         PinnedFilesService.endDrag()
@@ -95,6 +97,7 @@ Singleton {
         if (state.refreshPending) refresh()
     }
     function applySnapshot(snapshot) {
+        if (!enabled) return
         if (state.addingFolder && typeof snapshot.folder === "string") {
             if (folders.includes(snapshot.folder)
                 || PreferencesRepository.setValue("files.folders", folders.concat([snapshot.folder]))) {
@@ -113,7 +116,7 @@ Singleton {
         }
     }
     function refresh() {
-        if (state.pendingPanel || !DbService.ready) return
+        if (!enabled || state.pendingPanel || !DbService.ready) return
         PinnedFilesService.refresh()
         if (showingPinned) { files = pinnedFiles; return }
         if (scan.running || state.dragging) { state.refreshPending = true; return }
@@ -121,13 +124,14 @@ Singleton {
         state.requestFolder = currentFolder
         state.addingFolder = false
         scan.command = currentFolder ? folderCommand(currentFolder) : Config.recentFilesCommand
+        scan.discardResult = false
         scan.running = true
     }
     function folderCommand(path) {
         return Config.recentFolderCommand.concat(["--folder", path])
     }
     function selectFolder(path) {
-        if (state.dragging || (path && !folders.includes(path))) return
+        if (!enabled || state.dragging || (path && !folders.includes(path))) return
         if (!showingPinned && state.activeFolder === path && !canNavigateUp) return
         state.showingPinned = false
         state.activeFolder = path
@@ -137,11 +141,11 @@ Singleton {
         refresh()
     }
     function selectPinned() {
-        if (state.dragging) return
+        if (!enabled || state.dragging) return
         selectPinnedForDrag()
     }
     function selectPinnedForDrag() {
-        if (pinnedFiles.length === 0 || showingPinned) return
+        if (!enabled || pinnedFiles.length === 0 || showingPinned) return
         state.activeFolder = ""
         state.navigationFolders = []
         state.showingPinned = true
@@ -154,21 +158,22 @@ Singleton {
     function pinUrls(urls, beforeUri = "") { return PinnedFilesService.pinUrls(urls, beforeUri) }
     function reorderPins(uris, beforeUri = "") { return PinnedFilesService.reorder(uris, beforeUri) }
     function togglePin(file) {
-        if (state.dragging) return false
+        if (!enabled || state.dragging) return false
         return PinnedFilesService.toggle(file)
     }
     onPinnedFilesChanged: {
+        if (!enabled) return
         if (pinnedFiles.length === 0) Qt.callLater(root.resetEmptyPinnedDefault)
         if (!showingPinned) return
         if (pinnedFiles.length === 0) selectFolder("")
         else files = pinnedFiles
     }
     function resetEmptyPinnedDefault() {
-        if (pinnedFiles.length === 0 && PreferencesRepository.value("files.defaultTab", "recent") === "pinned")
+        if (enabled && pinnedFiles.length === 0 && PreferencesRepository.value("files.defaultTab", "recent") === "pinned")
             setDefaultTab("recent")
     }
     function navigateFolder(path) {
-        if (!activeFolder || state.dragging || (scan.running && state.addingFolder)
+        if (!enabled || !activeFolder || state.dragging || (scan.running && state.addingFolder)
             || typeof path !== "string" || !path || path === currentFolder) return false
         state.navigationFolders = state.navigationFolders.concat([path])
         files = []
@@ -177,7 +182,7 @@ Singleton {
         return true
     }
     function navigateUp() {
-        if (!canNavigateUp || state.dragging) return false
+        if (!enabled || !canNavigateUp || state.dragging) return false
         state.navigationFolders = state.navigationFolders.slice(0, -1)
         files = []
         state.error = ""
@@ -185,18 +190,19 @@ Singleton {
         return true
     }
     function addFolder(path) {
-        if (scan.running || state.dragging) return false
+        if (!enabled || scan.running || state.dragging) return false
         if (!path) { state.error = Translations.text("files.errors.pathRequired"); return false }
         state.refreshPending = false
         state.requestFolder = path
         state.addingFolder = true
         state.error = ""
         scan.command = folderCommand(path)
+        scan.discardResult = false
         scan.running = true
         return true
     }
     function removeFolder(path) {
-        if (state.dragging || !folders.includes(path)) return false
+        if (!enabled || state.dragging || !folders.includes(path)) return false
         const values = {"files.folders": folders.filter(folder => folder !== path)}
         if (defaultFolder === path) {
             values["files.defaultFolder"] = ""
@@ -216,7 +222,7 @@ Singleton {
         return setDefaultTab(path ? "folder" : "recent", path)
     }
     function setDefaultTab(tab, path = "") {
-        if (state.dragging || !["recent", "pinned", "folder"].includes(tab)
+        if (!enabled || state.dragging || !["recent", "pinned", "folder"].includes(tab)
             || (tab === "pinned" && pinnedFiles.length === 0)
             || (tab === "folder" && !folders.includes(path))) return false
         if (!PreferencesRepository.setValues({"files.defaultTab": tab,
@@ -232,7 +238,7 @@ Singleton {
             : path.split("/").filter(part => part.length > 0).pop() || "/"
     }
     function setFolderAlias(path, name) {
-        if (state.dragging || !folders.includes(path)) return false
+        if (!enabled || state.dragging || !folders.includes(path)) return false
         const aliases = Object.assign({}, folderAliases)
         const alias = name.trim()
         if (alias) aliases[path] = alias
@@ -244,22 +250,28 @@ Singleton {
         return true
     }
     function openFile(file) {
+        if (!enabled) return
         if (file.isDirectory) navigateFolder(file.path)
         else Quickshell.execDetached(Config.recentFileOpenCommand.concat([file.uri]))
     }
 
     Timer {
         interval: Config.recentFilesRefreshInterval
-        running: state.panels > 0
+        running: root.enabled && state.panels > 0
         repeat: true
         onTriggered: root.refresh()
     }
     Process {
         id: scan
+        property bool discardResult: false
         stdout: StdioCollector { id: output; waitForEnd: true }
         // Quickshell.Io omits QProcess::ExitStatus from its qmltypes.
         // qmllint disable signal-handler-parameters
         onExited: (exitCode, exitStatus) => {
+            if (!root.enabled || scan.discardResult) {
+                if (root.enabled && state.panels > 0) Qt.callLater(root.refresh)
+                return
+            }
             let snapshot
             try { snapshot = JSON.parse(output.text) } catch (_) { snapshot = null }
             if (exitCode === 0 && exitStatus === 0 && Array.isArray(snapshot?.files)) {
@@ -275,5 +287,25 @@ Singleton {
     IpcHandler {
         target: "recentfiles"
         function reload(): void { root.refresh() }
+    }
+    onEnabledChanged: {
+        if (enabled) {
+            if (state.panels > 0) {
+                state.pendingPanel = true
+                PinnedFilesService.active = true
+                Qt.callLater(root.initializePanel)
+            }
+        } else {
+            scan.discardResult = true
+            if (scan.running) scan.signal(15)
+            state.pendingPanel = false
+            state.refreshPending = false
+            state.deferredSnapshot = null
+            state.dragging = false
+            state.addingFolder = false
+            state.error = ""
+            files = []
+            PinnedFilesService.active = false
+        }
     }
 }

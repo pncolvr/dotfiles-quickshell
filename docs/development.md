@@ -1384,3 +1384,11 @@ active cancellation, late results and rapid off/on transitions. No packet
 capture or real `bandwhich` execution is used. `bash tests/system/stats.sh`
 retains the enabled-tab regressions and checks CPU/Memory without a bandwhich
 executable, plus the expected missing-dependency error for enabled Network.
+
+Optional Updates and Recent Files checks:
+`bash tests/run.sh system/optional-collections system/services files/recent ui/module-pins`
+uses private storage and mocked helpers. It covers disabled startup and entry
+points, hidden bar items without reserved space, closing active panels, cancelling
+checks/scans/imports, rejecting late successful results, re-enabling and restart
+with saved pins/folder preferences. It does not run package managers or open
+desktop applications. Standalone updater hooks and cron jobs remain independent.
