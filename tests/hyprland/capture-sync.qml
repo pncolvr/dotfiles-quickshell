@@ -10,6 +10,7 @@ Scope {
     property var audio: AudioService
     property var configuration: Config
     readonly property var service: HyprlandEventsService
+    readonly property var windows: WindowService
     property int stage: 0
     property int ticks: 0
     property int index: 0
@@ -88,7 +89,10 @@ Scope {
         running: !root.failed
         onTriggered: {
             if (!readLog.running) readLog.running = true
-            if (++root.ticks > 350) { root.check(false, "timeout at step " + root.index); return }
+            if (++root.ticks > 350) {
+                root.check(false, "timeout at step " + root.index + "; refreshed window state: " + root.windows.synchronizedState)
+                return
+            }
             switch (root.stage) {
             case 0:
                 if (root.ticks < 8) return
@@ -101,6 +105,11 @@ Scope {
             case 1:
                 root.check(root.commands.length <= root.expected.length, "unexpected command")
                 if (JSON.stringify(root.commands) !== JSON.stringify(root.expected)) return
+                const step = root.steps[root.index]
+                // The hidden badge must reflect the completed compositor update,
+                // without needing a focus or workspace event to refresh it.
+                if (step.command !== undefined && !step.advanceWhileBusy
+                    && root.windows.synchronizedState !== step.command) return
                 // Check quiet steps; the first transition also exercises a busy command.
                 if (!root.steps[root.index].advanceWhileBusy && ++root.settledTicks < 7) return
                 if (++root.index < root.steps.length) { root.next(); return }

@@ -202,6 +202,7 @@ run isolated images/crops bash tests/images/crops.sh
 run isolated files/recent bash tests/files/recent-files.sh
 run isolated directories bash tests/directories/directories.sh
 run isolated hyprland/capture-sync bash tests/hyprland/capture-sync.sh
+run isolated hyprland/windows bash tests/hyprland/windows.sh
 run isolated launcher/bridge bash tests/launcher/launcher.sh
 run isolated launcher/providers bash tests/launcher/providers.sh
 run isolated launcher/provider-config bash tests/launcher/provider-config.sh

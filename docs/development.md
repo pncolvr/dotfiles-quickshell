@@ -825,7 +825,9 @@ any database service. Four isolated processes reload edited fixture Config.qml
 values, while synthetic capture/compositor services and a slow command recorder
 check capture readiness, Config changes while a command is busy, multiple captures,
 compositor reload, disconnect/reconnect and the last share ending. Config changes
-during sharing are honored when sharing ends. It uses isolated runtime/data
+during sharing are honored when sharing ends. Hidden-window status is queried
+after each compositor update finishes, including when the last share ends without
+a focus or workspace change. It uses isolated runtime/data
 directories and private D-Bus sessions; no command reaches the desktop compositor.
 No persisted animation preferences, animation IPC controls or Lua state owner are
 involved.

@@ -28,7 +28,21 @@ printf 'singleton Config 1.0 Config.qml\n' > "$test_dir/src/config/qmldir"
 cat > "$fixture_dir/WindowService.qml" <<'QML'
 pragma Singleton
 import QtQml
-QtObject { function buildWindows() {} }
+import Quickshell
+import Quickshell.Io
+Scope {
+    id: root
+    property string synchronizedState: ""
+    readonly property bool activeWindowHidden: synchronizedState.startsWith("true ")
+    function buildWindows() { query.running = true }
+    Process {
+        id: query
+        command: ["cat", Quickshell.env("CAPTURE_SYNC_STATE")]
+        stdout: StdioCollector {
+            onStreamFinished: root.synchronizedState = text.trim()
+        }
+    }
+}
 QML
 cat > "$fixture_dir/StatusService.qml" <<'QML'
 pragma Singleton
@@ -43,9 +57,11 @@ cat > "$test_dir/record" <<'SH'
 #!/bin/sh
 printf '%s %s\n' "$1" "$2" >> "$CAPTURE_SYNC_LOG"
 sleep 0.12
+printf '%s %s\n' "$1" "$2" > "$CAPTURE_SYNC_STATE"
 SH
 chmod 700 "$test_dir/record"
 export CAPTURE_SYNC_LOG="$test_dir/calls" CAPTURE_SYNC_COMMAND="$test_dir/record"
+export CAPTURE_SYNC_STATE="$test_dir/state"
 export QT_QPA_PLATFORM=offscreen QT_NO_XDG_DESKTOP_PORTAL=1
 export XDG_RUNTIME_DIR="$test_dir/runtime" XDG_DATA_HOME="$test_dir/data" XDG_CACHE_HOME="$test_dir/cache"
 unset WAYLAND_DISPLAY HYPRLAND_INSTANCE_SIGNATURE
@@ -79,6 +95,7 @@ QtObject {
 }
 QML
     : > "$CAPTURE_SYNC_LOG"
+    printf 'false false\n' > "$CAPTURE_SYNC_STATE"
     output=$(timeout 12 dbus-run-session --config-file "$test_dir/bus.conf" -- qs -p "$test_dir/shell.qml" 2>&1) || {
         printf '%s\n' "$output" >&2; exit 1;
     }

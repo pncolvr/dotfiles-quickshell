@@ -9,6 +9,8 @@ import "../../services"
 Row {
     id: root
     height: parent.height
+    readonly property var titleWindows: WindowService.windows.filter(window =>
+        window.active && !WindowService.groupedWindows.includes(window))
     HoverHandler {
         onHoveredChanged: {
             // console.warn("hovered:", hovered)
@@ -20,15 +22,14 @@ Row {
     UI.TabBar {
         actionTabs: true
         id: windowTabs
-        visible: WindowService.isSpecialWorkspace
-        labels: WindowService.isSpecialWorkspace
-            ? WindowService.windows.map(window => window.title.toLowerCase()) : []
+        visible: WindowService.groupedWindows.length > 0
+        labels: WindowService.groupedWindows.map(window => window.title.toLowerCase())
         width: implicitWidth
         implicitHeight: root.height
         height: root.height
         tabPadding: Theme.groupedModuleSpacing / 2
         function syncFocusedWindow() {
-            const focusedIndex = visible ? WindowService.windows.findIndex(window => window.active) : -1
+            const focusedIndex = WindowService.groupedWindows.findIndex(window => window.active)
             setCurrentIndex(focusedIndex)
             for (let index = 0; index < count; index++) {
                 const tab = itemAt(index) as QC.TabButton
@@ -37,11 +38,15 @@ Row {
         }
         onLabelsChanged: Qt.callLater(windowTabs.syncFocusedWindow)
         onCountChanged: Qt.callLater(windowTabs.syncFocusedWindow)
-        onTabClicked: index => WindowService.focusWindow(WindowService.windows[index].address)
+        Connections {
+            target: WindowService
+            function onGroupedWindowsChanged() { Qt.callLater(windowTabs.syncFocusedWindow) }
+        }
+        onTabClicked: index => WindowService.focusWindow(WindowService.groupedWindows[index].address)
     }
 
     Repeater {
-        model: WindowService.isSpecialWorkspace ? [] : WindowService.windows
+        model: root.titleWindows
         delegate: Item {
             required property var modelData
 
@@ -50,6 +55,7 @@ Row {
 
             UI.Text {
                 id: tabText
+                objectName: "activeWindowTitle"
                 anchors.left: parent.left
                 anchors.leftMargin: Theme.moduleSpacing / 2
                 text: parent.modelData.title.toLowerCase()

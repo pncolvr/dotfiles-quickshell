@@ -10,6 +10,8 @@ Singleton {
     id: root
 
     readonly property var windows: _internal.windows
+    readonly property var groupedWindows: isSpecialWorkspace
+        ? windows.filter(window => (window.grouped?.length ?? 0) > 1) : []
     readonly property var allWindows: _internal.allWindows
     readonly property bool isSpecialWorkspace: _internal.isSpecialWorkspace
     property bool activeWindowHidden: _internal.activeWindowHidden
@@ -211,8 +213,9 @@ Singleton {
         const n = parseInt(index)
         if (isNaN(n)) return
         const i = n === 0 ? 9 : n - 1
-        if (i < 0 || i >= _internal.windows.length) return
-        const w = _internal.windows[i]
+        const candidates = isSpecialWorkspace ? groupedWindows : windows
+        if (i < 0 || i >= candidates.length) return
+        const w = candidates[i]
         if (w) focusWindow(w.address)
     }
 

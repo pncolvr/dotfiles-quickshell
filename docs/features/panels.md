@@ -96,7 +96,10 @@ IPC interfaces with arguments and results. Both entry points reuse feature servi
 
 View tabs form a compact group centered on their existing header line, including
 during resizing. Headers keep their right-side actions in place; overflowing tabs
-scroll horizontally. Window action tabs retain their original alignment.
+scroll horizontally. Window action tabs retain their original alignment. On
+workspaces configured for window tabs, only groups with multiple members appear
+as tabs. The focused standalone window uses the plain title style after the tabs;
+inactive standalone titles are omitted. Numbered group shortcuts follow tab order.
 
 Top panels drop down from the bar in 150ms and roll up in 100ms. Size changes settle in 160ms, retargeting the current frame when content changes
 again. Module anchors update immediately; centered pickers resize both edges together.

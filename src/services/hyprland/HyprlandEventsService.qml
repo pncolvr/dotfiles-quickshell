@@ -42,11 +42,14 @@ Singleton {
         function onScreencastReadyChanged() { root.synchronizeCapture() }
         function onScreencastActiveChanged() {
             root.synchronizeCapture()
-            WindowService.buildWindows()
         }
     }
 
-    Process { id: hideApplicationsProcess }
+    Process {
+        id: hideApplicationsProcess
+        // Query no_screen_share after the compositor applies the new state.
+        onExited: WindowService.buildWindows()
+    }
 
     Connections {
         target: Hyprland
