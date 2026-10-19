@@ -10,6 +10,13 @@ import "../../services"
 
 Column {
     id: root
+    property alias searchText: searchField.text
+    readonly property var priorityUpdates: UpdatesService.priorityUpdates.filter(matchesSearch)
+    readonly property var normalUpdates: UpdatesService.normalUpdates.filter(matchesSearch)
+    function matchesSearch(update) {
+        return !searchField.query || [update.name, update.repository, update.oldVersion, update.newVersion]
+            .some(value => String(value ?? "").toLowerCase().includes(searchField.query))
+    }
     readonly property var monitor: TooltipService.screen ?? (root.QsWindow.window as QsWindow)?.screen
     readonly property real maxPanelHeight: Math.max(0, Math.min((monitor?.height ?? 1080) * Theme.updatesTooltipMaxHeightRatio,
         (monitor?.height ?? 1080) - Theme.barHeight - Theme.tooltipPaddingHeight * 2))
@@ -43,6 +50,7 @@ Column {
                     color: UpdatesService.hasUpdates ? Theme.text : Theme.inactive
                 }
                 UI.ColumnText {
+                    objectName: "updatesLastChecked"
                     width: parent.width
                     text: Translations.text("updates.status.lastChecked",[Qt.formatTime(UpdatesService.lastChecked, "HH:mm")])
                     color: Theme.inactive
@@ -77,11 +85,12 @@ Column {
                 }
             }
         }
-        Rectangle {
-            visible: UpdatesService.hasUpdates
+        UI.SearchField {
+            id: searchField
+            objectName: "updatesSearch"
             width: parent.width
-            height: 1
-            color: Theme.empty
+            placeholderText: Translations.text("updates.search.placeholder")
+            onQueryChanged: list.contentY = 0
         }
     }
 
@@ -100,29 +109,23 @@ Column {
             id: entries
             width: list.width
             spacing: root.spacing
-            Repeater {
-                model: UpdatesService.priorityUpdates
-                delegate: UpdateRow {
-                    required property var modelData
-                    update: modelData
-                    nameColor: Theme.warning
-                }
+            UpdateSection {
+                objectName: "updatesPrioritySection"
+                updates: root.priorityUpdates
+                nameColor: Theme.warning
             }
 
-            Rectangle {
-                visible: UpdatesService.priorityUpdates.length > 0 && UpdatesService.normalUpdates.length > 0
-                width: parent.width
-                height: 1
-                color: Theme.empty
+            UpdateSection {
+                objectName: "updatesOtherSection"
+                updates: root.normalUpdates
+                nameColor: Theme.text
             }
 
-            Repeater {
-                model: UpdatesService.normalUpdates
-                delegate: UpdateRow {
-                    required property var modelData
-                    update: modelData
-                    nameColor: Theme.text
-                }
+            UI.ColumnText {
+                objectName: "updatesNoResults"
+                visible: UpdatesService.hasUpdates && !root.priorityUpdates.length && !root.normalUpdates.length
+                text: Translations.text("picker.empty.results")
+                color: Theme.inactive
             }
         }
         QC.ScrollBar.vertical: UI.ScrollBar {}

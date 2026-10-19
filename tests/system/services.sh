@@ -23,7 +23,7 @@ override_config() {
 }
 run_qml() {
     local directory=$1 fixture=$2 phase=${3:-} output line
-    sed 's@"../../src@"src@g' "$project_root/$fixture" > "$directory/shell.qml"
+    sed 's@"../../src@"src@g;s@"../launcher"@"."@g' "$project_root/$fixture" > "$directory/shell.qml"
     output=$(QT_QPA_PLATFORM=offscreen QT_QUICK_BACKEND=software XDG_RUNTIME_DIR="$directory/runtime" \
         XDG_DATA_HOME="$directory/data" XDG_CACHE_HOME="$directory/cache" SERVICES_TEST_PHASE="$phase" \
         timeout 10 qs -p "$directory" 2>&1) || { printf '%s\n' "$output" >&2; return 1; }
@@ -116,3 +116,62 @@ esac
 MOCK
 run_qml "$updates_refresh" tests/system/updates-refresh.qml
 [[ $(wc -l < "$updates_refresh/runs") -eq 5 ]]
+
+updates_panel="$test_dir/updates-panel"
+fixture_directory "$updates_panel"
+override_config "$updates_panel" networkCheckCommand '["printf", "0\n"]'
+override_config "$updates_panel" updatesCheckCommand '["printf", ""]'
+override_config "$updates_panel" updatesRefreshCommand '["true"]'
+sed -i 's/readonly property var updatesCheckCommand:/property var updatesCheckCommand:/;s/readonly property string language:.*/readonly property string language: "en"/' "$updates_panel/src/config/Config.qml"
+cp "$project_root/tests/launcher/NativeFocusDriver.qml" "$updates_panel/"
+run_qml "$updates_panel" tests/system/updates-panel.qml
+
+# Prime an existing engine before introducing the new section type and tooltip.
+sed -i 's/^    property var updatesCheckCommand:/    readonly property var updatesCheckCommand:/' "$updates_panel/src/config/Config.qml"
+override_config "$updates_panel" updatesCheckCommand '["printf", "core x86_64 linux 1 2\n"]'
+rm "$updates_panel/src/modules/updates/UpdateSection.qml"
+cat > "$updates_panel/src/modules/updates/UpdatesTooltip.qml" <<'QML'
+import QtQuick
+import "../../ui" as UI
+Column { width: 320; UI.ColumnText { text: "Original updates tooltip" } }
+QML
+sed 's@"../../src@"src@g' "$project_root/tests/system/updates-reload.qml" > "$updates_panel/shell.qml"
+(
+    export QT_QPA_PLATFORM=offscreen QT_QUICK_BACKEND=software QT_NO_XDG_DESKTOP_PORTAL=1
+    export XDG_RUNTIME_DIR="$updates_panel/runtime" XDG_DATA_HOME="$updates_panel/data" XDG_CACHE_HOME="$updates_panel/cache"
+    unset WAYLAND_DISPLAY HYPRLAND_INSTANCE_SIGNATURE
+    qs -p "$updates_panel" > "$updates_panel/reload.log" 2>&1 &
+    probe_pid=$!
+    cleanup_reload() {
+        local result=$?
+        if ((result != 0)); then cat "$updates_panel/reload.log" >&2; fi
+        kill "$probe_pid" 2>/dev/null || true
+        wait "$probe_pid" 2>/dev/null || true
+    }
+    trap cleanup_reload EXIT
+    ipc_reload() { timeout 2 qs ipc -p "$updates_panel" call updatesReloadTest "$@"; }
+    wait_reload() {
+        local expression=$1 attempt
+        for ((attempt=0; attempt<80; attempt++)); do
+            if snapshot=$(ipc_reload state 2>/dev/null) && jq -e "$expression" <<< "$snapshot" >/dev/null; then return; fi
+            kill -0 "$probe_pid" 2>/dev/null || break
+            sleep 0.05
+        done
+        printf 'SERVICES FAIL: updates reload %s; last state: %s\n' "$expression" "${snapshot:-unavailable}" >&2
+        return 1
+    }
+    wait_reload '.count==1 and (.search|not)'
+    generation=$(jq -r .generation <<< "$snapshot")
+    cp "$project_root/src/modules/updates/UpdateSection.qml" "$updates_panel/src/modules/updates/"
+    cp "$project_root/src/modules/updates/UpdatesTooltip.qml" "$updates_panel/src/modules/updates/"
+    ipc_reload reload >/dev/null
+    wait_reload ".generation!=\"$generation\" and .search and .priorityCount==\"1\""
+    generation=$(jq -r .generation <<< "$snapshot")
+    ipc_reload reload >/dev/null
+    wait_reload ".generation!=\"$generation\" and .search and .priorityCount==\"1\""
+    ! rg -q 'Failed to load configuration|TypeError:|ReferenceError:|Binding loop' "$updates_panel/reload.log"
+    ipc_reload quit >/dev/null
+    wait "$probe_pid"
+    trap - EXIT
+    printf 'PASS: existing-engine updates upgrade and repeated reload preserve search and section counts\n'
+)

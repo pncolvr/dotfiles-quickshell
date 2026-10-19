@@ -18,7 +18,11 @@ Calendar keeps right-click for month/year and uses middle-click for seconds.
 Audio mute buttons are at the top right of the respective panels; scroll still
 adjusts volume and middle-click opens the mixer. Updates puts its update count
 and last-checked time on the left of a compact header, beside notes and download
-buttons for opening the Markdown list and installing updates.
+buttons for opening the Markdown list and installing updates. A full-width search
+below the header filters priority and other updates together by package name,
+repository or version. Each section divider shows only its matching count at the
+right edge, in the same color as that section's package names; the header keeps
+the total available count.
 
 A focused search keeps its panel open if filtering shrinks it away from the
 pointer. This is a temporary keyboard-focus hold, with no automatic pinning;
