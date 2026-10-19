@@ -29,7 +29,7 @@ Item {
     }
     readonly property var audioNodes: nodes.filter(node => node instanceof PwNode && node.ready && node.audio)
     readonly property bool hasStreams: audioNodes.length > 0
-    readonly property bool rendering: UI.MotionPolicy.enabled && active && playing
+    readonly property bool rendering: UI.MotionPolicy.mediaVisualizerEnabled && active && playing
     readonly property bool capturing: rendering && hasStreams
     readonly property bool sampling: capturing && workers.count > 0
     property var bands: {

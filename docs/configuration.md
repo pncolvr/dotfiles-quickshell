@@ -533,6 +533,12 @@ settles active transitions immediately and stops decorative effects.
 `animateDuringScreenShare` defaults to `false`; enabling it allows decorative
 motion during sharing, subject to the master switch.
 
+`mediaVisualizerEnabled` defaults to `true` and independently controls media-card
+and fullscreen visualizers, including audio analysis and shader animation. They
+can run with general UI motion disabled and during screen sharing. Set it to
+`false` to stop visualization. Card flips and fullscreen transitions still follow
+the general animation policy.
+
 Compositor animations are owned by `HyprlandEventsService`, independently of UI
 motion. `hyprlandAnimationsEnabled` is authoritative: animations run only when it
 is `true` and no screen share is active. Changing it in Config.qml applies on bar

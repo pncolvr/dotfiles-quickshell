@@ -7,6 +7,7 @@ QtObject {
     function allowsMotion(allowDuringSharing, sharing) { return allowDuringSharing || !sharing }
     readonly property bool sharingAllowed: allowsMotion(Config.animateDuringScreenShare, AudioService.screencastActive)
     readonly property bool enabled: Config.animationsEnabled && sharingAllowed
+    readonly property bool mediaVisualizerEnabled: Config.mediaVisualizerEnabled
     // Status feedback stays available when decorative motion is disabled.
     readonly property bool screenSharePulseEnabled: Config.screenSharePulseEnabled
     readonly property bool recordingPulseEnabled: Config.recordingPulseEnabled

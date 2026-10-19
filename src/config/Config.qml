@@ -39,6 +39,7 @@ Item {
     // Decorative motion follows both switches below.
     readonly property bool animationsEnabled: true
     readonly property bool animateDuringScreenShare: false
+
     // Status indicators have independent switches, including during screen sharing.
     readonly property bool animateIndicators: animationsEnabled || true
     readonly property bool screenSharePulseEnabled: animateIndicators
@@ -46,6 +47,8 @@ Item {
     readonly property bool notificationBorderAnimationEnabled: animateIndicators
     readonly property bool micPulseEnabled: animateIndicators
     readonly property bool volumePulseEnabled: animateIndicators
+    // Media visualization is independent of decorative UI motion and sharing.
+    readonly property bool mediaVisualizerEnabled: animateIndicators
     readonly property string screenShareHiddenNamespace: "quickshell-private"
     readonly property int debounceInterval: Timespan.fromMilliseconds(50)
     readonly property int tooltipHideDelay: Timespan.fromMilliseconds(300)

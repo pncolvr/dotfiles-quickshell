@@ -67,6 +67,10 @@ A permanent scrolling list offers **17 styles**, with opaque hover backgrounds.
 The reverse face omits track details; its list spans the card height with equal
 top and bottom padding, beside the Flip and Fullscreen buttons.
 Selection uses the shared dropdown row's accent text and selected background.
+`Config.mediaVisualizerEnabled` independently controls visualization in the card
+and fullscreen view, including during screen sharing. Card flips and fullscreen
+transitions retain the general animation policy.
+
 The last selected effect is saved separately for each app and restored after
 reopening the panel or restarting the shell. Cards from the same app share its
 choice, using its desktop identity rather than a temporary player or process ID.

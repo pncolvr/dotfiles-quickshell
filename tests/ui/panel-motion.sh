@@ -8,7 +8,7 @@ tar -C "$repo_dir" --exclude='*.env' --exclude='src/services/launcher/providers/
 sed -i 's/readonly property bool screencastActive:.*/property bool screencastActive: false/' "$fixture/src/services/audio/AudioService.qml"
 # Only the isolated Config is writable for runtime policy checks.
 sed -i 's/readonly property bool animationsEnabled:.*/property bool animationsEnabled: true/;s/readonly property bool animateDuringScreenShare:.*/property bool animateDuringScreenShare: false/' "$fixture/src/config/Config.qml"
-sed -i -E 's/readonly property bool (screenSharePulseEnabled|notificationBorderAnimationEnabled|micPulseEnabled|volumePulseEnabled):.*/property bool \1: true/' "$fixture/src/config/Config.qml"
+sed -i -E 's/readonly property bool (screenSharePulseEnabled|notificationBorderAnimationEnabled|micPulseEnabled|volumePulseEnabled|mediaVisualizerEnabled):.*/property bool \1: true/' "$fixture/src/config/Config.qml"
 # No desktop notification registration or real notification data in this fixture.
 cat > "$fixture/src/services/notifications/NotificationService.qml" <<'MOCK'
 pragma Singleton

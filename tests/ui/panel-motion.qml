@@ -8,6 +8,7 @@ import "../../src/services"
 import "../../src/config"
 import "../../src/theme"
 import "../../src/modules/system/notifications"
+import "../../src/modules/system/audio" as Audio
 
 Scope {
     id: root
@@ -31,6 +32,12 @@ Scope {
     QtObject { id: loopTarget; property real value: 0 }
     UI.MotionAnimation { id: looping; target: loopTarget; property: "value"; from: 0; to: 100; animationDuration: 200; loops: Animation.Infinite }
     Test.TestCase { id: events; when: false }
+    Audio.MediaVisualizer { id: policyVisualizer; active: true; playing: true; visible: false }
+    Audio.MediaCavaShader {
+        id: policyShader
+        preset: "orion_circle_rotate"; bands: [0.5]
+        active: true; playing: true; visible: false
+    }
     readonly property var centered: centeredSurface.motion
     FloatingWindow {
         visible: true
@@ -343,6 +350,11 @@ Scope {
                 const countdownTime = countdown.clockNow
                 const countdownProgress = countdown.countdownProgress
                 root.fakeConfig.animationsEnabled = false
+                root.check(policyVisualizer.rendering && policyShader.animating,
+                    "media visualizers remain enabled independently of general UI motion")
+                root.check(events.findChild(policyShader, "mediaCavaBandBlend").policyEnabled
+                    && events.findChild(policyShader, "mediaCavaTime").policyEnabled,
+                    "both shader animators use the visualizer policy instead of the general motion gate")
                 root.check(!UI.MotionPolicy.enabled && UI.MotionPolicy.notificationBorderEnabled,
                     "master switch disables general motion and leaves the notification border enabled")
                 events.wait(1)
@@ -360,6 +372,14 @@ Scope {
                 root.check(!surface.presented, "master switch closes panels immediately")
                 root.fakeConfig.animateDuringScreenShare = true
                 root.fakeAudio.screencastActive = true
+                root.check(policyVisualizer.rendering && policyShader.animating,
+                    "media visualizers remain enabled during screen sharing")
+                root.fakeConfig.mediaVisualizerEnabled = false
+                root.check(!UI.MotionPolicy.mediaVisualizerEnabled && !policyVisualizer.rendering && !policyShader.animating,
+                    "the visualizer switch stops rendering and shader motion")
+                root.fakeConfig.mediaVisualizerEnabled = true
+                root.check(policyVisualizer.rendering && policyShader.animating,
+                    "reenabling visualizers resumes them during sharing")
                 root.check(!UI.MotionPolicy.enabled && UI.MotionPolicy.notificationBorderEnabled,
                     "allowing motion during sharing cannot override the disabled master switch")
                 root.fakeConfig.animateDuringScreenShare = false
