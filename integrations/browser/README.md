@@ -27,6 +27,12 @@ desktop session's `PATH`. The installer reports if it cannot find its launcher
 there. Keep this checkout at the installed path, or rerun installation after
 moving it. The `.desktop` file beside this README is copied by the installer.
 
+Desktop services also need that PATH. After configuring the compositor's PATH,
+include it in the session's environment import:
+`dbus-update-activation-environment --systemd PATH WAYLAND_DISPLAY XDG_CURRENT_DESKTOP`.
+The Hyprland autostart example includes this import. Restart applications that
+were already running with an older PATH.
+
 When Quickshell is running, the handler asks its browser IPC endpoint to open
 each target. With routing disabled, that endpoint uses the configured fallback
 browser directly. If the endpoint is unavailable, the installed wrapper uses the
