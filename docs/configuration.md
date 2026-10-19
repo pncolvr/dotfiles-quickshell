@@ -85,7 +85,8 @@ monitor's sampled color, chosen background and sampling status.
 ## Display language
 
 Set `Config.language` in `config/Config.qml` to `"system"` (default) or a catalog
-filename without `.json` from `src/i18n/languages/` (currently `"en"` and `"pt"`).
+filename without `.json` from `src/i18n/languages/`: `"en"` (English), `"pt"`
+(European Portuguese), `"es"` (Spanish), or `"fr"` (French).
 System mode reads Qt's default locale once, tries a matching regional catalog,
 then its base language, and falls back to English. There are no locale
 subprocesses or polling. A changed system locale may require restarting Quickshell. Editing the
@@ -94,8 +95,8 @@ Config override applies through the normal config reload.
 All shell-owned wording comes from the shared `Translations` singleton and the
 public catalogs in `src/i18n/languages/`. Each filename is a language key in the
 catalog dictionary; adding a language requires no loader changes. Optional
-`$locale` metadata controls date/number formatting (`en_GB` and `pt_PT` in the
-shipped catalogs). Missing messages fall back to English. Catalogs use stable
+`$locale` metadata controls date/number formatting (`en_GB`, `pt_PT`, `es_ES`, and
+`fr_FR` in the shipped catalogs). Missing messages fall back to English. Catalogs use stable
 semantic identifiers, independent of wording. Complete messages own their placeholders and singular/plural forms.
 Calendar month and weekday names live in these catalogs, rather than Theme;
 weekday highlighting uses numeric indexes. Theme still owns calendar styling.

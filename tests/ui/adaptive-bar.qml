@@ -43,7 +43,9 @@ Scope {
     Test.SignalSpy { id: contrastChanges; target: root.provider; signalName: "indicatorsChanged" }
     Item {
         id: foregrounds
-        Text { color: Theme.text }
+        // Real controls can derive their foreground from their host background.
+        // Scanning that color must not reenter the background's contrast binding.
+        Text { color: root.provider && !Qt.colorEqual(root.provider.background, Theme.background) ? Theme.inactive : Theme.text }
         Text { id: urgent; color: Theme.warning; visible: false }
         Text { color: Theme.warning; opacity: 0.5 }
         Audio.MediaVisualizer {

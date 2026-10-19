@@ -77,6 +77,24 @@ Scope {
             root.check(input.activeFocus,'focus survives translation update')
             const preview = Quickshell.env("I18N_PREVIEW");
             if (preview) events.grabImage(window.contentItem).save(preview);
+            input.forceActiveFocus()
+            root.check(input.activeFocus,'input focused before catalog switches')
+            const enteredText = input.text
+            for (const language of [
+                {id:'es',locale:'es_ES',save:'Guardar',month:'Marzo',one:'1 actualización disponible',other:'2 actualizaciones disponibles'},
+                {id:'fr',locale:'fr_FR',save:'Enregistrer',month:'Mars',one:'1 mise à jour disponible',other:'2 mises à jour disponibles'}
+            ]) {
+                root.settings.language=language.id
+                events.wait(20)
+                root.check(Translations.language===language.id && Translations.locale.name===language.locale,
+                    language.id+' catalog discovered with regional locale')
+                root.check(Translations.text('common.actions.save')===language.save
+                    && Translations.calendarMonthNames[2]===language.month,language.id+' labels and calendar translate')
+                root.check(Translations.text('updates.status.available',[],1)===language.one
+                    && Translations.text('updates.status.available',[],2)===language.other,language.id+' singular and plural forms')
+                root.check(input.text===enteredText && input.activeFocus,
+                    language.id+' switch preserves input and focus')
+            }
             root.settings.language='zz'
             events.wait(20)
             root.check(Translations.availableLanguages.includes('zz') && Translations.catalogs.zz,

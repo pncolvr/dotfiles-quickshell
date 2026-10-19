@@ -13,7 +13,7 @@ Item {
     }
 
     // Display language: system or a filename from src/i18n/languages (without .json).
-    readonly property string language: "es"
+    readonly property string language: "system"
 
     // Optional modules and integrations. Configure these before first launch.
     readonly property bool adaptiveBarEnabled: true
