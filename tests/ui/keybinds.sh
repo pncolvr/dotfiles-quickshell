@@ -17,5 +17,5 @@ sed 's@"../../src@"src@g' "$repo/tests/ui/keybinds.qml" > "$fixture/shell.qml"
 env -u WAYLAND_DISPLAY -u HYPRLAND_INSTANCE_SIGNATURE QT_QPA_PLATFORM=offscreen QT_QUICK_BACKEND=software \
     HOME="$fixture/home" XDG_RUNTIME_DIR="$fixture/runtime" XDG_DATA_HOME="$fixture/data" XDG_CACHE_HOME="$fixture/cache" \
     timeout -k 2 15 qs -p "$fixture" > "$fixture/log" 2>&1 || { cat "$fixture/log"; exit 1; }
-if ! rg -q 'PASS: configured panel' "$fixture/log" || rg -q 'KEYBINDS FAIL:|TypeError:|ReferenceError:|Binding loop|Failed to load configuration' "$fixture/log"; then cat "$fixture/log"; exit 1; fi
+if ! rg -q 'PASS: configured panel' "$fixture/log" || rg -q 'KEYBINDS FAIL:|TypeError:|ReferenceError:|Binding loop|Failed to load configuration|Unable to assign \[undefined\] to QString' "$fixture/log"; then cat "$fixture/log"; exit 1; fi
 rg 'PASS:' "$fixture/log"

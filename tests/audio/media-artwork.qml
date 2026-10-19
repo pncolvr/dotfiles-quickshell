@@ -97,7 +97,7 @@ Scope {
                 function test_config_default() {
                     const fresh = Qt.createComponent("../../src/modules/system/audio/MediaFullscreenArtwork.qml")
                     compare(fresh.status, Component.Ready)
-                    const item = fresh.createObject(cover.parent, {width: 100})
+                    const item = fresh.createObject(cover.parent, {width: 100}) as MediaFullscreenArtwork
                     verify(item)
                     compare(item.style, Config.mediaFullscreenArtworkStyle)
                     item.destroy()

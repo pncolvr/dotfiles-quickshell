@@ -94,7 +94,7 @@ QC.TabBar {
             readonly property bool keyboardFocusVisible: pointerFocus.keyboardFocusVisible
             UI.PointerFocus { id: pointerFocus }
             required property int index
-            readonly property string modelData: root.labels[index]
+            readonly property string modelData: root.labels[index] ?? ""
             text: modelData
             width: implicitWidth
             implicitWidth: tabLabel.implicitWidth + root.tabPadding * 2

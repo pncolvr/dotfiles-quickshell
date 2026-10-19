@@ -107,6 +107,15 @@ Scope {
             root.tabActions = 0
             events.wait(20)
             root.check(root.tabsCentered(),'tabs recenter when the header has room again')
+            tabs.currentIndex = 2
+            tabs.labels = ['Only']
+            root.check(tabs.count === 1 && (tabs.itemAt(0) as QC.TabButton).text === 'Only' && tabs.currentIndex === 0,
+                'shrinking tabs drops removed delegates and selects a valid tab')
+            tabs.labels = []
+            root.check(tabs.count === 0, 'empty tab lists release all delegates')
+            tabs.labels = ['First','Second','Third']
+            root.check(tabs.count === 3 && (tabs.itemAt(2) as QC.TabButton).text === 'Third',
+                'tabs can be repopulated after clearing')
             search.forceActiveFocus()
             events.keyClick(Qt.Key_A,Qt.ControlModifier)
             root.check(search.selectedText === search.text && root.additions === 0,'Ctrl+A selects text, never adds')
