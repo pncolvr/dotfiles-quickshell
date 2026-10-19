@@ -8,6 +8,7 @@ import "../../src/theme"
 import "../../src/services"
 import "../../src/ui/bar" as Bar
 import "../../src/ui/components" as UI
+import "../../src/modules/system/audio" as Audio
 
 Scope {
     id: root
@@ -38,11 +39,19 @@ Scope {
     function countRequests() { requests.reload(); return requests.text().trim().split("\n").filter(Boolean).length }
     property int requestCount: 0
     property int waitTicks: 0
+    property real decorativeOpacity: 0.4
+    Test.SignalSpy { id: contrastChanges; target: root.provider; signalName: "indicatorsChanged" }
     Item {
         id: foregrounds
         Text { color: Theme.text }
         Text { id: urgent; color: Theme.warning; visible: false }
         Text { color: Theme.warning; opacity: 0.5 }
+        Audio.MediaVisualizer {
+            // Exercise the real visualizer's exclusion, without audio capture.
+            width: 200; height: 50
+            Rectangle { opacity: root.decorativeOpacity }
+            Text { color: Theme.warning }
+        }
     }
     function check(ok, message) { if (!ok) throw new Error(message) }
     function preview(name) {
@@ -117,6 +126,10 @@ Scope {
                     root.check(AdaptiveBarService.foregrounds(output).length === 2,
                         "visible urgent text participates in contrast checks")
                     urgent.visible = false
+                    contrastChanges.clear()
+                    root.decorativeOpacity = 0.8
+                    root.check(contrastChanges.count === 0,
+                        "visualizer changes do not reevaluate adaptive contrast")
                     background.islands = false
                     background.background = root.provider.background
                     AdaptiveBarService.registerOverlay(overlay)
@@ -162,7 +175,7 @@ Scope {
                     root.step++; break
                 case 7:
                     root.check(!sampler.item && !AdaptiveBarService.providers.length, "disabling unloads the sampler")
-                    console.log("PASS: adaptive bar disabled lifecycle, islands, panel backing, per-monitor sampling, contrast fallback and overlay freeze")
+                    console.log("PASS: adaptive bar disabled lifecycle, islands, panel backing, per-monitor sampling, contrast fallback, visualizer exclusion and overlay freeze")
                     stop(); Qt.quit()
                 }
             } catch (error) {

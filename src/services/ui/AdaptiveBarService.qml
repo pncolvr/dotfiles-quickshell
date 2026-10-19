@@ -20,7 +20,9 @@ Singleton {
     function foregrounds(screen) {
         const colors = [];
         function visit(item, opacity) {
-            if (!item || !item.visible) return;
+            // Check before reading opacity or children: visualizer updates must
+            // not become dependencies of this contrast binding.
+            if (!item || item.adaptiveContrastExcluded === true || !item.visible) return;
             const effectiveOpacity = opacity * item.opacity;
             // Read color only: editable/secret field contents are never inspected.
             // Deliberately dim workspace markers retain their decorative role.

@@ -62,6 +62,8 @@ theme background. Color animation follows the shared motion and screen-sharing
 policy. Samples stay in memory; no screenshots or color history are saved.
 Contrast checks include visible bar and panel labels; hidden urgent indicators
 and deliberately dim decorative markers do not reject otherwise readable colors.
+Media visualizers are excluded from the text-contrast scan, so their animation
+does not repeatedly rescan the panel. Media-card labels remain checked.
 
 Empty workspaces and workspaces with only floating windows use three palette-
 colored islands. The left island rounds its bottom-right corner, the middle

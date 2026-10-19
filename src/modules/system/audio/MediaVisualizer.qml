@@ -10,6 +10,8 @@ import "../../../services"
 
 Item {
     id: root
+    // Decorative pixels do not constrain the shared bar/panel text background.
+    readonly property bool adaptiveContrastExcluded: true
     property var nodes: []
     property bool active: false
     property bool playing: false
