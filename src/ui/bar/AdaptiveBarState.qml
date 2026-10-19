@@ -61,7 +61,17 @@ Item {
     function invalidate() {
         generation++
         dirty = true
-        settle.restart()
+        Qt.callLater(root.captureIfReady)
+    }
+    function captureIfReady() {
+        if (!dirty || blocked || islands || !borderReady || capture.running || !monitor) return
+        dirty = false
+        const region = samplingRegion
+        if (!region) { lastResult = "invalid-geometry"; sample = Theme.background; return }
+        capture.generation = generation
+        capture.command = Config.adaptiveBarSampleCommand.concat([screen.name,
+            String(region.x), String(region.y), String(region.width), String(region.height)])
+        capture.running = true
     }
     onWorkspaceKeyChanged: invalidate()
     onIslandsChanged: invalidate()
@@ -89,20 +99,6 @@ Item {
         target: root.screen
         function onWidthChanged() { root.invalidate() }
         function onHeightChanged() { root.invalidate() }
-    }
-    Timer {
-        id: settle
-        interval: Math.max(80, Config.debounceInterval * 2)
-        onTriggered: {
-            if (root.blocked || root.islands || !root.borderReady || capture.running || !root.monitor) return
-            root.dirty = false
-            const region = root.samplingRegion
-            if (!region) { root.lastResult = "invalid-geometry"; root.sample = Theme.background; return }
-            capture.generation = root.generation
-            capture.command = Config.adaptiveBarSampleCommand.concat([root.screen.name,
-                String(region.x), String(region.y), String(region.width), String(region.height)])
-            capture.running = true
-        }
     }
     Process {
         id: borderProbe
@@ -135,7 +131,7 @@ Item {
                     : Colors.readable(color, Theme.background, Theme.text, root.indicators, margin) ? "accepted" : "unreadable"
                 root.sample = root.lastResult === "accepted" ? color : Theme.background
             }
-            if (root.dirty) settle.restart()
+            if (root.dirty) Qt.callLater(root.captureIfReady)
         }
     }
 }

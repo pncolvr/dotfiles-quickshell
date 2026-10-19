@@ -58,7 +58,8 @@ of a narrow strip below each monitor's bar. Hyprland's configured border size an
 visible window geometry move the strip below horizontal borders it would cross.
 Border size is read at startup and compositor configuration reload; window
 geometry updates follow the existing window model. Workspace, focus and
-window-layout events request a new sample; there is no continuous capture loop.
+window-layout events request a new sample; requests are coalesced on the next
+event-loop turn without a fixed capture delay. There is no continuous capture loop.
 The bar, its panels and launcher previews share that monitor's approved color.
 Unreadable colors, missing capture tools and capture failures use the configured
 theme background. Color animation follows the shared motion and screen-sharing
@@ -80,7 +81,7 @@ they close, retaining the last accepted color meanwhile.
 
 Install `grim` and `imagemagick` for sampling. `Theme.adaptiveBarSampleHeight`
 sets the strip height (12 logical pixels), and `Theme.adaptiveBarColorDuration`
-sets color-transition duration (280 ms). `adaptiveBarSampleCommand` is the
+sets color-transition duration (100 ms). `adaptiveBarSampleCommand` is the
 capture/color helper command; disabling the feature unloads its sampler.
 Run `qs ipc -p . call adaptivebar status` from the repository to inspect each
 monitor's sampled color, chosen background and sampling status.

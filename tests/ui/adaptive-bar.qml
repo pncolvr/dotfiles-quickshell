@@ -137,6 +137,16 @@ Scope {
                     root.decorativeOpacity = 0.8
                     root.check(contrastChanges.count === 0,
                         "visualizer changes do not reevaluate adaptive contrast")
+                    root.requestCount = root.countRequests()
+                    for (let request = 0; request < 20; request++) root.provider.invalidate()
+                    root.step++; break
+                case 2:
+                    if (root.provider.dirty || root.provider.sampling) return
+                    // FileView reloads an existing request log asynchronously.
+                    if (root.countRequests() === root.requestCount) return
+                    root.check(root.countRequests() === root.requestCount + 1,
+                        "a burst of invalidations produces one deferred capture; before=" + root.requestCount
+                            + ", after=" + root.countRequests())
                     background.islands = false
                     background.background = root.provider.background
                     AdaptiveBarService.registerOverlay(overlay)
@@ -144,7 +154,7 @@ Scope {
                     color.setText("#ffffff\n")
                     root.provider.invalidate()
                     root.step++; break
-                case 2:
+                case 3:
                     if (++root.waitTicks < 15) return
                     root.preview("sampled")
                     root.check(root.provider.blocked && root.countRequests() === root.requestCount,
@@ -152,17 +162,17 @@ Scope {
                     root.check(Qt.colorEqual(AdaptiveBarService.backgroundFor(output), "#08121c"), "open panels retain the cached background")
                     AdaptiveBarService.unregisterOverlay(overlay)
                     root.step++; break
-                case 3:
+                case 4:
                     if (AdaptiveBarService.backgroundFor(output) !== Theme.background) return
                     color.setText("#08121c\n")
                     delay.setText("delay")
                     root.provider.invalidate()
                     root.step++; break
-                case 4:
+                case 5:
                     if (!root.provider.sampling) return
                     AdaptiveBarService.registerOverlay(overlay)
                     root.step++; break
-                case 5:
+                case 6:
                     if (root.provider.sampling) return
                     root.check(root.provider.sample === Theme.background,
                         "an in-flight sample cannot update the background after an overlay opens")
@@ -170,7 +180,7 @@ Scope {
                     backend.allWindows = [{monitor:2,workspace:{id:7},floating:true}]
                     AdaptiveBarService.registerOverlay(overlay)
                     root.step++; break
-                case 6:
+                case 7:
                     root.check(root.provider.islands && AdaptiveBarService.backgroundFor(output) === Theme.background,
                         "floating-only workspaces use palette islands")
                     const bridges = AdaptiveBarService.bridges(output)
@@ -180,9 +190,9 @@ Scope {
                     AdaptiveBarService.unregisterOverlay(overlay)
                     root.settings.adaptiveBarEnabled = false
                     root.step++; break
-                case 7:
+                case 8:
                     root.check(!sampler.item && !AdaptiveBarService.providers.length, "disabling unloads the sampler")
-                    console.log("PASS: adaptive bar disabled lifecycle, islands, panel backing, per-monitor sampling, contrast fallback, visualizer exclusion and overlay freeze")
+                    console.log("PASS: adaptive bar disabled lifecycle, islands, panel backing, per-monitor sampling, contrast fallback, visualizer exclusion, coalesced capture requests and overlay freeze")
                     stop(); Qt.quit()
                 }
             } catch (error) {
