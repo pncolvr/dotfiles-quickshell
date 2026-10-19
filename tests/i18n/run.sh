@@ -7,6 +7,8 @@ fixture=$(mktemp -d /tmp/qs-i18n.XXXXXX)
 trap 'rm -rf -- "$fixture"' EXIT
 mkdir -m700 "$fixture/r"
 tar -C "$repo_dir" --exclude='*.env' --exclude='src/services/launcher/providers/*.json' -cf - src | tar -C "$fixture" -xf -
+# A third catalog must be discovered without editing any production QML/JS.
+printf '%s\n' '{"$locale":"en_GB","common.actions.save":"Synthetic save"}' > "$fixture/src/i18n/languages/zz.json"
 sed -Ei 's/readonly property string language: "[^"]+"/property string language: "en"/;s/clipboardMonitorEnabled: true/clipboardMonitorEnabled: false/;s/workModeEnabled: true/workModeEnabled: false/' "$fixture/src/config/Config.qml"
 sed 's@"../../src@"src@g' "$repo_dir/tests/i18n/runtime.qml" > "$fixture/shell.qml"
 env -u WAYLAND_DISPLAY QT_QPA_PLATFORM=offscreen QT_QUICK_BACKEND=software QT_NO_XDG_DESKTOP_PORTAL=1 \

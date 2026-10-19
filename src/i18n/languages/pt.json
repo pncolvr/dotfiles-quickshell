@@ -1,4 +1,5 @@
 {
+  "$locale": "pt_PT",
   "common.status.copied": "Copiado",
   "common.actions.copy": "Copiar",
   "arguments.errors.executableRequired": "Introduza um executável seguido dos seus argumentos.",

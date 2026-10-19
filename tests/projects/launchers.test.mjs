@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import * as Catalog from '../../src/i18n/Catalog.mjs';
-const english=JSON.parse(fs.readFileSync(new URL('../../src/i18n/en.json',import.meta.url)));
+const english=JSON.parse(fs.readFileSync(new URL('../../src/i18n/languages/en.json',import.meta.url)));
 const translate=(key,args)=>Catalog.text(key,english,english,args);
 import * as launchers from '../../src/services/projects/ProjectLaunchers.mjs';
 const rules = [

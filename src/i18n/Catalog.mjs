@@ -1,7 +1,10 @@
 // Display strings only. IDs, commands, paths and user content never pass through this module.
-export function language(requested, systemLocale) {
-    const value = String(requested === 'system' ? systemLocale : requested).toLowerCase().split(/[-_]/)[0]
-    return value === 'pt' ? 'pt' : 'en'
+export function language(requested, systemLocale, available) {
+    const normalize = value => String(value).toLowerCase().replace(/-/g, '_')
+    const value = normalize(requested === 'system' ? systemLocale : requested)
+    return available.find(code => normalize(code) === value)
+        ?? available.find(code => normalize(code) === value.split('_')[0])
+        ?? 'en'
 }
 export function parse(contents) {
     try {

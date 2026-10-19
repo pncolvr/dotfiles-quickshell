@@ -1339,12 +1339,15 @@ output remains literal. Detached alerts use the shared `alerts.postMessage` IPC
 method, preserving their existing severity, duration and capture-readiness flags.
 Decoded text and other user content continue through the ordinary literal path.
 
-English and European Portuguese live in separate public JSON files. Add a new
-message to both with the same ID, placeholder set and value shape. Calendar name
+Catalogs live in `src/i18n/languages/<language>.json`. Their filenames populate
+the translation dictionary and available-language list automatically. Optional
+`$locale` metadata preserves regional formatting without language-specific code.
+Keep `en.json` as the English fallback. Add a new
+message to all shipped catalogs with the same ID, placeholder set and value shape. Calendar name
 arrays must retain twelve months and seven Monday-first weekday headings. Do not
 translate model keys, file paths, application names or saved user content. A new
-language also needs an explicit locale mapping in `Catalog.mjs`, a catalog loader
-in the singleton, and coverage in the configuration documentation and tests.
+language needs only its JSON catalog; no language mapping, dedicated variable or
+loader is added to QML/JavaScript. Restart/reload the shell to apply catalog edits.
 
 Run `bash tests/i18n/run.sh` for catalog parity, semantic IDs, missing references,
 placeholder/plural compatibility, system/override selection, fallback, one-pass

@@ -12,8 +12,8 @@ Item {
         readonly property string runtimeDirectory: Quickshell.env("XDG_RUNTIME_DIR")
     }
 
-    // Display language: system, en or pt (European Portuguese). Unsupported locales use English.
-    readonly property string language: "system"
+    // Display language: system or a filename from src/i18n/languages (without .json).
+    readonly property string language: "es"
 
     // Optional modules and integrations. Configure these before first launch.
     readonly property bool adaptiveBarEnabled: true

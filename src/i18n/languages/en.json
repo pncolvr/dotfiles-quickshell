@@ -1,4 +1,5 @@
 {
+  "$locale": "en_GB",
   "common.status.copied": "Copied",
   "common.actions.copy": "Copy",
   "arguments.errors.executableRequired": "Enter an executable followed by its arguments.",

@@ -15,7 +15,7 @@ model_dir="$test_dir/src/services/audio"
 mkdir -p "$model_dir" "$test_dir/src/i18n"
 cp "$project_root/src/services/audio/ScreencastModel.qml" "$model_dir/"
 printf 'singleton Translations 1.0 Translations.qml\n' > "$test_dir/src/i18n/qmldir"
-node - "$project_root/src/i18n/en.json" "$test_dir/src/i18n/Translations.qml" <<'JS'
+node - "$project_root/src/i18n/languages/en.json" "$test_dir/src/i18n/Translations.qml" <<'JS'
 const fs = require('node:fs');
 const label = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'))['audio.sources.video'];
 if (typeof label !== 'string') throw new Error('Missing video capture translation');

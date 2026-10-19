@@ -2,34 +2,44 @@ import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import {fileURLToPath} from 'node:url'
 import * as Catalog from '../../src/i18n/Catalog.mjs'
-const folder=fileURLToPath(new URL('../../src/i18n/',import.meta.url))
-const en=JSON.parse(fs.readFileSync(folder+'en.json','utf8'))
-const pt=JSON.parse(fs.readFileSync(folder+'pt.json','utf8'))
-assert.deepEqual(Object.keys(en).sort(),Object.keys(pt).sort(),'catalog coverage matches')
+const folder=fileURLToPath(new URL('../../src/i18n/languages/',import.meta.url))
+const catalogs=Object.fromEntries(fs.readdirSync(folder).filter(name=>name.endsWith('.json'))
+    .map(name=>[name.slice(0,-5),JSON.parse(fs.readFileSync(folder+name,'utf8'))]))
+const en=catalogs.en
+const available=Object.keys(catalogs)
+assert.ok(en,'English fallback is packaged')
 function checkInitialCapital(value, key) {
     if (typeof value === 'string') assert.doesNotMatch(value, /^\p{Ll}/u, 'initial capital: '+key)
-    else for (const [part, child] of Object.entries(value)) checkInitialCapital(child,key+'.'+part)
+    else for (const [part, child] of Object.entries(value)) if(part!=='$locale') checkInitialCapital(child,key+'.'+part)
 }
-for (const [locale, catalog] of Object.entries({en,pt})) checkInitialCapital(catalog,locale)
+for (const [locale, catalog] of Object.entries(catalogs)) checkInitialCapital(catalog,locale)
 const placeholders=value=>String(value).match(/%n|%[1-9]\d*/g)?.sort() ?? []
-for(const key of Object.keys(en)) {
+const messageKeys=catalog=>Object.keys(catalog).filter(key=>key!=='$locale').sort()
+for(const [code,catalog] of Object.entries(catalogs)) {
+  assert.deepEqual(messageKeys(en),messageKeys(catalog),'catalog coverage: '+code)
+  if(catalog.$locale!==undefined) assert.match(catalog.$locale,/^[a-z]{2,3}(?:[_-][A-Za-z0-9]+)*$/)
+  for(const key of messageKeys(en)) {
     assert.match(key,/^[a-z][a-zA-Z0-9]*(?:\.[a-z][a-zA-Z0-9]*)+$/,'stable semantic ID: '+key)
-    assert.equal(typeof en[key],typeof pt[key],key)
-    if(Array.isArray(en[key])) assert.equal(en[key].length,pt[key].length,key)
+    assert.equal(typeof en[key],typeof catalog[key],key)
+    if(Array.isArray(en[key])) assert.equal(en[key].length,catalog[key].length,key)
     else if(typeof en[key]==='object') {
         assert.deepEqual(Object.keys(en[key]).sort(),['one','other'],key)
-        for(const form of ['one','other']) assert.deepEqual(placeholders(en[key][form]),placeholders(pt[key][form]),key)
+        for(const form of ['one','other']) assert.deepEqual(placeholders(en[key][form]),placeholders(catalog[key][form]),key)
     } else {
-        assert.notEqual(pt[key],'','Portuguese value: '+key)
-        assert.deepEqual(placeholders(en[key]),placeholders(pt[key]),key)
+        assert.notEqual(catalog[key],'','Translation value: '+code+':'+key)
+        assert.deepEqual(placeholders(en[key]),placeholders(catalog[key]),key)
     }
 }
-assert.equal(Catalog.language('system','pt_PT'),'pt')
-assert.equal(Catalog.language('system','pt-BR'),'pt')
-assert.equal(Catalog.language('system','de_DE'),'en')
-assert.equal(Catalog.language('en','pt_PT'),'en')
-assert.equal(Catalog.language('pt','en_US'),'pt')
-assert.equal(Catalog.language('invalid','pt_PT'),'en')
+}
+assert.equal(Catalog.language('system','pt_PT',available),'pt')
+assert.equal(Catalog.language('system','pt-BR',available),'pt')
+assert.equal(Catalog.language('system','de_DE',available),'en')
+assert.equal(Catalog.language('en','pt_PT',available),'en')
+assert.equal(Catalog.language('pt','en_US',available),'pt')
+assert.equal(Catalog.language('invalid','pt_PT',available),'en')
+assert.equal(Catalog.language('system','de_DE',[...available,'de']),'de')
+assert.equal(Catalog.language('pt-PT','en_US',[...available,'pt_PT']),'pt_PT')
+assert.equal(Catalog.language('zz','en_US',[...available,'zz']),'zz')
 assert.deepEqual(Catalog.parse('broken JSON'),{})
 assert.equal(Catalog.text('fallback',{}, {fallback:'English'}),'English')
 assert.equal(Catalog.text('missing',{},{}),'missing')

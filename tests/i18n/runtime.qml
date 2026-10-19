@@ -53,10 +53,12 @@ Scope {
             events.wait(20)
             root.check(Translations.language==='en','explicit English')
             root.check(Translations.text('common.actions.save')==='Save','English catalog loaded')
+            root.check(Translations.locale.name==='en_GB','English locale metadata retained')
             root.check(Translations.calendarMonthNames[2]==='March','English calendar')
             root.settings.language='pt'
             events.wait(20)
             root.check(Translations.text('common.actions.save')==='Guardar','Portuguese catalog loaded')
+            root.check(Translations.locale.name==='pt_PT','European Portuguese locale metadata retained')
             root.check(Translations.calendarMonthNames[2]==='Março','Portuguese calendar')
             root.check(Translations.calendarDayNames.length===7,'seven weekday headings')
             root.check(tabs.labels[0]==='Resumo','translated tab binding updates')
@@ -75,6 +77,13 @@ Scope {
             root.check(input.activeFocus,'focus survives translation update')
             const preview = Quickshell.env("I18N_PREVIEW");
             if (preview) events.grabImage(window.contentItem).save(preview);
+            root.settings.language='zz'
+            events.wait(20)
+            root.check(Translations.availableLanguages.includes('zz') && Translations.catalogs.zz,
+                'catalog file names populate the language dictionary')
+            root.check(Translations.text('common.actions.save')==='Synthetic save','third catalog needs no loader or language branch')
+            root.check(Translations.text('common.actions.cancel')==='Cancel','partial catalog falls back per message')
+            root.check(Translations.calendarMonthNames[2]==='March','partial catalog calendar falls back')
             root.settings.language='unknown'
             events.wait(20)
             root.check(Translations.language==='en','unsupported language falls back')
