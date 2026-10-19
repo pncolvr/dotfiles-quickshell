@@ -260,7 +260,7 @@ Column {
             textFormat: Text.PlainText
             wrapMode: Text.Wrap
         }
-        Rectangle { width: parent.width; height: 1; color: Theme.empty }
+        Rectangle { width: parent.width; height: 1; color: Theme.empty; visible: !root.managing }
     }
 
     StatusRulesEditor { id:rulesEditor; width:parent.width; visible:root.managing; statusService:root.statusService }
