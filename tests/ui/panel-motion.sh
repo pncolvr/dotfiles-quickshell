@@ -5,6 +5,7 @@ fixture=$(mktemp -d /tmp/qs-panel-motion.XXXXXXXX)
 trap 'rm -rf -- "$fixture"' EXIT
 mkdir -m700 "$fixture/runtime"
 tar -C "$repo_dir" --exclude='*.env' --exclude='src/services/launcher/providers/*.json' -cf - src | tar -C "$fixture" -xf -
+sed -i -E 's/readonly property bool adaptiveBarEnabled: (true|false)/readonly property bool adaptiveBarEnabled: false/' "$fixture/src/config/Config.qml"
 sed -i 's/readonly property bool screencastActive:.*/property bool screencastActive: false/' "$fixture/src/services/audio/AudioService.qml"
 # Only the isolated Config is writable for runtime policy checks.
 sed -i 's/readonly property bool animationsEnabled:.*/property bool animationsEnabled: true/;s/readonly property bool animateDuringScreenShare:.*/property bool animateDuringScreenShare: false/' "$fixture/src/config/Config.qml"

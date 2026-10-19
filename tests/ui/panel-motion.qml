@@ -7,6 +7,7 @@ import "../../src/ui" as UI
 import "../../src/services"
 import "../../src/config"
 import "../../src/theme"
+import "../../src/ui/bar" as Bar
 import "../../src/modules/system/notifications"
 import "../../src/modules/system/audio" as Audio
 
@@ -30,6 +31,11 @@ Scope {
         UI.MotionBehavior on value { UI.MotionAnimation { animationDuration: 200 } }
     }
     QtObject { id: loopTarget; property real value: 0 }
+    Item {
+        id: idleColor
+        property color value: "#142638"
+        UI.MotionBehavior on value { ColorAnimation { duration: 200 } }
+    }
     UI.MotionAnimation { id: looping; target: loopTarget; property: "value"; from: 0; to: 100; animationDuration: 200; loops: Animation.Infinite }
     Test.TestCase { id: events; when: false }
     Audio.MediaVisualizer { id: policyVisualizer; active: true; playing: true; visible: false }
@@ -44,6 +50,15 @@ Scope {
         implicitWidth: 1000
         implicitHeight: 900
         readonly property var surfaceComponent: centeredSurface
+        Bar.BarBackground {
+            id: passiveBar
+            width: 1000; height: 30
+            y: 850
+            islands: false
+            leftBounds: Qt.rect(0, 0, 180, 30)
+            centerBounds: Qt.rect(400, 0, 200, 30)
+            rightBounds: Qt.rect(800, 0, 200, 30)
+        }
         TopPanelSurface {
             id: centeredSurface
             anchors.fill: parent
@@ -306,6 +321,12 @@ Scope {
                 root.check(!UI.MotionPolicy.enabled && !tween.running && tweenTarget.value === 100,
                     "active sharing settles running primitives immediately")
                 root.check(behaviorTarget.value === 100, "sharing settles running Behavior animations")
+                root.check(!passiveBar.islands && passiveBar.islandFraction === 0,
+                    "starting screen sharing preserves a bar that has never animated")
+                root.check(events.grabImage(passiveBar).alpha(250,15) === 255,
+                    "non-island bar gaps remain opaque during screen sharing")
+                root.check(Qt.colorEqual(idleColor.value,"#142638"),
+                    "starting screen sharing preserves an untouched color Behavior")
                 root.check(surface.motion.contentOpacity === 1, "starting screen sharing completes an active tab fade")
                 tabs.currentIndex = 0
                 events.wait(1)
@@ -361,6 +382,8 @@ Scope {
                 root.check(!tween.running && tweenTarget.value === 100 && !looping.running
                     && behaviorTarget.value === 400 && !surface.motion.transitioning && surface.motion.progress === 1,
                     "master switch settles panels, finite transitions and bindings, and stops infinite motion")
+                root.check(passiveBar.islandFraction === 0 && Qt.colorEqual(idleColor.value,"#142638"),
+                    "disabling general motion also preserves idle Behavior values")
                 events.wait(35)
                 root.check(countdown.clockNow > countdownTime && countdown.countdownProgress < countdownProgress,
                     "notification countdown border keeps progressing while UI animations are disabled")

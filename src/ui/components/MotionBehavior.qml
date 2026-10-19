@@ -10,7 +10,9 @@ Behavior {
     // Behavior owns its animation, so Animation.complete() cannot finish it.
     // Temporarily apply its destination with Binding to cancel the interpolation
     // while preserving the original binding and future data updates.
-    onEnabledChanged: if (!enabled && targetProperty.object) {
+    // An idle Behavior may have no targetValue yet. Settling it would write
+    // undefined into an otherwise valid initial value (NaN for real properties).
+    onEnabledChanged: if (!enabled && animation?.running && targetProperty.object) {
         destinationValue = targetValue
         settling = true
         settling = false
