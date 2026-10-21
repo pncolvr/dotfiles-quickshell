@@ -21,8 +21,8 @@ Scope {
       readonly property rect leftBounds: Qt.rect(0, 0, left.width + Theme.controlFieldPadding, height)
       readonly property rect centerBounds: Qt.rect(center.x - Theme.controlFieldPadding, 0,
           center.width + Theme.controlFieldPadding * 2, height)
-      readonly property rect rightBounds: Qt.rect(right.x - Theme.controlFieldPadding, 0,
-          right.width + Theme.controlFieldPadding, height)
+      readonly property rect rightBounds: Qt.rect(rightModules.x - Theme.controlFieldPadding, 0,
+          rightModules.width + Theme.controlFieldPadding, height)
       mask: Region {
         width: panelWindow.islands ? 0 : panelWindow.width
         height: panelWindow.height
@@ -57,6 +57,7 @@ Scope {
       LeftModules {
         id: left
         anchors.left: parent.left
+        maximumWidth: Math.max(0, Math.min(center.x, rightModules.x) - x - Theme.moduleSpacing)
       }
 
       CenterModules {
@@ -66,7 +67,7 @@ Scope {
       }
       
       RightModules {
-        id: right
+        id: rightModules
         anchors.right: parent.right
         window: panelWindow
       }

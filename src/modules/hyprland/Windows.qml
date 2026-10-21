@@ -9,6 +9,10 @@ import "../../services"
 Row {
     id: root
     height: parent.height
+    property real maximumWidth: parent.width
+    readonly property real maximumTitleWidth: Math.max(0, maximumWidth
+        - (windowTabs.visible ? windowTabs.width : 0))
+    clip: true
     readonly property var titleWindows: WindowService.windows.filter(window =>
         window.active && !WindowService.groupedWindows.includes(window))
     HoverHandler {
@@ -25,7 +29,7 @@ Row {
         id: windowTabs
         visible: WindowService.groupedWindows.length > 0
         labels: WindowService.groupedWindows.map(window => window.title.toLowerCase())
-        width: implicitWidth
+        width: Math.min(implicitWidth, Math.max(0, root.maximumWidth / 2))
         implicitHeight: root.height
         height: root.height
         tabPadding: Theme.groupedModuleSpacing / 2
@@ -52,13 +56,18 @@ Row {
             required property var modelData
 
             implicitWidth: tabText.implicitWidth + Theme.moduleSpacing
+            width: Math.min(implicitWidth, root.maximumTitleWidth)
             height: parent.height
 
             UI.Text {
                 id: tabText
                 objectName: "activeWindowTitle"
                 anchors.left: parent.left
-                anchors.leftMargin: Theme.moduleSpacing / 2
+                anchors.leftMargin: Math.min(Theme.moduleSpacing / 2, parent.width / 2)
+                anchors.right: parent.right
+                anchors.rightMargin: anchors.leftMargin
+                elide: Text.ElideRight
+                textFormat: Text.PlainText
                 text: parent.modelData.title.toLowerCase()
                 color: parent.modelData.active ? Theme.accent : Theme.inactive
             }
