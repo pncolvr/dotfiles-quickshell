@@ -19,13 +19,17 @@ WorkerScope {
     property int step: 0
     property int ticks: 0
     property bool failed: false
+    property bool busy: false
     readonly property ListView list: mouse.findChild(panel, "recentFilesList") as ListView
     readonly property UI.TabBar tabs: mouse.findChild(panel, "recentFilesTabs") as UI.TabBar
     readonly property UI.ActionButton defaultStar: mouse.findChild(panel, "setDefaultTab") as UI.ActionButton
     function check(ok, message) {
         if (ok) return
         failed = true
-        console.error("RECENT FILES FAIL:", message)
+        console.error("RECENT FILES FAIL:", message, JSON.stringify({phase:root.phase,step:root.step,
+            pins:RecentFilesService.pinnedFiles.length,savedPins:PreferencesRepository.value("files.pinned",[]).length,
+            folders:RecentFilesService.folders.length,tab:root.tabs.currentIndex,
+            loading:RecentFilesService.loading,checking:PinnedFilesService.checking,error:RecentFilesService.error}))
     }
     function finish() {
         check(PinnedFilesService.active, "open file panel enables pin refresh")
@@ -38,22 +42,42 @@ WorkerScope {
         console.log(failed ? "RECENT FILES FAIL: pins " + phase : "PASS: recent-file pinned tab " + phase)
         Qt.quit()
     }
+    function runStep(action) {
+        if (busy) return
+        busy = true
+        try { action() }
+        catch (error) { check(false, "test action failed: " + error); finish() }
+        finally { busy = false }
+    }
+    function settleLayout() { list.forceLayout(); panel.forceLayout() }
     function clickTab(index) {
+        settleLayout()
         const tab = tabs.itemAt(index)
         mouse.mouseClick(tab, tab.width / 2, tab.height / 2)
     }
     function rowFor(path) {
         const index = RecentFilesService.files.findIndex(file => file.path === path)
         if (index < 0) { check(false, "file row exists: " + path); return null }
+        settleLayout()
         list.positionViewAtIndex(index, ListView.Contain)
-        list.forceLayout()
+        settleLayout()
         return list.itemAtIndex(index) as RecentFileRow
     }
     function clickPin(path) {
         const row = rowFor(path)
         if (!row) { check(false, "pin row is instantiated"); return }
         const button = mouse.findChild(row, "pinFile") as QC.Button
-        mouse.mouseClick(button, button.width / 2, button.height / 2)
+        if (!button || !button.visible || !button.enabled) { check(false, "pin button is visible and enabled"); return }
+        const uri = row.file.uri
+        const expected = !RecentFilesService.isPinned(uri)
+        let clicks = 0
+        const observed = () => { clicks++ }
+        button.clicked.connect(observed)
+        try { mouse.mouseClick(button, button.width / 2, button.height / 2) }
+        finally { if (Qt.isQtObject(button)) button.clicked.disconnect(observed) }
+        check(clicks === 1, "pin button received exactly one click; observed " + clicks)
+        check(RecentFilesService.isPinned(uri) === expected, "pin click changed membership to " + expected)
+
     }
     Test.TestCase { id: mouse; parent: testWindow.contentItem; when: false }
     Process {
@@ -72,8 +96,9 @@ WorkerScope {
         RecentFilesTooltip { id: panel; x: 20; y: 20 }
     }
     Timer {
-        interval: 100; repeat: true; running: true
-        onTriggered: {
+        interval: 100; repeat: true; running: !root.busy
+        // QtTest input can process events while an action is still on the stack.
+        onTriggered: root.runStep(() => {
             if (++root.ticks > 80) { root.check(false, "pins timeout at step " + root.step); root.finish(); return }
             if (RecentFilesService.loading || PinnedFilesService.checking || deleteFile.running) return
             if (root.phase === "empty") {
@@ -166,9 +191,9 @@ WorkerScope {
                     root.check(!root.rowFor(root.recentPath).pinned, "unpin state is shared with Recent")
                     root.clickPin(root.recentPath)
                 } else if (root.step === 9) {
-                    root.check(RecentFilesService.pinnedFiles.length === 2
-                        && PreferencesRepository.value("files.pinned", []).length === 2
-                        && RecentFilesService.folders.length === 0, "pins persist independently from removed folder preferences")
+                    root.check(RecentFilesService.pinnedFiles.length === 2, "re-pin restores two active pins")
+                    root.check(PreferencesRepository.value("files.pinned", []).length === 2, "re-pin persists two saved pins")
+                    root.check(RecentFilesService.folders.length === 0, "re-pin does not restore removed folder preferences")
                     root.clickTab(1)
                 } else if (root.step === 10) {
                     mouse.mouseClick(root.defaultStar, root.defaultStar.width / 2, root.defaultStar.height / 2)
@@ -224,6 +249,6 @@ WorkerScope {
                 }
             } else { root.check(false, "unknown test phase"); root.finish(); return }
             root.step++
-        }
+        })
     }
 }
