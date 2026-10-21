@@ -12,6 +12,20 @@ initialize() {
 }
 validate_id() { [[ $1 =~ ^[a-f0-9]{64}$ ]] || exit 2; }
 
+plain_text() {
+    case ${1,,} in
+        text/plain|text/plain\;charset=utf-8|text/plain\;charset=us-ascii) return 0 ;;
+        *) return 1 ;;
+    esac
+}
+text_size() {
+    # Find the final non-NUL byte without decoding text or losing interior NULs.
+    LC_ALL=C gawk 'BEGIN { RS = "\0" }
+        length($0) { end = offset + length($0) }
+        { offset += length($0) + length(RT) }
+        END { printf "%.0f\n", end }' "$1"
+}
+
 capture() {
     [[ ${CLIPBOARD_STATE:-data} == data ]] || { cat >/dev/null; exit 0; }
     mime=${CLIPBOARD_TYPE:-${2:-text/plain}}
@@ -28,6 +42,11 @@ capture() {
     timeout 5s cat >/dev/null
     size=$(stat -c %s -- "$temporary")
     [[ $size -gt 0 && $size -le $limit ]] || exit 0
+    if plain_text "$mime"; then
+        size=$(text_size "$temporary")
+        [[ $size -gt 0 ]] || exit 0
+        truncate -s "$size" -- "$temporary"
+    fi
     if [[ $kind == image ]]; then
         detected=$(file --brief --mime-type -- "$temporary")
         if [[ $mime == image ]]; then mime=$detected; fi
@@ -103,7 +122,14 @@ case ${1:-} in
     restore)
         id=${2:?}; mime=${3:?}; validate_id "$id"
         [[ -f $clipboard_dir/$id && ! -L $clipboard_dir/$id ]]
-        exec wl-copy --type "$mime" < "$clipboard_dir/$id"
+        if plain_text "$mime"; then
+            # Older entries may still include a remote text terminator. Keep the
+            # stored bytes and their content hash intact while restoring cleanly.
+            size=$(text_size "$clipboard_dir/$id")
+            head -c "$size" -- "$clipboard_dir/$id" | wl-copy --type "$mime"
+        else
+            exec wl-copy --type "$mime" < "$clipboard_dir/$id"
+        fi
         ;;
     paste)
         id=${2:?}; mime=${3:?}; destination=${4:?}; class_name=${5:-}

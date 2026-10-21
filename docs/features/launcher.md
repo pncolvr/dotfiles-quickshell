@@ -992,6 +992,10 @@ limit and 1 MB text limit. Empty, oversized, unsupported and sensitive-marked co
 are skipped. TOTP codes copied by this shell are excluded. This does not identify
 unmarked passwords copied by other applications.
 
+Plain UTF-8/ASCII text captures discard trailing NUL terminators supplied by
+remote applications. Restoration also cleans older plain-text entries without
+rewriting their stored payloads. Whitespace, embedded NULs and image data are preserved.
+
 Paste uses `ydotool` and an available daemon/socket. The destination must still
 exist and be focused before injection. Common terminal classes receive
 Ctrl+Shift+V; other applications receive Ctrl+V. Applications with different
