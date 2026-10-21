@@ -10,6 +10,7 @@ Item {
     property real contentX: 0
     property real contentWidth: 0
     property real contentHeight: 0
+    property real minimumContentHeight: 0
     property bool requestedVisible: false
     property bool continuousGeometry: false
     property alias centeredResize: presentation.centeredResize
@@ -43,7 +44,8 @@ Item {
         requested: root.requestedVisible
         targetX: root.contentX
         targetWidth: root.contentWidth
-        targetHeight: root.contentHeight
+        targetHeight: Math.max(root.contentHeight, Math.min(root.minimumContentHeight,
+            Math.max(0, root.height - root.shadowBottomPadding)))
         reserveHeight: root.reservedContentHeight
         targetScreen: root.requestedScreen
         continuousGeometry: root.continuousGeometry

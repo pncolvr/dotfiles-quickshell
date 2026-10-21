@@ -2,10 +2,12 @@ import QtQuick
 import Quickshell
 import Quickshell.Wayland
 import "../../services"
+import "../../theme"
 
 PrivateTopPanelTooltip {
     id: root
     capturePanel: focusPanel
+    minimumContentHeight: Theme.tooltipMinHeight
     onCaptureHideRequested: TooltipService.dismiss()
     readonly property var targetScreen: Quickshell.screens.includes(TooltipService.screen)
         ? TooltipService.screen : Quickshell.screens[0] ?? null

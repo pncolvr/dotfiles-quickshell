@@ -87,6 +87,7 @@ QtObject {
     readonly property int panelCloseDuration: 100
     readonly property int panelResizeDuration: 160
     readonly property int tooltipWidth: 420
+    readonly property int tooltipMinHeight: 200 // Bar hover panels; clamped to available screen height.
     readonly property real tooltipMaxHeightRatio: 0.6
     readonly property real tooltipCompactMaxHeightRatio: 0.5
     readonly property int tooltipHoverPaddingWidth: 1

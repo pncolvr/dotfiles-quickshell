@@ -385,7 +385,12 @@ readonly property int tooltipWidth: 420
 readonly property int statsTooltipWidth: tooltipWidth
 ```
 
-Changing `tooltipWidth` updates timers, stats and status panels together. The
+Changing `tooltipWidth` updates timers, stats and status panels together.
+`tooltipMinHeight` sets the minimum height of bar hover panels (200 px), including
+private TOTP and notification panels. It is bounded by the monitor height after
+reserving room for the bar and shadow. Content stays top-aligned, and taller
+panels retain their natural height. This gives combobox popups room inside the
+panel even when its contents are short. The
 `tooltipMaxHeightRatio` and `tooltipCompactMaxHeightRatio` defaults group the 60%
 and 50% tooltip limits. `rotateIcon` supplies retry/media-flip glyphs, and the
 network up-arrow inherits `upIcon`. Calendar cell and tray icon heights default

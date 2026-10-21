@@ -269,6 +269,7 @@ run isolated ui/folder-dialog bash tests/ui/folder-dialog.sh
 run isolated ui/keybinds bash tests/ui/keybinds.sh
 run isolated ui/module-pins bash tests/ui/module-pins.sh
 run isolated ui/panel-motion bash tests/ui/panel-motion.sh
+run isolated ui/tooltip-height bash tests/ui/tooltip-height.sh
 run isolated ui/adaptive-bar bash tests/ui/adaptive-bar.sh
 run isolated ui/reload bash tests/ui/reload-warnings.sh
 run isolated ui/rows bash tests/ui/rows.sh

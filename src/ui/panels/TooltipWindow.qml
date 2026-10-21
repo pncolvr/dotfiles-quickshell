@@ -6,6 +6,7 @@ import "../../services"
 TopPanelTooltip {
     id: root
     capturePanel: loadedContent
+    minimumContentHeight: Theme.tooltipMinHeight
     onCaptureHideRequested: TooltipService.dismiss()
     readonly property bool onTooltipScreen: !TooltipService.screen || TooltipService.screen === screen
     readonly property bool shouldShow: TooltipService.visible && onTooltipScreen && !TooltipService.ownsTooltipWindow

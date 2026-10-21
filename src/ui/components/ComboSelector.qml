@@ -89,6 +89,12 @@ Item {
         selectionPopup.transformOrigin = opensAbove ? Item.Bottom : Item.Top
     }
     Connections {
+        // The native buffer stays fixed while the visible panel changes size.
+        target: root.expanded ? root.contentBounds() : null
+        function onWidthChanged() { root.placePopup() }
+        function onHeightChanged() { root.placePopup() }
+    }
+    Connections {
         target: root.nativeWindow
         function onVisibleChanged() { if (!root.nativeWindow.visible) root.expanded = false }
         function onWidthChanged() { if (root.expanded) root.placePopup() }
