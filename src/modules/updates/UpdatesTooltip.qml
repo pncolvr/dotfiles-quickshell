@@ -113,12 +113,15 @@ Column {
                 objectName: "updatesPrioritySection"
                 updates: root.priorityUpdates
                 nameColor: Theme.warning
+                forceExpanded: searchField.query.length > 0
             }
 
             UpdateSection {
                 objectName: "updatesOtherSection"
                 updates: root.normalUpdates
                 nameColor: Theme.text
+                expanded: false
+                forceExpanded: searchField.query.length > 0
             }
 
             UI.ColumnText {

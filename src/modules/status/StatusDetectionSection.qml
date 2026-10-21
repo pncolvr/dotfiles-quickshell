@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 import "../../i18n"
 import QtQuick
-import QtQuick.Controls as QC
 import QtQuick.Layouts
 import Quickshell
 import "../../theme"
@@ -63,23 +62,16 @@ Column {
             width: root.width
             readonly property bool expanded: root.expandedProcess === modelData.name
             readonly property string methods: modelData.methods.map(method => ({process:Translations.text("status.detection.configuredProcess"),directory:Translations.text("status.detection.workingDirectory"),file:Translations.text("status.detection.openFiles")})[method] || method).join(" · ")
-            QC.ItemDelegate {
+            UI.CollapsibleSection {
                 id: toggle
-                UI.FocusReveal { owner: toggle }
                 objectName: "statusDetectionToggle-" + match.modelData.name
                 width: parent.width
                 height: Theme.controlHeight
                 padding: Theme.controlFieldPadding
                 enabled: match.modelData.paths.length > 0
                 Accessible.name: match.modelData.name + ", " + match.methods + ", " + Translations.text("status.detection.paths",[],match.modelData.paths.length)
-                Accessible.expanded: match.expanded
-                onClicked: root.expandedProcess = match.expanded ? "" : match.modelData.name
-                Keys.onReturnPressed: clicked()
-                Keys.onEnterPressed: clicked()
-                HoverHandler {
-                    id: toggleHover
-                    cursorShape: toggle.enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
-                }
+                expanded: match.expanded
+                onExpansionRequested: expanded => root.expandedProcess = expanded ? match.modelData.name : ""
                 background: Rectangle {
                     radius: Theme.iconButtonRadius
                     border.width: toggle.visualFocus ? 1 : 0
@@ -88,7 +80,6 @@ Column {
                 }
                 contentItem: RowLayout {
                     spacing: Theme.controlSpacing
-                    UI.IconText { centerVertical: false; text: match.expanded ? Theme.chevronDownIcon : Theme.chevronRightIcon; color: Theme.inactive }
                     UI.ColumnText {
                         objectName: "statusDetectionProcess"
                         Layout.fillWidth: true
@@ -96,7 +87,7 @@ Column {
                         textFormat: Text.PlainText; elide: Text.ElideRight
                         color: match.expanded ? Theme.accent : Theme.text
                         UI.HoverTooltip {
-                            hoverTarget: toggleHover
+                            hoverTarget: toggle
                             text: match.modelData.name + " · " + match.methods
                             textFormat: Text.PlainText
                         }

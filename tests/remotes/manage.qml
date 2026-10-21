@@ -1,6 +1,5 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Controls as QC
 import QtTest as Test
 import Quickshell
 import Quickshell.Io
@@ -191,8 +190,8 @@ WorkerScope {
                     panel.panel.beginAdd()
                     const form=panel.panel.entryForm
                     form.load(Entries.empty())
-                    const jump=objects.findChild(panel,'remoteJumpToggle') as QC.ItemDelegate
-                    root.check(!jump.checked && !root.field('remoteHop').visible,'RDP jump group starts collapsed')
+                    const jump=objects.findChild(panel,'remoteJumpToggle') as UI.CollapsibleSection
+                    root.check(!!jump && !jump.showingContent && !root.field('remoteHop').visible,'RDP jump group starts collapsed with the shared disclosure')
                     jump.forceActiveFocus(Qt.TabFocusReason); events.keyClick(Qt.Key_Return,Qt.NoModifier,0)
                     root.check(jump.checked && root.field('remoteHop').visible && root.field('remoteKey').visible,
                         'keyboard disclosure reveals the RDP jump fields')
@@ -215,8 +214,8 @@ WorkerScope {
                     root.step=31; break
                 }
                 case 31: {
-                    const jump=objects.findChild(panel,'remoteJumpToggle') as QC.ItemDelegate
-                    root.check(!jump.checked && !root.field('remoteHop').visible,'SSH jump group starts collapsed')
+                    const jump=objects.findChild(panel,'remoteJumpToggle') as UI.CollapsibleSection
+                    root.check(!!jump && !jump.showingContent && !root.field('remoteHop').visible,'SSH jump group starts collapsed with the shared disclosure')
                     jump.forceActiveFocus(Qt.TabFocusReason); events.keyClick(Qt.Key_Space,Qt.NoModifier,0)
                     root.check(jump.checked && root.field('remoteHop').visible && root.field('remoteHopKey').visible,
                         'Space reveals the SSH jump fields')

@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 import "../../../i18n"
 import QtQuick
-import QtQuick.Controls as QC
 import "../../../theme"
 import "../../../ui" as UI
 import "../../../services"
@@ -34,30 +33,21 @@ Item {
         height: parent.height + Theme.statsProcessRowSpacing
         color: Theme.empty
     }
-    QC.AbstractButton {
+    UI.CollapsibleSection {
         id: expander
         objectName: "statsExpandProcess"
         anchors.left: parent.left
         anchors.right: pid.left
         anchors.rightMargin: Theme.controlSpacing
         height: parent.height
+        showChevron: root.canExpand
         enabled: root.canExpand
-        onClicked: root.toggleExpanded()
-        Keys.onReturnPressed: click()
-        Keys.onEnterPressed: click()
-        UI.FocusReveal { owner: expander }
+        expanded: root.isExpanded
+        padding: 0
+        onExpansionRequested: root.toggleExpanded()
+        Accessible.name: root.process.label || root.process.name
+        contentItem: Item {}
         background: Rectangle { color: "transparent"; radius: Theme.iconButtonRadius; border.width: expander.visualFocus ? 1 : 0; border.color: Theme.accent }
-        HoverHandler { cursorShape: root.canExpand ? Qt.PointingHandCursor : Qt.ArrowCursor }
-    }
-    UI.IconText {
-        id: chevron
-        anchors.left: parent.left
-        anchors.verticalCenter: parent.verticalCenter
-        visible: root.canExpand
-        width: Theme.fontSize
-        horizontalAlignment: Text.AlignHCenter
-        text: root.isExpanded ? Theme.chevronDownIcon : Theme.chevronRightIcon
-        color: Theme.inactive
     }
     UI.ColumnText {
         id: name
@@ -77,7 +67,7 @@ Item {
             text: root.childProcess ? Translations.text("stats.processes.pidDescription",[root.process.name,root.process.pid])
                 : Translations.text("stats.processes.description",[root.process.name,root.process.count||1])
             cursorShape: root.canExpand ? Qt.PointingHandCursor : Qt.ArrowCursor
-            onClicked: if (root.canExpand) root.toggleExpanded()
+            onClicked: expander.requestToggle()
         }
     }
     Rectangle {

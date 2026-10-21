@@ -1,6 +1,5 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Controls as QC
 import "../../src/ui" as UI
 import QtTest as Test
 import Quickshell
@@ -175,10 +174,10 @@ WorkerScope {
                 root.check(view.count === 4, "restoring the filter preserves expansion")
                 const name = mouse.findChild(view.itemAtIndex(0), "statsProcessName") as UI.ColumnText
                 mouse.mouseClick(name, 5, name.height / 2)
-                const expander = mouse.findChild(view.itemAtIndex(0), "statsExpandProcess") as QC.AbstractButton
+                const expander = mouse.findChild(view.itemAtIndex(0), "statsExpandProcess") as UI.CollapsibleSection
                 root.check(view.count === 1, "collapse removes subprocess rows")
                 expander.forceActiveFocus(Qt.TabFocusReason)
-                root.check(expander.visualFocus, "process expander shows keyboard focus")
+                root.check(expander.keyboardFocusVisible && !expander.showingContent, "shared process expander shows keyboard focus and collapsed state")
                 mouse.keyClick(Qt.Key_Return)
                 root.panel.currentIndex = 2
             } else if (root.step === 7) {
@@ -186,7 +185,7 @@ WorkerScope {
                 root.panel.currentIndex = 1
             } else if (root.step === 8) {
                 root.check(view.count === 4 && (view.itemAtIndex(0) as StatsProcessRow).isExpanded, "returning to a tab restores expansion")
-                const expander = mouse.findChild(view.itemAtIndex(0), "statsExpandProcess") as QC.AbstractButton
+                const expander = mouse.findChild(view.itemAtIndex(0), "statsExpandProcess") as UI.CollapsibleSection
                 mouse.mouseClick(expander, 5, expander.height / 2)
                 search.text = ""
             } else if (root.step === 9) {
@@ -274,7 +273,7 @@ WorkerScope {
             } else if (root.step === 22) {
                 const group = view.itemAtIndex(0) as StatsProcessRow
                 root.check(group.canExpand, "single active network child remains expandable under its app parent")
-                const expander = mouse.findChild(group, "statsExpandProcess") as QC.AbstractButton
+                const expander = mouse.findChild(group, "statsExpandProcess") as UI.CollapsibleSection
                 expander.forceActiveFocus(Qt.TabFocusReason)
                 mouse.keyClick(Qt.Key_Space)
             } else if (root.step === 23) {

@@ -6,6 +6,7 @@ import Quickshell.Io
 import "../../src/services"
 import "../../src/modules/media"
 import "../../src/ui" as UI
+import "../../src/theme"
 
 WorkerScope {
     id: root
@@ -142,6 +143,35 @@ WorkerScope {
         const search = objects.findChild(panel, "twitchSearchField") as UI.SearchField
         const initialWidth = panel.implicitWidth
         panel.adding = false
+        const liveHeading = objects.findChild(live, "toggleTwitchUserSection") as UI.CollapsibleSection
+        const offlineHeading = objects.findChild(offline, "toggleTwitchUserSection") as UI.CollapsibleSection
+        check(live.showingUsers && !offline.showingUsers, "shared Twitch sections retain Live open and Offline closed defaults")
+        for (const section of [live, offline]) {
+            const heading = objects.findChild(section, "toggleTwitchUserSection") as UI.CollapsibleSection
+            const label = heading.contentItem as UI.ColumnText
+            const arrow = root.find(heading, "collapsibleChevron") as UI.IconText
+            check(label.text === section.title + " (" + section.users.length + ")" && label.color === Theme.inactive
+                && arrow.color === Theme.inactive, "Twitch retains its titled counts and inactive heading colors")
+        }
+        liveHeading.clicked()
+        offlineHeading.clicked()
+        check(!live.showingUsers && offline.showingUsers && !live.contentItem.visible && offline.contentItem.visible,
+            "Twitch heading toggles control the shared content slot")
+        search.text = "game"
+        check(live.showingUsers && offline.showingUsers && !live.expanded && offline.expanded,
+            "search reveals a manually collapsed Live section without changing either manual choice")
+        liveHeading.clicked()
+        offlineHeading.clicked()
+        check(!live.expanded && offline.expanded && live.showingUsers && offline.showingUsers,
+            "Twitch headings keep matches open while search is active")
+        search.text = ""
+        check(!live.showingUsers && offline.showingUsers, "clearing Twitch search restores both manual choices")
+        liveHeading.clicked()
+        offlineHeading.clicked()
+        search.text = "streamer_0"
+        check(live.visible && !offline.visible, "Twitch hides the section with no offline matches")
+        search.text = "streamer_35"
+        check(!live.visible && offline.visible, "Twitch hides the section with no live matches")
         search.text = " STREAMER_1 "
         check(panel.liveUsers.length === 3 && panel.offlineUsers.length === 8, "search matches login without case or surrounding spaces")
         check(offline.showingUsers && !offline.expanded, "search reveals Offline matches without changing its collapse state")
@@ -151,7 +181,8 @@ WorkerScope {
         search.text = "stream title"
         check(panel.filteredUsers.length === 36, "search matches cached stream titles")
         search.text = "no matching streamer"
-        check(!panel.filteredUsers.length && root.find(panel, "twitchSearchEmpty").visible, "unmatched search has an empty state")
+        check(!panel.filteredUsers.length && !live.visible && !offline.visible
+            && root.find(panel, "twitchSearchEmpty").visible, "unmatched search hides both sections and has an empty state")
         search.text = "streamer_1"
         panel.adding = true
         check(!search.visible && panel.filteredUsers.length === 36, "add form hides and suspends search")

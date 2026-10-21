@@ -68,3 +68,4 @@ FocusReveal 1.0 FocusReveal.qml
 TextBase 1.0 TextBase.qml
 GlyphText 1.0 GlyphText.qml
 SelectableRow 1.0 SelectableRow.qml
+CollapsibleSection 1.0 CollapsibleSection.qml

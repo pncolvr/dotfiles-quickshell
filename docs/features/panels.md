@@ -22,7 +22,13 @@ buttons for opening the Markdown list and installing updates. A full-width searc
 below the header filters priority and other updates together by package name,
 repository or version. Each section divider shows only its matching count at the
 right edge, in the same color as that section's package names; the header keeps
-the total available count.
+the total available count. The shared collapsible sections start with priority
+updates expanded and other updates collapsed. Click a divider to toggle its rows.
+Search reveals matching rows in both sections; clearing it restores your collapse
+choices. Twitch, notification emitter groups, Stats process groups, Status days
+and detection details, and remote jump-host fields share the disclosure control.
+Each owner defines its header content and expanded layout; the control supplies
+only the chevron, expansion requests, and pointer/keyboard focus behavior.
 
 A focused search keeps its panel open if filtering shrinks it away from the
 pointer. This is a temporary keyboard-focus hold, with no automatic pinning;

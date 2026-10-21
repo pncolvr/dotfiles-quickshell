@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 
 import "../../i18n"
 import QtQuick
-import QtQuick.Controls as QC
 import "../../theme"
 import "../../ui" as UI
 
@@ -14,49 +13,36 @@ Column {
     property bool expanded: true
     property bool forceExpanded: false
     signal editRequested(string login)
-    readonly property bool showingUsers: expanded || forceExpanded
+    readonly property bool showingUsers: heading.showingContent
+    property alias contentItem: grid
     spacing: Theme.twitchTooltipSpacing
     visible: users.length > 0
 
-    QC.Button {
+    UI.CollapsibleSection {
         id: heading
-        readonly property bool keyboardFocusVisible: pointerFocus.keyboardFocusVisible
-        UI.PointerFocus { id: pointerFocus }
         objectName: "toggleTwitchUserSection"
-        width: parent.width
-        implicitHeight: Math.max(label.implicitHeight, arrow.implicitHeight)
+        width: root.width
+        implicitHeight: label.implicitHeight
         padding: 0
-        hoverEnabled: true
-        checkable: !root.forceExpanded
-        checked: root.showingUsers
+        expanded: root.expanded
+        forceExpanded: root.forceExpanded
+        onExpansionRequested: expanded => root.expanded = expanded
         Accessible.name: root.title + " (" + root.users.length + "), "
-            + (root.forceExpanded ? Translations.text("twitch.sections.searchResults") : Translations.text(root.expanded ? "common.actions.collapse" : "common.actions.expand"))
-        onClicked: if (!root.forceExpanded) root.expanded = !root.expanded
-
+            + (root.forceExpanded ? Translations.text("twitch.sections.searchResults")
+                : Translations.text(root.expanded ? "common.actions.collapse" : "common.actions.expand"))
         background: Rectangle {
             radius: Theme.iconButtonRadius
             color: heading.hovered || heading.keyboardFocusVisible ? Theme.alternateBackground : "transparent"
         }
-        contentItem: Item {
-            UI.IconText {
-                id: arrow
-                anchors.left: parent.left
-                text: root.showingUsers ? Theme.chevronDownIcon : Theme.chevronRightIcon
-                color: Theme.inactive
-            }
-            UI.ColumnText {
-                id: label
-                anchors.left: arrow.right
-                anchors.leftMargin: Theme.controlSpacing
-                text: root.title + " (" + root.users.length + ")"
-                color: Theme.inactive
-                centerVertical: true
-            }
+        contentItem: UI.ColumnText {
+            id: label
+            text: root.title + " (" + root.users.length + ")"
+            color: Theme.inactive
+            centerVertical: false
         }
-        HoverHandler { cursorShape: Qt.PointingHandCursor }
     }
-
     Grid {
+        id: grid
         objectName: "twitchUserSectionGrid"
         width: root.width
         visible: root.showingUsers

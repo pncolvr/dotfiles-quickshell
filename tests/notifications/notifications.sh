@@ -32,6 +32,7 @@ chmod +x "$test_dir/bin/"*
 while IFS= read -r line; do
     line=${line//@NATIVE_WINDOWS@/file://$project_root/tests/notifications/notification-wayland-smoke.qml}
     line=${line//\"..\/..\/src\/services\"/\"file://$project_root/src/services\"}
+    line=${line//\"..\/..\/src\/ui\"/\"file://$project_root/src/ui\"}
     line=${line//\"..\/..\/src\/modules\/system\/notifications\"/\"file://$project_root/src/modules/system/notifications\"}
     printf '%s\n' "$line"
 done < "$project_root/tests/notifications/notification-smoke.qml" > "$test_dir/config/shell.qml"

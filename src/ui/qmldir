@@ -75,3 +75,4 @@ FocusReveal 1.0 components/FocusReveal.qml
 TextBase 1.0 components/TextBase.qml
 GlyphText 1.0 components/GlyphText.qml
 SelectableRow 1.0 components/SelectableRow.qml
+CollapsibleSection 1.0 components/CollapsibleSection.qml

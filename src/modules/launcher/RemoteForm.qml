@@ -1,8 +1,6 @@
 pragma ComponentBehavior: Bound
 import "../../i18n"
 import QtQuick
-import QtQuick.Controls as QC
-import QtQuick.Layouts
 import "../../theme"
 import "../../ui" as UI
 import "../../services/launcher/CommandArguments.mjs" as Arguments
@@ -20,7 +18,7 @@ Column {
     spacing: Theme.controlSpacing
     function focusInput() { name.focusInput() }
     function load(entry) {
-        jumpToggle.checked=false
+        jumpToggle.expanded=false
         original=entry; name.text=entry.name; connectionType=entry.type; entryCategory=entry.category
         entryEnabled=entry.enabled; endpoint.text=entry.endpoint; port.text=String(entry.port)
         username.text=entry.username; password.text=entry.password; password.revealed=false
@@ -68,37 +66,22 @@ Column {
     UI.LabeledField { readOnly: root.readOnly; id:targetKey; inputObjectName:'remoteTargetKey'; width:parent.width; visible:root.sshConnection; label:Translations.text("remotes.fields.sshKey"); onAccepted:root.accepted() }
     Column {
         width:parent.width; spacing:Theme.controlSpacing; visible:root.connectionType==='remote' || root.sshConnection
-        QC.ItemDelegate {
+        UI.CollapsibleSection {
             id: jumpToggle
             objectName: 'remoteJumpToggle'
             width: parent.width
-            height: Theme.controlHeight
-            padding: Theme.controlFieldPadding
-            checkable: true
-            Accessible.name: Translations.text("remotes.fields.jumpHost")
-            Accessible.expanded: checked
-            readonly property bool keyboardFocusVisible: pointerFocus.keyboardFocusVisible
-            UI.PointerFocus { id: pointerFocus }
-            UI.FocusReveal { owner: jumpToggle }
-            HoverHandler { cursorShape: Qt.PointingHandCursor }
-            Keys.onReturnPressed: click()
-            Keys.onEnterPressed: click()
-            onCheckedChanged: if (!checked) hopPassword.revealed=false
-            background: Rectangle {
-                radius: Theme.iconButtonRadius
-                color: jumpToggle.hovered || jumpToggle.checked ? Theme.alternateBackground : "transparent"
-                border.width: jumpToggle.keyboardFocusVisible ? 1 : 0
-                border.color: Theme.accent
-            }
-            contentItem: RowLayout {
-                spacing: Theme.controlSpacing
-                UI.IconText { centerVertical: false; text: jumpToggle.checked ? Theme.chevronDownIcon : Theme.chevronRightIcon; color: Theme.inactive }
-                UI.ColumnText { Layout.fillWidth: true; text: Translations.text("remotes.fields.jumpHost"); color: Theme.inactive }
+            text: Translations.text("remotes.fields.jumpHost")
+            onExpansionRequested: expanded => jumpToggle.expanded = expanded
+            onExpandedChanged: if (!expanded) hopPassword.revealed=false
+            contentItem: UI.ColumnText {
+                centerVertical: false
+                text: jumpToggle.text
+                color: Theme.inactive
             }
         }
         Column {
             width:parent.width - x; x:Theme.controlFieldPadding; spacing:Theme.controlSpacing
-            visible:jumpToggle.checked
+            visible:jumpToggle.showingContent
             UI.LabeledField { readOnly: root.readOnly; id:hop; inputObjectName:'remoteHop'; width:parent.width; label:Translations.text(root.sshConnection ? "remotes.fields.optionalJumpHost" : "remotes.fields.jumpHost"); onAccepted:root.accepted() }
             UI.LabeledField { readOnly: root.readOnly; id:hopPort; inputObjectName:'remoteHopPort'; width:parent.width; visible:root.sshConnection; label:Translations.text("remotes.fields.jumpPort"); onAccepted:root.accepted() }
             UI.LabeledField { readOnly: root.readOnly; id:hopUser; inputObjectName:'remoteHopUsername'; width:parent.width; label:Translations.text(root.sshConnection ? "remotes.fields.jumpUsername" : "remotes.fields.sshUsername"); onAccepted:root.accepted() }

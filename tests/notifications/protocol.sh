@@ -110,6 +110,14 @@ normal=$(notify Normal)
 critical=$(notify Critical urgency 2)
 wait_for 'all notifications tracked' state_is '(.live | length) == 4'
 check_rows 'length == 3 and any(.summary == "Low" and .urgency == 0) and .[0].summary == "Critical"' 'all urgencies archived; transient excluded'
+ipc prepareEmitter "$normal"
+emitter_is() { ipc emitterDisclosure | json_is "$1"; }
+wait_for 'shared emitter header and collapsed stacked cards' emitter_is '.shared and .width > 0 and .count == 3 and (.expanded | not) and .peeks > 0'
+ipc_true emitterButton notificationEmitterToggle || fail 'emitter disclosure pointer click'
+wait_for 'emitter expansion removes stacked peeks' emitter_is '.expanded and .checked and .entries == 3 and .peeks == 0'
+ipc_true emitterToggleKey || fail 'emitter disclosure Return key'
+wait_for 'emitter keyboard collapse restores stacked peeks' emitter_is '(.expanded | not) and (.checked | not) and .peeks > 0'
+
 for identifier in "$low" "$normal" "$critical"; do
     ipc prepareCard "$identifier" false
     check_state '.card.outlineVisible and .card.progress == 1' 'persistent popup has complete outline'

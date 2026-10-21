@@ -6,6 +6,7 @@ import QtTest as Test
 import Quickshell
 import Quickshell.Io
 import "../../src/services"
+import "../../src/ui" as UI
 import "../../src/modules/system/notifications"
 
 WorkerScope {
@@ -38,7 +39,7 @@ WorkerScope {
         implicitHeight: 600
         NotificationImageCache { id: imageCache }
         NotificationCard { id: card; width: 500; entry: root.cardEntry; popup: true }
-        NotificationEmitterGroup { id: emitterGroup; width: 500; visible: false; group: ({emitterKey: root.cardEntry.emitterKey, count: 1}) }
+        NotificationEmitterGroup { onToggleExpanded: expanded = !expanded; id: emitterGroup; width: 500; visible: false; group: ({emitterKey: root.cardEntry.emitterKey, count: 1}) }
         NotificationEmitterSettings { id: settings; width: 500; visible: false }
     }
     IpcHandler {
@@ -120,9 +121,24 @@ WorkerScope {
         function twitchNotify(login: string): void { TwitchService.notifyChanges({online: [{login}], offline: []}) }
         function prepareEmitter(id: int): void {
             root.cardEntry = NotificationService.liveEntries[id] || root.cardEntry
+            emitterGroup.group = NotificationRepository.groups(100, 0).find(group => group.emitterKey === root.cardEntry.emitterKey)
+                || {emitterKey: root.cardEntry.emitterKey, count: 1}
+            emitterGroup.expanded = false
             card.visible = false
             emitterGroup.visible = true
             settings.visible = false
+        }
+        function emitterDisclosure(): string {
+            const heading = root.find(emitterGroup, "notificationEmitterToggle") as UI.CollapsibleSection
+            const cards = emitterGroup.children.find(item => item instanceof Column)
+            return JSON.stringify({expanded: emitterGroup.expanded, checked: heading.checked,
+                shared: !!heading, count: emitterGroup.group.count, entries: emitterGroup.entries.length,
+                width: heading.width, peeks: cards.children.filter(item => item.clip).length})
+        }
+        function emitterToggleKey(): bool {
+            const heading = root.find(emitterGroup, "notificationEmitterToggle") as UI.CollapsibleSection
+            heading.forceActiveFocus(Qt.TabFocusReason)
+            return mouse.keyClick(Qt.Key_Return, Qt.NoModifier, 0)
         }
         function emitterButton(name: string): bool {
             const button = root.find(emitterGroup, name) as Item

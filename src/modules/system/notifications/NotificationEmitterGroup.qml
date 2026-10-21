@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 
 import "../../../i18n"
 import QtQuick
-import QtQuick.Controls as QC
 import QtQuick.Layouts
 import "../../../theme"
 import "../../../ui" as UI
@@ -26,45 +25,39 @@ Column {
     RowLayout {
         width: parent.width
         spacing: Theme.controlSpacing
-        Item {
+        UI.CollapsibleSection {
+            id: groupToggle
+            objectName: "notificationEmitterToggle"
             Layout.fillWidth: true
-            Layout.minimumWidth: countLabel.implicitWidth + expandIcon.width + 16
+            Layout.minimumWidth: countLabel.implicitWidth + leftPadding + rightPadding
             Layout.preferredHeight: Theme.controlHeight
-            UI.IconText {
-                id: expandIcon
-                anchors.left: parent.left
-                visible: root.group.count > 1
-                width: visible ? 16 : 0
-                text: root.expanded ? Theme.chevronDownIcon : Theme.chevronRightIcon
-                horizontalAlignment: Text.AlignHCenter
-                color: Theme.inactive
+            padding: 0
+            showChevron: root.group.count > 1
+            enabled: showChevron
+            expanded: root.expanded
+            onExpansionRequested: root.toggleExpanded()
+            Accessible.name: root.emitter?.name || root.group.emitterKey
+            background: Rectangle {
+                color: "transparent"
+                radius: Theme.iconButtonRadius
+                border.width: groupToggle.keyboardFocusVisible ? 1 : 0
+                border.color: Theme.accent
             }
-            UI.Text {
-                id: countLabel
-                anchors.left: expandIcon.right
-                anchors.leftMargin: expandIcon.visible ? 4 : 0
-                text: root.group.count
-                textFormat: Text.PlainText
-            }
-            UI.Text {
-                anchors.left: countLabel.right
-                anchors.leftMargin: 8
-                anchors.right: parent.right
-                text: root.emitter?.name || root.group.emitterKey
-                elide: Text.ElideRight
-                textFormat: Text.PlainText
-            }
-            QC.AbstractButton {
-                id: groupToggle
-                anchors.fill: parent
-                enabled: root.group.count > 1
-                Accessible.name: root.emitter?.name || root.group.emitterKey
-                background: Rectangle { color: "transparent"; radius: Theme.iconButtonRadius; border.width: groupToggle.visualFocus ? 1 : 0; border.color: Theme.accent }
-                UI.FocusReveal { owner: groupToggle }
-                HoverHandler { cursorShape: groupToggle.enabled ? Qt.PointingHandCursor : Qt.ArrowCursor }
-                onClicked: root.toggleExpanded()
-                Keys.onReturnPressed: click()
-                Keys.onEnterPressed: click()
+            contentItem: Item {
+                UI.Text {
+                    id: countLabel
+                    anchors.left: parent.left
+                    text: root.group.count
+                    textFormat: Text.PlainText
+                }
+                UI.Text {
+                    anchors.left: countLabel.right
+                    anchors.leftMargin: 8
+                    anchors.right: parent.right
+                    text: root.emitter?.name || root.group.emitterKey
+                    elide: Text.ElideRight
+                    textFormat: Text.PlainText
+                }
             }
         }
         NotificationSourceControls {
@@ -107,7 +100,7 @@ Column {
                     anchors.fill: parent
                     visible: historyEntry.stacked
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: root.toggleExpanded()
+                    onClicked: groupToggle.requestToggle()
                 }
             }
         }

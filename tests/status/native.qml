@@ -254,6 +254,22 @@ WorkerScope {
                     panel.selectPeriod(previousWeek);
                     const tabs = root.find(panel, 'statusTimecardTabs') as QC.TabBar;
                     root.check(panel.period.days.length > 0 && panel.height > 0, 'Today report renders');
+                    const populatedDay = panel.period.days.find(day => day.blocks.length > 0);
+                    const disclosure = root.find(panel, 'statusDay_' + populatedDay.date) as UI.CollapsibleSection;
+                    const chevron = root.find(disclosure, 'collapsibleChevron') as UI.IconText;
+                    const dayLabel = disclosure.parent.children.find(item => item instanceof UI.ColumnText);
+                    root.check(!!disclosure && !disclosure.showingContent && chevron.x === disclosure.padding,
+                        'status day uses a collapsed left-side shared disclosure');
+                    root.check(dayLabel.x >= chevron.x + chevron.width
+                        && dayLabel.x + dayLabel.width <= disclosure.width,
+                        'status day label leaves room for its left chevron');
+                    disclosure.forceActiveFocus(Qt.TabFocusReason);
+                    events.keyClick(Qt.Key_Space);
+                    root.check(panel.expandedDay === populatedDay.date && disclosure.showingContent,
+                        'Space opens status day sessions');
+                    events.keyClick(Qt.Key_Return);
+                    root.check(panel.expandedDay === '' && !disclosure.showingContent,
+                        'Return closes status day sessions');
                     tabs.currentIndex = 1;
                     root.check(panel.period.days.length === 7, 'week includes all days');
                     root.check(tabs.count === 4, 'only Today, This week, History and Manage tabs remain');

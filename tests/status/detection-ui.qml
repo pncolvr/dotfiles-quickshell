@@ -1,6 +1,5 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Controls as QC
 import QtTest as Test
 import Quickshell
 import "../../src/modules/status"
@@ -43,8 +42,8 @@ Scope {
                 const longName = "very-long-process-name-".repeat(8)
                 backend.detectionMatches = [{name:longName,methods:["directory","file"],paths},{name:"empty",methods:["process"],paths:[]},{name:"other",methods:["process"],paths:["/opt/other"]}]
                 events.wait(30)
-                const row = root.find(section,"statusDetectionToggle-" + longName) as QC.ItemDelegate
-                const empty = root.find(section,"statusDetectionToggle-empty") as QC.ItemDelegate
+                const row = root.find(section,"statusDetectionToggle-" + longName) as UI.CollapsibleSection
+                const empty = root.find(section,"statusDetectionToggle-empty") as UI.CollapsibleSection
                 root.check(!empty.enabled && section.expandedProcess === "","empty evidence cannot expand and rows begin collapsed")
                 root.check(row.contentItem.width <= row.width && row.contentItem.height <= row.height,"narrow disclosure geometry stays bounded")
                 row.forceActiveFocus(Qt.TabFocusReason)
@@ -70,7 +69,7 @@ Scope {
                 const position = last.mapToItem(scroll,0,0)
                 root.check(position.y >= 0 && position.y + last.height <= scroll.height + 1,"last path remains reachable")
                 scroll.contentY = 0
-                const other = root.find(section,"statusDetectionToggle-other") as QC.ItemDelegate
+                const other = root.find(section,"statusDetectionToggle-other") as UI.CollapsibleSection
                 other.forceActiveFocus(Qt.TabFocusReason); events.keyClick(Qt.Key_Enter); events.wait(20)
                 root.check(section.expandedProcess === "other" && !root.find(section,"statusDetectionPaths-" + literal),"only one process expands")
                 backend.detectionMatches = backend.detectionMatches.filter(match => match.name !== "other"); events.wait(20)

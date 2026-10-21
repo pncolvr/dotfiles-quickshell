@@ -296,8 +296,9 @@ Column {
                         height: Theme.controlHeight
                         UI.ColumnText {
                             anchors.left: parent.left
+                            anchors.leftMargin: dayToggle.leftPadding
                             anchors.verticalCenter: parent.verticalCenter
-                            width: Math.min(implicitWidth, Math.max(0, dayTotals.x - Theme.controlSpacing))
+                            width: Math.min(implicitWidth, Math.max(0, dayTotals.x - x - Theme.controlSpacing))
                             elide: Text.ElideRight
                             text: new Date(day.modelData.date + "T12:00:00").toLocaleDateString(Translations.locale, root.weekly ? "dddd" : root.ranged ? "yyyy-MM-dd" : "dddd yyyy-MM-dd")
                             HoverHandler {
@@ -312,25 +313,30 @@ Column {
                         }
                         UI.ColumnText {
                             id: dayTotals
-                            anchors.right: expand.left
-                            anchors.rightMargin: Theme.controlSpacing
+                            anchors.right: parent.right
+                            anchors.rightMargin: dayToggle.rightPadding + Theme.controlSpacing
                             anchors.verticalCenter: parent.verticalCenter
                             text: Timecard.duration(day.modelData.work) + " / " + Timecard.duration(day.modelData.personal)
                             color: Theme.inactive
                             UI.HoverTooltip { text: Translations.text("status.report.legend") }
                         }
-                        UI.IconText {
-                            id: expand
-                            anchors.right: parent.right
-                            text: day.expanded ? Theme.chevronDownIcon : Theme.chevronRightIcon
-                            color: day.modelData.blocks.length ? Theme.inactive : Theme.empty
-                        }
-                        MouseArea {
+                        UI.CollapsibleSection {
+                            id: dayToggle
                             objectName: "statusDay_" + day.modelData.date
                             anchors.fill: parent
+                            padding: 0
+                            chevronColor: enabled ? Theme.inactive : Theme.empty
+                            expanded: day.expanded
                             enabled: day.modelData.blocks.length > 0
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: root.expandedDay = day.expanded ? "" : day.modelData.date
+                            Accessible.name: day.modelData.date
+                            contentItem: Item {}
+                            background: Rectangle {
+                                color: "transparent"
+                                radius: Theme.iconButtonRadius
+                                border.width: dayToggle.keyboardFocusVisible ? 1 : 0
+                                border.color: Theme.accent
+                            }
+                            onExpansionRequested: expanded => root.expandedDay = expanded ? day.modelData.date : ""
                         }
                     }
                     Rectangle {
