@@ -84,7 +84,7 @@ import QtQml
 import Quickshell
 import Quickshell.Io
 import "src/services"
-Scope {
+WorkerScope {
     FileView {
         id: state
         path: Quickshell.env("QR_TEST_DIR") + "/reload-state"

@@ -228,7 +228,7 @@ import QtQml
 import Quickshell
 import Quickshell.Io
 import "src/services"
-Scope {
+WorkerScope {
     property int ticks: 0
     FileView { id: phase; path: Quickshell.env("CAPTURE_TEST_DIR") + "/reload-phase"; preload: false; blockLoading: true; blockWrites: true; printErrors: false }
     FileView { id: revealed; path: Quickshell.env("CAPTURE_TEST_DIR") + "/revealed"; preload: false; blockLoading: true; printErrors: false }

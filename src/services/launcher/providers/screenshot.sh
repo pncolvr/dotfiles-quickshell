@@ -35,7 +35,8 @@ run() {
     return "$result"
 }
 alert() {
-    "${QS_PICKER_EXECUTABLE:-qs}" ipc -p "$config_root" call alerts postMessage screenshot "$1" "${3:-[]}" "$2" 4000 false >/dev/null 2>&1 || true
+    # JSON whitespace prevents qs from expanding the array as CLI arguments.
+    "${QS_PICKER_EXECUTABLE:-qs}" ipc -p "$config_root" call alerts postMessage screenshot "$1" " ${3:-[]}" "$2" 4000 false >/dev/null 2>&1 || true
 }
 if [[ ${1:-} == --annotate ]]; then
     candidate=${2:?}; destination=${3:?}; config_root=${4:?}

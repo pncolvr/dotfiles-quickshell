@@ -1,11 +1,10 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
 import "../../../src/services"
 import "../../../src/modules/vault"
-Scope {
+WorkerScope {
     id: root
     VaultWindow { id: window }
     IpcHandler {

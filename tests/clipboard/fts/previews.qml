@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import "../../../src/services"
 import QtQuick.Window
 import QtTest as Test
 import Quickshell
@@ -8,7 +9,7 @@ import "../../../src/modules/launcher"
 import "../../../src/config"
 import "../../../src/theme"
 
-Scope {
+WorkerScope {
     id: root
     property bool failed: false
     property int decodeChanges: 0

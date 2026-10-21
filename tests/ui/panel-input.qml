@@ -13,7 +13,7 @@ import "../../src/modules/media"
 import "../launcher" as Fixtures
 
 // Real native hosts and controls, synthetic text, isolated storage, stationary cursor.
-Scope {
+WorkerScope {
     id: root
     property int currentCase: 0
     readonly property var host: currentCase === 2 ? privateWindow : publicWindow

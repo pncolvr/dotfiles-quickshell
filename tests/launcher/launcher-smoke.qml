@@ -10,7 +10,7 @@ import "../../src/ui" as UI
 import "../../src/config"
 import "../../src/theme"
 
-Scope {
+WorkerScope {
     id: root
     property bool failed: false
     Test.TestEvent { id: events }

@@ -7,7 +7,7 @@ import "../../src/modules/launcher"
 import "../../src/ui" as UI
 import "../../src/services/remotes/RemoteEntries.mjs" as Entries
 
-Scope {
+WorkerScope {
     id: root
     property int step: 0
     property int ticks: 0

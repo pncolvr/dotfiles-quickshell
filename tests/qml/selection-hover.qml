@@ -11,7 +11,7 @@ import "../../src/theme"
 import "../../src/ui" as UI
 import "../../src/modules/system/audio"
 
-Scope {
+WorkerScope {
     id: root
     property string mode: "volume"
     property bool above: true

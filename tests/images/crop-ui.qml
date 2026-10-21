@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import "../../src/services"
 import QtQuick.Window
 import Quickshell
 import "../../src/ui" as UI
@@ -7,7 +8,7 @@ import "../../src/modules/system/notifications"
 import "../../src/modules/media"
 import "../../src/modules/system/audio"
 
-Scope {
+WorkerScope {
     id: root
     property int step: 0
     property int ticks: 0

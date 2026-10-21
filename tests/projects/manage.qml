@@ -7,7 +7,7 @@ import "../../src/modules/launcher"
 import "../../src/theme"
 import "../../src/services/launcher/Search.mjs" as Search
 
-Scope {
+WorkerScope {
     id: root
     property bool failed: false
     property int step: 0

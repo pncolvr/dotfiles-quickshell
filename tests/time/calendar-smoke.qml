@@ -6,7 +6,7 @@ import "../../src/services"
 import "../../src/theme"
 import "../../src/modules/clock"
 
-Scope {
+WorkerScope {
     id: root
     property bool failed: false
     property int step: 0

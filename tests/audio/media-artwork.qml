@@ -7,7 +7,7 @@ import "../../src/config"
 import "../../src/modules/system/audio"
 import "../../src/services"
 
-Scope {
+WorkerScope {
     id: root
     property bool started: false
     function run() {

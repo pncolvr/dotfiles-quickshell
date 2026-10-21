@@ -138,7 +138,7 @@ import QtQml
 import Quickshell
 import "file://$project_root/src/modules/system/audio"
 import "file://$project_root/src/services" as Services
-Scope {
+Services.WorkerScope {
     MediaVisualizer { id: restored; appId: "banana" }
     Component { id: visualizerFactory; MediaVisualizer {} }
     Timer {
@@ -188,7 +188,7 @@ import QtQml
 import Quickshell
 import "file://$project_root/src/modules/system/audio"
 import "file://$project_root/src/services" as Services
-Scope {
+Services.WorkerScope {
     MediaVisualizer { id: banana; appId: "banana" }
     MediaVisualizer { id: potato; appId: "potato" }
     Timer {

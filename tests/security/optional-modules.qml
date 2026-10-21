@@ -5,7 +5,7 @@ import "../../src/config"
 import "../../src/services"
 import "../../src/modules/system/totp"
 
-Scope {
+WorkerScope {
     id: root
     property var settings: Config
     property int step: 0

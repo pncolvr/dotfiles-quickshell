@@ -1392,3 +1392,13 @@ points, hidden bar items without reserved space, closing active panels, cancelli
 checks/scans/imports, rejecting late successful results, re-enabling and restart
 with saved pins/folder preferences. It does not run package managers or open
 desktop applications. Standalone updater hooks and cron jobs remain independent.
+
+### Worker lifetime in fixtures
+
+Use `WorkerScope` from `src/services` for shell and fixture scopes that can load
+background workers. It releases registered background workers before Qt destroys their
+shared engine, including soft/hard reloads, clean exits and scopes loaded through
+`Loader`. Worker-owning services register with `WorkerLifetime` and implement
+`disposeWorker()`; entry points do not list individual services. The runner disables
+Quickshell crash restart so a failed fixture exits once. `ui/reload` checks this
+ownership with memory poisoning and an independent entry point.

@@ -9,7 +9,7 @@ import "../../src/config"
 import "../../src/services"
 import "../../src/modules/system/audio"
 
-Scope {
+WorkerScope {
     id: root
     property var settings: Config
     property var audio: AudioService

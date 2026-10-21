@@ -48,17 +48,34 @@ case $action in
             kill -USR1 "$(jq -r '.pid' <<< "$row")" 2>/dev/null || true
         fi
         exit ;;
-    --run) ;;
+    --run|--shutdown) ;;
     *) exit 2 ;;
 esac
 main_database=${4:?} config_root=${5:?} options=${6:?}
 fail() {
-    "${QS_PICKER_EXECUTABLE:-qs}" ipc -p "$config_root" call alerts postMessage remotes "$1" '[]' error 5000 false >/dev/null 2>&1 || true
+    # JSON whitespace prevents qs from expanding the array as CLI arguments.
+    "${QS_PICKER_EXECUTABLE:-qs}" ipc -p "$config_root" call alerts postMessage remotes "$1" ' []' error 5000 false >/dev/null 2>&1 || true
     exit 1
 }
 [[ -f $main_database && -O $main_database && ! -L $main_database ]] || fail "remotes.worker.database"
 jq -e 'all(.rdp,.ssh,.virsh,.probe; type=="array" and length>0 and all(.[];type=="string")) and (.waitSeconds|type=="number" and .>=1 and .<=300)' <<< "$options" >/dev/null || fail 'remotes.worker.configuration'
 entry=$(sqlite3 -readonly -batch -cmd '.timeout 5000' "$main_database" "SELECT payload_json FROM remotes WHERE id=$key;" 2>/dev/null) || exit 2
+if [[ $action == --shutdown ]]; then
+    # Persist intent before virsh: the guest can close RDP before virsh returns.
+    # Bind it to this session token so a reconnect never inherits the suppression.
+    jq -e '.type=="vm" and (.vmName|type=="string" and length>0)' <<< "$entry" >/dev/null || exit 2
+    session_token=$(sql "SELECT token FROM remote_sessions WHERE id=$key;") || exit 2
+    session_key="CAST(X'$(hex "$session_token")' AS TEXT)"
+    sql "UPDATE remote_sessions SET payload=json_set(payload,'$.shutdownRequested',json('true')) WHERE id=$key AND token=$session_key;" >/dev/null || exit 2
+    mapfile -d '' -t virsh_command < <(jq -j '.virsh[] | ., "\u0000"' <<< "$options")
+    vm=$(jq -r '.vmName' <<< "$entry")
+    result=0
+    timeout 15 "${virsh_command[@]}" shutdown -- "$vm" || result=$?
+    if ((result != 0)); then
+        sql "UPDATE remote_sessions SET payload=json_remove(payload,'$.shutdownRequested') WHERE id=$key AND token=$session_key;" >/dev/null || exit 2
+    fi
+    exit "$result"
+fi
 jq -e '.enabled==true and (.type=="remote" or .type=="vm" or .type=="ssh")' <<< "$entry" >/dev/null || exit 2
 mapfile -d '' -t rdp_command < <(jq -j '.rdp[] | ., "\u0000"' <<< "$options")
 mapfile -d '' -t ssh_command < <(jq -j '.ssh[] | ., "\u0000"' <<< "$options")
@@ -79,7 +96,8 @@ payload() {
         --argjson rdpPid "$rdp_pid" --arg rdpStart "$rdp_start" --argjson tunnelPid "$tunnel_pid" --arg tunnelStart "$tunnel_start" \
         '{token:$token,pid:$pid,start:$start,boot:$boot,state:$state,rdp:{pid:$rdpPid,start:$rdpStart},tunnel:{pid:$tunnelPid,start:$tunnelStart}}'
 }
-publish() { sql "UPDATE remote_sessions SET payload=CAST(X'$(hex "$(payload)")' AS TEXT) WHERE token=CAST(X'$(hex "$token")' AS TEXT);" >/dev/null; }
+# Keep control metadata when the owner publishes its next lifecycle state.
+publish() { sql "UPDATE remote_sessions SET payload=json_patch(payload,CAST(X'$(hex "$(payload)")' AS TEXT)) WHERE token=CAST(X'$(hex "$token")' AS TEXT);" >/dev/null; }
 stop_requested() { stopping=true; }
 trap stop_requested USR1 TERM INT HUP
 row=$(sql "SELECT payload FROM remote_sessions WHERE id=$key;") || exit 2
@@ -184,5 +202,6 @@ while process_alive "$rdp_pid" "$rdp_start" "$PROCESS_BOOT_ID"; do
 done
 wait "$rdp_pid"; result=$?
 if [[ $result != 0 ]] && ! $stopping; then
+    if [[ $connection_type == vm && $(sql "SELECT json_extract(payload,'$.shutdownRequested') FROM remote_sessions WHERE id=$key AND token=CAST(X'$(hex "$token")' AS TEXT);") == 1 ]]; then exit 0; fi
     if [[ $connection_type == ssh ]]; then fail 'remotes.worker.ssh'; else fail 'remotes.worker.rdp'; fi
 fi

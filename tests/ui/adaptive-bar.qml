@@ -10,7 +10,7 @@ import "../../src/ui/bar" as Bar
 import "../../src/ui/components" as UI
 import "../../src/modules/system/audio" as Audio
 
-Scope {
+WorkerScope {
     id: root
     property var settings: Config
     property int step: 0

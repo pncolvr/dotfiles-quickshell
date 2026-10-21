@@ -10,7 +10,7 @@ import "../../src/modules/launcher"
 import "../../src/ui" as UI
 import "../../src/services/browser/BrowserRouting.mjs" as Routing
 
-Scope {
+WorkerScope {
     id:root
     readonly property var settings:Config
     readonly property var browser:BrowserRoutingService

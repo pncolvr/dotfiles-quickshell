@@ -1,8 +1,7 @@
 import QtQuick
-import Quickshell
 import "../../src/services"
 
-Scope {
+WorkerScope {
     id: root
     property var windowSource: WindowService
     property var snapshot: null

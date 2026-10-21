@@ -8,7 +8,7 @@ import "../../src/modules/launcher"
 import "../../src/services"
 import "../../src/ui" as UI
 
-Scope {
+WorkerScope {
     id: root
     readonly property string folder: Quickshell.env("PROJECT_TEST_DIR") + "/single folder"
     property int step: 0

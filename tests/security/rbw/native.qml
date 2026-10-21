@@ -10,7 +10,7 @@ import "../../../src/modules/launcher"
 import "../../../src/config"
 import "../../../src/ui" as UI
 
-Scope {
+WorkerScope {
     id: root
     property int attempts: 0
     property int step: 0
@@ -181,7 +181,9 @@ Scope {
             if (input.echoMode !== TextInput.Password || input.text !== "NATIVE_RBW_SYNTHETIC") { root.fail(); return }
             root.accepted = true
             events.keyClick(Qt.Key_Enter, Qt.NoModifier, 0)
-            if (input.text.length || input.echoMode !== TextInput.Password) root.fail()
+            // Acceptance can unload the field synchronously; inspect it only if it survives.
+            if (PickerService.visible || (Qt.isQtObject(input)
+                && (input.text.length || input.echoMode !== TextInput.Password))) root.fail()
         }
     }
     Component.onCompleted: {

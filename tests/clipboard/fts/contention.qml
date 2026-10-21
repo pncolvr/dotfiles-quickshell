@@ -4,7 +4,7 @@ import Quickshell
 import Quickshell.Io
 import "../../../src/services"
 import "../../../src/config"
-Scope {
+WorkerScope {
     id: root
     property bool failed: false
     property bool started: false

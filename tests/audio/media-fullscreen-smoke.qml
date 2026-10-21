@@ -12,7 +12,7 @@ import "../../src/ui" as UI
 import "../../src/modules/system/audio"
 import "../../src/services"
 
-Scope {
+WorkerScope {
     id: root
     property bool failed: false
     property int step: 0

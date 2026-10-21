@@ -9,7 +9,7 @@ import "../../src/services"
 import "../../src/modules/launcher"
 import "../../src/ui" as UI
 import "../../src/services/remotes/RemoteEntries.mjs" as Entries
-Scope {
+WorkerScope {
     id:root
     property bool failed:false
     property int step:0

@@ -5,7 +5,7 @@ import Quickshell.Io
 import "../../src/services"
 import "../../src/modules/launcher"
 
-Scope {
+WorkerScope {
     id: root
     PickerWindow { id: popup }
     FileView {

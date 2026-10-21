@@ -8,7 +8,7 @@ import "../../src/config"
 import "../../src/services"
 import "../launcher" as Support
 
-Scope {
+WorkerScope {
     id: root
     property var settings: Config
     function find(name) { return driver.find(panel, name) }

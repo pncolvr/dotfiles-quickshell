@@ -77,3 +77,5 @@ singleton ClipboardPickerService 1.0 launcher/ClipboardPickerService.qml
 singleton PanelFocusService 1.0 ui/PanelFocusService.qml
 singleton BrowserRoutingService 1.0 browser/BrowserRoutingService.qml
 singleton BrowserRoutingRepository 1.0 storage/BrowserRoutingRepository.qml
+
+WorkerScope 1.0 processes/WorkerScope.qml

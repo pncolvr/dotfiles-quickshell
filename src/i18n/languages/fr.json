@@ -807,6 +807,7 @@
   "remotes.worker.tunnel": "Impossible d’ouvrir le tunnel SSH. Vérifiez l’hôte de rebond, la clé et la configuration SSH.",
   "remotes.worker.vmStart": "Impossible de démarrer la machine virtuelle.",
   "remotes.worker.vmTimeout": "Le port RDP de la machine virtuelle n’est pas devenu disponible.",
+  "screenshare.alert.audio.desktop": "Capture de l’audio du bureau détectée",
   "screenshare.indicator.label": "Partage d’écran",
   "screenshot.empty.qr": "Aucun code QR trouvé dans la zone sélectionnée",
   "screenshot.empty.text": "Aucun texte lisible trouvé dans la zone sélectionnée",
@@ -928,7 +929,7 @@
   "status.detection.checking": "Vérification de la détection automatique…",
   "status.detection.configuredProcess": "Processus configuré",
   "status.detection.empty": "Aucune détection de travail active.",
-  "status.detection.manualHint": "Mode manuel · les indices automatiques ne définissent pas le mode.",
+  "status.detection.manualHint": "Mode manuel · la détection automatique est en pause.",
   "status.detection.openFiles": "Fichiers de travail ouverts",
   "status.detection.paths": {
     "one": "%n chemin",

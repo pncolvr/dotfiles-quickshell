@@ -26,7 +26,32 @@ ROOT_DESTRUCTION_HANDLER="${handler#  }" awk '
 env -u WAYLAND_DISPLAY -u HYPRLAND_INSTANCE_SIGNATURE \
     QT_QPA_PLATFORM=offscreen QT_QUICK_BACKEND=software QT_NO_XDG_DESKTOP_PORTAL=1 \
     XDG_RUNTIME_DIR="$fixture/runtime" XDG_DATA_HOME="$fixture/data" XDG_CACHE_HOME="$fixture/cache" \
-    timeout 12 qs -p "$fixture" > "$fixture/log" 2>&1
+    QS_DISABLE_CRASH_HANDLER=1 MALLOC_CONF="${MALLOC_CONF:+$MALLOC_CONF,}junk:true" timeout 12 qs -p "$fixture" > "$fixture/log" 2>&1
 rg -q 'PASS: twenty tooltip generations' "$fixture/log"
 ! rg -q 'RELOAD WARNINGS FAIL|Unable to assign|Failed to load configuration|TypeError:|ReferenceError:|Binding loop' "$fixture/log"
-printf 'PASS: tooltip references released before old-generation teardown across twenty reloads\n'
+printf 'PASS: tooltip references and background workers released before old-generation teardown across twenty reloads\n'
+
+# Use an independent entry point without the real shell's cleanup callback.
+sed 's@"../../src@"src@g' "$project_root/tests/ui/worker-lifetime.qml" > "$fixture/worker.qml"
+for mode in soft hard; do
+    for entry in direct loader; do
+        printf 0 > "$fixture/worker-generations"
+        if [[ $entry == direct ]]; then cp "$fixture/worker.qml" "$fixture/shell.qml"
+        else
+            cat > "$fixture/shell.qml" <<'QML'
+import QtQuick
+import Quickshell
+Scope { Loader { source: "worker.qml" } }
+QML
+        fi
+        env -u WAYLAND_DISPLAY -u HYPRLAND_INSTANCE_SIGNATURE \
+            QT_QPA_PLATFORM=offscreen QT_QUICK_BACKEND=software QT_NO_XDG_DESKTOP_PORTAL=1 \
+            XDG_RUNTIME_DIR="$fixture/runtime" XDG_DATA_HOME="$fixture/data" XDG_CACHE_HOME="$fixture/cache" \
+            QS_DISABLE_CRASH_HANDLER=1 WORKER_RELOAD_MODE="$mode" \
+            MALLOC_CONF="${MALLOC_CONF:+$MALLOC_CONF,}junk:true" \
+            timeout -k 2 12 qs -p "$fixture" > "$fixture/log" 2>&1
+        rg -q 'PASS: ten worker generations reload and exit without a shell cleanup callback' "$fixture/log"
+        ! rg -q 'TypeError:|ReferenceError:|Binding loop|WARN scene|Failed to load configuration' "$fixture/log"
+        printf 'PASS: worker lifetime survives ten %s reloads and clean exit (%s entry)\n' "$mode" "$entry"
+    done
+done

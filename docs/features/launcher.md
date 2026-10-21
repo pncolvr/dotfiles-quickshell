@@ -585,7 +585,9 @@ requests are queued individually. **Disconnect** also stops only the selected
 managed SSH terminal or RDP connection and its own SSH tunnel; it leaves a VM running.
 **Shut down VM** requests shutdown for the selected VM and is disabled when that
 VM is stopped or its state is unavailable. Libvirt state is checked while a VM
-is selected in the open picker, independently of the RDP client. Active entries
+is selected in the open picker, independently of the RDP client. An RDP disconnect
+following a requested VM shutdown does not raise an error alert; failed shutdown
+requests and unexpected client failures still report errors. Active entries
 cannot be deleted until disconnected. Active connections remain listed for control
 even if their entry is disabled or the work-status filter changes; this does not
 allow another connection to a disabled host. Other SSH/RDP processes are untouched.

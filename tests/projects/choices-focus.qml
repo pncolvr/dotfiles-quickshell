@@ -5,7 +5,7 @@ import "../../src/services"
 import "../../src/modules/launcher"
 import "../launcher" as Fixtures
 
-Scope {
+WorkerScope {
     id: root
     readonly property string directory: Quickshell.env("PROJECT_CHOICES_TEST_DIR")
     property bool failed: false

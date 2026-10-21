@@ -11,7 +11,7 @@ import "../../src/theme"
 import "../../src/ui" as UI
 import "../../src/config"
 
-Scope {
+WorkerScope {
     id: root
     property int step: 0
     property bool failed: false

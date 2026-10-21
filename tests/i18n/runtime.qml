@@ -9,7 +9,7 @@ import "../../src/modules/system/stats"
 import "../../src/services"
 import "../../src/ui" as UI
 
-Scope {
+WorkerScope {
     id: root
     property var settings: Settings.Config
     property bool failed: false

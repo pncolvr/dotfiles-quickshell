@@ -2,10 +2,12 @@ pragma Singleton
 pragma ComponentBehavior: Bound
 
 import QtQml
+import "../../services/processes"
 import QtQml.WorkerScript
 
 QtObject {
     id: root
+    Component.onCompleted: WorkerLifetime.register(root)
     readonly property int maximumEntries: 64
     property var entries: ({})
     property var order: []
@@ -18,6 +20,11 @@ QtObject {
     signal computed(string key, var result)
     signal retry(string key)
 
+    // Called while the shell root still owns a live worker engine.
+    function disposeWorker() {
+        dispatch.stop(); queue = []; pending = ({}); active = null
+        if (worker) { worker.destroy(); worker = null }
+    }
     function lookup(key) {
         const result = entries[key]
         if (result) order = order.filter(value => value !== key).concat([key])

@@ -28,6 +28,7 @@ QC.TabBar {
     property var dropEnabledTabs: []
     property bool interactionEnabled: true
     property bool actionTabs: false
+    property bool showSeparators: false
     property bool centerTabs: !actionTabs
     readonly property var panelMotion: transitionHost?.surfaceComponent?.motion ?? null
     // Content adopts its destination width before the frame finishes resizing.
@@ -151,6 +152,14 @@ QC.TabBar {
                 radius: Theme.iconButtonRadius
                 border.width: tabButton.keyboardFocusVisible || tabDrop.containsDrag ? 1 : 0
                 border.color: Theme.accent
+                Rectangle {
+                    anchors.left: parent.left
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: 1
+                    height: Math.min(Theme.fontSize, parent.height)
+                    color: Theme.empty
+                    visible: root.showSeparators && tabButton.index > 0
+                }
                 Rectangle {
                     anchors.bottom: parent.bottom
                     anchors.bottomMargin: root.underlineBottomMargin

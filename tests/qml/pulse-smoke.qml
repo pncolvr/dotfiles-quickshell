@@ -8,7 +8,7 @@ import "../../src/config"
 import "../../src/theme"
 import "../../src/services"
 
-Scope {
+WorkerScope {
     id: root
     property int step: 0
     property real lowestRed: 1

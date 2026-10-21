@@ -63,6 +63,8 @@ printf '%s\n' "$output"
 [[ $output == *'PASS: alert replacement'* && $output != *'ALERT FAIL:'* \
     && $output != *'TypeError:'* && $output != *'ReferenceError:'* && $output != *'Failed to load configuration'* ]]
 
+bash "$project_root/tests/qml/alerts-ipc.sh"
+
 if [[ ${1:-} == --native ]]; then
     native_wayland_display=${WAYLAND_DISPLAY:-wayland-0}
     [[ $native_wayland_display == /* ]] || native_wayland_display=${XDG_RUNTIME_DIR:?}/$native_wayland_display
@@ -74,7 +76,7 @@ import Quickshell
 import Quickshell.Wayland
 import "src/ui/panels"
 import "src/services"
-Scope {
+WorkerScope {
     id: root
     property int step: 0
     property bool failed: false

@@ -66,3 +66,4 @@ sed 's@"../../src@"src@g' "$project_root/tests/status/desktop-session.qml" > "$f
 run lifecycle 'desktop session snapshots'
 [[ $(sqlite3 "$fixture/data/quickshell.db" 'PRAGMA integrity_check;') == ok ]]
 printf 'PASS: native time tracking, persistence, retention and optional mode\n'
+bash "$project_root/tests/status/manual-mode.sh"

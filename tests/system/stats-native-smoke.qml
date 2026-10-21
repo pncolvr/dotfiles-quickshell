@@ -1,8 +1,7 @@
 import QtQuick
-import Quickshell
 import "../../src/services"
 
-Scope {
+WorkerScope {
     id: root
     property int step: 0
     property bool failed: false

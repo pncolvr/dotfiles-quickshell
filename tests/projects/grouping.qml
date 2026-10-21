@@ -1,7 +1,6 @@
 import QtQuick
-import Quickshell
 import "../../src/services"
-Scope {
+WorkerScope {
     id: root
     property bool failed: false
     function check(ok,message) { if (!ok) { failed = true; console.error("GROUPING FAIL:",message) } }

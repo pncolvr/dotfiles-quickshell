@@ -233,6 +233,16 @@ node readiness. Starting or restarting the bar, or losing the PipeWire connectio
 does not publish an incomplete graph as "not sharing". The combined state stays
 active until the final capture ends.
 
+A 15-second warning shows **Desktop audio capture detected** when active,
+unmuted desktop audio capture is detected during a screen
+capture. Microphone-only capture and unknown audio routes stay silent. The warning
+expires while capture continues; unchanged registry updates and microphone changes
+do not renew it. Ending desktop audio capture or the final screen capture dismisses
+any remaining warning. Virtual sources are followed only where their upstream
+routing is visible. This reports local capture, not proof that an application
+transmits audio with its screen share; audio mixed internally by an application
+may remain unknown.
+
 Quickshell applies `Config.hyprlandAnimationsEnabled` and the current capture state
 directly: compositor animations run only when the setting is enabled and no share
 is active. Config edits are honored on bar reload/restart. The final share restores

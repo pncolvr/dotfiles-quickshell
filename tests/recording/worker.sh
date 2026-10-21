@@ -132,7 +132,7 @@ rm "$test_dir/readiness-held"
 wait_state recording
 control --toggle >/dev/null
 wait "$worker_pid"; worker_pid=''
-rg -Fq 'postMessage recording recording.worker.starting [] success 1000 true' "$test_dir/alerts"
+rg -Fq 'postMessage recording recording.worker.starting  [] success 1000 true' "$test_dir/alerts"
 printf 'PASS: missing readiness retries through bar reconnect, closing overlays block capture, and readiness releases the same worker\n'
 
 reset_logs

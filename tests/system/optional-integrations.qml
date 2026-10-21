@@ -9,7 +9,7 @@ import "../../src/modules/system/batteries"
 import "../../src/modules/media"
 import "../../src/modules/launcher" as Launcher
 
-Scope {
+WorkerScope {
     id: root
     property bool failed: false
     readonly property var settings: Config

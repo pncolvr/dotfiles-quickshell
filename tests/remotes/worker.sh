@@ -135,3 +135,74 @@ wait "${workers[-1]}" 2>/dev/null || true
 wait_count 0
 ! kill -0 "$terminal_pid" 2>/dev/null
 printf 'PASS: orphan recovery closes only the owned SSH terminal\n'
+
+rdp_errors() { jq -s '[.[]|select(.program=="alerts" and (.args|index("remotes.worker.rdp"))!=null)]|length' "$fixture/actions"; }
+vm_client() {
+    for ((attempt=0;attempt<80;attempt++)); do
+        vm_pid=$(sqlite3 -readonly "$fixture/runtime.db" "SELECT json_extract(payload,'$.rdp.pid') FROM remote_sessions WHERE id='beta';")
+        if [[ -n $vm_pid && -f $fixture/rdp-$vm_pid ]]; then printf '%s' "$vm_pid"; return; fi
+        sleep 0.02
+    done
+    return 1
+}
+shutdown_vm() { bash "$worker" --shutdown "$fixture/runtime.db" beta "$fixture/main.db" "$fixture" "$options"; }
+
+errors=$(rdp_errors)
+start beta
+wait_count 1
+kill -USR2 "$(vm_client)"
+if wait "${workers[-1]}"; then printf 'Expected unexpected RDP failure\n' >&2; exit 1; fi
+wait_count 0
+[[ $(rdp_errors) == $((errors+1)) ]]
+printf 'PASS: unexpected VM RDP failures still raise an alert\n'
+
+errors=$(rdp_errors)
+start beta
+wait_count 1
+vm_client > "$fixture/shutdown-rdp-pid"
+shutdown_vm
+wait "${workers[-1]}"
+wait_count 0
+[[ $(rdp_errors) == "$errors" ]]
+rm "$fixture/shutdown-rdp-pid"
+printf 'PASS: requested VM shutdown suppresses RDP failure even before virsh returns\n'
+
+touch "$fixture/not-ready"
+start beta
+for ((attempt=0;attempt<80;attempt++)); do
+    if status | jq -e 'length==1 and .[0].id=="beta" and .[0].state=="connecting"' >/dev/null; then break; fi
+    sleep 0.02
+done
+status | jq -e 'length==1 and .[0].state=="connecting"' >/dev/null
+shutdown_vm
+rm "$fixture/not-ready"
+wait_count 1
+[[ $(sqlite3 "$fixture/runtime.db" "SELECT json_extract(payload,'$.shutdownRequested') FROM remote_sessions WHERE id='beta';") == 1 ]]
+kill -USR2 "$(vm_client)"
+wait "${workers[-1]}"
+wait_count 0
+[[ $(rdp_errors) == "$errors" ]]
+printf 'PASS: VM shutdown intent survives the connecting-to-running lifecycle update\n'
+
+start beta
+wait_count 1
+touch "$fixture/shutdown-fail"
+if shutdown_vm; then printf 'Expected failed VM shutdown\n' >&2; exit 1; fi
+rm "$fixture/shutdown-fail"
+[[ $(sqlite3 "$fixture/runtime.db" "SELECT json_extract(payload,'$.shutdownRequested') IS NULL FROM remote_sessions WHERE id='beta';") == 1 ]]
+kill -USR2 "$(vm_client)"
+if wait "${workers[-1]}"; then printf 'Expected RDP failure after rejected shutdown\n' >&2; exit 1; fi
+wait_count 0
+[[ $(rdp_errors) == $((errors+1)) ]]
+printf 'PASS: rejected shutdown clears expected-disconnect state and preserves RDP errors\n'
+
+# A new session for the same entry must not inherit an earlier shutdown request.
+start beta
+wait_count 1
+kill -USR2 "$(vm_client)"
+if wait "${workers[-1]}"; then printf 'Expected reconnected RDP failure\n' >&2; exit 1; fi
+wait_count 0
+[[ $(rdp_errors) == $((errors+2)) ]]
+shutdown_vm
+[[ $(status) == '[]' ]]
+printf 'PASS: reconnect starts without shutdown intent and VM shutdown also works without an RDP session\n'

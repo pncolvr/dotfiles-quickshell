@@ -122,7 +122,7 @@ import Quickshell.Io
 import "src/services"
 import "src/services/recording"
 import "src/modules/launcher"
-Scope {
+WorkerScope {
     id: root
     property int ticks: 0
     RecordingSetup { id: setup; onPrepared: { console.error("SETUP FAIL: unexpected handoff"); Qt.quit() } }

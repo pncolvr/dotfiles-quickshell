@@ -47,6 +47,8 @@ if ! $list && [[ ${QS_TEST_RUNNER_BUS:-0} != 1 ]]; then
             bash "$repo/tests/runner/session.sh" bash "$0" "$@"
 fi
 cd -- "$repo"
+# A test crash must exit once, without replaying the fixture or opening a crash UI.
+export QS_DISABLE_CRASH_HANDLER=1
 run_started=$SECONDS
 limit=${TEST_TIMEOUT:-180}
 [[ $limit =~ ^[1-9][0-9]*$ ]] || { printf 'TEST_TIMEOUT must be a positive number of seconds.\n' >&2; exit 2; }

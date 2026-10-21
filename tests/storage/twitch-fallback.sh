@@ -110,7 +110,7 @@ import QtQuick
 import Quickshell
 import "src/services"
 import "src/modules/media"
-Scope {
+WorkerScope {
     id: root
     property int ticks: 0
     property bool failed: false

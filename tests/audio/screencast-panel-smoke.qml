@@ -3,7 +3,7 @@ import Quickshell
 import "../../src/services"
 import "../../src/modules/hyprland"
 
-Scope {
+WorkerScope {
     id: root
     property int attempts: 0
     function texts(item) {

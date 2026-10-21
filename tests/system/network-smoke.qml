@@ -1,9 +1,8 @@
 import QtQuick
-import Quickshell
 import Quickshell.Networking
 import "../../src/services"
 
-Scope {
+WorkerScope {
     id: root
     property bool failed: false
     function check(condition, message) {

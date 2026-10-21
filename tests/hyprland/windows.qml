@@ -8,7 +8,7 @@ import "../../src/services"
 import "../../src/config"
 import "../launcher" as Support
 
-Scope {
+WorkerScope {
     id: root
     property var settings: Config
     property var compositor: windows.compositor

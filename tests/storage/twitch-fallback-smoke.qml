@@ -9,7 +9,7 @@ import "../../src/modules/media"
 import "../../src/ui" as UI
 import "../../src/theme"
 
-Scope {
+WorkerScope {
     id: root
     readonly property string phase: Quickshell.env("TWITCH_FALLBACK_PHASE")
     property int ticks: 0

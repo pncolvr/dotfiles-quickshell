@@ -23,7 +23,8 @@ alert() {
             local capture_blocking=false
             [[ $1 == postCapture ]] && capture_blocking=true
             shift
-            "${QS_PICKER_EXECUTABLE:-qs}" ipc -p "$config_root" call alerts postMessage "$1" "$2" '[]' "$3" "$4" "$capture_blocking" >/dev/null 2>&1 || true
+            # JSON whitespace prevents qs from expanding the array as CLI arguments.
+            "${QS_PICKER_EXECUTABLE:-qs}" ipc -p "$config_root" call alerts postMessage "$1" "$2" ' []' "$3" "$4" "$capture_blocking" >/dev/null 2>&1 || true
             ;;
         *) "${QS_PICKER_EXECUTABLE:-qs}" ipc -p "$config_root" call alerts "$@" >/dev/null 2>&1 || true ;;
     esac

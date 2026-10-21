@@ -12,7 +12,7 @@ import "../../src/services/time/CalendarDates.mjs" as Dates
 import "../../src/ui" as UI
 import "../../src/theme"
 
-Scope {
+WorkerScope {
     id: root
     readonly property string phase: Quickshell.env('STATUS_TEST_PHASE')
     property int ticks: 0
@@ -206,6 +206,7 @@ Scope {
                 session.active = false;
                 root.check(!StatusService.tracking, 'inactive desktop pauses');
                 session.active = true;
+                StatusService.clear();
                 break;
             case 3:
                 {

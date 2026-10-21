@@ -96,7 +96,8 @@ ManagedCollectionService {
     function disconnectSelected() { disconnect(selectedEntry?.id) }
     function shutdownSelected() {
         if (!canShutdownSelected) return
-        shutdownTask.command=Config.remoteVmCommand.concat(['shutdown','--',selectedEntry.vmName])
+        shutdownTask.command=['bash',workerPath,'--shutdown',runtimeDatabase,selectedEntry.id,
+            Config.databasePath,Quickshell.shellDir,workerOptions()]
         shutdownTask.running=true
     }
     onSessionsChanged: syncPicker()

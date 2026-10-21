@@ -6,7 +6,7 @@ import Quickshell
 import "../../src/services"
 import "../../src/modules/launcher"
 
-Scope {
+WorkerScope {
     id: root
     readonly property string directory: Quickshell.env("PROJECT_TEST_DIR")
     readonly property string phase: Quickshell.env("PROJECT_TEST_PHASE")

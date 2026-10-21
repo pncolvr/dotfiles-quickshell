@@ -33,7 +33,7 @@ have not been introduced.
 
 | Setting | When false |
 | --- | --- |
-| `adaptiveBarEnabled` | Keep the fixed palette and continuous bar; unload the optional color sampler (default `false`) |
+| `adaptiveBarEnabled` | Keep the fixed palette and continuous bar; unload the optional color sampler |
 | `bookmarksEnabled` | Hide/disable the Bookmarks picker and skip bookmark-file reads |
 | `browserRoutingEnabled` | Enable browser routing and the Bookmarks History/Manage tabs; enabled in this setup |
 | `clipboardMonitorEnabled` | Stop automatic history collection; existing history remains available |
@@ -63,7 +63,7 @@ per-panel `hideForCapture` policy; this switch does not change that policy.
 
 ## Adaptive bar and panel backgrounds
 
-`adaptiveBarEnabled` defaults to `false`. Enable it to sample the most common color
+With `adaptiveBarEnabled`, the bar samples the most common color
 of a narrow strip below each monitor's bar. Hyprland's configured border size and
 visible window geometry move the strip below horizontal borders it would cross.
 Border size is read at startup and compositor configuration reload; window
@@ -398,6 +398,10 @@ Review these defaults when adapting the configuration:
 
 - `workModeEnabled` controls native work/personal detection, tracking and shared category UI.
   Automatic detection follows window/focus events and refresh requests; it does not poll on a timer.
+  Clicking a mode pins it manually; clicking that same manual mode again returns
+  to automatic detection. Selecting the other mode switches the manual override.
+  Manual mode stops detection checks and cancels any running scan. Returning to
+  automatic mode runs a fresh check; time tracking continues in either mode.
 - `workHistoryRetentionMonths` sets stored work/personal history retention in whole calendar months (default `36`; positive integers only). Cleanup runs at startup and hourly, trimming sessions that cross the cutoff. The History picker follows actual stored records.
   Rules and manual mode are saved privately in SQLite through Status → Manage.
 - `wallpaperDirectory` sets the wallpaper picker root, defaulting to `~/Pictures/wallpapers`.

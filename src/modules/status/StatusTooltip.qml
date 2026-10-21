@@ -112,8 +112,7 @@ Column {
             }
             Row {
                 id: modes
-                anchors.right: reset.left
-                anchors.rightMargin: Theme.controlSpacing
+                anchors.right: parent.right
                 spacing: Theme.controlSpacing
                 Repeater {
                     model: ["work", "personal"]
@@ -123,22 +122,15 @@ Column {
                             && root.statusService.status === modelData
                         objectName: "setStatusMode-" + modelData
                         glyph: modelData === "work" ? Theme.statusWorkingIcon : Theme.statusPersonalIcon
-                        hint: Translations.text("status.actions.setMode",[Translations.text("status.modes."+modelData)])
-                        foreground: selected ? Theme.accent : Theme.text
+                        hint: selected ? Translations.text("status.actions.automaticHint")
+                            : Translations.text("status.actions.setMode",[Translations.text("status.modes."+modelData)])
+                        foreground: root.statusService.status === modelData
+                            ? (selected ? Theme.warning : Theme.accent) : Theme.text
                         fillColor: selected ? Theme.selectionSelectedBackground : Theme.alternateBackground
                         enabled: !root.statusService.changingStatus
-                        onClicked: root.statusService.setStatus(modelData)
+                        onClicked: root.statusService.toggleStatus(modelData)
                     }
                 }
-            }
-            UI.ActionButton {
-                id: reset
-                objectName: "resetStatusMode"
-                anchors.right: parent.right
-                glyph: Theme.cancelIcon
-                hint: Translations.text("status.actions.automaticHint")
-                enabled: root.statusService.source === "manual" && !root.statusService.changingStatus
-                onClicked: root.statusService.clear()
             }
         }
 

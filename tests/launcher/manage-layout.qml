@@ -14,7 +14,7 @@ import "../../src/services/webapps/WebappEntries.mjs" as Webapps
 import "../../src/services/remotes/RemoteEntries.mjs" as Remotes
 import "../../src/services/n8n/N8nEntries.mjs" as N8n
 
-Scope {
+WorkerScope {
     id: root
     property bool failed: false
     property bool showWork: false

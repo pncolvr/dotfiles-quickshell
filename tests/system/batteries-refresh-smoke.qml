@@ -5,7 +5,7 @@ import "../../src/modules/system/batteries"
 import "../../src/services"
 import "../../src/theme"
 
-Scope {
+WorkerScope {
     id: root
     property int step: 0
     property int ticks: 0

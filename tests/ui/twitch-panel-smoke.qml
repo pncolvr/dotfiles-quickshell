@@ -13,7 +13,7 @@ import "../../src/modules/system"
 import "../../src/services"
 import "../../src/ui" as UI
 
-Scope {
+WorkerScope {
     id: root
     property int volumeLoads: 0
     property bool badgeVisible: false

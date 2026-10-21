@@ -10,7 +10,7 @@ import "../../src/ui" as UI
 import "../../src/services/network" as Network
 import "../../src/services/n8n/N8nEntries.mjs" as Entries
 
-Scope {
+WorkerScope {
     id: root
     property int step:0
     property int ticks:0

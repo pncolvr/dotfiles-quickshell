@@ -8,6 +8,8 @@ cleanup() {
     rm -rf -- "$test_dir"
 }
 trap cleanup EXIT
+node --test --test-reporter=tap "$project_root/tests/audio/capture-audio.test.mjs"
+bash "$project_root/tests/audio/capture-alert.sh"
 # Import only the production model: its directory also registers shell-only
 # singletons that ordinary qmltestrunner cannot load. Preserve its relative
 # translation import, with a Qt-only fixture backed by the packaged label.

@@ -9,7 +9,7 @@ import "../../src/modules/system/files"
 import "../../src/services"
 import "../../src/ui" as UI
 
-Scope {
+WorkerScope {
     id: root
     readonly property string folder: Quickshell.env("RECENT_NATIVE_FOLDER")
     property int step: 0

@@ -11,7 +11,7 @@ import "../../src/ui/bar" as Bar
 import "../../src/modules/system/notifications"
 import "../../src/modules/system/audio" as Audio
 
-Scope {
+WorkerScope {
     id: root
     property bool failed: false
     property var fakeAudio: AudioService

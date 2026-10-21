@@ -7,7 +7,7 @@ import "../../src/ui" as UI
 import "../../src/services/remotes/RemoteEntries.mjs" as Entries
 
 // Real layer-shell activation; synthetic entries and mocked clipboard commands.
-Scope {
+WorkerScope {
     id: root
     property var originalPanel: null
     property var originalDraft: null

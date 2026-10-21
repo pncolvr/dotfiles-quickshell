@@ -7,8 +7,9 @@ source "$provider_dir/_common/utils.sh"
 
 alert() {
     [[ $configured == false ]] || return 0
+    # JSON whitespace prevents qs from expanding the array as CLI arguments.
     "${QS_PICKER_EXECUTABLE:-qs}" ipc -p "${QS_PICKER_CONFIG:-$provider_dir/../../../..}" \
-        call alerts postMessage wallpaper "$1" "${3:-[]}" "$2" 3000 false >/dev/null 2>&1 || true
+        call alerts postMessage wallpaper "$1" " ${3:-[]}" "$2" 3000 false >/dev/null 2>&1 || true
 }
 fail() { jq -nc --arg key "$1" --argjson args "${2:-[]}" '{key:$key,args:$args}' >&2; alert "$1" error "${2:-[]}"; exit 2; }
 

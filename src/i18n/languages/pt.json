@@ -807,6 +807,7 @@
   "remotes.worker.tunnel": "Não foi possível abrir o túnel SSH. Verifique o servidor de salto, a chave e a configuração SSH.",
   "remotes.worker.vmStart": "Não foi possível iniciar a máquina virtual.",
   "remotes.worker.vmTimeout": "A porta RDP da máquina virtual não ficou pronta.",
+  "screenshare.alert.audio.desktop": "Detetada captura de áudio do ambiente de trabalho",
   "screenshare.indicator.label": "Partilha de ecrã",
   "screenshot.empty.qr": "Nenhum código QR encontrado na região selecionada",
   "screenshot.empty.text": "Nenhum texto legível encontrado na região selecionada",
@@ -928,7 +929,7 @@
   "status.detection.checking": "A verificar a deteção automática…",
   "status.detection.configuredProcess": "Processo configurado",
   "status.detection.empty": "Nenhuma atividade de trabalho detetada.",
-  "status.detection.manualHint": "Modo manual · a deteção automática não define o modo.",
+  "status.detection.manualHint": "Modo manual · a deteção automática está em pausa.",
   "status.detection.openFiles": "Ficheiros de trabalho abertos",
   "status.detection.paths": {
     "one": "%n caminho",

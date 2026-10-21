@@ -8,7 +8,7 @@ import "../../src/services"
 import "../../src/modules/system"
 import "../../src/ui" as UI
 
-Scope {
+WorkerScope {
     id: root
     property var settings: Config
     property var requests: []

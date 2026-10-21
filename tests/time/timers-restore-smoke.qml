@@ -2,7 +2,7 @@ import QtQml
 import Quickshell
 import "../../src/services"
 
-Scope {
+WorkerScope {
     id: root
     readonly property string phase: Quickshell.env("TIMERS_TEST_PHASE")
     property bool failed: false

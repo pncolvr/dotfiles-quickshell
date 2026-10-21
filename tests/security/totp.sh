@@ -166,7 +166,7 @@ import "src/modules/system/totp"
 import "src/ui/bar"
 import "src/ui/panels"
 import "src/services"
-Scope {
+WorkerScope {
     id: root
     property int step: 0
     property double closeDeadline: 0

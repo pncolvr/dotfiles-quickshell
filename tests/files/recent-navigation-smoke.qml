@@ -10,7 +10,7 @@ import "../../src/services"
 import "../../src/theme"
 import "../../src/ui" as UI
 
-Scope {
+WorkerScope {
     id: root
     readonly property string folder: Quickshell.env("RECENT_FILES_TEST_FOLDER")
     property int step: 0

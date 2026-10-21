@@ -1,12 +1,13 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import "../../src/services"
 import QtTest as Test
 import Quickshell
 import "../../src/modules/launcher"
 import "../../src/ui" as UI
 import "../../src/theme"
 
-Scope {
+WorkerScope {
     id: root
     property int step: 0
     property bool failed: false

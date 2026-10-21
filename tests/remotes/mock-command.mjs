@@ -19,7 +19,15 @@ case 'ssh': {
 case 'virsh':
  if(args.includes('domid'))console.log(fs.existsSync(dir+'/vm-running')?'42':'-');
  if(args.includes('start'))fs.writeFileSync(dir+'/vm-running','running');
- if(args.includes('shutdown'))fs.rmSync(dir+'/vm-running',{force:true});
+ if(args.includes('shutdown')) {
+  if(fs.existsSync(dir+'/shutdown-fail'))process.exit(3);
+  fs.rmSync(dir+'/vm-running',{force:true});
+  if(fs.existsSync(dir+'/shutdown-rdp-pid')) {
+   process.kill(Number(fs.readFileSync(dir+'/shutdown-rdp-pid','utf8')),'SIGUSR2');
+   // Model an RDP disconnect before virsh has acknowledged the shutdown.
+   setTimeout(()=>process.exit(0),200);break;
+  }
+ }
  process.exit(0);break
 case 'alerts':process.exit(0);break
 case 'terminal': {
@@ -35,6 +43,7 @@ case 'terminal': {
 case 'rdp':fs.writeFileSync(dir+'/rdp-'+process.pid,fs.readFileSync(0));break
 }
 const timer=setInterval(()=>{},100)
+if(program==='rdp')process.on('SIGUSR2',()=>process.exit(42));
 process.on('SIGTERM',()=>{
  if(program==='ssh' && args.includes('-L')){const file=dir+'/port-'+args[args.indexOf('-L')+1].split(':')[1];try{fs.unlinkSync(file)}catch{}}
  clearInterval(timer);process.exit(0)

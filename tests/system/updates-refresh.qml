@@ -8,7 +8,7 @@ import "../../src/theme"
 import "../../src/config"
 import "../../src/services"
 
-Scope {
+WorkerScope {
     id: root
     property bool failed: false
     // Only the copied fixture makes these production settings mutable.

@@ -7,7 +7,7 @@ import "../../src/ui/panels"
 import "../../src/ui" as UI
 import "../../src/services"
 
-Scope {
+WorkerScope {
     id: root
     property int phase: 0
     property int frames: 0

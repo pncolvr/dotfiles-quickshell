@@ -21,6 +21,7 @@ Row {
 
     UI.TabBar {
         actionTabs: true
+        showSeparators: true
         id: windowTabs
         visible: WindowService.groupedWindows.length > 0
         labels: WindowService.groupedWindows.map(window => window.title.toLowerCase())

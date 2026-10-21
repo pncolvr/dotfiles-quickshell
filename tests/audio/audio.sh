@@ -31,7 +31,7 @@ import "src/modules/system/audio"
 import "src/ui/bar"
 import "src/services"
 import "src/theme"
-Scope {
+WorkerScope {
     id: root
     property int step: 0
     Component { Bar {} }

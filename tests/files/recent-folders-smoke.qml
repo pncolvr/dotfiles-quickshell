@@ -11,7 +11,7 @@ import "../../src/services"
 import "../../src/theme"
 import "../../src/ui" as UI
 
-Scope {
+WorkerScope {
     id: root
     readonly property string phase: Quickshell.env("RECENT_FOLDERS_TEST_PHASE")
     readonly property string folder: Quickshell.env("RECENT_FILES_TEST_FOLDER")

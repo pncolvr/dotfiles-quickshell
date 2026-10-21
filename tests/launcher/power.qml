@@ -6,7 +6,7 @@ import "../../src/services"
 import "../../src/modules/launcher"
 
 // Real native menu/service, isolated storage and mock power/session executables.
-Scope {
+WorkerScope {
     id: root
     property bool failed: false
     property var status: StatusService

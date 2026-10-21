@@ -7,7 +7,7 @@ import Quickshell.Hyprland
 import "../../src/services"
 import "../../src/modules/launcher"
 
-Scope {
+WorkerScope {
     id: root
     readonly property var scenarios: ["apps", "webapps", "input", "image", "clipboard", "clipboard-images", "private-menu", "secret", "overview", "image"]
     property int scenario: 0

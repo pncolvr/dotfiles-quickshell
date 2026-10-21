@@ -8,7 +8,7 @@ import Quickshell.Io
 import "../../src/services"
 import "../../src/modules/system/notifications"
 
-Scope {
+WorkerScope {
     id: root
     readonly property var nativeView: nativeWindows.item
     property var cardEntry: ({emitterKey: "app:test", summary: "Test", body: "", urgency: 1, updatedAt: Date.now()})

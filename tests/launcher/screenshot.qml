@@ -6,7 +6,7 @@ import "../../src/services"
 import "../../src/ui" as UI
 import "../../src/ui/panels"
 
-Scope {
+WorkerScope {
     id: root
     property bool submapRequested: false
     property bool otherPanelRequested: true

@@ -15,7 +15,7 @@ import "../../src/theme" as Styling
 import "../../src/ui" as UI
 import "../../src/ui/components" as Components
 
-Scope {
+Services.WorkerScope {
     id: root
     property int ticks: 0
     property bool failed: false

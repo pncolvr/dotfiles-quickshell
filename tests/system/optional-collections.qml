@@ -7,7 +7,7 @@ import "../../src/services"
 import "../../src/ui/bar"
 import "../launcher"
 
-Scope {
+WorkerScope {
     id: root
     readonly property var settings: Config
     readonly property var network: NetworkService
@@ -109,7 +109,7 @@ Scope {
             })
             driver.waitFor("helpers reached held requests", () => count("refresh") > 0 && RecentFilesService.addingFolder
                 && PinnedFilesService.checking && PinnedFilesService.importing && UpdatesService.checking
-                && count("snapshot") >= 2 && count("folder") > 0 && count("import") > 0, () => {
+                && ["refresh", "snapshot", "folder", "pins", "import"].every(kind => count("ready:" + kind) > 0), () => {
                 UpdatesService.schedule()
                 TooltipService.openForKeyboard(100,module("updates").tooltip,module("updates"),false,host.screen)
                 root.settings.updatesEnabled = false
@@ -118,11 +118,11 @@ Scope {
                 root.settings.recentFilesEnabled = false
                 driver.check(!TooltipService.visible, "disabling Recent Files closes its panel")
                 RecentFilesService.endPanel()
-                hold.setText("")
             })
             driver.waitFor("cancellation completes", () => !UpdatesService.checking && !RecentFilesService.loading
                 && !PinnedFilesService.checking && !PinnedFilesService.importing && count("stopped:snapshot") > 0
                 && count("stopped:folder") > 0 && count("stopped:pins") > 0 && count("stopped:import") > 0, () => {
+                hold.setText("")
                 driver.check(preferences() === root.savedPreferences && JSON.stringify(UpdatesService.updates) === root.savedUpdates,
                     "cancelled successful reports cannot remove pins, add folders or replace updates")
                 driver.check(!UpdatesService.error && !RecentFilesService.error && !PinnedFilesService.error, "cancellation leaves no errors")

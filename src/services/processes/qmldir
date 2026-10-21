@@ -1,0 +1,2 @@
+singleton WorkerLifetime 1.0 WorkerLifetime.qml
+WorkerScope 1.0 WorkerScope.qml

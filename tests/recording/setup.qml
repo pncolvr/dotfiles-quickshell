@@ -7,7 +7,7 @@ import "../../src/services/recording"
 import "../../src/modules/launcher"
 import "../launcher" as Fixtures
 
-Scope {
+WorkerScope {
     id: root
     property var submitted: null
     property int submittedCount: 0

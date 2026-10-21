@@ -7,7 +7,7 @@ import "../../src/ui" as UI
 import "../../src/modules/launcher"
 import "../../src/services"
 
-Scope {
+WorkerScope {
     id: root
     property bool simulatedActive: false
     property int focusCalls: 0

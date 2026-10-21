@@ -7,7 +7,7 @@ import "../../src/ui" as UI
 import "../../src/ui/panels"
 import "../../src/services"
 
-Scope {
+WorkerScope {
     id: root
     property bool failed: false
     property bool deliveredWhileHeld: false

@@ -7,7 +7,7 @@ import "../../src/services"
 import "../../src/modules/launcher"
 import "../../src/theme"
 
-Scope {
+WorkerScope {
     id: root
     property int closures: 0
     Connections { target: PickerService; function onVisibleChanged() { if (!PickerService.visible) root.closures++ } }

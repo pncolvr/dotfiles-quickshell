@@ -7,6 +7,7 @@ import Quickshell.Io
 import Quickshell.Services.Pipewire
 import "../../config"
 import "." as AudioModels
+import "CaptureAudio.mjs" as CaptureAudio
 
 Singleton {
     id: root
@@ -18,7 +19,8 @@ Singleton {
     PwObjectTracker {
         // Link state is unavailable until its group is bound, just like node audio.
         objects: [root.sink, root.source, ...root.nodesModel.values,
-            ...root.linkGroupsModel.values.filter(link => link.source === root.source || link.target === root.sink)]
+            ...root.linkGroupsModel.values.filter(link => link.source === root.source || link.target === root.sink
+                || (root.screencastActive && root.micCaptureNodes.includes(link.target)))]
     }
 
     // Output
@@ -268,6 +270,13 @@ Singleton {
     // Initial registry sync alone may precede tracked node properties.
     readonly property bool screencastReady: Pipewire.ready && root.nodesModel.values.every(node => node.ready)
     readonly property bool screencastActive: screencastStreams.length > 0
+    readonly property string screencastAudioStatus: screencastActive
+        ? CaptureAudio.captureStatus(micCaptureNodes, root.linkGroupsModel.values, PwLinkState.Active) : "unknown"
+    AudioModels.ScreenShareAlert {
+        active: root.screencastActive
+        ready: root.screencastReady
+        audioStatus: root.screencastAudioStatus
+    }
     onScreencastActiveChanged: {
         const sound = screencastActive ? Config.screencastStartSound : Config.screencastStopSound
         screencastSound.command = Config.screencastSoundCommand(sound)

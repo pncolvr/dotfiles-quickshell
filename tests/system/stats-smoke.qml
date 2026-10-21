@@ -8,7 +8,7 @@ import "../../src/modules/system"
 import "../../src/services"
 import "../../src/theme"
 
-Scope {
+WorkerScope {
     id: root
     readonly property StatsTooltip panel: loader.item as StatsTooltip
     property int step: 0

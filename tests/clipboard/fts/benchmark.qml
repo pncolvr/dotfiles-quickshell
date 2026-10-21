@@ -1,7 +1,7 @@
 import QtQuick
 import Quickshell
 import "../../../src/services"
-Scope {
+WorkerScope {
     Timer {
         interval: 20; repeat: true; running: true
         onTriggered: {

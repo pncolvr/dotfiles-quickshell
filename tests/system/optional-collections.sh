@@ -45,7 +45,6 @@ cat > "$fixture/helper.sh" <<'MOCK'
 set -euo pipefail
 directory=${0%/*}
 kind=$1
-printf '%s\n' "$kind" >> "$directory/runs"
 file=$(jq -nc --arg path "$directory/document.txt" '{path:$path,uri:("file://"+$path),name:"document.txt",icon:"text-x-generic",isDirectory:false}')
 late() {
     printf 'stopped:%s\n' "$kind" >> "$directory/runs"
@@ -58,6 +57,8 @@ late() {
     exit 0
 }
 trap late TERM
+printf '%s\n' "$kind" >> "$directory/runs"
+if [[ -s $directory/hold ]]; then printf 'ready:%s\n' "$kind" >> "$directory/runs"; fi
 while [[ -s $directory/hold ]]; do sleep 0.02 & wait $!; done
 case $kind in
     snapshot) printf 'core x86_64 fixture 1 2\n' ;;

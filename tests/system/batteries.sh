@@ -110,7 +110,7 @@ import "file://$project_root/src/modules/system/batteries"
 import "file://$project_root/src/ui/panels"
 import "file://$project_root/src/services"
 import "file://$project_root/src/ui/bar" as Project
-Scope {
+WorkerScope {
     id: root
     property int step: 0
     Component { Project.Bar {} }

@@ -7,7 +7,7 @@ import "../../src/modules/launcher"
 import "../../src/ui" as UI
 
 // Actual native launcher hosts, synthetic projects/input, isolated storage.
-Scope {
+WorkerScope {
     id: root
     property var firstMapModes: []
     property var testedHost: null

@@ -51,7 +51,7 @@ printf 'PASS: TOTP tokens restore from backup with TOTP and Vault modules disabl
 cat > "$fixture/shell.qml" <<'QML'
 import Quickshell
 import "src/services"
-Scope { readonly property bool loadBackup: BackupService.busy }
+WorkerScope { readonly property bool loadBackup: BackupService.busy }
 QML
 qs -p "$fixture" > "$fixture/ipc.log" 2>&1 &
 qs_pid=$!

@@ -63,9 +63,12 @@ Singleton {
     property string detectionError: ''
     property bool detectionStale: false
     property bool detectionPending: false
+    readonly property bool detectionEnabled: enabled && ready && !paused && !manualMode
+    property bool detectionInFlight: false
+    property int detectionRevision: 0
     property string rulesError: ''
     property string timecardError: ''
-    readonly property bool detectionLoading: detector.running
+    readonly property bool detectionLoading: detectionEnabled && detectionInFlight
     readonly property bool timecardLoading: !ready
     readonly property bool changingStatus: !ready
     readonly property string summary: report.summary ?? ''
@@ -189,19 +192,21 @@ Singleton {
         refreshTimecard();
     }
     function reload() {
-        if (enabled)
+        if (detectionEnabled)
             detectionDelay.restart();
     }
     function refreshDetection() {
-        if (!enabled || !ready || paused)
+        if (!detectionEnabled)
             return;
-        if (detector.running) {
+        if (detectionInFlight) {
             detectionPending = true;
             return;
         }
         detectionPending = false;
+        detector.revision = detectionRevision;
         detector.input = JSON.stringify(rules);
         detector.stdinEnabled = true;
+        detectionInFlight = true;
         detector.running = true;
     }
     function saveRules(value) {
@@ -220,14 +225,22 @@ Singleton {
     function setStatus(mode) {
         return enabled && ready && ['work', 'personal'].includes(mode) && PreferencesRepository.setValue('status.manual', mode);
     }
+    function toggleStatus(mode) {
+        if (!enabled || !ready || !['work', 'personal'].includes(mode))
+            return false;
+        return manualMode === mode ? clear() : setStatus(mode);
+    }
     function toggle() {
         return setStatus(status === 'work' ? 'personal' : 'work');
     }
     function clear() {
         if (enabled && ready) {
-            PreferencesRepository.setValue('status.manual', '');
+            if (!PreferencesRepository.setValue('status.manual', ''))
+                return false;
             reload();
+            return true;
         }
+        return false;
     }
     function pause() {
         actionPending = true;
@@ -242,10 +255,6 @@ Singleton {
     }
     onReadyChanged: initialize()
     onEnabledChanged: {
-        if (!enabled) {
-            detector.running = false;
-            detectionDelay.stop();
-        }
         reconcile();
         announceModeChange();
     }
@@ -253,10 +262,16 @@ Singleton {
         reconcile();
         announceModeChange();
     }
-    onPausedChanged: {
-        reconcile();
-        if (!paused)
+    onPausedChanged: reconcile()
+    onDetectionEnabledChanged: {
+        if (detectionEnabled) {
             reload();
+        } else {
+            detectionRevision++;
+            detectionDelay.stop();
+            detectionPending = false;
+            detector.running = false;
+        }
     }
     DesktopSessionState {
         id: desktopSession
@@ -297,6 +312,7 @@ Singleton {
     }
     Process {
         id: detector
+        property int revision: 0
         property string input: ''
         command: ['timeout', '10', 'bash', decodeURIComponent(Qt.resolvedUrl('detection.sh').toString().replace(/^file:\/\//, ''))]
         onStarted: {
@@ -313,8 +329,14 @@ Singleton {
         }
         // qmllint disable signal-handler-parameters
         onExited: (code, status) => {
-            if (!root.enabled)
+            root.detectionInFlight = false;
+            if (!root.detectionEnabled)
                 return;
+            // A cancelled scan can finish after automatic mode is restored.
+            if (revision !== root.detectionRevision) {
+                root.reload();
+                return;
+            }
             let value;
             try {
                 value = JSON.parse(detectionOutput.text);

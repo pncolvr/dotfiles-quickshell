@@ -7,7 +7,7 @@ import "../../../src/services"
 import "../../../src/modules/launcher"
 import "../../../src/ui" as UI
 
-Scope {
+WorkerScope {
     id: root
     Test.TestResult { id: objects }
     Test.TestEvent { id: events }

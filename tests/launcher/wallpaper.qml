@@ -9,7 +9,7 @@ import "../../src/theme"
 import "../../src/i18n"
 import "../../src/modules/launcher"
 
-Scope {
+WorkerScope {
     id: root
     readonly property string folder: Config.wallpaperDirectory
     readonly property string image: folder + "/quote ' \" $(touch injected) #%.PNG"

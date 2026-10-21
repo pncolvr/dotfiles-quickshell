@@ -5,7 +5,7 @@ import Quickshell
 import "../../src/modules/launcher"
 import "../../src/services"
 
-Scope {
+WorkerScope {
     id: root
     property bool screenshotComplete: false
     property bool screenshotSaved: false

@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import "../../i18n"
 import QtQml
+import "../processes"
 import QtQml.WorkerScript
 import Quickshell
 import Quickshell.Io
@@ -9,6 +10,7 @@ import "../../config"
 
 QtObject {
     id: root
+    Component.onCompleted: WorkerLifetime.register(root)
     required property var owner
     readonly property bool active: owner.mode === PickerService.Mode.Clipboard && (owner.visible || owner.openingClipboard)
     property bool fuzzy: false
@@ -51,7 +53,7 @@ QtObject {
         request++; dispatch.stop(); pending = false; failed = false; pendingAccept = null
         reader.running = false; reader.input = ""; reader.output = ""
         results = []; fuzzyMetadata = []; queuedFuzzyRows = null; fuzzyRevision = -1; hasMore = false
-        worker.sendMessage({clear:true})
+        workerEngine?.sendMessage({clear:true})
         published([])
     }
     function more() {
@@ -61,12 +63,13 @@ QtObject {
     }
     function sendWorker(rows) {
         if (rows) queuedFuzzyRows = rows
-        if (!worker.ready || workerBusy) { dispatch.restart(); return }
+        if (!workerEngine) return
+        if (!workerEngine.ready || workerBusy) { dispatch.restart(); return }
         const message = {generation:fuzzyRevision,request:request,query:owner.query,
             fuzzy:true,smartCase:Config.pickerSmartCase,pinnedOnly:owner.itemCriteria.pinned === true,
             kind:owner.itemCriteria.kind ?? ""}
         if (queuedFuzzyRows) { message.rows = queuedFuzzyRows; queuedFuzzyRows = null }
-        workerBusy = true; worker.sendMessage(message)
+        workerBusy = true; workerEngine.sendMessage(message)
     }
     function run() {
         if (!active || !pending || reader.running || workerBusy || !DbService.ready) return
@@ -97,7 +100,7 @@ QtObject {
     onActiveChanged: { if (active) refresh(false); else release() }
     onFuzzyChanged: {
         fuzzyRevision = -1
-        if (!fuzzy) { fuzzyMetadata = []; queuedFuzzyRows = null; worker.sendMessage({clear:true}) }
+        if (!fuzzy) { fuzzyMetadata = []; queuedFuzzyRows = null; workerEngine?.sendMessage({clear:true}) }
         refresh(false)
     }
     property Connections changes: Connections {
@@ -155,18 +158,26 @@ QtObject {
         }
         // qmllint enable signal-handler-parameters
     }
-    property WorkerScript workerEngine: WorkerScript {
-        id: worker
-        source: Qt.resolvedUrl("ClipboardSearch.mjs")
-        onReadyChanged: if (ready && root.pending) root.dispatch.restart()
-        onMessage: message => {
-            root.workerBusy = false
-            if (!message.cleared && root.active && root.fuzzy && message.request === root.request
-                && message.generation === root.fuzzyRevision) {
-                root.statistics = {reused:message.reused,candidates:message.candidates,duration:message.duration}
-                root.hasMore = false
-                root.deliver(message.indices.map(index => root.fuzzyMetadata[index]))
-            } else if (root.pending) root.dispatch.restart()
+    function disposeWorker() {
+        request++; dispatch.stop(); reader.running = false; pending = false; workerBusy = false
+        if (workerEngine) { workerEngine.destroy(); workerEngine = null }
+    }
+    // Dispose this dynamic object before the singleton's QML engine tears down
+    // its shared worker engine. A statically owned worker survives too long.
+    property WorkerScript workerEngine: workerFactory.createObject(root) as WorkerScript
+    property Component workerFactory: Component {
+        WorkerScript {
+            source: Qt.resolvedUrl("ClipboardSearch.mjs")
+            onReadyChanged: if (ready && root.pending) root.dispatch.restart()
+            onMessage: message => {
+                root.workerBusy = false
+                if (!message.cleared && root.active && root.fuzzy && message.request === root.request
+                    && message.generation === root.fuzzyRevision) {
+                    root.statistics = {reused:message.reused,candidates:message.candidates,duration:message.duration}
+                    root.hasMore = false
+                    root.deliver(message.indices.map(index => root.fuzzyMetadata[index]))
+                } else if (root.pending) root.dispatch.restart()
+            }
         }
     }
 }

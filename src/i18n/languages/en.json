@@ -807,6 +807,7 @@
   "remotes.worker.tunnel": "SSH tunnel could not be opened. Check the jump host, key and SSH configuration.",
   "remotes.worker.vmStart": "Virtual machine could not be started.",
   "remotes.worker.vmTimeout": "Virtual machine RDP port did not become ready.",
+  "screenshare.alert.audio.desktop": "Desktop audio capture detected",
   "screenshare.indicator.label": "Screen sharing",
   "screenshot.empty.qr": "No QR code found in selected region",
   "screenshot.empty.text": "No readable text found in selected region",
@@ -928,7 +929,7 @@
   "status.detection.checking": "Checking automatic detection…",
   "status.detection.configuredProcess": "Configured process",
   "status.detection.empty": "No active work detections.",
-  "status.detection.manualHint": "Manual override · automatic evidence does not set the mode.",
+  "status.detection.manualHint": "Manual mode · automatic detection is paused.",
   "status.detection.openFiles": "Open work files",
   "status.detection.paths": {
     "one": "%n path",

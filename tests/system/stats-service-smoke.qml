@@ -1,8 +1,7 @@
 import QtQuick
-import Quickshell
 import "../../src/services"
 import "../../src/i18n"
-Scope {
+WorkerScope {
     id: root
     property bool failed: false
     function check(ok, message) { if (!ok) { failed = true; console.error("STATS FAIL:", message) } }

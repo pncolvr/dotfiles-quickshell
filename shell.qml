@@ -13,7 +13,7 @@ import "src/modules/system/audio"
 import "src/services"
 import "src/config"
 
-Scope {
+WorkerScope {
   // Release references to this generation before its tooltip owners are destroyed.
   Component.onDestruction: TooltipService.dismiss()
   // Register recording IPC and reconnect to any detached recording session.

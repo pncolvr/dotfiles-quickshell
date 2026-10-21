@@ -4,7 +4,7 @@ import Quickshell.Io
 import "../../src/modules/updates" as Updates
 import "../../src/services"
 
-Scope {
+WorkerScope {
     id: root
     readonly property string generation: Date.now() + '-' + Math.random()
     readonly property int count: UpdatesService.count

@@ -10,7 +10,7 @@ import "../../src/services"
 import "../../src/services/time/timers"
 import "../../src/theme"
 
-Scope {
+WorkerScope {
     id: root
     property bool failed: false
     property int step: 0

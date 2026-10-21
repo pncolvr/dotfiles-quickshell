@@ -9,7 +9,7 @@ import "../../src/theme"
 import "../../src/ui" as UI
 import "../../src/modules/launcher"
 
-Scope {
+WorkerScope {
     id: root
     readonly property var settings: Config
     property int replacementCalls: 0

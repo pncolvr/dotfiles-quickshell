@@ -7,7 +7,7 @@ import "../../src/ui/panels"
 import "../../src/services"
 import "../../src/config"
 
-Scope {
+WorkerScope {
     id: root
     property int step: 0
     property bool failed: false

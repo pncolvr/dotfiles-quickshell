@@ -7,7 +7,7 @@ import "../../src/services"
 import "../../src/modules/launcher"
 import "../../src/theme"
 
-Scope {
+WorkerScope {
     id: root
     property bool failed: false
     property var windows: WindowService

@@ -8,7 +8,7 @@ import "../../../src/services"
 import "../../../src/modules/vault"
 import "../../../src/theme"
 import "../../../src/ui" as UI
-Scope {
+WorkerScope {
     id: root
     function findVisual(item, name) {
         if (!item) return null

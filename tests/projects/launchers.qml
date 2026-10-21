@@ -2,7 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import "../../src/services"
-Scope {
+WorkerScope {
     id: root
     readonly property string directory: Quickshell.env("PROJECT_LAUNCH_TEST_DIR")
     readonly property string projectPath: directory + "/Game $literal; folder"

@@ -1,9 +1,8 @@
 pragma ComponentBehavior: Bound
 import QtQml
-import Quickshell
 import "../../src/services"
 
-Scope {
+WorkerScope {
     id: root
     property bool failed: false
     property bool waiting: false

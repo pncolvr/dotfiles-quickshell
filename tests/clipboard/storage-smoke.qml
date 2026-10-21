@@ -2,7 +2,7 @@ import QtQuick
 import Quickshell
 import "../../src/services"
 
-Scope {
+WorkerScope {
     id: root
     property bool retried: false
 

@@ -4,7 +4,7 @@ import "../../src/modules/system/batteries"
 import "../../src/services"
 import "../../src/theme"
 
-Scope {
+WorkerScope {
     id: root
     property int ticks: 0
     property bool sawReloadScan: false

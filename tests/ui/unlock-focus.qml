@@ -8,7 +8,7 @@ import "../../src/modules/launcher"
 import "../../src/ui" as UI
 import "../../src/services"
 
-Scope {
+WorkerScope {
     id: root
     property int stage: -1
     property int attempts: 0
