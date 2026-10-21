@@ -155,6 +155,10 @@ WorkerScope {
                 }
                 popup.cancelEditor()
                 popup.searchText = ""
+                // Refresh removes the synthetic rows; settle both layouts before
+                // measuring whether opening Add changes the popup's height.
+                root.find(popup, "totpList").forceLayout()
+                popup.forceLayout()
                 root.previousHeight = popup.height
                 popup.adding = true
                 root.step++
@@ -162,6 +166,7 @@ WorkerScope {
             case 3: {
                 const editor = root.find(popup, "totpEditor")
                 if (!editor) return
+                popup.forceLayout()
                 if (!root.check(popup.height === root.previousHeight, "add form resized popup")) return
                 if (!root.checkSecret(editor)) return
                 root.find(editor, "totpNameField").text = "Alpha test"
