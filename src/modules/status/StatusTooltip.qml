@@ -259,9 +259,10 @@ Column {
     UI.ColumnText { width:parent.width; text:root.statusService.pauseReason ?? ""; visible:!!text; color:Theme.inactive; wrapMode:Text.Wrap }
     Flickable {
         id: timecard
+        property UI.ScrollBehavior scrollBehavior: UI.ScrollBehavior { viewport: timecard }
         visible: !root.managing
         objectName: "statusTimecardView"
-        width: parent.width
+        width: root.width + Theme.scrollbarGutter
         height: Math.min(contentHeight, Math.max(0, root.maxPanelHeight - heading.height - root.spacing))
         contentWidth: width
         contentHeight: entries.implicitHeight
@@ -271,7 +272,7 @@ Column {
 
         Column {
             id: entries
-            width: timecard.width
+            width: root.width
             spacing: Theme.controlSpacing
 
             UI.ColumnText {

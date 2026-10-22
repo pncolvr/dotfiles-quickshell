@@ -33,6 +33,7 @@ FolderForm 1.0 components/FolderForm.qml
 ShortcutHints 1.0 components/ShortcutHints.qml
 SearchField 1.0 components/SearchField.qml
 ScrollBar 1.0 components/ScrollBar.qml
+ScrollBehavior 1.0 components/ScrollBehavior.qml
 TabBar 1.0 components/TabBar.qml
 TooltipBackground 1.0 components/TooltipBackground.qml
 PickerRow 1.0 components/PickerRow.qml

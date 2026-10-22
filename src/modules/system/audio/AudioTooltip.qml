@@ -87,7 +87,7 @@ Column {
 
     MediaPanel {
         objectName: "audioMediaPanel"
-        width: parent.width
+        width: root.width + Theme.scrollbarGutter
         maximumHeight: root.listHeight
         mediaService: root.mediaService
         audioService: root.audioService
@@ -96,9 +96,10 @@ Column {
 
     Flickable {
         id: deviceList
+        property UI.ScrollBehavior scrollBehavior: UI.ScrollBehavior { viewport: deviceList }
         objectName: "audioDeviceList"
         visible: tabs.currentIndex === 1
-        width: parent.width
+        width: root.width + Theme.scrollbarGutter
         height: Math.min(contentHeight, root.listHeight)
         contentWidth: width
         contentHeight: deviceContents.implicitHeight
@@ -108,7 +109,7 @@ Column {
 
         Column {
             id: deviceContents
-            width: deviceList.width
+            width: root.width
             spacing: Theme.audioSpacing
 
             UI.ColumnText {
@@ -142,9 +143,10 @@ Column {
 
     Flickable {
         id: appList
+        property UI.ScrollBehavior scrollBehavior: UI.ScrollBehavior { viewport: appList }
         objectName: "audioAppList"
         visible: tabs.currentIndex === 0
-        width: parent.width
+        width: root.width + Theme.scrollbarGutter
         height: Math.min(contentHeight, root.listHeight)
         contentWidth: width
         contentHeight: appContents.implicitHeight
@@ -154,7 +156,7 @@ Column {
 
         Column {
             id: appContents
-            width: appList.width
+            width: root.width
             spacing: Theme.audioSpacing
 
             UI.ColumnText {

@@ -111,14 +111,16 @@ Column {
                 .concat(root.networkEnabled ? [Translations.text("stats.tabs.network")] : [])
         }
         Flickable {
-            width: parent.width
+            id: summaryView
+            property UI.ScrollBehavior scrollBehavior: UI.ScrollBehavior { viewport: summaryView }
+            width: root.width + Theme.scrollbarGutter
             height: Math.min(contentHeight, root.maxPanelHeight * 0.5)
             contentHeight: summary.height
             clip: true
             boundsBehavior: Flickable.StopAtBounds
             Loader {
                 id: summary
-                width: parent.width
+                width: root.width
                 sourceComponent: root.resource === "cpu" ? cpu : root.resource === "memory" ? memory : root.resource === "network" ? network : overview
             }
             QC.ScrollBar.vertical: UI.ScrollBar {}
@@ -195,8 +197,9 @@ Column {
     }
     ListView {
         id: view
+        property UI.ScrollBehavior scrollBehavior: UI.ScrollBehavior { viewport: view }
         objectName: "statsProcessList"
-        width: parent.width
+        width: root.width + Theme.scrollbarGutter
         height: root.resource ? Math.max(0, root.maxPanelHeight - heading.height - root.spacing) : 0
         clip: true
         boundsBehavior: Flickable.StopAtBounds
@@ -215,7 +218,7 @@ Column {
             required property bool isChild
             required property bool expandable
             required property bool expanded
-            width: view.width
+            width: root.width
             process: ({pid, name, label, value, down, up, count})
             childProcess: isChild
             canExpand: expandable

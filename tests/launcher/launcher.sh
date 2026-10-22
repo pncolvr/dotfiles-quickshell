@@ -272,7 +272,7 @@ for sample in landscape portrait panorama; do
     jq -e '.previewStatus==1 and .panelWidth<=1000 and .panelWidth == 560
         and (.previewPaintedWidth > 0 and .previewPaintedWidth <= .previewContentWidth + 1)
         and (.previewPaintedHeight > 0 and .previewPaintedHeight <= .previewContentHeight + 1)
-        and ((.searchWidth-.listWidth)|fabs)<1' <<< "$rendered" >/dev/null
+        and ((.searchWidth-.listRowWidth)|fabs)<1' <<< "$rendered" >/dev/null
     geometry=$(jq -c '[.placementWidth,.searchWidth,.listWidth,.listHeight]' <<< "$rendered")
     if [[ -z $baseline ]]; then baseline=$geometry; else [[ $geometry == "$baseline" ]]; fi
     case $sample in portrait) jq -e '.panelWidth<1000' <<< "$rendered" >/dev/null ;; esac

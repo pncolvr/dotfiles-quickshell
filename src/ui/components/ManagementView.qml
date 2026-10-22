@@ -163,6 +163,7 @@ Item {
             spacing: Theme.controlSpacing * 2
             ListView {
                 id: list
+                property UI.ScrollBehavior scrollBehavior: UI.ScrollBehavior { viewport: list }
                 activeFocusOnTab: true
                 keyNavigationEnabled: false
                 objectName: root.listObjectName
@@ -189,6 +190,8 @@ Item {
                     required property var modelData
                     required property int index
                     width: list.width
+                    leftPadding: Theme.controlFieldPadding + Theme.scrollbarGutter
+                    rightPadding: Theme.controlFieldPadding + Theme.scrollbarGutter
                     height: Theme.manageRowHeight
                     objectName: "managementEntry-" + modelData.id
                     current: index === list.currentIndex
@@ -206,6 +209,7 @@ Item {
                 Rectangle { anchors.fill: parent; anchors.margins: 1; z: 1; color: "transparent"; radius: Theme.iconButtonRadius; border.width: 1; border.color: Theme.empty }
                 Flickable {
                     id: details
+                    property UI.ScrollBehavior scrollBehavior: UI.ScrollBehavior { viewport: details }
                     objectName: "managementDetailsScroll"
                     x: Theme.controlSpacing
                     y: Theme.controlSpacing
@@ -216,7 +220,7 @@ Item {
                     clip: true
                     boundsBehavior: Flickable.StopAtBounds
                     QC.ScrollBar.vertical: UI.ScrollBar {}
-                    Column { id: detailBody; width: details.width - Theme.scrollbarWidth - Theme.controlSpacing; spacing: Theme.controlSpacing }
+                    Column { id: detailBody; x: Theme.scrollbarGutter; width: Math.max(0, details.width - Theme.scrollbarGutter * 2); spacing: Theme.controlSpacing }
                 }
                 Row {
                     id: actions

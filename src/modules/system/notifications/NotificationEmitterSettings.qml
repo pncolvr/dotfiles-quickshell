@@ -28,7 +28,8 @@ Item {
 
     Column {
         id: controls
-        width: root.width - 10
+        x: Theme.scrollbarGutter
+        width: Math.max(0, root.width - Theme.scrollbarGutter * 2)
         spacing: 12
         UI.Text {
             centerVertical: false
@@ -61,6 +62,7 @@ Item {
 
     Flickable {
         id: rowsView
+        property UI.ScrollBehavior scrollBehavior: UI.ScrollBehavior { viewport: rowsView }
         objectName: "notificationEmitterList"
         y: controls.height + 12
         width: root.width
@@ -72,7 +74,8 @@ Item {
         QC.ScrollBar.vertical: UI.ScrollBar {}
         Column {
             id: rows
-            width: rowsView.width - 10
+            x: Theme.scrollbarGutter
+            width: Math.max(0, rowsView.width - Theme.scrollbarGutter * 2)
             spacing: 12
             UI.Text {
                 objectName: "notificationEmitterSearchEmpty"

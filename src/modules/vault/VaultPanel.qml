@@ -187,6 +187,7 @@ Item {
                 }
                 Flickable {
                     id: details
+                    property UI.ScrollBehavior scrollBehavior: UI.ScrollBehavior { viewport: details }
                     objectName: "vaultDetailScroll"
                     width: parent.width
                     height: parent.height - Theme.controlHeight - Theme.controlSpacing * 2
@@ -197,9 +198,9 @@ Item {
                     QC.ScrollBar.vertical: UI.ScrollBar {}
                     Column {
                         id: detailContent
-                        x: Theme.controlSpacing
+                        x: Theme.controlSpacing + Theme.scrollbarGutter
                         y: Theme.controlSpacing
-                        width: details.width - 10 - Theme.controlSpacing * 2
+                        width: Math.max(0, details.width - (Theme.scrollbarGutter + Theme.controlSpacing) * 2)
                         spacing: Theme.controlSpacing
                         UI.Text { centerVertical: false; width: parent.width; textFormat: Text.PlainText; wrapMode: Text.Wrap; visible: !!RbwService.detail; color: Theme.inactive; text: RbwService.detail?.folder ?? Translations.text("vault.folder.none") }
                         VaultEntryDetails {

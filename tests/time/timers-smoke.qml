@@ -257,7 +257,7 @@ WorkerScope {
                 root.selectTab(1)
                 const list = root.find(root.panel.activeTab, "timerList") as Flickable
                 root.check(list.height <= root.panel.maxListHeight && list.contentHeight > list.height, "long lists scroll within monitor")
-                root.check(root.row("stopwatchRows", 19).width === root.panel.width, "overlay scrollbar leaves row width intact")
+                root.check(root.row("stopwatchRows", 19).width === root.panel.width, "scrollbar uses panel padding and leaves row width intact")
                 const before = TimersService.entries.length
                 root.panel.destroy()
                 root.panel = trigger.tooltip.createObject(canvas, {x: 30, y: 50})

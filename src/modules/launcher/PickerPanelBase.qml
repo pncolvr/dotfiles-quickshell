@@ -29,7 +29,7 @@ Rectangle {
     property Component searchControls: null
     property real availableContentWidth: Theme.pickerWidth
     property real availableContentHeight: 800
-    readonly property real columnWidth: width - Theme.tooltipPaddingHeight * 2
+    readonly property real columnWidth: Math.max(0, width - Theme.scrollbarGutter * 2)
     readonly property real normalHeight: panelHeader.height + list.implicitHeight + panelFooter.height + Theme.tooltipPaddingHeight + Theme.controlSpacing
     property var searchKeyHandler: null
     property string hintPanel: "default"
@@ -107,6 +107,8 @@ Rectangle {
     FocusScope {
         anchors.fill: parent
         anchors.margins: Theme.tooltipPaddingHeight
+        anchors.leftMargin: Theme.scrollbarGutter
+        anchors.rightMargin: Theme.scrollbarGutter
         anchors.bottomMargin: 0
         focus: true
         Keys.priority: Keys.BeforeItem
@@ -180,7 +182,10 @@ Rectangle {
             showThumbnails: root.showThumbnails
             compactImages: root.compactImageRows
             rowHeight: root.uniformRows ? root.measuredRowHeight : 0
-            width: root.columnWidth
+            // Rows align with the header; the viewport reaches into the outer
+            // padding so the scrollbar has its own strip beside the content.
+            x: root.gridMode ? 0 : -Theme.scrollbarGutter
+            width: root.gridMode ? root.columnWidth : root.columnWidth + Theme.scrollbarGutter * 2
             y: panelHeader.height + Theme.controlSpacing
             visible: !root.inputOnly
             height: root.inputOnly ? 0 : Math.max(0, panelFooter.y - y)

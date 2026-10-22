@@ -24,8 +24,9 @@ Column {
     Rectangle { width: root.width; height: 1; color: Theme.empty }
     Flickable {
         id: list
+        property UI.ScrollBehavior scrollBehavior: UI.ScrollBehavior { viewport: list }
         objectName: "timerList"
-        width: root.width
+        width: root.width + Theme.scrollbarGutter
         height: Math.min(contentHeight, root.maxListHeight)
         contentHeight: entries.height
         clip: true
@@ -34,7 +35,7 @@ Column {
 
         Column {
             id: entries
-            width: list.width
+            width: root.width
             spacing: Theme.controlSpacing
             UI.Text {
                 centerVertical: false

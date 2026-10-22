@@ -6,6 +6,7 @@ import ".." as UI
 
 ListView {
     id: root
+    property UI.ScrollBehavior scrollBehavior: UI.ScrollBehavior { viewport: root }
     property bool blocksPanelShortcuts: true
     property var cancelHandler: null
     property var options: []
@@ -85,6 +86,8 @@ ListView {
         width: root.width
         height: root.rowHeight
         padding: root.contentPadding
+        leftPadding: root.contentPadding + Theme.scrollbarGutter
+        rightPadding: root.contentPadding + Theme.scrollbarGutter
         description: modelData.description
         selected: modelData.name === root.selectedName
         highlighted: root.activeFocus && root.currentIndex === index

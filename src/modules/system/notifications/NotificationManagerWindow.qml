@@ -83,9 +83,10 @@ PrivateTooltipWindow {
         }
         Flickable {
             id: historyView
-            x: Theme.tooltipPaddingWidth
+            property UI.ScrollBehavior scrollBehavior: UI.ScrollBehavior { viewport: historyView }
+            x: 0
             y: header.y + header.height + 12
-            width: parent.width - Theme.tooltipPaddingWidth * 2
+            width: parent.width
             height: Math.max(0, parent.height - y - Theme.tooltipPaddingHeight)
             visible: root.tab === "History"
             clip: true
@@ -95,7 +96,8 @@ PrivateTooltipWindow {
             QC.ScrollBar.vertical: UI.ScrollBar {}
             Column {
                 id: history
-                width: historyView.width - 10
+                x: Theme.tooltipPaddingWidth
+                width: Math.max(0, historyView.width - Theme.tooltipPaddingWidth * 2)
                 spacing: 16
                 UI.Text { centerVertical: false; visible: !root.groups.length; text: Translations.text("notifications.empty.history") }
                 Repeater {

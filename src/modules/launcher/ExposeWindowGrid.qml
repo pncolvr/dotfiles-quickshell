@@ -6,6 +6,7 @@ import "../../ui" as UI
 
 Flickable {
     id: root
+    property UI.ScrollBehavior scrollBehavior: UI.ScrollBehavior { viewport: root; enabled: root.transitionProgress === 1 && !root.picker.exposeDragging }
     required property var picker
     property real transitionProgress: 1
     required property Item dragLayer
@@ -30,8 +31,9 @@ Flickable {
     readonly property int layoutCount: layoutEntries.length
     readonly property int currentIndex: picker.currentIndex
     readonly property int columns: arrangement.columns
+    readonly property real layoutWidth: Math.max(0, width - Theme.scrollbarGutter * 2)
     readonly property var arrangement: {
-        if (!layoutCount || width <= 0 || height <= 0) return {columns: 1, cards: [], byId: {}, height: 0}
+        if (!layoutCount || layoutWidth <= 0 || height <= 0) return {columns: 1, cards: [], byId: {}, height: 0}
         const desktop = desktopArrangement()
         if (desktop) return desktop
         const spacing = Theme.exposeSpacing
@@ -41,7 +43,7 @@ Flickable {
             width: entry.client?.size?.[0] > 0 ? entry.client.size[0] : 1600,
             height: entry.client?.size?.[1] > 0 ? entry.client.size[1] : 900
         }))
-        const maximumColumns = Math.max(1, Math.min(layoutCount, Math.floor(width / Theme.exposeCardMinWidth)))
+        const maximumColumns = Math.max(1, Math.min(layoutCount, Math.floor(layoutWidth / Theme.exposeCardMinWidth)))
         let best = {columns: 1, scale: -1, widthScale: 0}
         // Use one scale for all windows, preserving their relative sizes as well as aspect ratios.
         for (let columns = 1; columns <= maximumColumns; columns++) {
@@ -51,7 +53,7 @@ Flickable {
             for (let index = 0; index < layoutCount; index += columns) {
                 const row = sizes.slice(index, index + columns)
                 widthScale = Math.min(widthScale,
-                    Math.max(0, width - row.length * horizontalPadding - (row.length - 1) * spacing)
+                    Math.max(0, layoutWidth - row.length * horizontalPadding - (row.length - 1) * spacing)
                         / row.reduce((sum, size) => sum + size.width, 0))
                 totalHeight += Math.max(...row.map(size => size.height))
             }
@@ -69,7 +71,7 @@ Flickable {
             const rowHeight = Math.max(...row.map(size => size.height)) * scale + verticalPadding
             const rowWidth = row.reduce((sum, size) => sum + size.width * scale + horizontalPadding, 0)
                 + (row.length - 1) * spacing
-            let x = Math.max(0, (width - rowWidth) / 2)
+            let x = Theme.scrollbarGutter + Math.max(0, (layoutWidth - rowWidth) / 2)
             for (const size of row) {
                 const cardWidth = size.width * scale + horizontalPadding
                 cards.push({x, y, width: cardWidth, height: size.height * scale + verticalPadding,
@@ -131,21 +133,21 @@ Flickable {
             return {byId, width: Math.max(...windows.map(window => byId[window.id].x + byId[window.id].width)),
                 height: Math.max(...windows.map(window => byId[window.id].y + byId[window.id].height))}
         }
-        if (layout(0).width > width) return null
+        if (layout(0).width > layoutWidth) return null
         function fitScale(fitHeight) {
             let low = 0
-            let high = width / Math.max(...windows.map(window => window.width))
+            let high = layoutWidth / Math.max(...windows.map(window => window.width))
             for (let iteration = 0; iteration < 24; iteration++) {
                 const middle = (low + high) / 2
                 const candidate = layout(middle)
-                if (candidate.width <= root.width && (!fitHeight || candidate.height <= root.height)) low = middle
+                if (candidate.width <= root.layoutWidth && (!fitHeight || candidate.height <= root.height)) low = middle
                 else high = middle
             }
             return low
         }
         const minimumScale = windows.length > 1 ? Theme.exposeCardMinWidth / Math.max(...windows.map(window => window.width)) : 0
         const result = layout(Math.min(fitScale(false), Math.max(fitScale(true), minimumScale)))
-        const offset = Math.max(0, (width - result.width) / 2)
+        const offset = Theme.scrollbarGutter + Math.max(0, (layoutWidth - result.width) / 2)
         const rows = [...new Set(windows.map(window => result.byId[window.id].y))].sort((a, b) => a - b)
         const columns = new Set(windows.map(window => result.byId[window.id].x)).size
         windows.forEach(window => {
@@ -281,7 +283,6 @@ Flickable {
     contentWidth: width
     contentHeight: Math.max(height, arrangement.height)
     clip: true
-    interactive: transitionProgress === 1 && !picker.exposeDragging
     boundsBehavior: Flickable.StopAtBounds
     flickableDirection: Flickable.VerticalFlick
 

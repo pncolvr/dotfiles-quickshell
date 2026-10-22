@@ -200,7 +200,7 @@ WorkerScope {
             previewPaintedWidth:image?.paintedWidth ?? 0,previewPaintedHeight:image?.paintedHeight ?? 0,
             previewContentWidth:Math.max(0,(image?.parent?.width ?? 0)-Theme.controlSpacing*2),
             previewContentHeight:Math.max(0,(image?.parent?.height ?? 0)-Theme.controlSpacing*2),
-            placementWidth:panel.placementWidth,panelWidth:panel.panel?.width ?? 0,searchWidth:search?.width ?? 0,listWidth:list?.width ?? 0,
+            placementWidth:panel.placementWidth,panelWidth:panel.panel?.width ?? 0,searchWidth:search?.width ?? 0,listWidth:list?.width ?? 0,listRowWidth:list?.currentItem?.width ?? 0,
             panelHeight:panel.panel?.height ?? 0,listHeight:list?.height ?? 0,listImplicitHeight:list?.implicitHeight ?? 0,
             viewerHints:viewer ? panel.panel.children.filter(child => child instanceof UI.ShortcutHints).length : 0,
             emptyHint:hint?.text ?? "",placeholder:search?.placeholderText ?? "",footerHint:panel.panel?.footerHint ?? "",

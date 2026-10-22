@@ -117,13 +117,14 @@ Item {
 
         QC.ScrollView {
             id: usersView
+            property UI.ScrollBehavior scrollBehavior: UI.ScrollBehavior { viewport: usersView.contentItem as Flickable }
             objectName: "twitchUsersScrollView"
-            width: root.width
+            width: root.width + Theme.scrollbarGutter
             height: Math.min(usersContent.implicitHeight, Math.max(0, root.scrollBudget - root.suggestionsHeight - root.undoHeight))
             clip: true
             contentWidth: root.width
             contentHeight: usersContent.implicitHeight
-            QC.ScrollBar.horizontal.policy: QC.ScrollBar.AlwaysOff
+            QC.ScrollBar.horizontal: UI.ScrollBar { policy: QC.ScrollBar.AlwaysOff }
             QC.ScrollBar.vertical: UI.ScrollBar {}
             Column {
                 id: usersContent
@@ -341,9 +342,10 @@ Item {
         }
 
         TwitchActionGrid {
+            reusePanelPadding: true
             id: undoView
             objectName: "twitchUndoGrid"
-            width: root.width
+            width: root.width + Theme.scrollbarGutter
             height: root.undoHeight
             visible: root.hasUndo
             logins: TwitchService.removedUsers.map(entry => entry.login)

@@ -7,6 +7,7 @@ import "../../ui" as UI
 
 ListView {
     id: list
+    property UI.ScrollBehavior scrollBehavior: UI.ScrollBehavior { viewport: list }
     required property var entries
     property bool busy: false
     signal entrySelected(string entryId)
@@ -33,6 +34,8 @@ ListView {
         required property var modelData
         required property int index
         width: list.width
+        leftPadding: Theme.controlFieldPadding + Theme.scrollbarGutter
+        rightPadding: Theme.controlFieldPadding + Theme.scrollbarGutter
         objectName: "vaultEntry-" + modelData.id
         current: index === list.currentIndex
         onActivated: { list.currentIndex = index; list.entrySelected(modelData.id) }

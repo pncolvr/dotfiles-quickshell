@@ -96,8 +96,9 @@ Column {
 
     Flickable {
         id: list
+        property UI.ScrollBehavior scrollBehavior: UI.ScrollBehavior { viewport: list }
         objectName: "updatesList"
-        width: parent.width
+        width: root.width + Theme.scrollbarGutter
         height: Math.min(contentHeight, Math.max(0, root.maxPanelHeight - header.height - root.spacing))
         contentWidth: width
         contentHeight: entries.implicitHeight
@@ -107,7 +108,7 @@ Column {
 
         Column {
             id: entries
-            width: list.width
+            width: root.width
             spacing: root.spacing
             UpdateSection {
                 objectName: "updatesPrioritySection"

@@ -118,8 +118,8 @@ WorkerScope {
             } else if (root.step === 8) {
                 const tabs = mouse.findChild(panel, "recentFilesTabs") as UI.TabBar
                 const view = tabs.contentItem as ListView
-                root.check(tabs.count === 21 && view.contentWidth > view.width && view.interactive,
-                    "many folder tabs use a horizontal scrolling view")
+                root.check(tabs.count === 21 && view.contentWidth > view.width && !view.interactive,
+                    "many folder tabs support wheel scrolling without content flicking")
                 root.check(tabs.clip, "overflow tabs cannot cover the plus button")
                 const plus = mouse.findChild(panel, "addFolderTab") as Item
                 const pos = plus.mapToItem(panel, plus.width, 0)

@@ -50,7 +50,7 @@ Column {
         }
 
         delegate: TotpRow {
-            width: list.width
+            width: root.width
             editing: root.editingId === entryId
             nameWidth: root.nameWidth
             draftName: root.draftName
@@ -95,8 +95,9 @@ Column {
 
     ListView {
         id: list
+        property UI.ScrollBehavior scrollBehavior: UI.ScrollBehavior { viewport: list }
         objectName: "totpList"
-        width: parent.width
+        width: root.width + Theme.scrollbarGutter
         readonly property real minimumHeight: Config.totpListMinRows * Theme.totpRowHeight
             + Math.max(0, Config.totpListMinRows - 1) * spacing
         height: Math.max(minimumHeight, Math.min(contentHeight, root.monitorHeight * Config.totpListMaxScreenHeight))
@@ -108,7 +109,7 @@ Column {
         UI.ColumnText {
             objectName: "totpSearchEmpty"
             parent: list
-            width: list.width
+            width: root.width
             visible: TotpService.ready && TotpService.entries.count > 0 && list.count === 0
             text: Translations.text("totp.empty.filtered")
             color: Theme.inactive

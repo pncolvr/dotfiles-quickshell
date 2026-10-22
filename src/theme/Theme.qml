@@ -112,6 +112,10 @@ QtObject {
     readonly property int selectionPopupPadding: 4
     readonly property int selectionAnimationDuration: 120
     readonly property int scrollbarWidth: 6
+    readonly property int scrollbarHoverWidth: 10
+    readonly property int scrollbarGutter: Math.max(scrollbarHoverWidth, tooltipPaddingWidth)
+    readonly property int scrollbarMinimumLength: 24
+    readonly property int scrollbarGrowDuration: 120
     readonly property int scrollbarHideDelay: 450
     readonly property int scrollbarFadeDuration: 200
 

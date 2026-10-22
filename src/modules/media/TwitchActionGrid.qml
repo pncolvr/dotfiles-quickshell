@@ -8,7 +8,9 @@ import "../../ui" as UI
 
 QC.ScrollView {
     id: root
+    property UI.ScrollBehavior scrollBehavior: UI.ScrollBehavior { viewport: root.contentItem as Flickable }
     property var logins: []
+    property bool reusePanelPadding: false
     property string glyph: Theme.addIcon
     property string hintKey: "twitch.actions.addChannel"
     property string buttonPrefix: "addBrowserTwitchUser_"
@@ -16,16 +18,19 @@ QC.ScrollView {
     readonly property real gridHeight: grid.implicitHeight
     signal selected(string login)
     clip: true
-    contentWidth: width
+    padding: 0
+    leftPadding: reusePanelPadding ? 0 : Theme.scrollbarGutter
+    rightPadding: Theme.scrollbarGutter
+    contentWidth: availableWidth
     contentHeight: grid.implicitHeight
-    QC.ScrollBar.horizontal.policy: QC.ScrollBar.AlwaysOff
+    QC.ScrollBar.horizontal: UI.ScrollBar { policy: QC.ScrollBar.AlwaysOff }
     QC.ScrollBar.vertical: UI.ScrollBar {}
     Grid {
         id: grid
         objectName: root.gridObjectName
         width: root.contentWidth
         columns: Math.min(3, Math.max(1, root.logins.length), Math.max(1,
-            Math.floor((root.width + Theme.twitchTooltipSpacing) / (Theme.twitchSuggestionMinWidth + Theme.twitchTooltipSpacing))))
+            Math.floor((root.contentWidth + Theme.twitchTooltipSpacing) / (Theme.twitchSuggestionMinWidth + Theme.twitchTooltipSpacing))))
         spacing: Theme.twitchTooltipSpacing
         Repeater {
             model: root.logins

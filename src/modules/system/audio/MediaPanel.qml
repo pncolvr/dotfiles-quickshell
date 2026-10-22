@@ -8,6 +8,7 @@ import "../../../services"
 
 Flickable {
     id: root
+    property UI.ScrollBehavior scrollBehavior: UI.ScrollBehavior { viewport: root }
     property var mediaService: MediaService
     property var audioService: AudioService
     property real maximumHeight: 600
@@ -21,7 +22,7 @@ Flickable {
     flickableDirection: Flickable.VerticalFlick
     Column {
         id: contents
-        width: root.width
+        width: Math.max(0, root.width - Theme.scrollbarGutter)
         spacing: Theme.audioSpacing
         Repeater {
             objectName: "mediaPlayers"

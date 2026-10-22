@@ -19,6 +19,7 @@ WorkerScope {
         const button = find("updates" + name + "SectionToggle")
         driver.click(button, button.width / 2, button.height / 2)
     }
+    function nearWidth(a, b) { return Math.abs(a - b) < 0.1 }
     function snapshot() {
         return ['core x86_64 linux 1.0 2.0', 'core x86_64 systemd 252 253',
             'extra x86_64 example 1.1 1.2', 'aur any example-tools 1.0 2.0', 'extra x86_64 alpha 5 6']
@@ -62,6 +63,17 @@ WorkerScope {
             const count = root.label(name), section = root.section(name)
             return section.width > 0 && Math.abs(count.mapToItem(section,count.width,0).x - section.width) < 1
         }))
+        driver.add("scrollbar uses existing outer padding", () => {
+            const list = root.find('updatesList') as Flickable
+            const bar = list.children.find(item => item instanceof UI.ScrollBar)
+            driver.check(root.nearWidth(list.width - panel.width, Theme.scrollbarGutter)
+                && root.section('Priority').width === panel.width && root.section('Other').width === panel.width,
+                'versions and counts keep their original content width')
+            driver.check(list.width - Theme.scrollbarHoverWidth >= panel.width
+                && list.width <= panel.width + Theme.tooltipPaddingWidth
+                && bar.width <= Theme.scrollbarHoverWidth,
+                'full scrollbar growth fits in the existing panel padding')
+        })
         driver.add("initial collapse defaults", () => {
             driver.check(root.section('Priority').showingContent && !root.section('Other').showingContent,
                 'priority starts expanded and other starts collapsed')

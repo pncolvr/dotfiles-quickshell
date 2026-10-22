@@ -62,12 +62,20 @@ Column {
         }
     }
     QC.ScrollView {
+        id: scroll
+        property UI.ScrollBehavior scrollBehavior: UI.ScrollBehavior { viewport: scroll.contentItem as Flickable }
         width: parent.width
         height: Theme.controlHeight * 4
         contentWidth: availableWidth
+        padding: 0
+        leftPadding: Theme.scrollbarGutter
+        rightPadding: Theme.scrollbarGutter
+        clip: true
+        QC.ScrollBar.horizontal: UI.ScrollBar { policy: QC.ScrollBar.AlwaysOff }
+        QC.ScrollBar.vertical: UI.ScrollBar {}
         UI.TextArea {
             id: input
-            width: parent.width
+            width: scroll.availableWidth
             focusBorder: true
         }
     }

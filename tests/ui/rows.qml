@@ -77,6 +77,8 @@ Scope {
             root.check(vaultRow.cursorShape === picker.cursorShape && manageRow.cursorShape === picker.cursorShape,"all row cursors share one policy")
             root.check(vaultRow.height >= vaultRow.contentItem.implicitHeight + vaultRow.topPadding + vaultRow.bottomPadding,"Vault preserves content-based height")
             root.check(manageRow.height === Theme.manageRowHeight,"Manage preserves uniform height")
+            root.check(vaultRow.leftPadding === vaultRow.rightPadding && manageRow.leftPadding === manageRow.rightPadding,
+                "Vault and Manage rows reserve equal side padding for scrollbars")
             root.click(picker,Qt.ControlModifier)
             root.check(root.chosen === 1 && root.activated === 1 && root.toggled,"picker preserves Ctrl-click selection and activation")
             picker.enabled = false

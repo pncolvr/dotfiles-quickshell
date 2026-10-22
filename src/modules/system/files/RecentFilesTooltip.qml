@@ -349,8 +349,9 @@ Column {
     }
     ListView {
         id: list
+        property UI.ScrollBehavior scrollBehavior: UI.ScrollBehavior { viewport: list; enabled: !root.fileService.dragging }
         objectName: "recentFilesList"
-        width: parent.width
+        width: root.width + Theme.scrollbarGutter
         height: Math.min(contentHeight, Math.max(0, (fileDragSource.dragging ? root.dragPanelHeight : root.maxPanelHeight) - filesHeader.height - limits.height
             - (renameEditor.visible ? renameEditor.height + root.spacing : 0)
             - (feedback.visible ? feedback.height + root.spacing : 0)
@@ -360,7 +361,6 @@ Column {
         keyNavigationEnabled: false
         clip: true
         boundsBehavior: Flickable.StopAtBounds
-        interactive: !root.fileService.dragging
         onContentYChanged: if (pinnedDrop.containsDrag) root.updatePinDropPosition(root.pinDropPointerY)
         Keys.onPressed: event => {
             if (root.fileService.dragging) return
@@ -403,7 +403,7 @@ Column {
             file: modelData
             fileService: root.fileService
             selection: root
-            width: list.width
+            width: root.width
         }
         QC.ScrollBar.vertical: UI.ScrollBar {}
         DropArea {

@@ -24,7 +24,7 @@ QC.ItemDelegate {
     hoverEnabled: true
     padding: Theme.pickerRowPadding
     leftPadding: Theme.controlFieldPadding
-    rightPadding: Theme.controlFieldPadding + Theme.scrollbarWidth
+    rightPadding: Theme.controlFieldPadding
     height: Math.max(Theme.controlHeight, contentItem.implicitHeight + topPadding + bottomPadding)
     background: Rectangle {
         id: surface

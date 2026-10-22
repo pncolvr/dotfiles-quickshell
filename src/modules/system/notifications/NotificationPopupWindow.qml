@@ -62,7 +62,7 @@ UI.PrivatePanelWindow {
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
     mask: Region {
         x: root.contentPaddingLeft; y: root.contentPaddingTop
-        width: stack.width
+        width: stack.width + (popupBar.needed ? Theme.scrollbarGutter : 0)
         height: Math.min(stack.height, Math.max(0, root.height - root.contentPaddingTop - root.contentPaddingBottom))
     }
     Item {
@@ -81,13 +81,16 @@ UI.PrivatePanelWindow {
             paddingRect: Qt.rect(0, 0, 0, root.shadowVerticalOffset)
         }
         Flickable {
+            id: popupView
+            property UI.ScrollBehavior scrollBehavior: UI.ScrollBehavior { viewport: popupView }
             anchors.fill: parent
             clip: true
             contentWidth: width
             contentHeight: stack.height
             boundsBehavior: Flickable.StopAtBounds
             QC.ScrollBar.vertical: UI.ScrollBar {
-                x: (parent?.width ?? 0) - root.contentPaddingRight - width
+                id: popupBar
+                edgeInset: Math.max(0, root.contentPaddingRight - Theme.scrollbarGutter)
             }
             NotificationPopupStack {
                 id: stack

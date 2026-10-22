@@ -40,8 +40,9 @@ Column {
 
     ListView {
         id: list
+        property UI.ScrollBehavior scrollBehavior: UI.ScrollBehavior { viewport: list }
         objectName: "batteryList"
-        width: parent.width
+        width: root.width + Theme.scrollbarGutter
         height: Math.min(contentHeight, root.maxListHeight)
         spacing: Theme.batterySpacing
         model: root.batteries
@@ -50,7 +51,7 @@ Column {
         delegate: BatteryRow {
             required property var modelData
             battery: modelData
-            width: list.width
+            width: root.width
         }
         QC.ScrollBar.vertical: UI.ScrollBar {}
     }

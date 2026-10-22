@@ -349,6 +349,16 @@ space is split equally above and below the preview. Its center stays fixed when
 image dimensions change, including during resize animations.
 Dimensions use Qt logical coordinates; image decode sizes follow display scale.
 
+Scrollbars share their appearance and timing through Theme: `scrollbarWidth` (6 px),
+`scrollbarHoverWidth` (10 px), `scrollbarMinimumLength` (24 px),
+`scrollbarGrowDuration` (120 ms), `scrollbarHideDelay` (450 ms), and
+`scrollbarFadeDuration` (200 ms). `scrollbarGutter` matches the panel's horizontal
+padding (20 px by default), with room for the widened thumb. Tooltip panels use
+their existing outer padding; nested views reserve equal padding on the left and
+right. The thumb is centered in its strip and widens equally to both sides on
+hover, keeping 3 px corners. Its open-hand cursor closes while dragging.
+Growth and fading follow the shared motion policy.
+
 `config/Theme.qml` exposes one palette toggle:
 
 ```qml

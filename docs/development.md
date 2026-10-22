@@ -353,11 +353,29 @@ The shader source and compiled bundle are both tracked. After changing it, rebui
   -o src/ui/shaders/pulse.frag.qsb src/ui/shaders/pulse.frag
 ```
 
+Scrollable viewports use `UI.ScrollBehavior` with their Flickable/ListView, or a
+ScrollView's internal Flickable, as `viewport`. Content dragging, kinetic flicks and touchpad momentum
+are disabled. Mouse wheels, touchpad wheel events, keyboard navigation and
+scrollbar dragging remain available. Wheel events at a boundary can continue to
+an enclosing scroll area. Disable the behavior's wheel input during item drags
+or transitions when necessary.
+
 Scrollable modules use `UI.ScrollBar` from `src/ui/components/ScrollBar.qml`.
-It overlays the content with an accent-colored thumb during scrolling or hover,
-then fades away. Keep content and row widths equal to the viewport width; do not
-reserve a gutter or change panel dimensions when a scrollbar appears. The shared
-component draws above the content and handles both vertical and horizontal bars.
+Its accent-colored thumb appears while hovering the viewport, scrolling (including
+keyboard navigation), or dragging, then fades away. It grows from 6 px to 10 px
+on scrollbar hover or drag and uses open-hand/closed-hand cursors. Its minimum
+length is 24 px. Growth and fading follow MotionPolicy; dimensions and timings
+are shared Theme properties.
+
+Keep text and controls outside the scrollbar's fixed `Theme.scrollbarGutter`
+strip. Tooltip viewports extend into existing panel padding while their content
+keeps its original width. Nested lists and editors reserve matching left and right padding inside their
+available bounds. The thumb is centered in the right-hand strip and grows equally
+to both sides. Hovering, hiding and dragging never change content widths or
+panel dimensions. Launcher search fields, result rows and footer controls share
+the same content edges; their list viewport includes the outer padding for the
+scrollbar. Both scrollbar orientations use the same control; compact tab
+strips retain their existing wheel/keyboard scrolling without an added scrollbar.
 
 Large expandable lists can use `UI.BatchedListModel` to add a few rows per
 rendered frame while preserving existing delegates. Run

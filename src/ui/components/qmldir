@@ -34,6 +34,7 @@ ScaledImage 1.0 ScaledImage.qml
 ScaledScreencopyView 1.0 ScaledScreencopyView.qml
 ScaledTexture 1.0 ScaledTexture.qml
 ScrollBar 1.0 ScrollBar.qml
+ScrollBehavior 1.0 ScrollBehavior.qml
 SearchField 1.0 SearchField.qml
 SecretField 1.0 SecretField.qml
 ShortcutHints 1.0 ShortcutHints.qml

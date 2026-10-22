@@ -18,8 +18,8 @@ panel with underlined tabs centered on their header line and icon buttons on the
 toggles DND; a slashed bell in the accent color means DND is enabled. The broom
 clears all notifications. Hover the buttons for their action descriptions.
 Left-click the notification icon on the bar to pin or unpin the panel.
-Buttons, tabs, scrollbars and clickable cards use the pointing-hand cursor;
-passive text and panel space use the normal pointer.
+Buttons, tabs and clickable cards use the pointing-hand cursor. Scrollbars use
+grab cursors; passive text and panel space use the normal pointer.
 
 Low, normal, and critical notifications are saved in SQLite until manually deleted;
 transient notifications are popup-only. Each emitter header shows

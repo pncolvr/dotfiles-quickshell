@@ -311,7 +311,13 @@ ManagedPickerFrame {
             onAccepted: root.submitForm()
         }, QC.ScrollView {
             id: draftScroll
+            property UI.ScrollBehavior scrollBehavior: UI.ScrollBehavior { viewport: draftScroll.contentItem as Flickable }
             objectName: "projectWorkspaceScroll"
+            padding: 0
+            leftPadding: Theme.scrollbarGutter
+            rightPadding: Theme.scrollbarGutter
+            QC.ScrollBar.horizontal: UI.ScrollBar { policy: QC.ScrollBar.AlwaysOff }
+            QC.ScrollBar.vertical: UI.ScrollBar {}
             x: 0
             y: 0
             width: parent.width

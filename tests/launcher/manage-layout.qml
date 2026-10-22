@@ -33,6 +33,22 @@ WorkerScope {
         }
         return null
     }
+    function checkPickerAlignment(panel) {
+        const search = find("pickerSearch", panel)
+        const list = find("pickerList", panel) as UI.PickerList
+        const row = list.currentItem
+        const left = search.mapToItem(panel, 0, 0).x
+        const right = left + search.width
+        check(!!row && Math.abs(row.width - search.width) < 0.1
+            && Math.abs(row.mapToItem(panel, 0, 0).x - left) < 0.1,
+            "launcher rows have the same width and left edge as the search input")
+        check(Math.abs(left - Theme.scrollbarGutter) < 0.1 && Math.abs(panel.width - right - left) < 0.1,
+            "launcher header and rows share balanced outer padding")
+        const bar = list.children.find(item => item instanceof UI.ScrollBar && item.orientation === Qt.Vertical)
+        const center = bar.mapToItem(panel, bar.width / 2, 0).x
+        check(Math.abs(center - (right + panel.width) / 2) < 0.1 && bar.mapToItem(panel, 0, 0).x >= right,
+            "launcher scrollbar stays centered beside the rows in the outer padding")
+    }
     function preview(name) {
         const directory = Quickshell.env("MANAGE_PREVIEWS")
         if (directory) events.grabImage(window.contentItem).save(directory + "/" + name + ".png")
@@ -104,7 +120,7 @@ WorkerScope {
                 ]
             }
         }
-        Launcher.PickerPanelBase { id: plainList; anchors.fill: parent; visible: root.showList }
+        Launcher.PickerPanelBase { id: plainList; width: parent.width; height: parent.height; visible: root.showList }
         StatusRulesEditor { id: work; width: Theme.statusTooltipWidth; visible: root.showWork; statusService: rulesBackend }
     }
     Timer {
@@ -182,6 +198,24 @@ WorkerScope {
             root.showList = true
             PickerService.promptMenu("Plain list",[{title:"Example"}],()=>{})
             events.wait(30)
+            const originalWidth = plainList.width
+            for (const width of [Theme.pickerWidth, Theme.manageWidth]) {
+                plainList.width = width
+                events.wait(30)
+                root.checkPickerAlignment(plainList)
+            }
+            plainList.width = originalWidth
+            PickerService.items = Array.from({length: 60}, (_, i) => ({id: String(i), title: 'Overflow row ' + i}))
+            events.wait(30)
+            const listScroll = root.find("pickerList", plainList) as UI.PickerList
+            const scrollbar = listScroll.children.find(item => item instanceof UI.ScrollBar && item.orientation === Qt.Vertical)
+            root.check(scrollbar.needed, "launcher alignment fixture has overflowing results")
+            events.mouseMove(scrollbar, scrollbar.width / 2, 10)
+            events.wait(Theme.scrollbarGrowDuration + 40)
+            root.check(Math.abs(scrollbar.width - Theme.scrollbarHoverWidth) < 0.1, "launcher scrollbar grows on hover")
+            root.checkPickerAlignment(plainList)
+            root.preview("list-padding")
+            events.mouseMove(window.contentItem, 0, 0)
             const plainHints = root.find("pickerFooterHint")
             root.check(!plainHints.visible && plainHints.height === 0
                 && Math.abs(plainHints.mapToItem(plainList,0,0).y - plainList.height) < 1,

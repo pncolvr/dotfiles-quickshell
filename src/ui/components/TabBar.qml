@@ -63,19 +63,9 @@ QC.TabBar {
     signal tabDropped(int index, DragEvent drop)
     implicitHeight: Theme.controlHeight
     clip: true
-    WheelHandler {
-        target: null
-        acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
-        onWheel: event => {
-            const view = root.contentItem as ListView
-            if (!view || view.contentWidth <= view.width) { event.accepted = false; return }
-            const delta = event.pixelDelta.x || event.pixelDelta.y
-                || (event.angleDelta.x || event.angleDelta.y) / 120 * 40
-            view.cancelFlick()
-            view.contentX = Math.max(view.originX,
-                Math.min(view.originX + view.contentWidth - view.width, view.contentX - delta))
-            event.accepted = true
-        }
+    property UI.ScrollBehavior scrollBehavior: UI.ScrollBehavior {
+        viewport: root.contentItem as Flickable
+        enabled: root.interactionEnabled
     }
     background: Rectangle {
         color: "transparent"
