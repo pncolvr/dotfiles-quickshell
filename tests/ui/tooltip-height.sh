@@ -17,7 +17,7 @@ env -u WAYLAND_DISPLAY -u HYPRLAND_INSTANCE_SIGNATURE \
     QS_DISABLE_CRASH_HANDLER=1 QT_QPA_PLATFORM=offscreen QT_QUICK_BACKEND=software QT_NO_XDG_DESKTOP_PORTAL=1 \
     HOME="$fixture/home" XDG_RUNTIME_DIR="$fixture/runtime" XDG_DATA_HOME="$fixture/data" XDG_CACHE_HOME="$fixture/cache" \
     timeout -k 2 12 qs -p "$fixture" > "$fixture/log" 2>&1 || { cat "$fixture/log"; exit 1; }
-if ! rg -q 'PASS: shared tooltip minimum height' "$fixture/log" \
+if ! rg -q 'PASS: compact tooltips and shared dropdown overflow' "$fixture/log" \
     || rg -q 'HEIGHT FAIL:|TypeError:|ReferenceError:|Binding loop|Failed to load configuration|WARN scene' "$fixture/log"; then
     cat "$fixture/log"; exit 1
 fi

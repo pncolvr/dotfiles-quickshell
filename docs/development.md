@@ -1105,15 +1105,23 @@ through the compositor without accessing the real vault or clipboard.
 
 Shared selection controls use `ComboSelector` for dropdowns and `SelectionList` /
 `SelectionRow` for persistent option lists. Dropdowns use an explicit same-window
-`Popup.Item`, constrained to the nearest `popupContentBounds` host (or the window
-overlay for standalone windows). `TopPanelSurface` supplies these bounds so
-private dropdowns stay in the existing private surface and its input mask.
+`Popup.Item`, bounded by the owning window's overlay. Bar panels retain their
+natural height while dropdowns can extend beyond them. `PopupInputRegion` adds
+only visible shared menus to the native input mask and removes them on dismissal;
+passive hover hints do not expand that mask. Private dropdowns stay in the same
+private window. The visible panel's bounds still drive hover and resize tracking.
 Keep `selectedName` bound to application state; `selected(name)` requests a change.
 
 Run `bash tests/qml/selection.sh` and `bash tests/qml/selection.sh --native` to
 check fixed layout, placement outside clipped lists, private window ownership,
 focus restoration, disabled options, keyboard navigation and outside clicks.
 The native test uses synthetic entries and restores the previous focus and pointer.
+`bash tests/ui/tooltip-height.sh` checks natural panel sizing, dropdown overflow,
+pointer selection and input-region cleanup. The native counterpart,
+`bash tests/ui/tooltip-dropdown-native.sh`, uses real pointer motion and clicks
+on compact, searchable, microphone-app and private menus below short panels.
+It restores the previous focus and pointer without accessing clipboard data or
+changing audio routing.
 Dropdowns animate on opening and dismiss immediately: Qt keeps popup input
 filtering active throughout an exit transition, which can swallow the next click.
 

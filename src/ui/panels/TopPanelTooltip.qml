@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Controls as QC
 import Quickshell
 import "../../theme"
 import "../../services"
@@ -16,7 +17,6 @@ PanelWindow {
     property alias contentX: surface.contentX
     property alias contentWidth: surface.contentWidth
     property alias contentHeight: surface.contentHeight
-    property alias minimumContentHeight: surface.minimumContentHeight
     property alias requestedVisible: surface.requestedVisible
     property alias continuousGeometry: surface.continuousGeometry
     property alias centeredResize: surface.centeredResize
@@ -39,7 +39,17 @@ PanelWindow {
     // our animations disabled. Geometry and input stay inside the surface.
     implicitHeight: Math.max(1, (geometryScreen?.height ?? 1080) - Theme.barHeight)
     color: "transparent"
-    mask: Region { x: surface.inputRect.x; y: surface.inputRect.y; width: surface.inputRect.width; height: surface.inputRect.height }
+    onRequestedVisibleChanged: if (!requestedVisible) popupRegion?.closePopups()
+    onContentKeyChanged: popupRegion?.closePopups()
+    mask: Region {
+        x: surface.inputRect.x; y: surface.inputRect.y
+        width: surface.inputRect.width; height: surface.inputRect.height
+        PopupInputRegion {
+            id: popupRegion
+            overlay: root.contentItem ? root.contentItem.QC.Overlay.overlay : null
+            enabled: root.requestedVisible
+        }
+    }
     property TopPanelSurface surfaceComponent: TopPanelSurface {
         id: surface
         parent: root.contentItem; width: root.width; height: root.height

@@ -47,15 +47,15 @@ WorkerScope {
         requestedVisible: root.privateCase && TooltipService.visible
         readonly property var loadedContent: privateLoader.item
         contentWidth: 680
-        contentHeight: 420
+        contentHeight: ((privateLoader.item as Item)?.implicitHeight ?? 400) + 20
         WlrLayershell.layer: WlrLayer.Overlay
         Component.onCompleted: root.offset(privateHost)
-        Loader { id: privateLoader; active: privateHost.visible; width: 640; height: 400; anchors.centerIn: parent; sourceComponent: TooltipService.content }
+        Loader { id: privateLoader; active: privateHost.visible; width: 640; height: (item as Item)?.implicitHeight ?? 400; anchors.centerIn: parent; sourceComponent: TooltipService.content }
     }
     component Fixture: Item {
         id: body
         implicitWidth: 640
-        implicitHeight: 400
+        implicitHeight: root.above ? Math.max(400, root.activeHost.height - root.activeHost.shadowBottomPadding - 20) : 400
         width: implicitWidth
         height: implicitHeight
         readonly property UI.ComboSelector selector: app.visible
@@ -93,7 +93,7 @@ WorkerScope {
         }
         AudioAppRow {
             id: app
-            x:20; y:root.above ? 280 : 40; width:600
+            x:20; y:root.above ? body.height - height - 10 : 40; width:600
             visible: root.mode === "volume" || root.mode === "mic"
             input: root.mode === "mic"
             audioService: backend
@@ -102,7 +102,7 @@ WorkerScope {
         }
         AudioProfileSelector {
             id: profile
-            x:20; y:root.above ? 320 : 40; width:600
+            x:20; y:root.above ? body.height - height - 10 : 40; width:600
             visible: root.mode === "profile"
             audioService: backend
             card: ({activeProfile:"stereo",profiles:[{name:"stereo",description:"Stereo"},
@@ -110,7 +110,7 @@ WorkerScope {
         }
         UI.ComboSelector {
             id: generic
-            x:20; y:root.above ? 320 : 40; width:300; compact:true
+            x:20; y:root.above ? body.height - height - 10 : 40; width:300; compact:true
             visible: !app.visible && !profile.visible
             selectedName: "first"
             options: root.mode === "type" ? [{name:"first",description:"Logins"},{name:"second",description:"Notes"},{name:"third",description:"SSH keys"}]

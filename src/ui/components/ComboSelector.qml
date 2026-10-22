@@ -58,13 +58,14 @@ Item {
         return null
     }
     function hostBounds(item: var): Item { return item.popupContentBounds ?? null }
-    function contentBounds(): Item {
+    function panelBounds(): Item {
         for (let item = root.parent; item; item = item.parent) {
             const bounds = hostBounds(item)
             if (bounds) return bounds
         }
         return QC.Overlay.overlay
     }
+    function contentBounds(): Item { return QC.Overlay.overlay ?? panelBounds() }
     function placePopup() {
         if (!selectionPopup.parent) return
         const bounds = contentBounds()
@@ -90,7 +91,7 @@ Item {
     }
     Connections {
         // The native buffer stays fixed while the visible panel changes size.
-        target: root.expanded ? root.contentBounds() : null
+        target: root.expanded ? root.panelBounds() : null
         function onWidthChanged() { root.placePopup() }
         function onHeightChanged() { root.placePopup() }
     }
@@ -190,6 +191,8 @@ Item {
             border.color: Theme.selectionBorder
         }
         contentItem: Item {
+            // The host adds this menu to its input region while it is visible.
+            readonly property QC.Popup panelPopup: selectionPopup
             UI.SearchField {
                 id: search
                 width: parent.width

@@ -32,11 +32,11 @@ Scope { PrivateTopPanelTooltip {
     requestedVisible: true
     screen: Quickshell.screens[0]
     contentWidth: 520
-    contentHeight: 560
+    contentHeight: Math.max(560, height - shadowBottomPadding)
     contentX: (width - contentWidth) / 2
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
-    Loader { width: host.contentWidth; height: host.contentHeight; source: "file://$project_root/tests/qml/selection-smoke.qml" }
+    Loader { width: host.contentWidth; height: host.height; source: "file://$project_root/tests/qml/selection-smoke.qml" }
 } }
 QML
 else

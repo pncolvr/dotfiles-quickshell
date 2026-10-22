@@ -44,7 +44,7 @@ Item {
         QtObject { id: mockAudio; property bool profileBusy: false; function setProfile(card: var, name: string) {} }
         Flickable {
             id: scroller
-            x: 16; y: 450; width: 300; height: 70
+            x: 16; y: body.height - 110; width: 300; height: 70
             clip: true; contentHeight: 150
             AudioSelector {
                 id: device

@@ -149,9 +149,9 @@ WorkerScope {
         })
         driver.waitFor("filter survives refresh", () => UpdatesService.count === 2 && panel.normalUpdates.length === 1, () => {
             driver.check(panel.searchText === 'example' && panel.normalUpdates[0].newVersion === '3.0', 'latest snapshot retains the search')
+            driver.check(root.find('updatesSearch').visible, 'search remains available with two updates')
         })
         driver.add("only priority updates available", () => {
-            panel.searchText = ''
             root.refresh('core x86_64 linux 1.0 2.0')
         })
         driver.waitFor("empty other group hidden without search", () => UpdatesService.count === 1
@@ -159,6 +159,8 @@ WorkerScope {
             driver.check(root.section('Priority').visible && !root.section('Other').visible
                 && !root.label('Other').visible && !root.find('updatesOtherSectionToggle').visible,
                 'empty other snapshot hides the entire section, count and toggle')
+            driver.check(!root.find('updatesSearch').visible && panel.searchText === '',
+                'one update hides search and clears its previous filter')
         })
         driver.add("only other updates available", () => root.refresh('extra x86_64 example 2.0 3.0'))
         driver.waitFor("empty priority group hidden without search", () => UpdatesService.count === 1
@@ -170,6 +172,7 @@ WorkerScope {
         driver.add("no available updates", () => root.refresh(''))
         driver.waitFor("empty successful snapshot", () => UpdatesService.count === 0, () => {
             driver.check(!root.find('updatesNoResults').visible && !root.section('Priority').visible && !root.section('Other').visible, 'empty cache does not show filtered no-results state')
+            driver.check(!root.find('updatesSearch').visible, 'no updates hides search')
         })
         driver.running = true
     }

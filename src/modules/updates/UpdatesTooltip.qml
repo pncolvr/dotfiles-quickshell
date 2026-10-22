@@ -17,6 +17,12 @@ Column {
         return !searchField.query || [update.name, update.repository, update.oldVersion, update.newVersion]
             .some(value => String(value ?? "").toLowerCase().includes(searchField.query))
     }
+    Connections {
+        target: UpdatesService
+        function onCountChanged() {
+            if (UpdatesService.count <= 1) searchField.text = ""
+        }
+    }
     readonly property var monitor: TooltipService.screen ?? (root.QsWindow.window as QsWindow)?.screen
     readonly property real maxPanelHeight: Math.max(0, Math.min((monitor?.height ?? 1080) * Theme.updatesTooltipMaxHeightRatio,
         (monitor?.height ?? 1080) - Theme.barHeight - Theme.tooltipPaddingHeight * 2))
@@ -88,6 +94,7 @@ Column {
         UI.SearchField {
             id: searchField
             objectName: "updatesSearch"
+            visible: UpdatesService.count > 1
             width: parent.width
             placeholderText: Translations.text("updates.search.placeholder")
             onQueryChanged: list.contentY = 0

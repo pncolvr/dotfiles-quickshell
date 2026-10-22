@@ -8,3 +8,4 @@ AlertWindow 1.0 AlertWindow.qml
 TopPanelSurface 1.0 TopPanelSurface.qml
 PrivateTopPanelTooltip 1.0 PrivateTopPanelTooltip.qml
 TooltipContent 1.0 TooltipContent.qml
+PopupInputRegion 1.0 PopupInputRegion.qml

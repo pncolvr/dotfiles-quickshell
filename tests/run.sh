@@ -333,6 +333,7 @@ if $native; then
     run native security/vault-manager bash tests/security/rbw-manager/native.sh
     run native system/batteries bash tests/system/batteries.sh --native-imports
     run native recording/setup env RECORD_SETUP_NATIVE=1 bash tests/recording/setup.sh
+    run native ui/tooltip-dropdown bash tests/ui/tooltip-dropdown-native.sh
     run native ui/panel-host bash tests/ui/panel-host.sh
     run native ui/panel-input bash tests/ui/panel-input.sh
     run native ui/panel-shadow bash tests/ui/panel-shadow.sh

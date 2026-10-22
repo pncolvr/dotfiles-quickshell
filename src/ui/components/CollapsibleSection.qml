@@ -49,7 +49,11 @@ QC.ItemDelegate {
         width: Theme.fontSize
         visible: root.showChevron
         horizontalAlignment: Text.AlignHCenter
-        text: root.showingContent ? Theme.chevronDownIcon : Theme.chevronRightIcon
+        text: Theme.chevronRightIcon
+        rotation: root.showingContent ? 90 : 0
+        UI.MotionBehavior on rotation {
+            NumberAnimation { duration: Theme.selectionAnimationDuration; easing.type: Easing.OutCubic }
+        }
         color: root.chevronColor
     }
 }
