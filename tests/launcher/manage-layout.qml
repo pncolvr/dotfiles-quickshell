@@ -218,8 +218,8 @@ WorkerScope {
             events.mouseMove(window.contentItem, 0, 0)
             const plainHints = root.find("pickerFooterHint")
             root.check(!plainHints.visible && plainHints.height === 0
-                && Math.abs(plainHints.mapToItem(plainList,0,0).y - plainList.height) < 1,
-                "plain lists without useful hints leave no empty footer row")
+                && Math.abs(plainHints.mapToItem(plainList,0,0).y - (plainList.height - Theme.scrollbarGutter)) < 1,
+                "plain lists omit unused footer rows while preserving bottom padding")
             PickerService.begin(PickerService.Mode.Webapps,"Filter geometry")
             filterService.open()
             PickerService.show()
