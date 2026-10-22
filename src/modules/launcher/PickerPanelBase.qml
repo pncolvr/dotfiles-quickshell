@@ -30,7 +30,8 @@ Rectangle {
     property real availableContentWidth: Theme.pickerWidth
     property real availableContentHeight: 800
     readonly property real columnWidth: Math.max(0, width - Theme.scrollbarGutter * 2)
-    readonly property real normalHeight: panelHeader.height + list.implicitHeight + panelFooter.height + Theme.tooltipPaddingHeight + Theme.controlSpacing
+    readonly property real normalHeight: panelHeader.height + list.implicitHeight + panelFooter.height
+        + Theme.tooltipPaddingHeight + Theme.scrollbarGutter + Theme.controlSpacing
     property var searchKeyHandler: null
     property string hintPanel: "default"
     property var hintActions: ["search"]
@@ -109,7 +110,7 @@ Rectangle {
         anchors.margins: Theme.tooltipPaddingHeight
         anchors.leftMargin: Theme.scrollbarGutter
         anchors.rightMargin: Theme.scrollbarGutter
-        anchors.bottomMargin: 0
+        anchors.bottomMargin: Theme.scrollbarGutter
         focus: true
         Keys.priority: Keys.BeforeItem
         Keys.forwardTo: [root]
@@ -191,7 +192,8 @@ Rectangle {
             height: root.inputOnly ? 0 : Math.max(0, panelFooter.y - y)
             // Keep the opening size while filtering or deleting entries so the
             // panel and its footer do not move under keyboard focus.
-            implicitHeight: root.inputOnly ? 0 : root.gridMode ? Theme.pickerGridHeight : root.openedListHeight
+            implicitHeight: root.inputOnly ? 0 : root.gridMode
+                ? Theme.pickerGridHeight + list.horizontalGutter * 2 : root.openedListHeight
         }
         UI.Text {
             objectName: "pickerEmptyHint"

@@ -20,9 +20,11 @@ ListView {
     clip: true
     boundsBehavior: Flickable.StopAtBounds
     orientation: picker.layout === "grid" ? ListView.Horizontal : ListView.Vertical
+    readonly property real horizontalGutter: orientation === ListView.Horizontal && contentWidth > width
+        ? Theme.scrollbarGutter : 0
     leftMargin: orientation === ListView.Vertical ? Theme.scrollbarGutter : 0
     rightMargin: leftMargin
-    topMargin: orientation === ListView.Horizontal ? Theme.scrollbarGutter : 0
+    topMargin: horizontalGutter
     bottomMargin: topMargin
     // ListView owns delegate positions; inset the cross-axis viewport instead.
     Binding on contentX {
@@ -32,7 +34,7 @@ ListView {
     }
     Binding on contentY {
         when: root.orientation === ListView.Horizontal
-        value: -Theme.scrollbarGutter
+        value: -root.horizontalGutter
         restoreMode: Binding.RestoreNone
     }
     spacing: Theme.controlSpacing
@@ -52,7 +54,7 @@ ListView {
         entry: modelData
         showThumbnail: root.showThumbnails
         compactImage: root.compactImages
-        height: grid ? Math.max(0, root.height - Theme.scrollbarGutter * 2) : root.rowHeight > 0 ? root.rowHeight : implicitHeight
+        height: grid ? Math.max(0, root.height - root.horizontalGutter * 2) : root.rowHeight > 0 ? root.rowHeight : implicitHeight
         enabled: !root.picker.searchPending && !root.picker.searchFailed
         width: grid ? Math.max(80, (root.width - Theme.controlSpacing * 4) / 5) : Math.max(0, root.width - Theme.scrollbarGutter * 2)
         current: root.currentIndex === index

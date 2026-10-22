@@ -266,6 +266,20 @@ WorkerScope {
                 'horizontal picker cards have equal top and bottom margins')
             driver.check(root.near(pickerList.currentItem.mapToItem(pickerList, 0, 0).x, 0),
                 'horizontal layout starts without a stale vertical side offset')
+            pickerList.width = 600
+            pickerState.filteredItems = pickerState.filteredItems.slice(0, 5)
+        })
+        driver.waitFor('fitting grid reclaims scrollbar padding', () => pickerList.contentWidth <= pickerList.width
+            && root.near(pickerList.currentItem.mapToItem(pickerList, 0, 0).y, 0), () => {
+            driver.check(pickerList.currentItem.height === pickerList.height
+                && !root.barFor(pickerList, Qt.Horizontal).visible,
+                'fitting grid tiles use the full height without an empty scrollbar strip')
+            pickerList.width = 260
+        })
+        driver.waitFor('overflow restores horizontal padding', () => pickerList.contentWidth > pickerList.width
+            && root.near(pickerList.currentItem.mapToItem(pickerList, 0, 0).y, Theme.scrollbarGutter), () => {
+            driver.check(pickerList.currentItem.height === pickerList.height - Theme.scrollbarGutter * 2,
+                'overflowing grids reserve space around their scrollbar again')
             pickerState.layout = 'list'
         })
         driver.waitFor('picker restores vertical margins', () => pickerList.orientation === ListView.Vertical

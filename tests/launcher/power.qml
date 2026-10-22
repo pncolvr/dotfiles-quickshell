@@ -4,6 +4,8 @@ import QtTest as Test
 import Quickshell
 import "../../src/services"
 import "../../src/modules/launcher"
+import "../../src/ui" as UI
+import "../../src/theme"
 
 // Real native menu/service, isolated storage and mock power/session executables.
 WorkerScope {
@@ -15,8 +17,8 @@ WorkerScope {
     FloatingWindow {
         visible: true
         implicitWidth: 640
-        implicitHeight: 400
-        PickerPanel { id: panel; anchors.fill: parent }
+        implicitHeight: panel.implicitHeight
+        PickerPanel { id: panel; width: parent.width; height: implicitHeight }
     }
     function check(ok, message) { if (!ok) throw new Error(message) }
     function checkMenu() {
@@ -41,6 +43,32 @@ WorkerScope {
                 events.wait(30)
                 const field = events.findChild(panel, "pickerSearch")
                 root.check(!!field && field.activeFocus, "existing search receives focus")
+                const grid = events.findChild(panel, "pickerList") as UI.PickerList
+                const footer = events.findChild(panel, "pickerFooter") as Item
+                root.check(panel.height - footer.mapToItem(panel, 0, footer.height).y === Theme.scrollbarGutter,
+                    "power launcher bottom padding matches its side padding")
+                grid.forceLayout()
+                for (let index = 0; index < 5; index++) {
+                    const tile = grid.itemAtIndex(index)
+                    root.check(!!tile && tile.height === Theme.pickerGridHeight,
+                        "naturally sized power grid preserves full-height action tiles: "
+                        + JSON.stringify({tileHeight:tile?.height, gridHeight:grid.height,
+                            contentWidth:grid.contentWidth, width:grid.width, gutter:grid.horizontalGutter,
+                            panelHeight:panel.height, naturalHeight:panel.implicitHeight}))
+                    root.check(tile.mapToItem(grid, 0, 0).y === 0,
+                        "fitting power grid has no unused horizontal scrollbar gutter")
+                }
+                panel.width = 360
+                events.wait(20)
+                grid.forceLayout()
+                root.check(grid.contentWidth > grid.width
+                    && grid.height === Theme.pickerGridHeight + Theme.scrollbarGutter * 2,
+                    "narrow power launcher grows to reserve its horizontal scrollbar")
+                root.check(grid.currentItem.height === Theme.pickerGridHeight
+                    && grid.currentItem.mapToItem(grid, 0, 0).y === Theme.scrollbarGutter,
+                    "overflowing power tiles keep their full height above the scrollbar")
+                panel.width = 640
+                events.wait(20)
                 field.text = "Lock"
                 root.check(PickerService.filteredItems.length === 1 && PickerService.currentItem.result === "Lock", "native search filters actions")
                 events.keyClick(Qt.Key_Escape, Qt.NoModifier, 0)
