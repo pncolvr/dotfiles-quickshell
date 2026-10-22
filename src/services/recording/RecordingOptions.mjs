@@ -10,6 +10,35 @@ export function deviceRows(devices, cards, defaultName, defaultLabel = name => n
         .map(device => ({title: device.name === defaultName ? defaultLabel(device.description ?? device.name) : device.description ?? device.name,
             result: device.name, monitorSource: device.monitor_source ?? ""}))
 }
+// Hyprland client coordinates are logical; monitor dimensions need scale/rotation.
+export function windowRegions(clients, monitors) {
+    if (!Array.isArray(clients) || !Array.isArray(monitors) || !monitors.length)
+        throw new Error("recording.errors.windows")
+    const visible = new Set(monitors.reduce((ids,monitor) => ids.concat([monitor.activeWorkspace?.id, monitor.specialWorkspace?.id]), [])
+        .filter(id => Number.isInteger(id) && id !== 0))
+    const bounds = monitors.map(monitor => {
+        const scale = monitor.scale ?? 1, transform = monitor.transform ?? 0
+        if (![monitor.x,monitor.y,monitor.width,monitor.height,scale].every(Number.isFinite)
+            || monitor.width <= 0 || monitor.height <= 0 || scale <= 0 || !Number.isInteger(transform))
+            throw new Error("recording.errors.windows")
+        return {x:monitor.x,y:monitor.y,
+            w:Math.round((transform % 2 ? monitor.height : monitor.width) / scale),
+            h:Math.round((transform % 2 ? monitor.width : monitor.height) / scale)}
+    })
+    return clients.filter(client => client.mapped !== false && client.hidden !== true
+        && visible.has(client.workspace?.id) && Array.isArray(client.at) && Array.isArray(client.size)
+        && client.at.length === 2 && client.size.length === 2 && [...client.at,...client.size].every(Number.isInteger)
+        && client.size[0] > 0 && client.size[1] > 0).map(client => {
+        const [x,y] = client.at, [w,h] = client.size
+        const parts = bounds.map(monitor => ({left:Math.max(x,monitor.x),top:Math.max(y,monitor.y),
+            right:Math.min(x+w,monitor.x+monitor.w),bottom:Math.min(y+h,monitor.y+monitor.h)}))
+            .filter(part => part.right > part.left && part.bottom > part.top)
+        if (!parts.length) return ""
+        const left=Math.floor(Math.min(...parts.map(part => part.left))), top=Math.floor(Math.min(...parts.map(part => part.top)))
+        const right=Math.ceil(Math.max(...parts.map(part => part.right))), bottom=Math.ceil(Math.max(...parts.map(part => part.bottom)))
+        return `${left},${top} ${right-left}x${bottom-top}`
+    }).filter(Boolean)
+}
 export function prepared(options, directory, encoderArguments, date = new Date()) {
     if (!directory || ![60,30,15].includes(Number(options.fps))) throw new Error("recording.errors.options")
     if (!Array.isArray(encoderArguments) || !encoderArguments.every(argument => typeof argument === "string"))
@@ -21,6 +50,7 @@ export function prepared(options, directory, encoderArguments, date = new Date()
         command.push("--output", options.output)
         break
       case "region":
+      case "window":
         if (!/^-?[0-9]+,-?[0-9]+ [1-9][0-9]*x[1-9][0-9]*$/.test(options.geometry)) throw new Error("recording.errors.region")
         command.push("--geometry", options.geometry)
         break

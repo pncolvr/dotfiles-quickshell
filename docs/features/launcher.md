@@ -780,6 +780,8 @@ Webapps, Remotes and n8n use native Manage tabs and SQLite; their old private JS
 files are not read and no manual import interface is required. RDP option strings
 support quotes and backslash escapes; shell expressions and wildcards stay literal.
 
+Recording can capture an output, a drawn region, or a clicked window rectangle.
+Window capture keeps the selected screen rectangle fixed during recording.
 Recording offers no audio, desktop audio, microphone audio, or both. Audio modes
 open the relevant output and microphone pickers, with the current defaults first
 so Enter accepts them immediately. Capture, output, framerate and audio choices

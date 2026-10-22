@@ -16,7 +16,7 @@ WorkerScope {
     Fixtures.NativeFocusDriver {
         id: driver
         timeout: 4000
-        onFailed: message => { console.error("SETUP FAIL:", message); root.finish() }
+        onFailed: message => { console.error("SETUP FAIL:", message, JSON.stringify({failures:root.failures,prompt:CaptureMenuService.prompt,command:setup.operation?.task?.command})); root.finish() }
         onCompleted: root.finish()
     }
     function finish() { setup.cancel(); CaptureMenuService.close(); Qt.quit() }
@@ -86,7 +86,7 @@ WorkerScope {
         })
         state(); begin()
         driver.add("initial choices", () => {
-            check(CaptureMenuService.items.map(item => item.result).join(",") === "output,region", "capture defaults unchanged")
+            check(CaptureMenuService.items.map(item => item.result).join(",") === "output,region,window", "window is appended without changing existing capture defaults")
             check(PickerService.visible && PickerService.query === "Existing", "recording capture menu preserves the ordinary launcher")
             CaptureMenuService.query = "reg"
             setup.open()
@@ -124,6 +124,23 @@ WorkerScope {
         }
         begin(); output(); audio("both"); device("sinks", true); device("sources", true)
         driver.waitFor("other devices prepared", () => !!submitted, () => check(submitted.command.includes("--audio=other.monitor") && submitted.loopback.includes("sink=output.other"), "other devices use identities rather than labels"))
+        const windowGate = {}
+        driver.add("hold window capture readiness", () => CaptureHandoffService.update(windowGate, true))
+        begin(); choose("window")
+        driver.add("window waits for presentation", () => check(setup.active && !CaptureMenuService.visible
+            && !setup.operation.task, "window metadata and selector wait for shared presentation readiness"))
+        driver.pause(30)
+        driver.add("release window capture readiness", () => CaptureHandoffService.update(windowGate, false))
+        menu("Framerate"); choose("30"); menu("Audio"); choose("desktop"); device("sinks")
+        driver.waitFor("window options", () => !!submitted, () => {
+            check(submitted.command.includes("--geometry") && submitted.command.includes("10,20 300x200")
+                && submitted.command.includes("30") && submitted.command.includes("--audio=output.monitor")
+                && !submitted.command.includes("--output"), "selected window rectangle keeps framerate and audio choices")
+        })
+        state({slurp:"cancel"}); begin(); choose("window")
+        driver.waitFor("window selector cancellation", () => !setup.active, () => check(!CaptureMenuService.visible
+            && failures.length === 0, "window Escape is quiet"))
+        state()
         const gate = {}
         driver.add("hold capture readiness", () => CaptureHandoffService.update(gate, true))
         begin(); choose("region")
@@ -138,6 +155,20 @@ WorkerScope {
         driver.waitFor("invalid region produces failure", () => !setup.active && failures.length === 1)
         state({empty:true}); begin(); output(); audio("desktop")
         driver.waitFor("empty device list produces failure", () => !setup.active && failures.length === 2)
+        state({windows:"empty"}); begin(); choose("window")
+        driver.waitFor("no visible windows produces failure", () => !setup.active && failures.length === 3)
+        state({windows:"invalid"}); begin(); choose("window")
+        driver.waitFor("invalid window metadata produces failure", () => !setup.active && failures.length === 4)
+        state({slurp:"other"}); begin(); choose("window")
+        driver.waitFor("window selector cannot return an unoffered rectangle", () => !setup.active && failures.length === 5)
+        state({slurp:"error"}); begin(); choose("window")
+        driver.waitFor("window backend failure is not cancellation", () => !setup.active && failures.length === 6)
+        state({slowWindows:true}); begin(); choose("window")
+        driver.waitFor("window metadata loading", () => setup.operation?.task?.command[1] === "clients")
+        driver.add("cancel window metadata", () => setup.cancel())
+        driver.pause(250)
+        driver.add("cancelled window metadata stays closed", () => check(!setup.active && !CaptureMenuService.visible,
+            "stale window metadata cannot reopen setup"))
         state({slow:true}); begin(); output(); audio("desktop")
         driver.waitFor("loading devices", () => CaptureMenuService.prompt === "Audio output")
         driver.add("replace pending choices", () => CaptureMenuService.promptMenu("Replacement", [{title:"Keep working"}], () => {}))
@@ -156,7 +187,7 @@ WorkerScope {
             driver.key(Qt.Key_Escape)
         })
         driver.waitFor("controller releases cancelled native setup", () => RecordingService.state === "idle" && !CaptureMenuService.visible)
-        driver.add("finished", () => console.log("PASS: native recording choices, defaults, all audio modes, device filtering, cancellation, replacement, EOF and shared region readiness"))
+        driver.add("finished", () => console.log("PASS: native recording choices, defaults, all audio modes, window selection, device filtering, cancellation, replacement, EOF and shared region readiness"))
         driver.running = true
     }
 }

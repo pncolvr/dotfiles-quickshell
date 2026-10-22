@@ -28,15 +28,25 @@ case $name in
             exit
         fi
         case " $* " in
-            *" clients "*) printf '[]\n' ;;
+            *" clients "*)
+                if [[ $(jq -r '.slowWindows // false' <<< "$control") == true ]]; then sleep 0.2; fi
+                case $(jq -r '.windows // "ok"' <<< "$control") in
+                    empty) printf '[]\n' ;;
+                    invalid) printf '{}\n' ;;
+                    *) printf '%s\n' '[{"workspace":{"id":1},"at":[10,20],"size":[300,200]},{"workspace":{"id":1},"at":[-10,40],"size":[200,100]},{"workspace":{"id":9},"at":[1,2],"size":[30,40]},{"workspace":{"id":1},"at":[1,2],"size":[30,40],"hidden":true},{"workspace":{"id":1},"at":[1,2],"size":[30,40],"mapped":false},{"workspace":{"id":1},"at":[9999,0],"size":[30,40]},{"workspace":{"id":-99},"at":[500,500],"size":[640,360]}]' ;;
+                esac ;;
             *" activewindow "*) printf '{"hidden":false}\n' ;;
-            *) printf '[{"name":"HDMI-A-1"},{"name":"DP-1"}]\n' ;;
+            *) printf '%s\n' '[{"name":"HDMI-A-1","x":1920,"y":0,"width":1080,"height":1920,"scale":1,"transform":0,"activeWorkspace":{"id":2},"specialWorkspace":{"id":0}},{"name":"DP-1","x":0,"y":0,"width":1920,"height":1080,"scale":1,"transform":0,"activeWorkspace":{"id":1},"specialWorkspace":{"id":-99}}]' ;;
         esac ;;
     slurp)
         cat > "$RECORD_SETUP_TEST/selector-stdin"
+        if [[ $* == -r ]]; then cp "$RECORD_SETUP_TEST/selector-stdin" "$RECORD_SETUP_TEST/window-stdin"; fi
         case $(jq -r '.slurp // "ok"' <<< "$control") in
             cancel) printf 'selection cancelled\n' >&2; exit 1 ;;
-            invalid) printf 'invalid\n' ;; *) printf '10,20 300x200\n' ;;
+            invalid) printf 'invalid\n' ;;
+            other) printf '11,21 300x200\n' ;;
+            error) printf 'selector backend failed\n' >&2; exit 1 ;;
+            *) printf '10,20 300x200\n' ;;
         esac ;;
     pactl)
         if [[ $(jq -r '.slow // false' <<< "$control") == true ]]; then sleep 0.2; fi
@@ -98,7 +108,7 @@ fi
 rg 'PASS:' "$fixture/log"
 node --input-type=module - "$repo_dir" <<'JS'
 import assert from 'node:assert/strict';
-const {prepared,deviceRows}=await import(process.argv[2]+'/src/services/recording/RecordingOptions.mjs');
+const {prepared,deviceRows,windowRegions}=await import(process.argv[2]+'/src/services/recording/RecordingOptions.mjs');
 const encoderArguments=['--codec','libx264','--codec-param','preset=veryfast'];
 const directory='/tmp/quotes " $literal $(touch injected)';
 const options=prepared({capture:'region',geometry:'-10,20 300x200',fps:30,audio:'both',outputDevice:'output $(literal)',monitorSource:'monitor $literal',microphone:'mic " literal'},directory,encoderArguments,new Date(2026,9,17,12,34,56));
@@ -111,6 +121,23 @@ assert.ok(!options.command.includes('hevc_nvenc'));
 assert.deepEqual(options.command.slice(4,10),[...encoderArguments,'--framerate','30']);
 assert.deepEqual(encoderArguments,['--codec','libx264','--codec-param','preset=veryfast']);
 for(const argumentsValue of [null,'--codec', [42]])assert.throws(()=>prepared({capture:'output',output:'DP-1',fps:60,audio:'none'},directory,argumentsValue));
+const monitors=[{x:0,y:0,width:1920,height:1080,scale:1,transform:0,activeWorkspace:{id:1},specialWorkspace:{id:-99}},
+    {x:-900,y:0,width:1200,height:1800,scale:2,transform:1,activeWorkspace:{id:2}}];
+const client=(workspace,at,size,extra={})=>({workspace:{id:workspace},at,size,...extra});
+assert.deepEqual(windowRegions([
+    client(1,[10,20],[300,200]),client(2,[-950,20],[300,200]),client(-99,[0,900],[100,300]),
+    client(3,[0,0],[20,20]),client(1,[0,0],[20,20],{hidden:true}),client(1,[0,0],[20,20],{mapped:false}),
+    client(1,[3000,0],[20,20]),client(2,[-500,700],[20,20]),client(1,[0,0],[0,20]),client(1,[0],[20,20])
+],monitors),['10,20 300x200','-900,20 250x200','0,900 100x180']);
+assert.deepEqual(windowRegions([],monitors),[]);
+for (const [clients,screens] of [[{},monitors],[[],[]],[[],[{x:0,y:0,width:1920,height:1080,scale:0}]]])
+    assert.throws(()=>windowRegions(clients,screens));
+const windowOptions=prepared({capture:'window',geometry:'-900,20 250x200',fps:30,audio:'none'},directory,encoderArguments);
+assert.deepEqual(windowOptions.command.slice(0,4),['wf-recorder','--no-damage','--geometry','-900,20 250x200']);
+assert.throws(()=>prepared({capture:'window',geometry:'invalid',fps:30,audio:'none'},directory,encoderArguments));
+assert.equal((await import('node:fs')).readFileSync(process.env.RECORD_SETUP_TEST+'/window-stdin','utf8'),
+    '10,20 300x200\n0,40 190x100\n500,500 640x360\n');
+console.log('PASS: window capture clips visible windows across scaled and rotated monitors and passes literal geometry');
 assert.throws(()=>deviceRows({},[],'default'));
 console.log('PASS: recording command quality settings, filename format, literal paths/audio identities and option validation');
 JS

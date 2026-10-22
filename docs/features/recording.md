@@ -4,12 +4,16 @@ Meta+R in the companion Hypr config dispatches `quickshell:recording-toggle`
 through the shared native shortcut registry to `RecordingService.toggle()`.
 `launcher.sh provider recording` remains available for shell callers and uses
 `RecordingService` to control one detached recording worker. RecordingSetup gathers
-Capture → Output/Region → Framerate → Audio → Devices through the shared native
+Capture → Output/Region/Window → Framerate → Audio → Devices through the shared native
 picker. Config.recordingDirectory supplies the destination directly; no provider
 script, temporary device-menu JSON or picker/Config IPC round trip is involved.
 Native services read monitor/PulseAudio metadata, and region selection waits for
-shared presentation readiness. The slurp input pipe is explicitly closed so it
-receives EOF before mapping. Stopping does not load provider configuration.
+shared presentation readiness. Window selection offers mapped, nonhidden windows
+on visible workspaces, clipped to logical monitor bounds, including scaled and
+rotated monitors. Click a window to select its rectangle, then choose framerate
+and audio as usual. The recording area stays fixed: moving, resizing or covering
+the window changes what appears inside that rectangle. The slurp input pipe is
+explicitly closed after sending window rectangles so it receives EOF before mapping. Stopping does not load provider configuration.
 
 The shortcut behaves according to the current phase:
 
