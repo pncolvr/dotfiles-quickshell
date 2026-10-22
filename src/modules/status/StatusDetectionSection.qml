@@ -72,12 +72,6 @@ Column {
                 Accessible.name: match.modelData.name + ", " + match.methods + ", " + Translations.text("status.detection.paths",[],match.modelData.paths.length)
                 expanded: match.expanded
                 onExpansionRequested: expanded => root.expandedProcess = expanded ? match.modelData.name : ""
-                background: Rectangle {
-                    radius: Theme.iconButtonRadius
-                    border.width: toggle.visualFocus ? 1 : 0
-                    border.color: Theme.accent
-                    color: toggle.hovered || match.expanded ? Theme.alternateBackground : "transparent"
-                }
                 contentItem: RowLayout {
                     spacing: Theme.controlSpacing
                     UI.ColumnText {

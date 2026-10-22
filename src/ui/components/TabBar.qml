@@ -82,8 +82,7 @@ QC.TabBar {
         model: root.labels.length
         QC.TabButton {
             id: tabButton
-            readonly property bool keyboardFocusVisible: pointerFocus.keyboardFocusVisible
-            UI.PointerFocus { id: pointerFocus }
+            readonly property bool keyboardFocusVisible: surface.keyboardFocusVisible
             required property int index
             readonly property string modelData: root.labels[index] ?? ""
             text: modelData
@@ -131,15 +130,15 @@ QC.TabBar {
                     enabled: root.interactionEnabled
                     glyph: Theme.cancelIcon
                     foreground: hovered ? Theme.text : Theme.inactive
-                    fillColor: "transparent"
                     hint: Translations.text("tabs.actions.remove", [tabButton.text])
                     onClicked: root.tabCloseRequested(tabButton.index)
                 }
             }
-            background: Rectangle {
-                color: tabButton.down ? Qt.darker(Theme.alternateBackground, 1.2)
-                    : tabButton.hovered || tabDrop.containsDrag ? Theme.alternateBackground : "transparent"
-                radius: Theme.iconButtonRadius
+            background: UI.ButtonSurface {
+                id: surface
+                control: tabButton
+                fillColor: "transparent"
+                highlighted: tabDrop.containsDrag
                 border.width: tabButton.keyboardFocusVisible || tabDrop.containsDrag ? 1 : 0
                 border.color: Theme.accent
                 Rectangle {
@@ -171,7 +170,6 @@ QC.TabBar {
                 onExited: root.tabDragExited(tabButton.index)
                 onDropped: drop => { drop.accepted = false; root.tabDropped(tabButton.index, drop) }
             }
-            HoverHandler { cursorShape: Qt.PointingHandCursor }
         }
     }
 }

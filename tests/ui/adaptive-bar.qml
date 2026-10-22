@@ -40,6 +40,7 @@ WorkerScope {
     property int requestCount: 0
     property int waitTicks: 0
     property real decorativeOpacity: 0.4
+    property bool exerciseButton: false
     Test.SignalSpy { id: contrastChanges; target: root.provider; signalName: "indicatorsChanged" }
     Item {
         id: foregrounds
@@ -48,6 +49,10 @@ WorkerScope {
         Text { color: root.provider && !Qt.colorEqual(root.provider.background, Theme.background) ? Theme.inactive : Theme.text }
         Text { id: urgent; color: Theme.warning; visible: false }
         Text { color: Theme.warning; opacity: 0.5 }
+        Item {
+            readonly property color buttonSurfaceColor: root.provider?.background ?? Theme.background
+            UI.ActionButton { id: derivedButton; visible: root.exerciseButton; label: "Derived foreground"; fillColor: "transparent" }
+        }
         Audio.MediaVisualizer {
             // Exercise the real visualizer's exclusion, without audio capture.
             width: 200; height: 50
@@ -137,6 +142,15 @@ WorkerScope {
                     root.decorativeOpacity = 0.8
                     root.check(contrastChanges.count === 0,
                         "visualizer changes do not reevaluate adaptive contrast")
+                    root.exerciseButton = true
+                    root.check(AdaptiveBarService.foregrounds(output).length > 1,
+                        "shared button palette references participate in adaptive contrast")
+                    contrastChanges.clear()
+                    derivedButton.down = true
+                    root.check(contrastChanges.count === 0,
+                        "derived button colors do not feed back into the adaptive background")
+                    derivedButton.down = false
+                    root.exerciseButton = false
                     root.requestCount = root.countRequests()
                     for (let request = 0; request < 20; request++) root.provider.invalidate()
                     root.step++; break

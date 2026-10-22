@@ -37,12 +37,6 @@ Column {
             expanded: root.expanded
             onExpansionRequested: root.toggleExpanded()
             Accessible.name: root.emitter?.name || root.group.emitterKey
-            background: Rectangle {
-                color: "transparent"
-                radius: Theme.iconButtonRadius
-                border.width: groupToggle.keyboardFocusVisible ? 1 : 0
-                border.color: Theme.accent
-            }
             contentItem: Item {
                 UI.Text {
                     id: countLabel

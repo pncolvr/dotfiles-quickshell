@@ -30,10 +30,6 @@ Column {
         Accessible.name: root.title + " (" + root.users.length + "), "
             + (root.forceExpanded ? Translations.text("twitch.sections.searchResults")
                 : Translations.text(root.expanded ? "common.actions.collapse" : "common.actions.expand"))
-        background: Rectangle {
-            radius: Theme.iconButtonRadius
-            color: heading.hovered || heading.keyboardFocusVisible ? Theme.alternateBackground : "transparent"
-        }
         contentItem: UI.ColumnText {
             id: label
             text: root.title + " (" + root.users.length + ")"

@@ -8,8 +8,11 @@ import "../../../src/services"
 import "../../../src/modules/vault"
 import "../../../src/theme"
 import "../../../src/ui" as UI
+import "../../../src/config"
+
 WorkerScope {
     id: root
+    property var testConfig: Config
     function findVisual(item, name) {
         if (!item) return null
         if (item.objectName === name) return item
@@ -124,7 +127,9 @@ WorkerScope {
             const row = choices.itemAtIndex(combo.options.findIndex(option => option.name === name)) as QC.ItemDelegate
             events.mouseClick(row,row.width/2,row.height/2,Qt.LeftButton,Qt.NoModifier,0)
         }
-        function search(): void { const field = objects.findChild(panel,"vaultSearch") as UI.InputField; field.text="exlg" }
+        function search(): void { root.testConfig.pickerFuzzySearch = true; (objects.findChild(panel,"vaultSearch") as UI.InputField).text="exlg" }
+        function substringSearch(): void { root.testConfig.pickerFuzzySearch = false; (objects.findChild(panel,"vaultSearch") as UI.InputField).text="exlg" }
+        function substringMatch(): void { (objects.findChild(panel,"vaultSearch") as UI.InputField).text="example" }
         function searchSecond(): void { (objects.findChild(panel,"vaultSearch") as UI.InputField).text="zebra" }
         function revealDetail(): void {
             const field = root.findVisual(panel,"vaultDetailField-password") as UI.SecretField

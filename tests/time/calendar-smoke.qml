@@ -82,7 +82,7 @@ WorkerScope {
                         root.check(warnings.length === 2
                             && warnings.some(cell => cell.date.getMonth() === 2 && cell.dayNum === 27)
                             && warnings.some(cell => cell.date.getMonth() === 9 && cell.dayNum === 30)
-                            && warnings.every(cell => cell.color.toString() === Theme.warning.toString()),
+                            && warnings.every(cell => cell.fillColor.toString() === Theme.warning.toString()),
                             "actual 2027 annual tooltip renders both warning dates")
                         events.mouseClick(clock, clock.width / 2, clock.height / 2, Qt.RightButton)
                         return
@@ -153,7 +153,7 @@ WorkerScope {
                     }
                     case 1:
                         root.check(CalendarService.clockChangeNotice.includes("tomorrow"), "live notice appears on eve")
-                        root.check(root.cells(month).find(cell => cell.dayNum === 24).color.toString() === Theme.warning.toString(), "today's eve keeps warning background")
+                        root.check(root.cells(month).find(cell => cell.dayNum === 24).fillColor.toString() === Theme.warning.toString(), "today's eve keeps warning background")
                         root.check((clock.child as Text).color.toString() === Theme.text.toString(), "bar color unchanged during warning")
                         root.testClock.time = new Date(2026, 9, 25, 0).toString()
                         return
@@ -219,7 +219,7 @@ WorkerScope {
                 "eve and transition share clock-change draft")
             root.check(decodeURIComponent(CalendarService.eventUrlFor(new Date(2027, 2, 28))).includes("20270327T180000Z/20270327T181500Z"), "future spring draft uses previous-day winter offset")
             const day = root.cells(month).find(cell => cell.dayNum === 24)
-            root.check(day && day.color.toString() === Theme.warning.toString(), "rendered eve warning background")
+            root.check(day && day.fillColor.toString() === Theme.warning.toString(), "rendered eve warning background")
             root.check(day && day.width === 26 && day.height === 26 && month.width === 225, "month geometry unchanged")
             root.check(year.width === 3 * 225 + 16, "annual grid geometry unchanged")
             const notice = CalendarService.clockChangeNotice

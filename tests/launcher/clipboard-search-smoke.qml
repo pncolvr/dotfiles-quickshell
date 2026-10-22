@@ -1,9 +1,12 @@
 pragma ComponentBehavior: Bound
 import QtQml
 import "../../src/services"
+import "../../src/config"
+import "../../src/services/launcher/Search.mjs" as Search
 
 WorkerScope {
     id: root
+    property var testConfig: Config
     property bool failed: false
     property bool waiting: false
     property int step: 0
@@ -30,7 +33,13 @@ WorkerScope {
     }
     function expectCurrentQuery() {
         const candidates = fixtureRows.filter(item => !PickerService.itemCriteria.pinned || item.pinned)
-        expected = PickerService.filter(candidates, PickerService.query).map(item => item.id)
+        // Clipboard's Fuzzy button is independent of the launcher's search setting.
+        const pattern = Search.searchPattern(PickerService.query, Config.pickerSmartCase)
+        expected = candidates.map((item,index) => ({item,index,
+            score: Math.min(Search.score(item.title,pattern,true),
+                item.search && item.search !== item.title ? Search.score(item.search,pattern,true) + 12 : Infinity)}))
+            .filter(row => Number.isFinite(row.score))
+            .sort((a,b) => a.score - b.score || a.index - b.index).map(row => row.item.id)
     }
     function verifyResults() {
         check(PickerService.filteredItems.map(item => item.id).join() === expected.join(),
@@ -73,6 +82,7 @@ WorkerScope {
                     PickerService.clipboardFuzzy = true
                     PickerService.show()
                 }
+                root.testConfig.pickerFuzzySearch = root.step % 2 === 0
                 const test = root.cases[root.step]
                 if ((PickerService.itemCriteria.pinned === true) !== (test.pinned === true))
                     PickerService.itemCriteria = test.pinned ? ({pinned:true}) : ({})
@@ -82,6 +92,7 @@ WorkerScope {
                     "pending searches cannot activate a stale selection")
                 root.waiting = true
             } else if (root.step === root.cases.length) {
+                root.testConfig.pickerFuzzySearch = false
                 // Change the history while a costly search is running; only the newest request may publish.
                 PickerService.itemCriteria = ({})
                 PickerService.query = "zzzzzzzz"
@@ -94,6 +105,8 @@ WorkerScope {
                 root.expectCurrentQuery()
                 root.waiting = true
             } else if (root.step === root.cases.length + 1) {
+                root.check(!Config.pickerFuzzySearch && PickerService.clipboardFuzzy,
+                    "clipboard fuzzy matching remains enabled with launcher fuzzy matching off")
                 root.check(PickerService.currentItem?.id === root.fixtureId(1001), "history replacement invalidates cached text and row indexes")
                 root.check(root.heartbeat > 0, "UI timers continue while the background worker searches")
                 PickerService.query = "zzzzzzzz"

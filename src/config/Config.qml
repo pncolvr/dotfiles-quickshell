@@ -16,7 +16,7 @@ Item {
     readonly property string language: "system"
 
     // Optional modules and integrations. Configure these before first launch.
-    readonly property bool adaptiveBarEnabled: true
+    readonly property bool adaptiveBarEnabled: false
     readonly property bool bookmarksEnabled: true
     readonly property bool browserRoutingEnabled: true
     readonly property bool browserHistoryEnabled: true
@@ -181,8 +181,8 @@ Item {
         clipboard: null,
         windows: null
     })
-    readonly property bool pickerShowPrompt: false
-    readonly property bool pickerFuzzySearch: true
+    readonly property bool pickerShowPrompt: true
+    readonly property bool pickerFuzzySearch: false
     // Only mixed-case queries are case sensitive; lowercase and uppercase ignore case.
     readonly property bool pickerSmartCase: true
     readonly property bool pickerRememberSelection: true

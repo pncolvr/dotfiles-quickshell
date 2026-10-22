@@ -26,9 +26,11 @@ QC.ItemDelegate {
     leftPadding: Theme.controlFieldPadding
     rightPadding: Theme.controlFieldPadding
     height: Math.max(Theme.controlHeight, contentItem.implicitHeight + topPadding + bottomPadding)
-    background: Rectangle {
+    background: ButtonSurface {
+        control: root
         id: surface
-        color: root.current ? root.currentBackground : root.pointerHovered ? root.hoverBackground : root.idleBackground
+        fillColor: root.current ? root.currentBackground : root.idleBackground
+        hoverColor: root.hoverBackground.a > 0 ? root.hoverBackground : Theme.selectionHoverBackground
         radius: Theme.iconButtonRadius
     }
     onClicked: {
@@ -36,10 +38,10 @@ QC.ItemDelegate {
         if (activateOnClick) activated()
     }
     onDoubleClicked: if (!activateOnClick) activated()
-    HoverHandler { id: hover; cursorShape: root.cursorShape }
+    HoverHandler { id: hover; target: null }
     MouseArea {
         anchors.fill: parent
-        cursorShape: root.cursorShape
+        cursorShape: root.enabled ? root.cursorShape : Qt.ArrowCursor
         onPressed: {
             if (root.focusPolicy & Qt.ClickFocus) root.forceActiveFocus(Qt.MouseFocusReason)
         }

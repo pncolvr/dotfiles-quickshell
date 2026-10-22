@@ -115,26 +115,28 @@ Item {
         text: root.label
         retainPanelWhileEditing: false
     }
-    QC.Button {
+    UI.Button {
         id: selector
         visible: !root.readOnly
-        readonly property bool keyboardFocusVisible: pointerFocus.keyboardFocusVisible
-        UI.PointerFocus { id: pointerFocus }
         objectName: root.toggleObjectName
         width: parent.width
         implicitHeight: root.compact ? root.controlHeight
             : Math.max(root.controlHeight, currentLabel.implicitHeight + root.contentPadding * 2)
         padding: root.contentPadding
-        hoverEnabled: true
         opacity: enabled ? 1 : 0.5
+        fillColor: Theme.selectionBackground
+        hoverColor: Theme.selectionHoverBackground
+        pressedColor: Qt.darker(Theme.selectionHoverBackground, 1.2)
         Accessible.name: root.hint || root.label
         onClicked: root.expanded = !root.expanded
         Keys.onPressed: event => {
             if (event.key === Qt.Key_Down || event.key === Qt.Key_Up) { root.expanded = true; event.accepted = true }
         }
-        background: Rectangle {
-            color: selector.hovered ? Theme.selectionHoverBackground : Theme.selectionBackground
-            radius: Theme.iconButtonRadius
+        background: UI.ButtonSurface {
+            control: selector
+            fillColor: selector.fillColor
+            hoverColor: selector.hoverColor
+            pressedColor: selector.pressedColor
             border.width: 1
             border.color: selector.keyboardFocusVisible || root.expanded ? Theme.accent : Theme.selectionBorder
         }
@@ -158,7 +160,6 @@ Item {
             }
         }
         UI.HoverTooltip { hoverTarget: selector; text: root.expanded ? "" : root.hint; delay: root.hintDelay }
-        HoverHandler { cursorShape: Qt.PointingHandCursor }
     }
     QC.Popup {
         id: selectionPopup

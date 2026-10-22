@@ -6,9 +6,10 @@ import ".." as UI
 
 QC.CheckBox {
     id: root
-    UI.FocusReveal { owner: root }
-    readonly property bool keyboardFocusVisible: pointerFocus.keyboardFocusVisible
-    UI.PointerFocus { id: pointerFocus }
+    readonly property bool keyboardFocusVisible: surface.keyboardFocusVisible
+    hoverEnabled: true
+    opacity: enabled ? 1 : 0.45
+    background: UI.ButtonSurface { id: surface; control: root; fillColor: "transparent" }
     padding: Theme.controlFieldPadding
     spacing: Theme.controlSpacing
     implicitHeight: Theme.controlHeight
@@ -21,7 +22,7 @@ QC.CheckBox {
         implicitWidth: Theme.fontSize + 4
         implicitHeight: implicitWidth
         radius: Theme.iconButtonRadius
-        color: Theme.alternateBackground
+        color: surface.colorFor(Theme.alternateBackground)
         border.width: 1
         border.color: root.keyboardFocusVisible ? Theme.accent : Theme.empty
         UI.IconText { anchors.centerIn: parent; text: root.checked ? Theme.checkIcon : ""; color: Theme.accent }

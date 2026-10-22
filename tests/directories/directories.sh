@@ -5,7 +5,9 @@ test_dir=$(mktemp -d /tmp/quickshell-directories.XXXXXXXX)
 trap 'rm -rf -- "$test_dir"' EXIT
 mkdir -p "$test_dir/config/data" "$test_dir/bin" "$test_dir/home/banana folder" "$test_dir/home/orange folder" "$test_dir/home/slow folder"
 mkdir -m700 "$test_dir/runtime"
-ln -s "$project_root/src" "$test_dir/config/src"
+tar -C "$project_root" --exclude='*.env' --exclude='src/services/launcher/providers/*.json' -cf - src | tar -C "$test_dir/config" -xf -
+# The QML fixture must use this private Config, never the live source through a symlink.
+sed -E -i 's/readonly property bool pickerFuzzySearch: (true|false)/property bool pickerFuzzySearch: true/;s/readonly property bool pickerSmartCase: (true|false)/readonly property bool pickerSmartCase: true/' "$test_dir/config/src/config/Config.qml"
 ln -s "$test_dir/home/banana folder" "$test_dir/folder-link"
 printf '#!/bin/sh\nprintf "[]\\n"\n' > "$test_dir/bin/hyprctl"
 printf '#!/bin/sh\nexit 1\n' > "$test_dir/bin/ping"
@@ -35,11 +37,7 @@ bash "$resolver" 'computer:///' | jq -e '.path == "computer:///" and .name == "C
 if bash "$resolver" "$test_dir/missing" >/dev/null 2>&1; then exit 1; fi
 touch "$test_dir/plain-file"
 if bash "$resolver" "$test_dir/plain-file" >/dev/null 2>&1; then exit 1; fi
-cat > "$test_dir/config/shell.qml" <<QML
-import QtQuick
-import Quickshell
-Scope { Loader { source: "file://$project_root/tests/directories/directories-smoke.qml" } }
-QML
+sed 's@"../../src@"src@g' "$project_root/tests/directories/directories-smoke.qml" > "$test_dir/config/shell.qml"
 for phase in setup restart typed; do
     output=$(DIRECTORY_TEST_PHASE="$phase" timeout 25 qs -p "$test_dir/config/shell.qml" 2>&1) || { printf '%s\n' "$output"; exit 1; }
     printf '%s\n' "$output"

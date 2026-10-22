@@ -3,36 +3,22 @@ import QtQuick.Controls as QC
 import "../../theme"
 import ".." as UI
 
-QC.Button {
+UI.Button {
     id: root
-    UI.FocusReveal { owner: root }
     property string glyph: ""
     property string label: ""
     property string hint: ""
     property string keyAction: ""
     property string hintAction: keyAction
     readonly property string shortcutHint: hintAction ? UI.Keybinds.hint(hint || label,hintAction) : hint
-    property color fillColor: Theme.alternateBackground
-    property color foreground: Theme.foregroundOn((background as Rectangle)?.color ?? fillColor)
 
     implicitWidth: label.length ? Math.max(Theme.actionButtonWidth, implicitContentWidth) : Theme.actionButtonWidth
     implicitHeight: Theme.controlHeight
     padding: 0
-    hoverEnabled: true
-    opacity: enabled ? 1 : 0.45
     Accessible.name: shortcutHint || label
     UI.PanelShortcut { owner: root; action: root.keyAction; onActivated: root.clicked() }
-    readonly property bool keyboardFocusVisible: pointerFocus.keyboardFocusVisible
-    UI.PointerFocus { id: pointerFocus }
-
-    background: Rectangle {
-        color: root.down ? Qt.darker(root.fillColor, 1.2) : root.hovered ? Qt.lighter(root.fillColor, 1.4) : root.fillColor
-        radius: Theme.iconButtonRadius
-        border.width: root.keyboardFocusVisible ? 1 : 0
-        border.color: Theme.accent
-    }
-
     contentItem: Item {
+        readonly property bool adaptiveContrastExcluded: true
         implicitWidth: root.label.length > 0
             ? codeLabel.implicitWidth + (icon.implicitWidth + Theme.controlSpacing + Theme.controlFieldPadding) * 2
             : icon.implicitWidth + Theme.controlFieldPadding * 2
@@ -73,8 +59,6 @@ QC.Button {
             text: icon.text
         }
     }
-
-    HoverHandler { cursorShape: Qt.PointingHandCursor }
 
     QC.ToolTip {
         visible: root.hovered && root.shortcutHint.length > 0

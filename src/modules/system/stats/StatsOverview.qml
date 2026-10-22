@@ -95,7 +95,7 @@ Column {
                 enabled: root.powerService.availableProfiles.includes(modelData)
                 checked: root.powerService.profile === modelData
                 foreground: checked ? Theme.accent : Theme.inactive
-                fillColor: checked ? Theme.alternateBackground : "transparent"
+                fillColor: checked ? Theme.selectionSelectedBackground : Theme.alternateBackground
                 onClicked: root.powerService.setProfile(modelData)
             }
         }

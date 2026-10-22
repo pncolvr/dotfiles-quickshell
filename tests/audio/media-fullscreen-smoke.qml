@@ -9,6 +9,7 @@ import Quickshell.Wayland
 import "../../src/theme"
 import "../../src/config"
 import "../../src/ui" as UI
+import "../../src/ui/components/ButtonColors.mjs" as Colors
 import "../../src/modules/system/audio"
 import "../../src/services"
 
@@ -269,11 +270,19 @@ WorkerScope {
                     "Left restores the first app's saved effect");
                 const effects = root.find(card, "mediaEffectSelector") as MediaEffectList;
                 const selected = effects.view.itemAtIndex(effects.view.currentIndex) as UI.SelectionRow;
+                const surface = selected.background as UI.ButtonSurface;
+                const reference = selected.hovered || selected.keyboardFocusVisible
+                    ? Theme.selectionHoverBackground : Theme.selectionSelectedBackground;
+                const rendered = Colors.composite(surface.color,surface.surfaceColor);
+                const expected = Colors.composite(reference,Theme.background);
+                const contrastMatches = Math.abs(Colors.contrast(rendered,surface.surfaceColor)
+                    - Colors.contrast(expected,Theme.background)) < 0.004;
+                const paletteFallback = ['r','g','b'].every(key => Math.abs(rendered[key] - expected[key]) < 0.001);
                 root.check(selected.selected
-                    && String((selected.contentItem.children[0] as Text).color) === String(Theme.accent)
-                    && String((selected.background as Rectangle).color) === String(selected.hovered || selected.keyboardFocusVisible
-                        ? Theme.selectionHoverBackground : Theme.selectionSelectedBackground),
-                    "selection uses the shared accent text and background styles");
+                    && Qt.colorEqual((selected.contentItem.children[0] as Text).color,Theme.accent)
+                    && Qt.colorEqual(surface.referenceColor,reference)
+                    && surface.color.a === 1 && (contrastMatches || paletteFallback),
+                    "selection keeps accent text and active-theme surface contrast or its readable palette fallback");
                 root.find(card, "mediaPlayPause").clicked();
                 root.check(!fixturePlayer.isPlaying, "fullscreen transport affects the same player");
                 root.find(card, "mediaPlayPause").clicked();

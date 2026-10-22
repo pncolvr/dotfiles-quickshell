@@ -4,8 +4,12 @@ import "../../../theme"
 import "../../../ui" as UI
 import "../../../services"
 
-Item {
+Rectangle {
     id: root
+    radius: Theme.iconButtonRadius
+    color: rowHover.hovered ? Theme.alternateBackground : "transparent"
+
+    HoverHandler { id: rowHover }
     required property var entry
     property bool roundUp: false
     readonly property color timeColor: entry.urgency === 2 ? Theme.urgent

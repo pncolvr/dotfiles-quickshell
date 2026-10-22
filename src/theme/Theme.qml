@@ -8,6 +8,14 @@ QtObject {
     readonly property bool darkMode: true
     readonly property ThemePalette palette: ThemePalette { darkMode: root.darkMode }
     function foregroundOn(surface) { return palette.foregroundOn(surface, background, text) }
+    function buttonHoverColor(fill) {
+        const lighter = Qt.lighter(fill, 1.4)
+        return fill.a > 0 && !Qt.colorEqual(fill, lighter) ? lighter : selectionHoverBackground
+    }
+    function buttonPressedColor(hover) {
+        const darker = Qt.darker(hover, 1.2)
+        return !Qt.colorEqual(hover, darker) ? darker : selectionSelectedBackground
+    }
 
     // Colors
     readonly property color background: palette.colors.background

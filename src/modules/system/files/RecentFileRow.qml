@@ -99,7 +99,6 @@ Rectangle {
         enabled: !root.fileService.dragging
         glyph: Theme.filePinIcon
         foreground: root.pinned ? Theme.accent : Theme.inactive
-        fillColor: "transparent"
         hint: Translations.text(root.pinned ? "files.actions.unpinHint" : "files.actions.pinHint")
         onClicked: root.fileService.togglePin(root.file)
     }

@@ -40,7 +40,6 @@ UI.InputField {
         enabled: !root.readOnly
         glyph: Theme.cancelIcon
         foreground: hovered ? Theme.text : Theme.inactive
-        fillColor: "transparent"
         hint: Translations.text("common.actions.clearSearch")
         onClicked: { root.clear(); root.forceActiveFocus() }
     }

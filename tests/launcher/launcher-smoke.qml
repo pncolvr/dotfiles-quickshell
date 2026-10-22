@@ -12,6 +12,7 @@ import "../../src/theme"
 
 WorkerScope {
     id: root
+    property var testConfig: Config
     property bool failed: false
     Test.TestEvent { id: events }
     Test.TestResult { id: objects }
@@ -67,6 +68,12 @@ WorkerScope {
         check(PickerService.filter([{title:"Éclair"}], "ÉCL").length === 1, "uppercase accented queries ignore case")
         check(PickerService.filter([{title:"éclair"}], "Écl").length === 0, "mixed-case accented queries respect case")
         check(PickerService.filter([{title:"Banana"}, {title:"potato"}], "ban")[0].title === "Banana", "case insensitive lowercase matching")
+        root.testConfig.pickerFuzzySearch = false
+        check(PickerService.filter([{title:"Banana"}], "bna").length === 0, "substring mode rejects skipped letters")
+        check(PickerService.filter([{title:"Banana"}], "ana").length === 1, "substring mode finds consecutive letters")
+        check(PickerService.filter([{title:"Banana tomato"}], "banana mato").length === 1, "substring query words match independently")
+        check(PickerService.filter([{title:"Banana"}, {title:"banana"}], "Ban").length === 1, "substring mode retains smart case")
+        root.testConfig.pickerFuzzySearch = true
         check(PickerService.filter([{title:"Banana"}], "bna").length === 1, "missing letters still match")
         check(PickerService.filter([{title:"Potato"}], "ptt").length === 1, "subsequence fuzzy matching")
         check(PickerService.filter([{title:"Tomato"}], "tmt").length === 1, "all launcher search uses subsequences")

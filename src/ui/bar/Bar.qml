@@ -17,6 +17,7 @@ Scope {
       required property var modelData
       screen: modelData
       color: "transparent"
+      readonly property color buttonSurfaceColor: AdaptiveBarService.backgroundFor(screen)
       readonly property bool islands: AdaptiveBarService.islandsFor(screen)
       readonly property rect leftBounds: Qt.rect(0, 0, left.width + Theme.controlFieldPadding, height)
       readonly property rect centerBounds: Qt.rect(center.x - Theme.controlFieldPadding, 0,

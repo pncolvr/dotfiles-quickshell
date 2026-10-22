@@ -47,7 +47,6 @@ Item {
         onExpansionRequested: root.toggleExpanded()
         Accessible.name: root.process.label || root.process.name
         contentItem: Item {}
-        background: Rectangle { color: "transparent"; radius: Theme.iconButtonRadius; border.width: expander.visualFocus ? 1 : 0; border.color: Theme.accent }
     }
     UI.ColumnText {
         id: name
@@ -101,7 +100,6 @@ Item {
         label: root.process.pid > 0 ? String(root.process.pid) : "—"
         copyContext: root.process.pid
         normalForeground: Theme.inactive
-        fillColor: "transparent"
         copyHint: root.process.pid > 0 ? Translations.text(root.canExpand || root.process.count > 1 ? "stats.processes.copyParentPid" : "stats.processes.copyPid",[root.process.pid]) : Translations.text("stats.processes.pidUnavailable")
         enabled: root.process.pid > 0
         copyAction: completed => root.statsService.copyPid(root.process.pid, completed)

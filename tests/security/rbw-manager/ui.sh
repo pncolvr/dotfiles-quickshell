@@ -9,6 +9,8 @@ wait_copy() {
     return 1
 }
 copy_shell
+# Search cases control their own settings, independently of the live Config.
+sed -E -i 's/readonly property bool pickerFuzzySearch: (true|false)/property bool pickerFuzzySearch: true/;s/readonly property bool pickerSmartCase: (true|false)/readonly property bool pickerSmartCase: true/' "$test_dir/src/config/Config.qml"
 printf '%s\n' '{"id":"22222222-2222-2222-2222-222222222222","name":"Other note","folder":"Personal","data":null,"notes":"Synthetic note content","fields":[],"history":[]}' > "$test_dir/note.json"
 printf '%s\n' '{"id":"33333333-3333-3333-3333-333333333333","name":"Zebra login","folder":"Personal","data":{"username":"zebra-user","password":"SYNTHETIC_SECOND_SECRET"},"notes":"","fields":[],"history":[]}' > "$test_dir/second-login.json"
 jq '. += [{"id":"33333333-3333-3333-3333-333333333333","name":"Zebra login","user":"zebra-user","folder":"Personal","uris":[],"type":"Login"}]' "$test_dir/entries.json" > "$test_dir/entries-next"
@@ -120,6 +122,12 @@ ipc toggleFolder
 wait_state '.folderExpanded and .folderChoiceReady'
 ipc chooseAll
 wait_state '(.folderExpanded|not) and .rows==2 and .filterGap==.filterSpacing'
+ipc search
+wait_state '.rows==1'
+ipc substringSearch
+wait_state '.rows==0 and (.details|not)'
+ipc substringMatch
+wait_state '.rows==1 and (.busy|not) and .selectionMatches'
 ipc search
 wait_state '.rows==1'
 ipc resetSearch

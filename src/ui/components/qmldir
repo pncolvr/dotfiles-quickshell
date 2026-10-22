@@ -70,3 +70,6 @@ TextBase 1.0 TextBase.qml
 GlyphText 1.0 GlyphText.qml
 SelectableRow 1.0 SelectableRow.qml
 CollapsibleSection 1.0 CollapsibleSection.qml
+
+Button 1.0 Button.qml
+ButtonSurface 1.0 ButtonSurface.qml

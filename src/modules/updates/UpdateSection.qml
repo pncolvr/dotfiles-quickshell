@@ -28,10 +28,6 @@ Column {
         onExpansionRequested: expanded => section.expanded = expanded
         Accessible.name: String(section.updates.length) + ", "
             + Translations.text(showingContent ? "common.actions.collapse" : "common.actions.expand")
-        background: Rectangle {
-            radius: Theme.iconButtonRadius
-            color: heading.hovered || heading.keyboardFocusVisible ? Theme.alternateBackground : "transparent"
-        }
         contentItem: Item {
             Rectangle {
                 anchors.left: parent.left

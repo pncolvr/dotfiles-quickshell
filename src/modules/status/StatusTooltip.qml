@@ -331,12 +331,6 @@ Column {
                             enabled: day.modelData.blocks.length > 0
                             Accessible.name: day.modelData.date
                             contentItem: Item {}
-                            background: Rectangle {
-                                color: "transparent"
-                                radius: Theme.iconButtonRadius
-                                border.width: dayToggle.keyboardFocusVisible ? 1 : 0
-                                border.color: Theme.accent
-                            }
                             onExpansionRequested: expanded => root.expandedDay = expanded ? day.modelData.date : ""
                         }
                     }

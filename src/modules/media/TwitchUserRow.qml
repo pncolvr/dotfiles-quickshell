@@ -8,10 +8,16 @@ import "../../ui" as UI
 import "../../theme"
 import "../../services"
 
-Row {
+Rectangle {
     id: root
-    spacing: Theme.twitchUserSpacing
+    property real spacing: Theme.twitchUserSpacing
     width: Theme.twitchAvatarSize + Theme.twitchInfoWidth + controls.implicitWidth + 2 * spacing
+
+    implicitHeight: content.implicitHeight
+    radius: Theme.iconButtonRadius
+    color: rowHover.hovered ? Theme.alternateBackground : "transparent"
+
+    HoverHandler { id: rowHover }
 
     required property var user
     readonly property string mainLogin: user.mainLogin ?? user.login
@@ -20,170 +26,176 @@ Row {
 
     opacity: user.online ? 1.0 : 0.4
 
-    // Avatar
-    Item {
-        width: Theme.twitchAvatarSize
-        height: width
+    Row {
+        id: content
+        width: parent.width
+        spacing: root.spacing
 
-        UI.CroppedImage {
-            id: avatarImage
-            objectName: "twitchAvatar_" + root.user.login
-            anchors.fill: parent
-            source: root.user.avatar || ""
-            fillMode: Image.PreserveAspectCrop
-            circular: true
-            removeBlackPadding: true
+        // Avatar
+        Item {
+            width: Theme.twitchAvatarSize
+            height: width
+
+            UI.CroppedImage {
+                id: avatarImage
+                objectName: "twitchAvatar_" + root.user.login
+                anchors.fill: parent
+                source: root.user.avatar || ""
+                fillMode: Image.PreserveAspectCrop
+                circular: true
+                removeBlackPadding: true
+            }
+
+            Rectangle {
+                anchors.fill: parent
+                radius: width / 2
+                color: "transparent"
+                border.color: root.user.online ? Theme.twitchColor : Theme.tooltipBackground
+                border.width: 3
+            }
+
+            MouseArea {
+                anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
+                onClicked: TwitchService.openUrl(root.user.login)
+            }
         }
 
-        Rectangle {
-            anchors.fill: parent
-            radius: width / 2
-            color: "transparent"
-            border.color: root.user.online ? Theme.twitchColor : Theme.tooltipBackground
-            border.width: 3
-        }
-
-        MouseArea {
-            anchors.fill: parent
-            cursorShape: Qt.PointingHandCursor
-            onClicked: TwitchService.openUrl(root.user.login)
-        }
-    }
-
-    // Info
-    Item {
-        objectName: "twitchUserDetails_" + root.mainLogin
-        width: Math.max(0, root.width - Theme.twitchAvatarSize - controls.implicitWidth - 2 * root.spacing)
-        height: Math.max(Theme.twitchAvatarSize, info.implicitHeight)
-        MouseArea {
-            anchors.fill: parent
-            cursorShape: Qt.PointingHandCursor
-            onClicked: TwitchService.openUrl(root.user.login)
-        }
-        Column {
-            id: info
-            width: parent.width
-            anchors.verticalCenter: parent.verticalCenter
-
-            RowLayout {
+        // Info
+        Item {
+            objectName: "twitchUserDetails_" + root.mainLogin
+            width: Math.max(0, root.width - Theme.twitchAvatarSize - controls.implicitWidth - 2 * root.spacing)
+            height: Math.max(Theme.twitchAvatarSize, info.implicitHeight)
+            MouseArea {
+                anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
+                onClicked: TwitchService.openUrl(root.user.login)
+            }
+            Column {
+                id: info
                 width: parent.width
-                spacing: 4
+                anchors.verticalCenter: parent.verticalCenter
 
-                UI.ColumnText {
-                    text: root.user.login
-                    color: root.user.online ? Theme.text : Theme.inactive
-                    elide: Text.ElideRight
-                    Layout.maximumWidth: parent.width / 2
-                    centerVertical: false
-                }
+                RowLayout {
+                    width: parent.width
+                    spacing: 4
 
-                UI.ColumnText {
-                    visible: root.user.online
-                    text: "·"
-                    color: root.user.online ? Theme.text : Theme.inactive
-                    centerVertical: false
-                }
+                    UI.ColumnText {
+                        text: root.user.login
+                        color: root.user.online ? Theme.text : Theme.inactive
+                        elide: Text.ElideRight
+                        Layout.maximumWidth: parent.width / 2
+                        centerVertical: false
+                    }
 
-                UI.ColumnText {
-                    visible: root.user.online
-                    objectName: "twitchGame_" + root.mainLogin
-                    text: root.user.online ? root.user.game : ""
-                    color: root.user.online ? Theme.text : Theme.inactive
-                    elide: Text.ElideMiddle
-                    Layout.fillWidth: !root.user.usingFallback
-                    Layout.maximumWidth: root.user.usingFallback ? implicitWidth : parent.width
-                    centerVertical: false
-                    UI.HoverTooltip { text: parent.text }
-                }
+                    UI.ColumnText {
+                        visible: root.user.online
+                        text: "·"
+                        color: root.user.online ? Theme.text : Theme.inactive
+                        centerVertical: false
+                    }
 
-                UI.ColumnText {
-                    objectName: "twitchSecondChannelSeparator_" + root.mainLogin
-                    visible: root.user.usingFallback === true
-                    text: "·"
-                    color: Theme.inactive
-                }
+                    UI.ColumnText {
+                        visible: root.user.online
+                        objectName: "twitchGame_" + root.mainLogin
+                        text: root.user.online ? root.user.game : ""
+                        color: root.user.online ? Theme.text : Theme.inactive
+                        elide: Text.ElideMiddle
+                        Layout.fillWidth: !root.user.usingFallback
+                        Layout.maximumWidth: root.user.usingFallback ? implicitWidth : parent.width
+                        centerVertical: false
+                        UI.HoverTooltip { text: parent.text }
+                    }
 
-                UI.ColumnText {
-                    objectName: "twitchSecondChannelLabel_" + root.mainLogin
-                    visible: root.user.usingFallback === true
-                    text: Translations.text("twitch.channel.secondLabel",[root.mainLogin])
-                    color: Theme.inactive
-                    elide: Text.ElideRight
-                    Layout.maximumWidth: parent.width / 2
-                    centerVertical: false
-                    UI.HoverTooltip { text: parent.text }
-                    MouseArea {
-                        anchors.fill: parent
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: TwitchService.openUrl(root.mainLogin)
+                    UI.ColumnText {
+                        objectName: "twitchSecondChannelSeparator_" + root.mainLogin
+                        visible: root.user.usingFallback === true
+                        text: "·"
+                        color: Theme.inactive
+                    }
+
+                    UI.ColumnText {
+                        objectName: "twitchSecondChannelLabel_" + root.mainLogin
+                        visible: root.user.usingFallback === true
+                        text: Translations.text("twitch.channel.secondLabel",[root.mainLogin])
+                        color: Theme.inactive
+                        elide: Text.ElideRight
+                        Layout.maximumWidth: parent.width / 2
+                        centerVertical: false
+                        UI.HoverTooltip { text: parent.text }
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: TwitchService.openUrl(root.mainLogin)
+                        }
+                    }
+                    Item {
+                        visible: root.user.usingFallback === true
+                        Layout.fillWidth: true
                     }
                 }
-                Item {
-                    visible: root.user.usingFallback === true
-                    Layout.fillWidth: true
-                }
-            }
 
-            RowLayout {
-                visible: root.user.online
-                width: parent.width
-                spacing: 4
+                RowLayout {
+                    visible: root.user.online
+                    width: parent.width
+                    spacing: 4
+
+                    UI.ColumnText {
+                        text: root.user.online ? root.user.viewers : ""
+                        color: root.user.online ? Theme.text : Theme.inactive
+                        Layout.preferredWidth: implicitWidth
+                        centerVertical: false
+                    }
+
+                    UI.ColumnText {
+                        text: "·"
+                        color: root.user.online ? Theme.text : Theme.inactive
+                        centerVertical: false
+                    }
+
+                    UI.ColumnText {
+                        text: root.user.online ? root.user.title : ""
+                        color: root.user.online ? Theme.text : Theme.inactive
+                        elide: Text.ElideMiddle
+                        Layout.fillWidth: true
+                        centerVertical: false
+                        UI.HoverTooltip { text: parent.text }
+                    }
+                }
 
                 UI.ColumnText {
-                    text: root.user.online ? root.user.viewers : ""
-                    color: root.user.online ? Theme.text : Theme.inactive
-                    Layout.preferredWidth: implicitWidth
-                    centerVertical: false
-                }
-
-                UI.ColumnText {
-                    text: "·"
-                    color: root.user.online ? Theme.text : Theme.inactive
-                    centerVertical: false
-                }
-
-                UI.ColumnText {
-                    text: root.user.online ? root.user.title : ""
-                    color: root.user.online ? Theme.text : Theme.inactive
-                    elide: Text.ElideMiddle
-                    Layout.fillWidth: true
+                    visible: !root.user.online && !!root.user.nextStream
+                    text: root.user.nextStream ?? ""
+                    color: Theme.inactive
+                    elide: Text.ElideRight
+                    width: parent.width
                     centerVertical: false
                     UI.HoverTooltip { text: parent.text }
                 }
             }
+        }
 
-            UI.ColumnText {
-                visible: !root.user.online && !!root.user.nextStream
-                text: root.user.nextStream ?? ""
-                color: Theme.inactive
-                elide: Text.ElideRight
-                width: parent.width
-                centerVertical: false
-                UI.HoverTooltip { text: parent.text }
+        Row {
+            id: controls
+            spacing: Theme.controlSpacing
+            anchors.verticalCenter: parent.verticalCenter
+
+            UI.ActionButton {
+                objectName: "editTwitchUser_" + root.mainLogin
+                glyph: Theme.editIcon
+                hint: Translations.text("twitch.actions.editHint")
+                enabled: TwitchService.usersReady
+                onClicked: root.editRequested(root.mainLogin)
             }
-        }
-    }
 
-    Row {
-        id: controls
-        spacing: Theme.controlSpacing
-        anchors.verticalCenter: parent.verticalCenter
-
-        UI.ActionButton {
-            objectName: "editTwitchUser_" + root.mainLogin
-            glyph: Theme.editIcon
-            hint: Translations.text("twitch.actions.editHint")
-            enabled: TwitchService.usersReady
-            onClicked: root.editRequested(root.mainLogin)
-        }
-
-        UI.ActionButton {
-            objectName: "removeTwitchUser_" + root.mainLogin
-            glyph: Theme.deleteIcon
-            hint: Translations.text("twitch.actions.removeHint")
-            fillColor: Theme.urgent
-            enabled: TwitchService.usersReady
-            onClicked: TwitchService.removeUser(root.mainLogin)
+            UI.ActionButton {
+                objectName: "removeTwitchUser_" + root.mainLogin
+                glyph: Theme.deleteIcon
+                hint: Translations.text("twitch.actions.removeHint")
+                fillColor: Theme.urgent
+                enabled: TwitchService.usersReady
+                onClicked: TwitchService.removeUser(root.mainLogin)
+            }
         }
     }
 }

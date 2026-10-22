@@ -4,8 +4,12 @@ import "../../ui" as UI
 import "../../theme"
 import "../../services"
 
-Item {
+Rectangle {
     id: root
+    radius: Theme.iconButtonRadius
+    color: rowHover.hovered ? Theme.alternateBackground : "transparent"
+
+    HoverHandler { id: rowHover }
     width: parent.width
     height: content.implicitHeight
 

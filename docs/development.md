@@ -202,6 +202,31 @@ Controls using `UI.PointerFocus` draw their keyboard ring through
 without clearing or restoring focus; the native control retains its keyboard
 navigation and activation behavior.
 
+`UI.Button` is the base for action and icon buttons; Copy, Audio and notification
+buttons specialize it through `ActionButton`. Every button family uses
+`UI.ButtonSurface` for hover, pressed, disabled, cursor and focus feedback. Qt's
+tab, checkbox and item-delegate controls retain their native semantics while
+using the same surface. Owners supply content, selection state, semantic icon
+colors and reference fills; they do not implement hover/pressed rectangles.
+Transparent idle fills receive a visible themed hover fill and a separate
+pressed fill. Feedback is immediate and does not add decorative animation.
+Collapsible headers stay transparent at rest, whether collapsed or expanded,
+and use the shared button surface for visible hover and pressed feedback.
+Twitch, update and timer rows use the same `alternateBackground` hover fill and
+corner radius as Recent Files rows.
+
+Button fill contrast is measured against the active theme's background after
+alpha compositing. The same contrast is reproduced against the actual parent
+surface, including adaptive bar/panel backgrounds and nested translucent cards.
+When necessary the tonal direction reverses to preserve foreground readability;
+if neither direction can do both, the readable active-palette fill is retained.
+`buttonSurfaceColor` marks surfaces painted by a sibling background; ordinary
+rectangle/control ancestors are composited automatically. The adaptive contrast
+scanner uses static palette colors supplied by the shared surface and excludes
+its derived action-label colors, preventing background/foreground binding loops.
+Run `bash tests/ui/buttons.sh` for dark/light calibration, all button families,
+transparent hover/press, disabled actions, nested cards and real profile buttons.
+
 `UI.CopyButton` shares TOTP-style copy feedback: a checkmark, active color and
 translated Copied tooltip for `Config.copyFeedbackDuration` milliseconds.
 Its `copyAction(completed)` operation reports success with `completed(true)`;

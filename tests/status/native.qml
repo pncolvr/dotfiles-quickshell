@@ -286,11 +286,14 @@ WorkerScope {
                     const week = root.find(picker, 'calendarWeek-' + Dates.key(panel.historyDate));
                     events.mouseClick(week, week.width / 2, week.height / 2);
                     root.check(!picker.visible && panel.period.days.length === 7, 'calendar row selects whole week and closes picker');
-                    events.mouseClick(choose, choose.width / 2, choose.height / 2);
-                    events.wait(30);
-                    week.forceActiveFocus();
-                    events.keyClick(Qt.Key_Return);
-                    root.check(!picker.visible && choose.activeFocus, 'keyboard selects whole week and restores period-control focus');
+                    for (const key of [Qt.Key_Return,Qt.Key_Enter,Qt.Key_Space]) {
+                        events.mouseClick(choose, choose.width / 2, choose.height / 2);
+                        events.wait(30);
+                        week.forceActiveFocus(Qt.TabFocusReason);
+                        events.keyClick(key);
+                        root.check(!picker.visible && choose.activeFocus,
+                            'keyboard key ' + key + ' selects whole week and restores period-control focus');
+                    }
                     root.find(panel,'statusHistoryKind').selected('month');
                     events.wait(30);
                     root.check(panel.period.days.length >= 28, 'month includes all days');

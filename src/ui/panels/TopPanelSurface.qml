@@ -112,6 +112,7 @@ Item {
             enabled: root.requestedVisible
             Item {
                 id: panel
+                readonly property color buttonSurfaceColor: root.backgroundColor
                 opacity: Math.min(presentation.fraction, presentation.contentOpacity)
                 width: presentation.layoutWidth
                 height: presentation.layoutHeight

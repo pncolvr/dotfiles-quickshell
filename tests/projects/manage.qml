@@ -7,8 +7,11 @@ import "../../src/modules/launcher"
 import "../../src/theme"
 import "../../src/services/launcher/Search.mjs" as Search
 
+import "../../src/config"
+
 WorkerScope {
     id: root
+    property var testConfig: Config
     property bool failed: false
     property int step: 0
     property int ticks: 0
@@ -98,7 +101,19 @@ WorkerScope {
                 root.checkFooter(false)
                 root.check(root.find("managedProjectName_" + root.projectPath).text.includes('<font color="' + Theme.accent + '">Pr</font>')
                     && root.plain(root.find("managedProjectName_" + root.projectPath).text) === "Project 60", "project name matches use the accent without altering text")
+                root.testConfig.pickerFuzzySearch = false
+                root.check(panel.managementView.filteredEntries.length === 0,"substring source search rejects pr60")
+                search.text = "Project 60"
+                root.step = 101
+                break
+            case 101:
+                root.checkFooter(false)
+                root.check(root.plain(root.find("managedProjectName_" + root.projectPath).text) === "Project 60"
+                    && root.find("managedProjectName_" + root.projectPath).text.includes("<font"),
+                    "substring project matches stay selected and highlighted")
+                root.testConfig.pickerFuzzySearch = true
                 search.text = "/p60"
+                root.step = 2
                 break
             case 2:
                 root.check(root.find("managedProjectPath_" + root.projectPath).visible

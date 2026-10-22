@@ -359,6 +359,14 @@ right. The thumb is centered in its strip and widens equally to both sides on
 hover, keeping 3 px corners. Its open-hand cursor closes while dragging.
 Growth and fading follow the shared motion policy.
 
+Buttons share their hover, pressed, disabled, cursor and focus feedback through
+`ButtonSurface`; action and icon buttons inherit `Button`. Transparent buttons
+use `selectionHoverBackground` on hover. Filled buttons derive their feedback
+from the active theme's fill colors. The rendered contrast against the theme's
+default background is retained on adaptive backgrounds and nested cards, with
+a readable palette fallback when the two contrast requirements cannot both fit.
+Existing semantic icon colors and copy-success colors remain unchanged.
+
 `config/Theme.qml` exposes one palette toggle:
 
 ```qml

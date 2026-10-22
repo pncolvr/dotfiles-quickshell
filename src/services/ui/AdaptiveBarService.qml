@@ -23,6 +23,9 @@ Singleton {
             // Check before reading opacity or children: visualizer updates must
             // not become dependencies of this contrast binding.
             if (!item || item.adaptiveContrastExcluded === true || !item.visible) return;
+            // Shared button surfaces contribute palette references; their
+            // derived labels are excluded to avoid background/foreground cycles.
+            if (item.adaptiveContrastColors) colors.push(...item.adaptiveContrastColors);
             const effectiveOpacity = opacity * item.opacity;
             // Read color only: editable/secret field contents are never inspected.
             // Deliberately dim workspace markers retain their decorative role.

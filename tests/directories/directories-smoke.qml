@@ -7,8 +7,11 @@ import Quickshell.Io
 import "../../src/services"
 import "../../src/modules/launcher"
 
+import "../../src/config"
+
 WorkerScope {
     id: root
+    property var testConfig: Config
     readonly property string directory: Quickshell.env("DIRECTORY_TEST_DIR")
     readonly property string folder: directory + "/home/banana folder"
     property int step: 0
@@ -182,6 +185,11 @@ WorkerScope {
                 root.check(PickerService.items.length === 1,"work directories hidden outside work")
                 root.find("directoryManageSearch").text = "cmptr"
                 root.check(panel.managementView.filteredEntries.length === 1 && panel.managementView.selectedEntry?.path === "computer:///","Manage uses shared fuzzy search")
+                root.testConfig.pickerFuzzySearch = false
+                root.check(panel.managementView.filteredEntries.length === 0,"substring Manage rejects skipped letters")
+                root.find("directoryManageSearch").text = "computer"
+                root.check(panel.managementView.filteredEntries.length === 1 && panel.managementView.selectedEntry?.path === "computer:///","substring Manage matches consecutive letters")
+                root.testConfig.pickerFuzzySearch = true
                 root.find("directoryManageSearch").clear()
                 root.find("directoryTabs").itemAt(0).clicked()
                 root.step = 6

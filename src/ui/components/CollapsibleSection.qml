@@ -11,9 +11,10 @@ QC.ItemDelegate {
     property bool expanded: false
     property bool forceExpanded: false
     property bool showChevron: true
+    property color fillColor: "transparent"
     property color chevronColor: Theme.inactive
     readonly property bool showingContent: expanded || forceExpanded
-    readonly property bool keyboardFocusVisible: pointerFocus.keyboardFocusVisible
+    readonly property bool keyboardFocusVisible: (background as UI.ButtonSurface)?.keyboardFocusVisible ?? false
     signal expansionRequested(bool expanded)
 
     function requestToggle() {
@@ -31,15 +32,11 @@ QC.ItemDelegate {
     onClicked: requestToggle()
     Keys.onReturnPressed: click()
     Keys.onEnterPressed: click()
-    UI.PointerFocus { id: pointerFocus }
-    UI.FocusReveal { owner: root }
-    HoverHandler { cursorShape: root.enabled ? Qt.PointingHandCursor : Qt.ArrowCursor }
 
-    background: Rectangle {
-        radius: Theme.iconButtonRadius
-        color: root.hovered || root.showingContent ? Theme.alternateBackground : "transparent"
-        border.width: root.keyboardFocusVisible ? 1 : 0
-        border.color: Theme.accent
+    background: UI.ButtonSurface {
+        id: surface
+        control: root
+        fillColor: root.fillColor
     }
     contentItem: Item {}
     UI.IconText {

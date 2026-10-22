@@ -245,13 +245,9 @@ Rectangle {
                     glyph: Theme.cancelIcon
                     foreground: hovered || down ? Theme.foregroundOn(Theme.notificationCritical) : Theme.accent
                     hint: Translations.text(root.popup ? "notifications.actions.dismissHint" : "notifications.actions.deleteEntryHint")
-                    background: Rectangle {
-                        radius: width / 2
-                        antialiasing: true
-                        color: dismissButton.down ? Qt.darker(Theme.notificationCritical, 1.2) : dismissButton.hovered ? Theme.notificationCritical : Theme.alternateBackground
-                        border.width: dismissButton.keyboardFocusVisible ? 1 : 0
-                        border.color: Theme.accent
-                    }
+                    cornerRadius: width / 2
+                    hoverColor: Theme.notificationCritical
+                    pressedColor: Qt.darker(Theme.notificationCritical, 1.2)
                     onClicked: NotificationService.dismiss(root.entry, !root.popup)
                 }
             }

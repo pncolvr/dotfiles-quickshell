@@ -124,16 +124,6 @@ Item {
 
                 visible: weekVisible || index === 0
 
-                Rectangle {
-                    anchors.fill: parent
-                    radius: Theme.calendarCellRadius
-                    visible: root.weekSelection
-                    color: Dates.key(root.selectedWeek) === Dates.key(weekRow.weekDate) ? Theme.selectionSelectedBackground
-                        : weekMouse.containsMouse ? Theme.selectionHoverBackground : "transparent"
-                    opacity: weekMouse.enabled ? 1 : 0.45
-                    border.width: weekMouse.activeFocus ? 1 : 0
-                    border.color: Theme.accent
-                }
                 Row {
                     spacing: Theme.calendarSpacing
                     UI.ColumnText {
@@ -147,7 +137,7 @@ Item {
 
                     Repeater {
                         model: 7
-                        delegate: Rectangle {
+                        delegate: UI.Button {
                             id: day
                             required property int index
                             property int dayNum: weekRow.firstDayOfWeek + index
@@ -160,11 +150,15 @@ Item {
 
                             width: Theme.calendarCellWidth
                             height: Theme.calendarCellHeight
-                            radius: Theme.calendarCellRadius
-                            color: root.dayBackground(style)
+                            cornerRadius: Theme.calendarCellRadius
+                            fillColor: root.dayBackground(style)
+                            focusPolicy: Qt.NoFocus
+                            enabled: valid && !root.weekSelection
+                            opacity: 1
+                            padding: 0
+                            onClicked: root.daySelected(day.date)
 
-                            UI.ColumnText {
-                                anchors.centerIn: parent
+                            contentItem: UI.ColumnText {
                                 text: day.valid ? day.dayNum : ""
                                 color: root.dayForeground(day.style, day.index >= 5)
                                 horizontalAlignment: Text.AlignHCenter
@@ -174,27 +168,24 @@ Item {
 
                             UI.HoverTooltip {
                                 enabled: day.valid && !root.weekSelection
-                                cursorShape: Qt.PointingHandCursor
+                                hoverTarget: day
                                 text: day.valid ? CalendarService.dayTooltip(day.date) : ""
                                 delay: Theme.calendarDayTooltipDelay
-                                onClicked: root.daySelected(day.date)
                             }
                         }
                     }
                 }
-                MouseArea {
+                UI.Button {
                     id: weekMouse
+                    z: -1
                     objectName: "calendarWeek-" + Dates.key(weekRow.weekDate)
                     anchors.fill: parent
                     visible: root.weekSelection
                     enabled: root.weekSelection && root.availableWeeks.includes(Dates.key(weekRow.weekDate))
-                    hoverEnabled: true
-                    cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
-                    activeFocusOnTab: enabled
+                    fillColor: Dates.key(root.selectedWeek) === Dates.key(weekRow.weekDate) ? Theme.selectionSelectedBackground : "transparent"
+                    cornerRadius: Theme.calendarCellRadius
+                    contentItem: Item {}
                     onClicked: root.weekSelected(weekRow.weekDate)
-                    Keys.onReturnPressed: root.weekSelected(weekRow.weekDate)
-                    Keys.onEnterPressed: root.weekSelected(weekRow.weekDate)
-                    Keys.onSpacePressed: root.weekSelected(weekRow.weekDate)
                 }
             }
         }

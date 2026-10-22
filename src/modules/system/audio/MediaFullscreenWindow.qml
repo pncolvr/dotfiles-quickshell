@@ -189,14 +189,9 @@ PanelWindow {
             foreground: hovered || down ? Theme.foregroundOn(Theme.notificationCritical) : Theme.accent
             hintAction: "cancel"
             hint: Translations.text("media.fullscreen.exitHint")
-            background: Rectangle {
-                radius: width / 2
-                antialiasing: true
-                color: closeButton.down ? Qt.darker(Theme.notificationCritical, 1.2)
-                    : closeButton.hovered ? Theme.notificationCritical : Theme.alternateBackground
-                border.width: closeButton.keyboardFocusVisible ? 1 : 0
-                border.color: Theme.accent
-            }
+            cornerRadius: width / 2
+            hoverColor: Theme.notificationCritical
+            pressedColor: Qt.darker(Theme.notificationCritical, 1.2)
             onClicked: root.dismiss()
         }
         Row {
