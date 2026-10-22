@@ -396,8 +396,11 @@ readonly property int statsTooltipWidth: tooltipWidth
 ```
 
 Changing `tooltipWidth` updates timers, stats and status panels together.
-Bar hover panels use their natural content height. Shared combobox menus can
-extend beyond a short panel within the existing window, bounded by the monitor.
+Bar hover panels use their natural content height. Their bottom padding matches
+the left and right padding (`tooltipPaddingWidth`,
+20 px by default); top padding uses `tooltipPaddingHeight` (10 px).
+Shared combobox menus can extend beyond a short panel within the existing window,
+bounded by the monitor.
 Only the open menu adds a clickable region outside the panel; closing it removes
 that region. Public and private panels retain their existing window ownership.
 The `tooltipMaxHeightRatio` and `tooltipCompactMaxHeightRatio` defaults group the 60%

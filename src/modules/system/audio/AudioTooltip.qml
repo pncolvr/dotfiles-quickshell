@@ -19,7 +19,7 @@ Column {
     readonly property var apps: input ? audioService.micApps : audioService.playbackApps
     readonly property var monitor: TooltipService.screen ?? (root.QsWindow.window as QsWindow)?.screen
     readonly property real maxPanelHeight: !input && tabs.currentIndex === 2
-        ? Math.max(0,(monitor?.height ?? 1080) - Theme.barHeight - Theme.tooltipPaddingHeight * 2
+        ? Math.max(0,(monitor?.height ?? 1080) - Theme.barHeight - Theme.tooltipPaddingHeight - Theme.tooltipPaddingWidth
             - (Theme.tooltipShadowEnabled ? Math.max(2,Math.min(64,Theme.tooltipShadowBlurRadius)) + Math.max(0,Theme.tooltipShadowVerticalOffset) : 0))
         : (monitor?.height ?? 1080) * Theme.audioTooltipMaxHeightRatio
     readonly property real listHeight: Math.max(0, maxPanelHeight - header.height - spacing

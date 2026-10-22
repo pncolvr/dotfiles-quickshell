@@ -18,7 +18,7 @@ TopPanelTooltip {
     TooltipPointerHandler { objectName: "tooltipPointerHandler"; tooltipWindow: root }
 
     contentWidth: keys.implicitWidth + Theme.tooltipPaddingWidth * 2
-    contentHeight: keys.implicitHeight + Theme.tooltipPaddingHeight * 2
+    contentHeight: keys.implicitHeight + Theme.tooltipPaddingHeight + Theme.tooltipPaddingWidth
     contentX: {
         const ideal = TooltipService.centered
             ? (width - contentWidth) / 2

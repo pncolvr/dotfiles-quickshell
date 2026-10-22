@@ -40,7 +40,8 @@ WorkerScope {
         requestedVisible: root.privateCase && TooltipService.visible
         readonly property var loadedContent: privateLoader.item
         contentWidth: 380
-        contentHeight: ((privateLoader.item as Item)?.implicitHeight ?? 0) + Theme.tooltipPaddingHeight * 2
+        contentHeight: ((privateLoader.item as Item)?.implicitHeight ?? 0)
+            + Theme.tooltipPaddingHeight + Theme.tooltipPaddingWidth
         Loader {
             id: privateLoader
             active: privateHost.visible

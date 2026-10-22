@@ -33,7 +33,7 @@ Item {
             + spacing) / (rowWidth + spacing))))
     readonly property real maximumHeight: Math.max(0, Math.min(
         (TooltipService.screen?.height ?? 1080) * Theme.twitchTooltipMaxHeightRatio,
-        (TooltipService.screen?.height ?? 1080) - Theme.barHeight - Theme.tooltipPaddingHeight * 2))
+        (TooltipService.screen?.height ?? 1080) - Theme.barHeight - Theme.tooltipPaddingHeight - Theme.tooltipPaddingWidth))
     readonly property real fixedHeight: divider.height + editor.height + spacing * 2
         + (hasSuggestions ? spacing : 0)
         + (hasUndo ? undoHeader.height + spacing * 2 : 0)

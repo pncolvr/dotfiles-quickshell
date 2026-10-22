@@ -28,7 +28,7 @@ PrivateTooltipWindow {
     contentWidth: Math.max(1, Math.min(Theme.notificationManagerWidth, targetScreen?.width || 560))
     contentHeight: Math.min(720, Math.max(1, (targetScreen?.height || 1080) - Theme.barHeight - 20),
         header.height + (tab === "History" ? history.implicitHeight : settings.implicitHeight)
-            + Theme.tooltipPaddingHeight * 2 + 12)
+            + Theme.tooltipPaddingHeight + Theme.tooltipPaddingWidth + 12)
 
     focusPanel: content
     UI.PanelFocusScope {
@@ -87,7 +87,7 @@ PrivateTooltipWindow {
             x: 0
             y: header.y + header.height + 12
             width: parent.width
-            height: Math.max(0, parent.height - y - Theme.tooltipPaddingHeight)
+            height: Math.max(0, parent.height - y - Theme.tooltipPaddingWidth)
             visible: root.tab === "History"
             clip: true
             contentWidth: width

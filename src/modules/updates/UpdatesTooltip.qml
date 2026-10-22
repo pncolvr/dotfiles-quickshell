@@ -25,7 +25,7 @@ Column {
     }
     readonly property var monitor: TooltipService.screen ?? (root.QsWindow.window as QsWindow)?.screen
     readonly property real maxPanelHeight: Math.max(0, Math.min((monitor?.height ?? 1080) * Theme.updatesTooltipMaxHeightRatio,
-        (monitor?.height ?? 1080) - Theme.barHeight - Theme.tooltipPaddingHeight * 2))
+        (monitor?.height ?? 1080) - Theme.barHeight - Theme.tooltipPaddingHeight - Theme.tooltipPaddingWidth))
     width: Math.min(Theme.updatesTooltipWidth, (monitor?.width ?? Theme.updatesTooltipWidth + Theme.tooltipPaddingWidth * 2)
         - Theme.tooltipPaddingWidth * 2)
     spacing: Theme.controlSpacing

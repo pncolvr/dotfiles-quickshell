@@ -15,7 +15,7 @@ Column {
     property string expandedDay: ""
     readonly property var monitor: TooltipService.screen ?? (root.QsWindow.window as QsWindow)?.screen
     readonly property real maxPanelHeight: Math.max(0, Math.min((monitor?.height ?? 1080) * Theme.statusTooltipMaxHeightRatio,
-        (monitor?.height ?? 1080) - Theme.barHeight - Theme.tooltipPaddingHeight * 2))
+        (monitor?.height ?? 1080) - Theme.barHeight - Theme.tooltipPaddingHeight - Theme.tooltipPaddingWidth))
     readonly property bool managing: tabs.currentIndex === 3
     readonly property bool history: tabs.currentIndex === 2
     property string historyKind: "week"
