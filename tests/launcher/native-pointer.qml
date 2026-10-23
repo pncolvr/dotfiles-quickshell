@@ -19,6 +19,7 @@ WorkerScope {
     property string phase: "open"
     property double phaseStarted: 0
     property var savedPosition: null
+    property int baselineChecks: 0
     property bool failed: false
     readonly property bool traceFocus: Quickshell.env("POINTER_TEST_TRACE") === "1"
     function trace() {
@@ -77,6 +78,8 @@ WorkerScope {
         // qmllint disable signal-handler-parameters
         onExited: (code,status) => {
             if (code || status) { root.fail("cursor placement failed"); return }
+            root.savedPosition = null
+            root.baselineChecks = 0
             root.phase = "baseline"
             cursor.running = true
         }
@@ -92,8 +95,17 @@ WorkerScope {
             let point
             try { point = JSON.parse(position.text) } catch (_) { root.fail("invalid cursor response"); return }
             if (root.phase === "baseline") {
-                root.savedPosition = point
-                root.openCurrent()
+                if (root.savedPosition && point.x === root.savedPosition.x && point.y === root.savedPosition.y)
+                    root.baselineChecks++
+                else {
+                    root.savedPosition = point
+                    root.baselineChecks = 1
+                }
+                if (root.baselineChecks >= 2) root.openCurrent()
+                else {
+                    root.phase = "baseline-wait"
+                    root.phaseStarted = Date.now()
+                }
                 return
             }
             if (point.x !== root.savedPosition.x || point.y !== root.savedPosition.y) { root.fail("launcher moved the pointer from " + JSON.stringify(root.savedPosition) + " to " + JSON.stringify(point)); return }
@@ -150,6 +162,9 @@ WorkerScope {
                 root.phase = "place"
                 placeCursor.command = ["hyprctl","dispatch",`hl.dsp.cursor.move({ x = ${Math.round(monitor.x + screen.width / 2)}, y = ${Math.round(monitor.y + screen.height * 0.85)} })`]
                 placeCursor.running = true
+            } else if (root.phase === "baseline-wait" && Date.now() - root.phaseStarted >= 100) {
+                root.phase = "baseline"
+                cursor.running = true
             } else if (root.phase === "mapped" && Date.now() - root.phaseStarted >= 220) {
                 root.phase = "verify"
                 cursor.running = true
