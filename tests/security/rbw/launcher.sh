@@ -54,7 +54,7 @@ assert_empty "$test_dir/error"
 
 printf '%s\n' '{"prompt":"Fill login on example.test","private":true,"showPrompt":true,"allowTyped":false,"items":[{"title":"Same | name","result":"first"},{"title":"Same | name","result":"second"}]}' > "$test_dir/options.json"
 bash "$picker" --json "$test_dir/options.json" > "$test_dir/result" 2> "$test_dir/error" & client_pid=$!
-wait_state '.visible and .privateWindow and .forcePrompt and (.prompt | contains("example.test"))'
+wait_state '.visible and .privateWindow and .placeholder == "Fill login on example.test" and (.prompt | contains("example.test"))'
 ipc submit; wait_client 0
 [[ $(<"$test_dir/result") == first ]]; assert_empty "$test_dir/error"
 for signal in TERM KILL; do

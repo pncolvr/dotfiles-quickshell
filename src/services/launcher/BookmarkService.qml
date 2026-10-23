@@ -28,7 +28,7 @@ Singleton {
         BrowserRoutingService.cancel()
         callback = rows => root.launch(rows)
         PickerService.promptMenu("", [], callback, "list", {
-            allowMultipleSelection: true, allowTyped: true, acceptLabel: Translations.text("bookmarks.actions.open")
+            promptKey: "bookmarks", allowMultipleSelection: true, allowTyped: true, acceptLabel: Translations.text("bookmarks.actions.open")
         })
         if(Config.bookmarkFile.trim()) {
             source.reload()

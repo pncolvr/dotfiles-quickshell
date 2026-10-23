@@ -18,6 +18,7 @@ Singleton {
     }
     function input(text = "") {
         PickerService.promptMenu(Translations.text("qr.fields.text"), [], rows => root.encode(rows[0].result), "list", {
+            promptKey: "qr",
             allowTyped: true, keepOpen: true, query: text, acceptLabel: Translations.text("qr.actions.generate")
         })
     }
@@ -30,6 +31,7 @@ Singleton {
         const callback = () => {}
         previewCallback = callback
         PickerService.promptMenu(Translations.text("qr.fields.text"), [], callback, "list", {
+            promptKey: "qr",
             allowTyped: true, keepOpen: true, query: text, busy: true,
             acceptLabel: Translations.text("qr.actions.generate"),
             onClosed: () => {
@@ -78,6 +80,7 @@ Singleton {
             AlertService.post("encode-qrcode", Translations.text("qr.status.copied"), "success", 3000)
             previewCallback = () => {}
             PickerService.promptMenu("", [{title: Translations.text("qr.title"), result: "close", image: response.image}], previewCallback, "list", {
+            promptKey: "qr",
                 imageOnly: true, keepOpen: true, acceptLabel: Translations.text("common.actions.close"), onClosed: () => root.release(operation)
             })
             break

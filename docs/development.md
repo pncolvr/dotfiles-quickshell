@@ -183,6 +183,10 @@ layout or width. Run `bash tests/launcher/manage-layout.sh` for selection, filte
 draft context, form rendering, Work dirty-state controls and motion/sharing
 checks. Set `MANAGE_PREVIEWS=/tmp/manage-previews` to save synthetic previews.
 
+`bash tests/launcher/prompts.sh` checks configurable picker placeholders, stage
+titles, translated collection names, live overrides, and the absence of duplicate
+prompt rows. Private menus use the same placeholder path.
+
 Vault UI uses feature-owned `VaultEntryList`, `VaultEntryDetails` and
 `VaultEntryEditor` components. `VaultPanel` coordinates selection and editing;
 `RbwService` owns vault operations. Inputs use the shared `UI.SecretField` and

@@ -74,18 +74,18 @@ Singleton {
             operation.query = state.query
             operation.selectedResult = rows[0].result
             chooseMode(operation)
-        }, {previewImages: true, query: operation.query, selectedResult: operation.selectedResult,
+        }, {promptKey: "wallpaper", previewImages: true, query: operation.query, selectedResult: operation.selectedResult,
             selectionKey: "wallpaper.image", acceptLabel: Translations.text("common.actions.choose")})
     }
     function chooseMode(operation) {
         if (!Config.workModeEnabled) { chooseMonitor(operation, "personal"); return }
         menu(operation, Translations.text("wallpaper.mode.title"), [{title: Translations.text("status.modes.personal"), result: "personal"}, {title: Translations.text("status.modes.work"), result: "work"}],
             rows => chooseMonitor(operation, rows[0].result),
-            {selectionKey: "wallpaper.mode", acceptLabel: Translations.text("wallpaper.actions.chooseMode")}, true)
+            {promptKey: "wallpaperMode", selectionKey: "wallpaper.mode", acceptLabel: Translations.text("wallpaper.actions.chooseMode")}, true)
     }
     function chooseMonitor(operation, mode) {
         menu(operation, Translations.text("wallpaper.monitor.title"), [], rows => apply(operation, rows[0].result, mode),
-            {selectionKey: "wallpaper.monitor", acceptLabel: Translations.text("wallpaper.actions.apply")}, true)
+            {promptKey: "wallpaperMonitor", selectionKey: "wallpaper.monitor", acceptLabel: Translations.text("wallpaper.actions.apply")}, true)
         const callback = operation.callback
         operation.job = run([], (success, output) => {
             if (session !== operation || operation.callback !== callback) return

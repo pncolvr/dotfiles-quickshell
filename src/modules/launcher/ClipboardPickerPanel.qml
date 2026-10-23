@@ -9,7 +9,7 @@ import "../../config"
 
 PreviewPickerPanel {
     id: root
-    searchPlaceholder: Translations.text("clipboard.search.placeholder")
+    searchPlaceholder: PickerPrompts.text("clipboard", "clipboard.search.placeholder")
     panelError: picker.error || ClipboardService.error
     minimumRowHeight: Theme.clipboardRowHeight
     readonly property bool imagesOnly: picker.itemCriteria.kind === "image"

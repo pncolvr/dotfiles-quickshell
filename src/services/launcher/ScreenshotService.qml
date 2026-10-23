@@ -22,8 +22,8 @@ Singleton {
         if (!method) {
             choosing = true
             CaptureHandoffService.begin(root)
-            CaptureMenuService.promptMenu("", ["ocr", "output", "qrcode", "region", "window"].map(method => ({title:Translations.text("screenshot.modes."+method),result:method})),
-                rows => root.open(rows[0].result), "list", {
+            CaptureMenuService.promptMenu(Translations.text("screenshot.search.placeholder"), ["ocr", "output", "qrcode", "region", "window"].map(method => ({title:Translations.text("screenshot.modes."+method),result:method})),
+                rows => root.open(rows[0].result), "list", {promptKey: "screenshot",
                     onClosed: reason => {
                         root.choosing = false
                         if (reason !== "accepted" && !root.busy) CaptureHandoffService.end(root)

@@ -21,7 +21,7 @@ Scope {
         const current = {options: {}, callback: null, task: null, waiter: null}
         operation = current
         CaptureHandoffService.begin(root)
-        menu(current, Translations.text("recording.setup.capture"), ["output", "region", "window"].map(mode => ({title:Translations.text("recording.modes."+mode),result:mode})), rows => {
+        menu(current, "recordingCapture", ["output", "region", "window"].map(mode => ({title:Translations.text("recording.modes."+mode),result:mode})), rows => {
             current.options.capture = rows[0].result
             switch (current.options.capture) {
               case "output": chooseOutput(current); break
@@ -41,10 +41,14 @@ Scope {
         cancelled()
     }
     function fail(message) { cancel(); failed(message) }
-    function menu(current, title, rows, callback) {
+    function menu(current, promptKey, rows, callback) {
         if (operation !== current) return
         current.callback = callback
-        CaptureMenuService.promptMenu(title, rows, callback, "list", {
+        const defaults = {recordingCapture: "recording.setup.capture", recordingOutput: "recording.setup.output",
+            recordingFramerate: "recording.setup.framerate", recordingAudio: "recording.setup.audio",
+            recordingAudioOutput: "recording.setup.audioOutput", recordingMicrophone: "recording.setup.microphone"}
+        CaptureMenuService.promptMenu(Translations.text(defaults[promptKey]), rows, callback, "list", {
+            promptKey,
             keepOpen: true,
             onClosed: reason => { if (root.operation === current && current.callback === callback && reason !== "accepted") root.cancel() }
         })
@@ -60,7 +64,7 @@ Scope {
         process.running = true
     }
     function chooseOutput(current) {
-        menu(current, Translations.text("recording.setup.output"), [], rows => { current.options.output = rows[0].result; chooseFramerate(current) })
+        menu(current, "recordingOutput", [], rows => { current.options.output = rows[0].result; chooseFramerate(current) })
         run(current, ["hyprctl", "monitors", "-j"], (ok, output) => {
             if (!ok) { fail(Translations.text("recording.errors.outputs")); return }
             try {
@@ -114,9 +118,9 @@ Scope {
         }, window ? regions.join("\n") + "\n" : "")
     }
     function chooseFramerate(current) {
-        menu(current, Translations.text("recording.setup.framerate"), ["60", "30", "15"].map(title => ({title})), rows => {
+        menu(current, "recordingFramerate", ["60", "30", "15"].map(title => ({title})), rows => {
             current.options.fps = Number(rows[0].result)
-            menu(current, Translations.text("recording.setup.audio"), ["none", "both", "desktop", "mic"].map(mode => ({title:Translations.text("recording.audio."+mode),result:mode})), rows => {
+            menu(current, "recordingAudio", ["none", "desktop", "mic", "both"].map(mode => ({title:Translations.text("recording.audio."+mode),result:mode})), rows => {
                 current.options.audio = rows[0].result
                 switch (current.options.audio) {
                   case "none": finish(current); break
@@ -127,7 +131,7 @@ Scope {
         })
     }
     function chooseDevice(current, kind) {
-        menu(current, Translations.text(kind === "sinks" ? "recording.setup.audioOutput" : "recording.setup.microphone"), [], rows => {
+        menu(current, kind === "sinks" ? "recordingAudioOutput" : "recordingMicrophone", [], rows => {
             const selected = rows[0]
             switch (kind) {
               case "sinks":

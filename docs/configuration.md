@@ -319,6 +319,32 @@ Private entry URLs, selected profile IDs and launch hooks are managed in Webapps
 saved in SQLite rather than Config. Webapps has no legacy-file reader or import
 settings; add and edit entries through Manage.
 
+## Picker prompts
+
+`Config.pickerPrompts` is a dictionary of search placeholders. Values can be
+translation keys (the supplied defaults) or literal text, including an empty
+string. A missing or `null` value keeps the built-in default; `menu` uses the
+caller or stage title and falls back to Search when the title is empty.
+Recording menus use descriptive placeholders such as Choose what to record
+and Choose a frame rate. Dedicated pickers use contextual Search/Filter text,
+including Search bookmarks, Search applications, and Search browsing history.
+There is no separate prompt row or forced-title setting.
+
+Keys cover `applications`, `windows`, `clipboard`, `images`, `projects`,
+`projectUrls`, `directories`, `webapps`, `remotes`, `n8n`, `bookmarks`, `history`,
+`browserRouting`, `expose`, `vault`, `power`, `qr`, `screenshot`, and `wallpaper`.
+Manage views use `projectsManage`, `directoriesManage`, `webappsManage`,
+`remotesManage`, `n8nManage`, and `browserRoutingManage`. Collection defaults
+use `%1` for the translated collection name. Wallpaper stages have `wallpaperMode`
+and `wallpaperMonitor`; recording stages have `recordingCapture`, `recordingOutput`,
+`recordingFramerate`, `recordingAudio`, `recordingAudioOutput`, and
+`recordingMicrophone`. Secret password dialogs keep their credential title and
+masked input; they are not search menus.
+
+For example, `clipboard: "Find copied text"` customizes Clipboard without
+changing the other pickers. Internal menus may supply `options.promptKey` to
+select a configured entry; external menus set their own `prompt` as before.
+
 ## Theme defaults
 
 Webapps, n8n, Remotes, Projects and Directories share `Theme.pickerHeight`

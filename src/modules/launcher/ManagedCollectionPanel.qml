@@ -11,6 +11,7 @@ ManagedPickerFrame {
     id: root
     required property var service
     required property string collectionName
+    required property string searchPromptKey
     property Component listActionButtons: null
     property alias managementToolbarContent: manage.toolbarContent
     property alias detailActionContent: detailActions.data
@@ -92,7 +93,7 @@ ManagedPickerFrame {
         backgroundVisible: root.backgroundVisible
         visible: !root.managing
         actionButtons: root.listActionButtons
-        searchPlaceholder: Translations.text("collections.search", [root.collectionName.toLowerCase()])
+        searchPlaceholder: PickerPrompts.text(root.searchPromptKey, "collections.search", [root.collectionName.toLowerCase()])
         hintOverrides: ({manage: {sequence: Config.pickerManageShortcut}, workFilter: {sequence: Config.pickerShowAllShortcut}})
         hintPanel: root.listHintPanel
         hintActions: ["manage", "search"].concat(StatusService.enabled ? ["workFilter"] : []).concat(root.listHintActions)
@@ -112,7 +113,7 @@ ManagedPickerFrame {
         searchObjectName: 'collectionManageSearch'
         hintOverrides: ({add: {sequence: Config.pickerAddShortcut}, manage: {sequence: Config.pickerManageShortcut, label: Translations.text("hints.list")}})
         addObjectName: 'addCollectionEntry'
-        searchPlaceholder: Translations.text("collections.manage.search",[root.collectionName.toLowerCase()])
+        searchPlaceholder: PickerPrompts.text(root.searchPromptKey + "Manage", "collections.manage.search", [root.collectionName.toLowerCase()])
         addHint: Translations.text("collections.actions.addHint",[Config.pickerAddShortcut])
         message: root.managementMessage
         refreshHintEnabled: root.refreshHintEnabled

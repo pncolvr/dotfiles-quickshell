@@ -17,7 +17,7 @@ Singleton {
         {title: Translations.text("power.actions.bios"), glyph: Theme.powerBiosIcon, result: "Bios"}
     ]
     function open() {
-        PickerService.promptMenu(Translations.text("common.actions.choose"), actions, picked => root.execute(picked[0].result), "grid")
+        PickerService.promptMenu(Translations.text("common.actions.choose"), actions, picked => root.execute(picked[0].result), "grid", {promptKey: "power"})
     }
     function execute(action) {
         if (!actions.some(item => item.result === action)) return false

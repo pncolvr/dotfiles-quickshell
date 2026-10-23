@@ -64,7 +64,7 @@ ManagedPickerFrame {
         y: root.contentTop; width: parent.width; height: root.listHeight
         picker: root.picker; backgroundVisible: root.backgroundVisible
         visible: !root.managing
-        searchPlaceholder: Translations.text("directories.search.placeholder")
+        searchPlaceholder: PickerPrompts.text("directories", "directories.search.placeholder")
         hintOverrides: ({manage: {sequence: Config.directoryManageShortcut}, workFilter: {sequence: Config.directoryShowAllShortcut}})
         hintPanel: "directories"
         hintActions: ["manage", "search"].concat(StatusService.enabled ? ["workFilter"] : [])
@@ -83,7 +83,7 @@ ManagedPickerFrame {
         searchObjectName: "directoryManageSearch"
         hintOverrides: ({add: {sequence: Config.directoryAddShortcut}, manage: {sequence: Config.directoryManageShortcut, label: Translations.text("hints.list")}})
         addObjectName: "beginAddDirectory"
-        searchPlaceholder: Translations.text("directories.manage.searchPlaceholder")
+        searchPlaceholder: PickerPrompts.text("directoriesManage", "directories.manage.searchPlaceholder")
         addHint: Translations.text("directories.actions.addShortcutHint",[Config.directoryAddShortcut])
         message: DirectoryService.error
         onEditRequested: root.edit(root.selectedEntry)

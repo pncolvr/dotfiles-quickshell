@@ -208,6 +208,7 @@ run isolated directories bash tests/directories/directories.sh
 run isolated hyprland/capture-sync bash tests/hyprland/capture-sync.sh
 run isolated hyprland/windows bash tests/hyprland/windows.sh
 run isolated launcher/bridge bash tests/launcher/launcher.sh
+run isolated launcher/prompts bash tests/launcher/prompts.sh
 run isolated launcher/providers bash tests/launcher/providers.sh
 run isolated launcher/provider-config bash tests/launcher/provider-config.sh
 run isolated launcher/bookmarks bash tests/launcher/bookmarks.sh

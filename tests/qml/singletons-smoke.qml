@@ -34,6 +34,7 @@ Services.WorkerScope {
                 ["RecordingService",Services.RecordingService,Recording.RecordingService],
                 ["PowerService",Services.PowerService,SystemServices.PowerService],
                 ["BookmarkService",Services.BookmarkService,Launcher.BookmarkService],
+                ["PickerPrompts",Services.PickerPrompts,Launcher.PickerPrompts],
                 ["CaptureHandoffService",Services.CaptureHandoffService,ServicesUi.CaptureHandoffService],
                 ["ScreenshotService",Services.ScreenshotService,Launcher.ScreenshotService],
                 ["QrEncodeService",Services.QrEncodeService,Launcher.QrEncodeService],

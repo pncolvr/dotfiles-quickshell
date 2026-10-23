@@ -181,7 +181,43 @@ Item {
         clipboard: null,
         windows: null
     })
-    readonly property bool pickerShowPrompt: true
+    // Search placeholders: translation keys or literal text; null uses the menu title.
+    readonly property var pickerPrompts: ({
+        menu: null,
+        applications: "applications.search.placeholder",
+        windows: "windows.search.placeholder",
+        clipboard: "clipboard.search.placeholder",
+        images: "images.search.placeholder",
+        projects: "projects.search.placeholder",
+        projectUrls: "projects.urls.searchPlaceholder",
+        projectsManage: "projects.manage.searchPlaceholder",
+        directories: "directories.search.placeholder",
+        directoriesManage: "directories.manage.searchPlaceholder",
+        webapps: "collections.search",
+        webappsManage: "collections.manage.search",
+        remotes: "collections.search",
+        remotesManage: "collections.manage.search",
+        n8n: "collections.search",
+        n8nManage: "collections.manage.search",
+        bookmarks: "bookmarks.search.placeholder",
+        history: "browser.routing.historySearchPlaceholder",
+        browserRouting: "collections.search",
+        browserRoutingManage: "collections.manage.search",
+        expose: "expose.search.placeholder",
+        vault: "vault.search.placeholder",
+        power: "power.prompt",
+        qr: "qr.fields.text",
+        screenshot: "screenshot.search.placeholder",
+        wallpaper: "images.search.placeholder",
+        wallpaperMode: "wallpaper.mode.title",
+        wallpaperMonitor: "wallpaper.monitor.title",
+        recordingCapture: "recording.prompts.capture",
+        recordingOutput: "recording.prompts.output",
+        recordingFramerate: "recording.prompts.framerate",
+        recordingAudio: "recording.prompts.audio",
+        recordingAudioOutput: "recording.prompts.audioOutput",
+        recordingMicrophone: "recording.prompts.microphone"
+    })
     readonly property bool pickerFuzzySearch: false
     // Only mixed-case queries are case sensitive; lowercase and uppercase ignore case.
     readonly property bool pickerSmartCase: true

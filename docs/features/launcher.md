@@ -23,8 +23,9 @@ focus cannot be recovered by the launcher.
 Legacy JSON `movePointer` fields are ignored and dmenu `--keep-pointer` remains
 accepted for compatibility; callers cannot enable pointer movement.
 Input-only prompts reserve no empty list row.
-Picker headers contain search. Prompt titles are hidden by
-default; set `Config.pickerShowPrompt` to `true` to display them below search.
+Picker prompts appear as search placeholders, without a separate title row.
+`Config.pickerPrompts` configures these strings; dedicated pickers retain their
+existing search text and generic menus use their caller or stage title.
 `Theme.pickerBackgroundOpacity` controls background transparency (0–1), keeping
 text and controls opaque. Escape dismisses the picker.
 The list keeps its opening size while filtering or deleting entries, so the
@@ -1045,7 +1046,8 @@ private reply FIFO; only public prompt metadata is written to disk. Cancellation
 timeout and client death clear the field. The Bash helpers `secret_prompt.sh` and
 `pinentry-rbw` connect this UI to rbw; secret replies are decoded from stdin with
 jq and streamed to stdout without putting the password in command arguments.
-JSON menus can set `showPrompt: true` to always display their destination label.
+JSON menus use `prompt` as the search placeholder, including private login menus.
+The legacy `showPrompt` field is ignored.
 See [rbw integration](rbw.md) for setup, limitations and cross-repository tests.
 
 ## Private windows and vault manager

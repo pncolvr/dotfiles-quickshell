@@ -1,6 +1,7 @@
 # Local type metadata; parent exports refer to the same QML files.
 ClipboardSearchSession 1.0 ClipboardSearchSession.qml
 singleton PickerService 1.0 PickerService.qml
+singleton PickerPrompts 1.0 PickerPrompts.qml
 singleton BookmarkService 1.0 BookmarkService.qml
 singleton QrEncodeService 1.0 QrEncodeService.qml
 singleton WallpaperService 1.0 WallpaperService.qml

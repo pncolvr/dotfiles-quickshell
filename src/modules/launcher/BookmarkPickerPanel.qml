@@ -23,6 +23,7 @@ Item {
     }
     MultiSelectPickerPanel {
         id:list
+        searchPlaceholder: PickerPrompts.text(BookmarkService.tab === 1 ? "history" : "bookmarks", BookmarkService.tab === 1 ? "browser.routing.historySearchPlaceholder" : "bookmarks.search.placeholder")
         y:tabs.height+Theme.controlSpacing; width:parent.width; height:parent.height-y
         picker:root.picker; backgroundVisible:root.backgroundVisible
         uniformRows:BookmarkService.tab===1
@@ -54,6 +55,7 @@ Item {
     }
     ManagedCollectionPanel {
         id:manager
+        searchPromptKey: "browserRouting"
         objectName:'browserRoutingManager'
         y:tabs.height+Theme.controlSpacing; width:parent.width; height:parent.height-y
         picker:root.picker; backgroundVisible:root.backgroundVisible; visible:BookmarkService.tab===2

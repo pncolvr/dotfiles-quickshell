@@ -50,7 +50,6 @@ sed -E -i 's/readonly property bool pickerFuzzySearch: (true|false)/property boo
 sed -Ei 's/readonly property int clipboardMaxItems: [0-9]+/readonly property int clipboardMaxItems: 3/' "$test_dir/src/config/Config.qml"
 sed -Ei 's/readonly property int clipboardMaxTotalBytes: [0-9]+/readonly property int clipboardMaxTotalBytes: 24/' "$test_dir/src/config/Config.qml"
 sed -i 's/readonly property bool clipboardMonitorEnabled: true/readonly property bool clipboardMonitorEnabled: false/' "$test_dir/src/config/Config.qml"
-sed -i 's/readonly property bool pickerShowPrompt: false/readonly property bool pickerShowPrompt: true/' "$test_dir/src/config/Config.qml"
 node - "$test_dir/src/config/Config.qml" "$test_dir/wallpapers" "$test_dir/saved-wallpapers" <<'JSCONFIG'
 const fs = require('fs'), [file, images, saved] = process.argv.slice(2);
 let source = fs.readFileSync(file,'utf8');
@@ -626,6 +625,6 @@ if [[ -n $placement_display ]]; then
     rg -q 'PASS: picker placement' "$test_dir/placement-log" || { cat "$test_dir/placement-log"; exit 1; }
     ! rg -q 'PICKER FAIL|TypeError:|ReferenceError:|Binding loop detected|Failed to load configuration' "$test_dir/placement-log" \
         || { cat "$test_dir/placement-log"; exit 1; }
-    printf 'PASS: hidden native picker placement keeps search height fixed across picker modes, filtering and visible prompts\n'
+    printf 'PASS: hidden native picker placement keeps search height fixed across picker modes, filtering and prompt placeholders\n'
 fi
 printf 'PASS: real Bash/QML IPC, object results, multi-selection, keyboard navigation, typed input, Escape, custom exit and cleanup\n'

@@ -112,7 +112,7 @@ Item {
                 anchors.rightMargin: Theme.controlSpacing
                 retainPanelWhileEditing: false
                 enabled: !root.editing && !root.deleting
-                placeholderText: Translations.text("vault.search.placeholder")
+                placeholderText: PickerPrompts.text("vault", "vault.search.placeholder")
                 onTextChanged: { root.query = text; root.selectFirst() }
                 Keys.onPressed: event => {
                     if (event.key === Qt.Key_Down) { list.currentIndex = Math.min(root.rows.length - 1, list.currentIndex + 1); event.accepted = true }

@@ -21,7 +21,13 @@ Rectangle {
     readonly property bool inputOnly: picker.mode === PickerService.Mode.Menu && picker.allowTyped && picker.items.length === 0
     readonly property var modulePointerTarget: search
     readonly property bool searchHasFocus: search.activeFocus
-    property string searchPlaceholder: inputOnly ? picker.prompt : Translations.text("common.actions.search")
+    property string searchPlaceholder: {
+        if (picker.mode === PickerService.Mode.Apps)
+            return PickerPrompts.text("applications", "applications.search.placeholder")
+        if (picker.mode === PickerService.Mode.Windows)
+            return PickerPrompts.text("windows", "windows.search.placeholder")
+        return PickerPrompts.text(picker.promptKey || "menu", picker.prompt || "common.actions.search")
+    }
     property string panelError: picker.error
     property real minimumRowHeight: 0
     property int minimumListRows: 1
@@ -157,15 +163,6 @@ Rectangle {
                 }
             }
             Loader { width: parent.width; height: (item as Item)?.implicitHeight ?? 0; visible: !root.inputOnly || sourceComponent !== null; sourceComponent: root.searchControls }
-            UI.Text {
-                centerVertical: false
-                width: parent.width
-                height: visible ? Theme.controlHeight : 0
-                visible: (Config.pickerShowPrompt || root.picker.forcePrompt) && root.picker.prompt.length > 0
-                verticalAlignment: Text.AlignVCenter
-                text: root.picker.prompt
-                textFormat: Text.PlainText
-            }
             UI.Text {
                 centerVertical: false
                 width: parent.width

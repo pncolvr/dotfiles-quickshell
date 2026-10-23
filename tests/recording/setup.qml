@@ -39,6 +39,10 @@ WorkerScope {
             && CaptureMenuService.prompt === title && CaptureMenuService.items.length > 0
             && panel.Window.active && !!driver.find(panel, "pickerSearch")?.activeFocus, () => {
                 check(CaptureMenuService.requestDirectory === "" && !!CaptureMenuService.menuCallback, "choices never use a shell request")
+                const prompts = {"Capture":"Choose what to record", "Output":"Choose a display to record",
+                    "Framerate":"Choose a frame rate", "Audio":"Choose audio to record",
+                    "Audio output":"Choose an audio output", "Microphone":"Choose a microphone"}
+                check(driver.find(panel, "pickerSearch").placeholderText === prompts[title], "recording placeholder describes the choice")
             })
     }
     function choose(result) {
@@ -66,7 +70,7 @@ WorkerScope {
     }
     function audio(mode) {
         choose("60"); menu("Audio")
-        driver.add("audio order", () => check(CaptureMenuService.items.map(item => item.result).join(",") === "none,both,desktop,mic", "audio order unchanged"))
+        driver.add("audio order", () => check(CaptureMenuService.items.map(item => item.result).join(",") === "none,desktop,mic,both", "combined audio is last"))
         choose(mode)
     }
     function device(kind, other = false) {

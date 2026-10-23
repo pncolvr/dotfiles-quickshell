@@ -6,6 +6,7 @@ import "../../theme"
 import "../../ui" as UI
 
 ManagedCollectionPanel {
+    searchPromptKey: "n8n"
     listHintPanel: "n8n"
     filterBrowser: true
     id: root

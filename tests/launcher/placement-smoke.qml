@@ -50,6 +50,8 @@ WorkerScope {
         check(popup.anchors.top && Math.abs(popup.contentX - (popup.width - popup.contentWidth) / 2) < 0.01,
             "picker is top anchored and horizontally centered")
         check(position.y === Theme.tooltipPaddingHeight, "search stays directly below the bar")
+        check(search.placeholderText === (PickerService.mode === PickerService.Mode.Clipboard ? "Search clipboard" : "Visible test prompt"),
+            "dedicated pickers keep their search text and menu titles become placeholders")
         check(popup.contentWidth > 0 && popup.contentHeight > 0, "picker has content geometry")
         check(popup.backgroundOpacity === Theme.pickerBackgroundOpacity, "tooltip shape preserves picker transparency")
         check(!popup.visible && !PickerService.visible, "placement test never displays or focuses a picker")

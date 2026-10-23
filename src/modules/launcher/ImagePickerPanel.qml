@@ -7,7 +7,7 @@ PreviewPickerPanel {
     id: root
     previewKind: "wallpaper"
     previewRequired: true
-    searchPlaceholder: Translations.text("images.search.placeholder")
+    searchPlaceholder: PickerPrompts.text(root.picker.promptKey || "images", "images.search.placeholder")
     showThumbnails: false
     panelError: picker.error || ClipboardService.error
     hintPanel: "wallpaper"

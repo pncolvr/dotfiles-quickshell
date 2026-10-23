@@ -17,7 +17,7 @@ Scope {
     property bool privateRequest: false
     readonly property bool privateWindow: privateRequest || mode === PickerService.Mode.Secret
     property string prompt: ""
-    property bool forcePrompt: false
+    property string promptKey: ""
     property bool previewImages: false
     property bool imageOnly: false
     property string secretDescription: ""
@@ -127,7 +127,7 @@ Scope {
         acceptLabel = Translations.text(actionKey)
         layout = "list"; multiple = false; allowTyped = false; customAccept = false
         error = ""; destination = ""; destinationClass = ""; selectionKey = ""
-        forcePrompt = false; previewImages = false; secretDescription = ""; privateRequest = false
+        promptKey = ""; previewImages = false; secretDescription = ""; privateRequest = false
         imageOnly = false
         targetScreen = chooseScreen()
     }
@@ -145,6 +145,7 @@ Scope {
     }
     function promptMenu(title, rows, callback, presentation = "list", options = {}) {
         begin(PickerService.Mode.Menu, title, options.keepOpen === true)
+        promptKey = options.promptKey ?? ""
         menuKeepOpen = options.keepOpen === true
         menuKeepOpenOnCancel = options.keepOpenOnCancel === true
         menuBusy = options.busy === true
@@ -604,7 +605,6 @@ Scope {
             root.privateRequest = request.private === true
             root.requestDirectory = directory
             root.prompt = request.prompt || Translations.text("common.actions.choose")
-            root.forcePrompt = request.showPrompt === true
             root.previewImages = request.previewImages === true
             root.imageOnly = request.kind === "image"
             if (request.kind === "secret") {

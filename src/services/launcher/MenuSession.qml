@@ -16,7 +16,7 @@ QtObject {
     property string layout: "list"
     property string error: ""
     property string acceptLabel: Translations.text("common.actions.select")
-    readonly property bool forcePrompt: false
+    property string promptKey: ""
     readonly property bool previewImages: false
     readonly property bool imageOnly: false
     readonly property bool allowTyped: false
@@ -38,6 +38,7 @@ QtObject {
     function menuRows(rows) { return Services.PickerService.menuRows(rows) }
     function promptMenu(title, rows, callback, presentation = "list", options = {}) {
         close("replaced", options.keepOpen === true)
+        promptKey = options.promptKey ?? ""
         prompt = title; query = ""; error = ""; currentIndex = 0
         layout = presentation; items = menuRows(rows)
         menuCallback = callback; menuClosedCallback = options.onClosed ?? null

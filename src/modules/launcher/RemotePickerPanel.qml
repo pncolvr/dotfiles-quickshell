@@ -6,6 +6,7 @@ import "../../theme"
 import "../../ui" as UI
 
 ManagedCollectionPanel {
+    searchPromptKey: "remotes"
     listHintPanel: "remotes"
     managementTypes: [{name:'ssh',description:Translations.text("remotes.type.sshTerminal")},{name:'remote',description:Translations.text("remotes.type.sshTunnel")},{name:'vm',description:Translations.text("remotes.type.virtualMachine")}]
     id: root

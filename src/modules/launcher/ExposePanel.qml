@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import "../../i18n"
+import "../../services"
 import QtQuick
 import "../../theme"
 import "../../ui" as UI
@@ -122,7 +123,7 @@ FocusScope {
             anchors.left: parent.left
             anchors.bottom: parent.bottom
             width: root.searchWidth
-            placeholderText: Translations.text("expose.search.placeholder")
+            placeholderText: PickerPrompts.text("expose", "expose.search.placeholder")
             retainPanelWhileEditing: false
             resetWithTooltip: false
             handleEscape: false

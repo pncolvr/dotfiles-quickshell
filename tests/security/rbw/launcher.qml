@@ -27,7 +27,7 @@ WorkerScope {
                 revealed: panel.panel?.secretRevealed ?? false,
                 valueIntact: input?.text === Quickshell.env("RBW_TEST_SECRET"),
                 privateWindow: PickerService.privateWindow,
-                query: PickerService.query, forcePrompt: PickerService.forcePrompt, prompt: PickerService.prompt,
+                query: PickerService.query, placeholder: (objects.findChild(panel.panel, "pickerSearch") as UI.SearchField)?.placeholderText ?? "", prompt: PickerService.prompt,
                 preferences: PickerService.selectionKey, directory: PickerService.requestDirectory})
         }
         function typeSecret(): void { root.field().text = Quickshell.env("RBW_TEST_SECRET") }

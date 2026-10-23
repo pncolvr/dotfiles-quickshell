@@ -133,7 +133,7 @@ ManagedPickerFrame {
         picker: root.picker
         backgroundVisible: root.backgroundVisible
         visible: !ProjectService.managing
-        searchPlaceholder: Translations.text(ProjectService.urls ? "projects.urls.searchPlaceholder" : "projects.search.placeholder")
+        searchPlaceholder: PickerPrompts.text(ProjectService.urls ? "projectUrls" : "projects", ProjectService.urls ? "projects.urls.searchPlaceholder" : "projects.search.placeholder")
         searchKeyHandler: root.handlePickerKey
         hintOverrides: ({manage: {sequence: Config.projectManageShortcut}, workFilter: {sequence: Config.projectShowAllShortcut}})
         hintPanel: "projects"
@@ -159,7 +159,7 @@ ManagedPickerFrame {
         refreshHintEnabled: !ProjectService.busy && ProjectService.sources.length > 0
         hintOverrides: ({add: {sequence: Config.projectAddShortcut}, manage: {sequence: Config.projectManageShortcut, label: Translations.text("hints.list")}})
         addObjectName: "beginAddProjectSource"
-        searchPlaceholder: Translations.text("projects.manage.searchPlaceholder")
+        searchPlaceholder: PickerPrompts.text("projectsManage", "projects.manage.searchPlaceholder")
         addHint: Translations.text("projects.actions.addHint",[Config.projectAddShortcut])
         message: ProjectService.busy ? Translations.text("projects.status.scanning") : ProjectService.error
         onEditRequested: root.editSource(root.selectedSource.path)
