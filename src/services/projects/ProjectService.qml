@@ -17,13 +17,14 @@ Singleton {
     property var draft: null
     property var pathStates: ({})
     property bool pathCheckPending: false
-    readonly property bool checkingPaths: pathCheck.running
+    property bool scanPending: false
+    readonly property bool checkingPaths: pathCheck.running === true
     signal sourceAdded()
     signal saved(string path)
     signal sourcePathResolved(string path)
     enum Operation { None, Add, Refresh, Edit, Discard }
     property int operation: ProjectService.Operation.None
-    readonly property bool busy: scan.running
+    readonly property bool busy: scanPending || scan.running === true
     readonly property var sources: ProjectRepository.sources
     readonly property var projects: ProjectRepository.projects
     readonly property var availableProjects: projects.filter(project => StatusService.includesCategory(project.category,showAll,Config.projectWorkStatus))
@@ -172,6 +173,7 @@ Singleton {
         try { fileExtensions = Launchers.extensions(Config.projectApps) }
         catch (exception) { error = Translations.message(exception); PickerService.error = error; return false }
         error = ""; operation = action
+        scanPending = true
         scan.input = JSON.stringify({sources:scanSources,sshConfig:Config.projectSshConfig,
             fileExtensions,fileExclusions:Config.projectFileExclusions,dotfilesGitDirectory:Config.projectDotfilesGitDirectory,
             dotfilesWorkTree:Config.projectDotfilesWorkTree}) + "\n"
@@ -309,7 +311,12 @@ Singleton {
         // qmllint disable signal-handler-parameters
         onExited: (exitCode, exitStatus) => {
             stdinEnabled = true
-            if (exitCode !== 0 || exitStatus !== 0) { root.error = errors.text.trim() || Translations.text("projects.errors.scan"); root.syncPicker(); return }
+            if (exitCode !== 0 || exitStatus !== 0) {
+                root.error = errors.text.trim() || Translations.text("projects.errors.scan")
+                root.syncPicker()
+                root.scanPending = false
+                return
+            }
             try {
                 const results = JSON.parse(output.text).sources
                 switch (root.operation) {
@@ -363,6 +370,7 @@ Singleton {
                 }
             } catch (error) { root.error = Translations.message(error) || String(error) }
             root.syncPicker()
+            root.scanPending = false
         }
         // qmllint enable signal-handler-parameters
     }
