@@ -257,12 +257,21 @@ WorkerScope {
                     const populatedDay = panel.period.days.find(day => day.blocks.length > 0);
                     const disclosure = root.find(panel, 'statusDay_' + populatedDay.date) as UI.CollapsibleSection;
                     const chevron = root.find(disclosure, 'collapsibleChevron') as UI.IconText;
-                    const dayLabel = disclosure.parent.children.find(item => item instanceof UI.ColumnText);
+                    const dayLabel = root.find(disclosure, 'statusDayLabel');
+                    const dayTotals = root.find(disclosure, 'statusDayTotals');
+                    const labelPosition = dayLabel.mapToItem(disclosure, 0, 0);
                     root.check(!!disclosure && !disclosure.showingContent && chevron.x === disclosure.padding,
                         'status day uses a collapsed left-side shared disclosure');
-                    root.check(dayLabel.x >= chevron.x + chevron.width
-                        && dayLabel.x + dayLabel.width <= disclosure.width,
+                    root.check(labelPosition.x >= chevron.x + chevron.width
+                        && labelPosition.x + dayLabel.width <= disclosure.width,
                         'status day label leaves room for its left chevron');
+                    root.check(dayLabel.parent === disclosure.contentItem && dayTotals.parent === disclosure.contentItem
+                        && dayLabel.text.length > 0 && dayTotals.text.length > 0
+                        && disclosure.contentItem.z > disclosure.background.z,
+                        'status day label and totals render above hover and press backgrounds');
+                    events.mouseMove(disclosure, disclosure.width / 2, disclosure.height / 2);
+                    root.check(disclosure.hovered, 'status day hover feedback is active');
+                    root.preview('day-disclosure-hover');
                     disclosure.forceActiveFocus(Qt.TabFocusReason);
                     events.keyClick(Qt.Key_Space);
                     root.check(panel.expandedDay === populatedDay.date && disclosure.showingContent,

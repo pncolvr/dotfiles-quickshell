@@ -293,46 +293,45 @@ Column {
                     readonly property bool expanded: root.expandedDay === modelData.date
                     readonly property real total: modelData.work + modelData.personal
 
-                    Item {
+                    UI.CollapsibleSection {
+                        id: dayToggle
+                        objectName: "statusDay_" + day.modelData.date
                         width: parent.width
                         height: Theme.controlHeight
-                        UI.ColumnText {
-                            anchors.left: parent.left
-                            anchors.leftMargin: dayToggle.leftPadding
-                            anchors.verticalCenter: parent.verticalCenter
-                            width: Math.min(implicitWidth, Math.max(0, dayTotals.x - x - Theme.controlSpacing))
-                            elide: Text.ElideRight
-                            text: new Date(day.modelData.date + "T12:00:00").toLocaleDateString(Translations.locale, root.weekly ? "dddd" : root.ranged ? "yyyy-MM-dd" : "dddd yyyy-MM-dd")
-                            HoverHandler {
-                                id: dateHover
-                                cursorShape: day.modelData.blocks.length ? Qt.PointingHandCursor : Qt.ArrowCursor
+                        padding: 0
+                        chevronColor: enabled ? Theme.inactive : Theme.empty
+                        expanded: day.expanded
+                        enabled: day.modelData.blocks.length > 0
+                        Accessible.name: day.modelData.date
+                        onExpansionRequested: expanded => root.expandedDay = expanded ? day.modelData.date : ""
+                        contentItem: Item {
+                            UI.ColumnText {
+                                objectName: "statusDayLabel"
+                                anchors.left: parent.left
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: Math.min(implicitWidth, Math.max(0, dayTotals.x - x - Theme.controlSpacing))
+                                elide: Text.ElideRight
+                                text: new Date(day.modelData.date + "T12:00:00").toLocaleDateString(Translations.locale, root.weekly ? "dddd" : root.ranged ? "yyyy-MM-dd" : "dddd yyyy-MM-dd")
+                                HoverHandler {
+                                    id: dateHover
+                                    cursorShape: day.modelData.blocks.length ? Qt.PointingHandCursor : Qt.ArrowCursor
+                                }
+                                UI.HoverTooltip {
+                                    enabled: root.weekly
+                                    hoverTarget: dateHover
+                                    text: day.modelData.date
+                                }
                             }
-                            UI.HoverTooltip {
-                                enabled: root.weekly
-                                hoverTarget: dateHover
-                                text: day.modelData.date
+                            UI.ColumnText {
+                                id: dayTotals
+                                objectName: "statusDayTotals"
+                                anchors.right: parent.right
+                                anchors.rightMargin: Theme.controlSpacing
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: Timecard.duration(day.modelData.work) + " / " + Timecard.duration(day.modelData.personal)
+                                color: Theme.inactive
+                                UI.HoverTooltip { text: Translations.text("status.report.legend") }
                             }
-                        }
-                        UI.ColumnText {
-                            id: dayTotals
-                            anchors.right: parent.right
-                            anchors.rightMargin: dayToggle.rightPadding + Theme.controlSpacing
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: Timecard.duration(day.modelData.work) + " / " + Timecard.duration(day.modelData.personal)
-                            color: Theme.inactive
-                            UI.HoverTooltip { text: Translations.text("status.report.legend") }
-                        }
-                        UI.CollapsibleSection {
-                            id: dayToggle
-                            objectName: "statusDay_" + day.modelData.date
-                            anchors.fill: parent
-                            padding: 0
-                            chevronColor: enabled ? Theme.inactive : Theme.empty
-                            expanded: day.expanded
-                            enabled: day.modelData.blocks.length > 0
-                            Accessible.name: day.modelData.date
-                            contentItem: Item {}
-                            onExpansionRequested: expanded => root.expandedDay = expanded ? day.modelData.date : ""
                         }
                     }
                     Rectangle {

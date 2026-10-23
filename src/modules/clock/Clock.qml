@@ -20,24 +20,41 @@ TooltipArea {
   Component { id: yearComp; YearTooltip {} }
 
   tooltip: Component {
-    Column {
-      spacing: Theme.calendarSpacing
-      ColumnText {
-        width: calendar.width
-        visible: text.length > 0
-        text: CalendarService.clockChangeNotice
-        wrapMode: Text.WordWrap
+    Item {
+      readonly property bool footerInGutter: legend.visible
+      width: calendarBody.width
+      height: calendarBody.height + (legend.visible ? Theme.tooltipPaddingWidth : 0)
+      // The last date row already has space below its digits. Include that in
+      // the legend's gutter so the visible gap is balanced above and below.
+      FontMetrics {
+        id: dateMetrics
+        font.family: Theme.fontFamily
+        font.pixelSize: Theme.fontSize
+        font.bold: Theme.fontBold
+        font.styleName: Theme.fontStyle
+        font.weight: Theme.fontWeight
       }
-      Loader {
-        id: calendar
-        sourceComponent: {
-          switch (root.viewMode) {
-            case Clock.View.Month: return monthComp
-            case Clock.View.Year: return yearComp
+      Column {
+        id: calendarBody
+        spacing: Theme.calendarSpacing
+        ColumnText {
+          width: calendar.width
+          visible: text.length > 0
+          text: CalendarService.clockChangeNotice
+          wrapMode: Text.WordWrap
+        }
+        Loader {
+          id: calendar
+          sourceComponent: {
+            switch (root.viewMode) {
+              case Clock.View.Month: return monthComp
+              case Clock.View.Year: return yearComp
+            }
           }
         }
       }
       ColumnText {
+        id: legend
         objectName: "calendarColorLegend"
         readonly property var view: calendar.item
         readonly property date today: new Date(TimeService.time)
@@ -49,6 +66,10 @@ TooltipArea {
           .some(event => root.viewMode === Clock.View.Year || Number(event.eve.slice(5, 7)) === view.displayMonth + 1)
         width: calendar.width
         visible: text.length > 0
+        anchors.bottom: parent.bottom
+        height: Math.max(Theme.tooltipPaddingWidth, implicitHeight)
+          + Math.max(0, (Theme.calendarCellHeight - dateMetrics.height) / 2 + dateMetrics.descent)
+        verticalAlignment: Text.AlignVCenter
         font.pixelSize: Theme.fontSize - 1
         horizontalAlignment: Text.AlignHCenter
         textFormat: Text.RichText

@@ -62,7 +62,19 @@ WorkerScope {
                         events.mouseClick(clock, clock.width / 2, clock.height / 2, Qt.RightButton)
                         return
                     case 21: {
+                        const legend = root.find(root.clockPanel, "calendarColorLegend")
+                        root.check(root.clockPanel.footerInGutter && legend.height > Math.max(Theme.tooltipPaddingWidth, legend.implicitHeight),
+                            "calendar legend shares the date row bottom space with the gutter")
+                        root.check(legend.verticalAlignment === Text.AlignVCenter
+                            && legend.horizontalAlignment === Text.AlignHCenter,
+                            "calendar legend centers text within its gutter")
+                        root.check(legend.y + legend.height === root.clockPanel.height,
+                            "calendar legend ends at the bottom of the content")
                         const view = root.calendarView(root.clockPanel)
+                        const calendarBottom = view.mapToItem(root.clockPanel,0,view.height).y
+                        root.check(legend.y < calendarBottom
+                            && root.clockPanel.height - calendarBottom === Theme.tooltipPaddingWidth,
+                            "legend centers across existing date padding and the bottom gutter")
                         root.check(clock.viewMode === Clock.View.Year && view && view.displayMonth === undefined,
                             "right click opens actual annual tooltip")
                         root.check(root.find(root.clockPanel, "calendarColorLegend").showClockChangeEve,
@@ -88,6 +100,11 @@ WorkerScope {
                         return
                     }
                     case 23: {
+                        if (Quickshell.env("CALENDAR_PREVIEWS")) {
+                            month.visible = false
+                            events.grabImage(root.clockPanel).save(Quickshell.env("CALENDAR_PREVIEWS") + "/calendar.png")
+                            month.visible = true
+                        }
                         root.calendarView(root.clockPanel).displayMonth = 10
                         return
                     }
@@ -114,6 +131,7 @@ WorkerScope {
                         const legend = root.find(root.clockPanel, "calendarColorLegend")
                         root.check(!legend.showHolidays && !legend.showClockChangeEve && !legend.visible,
                             "July without holidays or clock changes hides all hints")
+                        root.check(!root.clockPanel.footerInGutter, "hidden calendar legend retains normal bottom padding")
                         root.clockPanel.destroy()
                         clock.visible = false
                         root.step = 10
