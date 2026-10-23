@@ -21,7 +21,7 @@ Item {
         onActivated: root.accept()
     }
     implicitWidth: Theme.pickerWidth
-    implicitHeight: content.implicitHeight + Theme.tooltipPaddingWidth * 2
+    implicitHeight: content.implicitHeight + Theme.tooltipPaddingWidth + footer.height
 
     function focusSearch() { secret.forceActiveFocus() }
     function clearSecret() {
@@ -70,15 +70,6 @@ Item {
             textFormat: Text.PlainText
             wrapMode: Text.Wrap
         }
-        UI.Text {
-            centerVertical: false
-            width: parent.width
-            visible: text.length > 0
-            text: root.picker.error
-            color: Theme.warning
-            textFormat: Text.PlainText
-            wrapMode: Text.Wrap
-        }
         UI.SecretField {
             id: secret
             objectName: "secretInput"
@@ -115,11 +106,16 @@ Item {
                     copyAction: completed => { root.actions.copy(secret.text, completed); root.focusSearch() }
                 }
             }
-            UI.ShortcutHints {
-                width: parent.width
-                panelKey: "default"
-                availableActions: []
-            }
         }
+    }
+    UI.PanelFooter {
+        id: footer
+        objectName: "secretFooter"
+        x: Theme.tooltipPaddingWidth
+        width: parent.width - Theme.tooltipPaddingWidth * 2
+        anchors.bottom: parent.bottom
+        message: root.picker.error
+        panelKey: "default"
+        hintsEnabled: !!root.actions
     }
 }

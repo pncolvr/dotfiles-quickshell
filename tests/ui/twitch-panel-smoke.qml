@@ -67,12 +67,9 @@ WorkerScope {
     readonly property TotpTooltip totpPanel: totpWindow.loadedContent as TotpTooltip
     readonly property UI.SearchField totpSearch: root.totpPanel
         ? objects.findChild(root.totpPanel, "totpSearchField") as UI.SearchField : null
-    onTotpSearchChanged: if (totpSearch) totpSearch.readOnly = true
     readonly property TwitchTooltip panel: window.loadedContent as TwitchTooltip
     readonly property UI.SearchField search: root.panel
         ? objects.findChild(root.panel, "twitchSearchField") as UI.SearchField : null
-    // Keep real desktop typing from changing the fixture between assertions.
-    onSearchChanged: if (search) search.readOnly = true
     IpcHandler {
         target: "twitchpaneltest"
         function showDesktopFixture(): void { desktopFixture.visible = true }
@@ -99,12 +96,14 @@ WorkerScope {
                 pinned: TooltipService.pinned, adding: root.totpPanel?.adding ?? false,
                 text: root.totpSearch?.text ?? "", pointerTarget: {x: pos.x, y: pos.y}})
         }
-        function typeTotp(text: string): void {
-            if (!root.totpSearch) return
-            root.totpSearch.readOnly = false
+        function typeTotp(text: string): bool {
+            if (!root.totpSearch?.activeFocus || !totpWindow.nativeWindow?.active) return false
             root.totpSearch.clear()
-            for (const character of text) events.keyClickChar(character, Qt.NoModifier, 0)
-            root.totpSearch.readOnly = true
+            for (const character of text) {
+                if (!root.totpSearch.activeFocus || !totpWindow.nativeWindow.active
+                    || !events.keyClickChar(character, Qt.NoModifier, 0)) return false
+            }
+            return root.totpSearch.activeFocus && totpWindow.nativeWindow.active
         }
         function beginTotpAdd(): void { if (root.totpPanel) root.totpPanel.adding = true }
         function snapshotVolume(): string {
@@ -124,12 +123,14 @@ WorkerScope {
         function hoverVolumeEdge(): bool { return events.mouseMove(volume, volume.width / 2, 1, 0, Qt.NoButton, Qt.NoModifier) }
         function leaveBar(): bool { return events.mouseMove(testBar.contentItem, 1, 15, 0, Qt.NoButton, Qt.NoModifier) }
         function hoverTrayEdge(): bool { return events.mouseMove(tray, 1, 1, 0, Qt.NoButton, Qt.NoModifier) }
-        function type(text: string): void {
-            if (!root.search) return
-            root.search.readOnly = false
+        function type(text: string): bool {
+            if (!root.search?.activeFocus || !window.nativeWindow?.active) return false
             root.search.clear()
-            for (const character of text) events.keyClickChar(character, Qt.NoModifier, 0)
-            root.search.readOnly = true
+            for (const character of text) {
+                if (!root.search.activeFocus || !window.nativeWindow.active
+                    || !events.keyClickChar(character, Qt.NoModifier, 0)) return false
+            }
+            return root.search.activeFocus && window.nativeWindow.active
         }
         function pressEscape(): bool { return events.keyClick(Qt.Key_Escape, Qt.NoModifier, 0) }
         function dismiss(): void { TooltipService.dismiss() }

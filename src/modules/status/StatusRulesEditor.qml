@@ -57,11 +57,4 @@ Column {
         label: Translations.text("status.rules.processesLabel")
         inputObjectName: 'statusProcessPatterns'
     }
-    UI.ColumnText {
-        width: parent.width
-        text: root.statusService.rulesError ?? ''
-        visible: !!text
-        color: Theme.urgent
-        wrapMode: Text.Wrap
-    }
 }

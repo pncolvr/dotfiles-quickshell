@@ -125,5 +125,4 @@ Column {
     UI.CheckBox { id:process; objectName:'browserRouteOnlyWhenRunning'; enabled:!root.readOnly; visible:operation.selectedName==='command'; text:Translations.text('browser.routing.process') }
     UI.LabeledField { id:workspace; visible:['browser','command'].includes(operation.selectedName); width:parent.width; readOnly:root.readOnly; label:Translations.text('browser.routing.workspace'); onAccepted:root.accepted() }
     UI.CheckBox { id:enabledBox; enabled:!root.readOnly; text:Translations.text('common.states.enabled') }
-    UI.ColumnText { width:parent.width; text:root.parseError; visible:!!text; color:Theme.urgent; wrapMode:Text.Wrap }
 }

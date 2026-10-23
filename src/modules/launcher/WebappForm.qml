@@ -56,5 +56,4 @@ Column {
         UI.LabeledField { readOnly: root.readOnly; onAccepted: root.accepted(); id:before; width:parent.width; label:Translations.text("webapps.fields.before") }
         UI.LabeledField { readOnly: root.readOnly; onAccepted: root.accepted(); id:after; width:parent.width; label:Translations.text("webapps.fields.after") }
     }
-    UI.ColumnText { width:parent.width; text:root.parseError; visible:!!text; color:Theme.urgent; wrapMode:Text.Wrap }
 }

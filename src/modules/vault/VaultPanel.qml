@@ -278,36 +278,16 @@ Item {
         width: parent.width - Theme.tooltipPaddingWidth * 2
         anchors.bottom: parent.bottom
         spacing: Theme.controlSpacing
-        Item {
-            id: footerFeedback
+        UI.PanelFooter {
+            objectName: "vaultFormHints"
             width: parent.width
-            height: Math.max(formHints.visible ? Math.max(Theme.controlHeight, formHints.implicitHeight) : 0, status.visible ? Math.max(Theme.controlHeight, status.implicitHeight) : 0)
-            UI.ShortcutHints {
-                id: formHints
-                objectName: "vaultFormHints"
-                width: parent.width
-                height: parent.height
-                visible: !status.visible && text.length > 0
-                panelKey: root.editing ? "editing" : "vault"
-                availableActions: root.deleting ? [] : root.editing ? ["save"] : ["search", "add", "refresh", "vault.lock"]
-                    .concat(root.editable && root.detailReady ? ["edit"] : [])
-                actionOverrides: ({refresh: {label: Translations.text("hints.sync")}})
-            }
-            UI.Text {
-                id: status
-                objectName: "vaultStatus"
-                anchors.verticalCenter: parent.verticalCenter
-                anchors.right: parent.right
-                width: parent.width
-                centerVertical: false
-                font.pixelSize: Theme.fontSize - 1
-                textFormat: Text.PlainText
-                horizontalAlignment: Text.AlignRight
-                wrapMode: Text.WordWrap
-                visible: text.length > 0
-                text: (RbwService.busy && !RbwService.selecting) || root.detailBusyShown ? Translations.text("common.status.working") : RbwService.error || root.notice
-                color: RbwService.error ? Theme.warning : Theme.inactive
-            }
+            message: (RbwService.busy && !RbwService.selecting) || root.detailBusyShown
+                ? Translations.text("common.status.working") : RbwService.error || root.notice
+            messageColor: RbwService.error ? Theme.warning : Theme.inactive
+            panelKey: root.editing ? "editing" : "vault"
+            availableActions: root.deleting ? [] : root.editing ? ["save"] : ["search", "add", "refresh", "vault.lock"]
+                .concat(root.editable && root.detailReady ? ["edit"] : [])
+            actionOverrides: ({refresh: {label: Translations.text("hints.sync")}})
         }
     }
 }

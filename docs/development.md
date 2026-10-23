@@ -160,6 +160,20 @@ shortcut/action groups, omitting the centered dot at a line boundary. Only when
 one group exceeds the available width may its description wrap; its keybind
 stays intact. Do not insert forced line breaks in hint translations or override
 wrapping in individual panels. Font size and panel width stay unchanged.
+`UI.PanelFooter` places hints in the bottom gutter, with a minimum height of
+`Theme.scrollbarGutter` and extra height only when the hint groups need more
+lines. Panels with their own footer expose `footerInGutter: true`; tooltip hosts
+then reuse that strip instead of adding another bottom padding band.
+Transient feedback replaces the hints for eight seconds, capped at ten seconds
+by the component. Expiry changes only presentation: services retain their error
+and operation state. Changed messages restart the display; hidden panels stop
+the timer and reopening gives a retained message a fresh bounded display.
+Messages are centered horizontally and vertically, rendered as plain text, and
+elided to one line; their full text is available on hover. Confirmation text and
+per-entry diagnostics remain with the action or entry they describe.
+Run `bash tests/ui/panel-footer.sh` for gutter geometry, replacement/expiry,
+hint restoration, hintless feedback, hidden-panel cleanup, and duration limits.
+
 Footer hints are an ordered selection of less obvious options from
 `Config.panelHints`. Keep translations in the catalogs and actual bindings in
 `Config.keybinds`; Config contains only the selected IDs, not hint text or key

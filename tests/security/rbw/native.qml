@@ -16,6 +16,7 @@ WorkerScope {
     property int step: 0
     property bool accepted: false
     property bool focusRoundtrip: false
+    property bool helperPresented: false
     readonly property bool helperActive: helperWindow.contentItem.Window.active
     Test.TestEvent { id: events }
     function find(item, name) {
@@ -57,11 +58,22 @@ WorkerScope {
             target: helperWindow.contentItem.Window.window
             function onFrameSwapped() {
                 if (root.step !== 6) return
-                helperInput.forceActiveFocus()
-                root.moveTestPointer(helperInput)
-                Hyprland.dispatch('hl.dsp.focus({ window = "title:^Quickshell synthetic focus check$" })')
-                root.step = 7
+                root.helperPresented = true
             }
+        }
+    }
+    IpcHandler {
+        target: "rbwnativetest"
+        function snapshot(): string {
+            return JSON.stringify({step:root.step, helperPresented:root.helperPresented,
+                helperActive:root.helperActive, helperFocus:helperInput.activeFocus,
+                pickerVisible:PickerService.visible, pickerActive:pickerWindow.windowActive})
+        }
+        function helperReady(): bool {
+            if (root.step !== 6 || !root.helperPresented) return false
+            helperInput.forceActiveFocus()
+            root.step = 7
+            return true
         }
     }
     Process {
@@ -141,7 +153,7 @@ WorkerScope {
             if (!input || !button || pickerWindow.contentX <= 0) { root.fail(); return }
             if (root.step === 6) return
             if (root.step === 7) {
-                if (!root.helperActive || pickerWindow.windowActive) return
+                if (!root.helperActive || !helperInput.activeFocus || pickerWindow.windowActive) return
                 helperEvents.keyClick(Qt.Key_A, Qt.NoModifier, 0)
                 helperEvents.keyClick(Qt.Key_Escape, Qt.NoModifier, 0)
                 if (helperInput.text !== "a" || !PickerService.visible || input.text !== "NATIVE_RBW_SYNTHETIC") {

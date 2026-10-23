@@ -159,7 +159,7 @@ Item {
         }
         Row {
             width: parent.width
-            height: Math.max(0, content.height - y - (feedback.visible ? feedback.height + content.spacing : 0))
+            height: Math.max(0, content.height - y)
             spacing: Theme.controlSpacing * 2
             ListView {
                 id: list
@@ -230,20 +230,11 @@ Item {
                 }
             }
         }
-        UI.ColumnText {
-            id: feedback
-            width: parent.width
-            visible: !!root.message
-            text: root.message
-            textFormat: Text.PlainText
-            color: Theme.warning
-            wrapMode: Text.Wrap
-            font.pixelSize: Theme.fontSize - 1
-        }
     }
-    UI.ShortcutHints {
+    UI.PanelFooter {
         id: footerHints
         objectName: "managementHints"
+        message: root.message
         x: Theme.projectManagePadding
         width: parent.width - Theme.projectManagePadding * 2
         anchors.bottom: parent.bottom

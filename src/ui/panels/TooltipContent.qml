@@ -10,6 +10,7 @@ UI.PanelFocusScope {
     property bool hideForCapture: loadedContent?.hideForCapture ?? false
     property Component retainedContent: null
     readonly property var loadedContent: loader.item
+    readonly property real bottomPadding: loadedContent?.footerInGutter === true ? 0 : Theme.tooltipPaddingWidth
     implicitWidth: loader.implicitWidth
     implicitHeight: loader.implicitHeight
     panel: loader.item

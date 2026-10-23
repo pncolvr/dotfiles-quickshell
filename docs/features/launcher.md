@@ -28,6 +28,11 @@ Picker prompts appear as search placeholders, without a separate title row.
 existing search text and generic menus use their caller or stage title.
 `Theme.pickerBackgroundOpacity` controls background transparency (0–1), keeping
 text and controls opaque. Escape dismisses the picker.
+Hints occupy the bottom gutter. Picker and Manage feedback temporarily replaces
+them in warning color, centered in the same strip, for eight seconds. The hints
+return afterward without clearing the underlying service error. Long feedback
+is elided, with its full text on hover. Credential titles and action confirmations
+keep their existing roles.
 The list keeps its opening size while filtering or deleting entries, so the
 dialog and footer stay in place.
 `PickerPanelBase` shares layout, search and navigation. `ClipboardPickerPanel`

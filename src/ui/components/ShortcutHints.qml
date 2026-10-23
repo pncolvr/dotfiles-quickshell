@@ -11,6 +11,9 @@ UI.Text {
     readonly property string selectedHints: panelKey ? UI.Keybinds.panelHintText(panelKey, availableActions, actionOverrides)
         : [hints, closingHint].filter(Boolean).join(" · ")
     property string closingHint: ""
+    readonly property string formattedHints: layoutHints(selectedHints, width, metrics.font)
+    readonly property real naturalHintsHeight: formattedHints.length ? Math.ceil(metrics.height
+        + (formattedHints.split("\n").length - 1) * metrics.lineSpacing) : 0
     centerVertical: false
     visible: text.length > 0
     height: text.length > 0 ? Math.max(Theme.controlHeight, Math.ceil(metrics.height
@@ -22,7 +25,7 @@ UI.Text {
     textFormat: Text.PlainText
     color: Theme.inactive
     // Measure with the rendered font; font changes must also reflow the hints.
-    text: layoutHints(selectedHints, width, metrics.font)
+    text: formattedHints
 
     FontMetrics { id: metrics; font: root.font }
 

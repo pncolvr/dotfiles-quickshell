@@ -9,6 +9,7 @@ import "../../services"
 
 Item {
     id: root
+    readonly property bool footerInGutter: true
     property bool adding: false
     property string editingLogin: ""
     readonly property var linkEntry: adding
@@ -37,7 +38,7 @@ Item {
     readonly property real fixedHeight: divider.height + editor.height + spacing * 2
         + (hasSuggestions ? spacing : 0)
         + (hasUndo ? undoHeader.height + spacing * 2 : 0)
-        + (errorText.visible ? errorText.height + spacing : 0)
+        + footer.height + spacing
     readonly property real scrollBudget: Math.max(0, maximumHeight - fixedHeight)
     readonly property real suggestionsHeight: hasSuggestions
         ? Math.min(suggestionsView.gridHeight,
@@ -356,19 +357,6 @@ Item {
             onSelected: login => TwitchService.undoRemoveUser(login)
         }
 
-        UI.TextBase {
-            id: errorText
-            font.bold: false
-            width: root.width
-            height: Math.min(implicitHeight, root.maximumHeight * 0.2)
-            visible: text.length > 0
-            text: TwitchService.error
-            color: Theme.warning
-            wrapMode: Text.Wrap
-            maximumLineCount: 3
-            elide: Text.ElideRight
-            clip: true
-            UI.HoverTooltip { text: TwitchService.error }
-        }
+        UI.PanelFooter { id: footer; objectName: "twitchFooter"; width: root.width; message: TwitchService.error }
     }
 }

@@ -35,7 +35,7 @@ WorkerScope {
         function snapshot(): string {
             const field = objects.findChild(panel, "vaultPassword") as UI.SecretField
             const actions = objects.findChild(panel, "vaultEditorActions") as UI.EditorActions
-            const hints = objects.findChild(panel, "vaultFormHints") as UI.ShortcutHints
+            const hints = objects.findChild(panel, "vaultFormHints") as UI.PanelFooter
             const notes = root.findVisual(panel, "vaultDetailNotes")
             const mask = root.findVisual(panel, "vaultDetailNotesMask") as UI.Text
             const filters = objects.findChild(panel, "vaultFilters") as Row
@@ -51,16 +51,16 @@ WorkerScope {
             const toggle = objects.findChild(panel, "vaultFolderToggle") as QC.Button
             const add = objects.findChild(panel,"vaultAdd") as UI.ActionButton
             const lock = objects.findChild(panel,"vaultLock") as UI.ActionButton
-            const status = objects.findChild(panel,"vaultStatus") as UI.Text
+            const status = hints
             const choices = objects.findChild(panel, "vaultFolderChoices") as ListView
             const typeChoices = objects.findChild(panel, "vaultTypeChoices") as ListView
             const typeToggle = objects.findChild(panel, "vaultTypeToggle") as QC.Button
-            return JSON.stringify({statusVisible:status.visible,hintsVisible:hints.visible,
+            return JSON.stringify({statusVisible:status.showingMessage,hintsVisible:!hints.showingMessage && hints.text.length > 0,
                 addVisible:add.visible,addEnabled:add.enabled,
                 addBesideLock:add.x >= lock.x + lock.width && add.y === lock.y,
                 typeExpanded:(typeToggle.parent as UI.ComboSelector).expanded,typeChoiceReady:!!typeChoices.itemAtIndex(1),
                 statusBelowActions:status.mapToItem(panel,0,0).y >= details.mapToItem(panel,0,details.height).y,
-                statusRight:status.horizontalAlignment===Text.AlignRight,
+                statusCentered:status.horizontalAlignment===Text.AlignHCenter && status.verticalAlignment===Text.AlignVCenter,
                 listBottomAligned: Math.abs(list.mapToItem(panel,0,list.height).y - details.mapToItem(panel,0,details.height).y) < 1,
                 filterGap: list.mapToItem(panel,0,0).y - filters.mapToItem(panel,0,0).y - filters.height,
                 filterSpacing:filters.spacing, comboFramed:(toggle.background as Rectangle).border.width === 1,
@@ -69,7 +69,7 @@ WorkerScope {
                     && Math.abs(actions.x + actions.width - actions.parent.width) < 1
                     && actions.mapToItem(details,0,actions.height).y <= details.height,
                 hintsCentered: hints.verticalAlignment === Text.AlignVCenter && hints.height === hints.parent.height
-                    && hints.height >= Theme.controlHeight
+                    && hints.height >= Theme.scrollbarGutter
                     && Math.abs(hints.mapToItem(panel,0,hints.height).y - panel.height) < 1,
                 hintsSpaceBalanced: Math.abs(hints.mapToItem(panel,0,hints.height / 2).y
                     - (details.mapToItem(panel,0,details.height).y + panel.height) / 2) < 1,
@@ -92,7 +92,7 @@ WorkerScope {
                 hasError:RbwService.error.length>0,rows:panel.rows.length,typeFilter:panel.typeFilter,
                 noteSelected:RbwService.detail?.id === "22222222-2222-2222-2222-222222222222",
                 copying:!!RbwService.clipboardOwner, checking:RbwService.checkingLock,
-                statusHeight:(objects.findChild(panel,"vaultStatus") as UI.Text).height, listHeight:(objects.findChild(panel,"vaultList") as ListView).height,
+                statusHeight:(objects.findChild(panel,"vaultFormHints") as UI.PanelFooter).height, listHeight:(objects.findChild(panel,"vaultList") as ListView).height,
                 rowReady:!!(objects.findChild(panel,"vaultList") as ListView).itemAtIndex(0),
                 listEnabled:(objects.findChild(panel,"vaultList") as ListView).enabled})
         }

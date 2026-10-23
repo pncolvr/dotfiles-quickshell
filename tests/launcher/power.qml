@@ -45,7 +45,7 @@ WorkerScope {
                 root.check(!!field && field.activeFocus, "existing search receives focus")
                 const grid = events.findChild(panel, "pickerList") as UI.PickerList
                 const footer = events.findChild(panel, "pickerFooter") as Item
-                root.check(panel.height - footer.mapToItem(panel, 0, footer.height).y === Theme.scrollbarGutter,
+                root.check(panel.height - footer.mapToItem(panel, 0, footer.height).y === 0,
                     "power launcher bottom padding matches its side padding")
                 grid.forceLayout()
                 for (let index = 0; index < 5; index++) {

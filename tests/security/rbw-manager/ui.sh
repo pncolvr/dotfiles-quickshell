@@ -231,12 +231,12 @@ touch "$test_dir/slow-poll" "$test_dir/slow"
 ipc poll
 wait_state '.checking and (.busy|not)'
 ipc select
-wait_state '.busy and .statusVisible and (.hintsVisible|not) and .statusBelowActions and .statusRight'
+wait_state '.busy and .statusVisible and (.hintsVisible|not) and .statusBelowActions and .statusCentered'
 touch "$test_dir/locked"
 wait_state '(.checking|not) and (.busy|not) and (.details|not) and .count==0 and .hasError'
 rm "$test_dir/slow-poll" "$test_dir/slow"
 ipc lock
-wait_state '(.busy|not) and (.details|not) and .count==0 and .hasError and .statusVisible and (.hintsVisible|not) and .statusBelowActions and .statusRight'
+wait_state '(.busy|not) and (.details|not) and .count==0 and .hasError and .statusVisible and (.hintsVisible|not) and .statusBelowActions and .statusCentered'
 # An empty vault has no selected entry and does not request nonexistent details.
 ipc close
 printf '[]\n' > "$test_dir/entries.json"

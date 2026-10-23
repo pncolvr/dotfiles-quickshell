@@ -277,6 +277,7 @@ run isolated ui/adaptive-bar bash tests/ui/adaptive-bar.sh
 run isolated ui/reload bash tests/ui/reload-warnings.sh
 run isolated ui/rows bash tests/ui/rows.sh
 run isolated ui/hints bash tests/ui/shortcut-hints.sh
+run isolated ui/panel-footer bash tests/ui/panel-footer.sh
 run isolated ui/theme bash tests/ui/theme.sh
 run isolated ui/hover bash tests/ui/tooltip-hover.sh
 run isolated ui/search bash tests/ui/tooltip-search.sh

@@ -11,6 +11,7 @@ import "../../../services"
 
 Column {
     id: root
+    readonly property bool footerInGutter: true
     property var fileService: RecentFilesService
     readonly property var monitor: TooltipService.screen ?? (root.QsWindow.window as QsWindow)?.screen
     readonly property real maxPanelHeight: (monitor?.height ?? 1080) * Theme.recentFilesMaxHeightRatio
@@ -335,16 +336,15 @@ Column {
     UI.ColumnText {
         id: feedback
         width: parent.width
-        visible: root.fileService.error.length > 0 || root.fileService.files.length === 0
+        visible: root.fileService.files.length === 0
         text: {
             switch (true) {
-            case root.fileService.error.length > 0: return root.fileService.error
             case root.fileService.loading: return Translations.text("files.status.loading")
             case root.folderTab: return Translations.text("files.empty.folder")
             default: return Translations.text("files.empty.recent")
             }
         }
-        color: root.fileService.error ? Theme.warning : Theme.inactive
+        color: Theme.inactive
         wrapMode: Text.Wrap
     }
     ListView {
@@ -453,10 +453,11 @@ Column {
             }
         }
     }
-    UI.ShortcutHints {
+    UI.PanelFooter {
         id: hint
         width: parent.width
-        visible: root.fileService.files.length > 0 && text.length > 0
+        hintsEnabled: root.fileService.files.length > 0
+        message: root.fileService.error
         panelKey: "files"
         availableActions: ["files.multiple", "selection.all"].concat(root.selectedUris.length ? ["files.drag"] : [])
         actionOverrides: ({
@@ -464,7 +465,6 @@ Column {
             "files.drag": {sequence: Translations.text("hints.drag")},
             "selection.all": {label: Translations.text("hints.selectAll")}
         })
-        color: Theme.inactive
         font.pixelSize: 10
         horizontalAlignment: Text.AlignHCenter
     }

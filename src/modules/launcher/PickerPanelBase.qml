@@ -37,7 +37,7 @@ Rectangle {
     property real availableContentHeight: 800
     readonly property real columnWidth: Math.max(0, width - Theme.scrollbarGutter * 2)
     readonly property real normalHeight: panelHeader.height + list.implicitHeight + panelFooter.height
-        + Theme.tooltipPaddingHeight + Theme.scrollbarGutter + Theme.controlSpacing
+        + Theme.tooltipPaddingHeight + Theme.controlSpacing
     property var searchKeyHandler: null
     property string hintPanel: "default"
     property var hintActions: ["search"]
@@ -116,7 +116,7 @@ Rectangle {
         anchors.margins: Theme.tooltipPaddingHeight
         anchors.leftMargin: Theme.scrollbarGutter
         anchors.rightMargin: Theme.scrollbarGutter
-        anchors.bottomMargin: Theme.scrollbarGutter
+        anchors.bottomMargin: 0
         focus: true
         Keys.priority: Keys.BeforeItem
         Keys.forwardTo: [root]
@@ -163,15 +163,6 @@ Rectangle {
                 }
             }
             Loader { width: parent.width; height: (item as Item)?.implicitHeight ?? 0; visible: !root.inputOnly || sourceComponent !== null; sourceComponent: root.searchControls }
-            UI.Text {
-                centerVertical: false
-                width: parent.width
-                text: root.panelError
-                visible: text.length > 0
-                textFormat: Text.PlainText
-                wrapMode: Text.Wrap
-                color: Theme.warning
-            }
         }
         UI.PickerList {
             id: list
@@ -218,9 +209,10 @@ Rectangle {
                 visible: sourceComponent !== null
                 sourceComponent: root.actionButtons
             }
-            UI.ShortcutHints {
+            UI.PanelFooter {
                 id: hints
                 objectName: "pickerFooterHint"
+                message: root.panelError
                 width: parent.width
                 anchors.horizontalCenter: parent.horizontalCenter
                 y: actions.y + actions.height + (actions.visible ? Theme.controlSpacing : 0)

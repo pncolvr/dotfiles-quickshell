@@ -11,6 +11,7 @@ import "../../services/time/CalendarDates.mjs" as Dates
 
 Column {
     id: root
+    readonly property bool footerInGutter: true
     property var statusService: StatusService
     property string expandedDay: ""
     readonly property var monitor: TooltipService.screen ?? (root.QsWindow.window as QsWindow)?.screen
@@ -247,8 +248,8 @@ Column {
             objectName: "statusTimecardFeedback"
             width: parent.width
             visible: text.length > 0
-            text: root.statusService.timecardError || (root.statusService.timecardLoading && !root.selectedReport ? Translations.text("status.report.loading") : "")
-            color: root.statusService.timecardError ? Theme.warning : Theme.inactive
+            text: root.statusService.timecardLoading && !root.selectedReport ? Translations.text("status.report.loading") : ""
+            color: Theme.inactive
             textFormat: Text.PlainText
             wrapMode: Text.Wrap
         }
@@ -263,7 +264,7 @@ Column {
         visible: !root.managing
         objectName: "statusTimecardView"
         width: root.width + Theme.scrollbarGutter
-        height: Math.min(contentHeight, Math.max(0, root.maxPanelHeight - heading.height - root.spacing))
+        height: Math.min(contentHeight, Math.max(0, root.maxPanelHeight - heading.height - footer.height - root.spacing * 2))
         contentWidth: width
         contentHeight: entries.implicitHeight
         clip: true
@@ -400,4 +401,5 @@ Column {
             text: Timecard.duration(session.block.duration)
         }
     }
+    UI.PanelFooter { id: footer; objectName: "statusFooter"; width: root.width; message: root.managing ? root.statusService.rulesError ?? "" : root.statusService.timecardError }
 }

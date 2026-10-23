@@ -12,6 +12,7 @@ import "../../../services"
 
 Column {
     id: root
+    readonly property bool footerInGutter: true
     readonly property var tooltipWindow: root.QsWindow.window
     readonly property var monitor: TooltipService.screen ?? tooltipWindow?.screen
     readonly property real monitorHeight: monitor?.height ?? 1080
@@ -68,15 +69,6 @@ Column {
     Connections {
         target: TotpService.entries
         function onDataChanged() { filteredEntries.updateFilter() }
-    }
-
-    UI.ColumnText {
-        width: parent.width
-        visible: TotpService.error.length > 0
-        textFormat: Text.PlainText
-        text: TotpService.error
-        wrapMode: Text.Wrap
-        color: Theme.warning
     }
 
     UI.ColumnText {
@@ -217,4 +209,5 @@ Column {
             if (root.editingId === entryId) { root.draftName = name; root.draftToken = token }
         }
     }
+    UI.PanelFooter { objectName: "totpFooter"; width: root.width; message: TotpService.error }
 }

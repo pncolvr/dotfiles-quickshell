@@ -33,7 +33,7 @@ printf '%s\n' '{"private":true,"showPrompt":true,"prompt":"Synthetic login picke
 export QT_QPA_PLATFORM=wayland WAYLAND_DISPLAY="$display"
 export QS_PICKER_CONFIG="$test_dir" QS_PICKER_TIMEOUT=12
 qs -p "$test_dir" > "$test_dir/log" 2>&1 & shell_pid=$!
-ordinary=false private=false private_entry=false
+ordinary=false private=false private_entry=false helper_prepared=false
 for ((attempt=0;attempt<300;attempt++)); do
     kill -0 "$shell_pid" 2>/dev/null || break
     layers=$(XDG_RUNTIME_DIR="$desktop_runtime" timeout 2 hyprctl layers -j)
@@ -41,6 +41,23 @@ for ((attempt=0;attempt<300;attempt++)); do
     if jq -e --argjson pid "$shell_pid" 'any(.[] | .levels[][]; .pid == $pid and .namespace == "quickshell-private")' <<< "$layers" >/dev/null; then
         private=true
         if rg -q 'Native private login picker mapped' "$test_dir/log"; then private_entry=true; fi
+    fi
+    if [[ $helper_prepared == false ]]; then
+        state=$(qs ipc -p "$test_dir" call rbwnativetest snapshot 2>/dev/null || true)
+        if jq -e '.step == 6 and .helperPresented' <<< "$state" >/dev/null 2>&1; then
+            # Wayland does not expose a top-level window's desktop position to Qt.
+            # Wait for the compositor's mapped window and use its actual geometry.
+            helper=$(XDG_RUNTIME_DIR="$desktop_runtime" hyprctl clients -j | jq -c --argjson pid "$shell_pid" \
+                '.[] | select(.pid == $pid and .mapped and .title == "Quickshell synthetic focus check")')
+            if [[ -n $helper ]]; then
+                helper_address=$(jq -er '.address | select(test("^0x[0-9a-fA-F]+$"))' <<< "$helper")
+                read -r helper_x helper_y < <(jq -r '[(.at[0]+.size[0]/2|floor),(.at[1]+.size[1]/2|floor)] | @tsv' <<< "$helper")
+                [[ $(qs ipc -p "$test_dir" call rbwnativetest helperReady) == true ]]
+                XDG_RUNTIME_DIR="$desktop_runtime" hyprctl dispatch "hl.dsp.cursor.move({ x = $helper_x, y = $helper_y })" >/dev/null
+                XDG_RUNTIME_DIR="$desktop_runtime" hyprctl dispatch "hl.dsp.focus({ window = \"address:$helper_address\" })" >/dev/null
+                helper_prepared=true
+            fi
+        fi
     fi
     sleep 0.05
 done

@@ -10,6 +10,7 @@ import "../../services"
 
 Column {
     id: root
+    readonly property bool footerInGutter: true
     property alias searchText: searchField.text
     readonly property var priorityUpdates: UpdatesService.priorityUpdates.filter(matchesSearch)
     readonly property var normalUpdates: UpdatesService.normalUpdates.filter(matchesSearch)
@@ -34,14 +35,6 @@ Column {
         id: header
         width: parent.width
         spacing: root.spacing
-        UI.ColumnText {
-            visible: UpdatesService.error.length > 0
-            text: UpdatesService.error
-            width: parent.width
-            wrapMode: Text.Wrap
-            color: Theme.warning
-        }
-
         Item {
             width: parent.width
             height: Math.max(summary.implicitHeight, actions.implicitHeight)
@@ -106,7 +99,7 @@ Column {
         property UI.ScrollBehavior scrollBehavior: UI.ScrollBehavior { viewport: list }
         objectName: "updatesList"
         width: root.width + Theme.scrollbarGutter
-        height: Math.min(contentHeight, Math.max(0, root.maxPanelHeight - header.height - root.spacing))
+        height: Math.min(contentHeight, Math.max(0, root.maxPanelHeight - header.height - footer.height - root.spacing * 2))
         contentWidth: width
         contentHeight: entries.implicitHeight
         clip: true
@@ -141,4 +134,5 @@ Column {
         }
         QC.ScrollBar.vertical: UI.ScrollBar {}
     }
+    UI.PanelFooter { id: footer; objectName: "updatesFooter"; width: root.width; message: UpdatesService.error }
 }

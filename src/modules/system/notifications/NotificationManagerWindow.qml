@@ -28,13 +28,21 @@ PrivateTooltipWindow {
     contentWidth: Math.max(1, Math.min(Theme.notificationManagerWidth, targetScreen?.width || 560))
     contentHeight: Math.min(720, Math.max(1, (targetScreen?.height || 1080) - Theme.barHeight - 20),
         header.height + (tab === "History" ? history.implicitHeight : settings.implicitHeight)
-            + Theme.tooltipPaddingHeight + Theme.tooltipPaddingWidth + 12)
+            + Theme.tooltipPaddingHeight + footer.height + 12)
 
     focusPanel: content
     UI.PanelFocusScope {
         id: content
         onDismissRequested: TooltipService.dismiss()
         anchors.fill: parent
+        UI.PanelFooter {
+            id: footer
+            objectName: "notificationsFooter"
+            x: Theme.tooltipPaddingWidth
+            width: parent.width - Theme.tooltipPaddingWidth * 2
+            anchors.bottom: parent.bottom
+            message: NotificationService.error || NotificationService.focusMessage
+        }
         Column {
             id: header
             x: Theme.tooltipPaddingWidth; y: Theme.tooltipPaddingHeight
@@ -71,15 +79,6 @@ PrivateTooltipWindow {
                     }
                 }
             }
-            UI.Text {
-                centerVertical: false
-                width: parent.width
-                visible: text.length > 0
-                text: NotificationService.error || NotificationService.focusMessage
-                color: Theme.warning
-                wrapMode: Text.Wrap
-                textFormat: Text.PlainText
-            }
         }
         Flickable {
             id: historyView
@@ -87,7 +86,7 @@ PrivateTooltipWindow {
             x: 0
             y: header.y + header.height + 12
             width: parent.width
-            height: Math.max(0, parent.height - y - Theme.tooltipPaddingWidth)
+            height: Math.max(0, parent.height - y - footer.height)
             visible: root.tab === "History"
             clip: true
             contentWidth: width

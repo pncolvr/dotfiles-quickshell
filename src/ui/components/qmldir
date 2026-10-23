@@ -38,6 +38,7 @@ ScrollBehavior 1.0 ScrollBehavior.qml
 SearchField 1.0 SearchField.qml
 SecretField 1.0 SecretField.qml
 ShortcutHints 1.0 ShortcutHints.qml
+PanelFooter 1.0 PanelFooter.qml
 TabBar 1.0 TabBar.qml
 Text 1.0 Text.qml
 TextArea 1.0 TextArea.qml

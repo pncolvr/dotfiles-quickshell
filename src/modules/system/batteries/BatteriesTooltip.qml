@@ -10,6 +10,7 @@ import "../../../services"
 
 Column {
     id: root
+    readonly property bool footerInGutter: true
     property var batteries: BatteryService.batteries
     readonly property var monitor: TooltipService.screen ?? (root.QsWindow.window as QsWindow)?.screen
     readonly property real maxListHeight: (monitor?.height ?? 1080) * Theme.batteryTooltipMaxHeightRatio
@@ -21,14 +22,6 @@ Column {
         visible: BatteryService.scanningReceivers && root.batteries.length === 0
         text: Translations.text("batteries.status.checking")
         color: Theme.inactive
-    }
-
-    UI.ColumnText {
-        width: parent.width
-        visible: BatteryService.receiverError.length > 0
-        text: BatteryService.receiverError
-        wrapMode: Text.Wrap
-        color: Theme.warning
     }
 
     UI.ColumnText {
@@ -55,4 +48,5 @@ Column {
         }
         QC.ScrollBar.vertical: UI.ScrollBar {}
     }
+    UI.PanelFooter { objectName: "batteriesFooter"; width: root.width; message: BatteryService.receiverError }
 }

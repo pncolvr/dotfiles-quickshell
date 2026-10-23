@@ -106,5 +106,4 @@ Column {
         UI.LabeledField { readOnly: root.readOnly; id:extra; width:parent.width; visible:!root.sshConnection; label:Translations.text("remotes.fields.arguments"); onAccepted:root.accepted() }
         UI.LabeledField { readOnly: root.readOnly; id:sshExtra; inputObjectName:'remoteSshArguments'; width:parent.width; visible:root.sshConnection; label:Translations.text("remotes.fields.sshArguments"); onAccepted:root.accepted() }
     }
-    UI.ColumnText { width:parent.width; text:root.parseError; visible:!!text; color:Theme.urgent; wrapMode:Text.Wrap }
 }

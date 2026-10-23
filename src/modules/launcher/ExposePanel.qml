@@ -164,7 +164,7 @@ FocusScope {
         text: Translations.text(search.text ? "expose.empty.filtered" : "expose.empty.workspace")
         color: Theme.inactive
     }
-    UI.ShortcutHints {
+    UI.PanelFooter {
         id: footer
         font.pixelSize: Theme.fontSize
         anchors.bottom: parent.bottom

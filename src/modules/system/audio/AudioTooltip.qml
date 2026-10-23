@@ -11,6 +11,7 @@ import "../../../config"
 
 Column {
     id: root
+    readonly property bool footerInGutter: true
     property bool input: false
     property var audioService: AudioService
     property var mediaService: MediaService
@@ -23,7 +24,7 @@ Column {
             - (Theme.tooltipShadowEnabled ? Math.max(2,Math.min(64,Theme.tooltipShadowBlurRadius)) + Math.max(0,Theme.tooltipShadowVerticalOffset) : 0))
         : (monitor?.height ?? 1080) * Theme.audioTooltipMaxHeightRatio
     readonly property real listHeight: Math.max(0, maxPanelHeight - header.height - spacing
-        - (routingFeedback.visible ? routingFeedback.height + spacing : 0))
+        - footer.height - spacing)
     width: Math.min(Theme.audioTooltipWidth, (monitor?.width ?? Theme.audioTooltipWidth + Theme.tooltipPaddingWidth * 2) - Theme.tooltipPaddingWidth * 2)
     spacing: Theme.audioSpacing
     Component.onCompleted: {
@@ -76,15 +77,6 @@ Column {
         }
     }
 
-    UI.ColumnText {
-        id: routingFeedback
-        width: parent.width
-        visible: text.length > 0
-        text: root.audioService.routingBusy ? Translations.text("audio.routing.busy") : root.audioService.routingError || root.audioService.routingMessage
-        color: root.audioService.routingError ? Theme.warning : Theme.inactive
-        wrapMode: Text.Wrap
-    }
-
     MediaPanel {
         objectName: "audioMediaPanel"
         width: root.width + Theme.scrollbarGutter
@@ -112,13 +104,6 @@ Column {
             width: root.width
             spacing: Theme.audioSpacing
 
-            UI.ColumnText {
-                width: parent.width
-                visible: root.audioService.devicesError.length > 0
-                text: root.audioService.devicesError
-                color: Theme.warning
-                wrapMode: Text.Wrap
-            }
             Repeater {
                 objectName: "audioDevices"
                 model: root.devices
@@ -180,5 +165,14 @@ Column {
             }
         }
         QC.ScrollBar.vertical: UI.ScrollBar {}
+    }
+    UI.PanelFooter {
+        id: footer
+        objectName: "audioFooter"
+        width: root.width
+        message: root.audioService.routingBusy ? Translations.text("audio.routing.busy")
+            : root.audioService.routingError || root.audioService.routingMessage
+                || (tabs.currentIndex === 1 ? root.audioService.devicesError : "")
+        messageColor: root.audioService.routingError || (tabs.currentIndex === 1 && root.audioService.devicesError) ? Theme.warning : Theme.inactive
     }
 }

@@ -15,7 +15,7 @@ ManagedPickerFrame {
     property Component listActionButtons: null
     property alias managementToolbarContent: manage.toolbarContent
     property alias detailActionContent: detailActions.data
-    property string managementMessage: service.error
+    property string managementMessage: service.error || (showForm ? (entryForm?.parseError ?? "") : "")
     property bool refreshHintEnabled: false
     property string listHintPanel: "default"
     property var listHintActions: []

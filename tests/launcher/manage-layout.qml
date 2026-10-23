@@ -161,7 +161,7 @@ WorkerScope {
             }
             const hints = root.find("managementHints")
             root.check(!hints.text.includes("Esc") && !hints.text.includes("Enter"), "Manage omits routine closing and opening hints")
-            root.check(hints.verticalAlignment === Text.AlignVCenter && hints.height >= Theme.controlHeight
+            root.check(hints.verticalAlignment === Text.AlignVCenter && hints.height >= Theme.scrollbarGutter
                 && hints.horizontalAlignment === Text.AlignHCenter && Math.abs(hints.mapToItem(view,hints.width / 2,0).x - view.width / 2) < 1
                 && Math.abs(hints.mapToItem(view,0,hints.height).y - view.height) < 1
                 && Math.abs(hints.mapToItem(view,0,hints.height / 2).y
@@ -217,9 +217,9 @@ WorkerScope {
             root.preview("list-padding")
             events.mouseMove(window.contentItem, 0, 0)
             const plainHints = root.find("pickerFooterHint")
-            root.check(!plainHints.visible && plainHints.height === 0
-                && Math.abs(plainHints.mapToItem(plainList,0,0).y - (plainList.height - Theme.scrollbarGutter)) < 1,
-                "plain lists omit unused footer rows while preserving bottom padding")
+            root.check(plainHints.visible && plainHints.text === "" && plainHints.height === Theme.scrollbarGutter
+                && Math.abs(plainHints.mapToItem(plainList,0,0).y - (plainList.height - plainHints.height)) < 1,
+                "plain lists retain an empty bottom gutter without unused hint rows")
             PickerService.begin(PickerService.Mode.Webapps,"Filter geometry")
             filterService.open()
             PickerService.show()

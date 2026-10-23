@@ -32,7 +32,11 @@ cleanup() {
     if [[ -n $original_x && -n $original_y ]]; then
         hyprctl dispatch "hl.dsp.cursor.move({ x = $original_x, y = $original_y })" >/dev/null 2>&1 || true
     fi
-    rm -rf -- "$test_dir"
+    if [[ ${TWITCH_TEST_KEEP:-0} == 1 ]]; then
+        printf 'Test artifacts: %s\n' "$test_dir" >&2
+    else
+        rm -rf -- "$test_dir"
+    fi
     exit "$result"
 }
 trap cleanup EXIT
@@ -91,7 +95,7 @@ wait_for 'IPC opens panel and focuses search' state_matches '.visible and .focus
 wait_for 'keyboard focus returns to on demand after activation' state_matches '.onDemand and (.requestingFocus | not)'
 check_state '(.pinned | not) and .keyboard and .source and .screen' 'panel opens without pinning on the target screen with keyboard focus'
 pointer_unchanged || fail 'opening Twitch moved the pointer'
-ipc twitchpaneltest type alice
+[[ $(ipc twitchpaneltest type alice) == true ]] || fail 'Twitch keeps native input focus while typing'
 check_state '.text == "alice"' 'typing goes into search'
 ipc twitchpaneltest beginAdd
 check_state '.adding' 'add editor opens'
@@ -134,7 +138,7 @@ totp_matches() { ipc twitchpaneltest snapshotTotp | jq -e "$1" >/dev/null; }
 wait_for 'TOTP search gets native keyboard focus' totp_matches '.visible and .focused and .windowActive and .onDemand and .source and .screen and (.pinned | not)'
 pointer_unchanged || fail 'opening TOTP moved the pointer'
 
-ipc twitchpaneltest typeTotp twi
+[[ $(ipc twitchpaneltest typeTotp twi) == true ]] || fail 'TOTP keeps native input focus while typing'
 totp_matches '.text == "twi" and .source and .focused' || fail 'typing twi stays in TOTP search'
 ipc twitchpaneltest beginTotpAdd
 ipc bar open totp >/dev/null
