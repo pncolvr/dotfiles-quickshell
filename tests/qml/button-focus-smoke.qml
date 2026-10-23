@@ -118,7 +118,10 @@ Scope {
             events.mouseClick(slider, slider.width / 2, slider.height / 2, Qt.LeftButton, Qt.NoModifier, 0)
             root.check(!slider.keyboardFocusVisible && (slider.handle as Rectangle).border.width === 0, "slider click leaves no focus outline")
             const heading = root.find(section, "toggleTwitchUserSection")
-            heading.forceActiveFocus(Qt.TabFocusReason)
+            slider.forceActiveFocus(Qt.TabFocusReason)
+            events.keyClick(Qt.Key_Tab, Qt.NoModifier, 0)
+            root.check(heading.activeFocus && heading.keyboardFocusVisible,
+                "Tab reaches collapsible headers with visible keyboard focus")
             events.mouseClick(heading, heading.width / 2, heading.height / 2, Qt.LeftButton, Qt.NoModifier, 0)
             root.check(!heading.keyboardFocusVisible && section.expanded, "Twitch header toggles without keeping keyboard highlighting")
             const tab = tabs.itemAt(1) as QC.TabButton

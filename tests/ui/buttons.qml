@@ -117,6 +117,8 @@ WorkerScope {
                 const trigger=driver.find(combo,combo.toggleObjectName) as QC.Button
                 for (const button of [plain,action,copy,icon,audio,checkBox,disclosure,trigger,option,tabs.itemAt(0)])
                     driver.check(!!root.surface(button),'button family shares its background and interaction policy')
+                driver.check(disclosure.focusPolicy===Qt.StrongFocus && disclosure.activeFocusOnTab,
+                    'collapsible sections participate in keyboard traversal')
             })
             driver.add('collapsed section stays transparent',()=>{
                 root.park()

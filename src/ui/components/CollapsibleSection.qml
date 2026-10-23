@@ -21,6 +21,7 @@ QC.ItemDelegate {
         if (enabled && !forceExpanded) expansionRequested(!expanded)
     }
     implicitHeight: Theme.controlHeight
+    focusPolicy: Qt.StrongFocus
     padding: Theme.controlFieldPadding
     leftPadding: padding + (showChevron ? arrow.width + Theme.controlSpacing : 0)
     rightPadding: padding

@@ -437,6 +437,11 @@ to change an existing keyboard focus to pointer focus on press. Run
 Selected tabs, active devices and input-field borders
 continue to indicate their own states.
 
+Interactive standalone controls, including `UI.CollapsibleSection`, must use
+`Qt.StrongFocus` so Tab and Shift+Tab can reach them. Rows inside a composite
+list can opt out when their owning view provides one focus stop plus arrow-key
+navigation and activation.
+
 Panel shortcuts use `UI.PanelShortcut` and `UI.Keybinds` with grouped
 `Config.keybinds` settings. Give an action button a `keyAction` to reuse its click
 handler and enabled state; use `hintAction` alone when a scoped shortcut already
