@@ -111,12 +111,12 @@ for phase in seed restart avatar-failure avatar-update empty empty-restart live-
     if [[ $phase == live-add ]]; then initial_live_alerts=$(wc -l < "$test_dir/notify-calls"); fi
     if [[ $phase == live-restart ]]; then [[ $(wc -l < "$test_dir/notify-calls") -eq $initial_live_alerts ]]; fi
     if [[ $phase == live-new-stream ]]; then
-        jq -se --argjson initial "$initial_live_alerts" 'length == $initial + 1 and .[-1][-2:] == ["Live","| Twitch channel |\n| :--- |\n| `alice` |"] and all(.[][]; startswith("--action") | not)' "$test_dir/notify-calls" >/dev/null
+        jq -se --argjson initial "$initial_live_alerts" 'length == $initial + 1 and .[-1][-2:] == ["","online\talice"] and all(.[][]; startswith("--action") | not)' "$test_dir/notify-calls" >/dev/null
         printf 'PASS: live alerts persist across restarts and only a new stream triggers another alert\n'
     fi
     if [[ $phase == live-error ]]; then [[ $(wc -l < "$test_dir/notify-calls") -eq $((initial_live_alerts + 1)) ]]; fi
     if [[ $phase == live-offline || $phase == live-offline-restart ]]; then
-        jq -se --argjson initial "$initial_live_alerts" 'length == $initial + 2 and .[-1][-2:] == ["Offline","| Twitch channel |\n| :--- |\n| `alice` |\n| `bob` |"]' "$test_dir/notify-calls" >/dev/null
+        jq -se --argjson initial "$initial_live_alerts" 'length == $initial + 2 and .[-1][-2:] == ["","offline\talice\noffline\tbob"]' "$test_dir/notify-calls" >/dev/null
         printf 'PASS: offline alert emitted once and preserved across restarts\n'
     fi
 done

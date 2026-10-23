@@ -18,7 +18,8 @@ UI.Text {
     }
     readonly property var twitchReport: parseTwitchReport(bodyText)
     readonly property var updateReport: parseUpdateReport(bodyText)
-    readonly property var visibleTwitchReport: limitTwitchReport(twitchReport)
+    readonly property int visibleTwitchCount: !twitchReport ? 0 : popup && twitchReport.length > 7 ? 6 : twitchReport.length
+    readonly property int hiddenTwitchCount: !twitchReport ? 0 : twitchReport.length - visibleTwitchCount
     readonly property int visibleUpdateCount: !updateReport ? 0 : popup && updateReport.length > 7 ? 6 : updateReport.length
     readonly property int hiddenUpdateCount: !updateReport ? 0 : updateReport.length - visibleUpdateCount
     readonly property bool formatted: !!inboxReport || !!twitchReport || !!updateReport || markdown
@@ -27,40 +28,13 @@ UI.Text {
     }
     function parseTwitchReport(value) {
         if (emitterKey !== "app:twitch") return null
-        const lines = value.split("\n")
-        if (lines.length < 3) return null
-        const parseCells = line => {
-            if (!line.startsWith("|") || !line.endsWith("|")) return null
-            return line.slice(1, -1).split("|").map(cell => cell.trim())
-        }
-        const headers = parseCells(lines[0])
-        const dividers = parseCells(lines[1])
-        if (!headers || !headers.length || headers.length > 2 || !dividers || dividers.length !== headers.length
-            || dividers.some(value => !/^:?-{3,}:?$/.test(value))) return null
         const rows = []
-        for (const line of lines.slice(2)) {
-            const cells = parseCells(line)
-            if (!cells || cells.length !== headers.length) return null
-            const values = []
-            for (const cell of cells) {
-                const match = cell.match(/^`([^`\n]+)`$/)
-                if (cell && !match) return null
-                values.push(match ? match[1] : "")
-            }
-            rows.push(values)
+        for (const line of value.split("\n")) {
+            const match = line.match(/^(online|offline)\t([a-z0-9_]{1,25})$/)
+            if (!match) return null
+            rows.push({online: match[1] === "online", login: match[2]})
         }
-        return rows.length ? {headers, rows} : null
-    }
-    function limitTwitchReport(report) {
-        if (!report || !popup) return report
-        const limit = report.headers.length > 1 ? 6 : 7
-        if (report.rows.length <= limit) return report
-        const shown = limit - 1
-        const more = report.headers.map((_, column) => {
-            const hidden = report.rows.slice(shown).filter(row => row[column]).length
-            return hidden ? Translations.text("common.status.more", [], hidden) : ""
-        })
-        return {headers: report.headers, rows: [...report.rows.slice(0, shown), more]}
+        return rows.length ? rows : null
     }
     function parseUpdateReport(value) {
         if (emitterKey !== "app:updates") return null
@@ -83,15 +57,15 @@ UI.Text {
             + `<table width="100%" border="1" cellspacing="0" cellpadding="6" style="border-collapse: collapse; border-color: ${Theme.notificationBorder};">`
             + `<tr>${headers}</tr><tr>${counts}</tr></table>`
     }
-    readonly property string twitchTable: {
-        if (!visibleTwitchReport) return ""
-        const border = `border: 1px solid ${Theme.notificationBorder};`
-        const width = Math.floor(100 / visibleTwitchReport.headers.length)
-        const headers = visibleTwitchReport.headers.length > 1
-            ? `<tr>${visibleTwitchReport.headers.map(header => `<th width="${width}%" align="left" style="${border} color: ${Theme.text};">${escapeHtml(header)}</th>`).join("")}</tr>` : ""
-        const rows = visibleTwitchReport.rows.map(row => `<tr>${row.map(channel =>
-            `<td width="${width}%" align="left" style="${border} color: ${Theme.text};">${escapeHtml(channel)}</td>`).join("")}</tr>`).join("")
-        return `<table width="100%" border="1" cellspacing="0" cellpadding="3" style="border-collapse: collapse; border-color: ${Theme.notificationBorder}; color: ${Theme.text};">${headers}${rows}</table>`
+    readonly property string twitchRows: {
+        if (!twitchReport) return ""
+        const rows = twitchReport.slice(0, visibleTwitchCount).map(stream => {
+            const color = stream.online ? Theme.ok : Theme.urgent
+            return `<tr><td valign="middle"><font face="${Theme.fontFamilyIcons}" color="${color}">${Theme.twitchIcon}</font></td>`
+                + `<td valign="middle">&nbsp;&nbsp;${escapeHtml(stream.login)}</td></tr>`
+        })
+        if (hiddenTwitchCount) rows.push(`<tr><td></td><td valign="middle">&nbsp;&nbsp;${escapeHtml(Translations.text("common.status.more", [], hiddenTwitchCount))}</td></tr>`)
+        return `<font color="${Theme.text}"><table border="0" cellspacing="0" cellpadding="0">${rows.join("")}</table></font>`
     }
     readonly property string updateRows: {
         if (!updateReport) return ""
@@ -109,7 +83,7 @@ UI.Text {
 
     centerVertical: false
     visible: body.length > 0
-    text: inboxReport ? inboxTable : twitchReport ? twitchTable : updateReport ? updateRows : markdown ? bodyText : body
+    text: inboxReport ? inboxTable : twitchReport ? twitchRows : updateReport ? updateRows : markdown ? bodyText : body
     textFormat: inboxReport || twitchReport || updateReport ? Text.RichText : markdown ? Text.MarkdownText : Text.PlainText
     wrapMode: Text.Wrap
     // Formatted text ignores maximumLineCount and elide; bound it explicitly.

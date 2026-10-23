@@ -114,10 +114,10 @@ WorkerScope {
         check(!BatteryRepository.saveReceiverSnapshot([duplicate, duplicate]), "failed SQL write reported")
         check(BatteryRepository.receiverSnapshot()[0]?.percentage === 17, "SQL error rolls back snapshot replacement")
         check(TwitchRepository.imageDataUrl("not an image") === "", "invalid image payload rejected")
-        const notification = TwitchService.streamNotification({online: [{login: "a_b", game: "Game", title: "Title"}], offline: [{login: "charlie"}]})
+        const notification = TwitchService.streamNotification({online: [{login: "zeta"}, {login: "a_b"}], offline: [{login: "mole"}, {login: "charlie"}]})
         check(notification.summary === ""
-            && notification.body === "| Live | Offline |\n| :--- | :--- |\n| `a_b` | `charlie` |",
-            "mixed status notification has one two-column table, an empty title and literal login names")
+            && notification.body === "online\ta_b\nonline\tzeta\noffline\tcharlie\noffline\tmole",
+            "notification is titleless and orders online then offline logins alphabetically")
         testDates()
     }
 

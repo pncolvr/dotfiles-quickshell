@@ -223,15 +223,15 @@ if [[ ${NOTIFICATION_TEST_WAYLAND:-0} == 1 ]]; then
     wait_for 'CLI group in manager' native_is 'any(.groups[]; .emitterKey == "app:notify-send")'
 fi
 ipc twitchNotify streamer_online
-wait_for 'Twitch received with 10-second expiry' state_is 'any(.live[]; .summary == "Live" and .duration == 10000)'
-twitch_id=$(state | jq '.live[] | select(.summary == "Live") | .id')
+wait_for 'Twitch received with 10-second expiry' state_is 'any(.live[]; .summary == "" and .duration == 10000)'
+twitch_id=$(state | jq '.live[] | select(.summary == "" and .duration == 10000) | .id')
 ipc prepareCard "$twitch_id" false
 wait_for 'Twitch image in icon slot' state_is '.card.imageIsIcon and (.card.icon | length) > 0'
 check_state '.emitters["app:twitch"].name == "Twitch"'
-wait_for 'Twitch icon archived' rows_are 'any(.summary == "Live" and (.image | startswith("data:image/png;base64,")))' app:twitch
+wait_for 'Twitch icon archived' rows_are 'any(.summary == "" and .body == "online\tstreamer_online" and (.image | startswith("data:image/png;base64,")))' app:twitch
 if [[ ${NOTIFICATION_TEST_WAYLAND:-0} == 1 ]]; then ipc_true preview /tmp/quickshell-notifications-twitch-preview.png || fail 'Twitch preview'; fi
-twitch_archive=$(rows app:twitch | jq -r '.[] | select(.summary == "Live") | .archiveId')
-check_rows 'any(.summary == "Live" and .urgency == 1 and .body == "| Twitch channel |\n| :--- |\n| `streamer_online` |" and .actions == [])' 'Twitch table, normal urgency and no actions' app:twitch
+twitch_archive=$(rows app:twitch | jq -r '.[] | select(.body == "online\tstreamer_online") | .archiveId')
+check_rows 'any(.summary == "" and .urgency == 1 and .body == "online\tstreamer_online" and .actions == [])' 'Twitch status row, normal urgency and no actions' app:twitch
 check_state '.card.actionStates == []'
 ipc_true prepareHistory "$twitch_archive" || fail 'Twitch history card'
 sleep 0.1
@@ -320,7 +320,7 @@ check_state "all(.popups[]; .id != $returned)"
 ipc dismiss "$returned"
 check_rows '.[0].summary == "Title only" and .[0].body == ""' 'CLI restart history' app:notify-send
 check_rows 'any(.summary == "Low" and .urgency == 0)' 'low urgency restart history'
-check_rows 'any(.summary == "Live" and (.image | startswith("data:image/png;base64,")))' 'Twitch restart history' app:twitch
+check_rows 'any(.summary == "" and .body == "online\tstreamer_online" and (.image | startswith("data:image/png;base64,")))' 'Twitch restart history' app:twitch
 for archive in "$archived_action" "$twitch_archive"; do
     ipc_true prepareHistory "$archive" || fail 'restart history card'
     sleep 0.1

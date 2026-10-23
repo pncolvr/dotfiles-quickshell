@@ -36,8 +36,8 @@ Scope {
                 root.init(); root.test_incompleteReportsStayPlain(data)
             }
             root.init(); root.test_reportScope()
-            root.init(); root.test_twitchTable()
-            root.init(); root.test_twitchTableScope()
+            root.init(); root.test_twitchRows()
+            root.init(); root.test_twitchRowsScope()
             root.init(); root.test_updateRows()
             root.init(); root.test_updateRowsScope()
             root.init(); root.test_discordMarkdownUnchanged()
@@ -52,7 +52,7 @@ Scope {
         interval: 100
         onTriggered: {
             root.verify(content.height === content.implicitHeight && content.contentHeight === content.height && content.lineCount >= 3 && !content.truncated)
-            console.log(root.failed ? "BODY FORMAT FAIL: notification formatting" : "PASS: Teams and Twitch tables, Updates rows, emitter scope, escaping, plain text fallback and Discord Markdown")
+            console.log(root.failed ? "BODY FORMAT FAIL: notification formatting" : "PASS: Teams table, Twitch and Updates rows, emitter scope, escaping, plain text fallback and Discord Markdown")
             if (Quickshell.env("NOTIFICATION_BODY_SCREENSHOT")) {
                 preview.grabToImage(result => { result.saveToFile(Quickshell.env("NOTIFICATION_BODY_SCREENSHOT")); Qt.quit() })
             } else Qt.quit()
@@ -141,37 +141,35 @@ Scope {
         verify(content.text.includes("Junk:1"))
     }
 
-    function test_twitchTable() {
+    function test_twitchRows() {
         content.emitterKey = "app:twitch"
-        content.body = "| Live | Offline |\n| :--- | :--- |\n| `alice` | `charlie` |\n| `bob` | |"
-        compare(content.twitchReport.headers.length, 2)
-        compare(content.twitchReport.headers[0], "Live")
-        compare(content.twitchReport.rows[0][1], "charlie")
+        content.body = "online\talice\nonline\tbob\noffline\tcharlie"
+        compare(content.twitchReport.length, 3)
+        compare(content.twitchReport[0].login, "alice")
+        compare(content.twitchReport[0].online, true)
+        compare(content.twitchReport[2].online, false)
         compare(content.textFormat, Text.RichText)
-        compare((content.text.match(/<table/g) ?? []).length, 1)
-        verify(content.text.includes("<td") && content.text.includes("alice") && content.text.includes("Offline"), "Twitch table cells")
-        verify(content.text.includes(`color: ${Theme.text}`), "Twitch uniform color")
-
-        content.body = "| Twitch channel |\n| :--- |\n| `alice` |"
-        compare(content.twitchReport.headers.length, 1)
-        verify(!content.text.includes("<th") && content.text.includes("alice"), "single Twitch column omits header")
+        verify(content.text.includes(Theme.fontFamilyIcons) && content.text.includes(Theme.twitchIcon), "Twitch rows use the Twitch glyph")
+        verify(content.text.includes(`color="${Theme.ok}"`) && content.text.includes(`color="${Theme.urgent}"`), "Twitch rows color status glyphs")
+        verify(content.text.includes(`color="${Theme.text}"`) && content.text.includes("alice") && content.text.includes("charlie"), "Twitch logins use theme text")
+        verify(content.text.includes('<td valign="middle">') && !content.text.includes("Live") && !content.text.includes("Offline"),
+            "Twitch rows vertically align icons and logins without headings")
 
         content.popup = true
-        content.body = "| Live | Offline |\n| :--- | :--- |\n"
-            + Array.from({length: 9}, (_, index) => `| \`live-${index}\` | ${index < 2 ? `\`offline-${index}\`` : ""} |`).join("\n")
-        compare(content.visibleTwitchReport.rows.length, 6)
-        compare(content.visibleTwitchReport.rows[5][0], Translations.text("common.status.more", [], 4))
-        compare(content.visibleTwitchReport.rows[5][1], "")
-        verify(!content.text.includes("live-5"), "Twitch hidden rows")
+        content.body = Array.from({length: 10}, (_, index) => `${index < 7 ? "online" : "offline"}\tstreamer_${index}`).join("\n")
+        compare(content.visibleTwitchCount, 6)
+        compare(content.hiddenTwitchCount, 4)
+        verify(content.text.includes(Translations.text("common.status.more", [], 4)), "Twitch overflow count")
+        verify(!content.text.includes("streamer_6"), "Twitch hidden rows")
     }
 
-    function test_twitchTableScope() {
-        const body = "| Twitch channel |\n| :--- |\n| `alice` |"
+    function test_twitchRowsScope() {
+        const body = "online\talice"
         content.body = body
         for (const emitter of ["", "app:other", "desktop:twitch"]) {
             content.emitterKey = emitter
             compare(content.twitchReport, null)
-            compare(content.textFormat, Text.MarkdownText)
+            compare(content.textFormat, Text.PlainText)
         }
         content.emitterKey = "app:twitch"
         content.body = "| malformed |"

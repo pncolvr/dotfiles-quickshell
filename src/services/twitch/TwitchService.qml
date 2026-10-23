@@ -58,17 +58,12 @@ Singleton {
 
     function openUrl(login) { if (enabled) BrowserRoutingService.open(`${Config.twitchBaseUrl}${login}`) }
     function streamNotification(changes) {
-        const groups = [[Translations.text("twitch.sections.live"), changes.online],
-            [Translations.text("twitch.sections.offline"), changes.offline]].filter(group => group[1].length)
-        if (groups.length === 1) {
-            const rows = groups[0][1].map(stream => `| \`${stream.login}\` |`).join("\n")
-            return {summary: groups[0][0], body: `| ${Translations.text("twitch.fields.channel")} |\n| :--- |\n${rows}`}
-        }
-        const rowCount = Math.max(...groups.map(group => group[1].length))
-        const rows = []
-        for (let index = 0; index < rowCount; index++)
-            rows.push(`| ${groups.map(group => group[1][index] ? `\`${group[1][index].login}\`` : "").join(" | ")} |`)
-        return {summary: "", body: `| ${groups.map(group => group[0]).join(" | ")} |\n| ${groups.map(() => ":---").join(" | ")} |\n${rows.join("\n")}`}
+        const byLogin = (left, right) => left.login.localeCompare(right.login)
+        const rows = [
+            ...changes.online.slice().sort(byLogin).map(stream => `online\t${stream.login}`),
+            ...changes.offline.slice().sort(byLogin).map(stream => `offline\t${stream.login}`)
+        ]
+        return {summary: "", body: rows.join("\n")}
     }
 
     function notifyChanges(changes) {
