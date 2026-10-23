@@ -70,6 +70,12 @@ run_qml "$network" tests/system/network-smoke.qml
 
 updates="$test_dir/updates"
 fixture_directory "$updates"
+mkdir "$updates/bin"
+cat > "$updates/bin/notify-send" <<'MOCK'
+#!/usr/bin/env bash
+jq -cn --args '$ARGS.positional' -- "$@" >> "$(dirname "$0")/../notify-calls"
+MOCK
+chmod +x "$updates/bin/notify-send"
 override_config "$updates" networkCheckCommand '["printf", "0\n"]'
 override_config "$updates" updatesCheckCommand '["bash", Quickshell.shellPath("update-snapshot.sh")]'
 override_config "$updates" updatesRefreshCommand '["true"]'
@@ -83,10 +89,12 @@ case $count in
     1) printf 'core x86_64 linux 1 2\nextra x86_64 example 1 2\n' ;;
     2) printf 'extra x86_64 partial 1 2\n'; exit 1 ;;
     3) printf 'extra x86_64 partial 1 2\nbroken row\n' ;;
-    *) exit 0 ;;
+    4) exit 0 ;;
+    *) printf 'extra x86_64 fresh 1 2\n' ;;
 esac
 MOCK
-run_qml "$updates" tests/system/updates-smoke.qml
+PATH="$updates/bin:$PATH" run_qml "$updates" tests/system/updates-smoke.qml
+jq -se 'length == 1 and (.[0] | index("--expire-time=10000")) != null and .[0][-2:] == ["1 new update", "fresh: 1 -> 2"]' "$updates/notify-calls" >/dev/null
 
 updates_refresh="$test_dir/updates-refresh"
 fixture_directory "$updates_refresh"

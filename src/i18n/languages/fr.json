@@ -380,6 +380,10 @@
   "common.states.unavailableLabel": "%1 indisponible",
   "common.states.unknown": "Inconnu",
   "common.status.copied": "Copié",
+  "common.status.more": {
+    "one": "%n de plus",
+    "other": "%n de plus"
+  },
   "common.status.refreshing": "Actualisation…",
   "common.status.searching": "Recherche…",
   "common.status.working": "Traitement…",
@@ -1111,6 +1115,10 @@
   "updates.errors.invalidResponse": "Réponse non valide du vérificateur de mises à jour.",
   "updates.errors.read": "Impossible de lire les mises à jour disponibles.",
   "updates.errors.refresh": "Impossible d’actualiser les mises à jour disponibles.",
+  "updates.notifications.new": {
+    "one": "%n nouvelle mise à jour",
+    "other": "%n nouvelles mises à jour"
+  },
   "updates.report.other": "Autres mises à jour",
   "updates.report.priority": "Mises à jour prioritaires",
   "updates.report.title": "Mises à jour disponibles",

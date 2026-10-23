@@ -380,6 +380,10 @@
   "common.states.unavailableLabel": "%1 no disponible",
   "common.states.unknown": "Desconocido",
   "common.status.copied": "Copiado",
+  "common.status.more": {
+    "one": "%n más",
+    "other": "%n más"
+  },
   "common.status.refreshing": "Actualizando…",
   "common.status.searching": "Buscando…",
   "common.status.working": "Procesando…",
@@ -1111,6 +1115,10 @@
   "updates.errors.invalidResponse": "Respuesta no válida del comprobador de actualizaciones.",
   "updates.errors.read": "No se pudieron leer las actualizaciones disponibles.",
   "updates.errors.refresh": "No se pudieron actualizar las actualizaciones disponibles.",
+  "updates.notifications.new": {
+    "one": "%n nueva actualización",
+    "other": "%n nuevas actualizaciones"
+  },
   "updates.report.other": "Otras actualizaciones",
   "updates.report.priority": "Actualizaciones prioritarias",
   "updates.report.title": "Actualizaciones disponibles",

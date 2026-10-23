@@ -1,12 +1,13 @@
 import QtQuick
 import Quickshell
+import "../../src/i18n"
 import "../../src/theme"
 import "../../src/modules/system/notifications" as Notifications
 
 Scope {
     id: root
     property bool failed: false
-    function verify(value) { if (!value) { failed = true; console.error("BODY FORMAT FAIL: assertion") } }
+    function verify(value, message = "assertion") { if (!value) { failed = true; console.error("BODY FORMAT FAIL:", message) } }
     function compare(actual, expected) {
         if (actual !== expected) { failed = true; console.error("BODY FORMAT FAIL:", actual, "expected", expected) }
     }
@@ -27,6 +28,7 @@ Scope {
         interval: 100
         running: true
         onTriggered: {
+            if (!Translations.availableLanguages.includes("en")) { restart(); return }
             root.init(); root.test_receivedTeamsReport()
             root.init(); root.test_columnOrderAndWhitespace()
             root.init(); root.test_escapeHeading()
@@ -34,6 +36,10 @@ Scope {
                 root.init(); root.test_incompleteReportsStayPlain(data)
             }
             root.init(); root.test_reportScope()
+            root.init(); root.test_twitchTable()
+            root.init(); root.test_twitchTableScope()
+            root.init(); root.test_updateRows()
+            root.init(); root.test_updateRowsScope()
             root.init(); root.test_discordMarkdownUnchanged()
             content.emitterKey = "desktop:teams-for-linux"
             content.body = "Team Admin: inbox@example.com Inbox\nJunk\nError 0\n1\n0"
@@ -46,7 +52,7 @@ Scope {
         interval: 100
         onTriggered: {
             root.verify(content.height === content.implicitHeight && content.contentHeight === content.height && content.lineCount >= 3 && !content.truncated)
-            console.log(root.failed ? "BODY FORMAT FAIL: inbox table" : "PASS: Teams/mailbox scope, inbox table, column order, escaping, plain text fallback and Discord Markdown")
+            console.log(root.failed ? "BODY FORMAT FAIL: notification formatting" : "PASS: Teams and Twitch tables, Updates rows, emitter scope, escaping, plain text fallback and Discord Markdown")
             if (Quickshell.env("NOTIFICATION_BODY_SCREENSHOT")) {
                 preview.grabToImage(result => { result.saveToFile(Quickshell.env("NOTIFICATION_BODY_SCREENSHOT")); Qt.quit() })
             } else Qt.quit()
@@ -133,5 +139,77 @@ Scope {
         compare(content.textFormat, Text.MarkdownText)
         verify(!content.text.includes("\u2068"))
         verify(content.text.includes("Junk:1"))
+    }
+
+    function test_twitchTable() {
+        content.emitterKey = "app:twitch"
+        content.body = "| Live | Offline |\n| :--- | :--- |\n| `alice` | `charlie` |\n| `bob` | |"
+        compare(content.twitchReport.headers.length, 2)
+        compare(content.twitchReport.headers[0], "Live")
+        compare(content.twitchReport.rows[0][1], "charlie")
+        compare(content.textFormat, Text.RichText)
+        compare((content.text.match(/<table/g) ?? []).length, 1)
+        verify(content.text.includes("<td") && content.text.includes("alice") && content.text.includes("Offline"), "Twitch table cells")
+        verify(content.text.includes(`color: ${Theme.text}`), "Twitch uniform color")
+
+        content.body = "| Twitch channel |\n| :--- |\n| `alice` |"
+        compare(content.twitchReport.headers.length, 1)
+        verify(!content.text.includes("<th") && content.text.includes("alice"), "single Twitch column omits header")
+
+        content.popup = true
+        content.body = "| Live | Offline |\n| :--- | :--- |\n"
+            + Array.from({length: 9}, (_, index) => `| \`live-${index}\` | ${index < 2 ? `\`offline-${index}\`` : ""} |`).join("\n")
+        compare(content.visibleTwitchReport.rows.length, 6)
+        compare(content.visibleTwitchReport.rows[5][0], Translations.text("common.status.more", [], 4))
+        compare(content.visibleTwitchReport.rows[5][1], "")
+        verify(!content.text.includes("live-5"), "Twitch hidden rows")
+    }
+
+    function test_twitchTableScope() {
+        const body = "| Twitch channel |\n| :--- |\n| `alice` |"
+        content.body = body
+        for (const emitter of ["", "app:other", "desktop:twitch"]) {
+            content.emitterKey = emitter
+            compare(content.twitchReport, null)
+            compare(content.textFormat, Text.MarkdownText)
+        }
+        content.emitterKey = "app:twitch"
+        content.body = "| malformed |"
+        compare(content.twitchReport, null)
+        compare(content.textFormat, Text.PlainText)
+    }
+
+    function test_updateRows() {
+        content.emitterKey = "app:updates"
+        content.body = "linux: 6.17.1 -> 6.17.2\nfirefox: 145.0 -> 146.0"
+        compare(content.updateReport.length, 2)
+        compare(content.updateReport[0].name, "linux")
+        compare(content.updateReport[1].newVersion, "146.0")
+        compare(content.textFormat, Text.RichText)
+        verify(content.text.includes(Theme.fontFamilyIcons) && content.text.includes(Theme.rightIcon), "Updates Font Awesome arrow")
+        verify(!content.text.includes("<li") && !content.text.includes("•"), "Updates has no bullets")
+        verify(content.text.includes(`color="${Theme.text}"`), "Updates uniform color")
+
+        content.popup = true
+        content.body = Array.from({length: 10}, (_, index) => `package-${index}: 1 -> 2`).join("\n")
+        compare(content.visibleUpdateCount, 6)
+        compare(content.hiddenUpdateCount, 4)
+        verify(content.text.includes(Translations.text("common.status.more", [], 4)), "Updates overflow count: " + content.text)
+        verify(!content.text.includes("package-6"), "Updates hidden rows: " + content.text)
+    }
+
+    function test_updateRowsScope() {
+        const body = "linux: 6.17.1 -> 6.17.2"
+        content.body = body
+        for (const emitter of ["", "app:other", "desktop:updates"]) {
+            content.emitterKey = emitter
+            compare(content.updateReport, null)
+            compare(content.textFormat, Text.PlainText)
+            compare(content.text, body)
+        }
+        content.emitterKey = "app:updates"
+        content.body = "malformed update"
+        compare(content.updateReport, null)
+        compare(content.textFormat, Text.PlainText)
     }
 }

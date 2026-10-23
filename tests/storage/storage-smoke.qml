@@ -115,8 +115,9 @@ WorkerScope {
         check(BatteryRepository.receiverSnapshot()[0]?.percentage === 17, "SQL error rolls back snapshot replacement")
         check(TwitchRepository.imageDataUrl("not an image") === "", "invalid image payload rejected")
         const notification = TwitchService.streamNotification({online: [{login: "a_b", game: "Game", title: "Title"}], offline: [{login: "charlie"}]})
-        check(notification.summary === "Live" && notification.body === "`a_b`\n\n**Offline**\n\n`charlie`",
-            "mixed status notification contains only headings and literal login names")
+        check(notification.summary === ""
+            && notification.body === "| Live | Offline |\n| :--- | :--- |\n| `a_b` | `charlie` |",
+            "mixed status notification has one two-column table, an empty title and literal login names")
         testDates()
     }
 

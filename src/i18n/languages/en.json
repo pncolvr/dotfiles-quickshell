@@ -380,6 +380,10 @@
   "common.states.unavailableLabel": "%1 unavailable",
   "common.states.unknown": "Unknown",
   "common.status.copied": "Copied",
+  "common.status.more": {
+    "one": "%n more",
+    "other": "%n more"
+  },
   "common.status.refreshing": "Refreshing…",
   "common.status.searching": "Searching…",
   "common.status.working": "Working…",
@@ -1111,6 +1115,10 @@
   "updates.errors.invalidResponse": "Invalid response from the update checker.",
   "updates.errors.read": "Could not read available updates.",
   "updates.errors.refresh": "Could not refresh available updates.",
+  "updates.notifications.new": {
+    "one": "%n new update",
+    "other": "%n new updates"
+  },
   "updates.report.other": "Other Updates",
   "updates.report.priority": "Priority Updates",
   "updates.report.title": "Available Updates",

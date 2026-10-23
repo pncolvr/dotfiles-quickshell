@@ -34,7 +34,11 @@ Singleton {
         property bool hasPriority: priorityUpdates.length > 0
         property date lastChecked: new Date(0)
         property string error: ""
+        property var pendingNotificationUpdates: null
+        property var notificationQueue: []
     }
+
+    readonly property string notificationSnapshotKey: "updates.notificationSnapshot"
 
     function install() {
         if (!enabled) return
@@ -124,6 +128,9 @@ Singleton {
                 process.discardResult = true
                 if (process.running) process.signal(15)
             }
+            _internal.pendingNotificationUpdates = null
+            _internal.notificationQueue = []
+            if (updateNotificationProcess.running) updateNotificationProcess.signal(15)
             if (markdownProcess.running) markdownProcess.signal(15)
             _internal.error = ""
         }
@@ -135,6 +142,38 @@ Singleton {
 
     function sortUpdates(updates) {
         return [...updates].sort((left, right) => left.name.localeCompare(right.name))
+    }
+
+    function notificationIdentity(update) {
+        return [update.repository, update.architecture, update.name, update.newVersion].join("\u0000")
+    }
+
+    function updateNotificationSnapshot(updates) {
+        if (!PreferencesRepository.ready) {
+            _internal.pendingNotificationUpdates = updates
+            return
+        }
+        _internal.pendingNotificationUpdates = null
+        const previous = PreferencesRepository.value(notificationSnapshotKey, null)
+        const identities = updates.map(update => root.notificationIdentity(update))
+        if (!PreferencesRepository.setValue(notificationSnapshotKey, identities)) return
+        if (!Array.isArray(previous)) return
+        const known = new Set(previous)
+        const added = updates.filter(update => !known.has(root.notificationIdentity(update)))
+        if (!added.length) return
+        _internal.notificationQueue.push({
+            summary: Translations.text("updates.notifications.new", [], added.length),
+            body: added.map(update => `${update.name}: ${update.oldVersion} -> ${update.newVersion}`).join("\n")
+        })
+        processNotificationQueue()
+    }
+
+    function processNotificationQueue() {
+        if (!enabled || updateNotificationProcess.running || !_internal.notificationQueue.length) return
+        const notification = _internal.notificationQueue.shift()
+        updateNotificationProcess.command = ["notify-send", "--app-name=Updates", "--urgency=normal", "--expire-time=10000",
+            "--icon=system-software-update", "--", notification.summary, notification.body]
+        updateNotificationProcess.running = true
     }
 
     Process {
@@ -171,6 +210,7 @@ Singleton {
             _internal.lastChecked = new Date()
             _internal.error = ""
             root.writeMarkdown()
+            root.updateNotificationSnapshot(_internal.updates)
         }
         // qmllint enable signal-handler-parameters
         stdout: StdioCollector { id: updatesOutput; waitForEnd: true }
@@ -192,6 +232,22 @@ Singleton {
             root.refresh()
         }
         // qmllint enable signal-handler-parameters
+    }
+
+    Process {
+        id: updateNotificationProcess
+        // Quickshell.Io omits QProcess::ExitStatus from its qmltypes.
+        // qmllint disable signal-handler-parameters
+        onExited: Qt.callLater(root.processNotificationQueue)
+        // qmllint enable signal-handler-parameters
+    }
+
+    Connections {
+        target: PreferencesRepository
+        function onReadyChanged() {
+            if (PreferencesRepository.ready && _internal.pendingNotificationUpdates !== null)
+                root.updateNotificationSnapshot(_internal.pendingNotificationUpdates)
+        }
     }
 
     function refreshIfOnline() {

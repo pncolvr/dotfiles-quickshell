@@ -58,15 +58,17 @@ Singleton {
 
     function openUrl(login) { if (enabled) BrowserRoutingService.open(`${Config.twitchBaseUrl}${login}`) }
     function streamNotification(changes) {
-        const sections = []
-        let summary = ""
-        for (const [heading, streams] of [[Translations.text("twitch.sections.live"), changes.online], [Translations.text("twitch.sections.offline"), changes.offline]]) {
-            if (!streams.length) continue
-            const title = summary ? `**${heading}**\n\n` : ""
-            if (!summary) summary = heading
-            sections.push(title + streams.map(stream => `\`${stream.login}\``).join("  \n"))
+        const groups = [[Translations.text("twitch.sections.live"), changes.online],
+            [Translations.text("twitch.sections.offline"), changes.offline]].filter(group => group[1].length)
+        if (groups.length === 1) {
+            const rows = groups[0][1].map(stream => `| \`${stream.login}\` |`).join("\n")
+            return {summary: groups[0][0], body: `| ${Translations.text("twitch.fields.channel")} |\n| :--- |\n${rows}`}
         }
-        return {summary, body: sections.join("\n\n")}
+        const rowCount = Math.max(...groups.map(group => group[1].length))
+        const rows = []
+        for (let index = 0; index < rowCount; index++)
+            rows.push(`| ${groups.map(group => group[1][index] ? `\`${group[1][index].login}\`` : "").join(" | ")} |`)
+        return {summary: "", body: `| ${groups.map(group => group[0]).join(" | ")} |\n| ${groups.map(() => ":---").join(" | ")} |\n${rows.join("\n")}`}
     }
 
     function notifyChanges(changes) {
@@ -78,7 +80,7 @@ Singleton {
     function processNotificationQueue() {
         if (!enabled || notifyProcess.running || !state.notificationQueue.length) return
         const notification = state.notificationQueue.shift()
-        notifyProcess.command = ["notify-send", "--app-name=Twitch", "--urgency=normal",
+        notifyProcess.command = ["notify-send", "--app-name=Twitch", "--urgency=normal", "--expire-time=10000",
             "--icon",
             Qt.resolvedUrl("../../assets/twitch.png").toString().replace("file://", ""), "--", notification.summary, notification.body]
         notifyProcess.running = true
