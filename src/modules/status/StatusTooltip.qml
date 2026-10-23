@@ -276,12 +276,9 @@ Column {
             width: root.width
             spacing: Theme.controlSpacing
 
-            UI.ColumnText {
-                width: parent.width
+            UI.EmptyState {
                 visible: root.period.days.length === 0 && !root.statusService.timecardLoading && !root.statusService.timecardError
                 text: Translations.text("status.report.empty")
-                color: Theme.inactive
-                horizontalAlignment: Text.AlignHCenter
             }
             Repeater {
                 model: root.period.days

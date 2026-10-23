@@ -132,12 +132,21 @@ Column {
             color: Theme.empty
         }
         UI.ColumnText {
+            objectName: "statsProcessesStatus"
             width: parent.width
-            visible: root.resource.length > 0
-            text: root.statsService.processError || (!processModel.count ? root.statsService.processesLoading ? Translations.text("stats.processes.loading")
-                : Translations.text(search.query ? "stats.processes.emptyFiltered" : "stats.processes.empty") : Translations.text("stats.processes.count",[root.applicationCount]))
+            visible: root.resource.length > 0 && (root.statsService.processError.length > 0
+                || root.statsService.processesLoading || processModel.count > 0)
+            text: root.statsService.processError || (processModel.count > 0
+                ? Translations.text("stats.processes.count",[root.applicationCount])
+                : Translations.text("stats.processes.loading"))
             color: root.statsService.processError ? Theme.warning : Theme.inactive
             wrapMode: Text.Wrap
+        }
+        UI.EmptyState {
+            objectName: "statsProcessesEmpty"
+            visible: root.resource.length > 0 && !root.statsService.processError.length
+                && !root.statsService.processesLoading && processModel.count === 0
+            text: Translations.text(search.query ? "stats.processes.emptyFiltered" : "stats.processes.empty")
         }
         UI.SearchField {
             id: search

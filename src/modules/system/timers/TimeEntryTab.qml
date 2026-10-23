@@ -37,11 +37,9 @@ Column {
             id: entries
             width: root.width
             spacing: Theme.controlSpacing
-            UI.Text {
-                centerVertical: false
+            UI.EmptyState {
                 visible: root.empty
                 text: root.emptyMessage
-                color: Theme.inactive
             }
         }
     }

@@ -63,6 +63,12 @@ Scope {
             UI.GlyphText { id: glyph; text: Theme.checkIcon }
             UI.InputField { id: input; width: 350; text: "Input" }
             UI.TextArea { id: multiline; width: 350; text: "Area" }
+            Item {
+                id: emptyHost
+                width: 350
+                height: emptyState.implicitHeight
+                UI.EmptyState { id: emptyState; text: "Nothing here" }
+            }
         }
     }
     Timer {
@@ -115,7 +121,13 @@ Scope {
                     "one Theme change updates display text and both input bases")
             }
             root.check(glyph.font.family === Theme.fontFamilyIcons && !glyph.font.bold,"plain glyph preserves icon font metrics")
-            if (!root.failed) console.log("PASS: shared row cursors, selection, activation, disabled/editing guards, focus, row sizing and text defaults")
+            root.check(emptyState.width === emptyHost.width
+                && emptyState.horizontalAlignment === Text.AlignHCenter
+                && emptyState.wrapMode === Text.Wrap
+                && emptyState.textFormat === Text.PlainText
+                && emptyState.color === Theme.inactive,
+                "empty states share centered presentation")
+            if (!root.failed) console.log("PASS: shared row cursors, selection, activation, disabled/editing guards, focus, row sizing, text defaults and empty states")
             Qt.quit()
         }
     }

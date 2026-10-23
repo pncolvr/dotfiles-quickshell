@@ -1,5 +1,6 @@
 Text 1.0 components/Text.qml
 ColumnText 1.0 components/ColumnText.qml
+EmptyState 1.0 components/EmptyState.qml
 CheckBox 1.0 components/CheckBox.qml
 RightAlignedText 1.0 components/RightAlignedText.qml
 RightAlignedTooltipText 1.0 components/RightAlignedTooltipText.qml

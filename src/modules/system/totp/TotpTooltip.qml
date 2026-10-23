@@ -78,11 +78,9 @@ Column {
         color: Theme.inactive
     }
 
-    UI.ColumnText {
-        width: parent.width
+    UI.EmptyState {
         visible: TotpService.ready && TotpService.entries.count === 0
         text: Translations.text("totp.empty.initial")
-        color: Theme.inactive
     }
 
     ListView {
@@ -98,13 +96,12 @@ Column {
         boundsBehavior: Flickable.StopAtBounds
         model: filteredEntries
         QC.ScrollBar.vertical: UI.ScrollBar {}
-        UI.ColumnText {
+        UI.EmptyState {
             objectName: "totpSearchEmpty"
             parent: list
             width: root.width
             visible: TotpService.ready && TotpService.entries.count > 0 && list.count === 0
             text: Translations.text("totp.empty.filtered")
-            color: Theme.inactive
         }
     }
 

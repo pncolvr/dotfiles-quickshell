@@ -37,13 +37,11 @@ Column {
         textFormat: Text.PlainText; wrapMode: Text.Wrap
         color: Theme.inactive; font.bold: false; font.weight: Font.Normal; font.styleName: ""
     }
-    UI.ColumnText {
+    UI.EmptyState {
         objectName: "statusDetectionFeedback"
-        width: parent.width
         visible: text.length > 0
         text: root.statusService.detectionError || (!root.matches.length
             ? Translations.text(root.statusService.detectionLoading ? "status.detection.checking" : "status.detection.empty") : "")
-        textFormat: Text.PlainText; wrapMode: Text.Wrap
         color: root.statusService.detectionError ? Theme.warning : Theme.inactive
         font.bold: false; font.weight: Font.Normal; font.styleName: ""
     }

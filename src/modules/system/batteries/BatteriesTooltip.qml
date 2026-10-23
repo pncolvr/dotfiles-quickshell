@@ -24,11 +24,9 @@ Column {
         color: Theme.inactive
     }
 
-    UI.ColumnText {
-        width: parent.width
+    UI.EmptyState {
         visible: root.batteries.length === 0 && !BatteryService.scanningReceivers
         text: Translations.text("batteries.empty")
-        color: Theme.inactive
     }
 
     ListView {

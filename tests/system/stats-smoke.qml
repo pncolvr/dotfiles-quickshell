@@ -112,6 +112,10 @@ WorkerScope {
                 root.panel.currentIndex = 1
             } else if (root.step === 1) {
                 root.check(backend.processResource === "cpu" && search.visible && view.count === 64, "CPU has the full process list")
+                const processStatus = root.find("statsProcessesStatus") as UI.ColumnText
+                backend.processesLoading = true
+                root.check(processStatus.text.includes("64"), "refresh keeps the populated process count instead of showing loading")
+                backend.processesLoading = false
                 root.check((root.find("statsProcessColumns") as Item).visible, "resource table headers are visible")
                 root.check((view.itemAtIndex(0) as StatsProcessRow)?.process.pid === 1000 && (view.itemAtIndex(0) as StatsProcessRow)?.process.value === 64, "highest CPU usage is first")
                 root.check(root.panel.height <= root.panel.maxPanelHeight && view.contentHeight > view.height, "CPU list stays bounded and scrolls")

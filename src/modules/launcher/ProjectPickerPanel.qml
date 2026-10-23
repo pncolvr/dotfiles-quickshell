@@ -282,10 +282,9 @@ ManagedPickerFrame {
                                     }
                                 }
                             }
-                            UI.ColumnText {
+                            UI.EmptyState {
                                 text: Translations.text("projects.empty.repositories")
                                 visible: sourceRow.modelData.kind === "root" && sourceRow.projects.length === 0
-                                color: Theme.inactive
                             }
                         }
                     }, UI.FolderForm {

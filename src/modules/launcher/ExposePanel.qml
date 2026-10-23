@@ -158,11 +158,11 @@ FocusScope {
         width: parent.width
         height: Math.max(0, footer.y - y - Theme.exposeSpacing)
     }
-    UI.ColumnText {
+    UI.EmptyState {
         anchors.centerIn: grid
+        width: grid.width
         visible: grid.count === 0
         text: Translations.text(search.text ? "expose.empty.filtered" : "expose.empty.workspace")
-        color: Theme.inactive
     }
     UI.PanelFooter {
         id: footer

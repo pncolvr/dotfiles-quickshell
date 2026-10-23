@@ -38,12 +38,9 @@ Flickable {
                 monitorPosition: root.visible && card.y + card.height > root.contentY && card.y < root.contentY + root.height
             }
         }
-        UI.ColumnText {
-            width: parent.width
+        UI.EmptyState {
             visible: root.players.length === 0
             text: Translations.text("media.empty.players")
-            color: Theme.inactive
-            wrapMode: Text.Wrap
         }
     }
     QC.ScrollBar.vertical: UI.ScrollBar {}

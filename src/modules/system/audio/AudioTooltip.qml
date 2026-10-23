@@ -115,12 +115,9 @@ Column {
                     width: deviceContents.width
                 }
             }
-            UI.ColumnText {
-                width: parent.width
+            UI.EmptyState {
                 visible: root.devices.length === 0
                 text: Translations.text(root.input ? "audio.empty.microphones" : "audio.empty.outputs")
-                color: Theme.inactive
-                wrapMode: Text.Wrap
             }
         }
         QC.ScrollBar.vertical: UI.ScrollBar {}
@@ -144,12 +141,10 @@ Column {
             width: root.width
             spacing: Theme.audioSpacing
 
-            UI.ColumnText {
+            UI.EmptyState {
                 objectName: "audioAppsTitle"
-                width: parent.width
                 visible: root.apps.length === 0
                 text: Translations.text(root.input ? "audio.empty.recording" : "audio.empty.playback")
-                color: Theme.inactive
                 elide: Text.ElideRight
             }
             Repeater {

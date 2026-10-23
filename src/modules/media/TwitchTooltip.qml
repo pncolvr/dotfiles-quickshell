@@ -151,16 +151,14 @@ Item {
                     forceExpanded: root.searchQuery.length > 0
                     onEditRequested: login => root.editUser(login)
                 }
-                UI.ColumnText {
+                UI.EmptyState {
                     visible: !root.users.length
                     text: Translations.text("twitch.empty.initial")
-                    color: Theme.inactive
                 }
-                UI.ColumnText {
+                UI.EmptyState {
                     objectName: "twitchSearchEmpty"
                     visible: root.users.length > 0 && !root.filteredUsers.length
                     text: Translations.text("twitch.empty.filtered")
-                    color: Theme.inactive
                 }
             }
         }

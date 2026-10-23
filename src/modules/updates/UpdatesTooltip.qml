@@ -125,11 +125,10 @@ Column {
                 forceExpanded: searchField.query.length > 0
             }
 
-            UI.ColumnText {
+            UI.EmptyState {
                 objectName: "updatesNoResults"
                 visible: UpdatesService.hasUpdates && !root.priorityUpdates.length && !root.normalUpdates.length
                 text: Translations.text("picker.empty.results")
-                color: Theme.inactive
             }
         }
         QC.ScrollBar.vertical: UI.ScrollBar {}

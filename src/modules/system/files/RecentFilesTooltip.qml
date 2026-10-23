@@ -333,9 +333,8 @@ Column {
             }
         }
     }
-    UI.ColumnText {
+    UI.EmptyState {
         id: feedback
-        width: parent.width
         visible: root.fileService.files.length === 0
         text: {
             switch (true) {
@@ -344,8 +343,6 @@ Column {
             default: return Translations.text("files.empty.recent")
             }
         }
-        color: Theme.inactive
-        wrapMode: Text.Wrap
     }
     ListView {
         id: list

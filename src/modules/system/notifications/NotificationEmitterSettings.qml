@@ -77,9 +77,8 @@ Item {
             x: Theme.scrollbarGutter
             width: Math.max(0, rowsView.width - Theme.scrollbarGutter * 2)
             spacing: 12
-            UI.Text {
+            UI.EmptyState {
                 objectName: "notificationEmitterSearchEmpty"
-                centerVertical: false
                 visible: !root.emitters.length
                 text: Translations.text(root.searchQuery ? "notifications.empty.filteredEmitters" : "notifications.empty.emitters")
             }

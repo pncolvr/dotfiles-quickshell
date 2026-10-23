@@ -44,5 +44,5 @@ ListView {
             UI.Text { centerVertical: false; width: parent.width; visible: text.length > 0; textFormat: Text.PlainText; text: [entryRow.modelData.user, entryRow.modelData.folder].filter(Boolean).join(" · "); color: entryRow.secondaryForeground; elide: Text.ElideRight }
         }
     }
-    UI.Text { centerVertical: false; anchors.centerIn: parent; text: Translations.text("vault.empty.entries"); visible: !list.entries.length && !list.busy }
+    UI.EmptyState { anchors.centerIn: parent; text: Translations.text("vault.empty.entries"); visible: !list.entries.length && !list.busy }
 }

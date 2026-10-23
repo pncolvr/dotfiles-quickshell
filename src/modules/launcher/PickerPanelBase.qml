@@ -183,14 +183,12 @@ Rectangle {
             implicitHeight: root.inputOnly ? 0 : root.gridMode
                 ? Theme.pickerGridHeight + list.horizontalGutter * 2 : root.openedListHeight
         }
-        UI.Text {
+        UI.EmptyState {
             objectName: "pickerEmptyHint"
-            centerVertical: false
             anchors.centerIn: list
+            width: list.width
             visible: list.count === 0 && !root.inputOnly
             text: root.inputOnly ? "" : Translations.text(root.picker.allowTyped && search.text.length ? "picker.empty.useTyped" : "picker.empty.results")
-            textFormat: Text.PlainText
-            color: Theme.inactive
         }
         Item {
             id: panelFooter

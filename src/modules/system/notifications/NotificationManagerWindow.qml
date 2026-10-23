@@ -98,7 +98,7 @@ PrivateTooltipWindow {
                 x: Theme.tooltipPaddingWidth
                 width: Math.max(0, historyView.width - Theme.tooltipPaddingWidth * 2)
                 spacing: 16
-                UI.Text { centerVertical: false; visible: !root.groups.length; text: Translations.text("notifications.empty.history") }
+                UI.EmptyState { visible: !root.groups.length; text: Translations.text("notifications.empty.history") }
                 Repeater {
                     model: root.groups.slice(0, root.groupLimit)
                     NotificationEmitterGroup {

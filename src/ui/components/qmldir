@@ -5,6 +5,7 @@ BarIcon 1.0 BarIcon.qml
 ActivityIndicator 1.0 ActivityIndicator.qml
 BatchedListModel 1.0 BatchedListModel.qml
 ColumnText 1.0 ColumnText.qml
+EmptyState 1.0 EmptyState.qml
 CheckBox 1.0 CheckBox.qml
 ComboSelector 1.0 ComboSelector.qml
 EditorActions 1.0 EditorActions.qml

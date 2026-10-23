@@ -201,7 +201,7 @@ Item {
                         UI.ColumnText { width: parent.width; text: row.modelData.subtitle ?? ""; textFormat: Text.PlainText; elide: Text.ElideMiddle; color: row.secondaryForeground }
                     }
                 }
-                UI.ColumnText { anchors.centerIn: parent; width: parent.width - Theme.controlFieldPadding * 2; wrapMode: Text.Wrap; horizontalAlignment: Text.AlignHCenter; text: Translations.text("collections.empty.filtered"); visible: !root.filteredEntries.length }
+                UI.EmptyState { anchors.centerIn: parent; width: parent.width - Theme.controlFieldPadding * 2; text: Translations.text("collections.empty.filtered"); visible: !root.filteredEntries.length }
             }
             Item {
                 width: parent.width - list.width - parent.spacing
