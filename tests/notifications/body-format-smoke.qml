@@ -149,11 +149,11 @@ Scope {
         compare(content.twitchReport[0].online, true)
         compare(content.twitchReport[2].online, false)
         compare(content.textFormat, Text.RichText)
-        verify(content.text.includes(Theme.fontFamilyIcons) && content.text.includes(Theme.twitchIcon), "Twitch rows use the Twitch glyph")
-        verify(content.text.includes(`color="${Theme.ok}"`) && content.text.includes(`color="${Theme.urgent}"`), "Twitch rows color status glyphs")
-        verify(content.text.includes(`color="${Theme.text}"`) && content.text.includes("alice") && content.text.includes("charlie"), "Twitch logins use theme text")
-        verify(content.text.includes('<td valign="middle">') && !content.text.includes("Live") && !content.text.includes("Offline"),
-            "Twitch rows vertically align icons and logins without headings")
+        verify(content.text.includes(`color="${Theme.ok}">alice`) && content.text.includes(`color="${Theme.urgent}">charlie`),
+            "Twitch logins use their online and offline colors")
+        verify(!content.text.includes(Theme.twitchIcon) && !content.text.includes("<table")
+            && !content.text.includes("Live") && !content.text.includes("Offline"),
+            "Twitch rows contain only colored logins without icons or headings")
 
         content.popup = true
         content.body = Array.from({length: 10}, (_, index) => `${index < 7 ? "online" : "offline"}\tstreamer_${index}`).join("\n")

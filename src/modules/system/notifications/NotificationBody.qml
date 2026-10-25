@@ -61,11 +61,10 @@ UI.Text {
         if (!twitchReport) return ""
         const rows = twitchReport.slice(0, visibleTwitchCount).map(stream => {
             const color = stream.online ? Theme.ok : Theme.urgent
-            return `<tr><td valign="middle"><font face="${Theme.fontFamilyIcons}" color="${color}">${Theme.twitchIcon}</font></td>`
-                + `<td valign="middle">&nbsp;&nbsp;${escapeHtml(stream.login)}</td></tr>`
+            return `<font color="${color}">${escapeHtml(stream.login)}</font>`
         })
-        if (hiddenTwitchCount) rows.push(`<tr><td></td><td valign="middle">&nbsp;&nbsp;${escapeHtml(Translations.text("common.status.more", [], hiddenTwitchCount))}</td></tr>`)
-        return `<font color="${Theme.text}"><table border="0" cellspacing="0" cellpadding="0">${rows.join("")}</table></font>`
+        if (hiddenTwitchCount) rows.push(`<font color="${Theme.text}">${escapeHtml(Translations.text("common.status.more", [], hiddenTwitchCount))}</font>`)
+        return rows.join("<br>")
     }
     readonly property string updateRows: {
         if (!updateReport) return ""
