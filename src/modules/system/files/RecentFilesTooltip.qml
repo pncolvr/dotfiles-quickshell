@@ -400,7 +400,7 @@ Column {
             file: modelData
             fileService: root.fileService
             selection: root
-            width: root.width
+            width: root.width + Theme.controlFieldPadding
         }
         QC.ScrollBar.vertical: UI.ScrollBar {}
         DropArea {

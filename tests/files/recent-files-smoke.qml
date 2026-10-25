@@ -87,6 +87,13 @@ WorkerScope {
                 root.check(panel.height <= panel.maxPanelHeight, "list stays within screen height")
                 root.check(list.contentHeight > list.height, "long list scrolls")
                 const row = list.itemAtIndex(0) as RecentFileRow
+                const pin = mouse.findChild(row, "pinFile") as Item
+                const defaultTab = mouse.findChild(panel, "setDefaultTab") as Item
+                root.check(Math.abs(pin.mapToItem(panel, pin.width, 0).x
+                    - defaultTab.mapToItem(panel, defaultTab.width, 0).x) < 0.5,
+                    "file pin actions align with the right edge of the default-tab action")
+                root.check(Math.abs(row.width - pin.x - pin.width - Theme.controlFieldPadding) < 0.5,
+                    "file rows keep matching left and right content padding")
                 panel.dragSource.prepare(panel.dragFilesFor(row.file.uri), backend.activeTab)
                 root.check(panel.dragSource.Drag.dragType === Drag.Automatic && panel.dragSource.Drag.supportedActions === Qt.CopyAction,
                     "file drag uses the native copy action")
