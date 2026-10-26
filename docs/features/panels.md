@@ -56,6 +56,12 @@ keep their existing passive/transient policies. The tray shortcut opens a focuse
 popup using the same tray contents, preserving keyboard access without a cursor
 warp. Native tray menus use the shared child-dialog focus handoff.
 
+Bar-attached surfaces that are intentionally available over fullscreen windows
+temporarily promote the matching bar to the overlay layer. This covers ordinary,
+Clipboard and capture pickers, custom alerts, the vault and submap hints. Expose,
+media fullscreen and notification popups remain independent surfaces and do not
+raise the bar.
+
 The shared components are `TooltipArea` (pin gesture and color),
 `WindowFocusHandler` (activation and native-child lifecycle), `PanelFocusScope`
 (Escape fallback), and `FolderDialog` (native selection). Module-specific adapters

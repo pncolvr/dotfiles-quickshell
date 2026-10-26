@@ -10,6 +10,7 @@ import "../../config"
 
 TopPanelTooltip {
     id: root
+    revealBarOverFullscreen: true
     capturePanel: panel
     onCaptureHideRequested: picker.close()
     property var picker: PickerService

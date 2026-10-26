@@ -10,6 +10,7 @@ Scope {
     property bool requested: false
     property bool hideForCapture: host.hideForCapture ?? false
     property bool presentationPending: host.visible
+    readonly property bool revealsBar: host.revealBarOverFullscreen ?? false
     property bool captureParticipant: false
     // A closing Loader can release its content (and its opt-in property) before
     // the native surface unmaps. Retain that participation through the close.

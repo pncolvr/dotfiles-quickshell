@@ -24,6 +24,7 @@ Scope {
           center.width + Theme.controlFieldPadding * 2, height)
       readonly property rect rightBounds: Qt.rect(rightModules.x - Theme.controlFieldPadding, 0,
           rightModules.width + Theme.controlFieldPadding, height)
+      BarLayerState { id: layerState; screen: panelWindow.screen }
       mask: Region {
         width: panelWindow.islands ? 0 : panelWindow.width
         height: panelWindow.height
@@ -44,9 +45,8 @@ Scope {
         rightBounds: panelWindow.rightBounds
         bridges: AdaptiveBarService.bridges(panelWindow.screen)
       }
-      // Keep the launcher's attachment visible above fullscreen applications.
-      WlrLayershell.layer: PickerService.visible && PickerService.layout !== "expose"
-        && PickerService.targetScreen === panelWindow.screen ? WlrLayer.Overlay : WlrLayer.Top
+      // Keep bar-attached overlays visually joined above fullscreen applications.
+      WlrLayershell.layer: layerState.layer
 
       anchors {
         top: true
@@ -78,8 +78,8 @@ Scope {
         enabled: panelWindow.screen === Quickshell.screens[0]
       }
 
-      SubmapWindow {}
-      AlertWindow { screen: panelWindow.screen }
+      SubmapWindow { screen: panelWindow.screen; requestedScreen: panelWindow.screen }
+      AlertWindow { screen: panelWindow.screen; requestedScreen: panelWindow.screen }
     }
     
   }

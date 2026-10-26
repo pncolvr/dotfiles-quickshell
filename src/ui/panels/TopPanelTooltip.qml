@@ -10,6 +10,7 @@ PanelWindow {
     id: root
     property var capturePanel: null
     property bool hideForCapture: capturePanel?.hideForCapture ?? false
+    property bool revealBarOverFullscreen: false
     signal captureHideRequested()
     UI.CaptureOverlay { host: root; requested: root.requestedVisible }
     default property alias contentData: surface.contentData

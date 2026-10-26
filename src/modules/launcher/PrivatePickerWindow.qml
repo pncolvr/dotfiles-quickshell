@@ -9,6 +9,7 @@ import "../../services"
 
 PrivateTopPanelTooltip {
     id: root
+    revealBarOverFullscreen: true
     capturePanel: panel
     onCaptureHideRequested: picker.close()
     property var picker: PickerService

@@ -6,6 +6,9 @@ Messages appear as text rows; the panel disappears when the last message is remo
 This panel is separate from desktop notifications and their history.
 Each bar uses its own monitor's alert surface. Alerts use the overlay layer so
 they remain visible over fullscreen applications without taking keyboard focus.
+While an alert is visible, its owning bar is also promoted to the overlay layer
+so the attached panel retains its visual connection; both return to their normal
+layer when the final alert disappears.
 Long messages wrap within the monitor width.
 
 ## Custom messages

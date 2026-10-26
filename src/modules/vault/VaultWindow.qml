@@ -8,6 +8,7 @@ import "../../ui" as UI
 import "../../theme"
 PrivateTopPanelTooltip {
     id: root
+    revealBarOverFullscreen: true
     capturePanel: panel
     onCaptureHideRequested: RbwService.close()
     requestedScreen: Quickshell.screens.includes(RbwService.targetScreen) ? RbwService.targetScreen : Quickshell.screens[0] ?? null

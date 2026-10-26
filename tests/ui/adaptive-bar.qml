@@ -32,7 +32,15 @@ WorkerScope {
         property var screen: output
         property var surfaceComponent: ({motion:{displayedX:100,displayedWidth:780,fraction:1}})
     }
-    QtObject { id: overlay; property var host: overlayHost; property bool requested: true; property bool presentationPending: true }
+    QtObject {
+        id: overlay
+        property var host: overlayHost
+        property bool requested: true
+        property bool presentationPending: true
+        property bool revealsBar: false
+    }
+    Bar.BarLayerState { id: barLayer; screen: output }
+    Bar.BarLayerState { id: otherBarLayer; screen: other }
     FileView { id: color; path: Quickshell.env("ADAPTIVE_TEST_DIR") + "/fixture.color"; blockWrites: true }
     FileView { id: requests; path: Quickshell.env("ADAPTIVE_TEST_DIR") + "/requests"; blockLoading: true; printErrors: false }
     FileView { id: delay; path: Quickshell.env("ADAPTIVE_TEST_DIR") + "/delay"; blockWrites: true; printErrors: false }
@@ -201,6 +209,14 @@ WorkerScope {
                     root.check(bridges.length === 1 && bridges[0].x === 100
                         && bridges[0].width === 780 && !AdaptiveBarService.bridges(other).length,
                         "panel backing follows the panel footprint on its monitor only")
+                    root.check(!barLayer.overlay, "ordinary panels do not promote the bar")
+                    overlay.revealsBar = true
+                    root.check(barLayer.overlay, "declared attachments promote only their bar")
+                    root.check(!otherBarLayer.overlay, "bar promotion is monitor-local")
+                    overlay.requested = false
+                    root.check(barLayer.overlay, "the bar remains promoted through attachment closing motion")
+                    overlay.presentationPending = false
+                    root.check(!barLayer.overlay, "the bar returns after its attachment unmaps")
                     AdaptiveBarService.unregisterOverlay(overlay)
                     root.settings.adaptiveBarEnabled = false
                     root.step++; break

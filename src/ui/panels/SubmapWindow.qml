@@ -1,13 +1,17 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
+import Quickshell.Wayland
 import "../../theme"
 import ".." as UI
 import "../../services"
 
 TopPanelTooltip {
     id: root
+    revealBarOverFullscreen: true
     requestedVisible: SubmapService.submapActive
+    WlrLayershell.layer: WlrLayer.Overlay
+    WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
 
     contentX: width - contentWidth - Theme.tooltipRadius + 1
     contentWidth: Math.min(Theme.submapWindowMaxWidth, keybindsColumn.implicitWidth + Theme.tooltipPaddingWidth * 2)
