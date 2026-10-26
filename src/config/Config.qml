@@ -277,6 +277,10 @@ Item {
                 {
                     id: "qutebrowser-webapp",
                     name: "Webapps"
+                },
+                {
+                    id: "qutebrowser-hobby",
+                    name: "Hobby"
                 }
             ],
             profileArguments: ["--desktop-file-name", "{profile}", "-C", _internal.home + "/.config/qutebrowser/config.py", "-B", _internal.dataHome + "/{profile}"],
