@@ -61,7 +61,7 @@ UI.Text {
         if (!twitchReport) return ""
         const rows = twitchReport.slice(0, visibleTwitchCount).map(stream => {
             const color = stream.online ? Theme.ok : Theme.urgent
-            return `<font color="${color}">${escapeHtml(stream.login)}</font>`
+            return `<b><font color="${color}">${escapeHtml(stream.login)}</font></b>`
         })
         if (hiddenTwitchCount) rows.push(`<font color="${Theme.text}">${escapeHtml(Translations.text("common.status.more", [], hiddenTwitchCount))}</font>`)
         return rows.join("<br>")

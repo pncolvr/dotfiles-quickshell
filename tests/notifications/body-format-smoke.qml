@@ -149,8 +149,9 @@ Scope {
         compare(content.twitchReport[0].online, true)
         compare(content.twitchReport[2].online, false)
         compare(content.textFormat, Text.RichText)
-        verify(content.text.includes(`color="${Theme.ok}">alice`) && content.text.includes(`color="${Theme.urgent}">charlie`),
-            "Twitch logins use their online and offline colors")
+        verify(content.text.includes(`<b><font color="${Theme.ok}">alice</font></b>`)
+            && content.text.includes(`<b><font color="${Theme.urgent}">charlie</font></b>`),
+            "Twitch logins use bold online and offline colors")
         verify(!content.text.includes(Theme.twitchIcon) && !content.text.includes("<table")
             && !content.text.includes("Live") && !content.text.includes("Offline"),
             "Twitch rows contain only colored logins without icons or headings")
