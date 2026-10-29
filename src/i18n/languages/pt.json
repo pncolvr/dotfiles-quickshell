@@ -607,6 +607,7 @@
   "notifications.actions.dismissHint": "Dispensar notificação; manter histórico",
   "notifications.actions.loadOlder": "Carregar notificações anteriores",
   "notifications.actions.loadOlderEmitters": "Carregar emissores anteriores",
+  "notifications.actions.replayHint": "Mostrar novamente esta notificação como janela emergente",
   "notifications.actions.unavailable": "Esta ação da aplicação já não está disponível.",
   "notifications.dnd.allowed": "Permitido em Não incomodar",
   "notifications.dnd.allowedHint": "Este emissor pode mostrar notificações em Não incomodar. Clique para bloquear; silenciar continua a ter prioridade.",

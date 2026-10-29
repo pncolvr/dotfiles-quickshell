@@ -200,7 +200,7 @@ Rectangle {
                 height: Math.max(headingText.height, dismissButton.height - contents.spacing)
                 Column {
                     id: headingText
-                    width: parent.width - dismissButton.width - 8
+                    width: parent.width - dismissButton.width - (replayButton.visible ? replayButton.width + 4 : 0) - 8
                     Row {
                         width: parent.width
                         spacing: 8
@@ -237,6 +237,19 @@ Rectangle {
                     }
                 }
                 NotificationButton {
+                    id: replayButton
+                    objectName: "notificationReplay"
+                    visible: !root.popup
+                    anchors.right: dismissButton.left
+                    anchors.rightMargin: 4
+                    width: Theme.controlHeight
+                    height: width
+                    glyph: Theme.refreshIcon
+                    hint: Translations.text("notifications.actions.replayHint")
+                    cornerRadius: width / 2
+                    onClicked: NotificationService.replay(root.entry)
+                }
+                NotificationButton {
                     id: dismissButton
                     objectName: "notificationDismiss"
                     anchors.right: parent.right
@@ -269,7 +282,7 @@ Rectangle {
                     id: bodyImage
                     objectName: "notificationBodyImage"
                     anchors.centerIn: parent
-                    anchors.horizontalCenterOffset: root.popup ? 0 : -(iconColumn.width + layout.spacing) / 2
+                    anchors.horizontalCenterOffset: -(iconColumn.width + layout.spacing) / 2
                     width: Math.min(parent.width, root.popup ? 240 : 320)
                     height: parent.height
                     source: notificationBody.remoteImageUrl

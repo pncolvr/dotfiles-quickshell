@@ -219,6 +219,15 @@ title_only=$(notify-send --print-id --expire-time=150 'Title only')
 wait_for 'title-only CLI history' rows_are 'any(.summary == "Title only" and .body == "")' app:notify-send
 wait_for 'title-only expiry' state_is "all(.live[]; .id != $title_only)"
 check_rows 'length == 1' 'CLI history retained' app:notify-send
+title_archive=$(rows app:notify-send | jq -r '.[] | select(.summary == "Title only") | .archiveId')
+ipc_true prepareHistory "$title_archive" || fail 'title-only history card'
+ipc_true historyButton notificationReplay || fail 'history replay button'
+wait_for 'history replay popup' state_is "any(.popups[]; .archiveId == \"$title_archive\")"
+replayed=$(state | jq -r ".live[] | select(.archiveId == \"$title_archive\" and .replayed) | .id")
+[[ $replayed =~ ^-[0-9]+$ ]] || fail 'history replay uses an ephemeral ID'
+ipc dismiss "$replayed"
+wait_for 'history replay dismissal' state_is "all(.popups[]; .archiveId != \"$title_archive\")"
+check_rows 'length == 1' 'replay does not duplicate history' app:notify-send
 if [[ ${NOTIFICATION_TEST_WAYLAND:-0} == 1 ]]; then
     wait_for 'CLI group in manager' native_is 'any(.groups[]; .emitterKey == "app:notify-send")'
 fi

@@ -57,7 +57,7 @@ WorkerScope {
                     outlineVisible: (root.find(card, "notificationOutline") as Item)?.visible === true,
                     actions: card.displayActions.map(action => action.identifier), actionStates: card.displayActions,
                     buttonFound: !!root.find(card, "notificationAction_custom")},
-                live: Object.values(NotificationService.liveEntries).map(entry => ({id: entry.liveId, archiveId: entry.archiveId, summary: entry.summary, deadline: entry.deadline, duration: entry.duration, image: entry.image}))})
+                live: Object.values(NotificationService.liveEntries).map(entry => ({id: entry.liveId, archiveId: entry.archiveId, summary: entry.summary, deadline: entry.deadline, duration: entry.duration, image: entry.image, replayed: !!entry.replayed}))})
         }
         function preference(key: string, preference: string, value: bool): bool { return NotificationService.setEmitterPreference(key, preference, value) }
         function entries(key: string, limit: int, offset: int): string { return JSON.stringify(NotificationRepository.entries(key, limit, offset)) }

@@ -607,6 +607,7 @@
   "notifications.actions.dismissHint": "Dismiss popup; keep history",
   "notifications.actions.loadOlder": "Load older notifications",
   "notifications.actions.loadOlderEmitters": "Load older emitters",
+  "notifications.actions.replayHint": "Show this notification as a popup again",
   "notifications.actions.unavailable": "This app action is no longer available.",
   "notifications.dnd.allowed": "DND allowed",
   "notifications.dnd.allowedHint": "This emitter can show popups during DND. Click to block it; mute still takes precedence.",

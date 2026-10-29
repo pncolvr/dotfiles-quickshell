@@ -41,7 +41,7 @@ Scope {
             root.init(); root.test_updateRows()
             root.init(); root.test_updateRowsScope()
             root.init(); root.test_discordMarkdownUnchanged()
-            root.init(); root.test_discordImageUrl()
+            root.init(); root.test_remoteImageUrl()
             content.emitterKey = "desktop:teams-for-linux"
             content.body = "Team Admin: inbox@example.com Inbox\nJunk\nError 0\n1\n0"
             content.popup = true
@@ -53,7 +53,7 @@ Scope {
         interval: 100
         onTriggered: {
             root.verify(content.height === content.implicitHeight && content.contentHeight === content.height && content.lineCount >= 3 && !content.truncated)
-            console.log(root.failed ? "BODY FORMAT FAIL: notification formatting" : "PASS: Teams table, Twitch and Updates rows, emitter scope, escaping, plain text fallback and Discord Markdown")
+            console.log(root.failed ? "BODY FORMAT FAIL: notification formatting" : "PASS: Teams table, Twitch and Updates rows, emitter scope, escaping, image links, plain text fallback and Discord Markdown")
             if (Quickshell.env("NOTIFICATION_BODY_SCREENSHOT")) {
                 preview.grabToImage(result => { result.saveToFile(Quickshell.env("NOTIFICATION_BODY_SCREENSHOT")); Qt.quit() })
             } else Qt.quit()
@@ -142,7 +142,7 @@ Scope {
         verify(content.text.includes("Junk:1"))
     }
 
-    function test_discordImageUrl() {
+    function test_remoteImageUrl() {
         const image = "https://instagram.example.test/media/story.heic?stp=dst-jpg_e35"
         content.emitterKey = "desktop:discord"
         content.body = image
@@ -153,6 +153,10 @@ Scope {
         compare(content.remoteImageUrl, "")
         content.body = image
         content.emitterKey = "app:other"
+        compare(content.remoteImageUrl, image)
+        content.body = "http://example.test/image.png"
+        compare(content.remoteImageUrl, "")
+        content.body = "https://example.test/vector.svg"
         compare(content.remoteImageUrl, "")
     }
 

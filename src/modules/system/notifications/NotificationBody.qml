@@ -11,7 +11,7 @@ UI.Text {
     property bool hideRemoteImageUrl: false
     // Discord wraps message content in bidi isolates, including Markdown fences.
     readonly property string bodyText: body.replace(/[\u2066-\u2069]/g, "")
-    readonly property string remoteImageUrl: discordImageUrl(bodyText)
+    readonly property string remoteImageUrl: imageUrl(bodyText)
     // Teams flattens the n8n inbox table: headers first, then values in column order.
     readonly property var inboxReport: {
         if (emitterKey !== "desktop:teams-for-linux") return null
@@ -28,8 +28,7 @@ UI.Text {
     function escapeHtml(value) {
         return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;")
     }
-    function discordImageUrl(value) {
-        if (emitterKey !== "desktop:discord") return ""
+    function imageUrl(value) {
         const url = value.trim()
         if (!/^https:\/\/[^\s]+$/i.test(url)) return ""
         const path = url.split(/[?#]/, 1)[0]

@@ -607,6 +607,7 @@
   "notifications.actions.dismissHint": "Descartar ventana emergente; conservar historial",
   "notifications.actions.loadOlder": "Cargar notificaciones anteriores",
   "notifications.actions.loadOlderEmitters": "Cargar emisores anteriores",
+  "notifications.actions.replayHint": "Volver a mostrar esta notificación como ventana emergente",
   "notifications.actions.unavailable": "Esta acción de la aplicación ya no está disponible.",
   "notifications.dnd.allowed": "Permitido en No molestar",
   "notifications.dnd.allowedHint": "Este emisor puede mostrar notificaciones emergentes en No molestar. Haz clic para bloquearlo; el silencio sigue teniendo prioridad.",

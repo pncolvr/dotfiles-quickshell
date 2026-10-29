@@ -26,6 +26,7 @@ Singleton {
         property var popups: []
         property var imageJobs: []
         property var pendingNotifications: ({})
+        property int nextReplayId: -1
     }
 
     function initialize() {
@@ -148,17 +149,18 @@ Singleton {
             delete pending[id]
             state.pendingNotifications = pending
         }
+        const entry = state.liveEntries[id]
         const next = Object.assign({}, state.liveEntries)
         delete next[id]
         state.liveEntries = next
-        NotificationRepository.removeLive(token(id))
+        if (!entry?.replayed) NotificationRepository.removeLive(token(id))
         refreshPopups()
     }
     function applyPolicy() {
         const next = Object.assign({}, state.liveEntries)
         for (const entry of Object.values(next)) {
             const emitter = NotificationEmitterRepository.emitters[entry.emitterKey]
-            if (entry.popupVisible && emitter && !popupAllowed(emitter)) {
+            if (!entry.replayed && entry.popupVisible && emitter && !popupAllowed(emitter)) {
                 next[entry.liveId] = Object.assign({}, entry, {popupVisible: false})
                 NotificationRepository.saveLive(token(entry.liveId), next[entry.liveId])
             }
@@ -175,14 +177,34 @@ Singleton {
         return entry.liveId !== undefined ? state.liveEntries[entry.liveId] ?? null
             : Object.values(state.liveEntries).find(item => item.archiveId === entry.archiveId) ?? null
     }
+    function replay(entry) {
+        if (!entry?.archiveId) return false
+        const now = Date.now()
+        const duration = entry.urgency === 0 ? Config.notificationLowTimeout
+            : entry.urgency === 2 ? Config.notificationCriticalTimeout : Config.notificationNormalTimeout
+        const existing = Object.values(state.liveEntries).find(item => item.replayed && item.archiveId === entry.archiveId)
+        if (existing) {
+            const updated = Object.assign({}, existing, {popupVisible: true, updatedAt: now,
+                deadline: duration > 0 ? now + duration : 0, duration})
+            state.liveEntries = Object.assign({}, state.liveEntries, {[existing.liveId]: updated})
+            refreshPopups()
+            return true
+        }
+        const id = state.nextReplayId--
+        const replayed = Object.assign({}, entry, {liveId: id, replayed: true, popupVisible: true,
+            receivedAt: now, updatedAt: now, duration, deadline: duration > 0 ? now + duration : 0})
+        state.liveEntries = Object.assign({}, state.liveEntries, {[id]: replayed})
+        refreshPopups()
+        return true
+    }
     function setPopupHovered(entry, hovered) {
         const live = liveFor(entry)
-        if (!live?.notification || live.duration <= 0) return
+        if ((!live?.notification && !live?.replayed) || live.duration <= 0) return
         const now = Date.now()
         if (hovered ? !live.popupVisible || live.deadline <= now : live.deadline >= 0) return
         const updated = Object.assign({}, live, {deadline: hovered ? -(live.deadline - now) : now - live.deadline})
         state.liveEntries = Object.assign({}, state.liveEntries, {[live.liveId]: updated})
-        NotificationRepository.saveLive(token(live.liveId), updated)
+        if (!live.replayed) NotificationRepository.saveLive(token(live.liveId), updated)
         // Keep the popup model stable so pausing does not recreate hovered cards.
     }
     function hasSavedAction(entry, identifier) {
@@ -222,22 +244,24 @@ Singleton {
     }
     function dismiss(entry, fromHistory) {
         if (fromHistory && entry.archiveId && !NotificationRepository.remove(entry.archiveId)) return
-        liveFor(entry)?.notification?.dismiss()
+        const live = liveFor(entry)
+        if (live?.replayed) closed(live.liveId)
+        else live?.notification?.dismiss()
     }
     function clearEmitter(key) {
         if (!NotificationRepository.clearEmitter(key)) return
-        for (const entry of Object.values(state.liveEntries)) if (entry.emitterKey === key) entry.notification.dismiss()
+        for (const entry of Object.values(state.liveEntries)) if (entry.emitterKey === key) dismiss(entry, false)
     }
     function deleteEmitter(key) {
         const entries = Object.values(state.liveEntries).filter(entry => entry.emitterKey === key)
         if (!NotificationEmitterRepository.remove(key, entries.map(entry => token(entry.liveId)))) return false
         NotificationRepository.revision++
-        for (const entry of entries) entry.notification.dismiss()
+        for (const entry of entries) dismiss(entry, false)
         return true
     }
     function clearAll() {
         if (!NotificationRepository.clearAll()) return
-        for (const entry of Object.values(state.liveEntries)) entry.notification.dismiss()
+        for (const entry of Object.values(state.liveEntries)) dismiss(entry, false)
     }
     function finishImage(job, dataUrl) {
         if (dataUrl) NotificationRepository.saveImage(job.id, job.updatedAt, dataUrl)
@@ -263,7 +287,10 @@ Singleton {
         onTriggered: {
             const now = Date.now()
             for (const entry of Object.values(state.liveEntries))
-                if (entry.deadline > 0 && entry.deadline <= now) entry.notification.expire()
+                if (entry.deadline > 0 && entry.deadline <= now) {
+                    if (entry.replayed) root.closed(entry.liveId)
+                    else entry.notification?.expire()
+                }
             root.scheduleExpiration()
         }
     }

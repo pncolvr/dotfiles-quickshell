@@ -607,6 +607,7 @@
   "notifications.actions.dismissHint": "Fermer la notification ; conserver l’historique",
   "notifications.actions.loadOlder": "Charger les notifications plus anciennes",
   "notifications.actions.loadOlderEmitters": "Charger les émetteurs plus anciens",
+  "notifications.actions.replayHint": "Afficher à nouveau cette notification dans une fenêtre contextuelle",
   "notifications.actions.unavailable": "Cette action de l’application n’est plus disponible.",
   "notifications.dnd.allowed": "Autorisé en mode Ne pas déranger",
   "notifications.dnd.allowedHint": "Cet émetteur peut afficher des notifications en mode Ne pas déranger. Cliquez pour le bloquer ; la mise en sourdine reste prioritaire.",
