@@ -10,7 +10,9 @@ PanelWindow {
     id: root
     property var capturePanel: null
     property bool hideForCapture: capturePanel?.hideForCapture ?? false
-    property bool revealBarOverFullscreen: false
+    // Every top-attached panel belongs visually to the bar. Keep the bar on
+    // the overlay layer for the panel's complete opening and closing lifetime.
+    property bool revealBarOverFullscreen: true
     signal captureHideRequested()
     UI.CaptureOverlay { host: root; requested: root.requestedVisible }
     default property alias contentData: surface.contentData

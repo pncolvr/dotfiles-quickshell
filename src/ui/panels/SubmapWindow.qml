@@ -8,7 +8,6 @@ import "../../services"
 
 TopPanelTooltip {
     id: root
-    revealBarOverFullscreen: true
     requestedVisible: SubmapService.submapActive
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None

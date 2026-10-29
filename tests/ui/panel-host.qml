@@ -55,6 +55,8 @@ WorkerScope {
             switch (root.phase) {
             case 0:
                 if (!root.tabs || !panelWindow.visible || panelWindow.transitioning) return
+                root.check(panelWindow.revealBarOverFullscreen,
+                    "top-attached panels reveal their bar over fullscreen windows by default")
                 root.nativeHeight = panelWindow.height
                 root.nativeTop = panelWindow.contentItem.mapToGlobal(0,0).y
                 root.tallHeight = panelWindow.contentHeight

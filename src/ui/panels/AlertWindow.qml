@@ -7,7 +7,6 @@ import "../../services"
 
 TopPanelTooltip {
     id: root
-    revealBarOverFullscreen: true
     requestedVisible: AlertService.messages.length > 0
     // Status must remain visible over fullscreen apps without taking focus.
     WlrLayershell.layer: WlrLayer.Overlay
