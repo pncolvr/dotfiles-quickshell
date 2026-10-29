@@ -8,8 +8,10 @@ UI.Text {
     property string body: ""
     property string emitterKey: ""
     property bool popup: false
+    property bool hideRemoteImageUrl: false
     // Discord wraps message content in bidi isolates, including Markdown fences.
     readonly property string bodyText: body.replace(/[\u2066-\u2069]/g, "")
+    readonly property string remoteImageUrl: discordImageUrl(bodyText)
     // Teams flattens the n8n inbox table: headers first, then values in column order.
     readonly property var inboxReport: {
         if (emitterKey !== "desktop:teams-for-linux") return null
@@ -25,6 +27,13 @@ UI.Text {
     readonly property bool formatted: !!inboxReport || !!twitchReport || !!updateReport || markdown
     function escapeHtml(value) {
         return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;")
+    }
+    function discordImageUrl(value) {
+        if (emitterKey !== "desktop:discord") return ""
+        const url = value.trim()
+        if (!/^https:\/\/[^\s]+$/i.test(url)) return ""
+        const path = url.split(/[?#]/, 1)[0]
+        return /\.(?:avif|bmp|gif|heic|heif|jpe?g|png|webp)$/i.test(path) ? url : ""
     }
     function parseTwitchReport(value) {
         if (emitterKey !== "app:twitch") return null
@@ -81,7 +90,7 @@ UI.Text {
         || /(?:^|\n) {0,3}(?:#{1,6} |[-*+] |\d+\. |> )/.test(bodyText)
 
     centerVertical: false
-    visible: body.length > 0
+    visible: body.length > 0 && !(hideRemoteImageUrl && remoteImageUrl)
     text: inboxReport ? inboxTable : twitchReport ? twitchRows : updateReport ? updateRows : markdown ? bodyText : body
     textFormat: inboxReport || twitchReport || updateReport ? Text.RichText : markdown ? Text.MarkdownText : Text.PlainText
     wrapMode: Text.Wrap

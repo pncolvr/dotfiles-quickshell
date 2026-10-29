@@ -252,11 +252,31 @@ Rectangle {
                 }
             }
             NotificationBody {
+                id: notificationBody
                 objectName: "notificationBody"
                 width: parent.width
                 body: root.entry.body || ""
                 emitterKey: root.entry.emitterKey || ""
                 popup: root.popup
+                hideRemoteImageUrl: bodyImageContainer.visible
+            }
+            Item {
+                id: bodyImageContainer
+                width: parent.width
+                height: visible ? (root.popup ? 120 : 180) : 0
+                visible: notificationBody.remoteImageUrl.length > 0 && bodyImage.status !== Image.Error
+                UI.ScaledImage {
+                    id: bodyImage
+                    objectName: "notificationBodyImage"
+                    anchors.centerIn: parent
+                    anchors.horizontalCenterOffset: root.popup ? 0 : -(iconColumn.width + layout.spacing) / 2
+                    width: Math.min(parent.width, root.popup ? 240 : 320)
+                    height: parent.height
+                    source: notificationBody.remoteImageUrl
+                    sourceSize: Qt.size(Math.ceil(width * Screen.devicePixelRatio), Math.ceil(height * Screen.devicePixelRatio))
+                    asynchronous: true
+                    cache: true
+                }
             }
             Flow {
                 id: actionFlow

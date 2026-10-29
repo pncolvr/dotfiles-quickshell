@@ -41,6 +41,7 @@ Scope {
             root.init(); root.test_updateRows()
             root.init(); root.test_updateRowsScope()
             root.init(); root.test_discordMarkdownUnchanged()
+            root.init(); root.test_discordImageUrl()
             content.emitterKey = "desktop:teams-for-linux"
             content.body = "Team Admin: inbox@example.com Inbox\nJunk\nError 0\n1\n0"
             content.popup = true
@@ -139,6 +140,20 @@ Scope {
         compare(content.textFormat, Text.MarkdownText)
         verify(!content.text.includes("\u2068"))
         verify(content.text.includes("Junk:1"))
+    }
+
+    function test_discordImageUrl() {
+        const image = "https://instagram.example.test/media/story.heic?stp=dst-jpg_e35"
+        content.emitterKey = "desktop:discord"
+        content.body = image
+        compare(content.remoteImageUrl, image)
+        content.body = "https://example.test/page?id=photo.jpg"
+        compare(content.remoteImageUrl, "")
+        content.body = "image: " + image
+        compare(content.remoteImageUrl, "")
+        content.body = image
+        content.emitterKey = "app:other"
+        compare(content.remoteImageUrl, "")
     }
 
     function test_twitchRows() {
