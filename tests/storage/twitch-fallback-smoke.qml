@@ -18,6 +18,7 @@ WorkerScope {
     property int streamResponses: 0
     property int responseBaseline: 0
     property bool awaitingBrowserLinks: false
+    property bool phaseVerified: false
     FileView {
         id: openedUrls
         path: Quickshell.env("TWITCH_FALLBACK_STATE") + "/opened-urls"
@@ -151,6 +152,10 @@ WorkerScope {
         id: buttonCheck
         interval: 50
         onTriggered: {
+            if (NotificationDispatchService.pendingBatchCount || NotificationDispatchService.activeCount) {
+                restart()
+                return
+            }
             const edit = root.find("editTwitchUser_banana") as UI.ActionButton
             root.check(events.mouseClick(edit, edit.width / 2, edit.height / 2, Qt.LeftButton, Qt.NoModifier, 0), "edit button receives a real pointer click")
             root.check(panel.editingLogin === "banana" && panel.adding && root.find("twitchSecondChannelField").visible
@@ -179,6 +184,7 @@ WorkerScope {
                 openedUrls.reload()
                 const urls = openedUrls.text().trim().split("\n").filter(Boolean)
                 if (urls.length < 3 || BrowserRoutingService.launching || BrowserRoutingService.launchQueue.length) return
+                if (NotificationDispatchService.pendingBatchCount || NotificationDispatchService.activeCount) return
                 root.check(urls.length === 3 && urls.filter(url => url === "https://www.twitch.tv/banana").length === 1
                     && urls.filter(url => url === "https://www.twitch.tv/potato").length === 2,
                     "main label, fallback details and avatar use the browser router with their own channel")
@@ -188,6 +194,13 @@ WorkerScope {
                 return
             }
             if (!DbService.ready || !TwitchService.available || !NetworkService.online) return
+            if (root.phaseVerified) {
+                if (NotificationDispatchService.pendingBatchCount || NotificationDispatchService.activeCount) return
+                if (!root.failed) console.log("PASS: fallback " + root.phase)
+                stop()
+                Qt.quit()
+                return
+            }
             if (root.step === 0) {
                 root.check(indicator.normalIconColor.toString() === (TwitchService.hasOnline ? Theme.twitchColor : Theme.text).toString(), "idle/live icon uses shared normal/live colors")
                 events.mouseClick(indicator, indicator.width / 2, indicator.height / 2, Qt.LeftButton, Qt.NoModifier, 0)
@@ -215,6 +228,7 @@ WorkerScope {
                     root.step = 2
                     failNextBatch.running = true
                 } else if (root.streamResponses >= root.responseBaseline + 2) {
+                    if (NotificationDispatchService.pendingBatchCount || NotificationDispatchService.activeCount) return
                     root.check(TwitchService.onlineUsers.length === 51, "failed second batch preserves the complete previous live snapshot")
                     if (!root.failed) console.log("PASS: fallback batch")
                     stop()
@@ -229,17 +243,21 @@ WorkerScope {
             if (!user || user.login !== expected || TwitchService.onlineUsers.length !== (root.phase === "neither" ? 1 : 2)) return
             // Allow row delegates and queued notifications to settle.
             if (++root.step < 5) return
-            root.selection()
-            if (root.phase === "fallback" && !root.failed) {
-                root.awaitingBrowserLinks = true
-                return
+            if (!root.phaseVerified) {
+                root.phaseVerified = true
+                root.selection()
+                if (root.phase === "fallback" && !root.failed) {
+                    root.awaitingBrowserLinks = true
+                    return
+                }
+                if (root.phase === "edit") root.editing()
+                if (root.phase === "both" && !root.failed) {
+                    stop()
+                    buttonCheck.start()
+                    return
+                }
             }
-            if (root.phase === "edit") root.editing()
-            if (root.phase === "both" && !root.failed) {
-                stop()
-                buttonCheck.start()
-                return
-            }
+            if (NotificationDispatchService.pendingBatchCount || NotificationDispatchService.activeCount) return
             if (!root.failed) console.log("PASS: fallback " + root.phase)
             stop()
             Qt.quit()

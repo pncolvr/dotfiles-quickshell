@@ -38,6 +38,10 @@ Singleton {
     }
     onUsersReadyChanged: if (usersReady) Qt.callLater(root.refresh)
     onAvailableChanged: if (available) Qt.callLater(root.refresh)
+    onEnabledChanged: if (!enabled) {
+        state.notificationBatchOpen = false
+        NotificationDispatchService.cancelSource("twitch")
+    }
 
     QtObject {
         id: state
@@ -46,13 +50,13 @@ Singleton {
         property var userIds: ({})
         property var scheduleQueue: []
         property var browserLogins: []
-        property var notificationQueue: []
         property var streamQueue: []
         property var pendingStreams: []
         property var avatarQueue: []
         property bool available: false
         property bool refreshing: false
         property bool refreshAgain: false
+        property bool notificationBatchOpen: false
         readonly property int scheduleCacheDuration: 60 * 60 * 1000
     }
 
@@ -66,19 +70,32 @@ Singleton {
         return {summary: "", body: rows.join("\n")}
     }
 
-    function notifyChanges(changes) {
-        if (!enabled || (!changes.online.length && !changes.offline.length)) return
-        state.notificationQueue.push(streamNotification(changes))
-        processNotificationQueue()
+    function notificationPayload(changes) {
+        const content = streamNotification(changes)
+        return Object.assign({}, content, {
+            source: "twitch",
+            appName: "Twitch",
+            icon: Qt.resolvedUrl("../../assets/twitch.png").toString().replace("file://", ""),
+            urgency: "normal",
+            expireTime: 10000
+        })
     }
 
-    function processNotificationQueue() {
-        if (!enabled || notifyProcess.running || !state.notificationQueue.length) return
-        const notification = state.notificationQueue.shift()
-        notifyProcess.command = ["notify-send", "--app-name=Twitch", "--urgency=normal", "--expire-time=10000",
-            "--icon",
-            Qt.resolvedUrl("../../assets/twitch.png").toString().replace("file://", ""), "--", notification.summary, notification.body]
-        notifyProcess.running = true
+    function notifyChanges(changes) {
+        if (!enabled || (!changes.online.length && !changes.offline.length)) return
+        NotificationDispatchService.send(notificationPayload(changes))
+    }
+
+    function beginNotificationBatch() {
+        if (state.notificationBatchOpen) return
+        state.notificationBatchOpen = NotificationDispatchService.beginBatch("background-refresh", "twitch")
+    }
+
+    function completeNotificationBatch(changes = null) {
+        const notification = changes && (changes.online.length || changes.offline.length)
+            ? notificationPayload(changes) : null
+        NotificationDispatchService.completeBatch("background-refresh", "twitch", notification)
+        state.notificationBatchOpen = false
     }
     function avatarSource(login) { return TwitchRepository.avatars[login]?.dataUrl ?? "" }
     function addUser(login, fallback = "", linkExisting = false) { return usersReady && TwitchRepository.addUser(login, fallback, linkExisting) }
@@ -141,9 +158,11 @@ Singleton {
             return
         }
         state.refreshAgain = false
+        beginNotificationBatch()
         const logins = TwitchRepository.channelLogins()
         if (!logins.length) {
             syncUsers()
+            completeNotificationBatch()
             return
         }
         state.refreshing = true
@@ -167,6 +186,7 @@ Singleton {
     }
 
     function finishRefresh() {
+        if (state.notificationBatchOpen) completeNotificationBatch()
         state.refreshing = false
         if (state.refreshAgain) Qt.callLater(root.refresh)
     }
@@ -261,7 +281,7 @@ Singleton {
         // Quickshell.Io omits QProcess::ExitStatus from its qmltypes.
         // qmllint disable signal-handler-parameters
         onExited: (exitCode, exitStatus) => {
-            if (exitStatus !== 0) { root.finishRefresh(); return }
+            if (exitStatus !== 0) { root.completeNotificationBatch(); root.finishRefresh(); return }
             try {
                 // The CLI update check can fail after a successful API response; validate the JSON itself.
                 const json = JSON.parse(streamsOutput.text)
@@ -275,21 +295,14 @@ Singleton {
                 if (state.streamQueue.length) { Qt.callLater(root.fetchStreams); return }
                 state.streams = state.pendingStreams.filter(stream => logins.includes(stream.login))
                 const changes = TwitchRepository.updateStreamSnapshot(state.streams)
-                if (changes) root.notifyChanges(changes)
+                root.completeNotificationBatch(changes)
                 root.fetchAvatars()
             } catch (error) {
                 console.warn("TwitchService streams response:", error)
+                root.completeNotificationBatch()
                 root.finishRefresh()
             }
         }
-        // qmllint enable signal-handler-parameters
-    }
-
-    Process {
-        id: notifyProcess
-        // Quickshell.Io omits QProcess::ExitStatus from its qmltypes.
-        // qmllint disable signal-handler-parameters
-        onExited: Qt.callLater(root.processNotificationQueue)
         // qmllint enable signal-handler-parameters
     }
 

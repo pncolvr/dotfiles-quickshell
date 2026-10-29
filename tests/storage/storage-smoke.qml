@@ -363,19 +363,22 @@ WorkerScope {
                 root.check(DbService.read("SELECT login FROM twitch_notified_streams").length === 2,
                     "only one notified stream per followed user, including after a new stream")
             } else if (["live-error", "live-offline", "live-offline-restart"].includes(root.phase)) {
-                if (root.streamResponses < 1 || ++root.layoutTicks < 4) return
-                const expectedOnline = root.phase === "live-error"
-                root.check(TwitchRepository.notifiedStreams.alice?.online === expectedOnline
-                    && TwitchRepository.notifiedStreams.bob?.online === expectedOnline,
-                    "failed requests preserve online state; successful offline checks persist it")
-                root.check(DbService.read("SELECT login FROM twitch_notified_streams").length === 2, "offline records remain bounded")
-                if (root.phase === "live-offline-restart") {
-                    root.check(TwitchService.removeUser("alice") && !TwitchRepository.notifiedStreams.alice, "removal clears notified stream")
-                    root.check(TwitchService.undoRemoveUser("alice") && TwitchRepository.notifiedStreams.alice?.streamId === "alice-stream-2"
-                        && !TwitchRepository.notifiedStreams.alice?.online,
-                        "undo restores notified stream without repeating its alert")
-                    TwitchService.removeUser("alice")
-                    TwitchService.removeUser("bob")
+                if (root.phase !== "live-offline-restart" || root.step === 1) {
+                    if (root.streamResponses < 1 || ++root.layoutTicks < 4) return
+                    const expectedOnline = root.phase === "live-error"
+                    root.check(TwitchRepository.notifiedStreams.alice?.online === expectedOnline
+                        && TwitchRepository.notifiedStreams.bob?.online === expectedOnline,
+                        "failed requests preserve online state; successful offline checks persist it")
+                    root.check(DbService.read("SELECT login FROM twitch_notified_streams").length === 2, "offline records remain bounded")
+                    if (root.phase === "live-offline-restart") {
+                        root.check(TwitchService.removeUser("alice") && !TwitchRepository.notifiedStreams.alice, "removal clears notified stream")
+                        root.check(TwitchService.undoRemoveUser("alice") && TwitchRepository.notifiedStreams.alice?.streamId === "alice-stream-2"
+                            && !TwitchRepository.notifiedStreams.alice?.online,
+                            "undo restores notified stream without repeating its alert")
+                        TwitchService.removeUser("alice")
+                        TwitchService.removeUser("bob")
+                        root.step++
+                    }
                 }
             } else if (root.phase === "layout") {
                 if (root.step === 1) {
@@ -402,6 +405,7 @@ WorkerScope {
                 const expectedUrl = root.phase === "avatar-failure" ? "https://avatars.test/alice.png" : "https://avatars.test/alice-v2.png"
                 root.check(TwitchRepository.avatars.alice?.sourceUrl === expectedUrl, "failed download keeps cache; changed image replaces cache after success")
             }
+            if (NotificationDispatchService.pendingBatchCount || NotificationDispatchService.activeCount) return
             if (!root.failed) console.log("PASS: storage " + root.phase)
             ticker.stop()
             Qt.quit()

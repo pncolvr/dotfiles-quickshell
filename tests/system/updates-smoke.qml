@@ -33,6 +33,7 @@ WorkerScope {
                 if (UpdatesService.count !== 0 || UpdatesService.error) return
             } else {
                 if (UpdatesService.count !== 1 || UpdatesService.updates[0].name !== "fresh" || UpdatesService.error) return
+                if (NotificationDispatchService.pendingBatchCount || NotificationDispatchService.activeCount) return
                 console.log(root.failed ? "SERVICES FAIL: updates" : "PASS: update snapshots survive errors, accept empty success and notify only newly added updates")
                 Qt.quit()
                 return

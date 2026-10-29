@@ -699,6 +699,7 @@ bash tests/notifications/notifications.sh --wayland
 bash tests/notifications/animations.sh
 bash tests/notifications/animations.sh --wayland
 bash tests/notifications/startup.sh
+bash tests/notifications/dispatch.sh
 bash tests/storage/storage.sh
 bash tests/directories/directories.sh
 bash tests/qml/lint.sh
@@ -732,6 +733,16 @@ also verifies that request reaches the mocked browser opener.
 The startup test briefly launches a temporary copy of the complete shell on the
 current Wayland desktop with notifications enabled by default. It checks
 the real module loader, with a private D-Bus session and mocked startup commands.
+
+Outgoing shell-owned notifications use the singleton
+`src/services/notifications/NotificationDispatchService.qml`. Producers own their
+content and call `beginBatch(cohort, source)` before asynchronous work, followed
+by exactly one `completeBatch(cohort, source, payload)`; pass `null` for a
+successful empty result or failure. Batches retain per-source participation,
+start every completed payload concurrently after the join window, and force a
+flush at the hard deadline. `send(payload)` is the immediate path. The dispatch
+fixture checks concurrent paired delivery, empty peers, hard timeouts and direct
+sends with a mocked `notify-send`.
 
 ## Storage and Twitch
 

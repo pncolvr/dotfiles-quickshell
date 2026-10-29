@@ -476,6 +476,8 @@ Item {
     readonly property int notificationNormalTimeout: 5000
     readonly property int notificationCriticalTimeout: 0
     readonly property int notificationPageSize: 25
+    readonly property int notificationBatchJoinWindow: Timespan.fromMilliseconds(500)
+    readonly property int notificationBatchMaxWait: Timespan.fromSeconds(30)
 
     // Recent files
     // Either recent-file limit can be disabled with 0.

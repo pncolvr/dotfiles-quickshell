@@ -18,20 +18,35 @@ mkdir -p "$cache_dir" || exit 1
 exec 9>"$cache_dir/updates.lock" || exit 1
 # Cron, pacman hooks and the shell can request a check at the same time.
 flock -n 9 || exit 0
+
+notification_batch_open=false
+begin_notification_batch() {
+    if qs ipc call notificationDispatch begin background-refresh updates 9>&- >/dev/null 2>&1; then
+        notification_batch_open=true
+    fi
+}
+complete_notification_batch() {
+    [[ $notification_batch_open == true ]] || return 0
+    qs ipc call notificationDispatch complete background-refresh updates 9>&- >/dev/null 2>&1 || true
+    notification_batch_open=false
+}
+begin_notification_batch
+
 # Remove abandoned files from older/interrupted runs, leaving recent files alone.
 find "$cache_dir" -maxdepth 1 -type f \( -name 'updates.cache.??????' -o -name 'updates.err.??????' \) -mmin +60 -delete
 
 tmp_file="$(mktemp "$cache_dir/updates.cache.XXXXXX" 2>/dev/null)" || exit 1
 err_file=""
 trap 'rm -f "$tmp_file" "$err_file"' EXIT
-trap 'exit 130' INT
-trap 'exit 143' TERM
-trap 'exit 129' HUP
+trap 'complete_notification_batch; exit 130' INT
+trap 'complete_notification_batch; exit 143' TERM
+trap 'complete_notification_batch; exit 129' HUP
 err_file="$(mktemp "$cache_dir/updates.err.XXXXXX" 2>/dev/null)" || exit 1
 
 fail() {
     printf 'Update check failed: %s\n' "$1" >&2
     [[ ! -s "$err_file" ]] || cat "$err_file" >&2
+    complete_notification_batch
     qs ipc call updates schedule 9>&- 2>/dev/null || true
     exit 1
 }
@@ -46,6 +61,7 @@ defer_if_locked() {
     # timer retry outside that transaction; do not query or replace the cache.
     # Check the private database before checkupdates, which removes its db.lck.
     if [[ -e "${pacman_db%/}/db.lck" || -e "$CHECKUPDATES_DB/db.lck" ]]; then
+        complete_notification_batch
         qs ipc call updates schedule 9>&- 2>/dev/null || true
         exit 0
     fi
@@ -104,5 +120,7 @@ defer_if_locked
 mv -f -- "$tmp_file" "$cache_file" || {
     fail 'could not publish the update cache.'
 }
-qs ipc call updates reload 9>&- 2>/dev/null || true
+if ! qs ipc call updates reload 9>&- 2>/dev/null; then
+    complete_notification_batch
+fi
 exit 0

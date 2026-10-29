@@ -479,6 +479,10 @@ Review these defaults when adapting the configuration:
   by default), including when the helper is invoked by a post-transaction hook.
   Locks are checked again after queries and before publication. The helper uses
   `C.UTF-8` for English package fields and Qt IPC without locale warnings.
+  It also joins the shared `background-refresh` notification cohort before its
+  queries, allowing update and Twitch results scheduled together to appear as one
+  burst. `notificationBatchJoinWindow` controls the producer join window (500ms)
+  and `notificationBatchMaxWait` bounds a stalled cohort (30 seconds).
   The panel's refresh button, immediately left of Install updates, offers
   “Check now”. It clears the pending retry
   timer and starts the configured refresh helper immediately, even if the cached

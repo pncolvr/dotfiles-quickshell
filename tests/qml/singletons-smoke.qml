@@ -3,6 +3,7 @@ import Quickshell
 import "../../src/services" as Services
 import "../../src/services/storage" as Storage
 import "../../src/services/ui" as ServicesUi
+import "../../src/services/notifications" as Notifications
 import "../../src/services/clipboard" as Clipboard
 import "../../src/services/audio" as Audio
 import "../../src/services/time" as Time
@@ -50,6 +51,7 @@ Services.WorkerScope {
                 ["BatteryRepository",Services.BatteryRepository,Storage.BatteryRepository],
                 ["NotificationRepository",Services.NotificationRepository,Storage.NotificationRepository],
                 ["NotificationEmitterRepository",Services.NotificationEmitterRepository,Storage.NotificationEmitterRepository],
+                ["NotificationDispatchService",Services.NotificationDispatchService,Notifications.NotificationDispatchService],
                 ["TwitchRepository",Services.TwitchRepository,Storage.TwitchRepository],
                 ["TextureSettings",UI.TextureSettings,Components.TextureSettings],
                 ["ImageCropCache",UI.ImageCropCache,Components.ImageCropCache],

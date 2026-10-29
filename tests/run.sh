@@ -185,6 +185,7 @@ run isolated qml/button-focus bash tests/qml/button-focus.sh
 run isolated qml/batched-model bash tests/qml/batched-model.sh
 run isolated qml/pulse-clock bash tests/qml/pulse-clock.sh
 run isolated qml/alerts bash tests/qml/alerts.sh
+run isolated notifications/dispatch bash tests/notifications/dispatch.sh
 run isolated ui/copy-button bash tests/ui/copy-button.sh
 run isolated ui/buttons bash tests/ui/buttons.sh
 run isolated ui/scrollbar bash tests/ui/scrollbar.sh

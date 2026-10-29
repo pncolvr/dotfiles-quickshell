@@ -35,7 +35,6 @@ Singleton {
         property date lastChecked: new Date(0)
         property string error: ""
         property var pendingNotificationUpdates: null
-        property var notificationQueue: []
     }
 
     readonly property string notificationSnapshotKey: "updates.notificationSnapshot"
@@ -114,6 +113,7 @@ Singleton {
 
     function startRefresh() {
         if (!enabled || checking) return
+        NotificationDispatchService.beginBatch("background-refresh", "updates")
         refreshScriptProcess.discardResult = false
         refreshScriptProcess.running = true
     }
@@ -129,8 +129,7 @@ Singleton {
                 if (process.running) process.signal(15)
             }
             _internal.pendingNotificationUpdates = null
-            _internal.notificationQueue = []
-            if (updateNotificationProcess.running) updateNotificationProcess.signal(15)
+            NotificationDispatchService.cancelSource("updates")
             if (markdownProcess.running) markdownProcess.signal(15)
             _internal.error = ""
         }
@@ -156,24 +155,30 @@ Singleton {
         _internal.pendingNotificationUpdates = null
         const previous = PreferencesRepository.value(notificationSnapshotKey, null)
         const identities = updates.map(update => root.notificationIdentity(update))
-        if (!PreferencesRepository.setValue(notificationSnapshotKey, identities)) return
-        if (!Array.isArray(previous)) return
+        if (!PreferencesRepository.setValue(notificationSnapshotKey, identities)) {
+            root.completeNotificationBatch()
+            return
+        }
+        if (!Array.isArray(previous)) {
+            root.completeNotificationBatch()
+            return
+        }
         const known = new Set(previous)
         const added = updates.filter(update => !known.has(root.notificationIdentity(update)))
-        if (!added.length) return
-        _internal.notificationQueue.push({
+        const notification = !added.length ? null : {
+            source: "updates",
+            appName: "Updates",
+            icon: "system-software-update",
+            urgency: "normal",
+            expireTime: 10000,
             summary: Translations.text("updates.notifications.new", [], added.length),
             body: added.map(update => `${update.name}: ${update.oldVersion} -> ${update.newVersion}`).join("\n")
-        })
-        processNotificationQueue()
+        }
+        root.completeNotificationBatch(notification)
     }
 
-    function processNotificationQueue() {
-        if (!enabled || updateNotificationProcess.running || !_internal.notificationQueue.length) return
-        const notification = _internal.notificationQueue.shift()
-        updateNotificationProcess.command = ["notify-send", "--app-name=Updates", "--urgency=normal", "--expire-time=10000",
-            "--icon=system-software-update", "--", notification.summary, notification.body]
-        updateNotificationProcess.running = true
+    function completeNotificationBatch(notification = null) {
+        NotificationDispatchService.completeBatch("background-refresh", "updates", notification)
     }
 
     Process {
@@ -189,6 +194,7 @@ Singleton {
             }
             if (exitCode !== 0 || exitStatus !== 0) {
                 _internal.error = Translations.text("updates.errors.read")
+                root.completeNotificationBatch()
                 return
             }
             const priority = []
@@ -197,6 +203,7 @@ Singleton {
                 const parts = line.trim().split(/\s+/)
                 if (parts.length !== 5) {
                     _internal.error = Translations.text("updates.errors.invalidResponse")
+                    root.completeNotificationBatch()
                     return
                 }
                 const update = {repository: parts[0], architecture: parts[1], name: parts[2],
@@ -222,23 +229,17 @@ Singleton {
         // qmllint disable signal-handler-parameters
         onExited: (exitCode, exitStatus) => {
             if (!root.enabled || refreshScriptProcess.discardResult) {
+                root.completeNotificationBatch()
                 if (root.enabled) Qt.callLater(root.refreshIfOnline)
                 return
             }
             if (exitCode !== 0 || exitStatus !== 0) {
                 _internal.error = Translations.text("updates.errors.refresh")
+                root.completeNotificationBatch()
                 return
             }
             root.refresh()
         }
-        // qmllint enable signal-handler-parameters
-    }
-
-    Process {
-        id: updateNotificationProcess
-        // Quickshell.Io omits QProcess::ExitStatus from its qmltypes.
-        // qmllint disable signal-handler-parameters
-        onExited: Qt.callLater(root.processNotificationQueue)
         // qmllint enable signal-handler-parameters
     }
 

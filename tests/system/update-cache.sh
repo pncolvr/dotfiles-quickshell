@@ -89,21 +89,21 @@ for mode in success age aur-only empty empty-exit-one unexpected-exit query-fail
                 age) [[ $(<"$UPDATES_TEST_CACHE") == $'aur x86_64 visual-studio-code-bin 1.140.0-2 1.141.0-1\ncore x86_64_v3 linux 1 2' ]] ;;
                 aur-only) [[ $(<"$UPDATES_TEST_CACHE") == 'aur x86_64 visual-studio-code-bin 1.140.0-2 1.141.0-1' ]] ;;
             esac
-            [[ $(<"$test_dir/actions") == $'rename\nipc call updates reload' ]]
+            [[ $(<"$test_dir/actions") == $'ipc call notificationDispatch begin background-refresh updates\nrename\nipc call updates reload' ]]
             ;;
         empty*)
             [[ $status == 0 ]]
             [[ ! -s $UPDATES_TEST_CACHE ]]
-            [[ $(<"$test_dir/actions") == $'rename\nipc call updates reload' ]]
+            [[ $(<"$test_dir/actions") == $'ipc call notificationDispatch begin background-refresh updates\nrename\nipc call updates reload' ]]
             ;;
         signal)
             [[ $status == 143 && $(<"$UPDATES_TEST_CACHE") == "$UPDATES_TEST_PREVIOUS" ]]
-            [[ ! -s $test_dir/actions ]]
+            [[ $(<"$test_dir/actions") == $'ipc call notificationDispatch begin background-refresh updates\nipc call notificationDispatch complete background-refresh updates' ]]
             ;;
         *-lock-race)
             [[ $status == 0 && ! -s $test_dir/error ]]
             [[ $(<"$UPDATES_TEST_CACHE") == "$UPDATES_TEST_PREVIOUS" ]]
-            [[ $(<"$test_dir/actions") == 'ipc call updates schedule' ]]
+            [[ $(<"$test_dir/actions") == $'ipc call notificationDispatch begin background-refresh updates\nipc call notificationDispatch complete background-refresh updates\nipc call updates schedule' ]]
             case $mode in
                 repo-lock-race) [[ $(<"$test_dir/queries") == repo ]] ;;
                 aur-lock-race) [[ $(<"$test_dir/queries") == $'repo\naur' ]] ;;
@@ -114,6 +114,8 @@ for mode in success age aur-only empty empty-exit-one unexpected-exit query-fail
         *)
             [[ $status == 1 && -s $test_dir/error ]]
             [[ $(<"$UPDATES_TEST_CACHE") == "$UPDATES_TEST_PREVIOUS" ]]
+            rg -q '^ipc call notificationDispatch begin background-refresh updates$' "$test_dir/actions"
+            rg -q '^ipc call notificationDispatch complete background-refresh updates$' "$test_dir/actions"
             rg -q '^ipc call updates schedule$' "$test_dir/actions"
             ! rg -q 'updates reload' "$test_dir/actions"
             ;;
@@ -131,7 +133,7 @@ for lock_file in "$test_dir/pacman/db.lck" "$test_dir/home/.cache/quickshell/upd
     HOME="$test_dir/home" UPDATES_TEST_MODE=success bash "$project_root/src/services/system/update-check.sh" 2> "$test_dir/error"
     [[ -f $lock_file && ! -s $test_dir/queries && ! -s $test_dir/error ]]
     [[ $(<"$UPDATES_TEST_CACHE") == "$UPDATES_TEST_PREVIOUS" ]]
-    [[ $(<"$test_dir/actions") == 'ipc call updates schedule' ]]
+    [[ $(<"$test_dir/actions") == $'ipc call notificationDispatch begin background-refresh updates\nipc call notificationDispatch complete background-refresh updates\nipc call updates schedule' ]]
     [[ $(find "$test_dir/home/.cache/quickshell" -maxdepth 1 -type f | wc -l) -eq 2 ]]
     rm "$lock_file"
 done
@@ -139,7 +141,7 @@ done
 : > "$test_dir/actions"
 HOME="$test_dir/home" UPDATES_TEST_MODE=success bash "$project_root/src/services/system/update-check.sh"
 [[ $(<"$UPDATES_TEST_CACHE") == 'core x86_64_v3 linux 1 2' ]]
-[[ $(<"$test_dir/actions") == $'rename\nipc call updates reload' ]]
+[[ $(<"$test_dir/actions") == $'ipc call notificationDispatch begin background-refresh updates\nrename\nipc call updates reload' ]]
 
 # A simultaneous invocation leaves the active writer's files and snapshot intact.
 printf '%s\n' "$UPDATES_TEST_PREVIOUS" > "$UPDATES_TEST_CACHE"

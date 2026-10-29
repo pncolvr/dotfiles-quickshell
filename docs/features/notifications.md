@@ -66,7 +66,8 @@ content. File icons supplied through
 `notify-send`, including the custom Twitch logo, use this same left icon slot.
 Twitch sends normal-urgency, nontransient notifications under its own emitter name,
 so its notifications and icons are retained in history. New Twitch notifications
-list streamer login names under Live and Offline headings, without a view button.
+list online logins first in green and offline logins second in red, without a title
+or view button.
 Extra images supplied by any app, including Discord and Signal user/group
 images, overlap the app icon with an offset down and right, leaving the app icon
 visible above and to the left. If no app icon is available, the supplied image
@@ -108,6 +109,23 @@ protocol invalidates their IDs on closure. See the
 The locally implemented legacy Twitch default action still works on card clicks.
 Focus lookup includes other workspaces and desktop `StartupWMClass`. If no window
 matches, the feedback message clears three seconds after the click.
+
+## Outgoing notification batches
+
+Quickshell-owned producers send desktop notifications through the shared
+`NotificationDispatchService`. Twitch and Updates join the
+`background-refresh` cohort when their checks begin and complete their own slot
+with either a notification or an explicit empty result. Once every joined source
+has completed, the service starts all notification processes together. This keeps
+the common on-the-hour Twitch and update results visually synchronized without
+combining their separate emitters, content, expiry, urgency or history.
+
+The cohort accepts producers for `notificationBatchJoinWindow` (500ms by default)
+and has a `notificationBatchMaxWait` safety deadline (30 seconds by default).
+A failed or empty producer therefore cannot strand another notification. Direct,
+user-triggered notifications can bypass a cohort with `send()` and remain
+immediate. The external update helper opens its slot before package queries and
+the Updates service completes it only after the published snapshot is parsed.
 
 See [setup](../setup.md) for notification ownership and screen-sharing rules,
 [storage](../storage.md) for history persistence, and

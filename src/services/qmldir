@@ -30,6 +30,7 @@ singleton NotificationRepository 1.0 storage/NotificationRepository.qml
 singleton NotificationEmitterRepository 1.0 storage/NotificationEmitterRepository.qml
 
 singleton NotificationService 1.0 notifications/NotificationService.qml
+singleton NotificationDispatchService 1.0 notifications/NotificationDispatchService.qml
 NativeNotificationServer 1.0 notifications/NativeNotificationServer.qml
 singleton StatusService 1.0 status/StatusService.qml
 singleton TwitchService 1.0 twitch/TwitchService.qml
