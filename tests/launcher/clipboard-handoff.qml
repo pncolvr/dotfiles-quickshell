@@ -15,6 +15,24 @@ WorkerScope {
     property var originalPanel: null
     property var originalDraft: null
     property var originalField: null
+    QtObject { id: stalledSession }
+    QtObject {
+        id: stalledHandler
+        property bool hostRequestedVisible: false
+        property bool windowActive: false
+        property bool ready: true
+        property bool blocked: false
+        property bool nativeDialogOpen: false
+        property bool requestingKeyboardFocus: false
+        property var focusSession: stalledSession
+        property var handoffOwner: stalledSession
+        property var nativeWindow: null
+        function restoreFocus(_item) {
+            windowActive = false
+            requestingKeyboardFocus = true
+            return false
+        }
+    }
     Test.TestResult { id: objects }
     Component { id: tooltipContent; Item {} }
     QtObject { id: tooltipSource }
@@ -188,8 +206,22 @@ WorkerScope {
             case 16:
                 if (ClipboardPickerService.visible) return
                 root.check(!PanelFocusService.active && !PickerService.visible, "stale return target never reopens a closed parent")
+                stalledHandler.hostRequestedVisible = true
+                stalledHandler.windowActive = true
+                PanelFocusService.register(stalledHandler)
+                PanelFocusService.begin(stalledSession)
+                root.check(TooltipService.interactionHeld, "focus handoff holds tooltip dismissal")
+                PanelFocusService.finish(stalledSession)
+                root.ticks = 0
+                root.step++
+                break
+            case 17:
+                if (PanelFocusService.returnHandler || TooltipService.interactionHeld) return
+                root.check(!PanelFocusService.active, "unacknowledged focus return releases its global panel hold")
+                PanelFocusService.unregister(stalledHandler)
+                stalledHandler.hostRequestedVisible = false
                 TooltipService.dismiss()
-                if (!root.failed) console.log("PASS: Clipboard preserves unsaved SSH forms and bar panels, repeat opening, Escape/Copy focus return, selected-field paste, outside dismissal and stale target safety")
+                if (!root.failed) console.log("PASS: Clipboard preserves unsaved SSH forms and bar panels, repeat opening, Escape/Copy focus return, selected-field paste, outside dismissal, stale target safety and failed-activation cleanup")
                 Qt.quit()
             }
         }

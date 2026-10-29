@@ -10,6 +10,7 @@ QtObject {
     property var heldSessions: []
     property var returnHandler: null
     readonly property bool active: owner !== null
+    readonly property int returnFocusTimeout: 1500
 
     function register(handler) { handlers = handlers.concat([handler]) }
     function unregister(handler) {
@@ -38,6 +39,7 @@ QtObject {
     }
     function begin(session) {
         if (owner === session) return
+        returnTimeout.stop()
         returnHandler = null
         const handler = handlers.find(item => item.hostRequestedVisible && item.windowActive
             && item.ready && !item.blocked && !item.nativeDialogOpen)
@@ -56,9 +58,23 @@ QtObject {
     function finishReturn() {
         if (active) return
         if (returnHandler?.hostRequestedVisible && returnHandler.requestingKeyboardFocus
-            && !returnHandler.windowActive) return
+            && !returnHandler.windowActive) {
+            // Wayland activation is asynchronous and is not guaranteed to be
+            // acknowledged. Never let a failed focus return retain every panel.
+            if (!returnTimeout.running) returnTimeout.start()
+            return
+        }
+        returnTimeout.stop()
         returnHandler = null
         TooltipService.setInteraction(root, false)
+    }
+    property Timer returnTimeout: Timer {
+        id: returnTimeout
+        interval: root.returnFocusTimeout
+        onTriggered: {
+            root.returnHandler = null
+            TooltipService.setInteraction(root, false)
+        }
     }
     property Connections returnChanges: Connections {
         target: root.returnHandler
