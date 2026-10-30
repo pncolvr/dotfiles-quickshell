@@ -47,9 +47,14 @@ Rectangle {
                     ? (root.muted ? Theme.micMutedIcon : Theme.micIcon)
                     : (root.muted ? Theme.volumeMutedIcon : Theme.volumeIcons[Theme.volumeIcons.length - 1])
                 hint: Translations.text(root.muted ? "audio.actions.unmuteDevice" : "audio.actions.muteDevice",[root.audioService.deviceName(root.node)])
-                enabled: root.deviceReady
+                enabled: root.deviceReady && (!root.isDefault || !root.audioService.muteBusy)
                 highlightedDevice: root.muted
-                onClicked: root.audioService.toggleNodeMute(root.node)
+                onClicked: {
+                    if (root.isDefault) {
+                        if (root.input) root.audioService.toggleMicMute()
+                        else root.audioService.toggleMute()
+                    } else root.audioService.toggleNodeMute(root.node)
+                }
             }
 
             AudioVolumeSlider {

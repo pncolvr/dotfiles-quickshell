@@ -37,6 +37,7 @@ const services={
   'function expose(scope) { Calls.record("expose", [scope]) }',
   'function clipboard() { Calls.record("clipboard", []) }'
  ],
+ AudioService:['function toggleMicMute() { Calls.record("mic-mute", []) }', 'function toggleMute() { Calls.record("speaker-mute", []) }'],
  RecordingService:['function toggle() { Calls.record("recording", []) }'],
  MediaFullscreenService:['function openPreferred(screen) { Calls.record("media-fullscreen", []) }'],
  ScreenshotService:['function open(method = "") { Calls.record("screenshot", [method]) }'],
@@ -90,6 +91,7 @@ const expected={
  'window-switch':['window-switch',[]],
  'launcher-expose-current':['expose',['current']], 'launcher-clipboard':['clipboard',[]],
  'launcher-wallpaper':['wallpaper',[]], 'launcher-encode-qr':['encode-qr',[]], 'launcher-bookmarks':['bookmarks',[]], 'launcher-power':['power',[]], 'recording-toggle':['recording',[]], 'vault-toggle':['vault',[]],
+ 'audio-mic-mute':['mic-mute',[]], 'audio-speaker-mute':['speaker-mute',[]],
  'notifications-toggle-dnd':['dnd',[]], 'shell-reload':['shell-reload',[]],
  'media-fullscreen':['media-fullscreen',[]],
  'windows-next':['windows-next',[]], 'windows-prev':['windows-prev',[]]
@@ -108,7 +110,8 @@ function ipc(method) {
 }
 function waitFor(predicate,message) {
  for(let i=0;i<100;i++) {const value=predicate();if(value)return value;Atomics.wait(new Int32Array(new SharedArrayBuffer(4)),0,0,20);}
- throw new Error(message);
+ const snapshot=ipc('snapshot');
+ throw new Error(message+'; last callback count: '+(snapshot===null?'unavailable':snapshot.length));
 }
 waitFor(()=>ipc('snapshot'),'Registry fixture did not start');
 const timings=[];

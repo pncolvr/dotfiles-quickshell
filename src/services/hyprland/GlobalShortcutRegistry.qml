@@ -33,6 +33,8 @@ Scope {
             name: "screenshot-" + method, description: Translations.text("shortcuts.capture",[Translations.text("screenshot.modes."+method)]),
             activate: () => ScreenshotService.open(method)
         })),
+        {name: "audio-mic-mute", description: Translations.text("shortcuts.micMute"), activate: () => AudioService.toggleMicMute()},
+        {name: "audio-speaker-mute", description: Translations.text("shortcuts.speakerMute"), activate: () => AudioService.toggleMute()},
         {name: "recording-toggle", description: Translations.text("shortcuts.recording"), activate: () => RecordingService.toggle()},
         {name: "media-fullscreen", description: Translations.text("media.actions.fullscreen"), activate: () => MediaFullscreenService.openPreferred(
             Quickshell.screens.find(screen => screen.name === Hyprland.focusedMonitor?.name) ?? Quickshell.screens[0])},

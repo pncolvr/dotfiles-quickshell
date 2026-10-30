@@ -834,7 +834,13 @@ bash tests/audio/screencast.sh
 bash tests/audio/screencast.sh --native
 ```
 
-Run `bash tests/audio/audio.sh` for routing, profile, and QML interaction checks.
+Run `bash tests/audio/audio.sh` for mute synchronization, routing, profile, and QML interaction checks.
+`bash tests/audio/audio-mute.sh` isolates the Bash mute controls with mocked
+PulseAudio and Discord tray commands; it never changes hardware or Discord.
+`bash tests/audio/audio-mute-service.sh` checks asynchronous AudioService mute
+dispatch, overlap prevention and translated failure reporting offscreen.
+The native shortcut fixture mocks AudioService and checks both audio callbacks
+before and after reloading its own isolated shell.
 `bash tests/audio/media.sh` checks transport capabilities, artwork loading,
 the all-player list, timeline dragging and capability checks, screen-height
 limits, track metadata changes, late position responses, elapsed-time limits,
@@ -1349,8 +1355,8 @@ client startup. This cannot guarantee delivery of keys typed before native focus
 transfers; test immediate Meta+P typing on the live desktop as well.
 
 Run `bash tests/launcher/global-shortcuts.sh` in a Hyprland session to check all
-52 production shortcut callbacks before and after reload, covering launcher and
-recording actions, Vault, notification DND, shell reload, all 14 module shortcuts,
+production shortcut callbacks before and after reload, covering launcher,
+audio mute and recording actions, Vault, notification DND, shell reload, all 14 module shortcuts,
 window cycling and all ten numbered window targets. It loads the unmodified
 registry component with fixture-only feature services, captures reload through
 a test override and uses a unique native shortcut namespace; it opens

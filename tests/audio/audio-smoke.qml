@@ -120,8 +120,12 @@ WorkerScope {
         readonly property var playbackApps: AudioService.appEntries(playbackNodes, false, playbackLinks, outputs)
         readonly property bool muted: defaultOutput.audio.muted
         readonly property bool micMuted: defaultInput.audio.muted
-        function toggleMute() { defaultOutput.audio.muted = !muted }
-        function toggleMicMute() { defaultInput.audio.muted = !micMuted }
+        property int speakerMuteCalls: 0
+        property int micMuteCalls: 0
+        property bool muteBusy: false
+        property string muteError: ""
+        function toggleMute() { speakerMuteCalls++; defaultOutput.audio.muted = !muted }
+        function toggleMicMute() { micMuteCalls++; defaultInput.audio.muted = !micMuted }
         property bool micActivityEnabled: true
         property bool routingBusy: false
         property string routingError: ""
@@ -243,6 +247,14 @@ WorkerScope {
                 root.check(!output.audio.muted && input.audio.muted && inputMute.muted,
                     "top-right mic mute controls only the default input")
                 inputMute.clicked()
+                backend.muteBusy = true
+                root.check(!outputMute.enabled && !inputMute.enabled, "both system mute controls disable while busy")
+                backend.muteBusy = false
+                root.check(outputMute.enabled && inputMute.enabled, "system controls recover after completion")
+                backend.muteError = "Synthetic sync failure"
+                root.check(root.find(inputPanel, "audioFooter").message === backend.muteError,
+                    "mute failures are visible in the panel footer")
+                backend.muteError = ""
                 const outputs = root.find(outputPanel, "audioDevices")
                 const inputs = root.find(inputPanel, "audioDevices")
                 root.check(outputs.count === 2 && inputs.count === 2, "separate device lists")
@@ -377,9 +389,13 @@ WorkerScope {
                 root.check(backend.currentOutput === secondOutput && backend.defaultOutput === output, "Use now leaves default unchanged")
                 root.find(row, "deviceDefault").clicked()
                 root.check(backend.defaultOutput === secondOutput && row.isDefault, "default marker follows selected output")
+                const defaultSpeakerCalls = backend.speakerMuteCalls
                 const deviceMute = root.find(row, "deviceMute")
                 root.checkMuteSize(deviceMute, () => wheelEvents.mouseClick(deviceMute), "device mute keeps button dimensions")
-                root.check(secondOutput.audio.muted && !output.audio.muted, "mute affects only its device")
+                root.check(secondOutput.audio.muted && !output.audio.muted && backend.speakerMuteCalls === defaultSpeakerCalls + 1, "default device mute reuses the system action")
+                backend.muteBusy = true
+                root.check(!deviceMute.enabled && root.find(outputs.itemAt(0), "deviceMute").enabled, "busy disables only the default device action")
+                backend.muteBusy = false
                 const slider = root.find(row, "deviceVolume")
                 slider.value = 0.77
                 slider.moved()
@@ -403,9 +419,10 @@ WorkerScope {
                 profiles.itemAtIndex(1).clicked()
                 root.check(backend.card.activeProfile === "stereo" && !profile.expanded
                     && root.find(micRow, "deviceProfile").activeDescription === "Analog Stereo Output", "profile selection updates both panels")
+                const defaultMicCalls = backend.micMuteCalls
                 const micMute = root.find(micRow, "deviceMute")
                 root.checkMuteSize(micMute, () => micMute.clicked(), "microphone mute keeps button dimensions")
-                root.check(input.audio.muted, "microphone mute")
+                root.check(input.audio.muted && backend.micMuteCalls === defaultMicCalls + 1, "default microphone row reuses the system action")
                 AudioService.setNodeVolume(input, 2)
                 root.check(input.audio.volume === Config.audioMaxVolume, "volume caps at configured boost limit")
                 AudioService.setNodeVolume(input, 1.25)

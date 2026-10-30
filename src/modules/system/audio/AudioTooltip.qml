@@ -73,6 +73,7 @@ Column {
                 : (muted ? Theme.volumeMutedIcon : Theme.volumeIcons[Theme.volumeIcons.length - 1])
             foreground: muted ? Theme.warning : Theme.text
             hint: Translations.text(muted ? "audio.actions.unmuteDevice" : "audio.actions.muteDevice",[Translations.text(root.input ? "audio.device.microphone" : "audio.device.audio")])
+            enabled: !root.audioService.muteBusy
             onClicked: root.input ? root.audioService.toggleMicMute() : root.audioService.toggleMute()
         }
     }
@@ -166,8 +167,8 @@ Column {
         objectName: "audioFooter"
         width: root.width
         message: root.audioService.routingBusy ? Translations.text("audio.routing.busy")
-            : root.audioService.routingError || root.audioService.routingMessage
+            : root.audioService.muteError || root.audioService.routingError || root.audioService.routingMessage
                 || (tabs.currentIndex === 1 ? root.audioService.devicesError : "")
-        messageColor: root.audioService.routingError || (tabs.currentIndex === 1 && root.audioService.devicesError) ? Theme.warning : Theme.inactive
+        messageColor: root.audioService.muteError || root.audioService.routingError || (tabs.currentIndex === 1 && root.audioService.devicesError) ? Theme.warning : Theme.inactive
     }
 }

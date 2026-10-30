@@ -141,7 +141,7 @@ those before running on another desktop.
 | `gtk-launch` | Desktop application launching, including terminal entries |
 | `ydotool` and its daemon | Optional paste on clipboard activation |
 | Noto Sans Mono, JetBrains Mono, Font Awesome 7 Free Solid | Text and icons configured in `src/theme/Theme.qml` |
-| PipeWire, WirePlumber, `pactl` | Audio controls, routing, profiles and video capture detection |
+| PipeWire, WirePlumber, `pactl`, util-linux (`flock`), `busctl` | Audio controls, routing, profiles, Discord mute/deafen sync and video capture detection |
 | C compiler (`cc`), `pkg-config`, PipeWire and FFTW headers/libraries | Native cavacore spectrum helper; cached under `$XDG_RUNTIME_DIR/quickshell-spectrum` |
 | `pavucontrol` | Mixer opened by middle-clicking audio icons |
 | `libsecret` (`secret-tool`), `oath-toolkit` (`oathtool`), Secret Service provider | TOTP storage and code generation |

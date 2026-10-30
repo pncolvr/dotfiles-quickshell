@@ -148,7 +148,7 @@ Singleton {
     }
 
     function toggleMute() {
-        toggleNodeMute(sink)
+        toggleSystemMute(false)
     }
 
     function setVolume(v: real) {
@@ -185,11 +185,40 @@ Singleton {
     onMicMutedChanged: micActivityRelease.stop()
 
     function toggleMicMute() {
-        toggleNodeMute(source)
+        toggleSystemMute(true)
     }
 
     function setMicVolume(v: real) {
         setNodeVolume(source, v)
+    }
+
+    readonly property bool muteBusy: muteState.busy
+    property string muteError: ""
+
+    QtObject {
+        id: muteState
+        property bool busy: false
+    }
+
+    function toggleSystemMute(input) {
+        if (muteBusy) return
+        muteError = ""
+        muteState.busy = true
+        muteProcess.command = Config.audioMuteCommand(input)
+        muteProcess.running = true
+    }
+
+    Process {
+        id: muteProcess
+        stderr: StdioCollector { id: muteDiagnostic; waitForEnd: true }
+        // Quickshell.Io omits QProcess::ExitStatus from its qmltypes.
+        // qmllint disable signal-handler-parameters
+        onExited: (exitCode, exitStatus) => {
+            root.muteError = Translations.message(muteDiagnostic.text.trim())
+                || (exitCode !== 0 || exitStatus !== 0 ? Translations.text("audio.errors.changeMute") : "")
+            muteState.busy = false
+        }
+        // qmllint enable signal-handler-parameters
     }
 
     property string routingError: ""

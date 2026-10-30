@@ -5,6 +5,8 @@ test_dir=$(mktemp -d /tmp/quickshell-audio-test.XXXXXX)
 entry=$(mktemp "$project_root/.audio-smoke.XXXXXX.qml")
 trap 'rm -rf -- "$test_dir"; rm -f -- "$entry"' EXIT
 mkdir -m 700 "$test_dir/runtime"
+bash "$project_root/tests/audio/audio-mute.sh"
+bash "$project_root/tests/audio/audio-mute-service.sh"
 bash "$project_root/tests/audio/audio-route.sh"
 bash "$project_root/tests/audio/audio-devices.sh"
 cat > "$entry" <<'QML'

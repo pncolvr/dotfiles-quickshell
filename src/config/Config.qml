@@ -502,6 +502,9 @@ Item {
     readonly property real audioVolumeStep: 0.01
     readonly property real audioMaxVolume: 1.5 // 150%, including microphone gain.
     readonly property int audioDevicesInterval: Timespan.fromSeconds(3)
+    readonly property var audioMuteCommand: input => [
+        "bash", Qt.resolvedUrl(input ? "../services/audio/mic.sh" : "../services/audio/speakers.sh").toString().replace("file://", "")
+    ]
     readonly property var audioDevicesCommand: [
         "bash", Qt.resolvedUrl("../services/audio/audio-devices.sh").toString().replace("file://", "")
     ]

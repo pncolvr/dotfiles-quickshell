@@ -199,7 +199,22 @@ with an **Off** profile last, sorting each group alphabetically by displayed nam
 Left-click either bar icon to pin or unpin its panel; the pinned icon uses the
 accent color. Scroll adjusts its default device and middle-click opens
 `pavucontrol`. The top-right mute button inside each panel controls its default
-microphone or output. Device and app mute controls retain their individual scope.
+microphone or output. The mute control on the default device uses the same action.
+Other device and app mute controls retain their individual scope.
+
+Default microphone mute also sets Discord's mute checkbox to the same state.
+Default speaker mute deafens Discord and mutes the microphone, remembering its
+previous state; unmuting speakers restores that microphone state. Discord's tray
+checkboxes are read before changing them, so an existing mismatch is corrected.
+Without Discord running, the system controls still work. Failures appear in the
+panel footer; a Discord sync failure does not prevent the system action.
+
+Hyprland can invoke these same actions through the global shortcuts
+`quickshell:audio-mic-mute` and `quickshell:audio-speaker-mute` (see
+`integrations/hyprland/bindings.lua`). These bindings require Quickshell to be
+running. UI and shortcut actions share one worker and a runtime lock, ignoring
+overlapping requests while a mute operation completes. Mute indicators continue
+to reflect PipeWire state rather than changing optimistically.
 Muted bar icons pulse only while an app has an active PipeWire link to the
 corresponding default device. With no request, the muted icon stays static.
 Volume mute uses a crossed-out speaker so its state is clear without animation.
@@ -216,8 +231,10 @@ Long lists scroll within the current monitor. Device cards include their own
 profile selector when profiles are available. Profiles affect the whole device,
 including playback and recording; devices with an **Off** profile can be enabled
 from the same selector. Bash helpers use `pactl`, `jq`, and `timeout` for current-app
-routing and profiles; level, mute, default selection, activity, and process lists
-use the native PipeWire service. Profile data refreshes only while a panel is open.
+routing and profiles. Default mute actions also use Bash, `pactl`, util-linux
+`flock`, and `busctl` for Discord tray access. Levels, other device/app mutes,
+default selection, activity, process lists and displayed mute state use the native
+PipeWire service. Profile data refreshes only while a panel is open.
 
 See [development](../development.md#audio) for routing and native device checks.
 
