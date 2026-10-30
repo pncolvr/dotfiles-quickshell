@@ -9,6 +9,7 @@ QtObject {
     property var target: null
     property var heldSessions: []
     property var returnHandler: null
+    property bool restoringReturn: false
     readonly property bool active: owner !== null
     readonly property int returnFocusTimeout: 1500
 
@@ -40,6 +41,7 @@ QtObject {
     function begin(session) {
         if (owner === session) return
         returnTimeout.stop()
+        restoringReturn = false
         returnHandler = null
         const handler = handlers.find(item => item.hostRequestedVisible && item.windowActive
             && item.ready && !item.blocked && !item.nativeDialogOpen)
@@ -56,7 +58,7 @@ QtObject {
             && target.handler.hostRequestedVisible && target.handler.focusSession === target.session
     }
     function finishReturn() {
-        if (active) return
+        if (active || restoringReturn) return
         if (returnHandler?.hostRequestedVisible && returnHandler.requestingKeyboardFocus
             && !returnHandler.windowActive) {
             // Wayland activation is asynchronous and is not guaranteed to be
@@ -72,7 +74,12 @@ QtObject {
         id: returnTimeout
         interval: root.returnFocusTimeout
         onTriggered: {
+            const handler = root.returnHandler
             root.returnHandler = null
+            // A timed-out Wayland activation leaves the handler requesting
+            // keyboard focus indefinitely. Abandon that request as well as the
+            // global hold so later desktop activations can dismiss the panel.
+            if (typeof handler?.release === "function") handler.release()
             TooltipService.setInteraction(root, false)
         }
     }
@@ -95,7 +102,10 @@ QtObject {
             if (restore && previous && root.handlers.includes(previous.handler)
                 && previous.handler.hostRequestedVisible && previous.handler.focusSession === previous.session) {
                 root.returnHandler = previous.handler
-                const restored = previous.handler.restoreFocus(previous.item)
+                root.restoringReturn = true
+                let restored = false
+                try { restored = previous.handler.restoreFocus(previous.item) }
+                finally { root.restoringReturn = false }
                 if (restored) root.restoreTextPosition(previous.item, previous.position)
                 // Qt's text controls paste from the clipboard directly, including
                 // normal selection replacement. No payload is read into this service.

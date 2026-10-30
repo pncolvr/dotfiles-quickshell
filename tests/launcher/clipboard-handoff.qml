@@ -24,6 +24,7 @@ WorkerScope {
         property bool blocked: false
         property bool nativeDialogOpen: false
         property bool requestingKeyboardFocus: false
+        property int releaseCount: 0
         property var focusSession: stalledSession
         property var handoffOwner: stalledSession
         property var nativeWindow: null
@@ -31,6 +32,10 @@ WorkerScope {
             windowActive = false
             requestingKeyboardFocus = true
             return false
+        }
+        function release() {
+            releaseCount++
+            requestingKeyboardFocus = false
         }
     }
     Test.TestResult { id: objects }
@@ -218,6 +223,8 @@ WorkerScope {
             case 17:
                 if (PanelFocusService.returnHandler || TooltipService.interactionHeld) return
                 root.check(!PanelFocusService.active, "unacknowledged focus return releases its global panel hold")
+                root.check(stalledHandler.releaseCount === 1 && !stalledHandler.requestingKeyboardFocus,
+                    "unacknowledged focus return abandons the handler focus request")
                 PanelFocusService.unregister(stalledHandler)
                 stalledHandler.hostRequestedVisible = false
                 TooltipService.dismiss()
