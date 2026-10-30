@@ -100,6 +100,9 @@ WorkerScope {
         onCompleted:{console.log('PASS: shared button families, active-theme contrast, visible transparent hover/press, nested surfaces, disabled actions, transparent disclosures, row hover and power-profile feedback');Qt.quit()}
     }
     Component.onCompleted: {
+        const twitchOpen = driver.find(twitchRow, "openTwitchUser_synthetic") as UI.Button
+        const twitchEdit = driver.find(twitchRow, "editTwitchUser_synthetic") as UI.ActionButton
+        const twitchRemove = driver.find(twitchRow, "removeTwitchUser_synthetic") as UI.ActionButton
         for (const button of [plain,action]) {
             for (const key of [Qt.Key_Return,Qt.Key_Enter,Qt.Key_Space]) {
                 driver.add('keyboard button activation '+key,()=>{
@@ -115,7 +118,7 @@ WorkerScope {
             driver.add('set active palette',()=>{ root.palette.darkMode=!light;backdrop.color=Theme.background;root.park() })
             driver.add('all button families use the common surface',()=>{
                 const trigger=driver.find(combo,combo.toggleObjectName) as QC.Button
-                for (const button of [plain,action,copy,icon,audio,checkBox,disclosure,trigger,option,tabs.itemAt(0)])
+                for (const button of [plain,action,copy,icon,audio,checkBox,disclosure,trigger,option,tabs.itemAt(0),twitchOpen])
                     driver.check(!!root.surface(button),'button family shares its background and interaction policy')
                 driver.check(disclosure.focusPolicy===Qt.StrongFocus && disclosure.activeFocusOnTab,
                     'collapsible sections participate in keyboard traversal')
@@ -204,6 +207,15 @@ WorkerScope {
                 root.park()
             })
         }
+        driver.add('Twitch row keyboard traversal',()=>{
+            driver.check(twitchOpen.activeFocusOnTab && twitchEdit.activeFocusOnTab && twitchRemove.activeFocusOnTab,
+                'open, edit and remove all participate in Tab traversal')
+            twitchOpen.forceActiveFocus(Qt.TabFocusReason)
+            driver.key(Qt.Key_Tab)
+            driver.check(twitchEdit.activeFocus,'Tab moves from the stream link to Edit')
+            driver.key(Qt.Key_Tab)
+            driver.check(twitchRemove.activeFocus,'Tab moves from Edit to Delete')
+        })
         driver.add('copy remains specialized',()=>driver.click(copy))
         driver.waitFor('copy feedback',()=>copy.copied,()=>driver.check(copy.glyph===Theme.checkIcon && Qt.colorEqual(copy.foreground,Theme.active),'copy still shows a green checkmark'))
         driver.running=true

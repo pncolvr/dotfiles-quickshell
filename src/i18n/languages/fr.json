@@ -1084,6 +1084,7 @@
   "twitch.actions.addChannel": "Ajouter %1",
   "twitch.actions.editHint": "Modifier la chaîne",
   "twitch.actions.link": "Associer ces entrées",
+  "twitch.actions.openHint": "Ouvrir %1 sur Twitch",
   "twitch.actions.removeHint": "Supprimer le streamer",
   "twitch.actions.restoreChannel": "Restaurer %1",
   "twitch.actions.saveChannels": "Enregistrer les chaînes",
