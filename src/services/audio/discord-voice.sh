@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Read or set Discord voice checkboxes through its native tray menu.
+# Synchronize Discord tray checkboxes and Vesktop accessibility voice switches.
 set -euo pipefail
 
 usage() {
@@ -35,25 +35,13 @@ bus() {
 
 names=$(bus call org.freedesktop.DBus /org/freedesktop/DBus org.freedesktop.DBus ListNames |
     jq -r '.data[0][] | select(startswith("org.freedesktop.StatusNotifierItem-") or startswith("org.kde.StatusNotifierItem-"))')
-menu=
-while IFS= read -r service; do
-    [[ -n "$service" ]] || continue
-    if ! id=$(bus get-property "$service" /StatusNotifierItem org.kde.StatusNotifierItem Id 2>/dev/null | jq -r '.data'); then
-        continue
-    fi
-    [[ "$id" == discord_status_icon_* ]] || continue
-    menu=$(bus get-property "$service" /StatusNotifierItem org.kde.StatusNotifierItem Menu | jq -er '.data')
-    break
-done <<<"$names"
-[[ -n "$menu" ]] || exit 0
-
 menu_call() {
     bus call "$service" "$menu" com.canonical.dbusmenu "$@"
 }
 
 checkbox() {
     local layout values
-    layout=$(menu_call GetLayout iias 0 -1 2 label toggle-state)
+    layout=$(menu_call GetLayout iias 0 -1 2 label toggle-state) || return 1
     if ! values=$(jq -er --arg label "$label" '
         .data[1] | recurse(.[2][]?.data)
         | select(((.[1].label.data // "") | gsub("[_&]"; "")) == $label)
@@ -65,17 +53,39 @@ checkbox() {
     IFS=$'\t' read -r ident state <<<"$values"
 }
 
-menu_call AboutToShow i 0 >/dev/null
-checkbox
-if [[ -z "$target" ]]; then
-    echo "$state"
-    exit 0
-fi
-[[ "$state" != "$target" ]] || exit 0
-menu_call Event isvu "$ident" clicked i 0 0 >/dev/null
-for (( attempt=0; attempt<40; attempt++ )); do
-    checkbox
+sync_discord() (
+    menu=$(bus get-property "$service" /StatusNotifierItem org.kde.StatusNotifierItem Menu | jq -er '.data') || exit 1
+    menu_call AboutToShow i 0 >/dev/null || exit 1
+    checkbox || exit 1
+    if [[ -z "$target" ]]; then echo "$state"; exit 0; fi
     [[ "$state" != "$target" ]] || exit 0
-    sleep 0.05
-done
-fail "Discord did not update its $1 state"
+    menu_call Event isvu "$ident" clicked i 0 0 >/dev/null || exit 1
+    for (( attempt=0; attempt<40; attempt++ )); do
+        checkbox || exit 1
+        [[ "$state" != "$target" ]] || exit 0
+        sleep 0.05
+    done
+    fail "Discord did not update its $1 state"
+)
+
+script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+result=0
+while IFS= read -r service; do
+    [[ -n "$service" ]] || continue
+    if ! id=$(bus get-property "$service" /StatusNotifierItem org.kde.StatusNotifierItem Id 2>/dev/null | jq -r '.data'); then
+        continue
+    fi
+    case "$id" in
+        discord_status_icon_*)
+            sync_discord "$@" || result=1
+            ;;
+        vesktop_status_icon_*)
+            if ! pid=$(bus call org.freedesktop.DBus /org/freedesktop/DBus org.freedesktop.DBus GetConnectionUnixProcessID s "$service" | jq -er '.data[0]'); then
+                result=1
+                continue
+            fi
+            bash "$script_dir/vesktop-voice.sh" "$pid" "$@" || result=1
+            ;;
+    esac
+done <<<"$names"
+exit "$result"

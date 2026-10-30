@@ -20,7 +20,7 @@ set -euo pipefail
 printf '%s\n' "$1" >>"$AUDIO_TEST_STATE/calls"
 count=$(wc -l <"$AUDIO_TEST_STATE/calls")
 if (( count == 2 )); then
-    printf '{"key":"audio.errors.discordSync"}\n' >&2
+    printf '{"key":"audio.errors.discordSync","detail":"Synthetic client action rejection"}\n' >&2
 elif (( count == 3 )); then
     printf '{"key":"audio.errors.changeMute"}\n' >&2
     exit 1
@@ -35,4 +35,6 @@ if ! rg -q 'PASS: AudioService mute' "$fixture/log" \
     cat "$fixture/log"; exit 1
 fi
 [[ $(cat "$fixture/calls") == $'mic\nspeakers\nmic\nmic' ]]
+rg -q 'Audio client sync: Synthetic client action rejection' "$fixture/log"
+[[ $(rg -c 'Audio mute request ignored while a mute operation is pending' "$fixture/log") == 2 ]]
 rg 'PASS:' "$fixture/log"

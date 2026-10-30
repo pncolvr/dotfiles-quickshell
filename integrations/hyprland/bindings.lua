@@ -8,4 +8,4 @@ hl.bind("SUPER + R", hl.dsp.global("quickshell:recording-toggle"), { desc = "Rec
 -- hl.bind("v", hl.dsp.global("quickshell:media-fullscreen"), { desc = "Fullscreen media" })
 
 hl.bind("XF86AudioMute", hl.dsp.global("quickshell:audio-mic-mute"), { locked = true, desc = "Toggle microphone mute" })
-hl.bind("XF86Eject", hl.dsp.global("quickshell:audio-speaker-mute"), { locked = true, desc = "Toggle speakers and Discord deafen" })
+hl.bind("XF86Eject", hl.dsp.global("quickshell:audio-speaker-mute"), { locked = true, desc = "Toggle speakers and voice app deafen" })

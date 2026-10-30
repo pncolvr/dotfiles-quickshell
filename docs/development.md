@@ -836,7 +836,14 @@ bash tests/audio/screencast.sh --native
 
 Run `bash tests/audio/audio.sh` for mute synchronization, routing, profile, and QML interaction checks.
 `bash tests/audio/audio-mute.sh` isolates the Bash mute controls with mocked
-PulseAudio and Discord tray commands; it never changes hardware or Discord.
+PulseAudio, Discord tray and Vesktop accessibility commands; it never changes
+hardware or either real client. Coverage includes both clients together, changing
+Vesktop PIDs, filtering unrelated Electron apps, and continuing after one client fails.
+The mute checks assert that the system changes before client discovery, rejected
+client requests are sent only once, and a client overriding hardware mute is
+corrected without redundant system writes in the normal case.
+Vesktop checks also cover replaced accessibility objects being skipped before
+an unmute request and retaining client rejection details in the service log.
 `bash tests/audio/audio-mute-service.sh` checks asynchronous AudioService mute
 dispatch, overlap prevention and translated failure reporting offscreen.
 The native shortcut fixture mocks AudioService and checks both audio callbacks

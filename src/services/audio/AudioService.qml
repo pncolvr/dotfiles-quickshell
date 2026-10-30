@@ -201,7 +201,10 @@ Singleton {
     }
 
     function toggleSystemMute(input) {
-        if (muteBusy) return
+        if (muteBusy) {
+            console.debug("Audio mute request ignored while a mute operation is pending")
+            return
+        }
         muteError = ""
         muteState.busy = true
         muteProcess.command = Config.audioMuteCommand(input)
@@ -214,8 +217,15 @@ Singleton {
         // Quickshell.Io omits QProcess::ExitStatus from its qmltypes.
         // qmllint disable signal-handler-parameters
         onExited: (exitCode, exitStatus) => {
-            root.muteError = Translations.message(muteDiagnostic.text.trim())
+            const diagnostic = muteDiagnostic.text.trim()
+            root.muteError = Translations.message(diagnostic)
                 || (exitCode !== 0 || exitStatus !== 0 ? Translations.text("audio.errors.changeMute") : "")
+            if (diagnostic) {
+                try {
+                    const detail = JSON.parse(diagnostic).detail
+                    if (typeof detail === "string" && detail) console.warn("Audio client sync:", detail)
+                } catch (error) {}
+            }
             muteState.busy = false
         }
         // qmllint enable signal-handler-parameters

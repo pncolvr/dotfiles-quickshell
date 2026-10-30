@@ -202,12 +202,41 @@ accent color. Scroll adjusts its default device and middle-click opens
 microphone or output. The mute control on the default device uses the same action.
 Other device and app mute controls retain their individual scope.
 
-Default microphone mute also sets Discord's mute checkbox to the same state.
-Default speaker mute deafens Discord and mutes the microphone, remembering its
-previous state; unmuting speakers restores that microphone state. Discord's tray
-checkboxes are read before changing them, so an existing mismatch is corrected.
-Without Discord running, the system controls still work. Failures appear in the
-panel footer; a Discord sync failure does not prevent the system action.
+Default microphone mute also sets Discord and Vesktop to the same state when
+they are running. Default speaker mute deafens both clients and mutes the
+microphone, remembering its previous state; unmuting speakers restores that
+microphone state. The helpers read each client's actual state before changing
+it, so an existing mismatch is corrected. Both clients are handled if they run
+together; a failure in one does not skip the other or prevent the system action.
+Failures appear in the panel footer. The system controls also work when neither
+client is running.
+
+The system mute state changes first, so PipeWire can update the bar while client
+synchronization is running. There is no fixed settling delay. Each client gets
+one change request when its state differs; a rejection is reported without
+rolling back the system action or repeatedly trying to force the client. After
+synchronization, the helpers recheck system mute and reapply the requested state
+only if a client changed it.
+
+Discord exposes native tray checkboxes. Vesktop instead uses its AT-SPI
+accessibility voice switches, selected by the running tray service's current PID.
+No PID, accessibility bus address, or object path is persisted. Only checkable
+voice switches are queried; no focus changes or keyboard events are sent.
+Defunct, stale and non-checkable accessibility objects are excluded when reading
+voice state. Client failures retain diagnostic details in Quickshell's logs;
+the panel keeps its concise translated warning. Rejected actions are not resent.
+Overlapping requests ignored by the busy guard are also recorded in the shell log.
+
+For Vesktop, install `at-spi2-core`, add `--force-renderer-accessibility` to
+`~/.config/vesktop-flags.conf`, and launch with
+`env ACCESSIBILITY_ENABLED=1 vesktop`. For persistent desktop launching, copy
+the installed Vesktop desktop entry to `~/.local/share/applications/vesktop.desktop`
+and prefix its existing Exec command with `env ACCESSIBILITY_ENABLED=1` (normally
+`Exec=env ACCESSIBILITY_ENABLED=1 vesktop %U`). Fully quit and reopen Vesktop
+after changing these launch settings. These are per-app settings; the helper
+does not enable desktop-wide accessibility or restart Vesktop automatically.
+Vesktop voice-switch labels currently need to be in English, matching the
+English Discord tray labels used by the existing backend.
 
 Hyprland can invoke these same actions through the global shortcuts
 `quickshell:audio-mic-mute` and `quickshell:audio-speaker-mute` (see
@@ -232,7 +261,7 @@ profile selector when profiles are available. Profiles affect the whole device,
 including playback and recording; devices with an **Off** profile can be enabled
 from the same selector. Bash helpers use `pactl`, `jq`, and `timeout` for current-app
 routing and profiles. Default mute actions also use Bash, `pactl`, util-linux
-`flock`, and `busctl` for Discord tray access. Levels, other device/app mutes,
+`flock`, and `busctl` for Discord tray and Vesktop accessibility access. Levels, other device/app mutes,
 default selection, activity, process lists and displayed mute state use the native
 PipeWire service. Profile data refreshes only while a panel is open.
 
