@@ -115,6 +115,9 @@ PanelWindow {
             transitionWorkspace = picker.exposeReturnWorkspace
         } else if (picker.exposeCloseTarget) {
             transitionWorkspace = picker.exposeCloseTarget.workspaceId
+            // Let Hyprland switch beneath the opaque overview while its own zoom closes.
+            // Window focus remains deferred until this layer has unmapped.
+            picker.prepareExposeClose()
         }
         prepareTransition.stop()
         if (requested && animationsEnabled) prepareTransition.restart()

@@ -173,6 +173,15 @@ Singleton {
         Hyprland.dispatch(Config.hyprlandFocusWindowByAddress(address))
     }
 
+    function activateWorkspace(id) {
+        if (!Number.isInteger(id) || id === 0) return false
+        if (Hyprland.focusedWorkspace?.id === id) return true
+        const workspace = Hyprland.workspaces.values.find(value => value.id === id)
+        if (workspace) workspace.activate()
+        else Hyprland.dispatch("workspace " + id)
+        return true
+    }
+
     function moveWindowToWorkspace(address, workspace) {
         if (!/^0x[0-9a-f]+$/i.test(address) || !Number.isInteger(workspace) || workspace <= 0) return false
         const client = allWindows.find(window => window.address === address && window.mapped !== false)

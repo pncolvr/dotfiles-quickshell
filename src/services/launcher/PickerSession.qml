@@ -52,6 +52,7 @@ Scope {
     property bool exposeDragging: false
     property var exposePendingMoves: ({})
     property var exposeCloseTarget: null
+    property bool exposeWorkspacePrepared: false
     readonly property var exposeWorkspaces: {
         const native = Hyprland.workspaces.values
         const ids = [...new Set(Config.exposeWorkspaceIds.concat(native.map(ws => ws.id),
@@ -111,6 +112,7 @@ Scope {
     }
     function begin(newMode, title, keepVisible = false) {
         exposeCloseTarget = null
+        exposeWorkspacePrepared = false
         if (pendingDirectory) {
             reply(pendingDirectory, {status: "cancelled", items: [], exitCode: 1})
             pendingDirectory = ""
@@ -283,7 +285,14 @@ Scope {
     }
     function activateExposeWorkspace(id) {
         exposeCloseTarget = {workspaceId: id}
+        exposeWorkspacePrepared = false
         close()
+    }
+
+    function prepareExposeClose() {
+        const target = exposeCloseTarget
+        if (!target || exposeWorkspacePrepared) return
+        exposeWorkspacePrepared = WindowService.activateWorkspace(target.workspaceId)
     }
     function syncExpose() {
         if (!visible || layout !== "expose" || exposeDragging) return
@@ -390,15 +399,13 @@ Scope {
     }
     function finishExposeClose() {
         const target = exposeCloseTarget
+        const workspacePrepared = exposeWorkspacePrepared
         exposeCloseTarget = null
+        exposeWorkspacePrepared = false
         // The overview surface has unmapped; compositor focus restoration can no longer override selection.
         if (target) Qt.callLater(() => {
             if (target.result) WindowService.focusWindow(target.result)
-            else {
-                const workspace = Hyprland.workspaces.values.find(workspace => workspace.id === target.workspaceId)
-                if (workspace) workspace.activate()
-                else Hyprland.dispatch("workspace " + target.workspaceId)
-            }
+            else if (!workspacePrepared) WindowService.activateWorkspace(target.workspaceId)
         })
     }
 
@@ -495,6 +502,7 @@ Scope {
             if (custom) WindowService.focusWindow(item.result)
             else if (layout === "expose") {
                 exposeCloseTarget = item
+                exposeWorkspacePrepared = false
                 close()
             } else {
                 close()

@@ -33,6 +33,7 @@ WorkerScope {
         property var exposeCloseTarget: null
         readonly property var currentItem: filteredItems[currentIndex] ?? null
         property string focusedAddress: ""
+        property int preparedWorkspace: 0
         property int currentIndex: 0
         property bool exposeDragging: false
         property int exposeWorkspace: 1
@@ -49,6 +50,9 @@ WorkerScope {
             && (!query || item.title.includes(query)))
         property string error: ""
         function close() { visible = false }
+        function prepareExposeClose() {
+            if (exposeCloseTarget) preparedWorkspace = exposeCloseTarget.workspaceId
+        }
         function finishExposeClose() {
             if (exposeCloseTarget) focusedAddress = exposeCloseTarget.result
             exposeCloseTarget = null
@@ -137,6 +141,8 @@ WorkerScope {
                 fixturePicker.visible = false
                 root.check(window.transitionWorkspace === 2,
                     "the accepted window's workspace becomes the closing animation destination")
+                root.check(fixturePicker.preparedWorkspace === 2,
+                    "the destination workspace starts switching beneath the accepted window's closing zoom")
                 root.check(fixturePicker.focusedAddress === "", "activation waits until the overlay disappears")
                 root.check(window.zoomFactor > 1, "accepting a centered window zooms into its workspace miniature")
                 root.checkWorkspaceFillsDesktop()
@@ -219,11 +225,14 @@ WorkerScope {
                     && Math.abs(window.zoomRect.height * window.zoomFactor - window.desktopRect.height) < 1,
                     "empty workspace opening uses its fitted desktop miniature")
             } else if (root.step === 42) {
+                fixturePicker.exposeCloseTarget = {workspaceId: 3}
                 fixturePicker.close()
                 root.check(window.transitionWorkspace === 3, "filtered All view dismisses to the empty starting workspace")
+                root.check(fixturePicker.preparedWorkspace === 3,
+                    "workspace switching starts while the opaque overview still covers the compositor animation")
                 root.checkWorkspaceFillsDesktop()
             } else if (root.step === 47) {
-                root.check(!window.visible, "empty workspace cancellation completes")
+                root.check(!window.visible, "empty workspace activation completes")
                 fixturePicker.query = ""
                 fixturePicker.items = fixturePicker.items.concat([{id: "0x3", result: "0x3", title: "Special", workspaceId: -99,
                     client: Object.assign({}, fixturePicker.items[1].client, {address: "0x3"})}])

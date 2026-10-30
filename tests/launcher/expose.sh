@@ -52,8 +52,15 @@ pragma Singleton
 import Quickshell
 Singleton {
     property var allWindows: []
+    property int activatedWorkspace: 0
+    property int activationCount: 0
     function buildWindows() {}
     function focusWindow(_address) {}
+    function activateWorkspace(workspace) {
+        activatedWorkspace = workspace
+        activationCount++
+        return true
+    }
     function getDisplayTitle(_workspace, title, _className) { return title }
     function moveWindowToWorkspace(address, workspace) {
         const client = allWindows.find(window => window.address === address)

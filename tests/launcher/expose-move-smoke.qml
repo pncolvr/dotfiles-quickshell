@@ -86,6 +86,17 @@ WorkerScope {
                 PickerService.moveExposeWindow("0x2", 1)
                 PickerService.close()
                 root.check(!Object.keys(PickerService.exposePendingMoves).length, "closing clears pending moves")
+                PickerService.begin(PickerService.Mode.Windows, "Windows")
+                PickerService.layout = "expose"
+                PickerService.show()
+                PickerService.activateExposeWorkspace(2)
+                PickerService.prepareExposeClose()
+                PickerService.prepareExposeClose()
+                root.check(root.windowSource.activatedWorkspace === 2 && root.windowSource.activationCount === 1,
+                    "workspace activation is prepared exactly once beneath the closing overview")
+                PickerService.finishExposeClose()
+                root.check(root.windowSource.activationCount === 1 && PickerService.exposeCloseTarget === null,
+                    "finishing a prepared close does not dispatch a second workspace switch")
                 root.windowSource.allWindows = root.clients(-99, 1)
                 PickerService.items = PickerService.windowItems("all", true)
                 root.check(PickerService.exposeWorkspaces.some(workspace => workspace.id === -99),
