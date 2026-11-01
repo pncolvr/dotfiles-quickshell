@@ -110,6 +110,15 @@ IPC interfaces with arguments and results. Both entry points reuse feature servi
 
 ## Motion
 
+Optional bar auto-hide keeps a two-pixel top-edge sensor while releasing the
+layer-shell exclusive zone. Edge hover reveals the bar quickly; pointer leave
+hides it again after a short grace period. Attached panels and alerts keep their
+bar visible. Meta+H toggles the focused bar's manual visibility without changing
+`Config.barAutoHideEnabled`; when `barShowOnEmptyWorkspace` is enabled, empty
+workspaces hold their bar visible unless it was manually hidden. The slide uses the
+shared motion policy and therefore settles immediately during restricted screen
+sharing.
+
 View tabs form a compact group centered on their existing header line, including
 during resizing. Headers keep their right-side actions in place; overflowing tabs
 scroll horizontally. Window action tabs retain their original alignment. On

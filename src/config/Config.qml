@@ -17,6 +17,8 @@ Item {
 
     // Optional modules and integrations. Configure these before first launch.
     readonly property bool adaptiveBarEnabled: false
+    readonly property bool barAutoHideEnabled: false
+    readonly property bool barShowOnEmptyWorkspace: true
     readonly property bool bookmarksEnabled: true
     readonly property bool browserRoutingEnabled: true
     readonly property bool browserHistoryEnabled: true

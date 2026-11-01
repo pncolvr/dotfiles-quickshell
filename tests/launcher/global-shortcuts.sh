@@ -52,7 +52,8 @@ const services={
   'function cyclePrev() { Calls.record("windows-prev", []) }',
   'function focusIndex(key) { Calls.record("windows-focus", [key]) }'
  ],
- BarModuleService:['function open(name) { Calls.record("bar", [name]) }']
+ BarModuleService:['function open(name) { Calls.record("bar", [name]) }'],
+ BarVisibilityService:['function toggleVisibility() { Calls.record("bar-visibility", []) }']
 };
 fs.cpSync(repo+'/src/i18n',fixture+'/src/i18n',{recursive:true});
 fs.mkdirSync(fixture+'/src/config');
@@ -93,6 +94,7 @@ const expected={
  'launcher-wallpaper':['wallpaper',[]], 'launcher-encode-qr':['encode-qr',[]], 'launcher-bookmarks':['bookmarks',[]], 'launcher-power':['power',[]], 'recording-toggle':['recording',[]], 'vault-toggle':['vault',[]],
  'audio-mic-mute':['mic-mute',[]], 'audio-speaker-mute':['speaker-mute',[]],
  'notifications-toggle-dnd':['dnd',[]], 'shell-reload':['shell-reload',[]],
+ 'bar-visibility-toggle':['bar-visibility',[]],
  'media-fullscreen':['media-fullscreen',[]],
  'windows-next':['windows-next',[]], 'windows-prev':['windows-prev',[]]
 };

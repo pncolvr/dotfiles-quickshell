@@ -34,6 +34,8 @@ have not been introduced.
 | Setting | When false |
 | --- | --- |
 | `adaptiveBarEnabled` | Keep the fixed palette and continuous bar; unload the optional color sampler |
+| `barAutoHideEnabled` | Keep the bar visible and make the Meta+H visibility shortcut a no-op |
+| `barShowOnEmptyWorkspace` | Let an empty workspace follow normal auto-hide instead of holding its bar visible |
 | `bookmarksEnabled` | Hide/disable the Bookmarks picker and skip bookmark-file reads |
 | `browserRoutingEnabled` | Enable browser routing and the Bookmarks History/Manage tabs; enabled in this setup |
 | `clipboardMonitorEnabled` | Stop automatic history collection; existing history remains available |
@@ -622,6 +624,15 @@ monitor. It needs no open media panel. Bind it in your tools submap; Escape
 retains its existing close behavior.
 
 ## Animation policy
+
+`barAutoHideEnabled` controls the feature. When enabled, the bar slides away and
+releases its reserved screen edge after the pointer leaves. Moving the pointer to
+the top edge reveals it; attached panels and alerts hold it open. The companion
+Hyprland binding uses **Meta+H** to toggle the focused monitor's bar visibility;
+it does not change the Config feature gate. `barShowOnEmptyWorkspace` defaults to
+`true` and holds the bar visible when that monitor has no mapped visible windows.
+Its slide follows `UI.MotionPolicy`, so screen sharing with
+`animateDuringScreenShare: false` changes visibility immediately.
 
 Set `animationsEnabled: false` to disable decorative UI motion. It defaults to
 `true`. All UI animation decisions come from `UI.MotionPolicy`; the master switch

@@ -881,6 +881,7 @@
   "session.errors.unavailable": "Session unavailable",
   "session.states.active": "Active",
   "shortcuts.applications": "Open applications",
+  "shortcuts.barVisibility": "Toggle bar visibility",
   "shortcuts.bookmarks": "Open bookmarks",
   "shortcuts.capture": "Capture %1",
   "shortcuts.clipboard": "Open clipboard history",

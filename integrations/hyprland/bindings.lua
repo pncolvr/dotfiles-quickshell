@@ -4,6 +4,7 @@ hl.bind("SUPER + V", hl.dsp.global("quickshell:launcher-clipboard"), { desc = "C
 hl.bind("ALT + TAB", hl.dsp.global("quickshell:window-switch"), { desc = "Switch window" })
 hl.bind("SUPER + PRINT", hl.dsp.global("quickshell:launcher-screenshot"), { desc = "Screenshot" })
 hl.bind("SUPER + R", hl.dsp.global("quickshell:recording-toggle"), { desc = "Recording" })
+hl.bind("SUPER + H", hl.dsp.global("quickshell:bar-visibility-toggle"), { desc = "Toggle bar visibility" })
 -- Add inside your existing tools submap:
 -- hl.bind("v", hl.dsp.global("quickshell:media-fullscreen"), { desc = "Fullscreen media" })
 

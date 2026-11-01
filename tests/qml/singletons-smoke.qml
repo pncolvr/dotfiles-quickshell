@@ -37,6 +37,7 @@ Services.WorkerScope {
                 ["BookmarkService",Services.BookmarkService,Launcher.BookmarkService],
                 ["PickerPrompts",Services.PickerPrompts,Launcher.PickerPrompts],
                 ["CaptureHandoffService",Services.CaptureHandoffService,ServicesUi.CaptureHandoffService],
+                ["BarVisibilityService",Services.BarVisibilityService,ServicesUi.BarVisibilityService],
                 ["ScreenshotService",Services.ScreenshotService,Launcher.ScreenshotService],
                 ["QrEncodeService",Services.QrEncodeService,Launcher.QrEncodeService],
                 ["WallpaperService",Services.WallpaperService,Launcher.WallpaperService],

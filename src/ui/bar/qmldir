@@ -1,5 +1,6 @@
 Bar 1.0 Bar.qml
 BarLayerState 1.0 BarLayerState.qml
+BarVisibilityState 1.0 BarVisibilityState.qml
 BarBackground 1.0 BarBackground.qml
 AdaptiveBarState 1.0 AdaptiveBarState.qml
 CenterModules 1.0 CenterModules.qml

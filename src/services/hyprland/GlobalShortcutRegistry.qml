@@ -40,6 +40,7 @@ Scope {
             Quickshell.screens.find(screen => screen.name === Hyprland.focusedMonitor?.name) ?? Quickshell.screens[0])},
         {name: "vault-toggle", description: Translations.text("shortcuts.vault"), activate: () => RbwService.open()},
         {name: "notifications-toggle-dnd", description: Translations.text("shortcuts.dnd"), activate: () => NotificationService.toggle()},
+        {name: "bar-visibility-toggle", description: Translations.text("shortcuts.barVisibility"), activate: () => BarVisibilityService.toggleVisibility()},
         {name: "shell-reload", description: Translations.text("shortcuts.reload"), activate: () => root.reloadShell()},
         {name: "windows-next", description: Translations.text("shortcuts.nextWindow"), activate: () => WindowService.cycleNext()},
         {name: "windows-prev", description: Translations.text("shortcuts.previousWindow"), activate: () => WindowService.cyclePrev()}

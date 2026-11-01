@@ -881,6 +881,7 @@
   "session.errors.unavailable": "Sesión no disponible",
   "session.states.active": "Activo",
   "shortcuts.applications": "Abrir aplicaciones",
+  "shortcuts.barVisibility": "Alternar visibilidad de la barra",
   "shortcuts.bookmarks": "Abrir marcadores",
   "shortcuts.capture": "Capturar %1",
   "shortcuts.clipboard": "Abrir historial del portapapeles",

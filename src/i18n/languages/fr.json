@@ -881,6 +881,7 @@
   "session.errors.unavailable": "Session indisponible",
   "session.states.active": "Actif",
   "shortcuts.applications": "Ouvrir les applications",
+  "shortcuts.barVisibility": "Afficher ou masquer la barre",
   "shortcuts.bookmarks": "Ouvrir les favoris",
   "shortcuts.capture": "Capturer %1",
   "shortcuts.clipboard": "Ouvrir l’historique du presse-papiers",

@@ -881,6 +881,7 @@
   "session.errors.unavailable": "Sessão indisponível",
   "session.states.active": "Ativo",
   "shortcuts.applications": "Abrir aplicações",
+  "shortcuts.barVisibility": "Alternar visibilidade da barra",
   "shortcuts.bookmarks": "Abrir marcadores",
   "shortcuts.capture": "Capturar %1",
   "shortcuts.clipboard": "Abrir histórico da área de transferência",
