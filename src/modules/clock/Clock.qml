@@ -21,6 +21,9 @@ TooltipArea {
 
   tooltip: Component {
     Item {
+      // Month/year changes keep the clock as their visual anchor while the
+      // panel contracts or expands on both sides.
+      readonly property bool centeredResize: true
       readonly property bool footerInGutter: legend.visible
       width: calendarBody.width
       height: calendarBody.height + (legend.visible ? Theme.tooltipPaddingWidth : 0)

@@ -55,6 +55,8 @@ WorkerScope {
                     case 20:
                         clock.visible = true
                         root.clockPanel = clock.tooltip.createObject(window.contentItem, {x: 0, y: 40})
+                        root.check(root.clockPanel.centeredResize,
+                            "month/year transitions request symmetric panel resizing")
                         root.check(root.find(root.clockPanel, "calendarColorLegend").showClockChangeEve,
                             "October month legend includes change eve")
                         root.check(root.find(root.clockPanel, "calendarColorLegend").showToday,

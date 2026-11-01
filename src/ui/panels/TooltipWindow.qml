@@ -13,6 +13,7 @@ TopPanelTooltip {
     readonly property var nativeWindow: focusHandler.nativeWindow
     readonly property bool requestingKeyboardFocus: focusHandler.requestingKeyboardFocus
     requestedVisible: shouldShow
+    centeredResize: keys.centeredResize
     WlrLayershell.keyboardFocus: focusHandler.keyboardFocusMode
     TooltipFocusHandler { id: focusHandler; tooltipWindow: root; panel: keys }
     TooltipPointerHandler { objectName: "tooltipPointerHandler"; tooltipWindow: root }
