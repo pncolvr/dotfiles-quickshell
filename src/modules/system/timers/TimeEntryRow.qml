@@ -1,5 +1,8 @@
+pragma ComponentBehavior: Bound
+
 import "../../../i18n"
 import QtQuick
+import QtQuick.Layouts
 import "../../../theme"
 import "../../../ui" as UI
 import "../../../services"
@@ -12,15 +15,19 @@ Rectangle {
     HoverHandler { id: rowHover }
     required property var entry
     property bool roundUp: false
+    property bool editable: false
+    property bool editing: false
+    readonly property Item editorItem: editorLoader.item as Item
     readonly property color timeColor: entry.urgency === 2 ? Theme.urgent
         : entry.urgency === 1 ? Theme.warning : Theme.text
-    implicitHeight: Theme.controlHeight
+    implicitHeight: root.editing ? editorItem?.implicitHeight ?? Theme.controlHeight : Theme.controlHeight
 
     UI.Text {
         objectName: "timerTitle"
         anchors.left: parent.left
         anchors.right: timeLabel.left
         anchors.rightMargin: Theme.controlSpacing
+        visible: !root.editing
         text: root.entry.title
         elide: Text.ElideRight
         color: root.entry.running || root.entry.finished ? root.timeColor : Theme.inactive
@@ -30,6 +37,7 @@ Rectangle {
         objectName: "timerTime"
         anchors.right: actions.left
         anchors.rightMargin: Theme.controlSpacing
+        visible: !root.editing
         text: TimersService.formatTime(root.entry.valueMs, root.roundUp)
         color: root.timeColor
     }
@@ -38,6 +46,14 @@ Rectangle {
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
         spacing: Theme.controlSpacing
+        visible: !root.editing
+        UI.ActionButton {
+            objectName: "timerEdit"
+            visible: root.editable
+            glyph: Theme.editIcon
+            hint: Translations.text("timers.actions.editHint")
+            onClicked: root.editing = true
+        }
         UI.ActionButton {
             objectName: "timerPause"
             glyph: root.entry.running ? Theme.pauseIcon : Theme.playIcon
@@ -58,6 +74,62 @@ Rectangle {
             hint: Translations.text("timers.actions.deleteHint")
             fillColor: Theme.urgent
             onClicked: TimersService.remove(root.entry)
+        }
+    }
+
+    Loader {
+        id: editorLoader
+        objectName: "countdownEditor"
+        anchors.fill: parent
+        visible: root.editing
+        active: root.editable
+        sourceComponent: Component {
+            RowLayout {
+                spacing: Theme.controlSpacing
+                visible: root.editing
+
+                function loadEntry() {
+                    editName.text = root.entry.label
+                    editDuration.setDuration(root.entry.durationMs)
+                }
+
+                UI.InputField {
+                    id: editName
+                    objectName: "countdownEditName"
+                    Layout.preferredWidth: 105
+                    Layout.minimumWidth: 0
+                    Layout.alignment: Qt.AlignBottom
+                    text: root.entry.label
+                    placeholderText: Translations.text("timers.fields.nameRequired")
+                    Accessible.name: Translations.text("timers.fields.nameRequired")
+                }
+
+                DurationFields {
+                    id: editDuration
+                    namePrefix: "countdownEdit"
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    initialDurationMs: root.entry.durationMs
+                }
+
+                UI.EditorActions {
+                    Layout.alignment: Qt.AlignBottom
+                    submitObjectName: "countdownEditSave"
+                    cancelObjectName: "countdownEditCancel"
+                    cancelHint: Translations.text("common.actions.cancelHint")
+                    submitHint: Translations.text("common.actions.saveChangesHint")
+                    submitEnabled: editName.text.trim().length > 0 && editDuration.acceptableInput
+                        && TimersService.validDuration(editDuration.totalSeconds)
+                    onCancelled: root.editing = false
+                    onSubmitted: {
+                        if (TimersService.editCountdown(root.entry, editDuration.totalSeconds, editName.text))
+                            root.editing = false
+                    }
+                }
+
+                Component.onCompleted: loadEntry()
+                onVisibleChanged: if (visible) loadEntry()
+            }
         }
     }
 }

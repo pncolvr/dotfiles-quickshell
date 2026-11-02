@@ -25,12 +25,26 @@ Singleton {
     }
 
     function addCountdown(seconds, label = "") {
-        if (!ready || !validDuration(seconds)) return null
+        const name = typeof label === "string" ? label.trim() : ""
+        if (!ready || !validDuration(seconds) || name.length === 0) return null
         update()
-        const entry = countdownComponent.createObject(root, {durationMs: seconds * 1000, startedAt: now, label: label.trim()})
+        const entry = countdownComponent.createObject(root, {
+            durationMs: seconds * 1000, startedAt: now, label: name, running: false
+        })
         countdowns = countdowns.concat(entry)
         save()
         return entry
+    }
+
+    function editCountdown(entry, seconds, label) {
+        const name = typeof label === "string" ? label.trim() : ""
+        if (!ready || !countdowns.includes(entry) || !validDuration(seconds) || name.length === 0) return false
+        update()
+        entry.label = name
+        entry.durationMs = seconds * 1000
+        entry.reset()
+        save()
+        return true
     }
 
     function addTimer(label = "") {

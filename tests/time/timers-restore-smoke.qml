@@ -14,12 +14,11 @@ WorkerScope {
     }
     function seed() {
         check(TimersService.entries.length === 0, "empty state remains empty after restart")
-        TimersService.addCountdown(600, "Running countdown")
+        const running = TimersService.addCountdown(600, "Running countdown")
+        TimersService.togglePause(running)
         const countdown = TimersService.addCountdown(90, "Paused countdown")
-        TimersService.togglePause(countdown)
         countdown.accumulatedMs = 1234
         const reusable = TimersService.addCountdown(240, "Reusable countdown")
-        TimersService.togglePause(reusable)
         reusable.accumulatedMs = 120000
         const timer = TimersService.addTimer("Running timer")
         timer.startedAt -= 10000
@@ -31,6 +30,7 @@ WorkerScope {
         completed.accumulatedMs = completed.durationMs
         completed.finished = true
         const expired = TimersService.addCountdown(1, "Expired while closed")
+        TimersService.togglePause(expired)
         // Save before the next tick, simulating shutdown before its deadline.
         expired.startedAt -= 3000
         check(TimersService.save(), "timer snapshot is written successfully")

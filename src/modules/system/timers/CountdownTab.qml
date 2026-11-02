@@ -15,14 +15,15 @@ TimeEntryTab {
             id: creator
             spacing: Theme.controlSpacing
             function addCountdown() {
-                if (duration.acceptableInput && duration.totalSeconds > 0)
+                if (nameField.text.trim().length > 0 && duration.acceptableInput
+                    && TimersService.validDuration(duration.totalSeconds))
                     TimersService.addCountdown(duration.totalSeconds, nameField.text)
             }
             UI.InputField {
                 id: nameField
                 objectName: "countdownName"
                 width: parent.width
-                placeholderText: Translations.text("timers.fields.nameOptional")
+                placeholderText: Translations.text("timers.fields.nameRequired")
                 onAccepted: creator.addCountdown()
             }
             Row {
@@ -31,7 +32,7 @@ TimeEntryTab {
                 DurationFields {
                     id: duration
                     namePrefix: "countdown"
-                    initialDurationMs: 300000
+                    initialDurationMs: 0
                     width: parent.width - addButton.width - parent.spacing
                     onAccepted: creator.addCountdown()
                 }
@@ -43,7 +44,8 @@ TimeEntryTab {
                     glyph: Theme.addIcon
                     foreground: Theme.accent
                     hint: Translations.text("timers.countdowns.add")
-                    enabled: duration.acceptableInput && duration.totalSeconds > 0
+                    enabled: nameField.text.trim().length > 0 && duration.acceptableInput
+                        && TimersService.validDuration(duration.totalSeconds)
                     onClicked: creator.addCountdown()
                 }
             }

@@ -13,6 +13,12 @@ Row {
     signal accepted()
     spacing: Theme.controlSpacing
 
+    function setDuration(milliseconds) {
+        hours.text = String(Math.floor(milliseconds / 3600000))
+        minutes.text = String(Math.floor(milliseconds / 60000) % 60)
+        seconds.text = String(Math.floor(milliseconds / 1000) % 60)
+    }
+
     DurationField {
         id: hours
         objectName: root.namePrefix + Translations.text("timers.duration.hours")

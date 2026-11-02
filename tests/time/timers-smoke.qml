@@ -92,14 +92,18 @@ WorkerScope {
             && TimersService.formatTime(3600000) === "01:00:00"
             && TimersService.formatTime(100 * 3600000) === "100:00:00", "duration formatting")
 
-        check(TimersService.addCountdown(0) === null && TimersService.addCountdown(-1) === null
-            && TimersService.addCountdown(NaN) === null && TimersService.addCountdown(Infinity) === null,
-            "invalid durations do not create entries")
+        check(TimersService.addCountdown(0, "Invalid") === null && TimersService.addCountdown(-1, "Invalid") === null
+            && TimersService.addCountdown(NaN, "Invalid") === null && TimersService.addCountdown(Infinity, "Invalid") === null
+            && TimersService.addCountdown(60) === null && TimersService.addCountdown(60, "  ") === null,
+            "invalid duration or missing name does not create entries")
         const first = TimersService.addTimer("First")
         const second = TimersService.addTimer("Second")
         check(TimersService.barEntry === first, "first running timer is the fallback")
         const long = TimersService.addCountdown(120, "Long")
         const short = TimersService.addCountdown(30, "Short")
+        check(!long.running && !short.running, "new countdowns remain stopped")
+        TimersService.togglePause(long)
+        TimersService.togglePause(short)
         check(TimersService.barEntry === short, "shortest running countdown wins")
         TimersService.togglePause(short)
         check(TimersService.barEntry === long, "paused countdown is excluded")
@@ -169,16 +173,21 @@ WorkerScope {
                 root.checkState()
                 root.check(trigger.cursorShape === Qt.PointingHandCursor, "bar has pointing hand cursor")
                 root.check(!root.find(trigger, "timersBarText").visible, "empty bar shows just icon")
-                root.find(root.panel, "countdownName").text = "Tea"
+                root.check(!root.find(root.panel, "countdownStart").enabled, "empty countdown starts with zero duration")
                 root.find(root.panel, "countdownHours").text = "1"
                 root.find(root.panel, "countdownMinutes").text = "2"
                 root.find(root.panel, "countdownSeconds").text = "3"
+                root.check(!root.find(root.panel, "countdownStart").enabled, "countdown requires a name")
+                root.find(root.panel, "countdownName").text = "Tea"
                 root.click(root.find(root.panel, "countdownStart"))
                 root.check(TimersService.countdowns.length === 1 && TimersService.countdowns[0].durationMs === 3723000,
-                    "hours, minutes and seconds start a countdown")
+                    "hours, minutes and seconds create a countdown")
                 root.liveCountdown = TimersService.countdowns[0]
+                root.check(!root.liveCountdown.running && TimersService.barEntry === null,
+                    "new countdown does not auto-start")
                 root.check(root.find(root.panel, "countdownStart").foreground === Theme.accent,
                     "countdown add icon uses accent")
+                root.click(root.find(root.row("countdownRows"), "timerPause"))
                 root.selectTab(1)
                 root.check(root.panel.timersTab.visible && !root.panel.countdownTab.visible,
                     "tabs show only their own entries and creation controls")
@@ -201,6 +210,31 @@ WorkerScope {
                 root.check(!root.liveCountdown.running && root.liveCountdown.valueMs === 3723000
                     && root.liveCountdown.label === "Tea" && TimersService.barEntry === root.liveTimer,
                     "reset running countdown preserves name and duration and updates bar")
+                root.click(root.find(root.row("countdownRows"), "timerEdit"))
+                root.check(root.row("countdownRows").editing, "countdown editor opens")
+                root.find(root.panel, "countdownEditName").text = "Discard this"
+                root.find(root.panel, "countdownEditMinutes").text = "9"
+                root.click(root.find(root.panel, "countdownEditCancel"))
+                root.check(!root.row("countdownRows").editing, "cancel closes countdown editor")
+                root.click(root.find(root.row("countdownRows"), "timerEdit"))
+                root.check(root.row("countdownRows").editing && root.find(root.panel, "countdownEditSave") !== null,
+                    "countdown editor opens again after cancel")
+                root.check(root.find(root.panel, "countdownEditName").text === "Tea"
+                    && root.find(root.panel, "countdownEditHours").text === "1"
+                    && root.find(root.panel, "countdownEditMinutes").text === "2"
+                    && root.find(root.panel, "countdownEditSeconds").text === "3",
+                    "reopened editor reloads saved values")
+                root.find(root.panel, "countdownEditName").text = "Tea revised"
+                root.find(root.panel, "countdownEditHours").text = "0"
+                root.find(root.panel, "countdownEditMinutes").text = "2"
+                root.find(root.panel, "countdownEditSeconds").text = "3"
+                root.click(root.find(root.panel, "countdownEditSave"))
+                root.check(!root.liveCountdown.running && root.liveCountdown.label === "Tea revised"
+                    && root.liveCountdown.durationMs === 123000 && root.liveCountdown.valueMs === 123000,
+                    "editing countdown updates its name and duration and leaves it stopped")
+                root.click(root.find(root.row("countdownRows"), "timerEdit"))
+                root.check(root.row("countdownRows").editing, "countdown editor opens after saving")
+                root.click(root.find(root.panel, "countdownEditCancel"))
                 root.check(root.find(root.row("countdownRows"), "timerDelete").fillColor === Theme.urgent
                     && root.find(root.row("countdownRows"), "timerDelete").glyph === Theme.deleteIcon, "shared red delete style")
                 root.click(root.find(root.row("countdownRows"), "timerDelete"))
@@ -215,7 +249,8 @@ WorkerScope {
                 root.find(root.panel, "countdownSeconds").text = "0"
                 root.check(!root.find(root.panel, "countdownStart").enabled, "zero duration disables start")
                 root.liveTimer = TimersService.addTimer()
-                root.liveCountdown = TimersService.addCountdown(0.2)
+                root.liveCountdown = TimersService.addCountdown(0.2, "Brief")
+                TimersService.togglePause(root.liveCountdown)
                 root.check(root.find(trigger, "timersBarText").color === Theme.urgent, "urgent countdown color on bar")
                 break
             case 3:
@@ -246,7 +281,8 @@ WorkerScope {
                 root.check(!root.liveTimer.running && root.liveTimer.valueMs === 0 && TimersService.barEntry === null,
                     "reset running elapsed timer stops at zero and restores icon")
                 root.clearEntries()
-                root.liveCountdown = TimersService.addCountdown(25)
+                root.liveCountdown = TimersService.addCountdown(25, "Warning")
+                TimersService.togglePause(root.liveCountdown)
                 root.check(root.find(trigger, "timersBarText").color === Theme.warning, "warning countdown color on bar")
                 for (let index = 0; index < 20; index++) TimersService.addTimer("Timer " + index)
                 break
