@@ -162,16 +162,19 @@ Singleton {
     readonly property bool micMutePulse: micMuted && hasDeviceRequest(source, true, micCaptureNodes, root.linkGroupsModel.values)
     readonly property bool micActivityEnabled: micMonitor.enabled
     readonly property bool micActive: micActivityEnabled && micActivityRelease.running
+    // Peaks are post-volume on the same cubic scale as volume, so the threshold scales linearly with it.
+    readonly property real micActivityThreshold: Config.micActivityThreshold * micVolume
 
     PwNodePeakMonitor {
         id: micMonitor
         node: root.source
-        enabled: !root.micMuted && root.hasDeviceRequest(root.source, true, root.micCaptureNodes, root.linkGroupsModel.values)
+        enabled: !root.micMuted && root.micVolume > 0
+            && root.hasDeviceRequest(root.source, true, root.micCaptureNodes, root.linkGroupsModel.values)
         onEnabledChanged: {
             if (!enabled) micActivityRelease.stop()
         }
         onPeakChanged: {
-            if (enabled && peak >= Config.micActivityThreshold)
+            if (enabled && peak >= root.micActivityThreshold)
                 micActivityRelease.restart()
         }
     }

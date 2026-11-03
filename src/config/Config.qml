@@ -498,8 +498,8 @@ Item {
     ]
 
     // Audio: devices and levels
-    readonly property real micActivityThreshold: 0.20 // Quickshell peak scale; calibrated above MMX silence (~0.14 max).
-    readonly property int micActivityHold: 200
+    readonly property real micActivityThreshold: 0.10 // Quickshell peak scale at 100% mic volume (scaled by volume); calibrated above MMX silence (~0.14 max).
+    readonly property int micActivityHold: 100
     readonly property var mixerCommand: ["pavucontrol"]
     readonly property real audioVolumeStep: 0.01
     readonly property real audioMaxVolume: 1.5 // 150%, including microphone gain.
