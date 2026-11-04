@@ -26,6 +26,9 @@ Item {
     }
     Component {
         id: liveWindow
-        WindowPreview { client: root.picker.currentItem?.client ?? ({address:"",class:""}) }
+        WindowPreview {
+            objectName: "pickerWindowPreview"
+            client: root.picker.currentItem?.client ?? ({address:"",class:""})
+        }
     }
 }

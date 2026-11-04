@@ -106,7 +106,10 @@ WorkerScope {
     function windows() {
         PickerService.begin(PickerService.Mode.Windows,"Windows")
         PickerService.layout = "switcher"
-        PickerService.items = [{id:"window",title:"Fixture",client:{address:"",class:"fixture"}}]
+        PickerService.items = [
+            {id:"window-1",title:"Fixture 1",client:{address:"0x1",class:"fixture"}},
+            {id:"window-2",title:"Fixture 2",client:{address:"0x2",class:"fixture"}}
+        ]
         PickerService.show()
     }
     function layout() {
@@ -175,11 +178,16 @@ WorkerScope {
                 PickerService.close(); root.windows(); root.step++; break
             case 4:
                 if (root.panel?.previewKind !== "windows") return
-                root.check(!root.panel.previewEnabled && !root.preview.requestedVisible,"window preview defaults off")
-                root.panel.previewEnabled = true; root.step++; break
+                root.check(root.panel.previewEnabled && root.preview.requestedVisible,"window preview defaults on from its config override")
+                root.step++; break
             case 5:
                 if (!root.preview.visible || root.preview.transitioning) return
                 root.layout()
+                const windowPreview = root.find(root.preview,"pickerWindowPreview")
+                root.check(windowPreview?.client.address === "0x1","preview renders the initially selected window")
+                PickerService.move(1)
+                root.check(windowPreview?.client.address === "0x2","preview follows the selected window")
+                PickerService.move(-1)
                 root.audio.screencastActive = true
                 root.panel.previewEnabled = false
                 root.check(!root.preview.visible && !root.preview.transitioning,"sharing closes without decorative motion")

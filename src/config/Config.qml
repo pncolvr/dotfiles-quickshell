@@ -181,7 +181,7 @@ Item {
     // null inherits the global setting; explicit booleans override it.
     readonly property var pickerPreviewDefaults: ({
         clipboard: null,
-        windows: null
+        windows: true
     })
     // Search placeholders: translation keys or literal text; null uses the menu title.
     readonly property var pickerPrompts: ({
