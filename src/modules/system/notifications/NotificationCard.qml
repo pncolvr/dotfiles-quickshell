@@ -200,7 +200,8 @@ Rectangle {
                 height: Math.max(headingText.height, dismissButton.height - contents.spacing)
                 Column {
                     id: headingText
-                    width: parent.width - dismissButton.width - (replayButton.visible ? replayButton.width + 4 : 0) - 8
+                    width: parent.width - dismissButton.width - (replayButton.visible ? replayButton.width + 4 : 0)
+                        - (copyButton.visible ? copyButton.width + 4 : 0) - 8
                     Row {
                         width: parent.width
                         spacing: 8
@@ -235,6 +236,19 @@ Rectangle {
                         elide: Text.ElideRight
                         font.family: root.popup ? Theme.notificationFont : Theme.fontFamily
                     }
+                }
+                UI.CopyButton {
+                    id: copyButton
+                    objectName: "notificationCopy"
+                    visible: NotificationService.copyText(root.entry).length > 0
+                    anchors.right: replayButton.visible ? replayButton.left : dismissButton.left
+                    anchors.rightMargin: 4
+                    width: Theme.controlHeight
+                    height: width
+                    cornerRadius: width / 2
+                    copyHint: Translations.text("notifications.actions.copyHint")
+                    copyContext: root.entry
+                    copyAction: completed => NotificationService.copy(root.entry, completed)
                 }
                 NotificationButton {
                     id: replayButton

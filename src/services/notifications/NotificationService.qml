@@ -177,6 +177,29 @@ Singleton {
         return entry.liveId !== undefined ? state.liveEntries[entry.liveId] ?? null
             : Object.values(state.liveEntries).find(item => item.archiveId === entry.archiveId) ?? null
     }
+    function copyText(entry) {
+        const body = String(entry?.body ?? "").replace(/[\u2066-\u2069]/g, "")
+        return body.trim().length > 0 ? body : ""
+    }
+    function copy(entry, completed = null) {
+        const text = copyText(entry)
+        if (!text) { if (completed) completed(false); return }
+        const task = copyProcess.createObject(root, {command: ["wl-copy", "--", text], completed}) as Process
+        task.running = true
+    }
+    Component {
+        id: copyProcess
+        Process {
+            id: task
+            property var completed: null
+            stdout: SplitParser { onRead: _data => {} }
+            stderr: SplitParser { onRead: _data => {} }
+            onExited: (code, status) => {
+                if (completed) completed(code === 0 && status === 0)
+                task.destroy()
+            }
+        }
+    }
     function replay(entry) {
         if (!entry?.archiveId) return false
         const now = Date.now()

@@ -102,7 +102,8 @@ default action, then falls back to focusing a matched existing app only when no
 default action is usable. Explicit action buttons appear only on popups and invoke
 their own actions. History hides action buttons, including for notifications that
 are still live. Right-click dismisses a popup without deleting its history;
-right-click in history deletes that entry. Action identifiers and labels are
+right-click in history deletes that entry. The copy button left of the close
+button copies the raw body text on popups and history cards. Action identifiers and labels are
 saved with history. Generic app callbacks cannot be restored, as the notification
 protocol invalidates their IDs on closure. See the
 [notification protocol](https://specifications.freedesktop.org/notification/latest/protocol.html).

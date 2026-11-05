@@ -604,6 +604,7 @@
   "network.status.noInternet": "Sin acceso a Internet",
   "notifications.actions.clearAllHint": "Borrar todas las notificaciones",
   "notifications.actions.clearEmitterHint": "Eliminar el historial de este emisor y descartar sus notificaciones actuales; conservar su configuración",
+  "notifications.actions.copyHint": "Copiar cuerpo de la notificación",
   "notifications.actions.deleteEmitterHint": "Eliminar el emisor, su historial y su configuración, y descartar sus notificaciones. Las nuevas notificaciones lo recrean con los valores predeterminados.",
   "notifications.actions.deleteEntryHint": "Eliminar esta entrada del historial",
   "notifications.actions.dismissHint": "Descartar ventana emergente; conservar historial",
