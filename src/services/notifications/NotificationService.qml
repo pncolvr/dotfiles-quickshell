@@ -181,6 +181,11 @@ Singleton {
         const body = String(entry?.body ?? "").replace(/[\u2066-\u2069]/g, "")
         return body.trim().length > 0 ? body : ""
     }
+    // A body that is only a web link opens it when the app offers no default action.
+    function bodyUrl(entry) {
+        const body = copyText(entry).trim()
+        return /^https?:\/\/\S+$/i.test(body) ? body : ""
+    }
     function copy(entry, completed = null) {
         const text = copyText(entry)
         if (!text) { if (completed) completed(false); return }
@@ -259,6 +264,8 @@ Singleton {
         focusMessageTimer.stop()
         focusMessage = ""
         if (invoke(entry, "default")) return
+        const url = bodyUrl(entry)
+        if (url && BrowserRoutingService.open(url)) return
         const emitter = NotificationEmitterRepository.emitters[entry.emitterKey]
         if (!WindowService.focusEmitter(emitter?.desktopEntry || "", emitter?.name || "")) {
             focusMessage = Translations.text("projects.errors.windowUnavailable")

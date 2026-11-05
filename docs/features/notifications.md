@@ -98,8 +98,8 @@ them, newest first. The close
 button is circular and turns red on hover. History cards use a complete outline
 in their urgency color. Application timeouts take
 priority over the configured low/normal/critical defaults. Left-click runs a usable
-default action, then falls back to focusing a matched existing app only when no
-default action is usable. Explicit action buttons appear only on popups and invoke
+default action. Without one, a body that is only an http(s) link opens it through
+browser routing; otherwise the click focuses a matched existing app. Explicit action buttons appear only on popups and invoke
 their own actions. History hides action buttons, including for notifications that
 are still live. Right-click dismisses a popup without deleting its history;
 right-click in history deletes that entry. The copy button left of the close
