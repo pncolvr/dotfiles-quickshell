@@ -1,6 +1,24 @@
 #!/usr/bin/env bash
 # Literal argv only. No shell evaluation or changes to desktop associations.
 set -euo pipefail
+# AppImages export variables pointing into their mount (LD_LIBRARY_PATH, QT_PLUGIN_PATH,
+# XDG_DATA_DIRS, ...); inherited by qs or the browser they load mismatched bundled libraries.
+strip_appimage_environment() {
+    local appdir=${APPDIR:-} name entry kept
+    while [[ $appdir == */ ]]; do appdir=${appdir%/}; done
+    [[ -n ${APPIMAGE:-} && $appdir == /?* ]] || return 0
+    for name in $(compgen -e); do
+        [[ ${!name} == *"$appdir"* ]] || continue
+        kept=''
+        IFS=: read -r -a entries <<< "${!name}"
+        for entry in "${entries[@]}"; do
+            [[ -n $entry && $entry != "$appdir" && $entry != "$appdir"/* ]] || continue
+            kept+=${kept:+:}$entry
+        done
+        if [[ -n $kept ]]; then export "$name=$kept"; else unset "$name"; fi
+    done
+    unset APPDIR APPIMAGE ARGV0 OWD
+}
 mode=${1:-}
 shift || true
 case $mode in
@@ -18,6 +36,7 @@ case $mode in
         fallback_argv=("${fallback_argv[@]:1}")
         case ${fallback_argv[0]##*/} in xdg-open|quickshell-browser|default-browser.sh) printf 'Choose a concrete fallback browser.\n' >&2; exit 2;; esac
         repo=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../../.." && pwd)
+        strip_appimage_environment
         for url in "$@"; do
             [[ $url =~ [^[:space:]] && ! $url =~ [[:cntrl:]] ]] || { printf 'Empty or invalid browser target.\n' >&2; exit 2; }
             response=$(timeout --kill-after=1 3 qs -p "$repo" ipc call browser open "$url" 2>/dev/null) || response=''
