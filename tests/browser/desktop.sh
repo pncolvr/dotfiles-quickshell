@@ -10,10 +10,12 @@ mkdir -m700 "$fixture/runtime"
 cat > "$fixture/bin/qs" <<'MOCK'
 #!/usr/bin/env bash
 if [[ ${*: -1} == */desktop/Discovery.qml ]]; then exec "$BROWSER_TEST_QS" "$@"; fi
+[[ -z ${BROWSER_TEST_ENV:-} ]] || env > "$BROWSER_TEST_ENV.qs"
 printf '%s\n' "${BROWSER_MOCK_RESPONSE:-false}"
 MOCK
 cat > "$fixture/bin/browser" <<'MOCK'
 #!/usr/bin/env bash
+[[ -z ${BROWSER_TEST_ENV:-} ]] || env > "$BROWSER_TEST_ENV.browser"
 jq -nc --args '$ARGS.positional' -- "$@" >> "$BROWSER_TEST_ACTIONS"
 MOCK
 cat > "$fixture/bin/curl" <<'MOCK'
@@ -124,6 +126,19 @@ for invalid in '{"argv":[]}' '{"argv":["browser",null]}' '{"argv":["-browser"]}'
     fi
     [[ ! -s $fixture/rejected ]]
 done
+# AppImage-injected variables must not reach qs or the fallback browser.
+: > "$fixture/actions"
+appdir="$fixture/.mount_App Image"
+env APPIMAGE="$fixture/App.AppImage" APPDIR="$appdir/" ARGV0=App OWD="$fixture" BROWSER_TEST_ENV="$fixture/env" \
+    LD_LIBRARY_PATH="$appdir/usr/lib:$appdir/usr/lib/Sub Dir" GDK_PIXBUF_MODULE_FILE="$appdir//usr/lib/loaders.cache" \
+    XDG_DATA_DIRS="$appdir/usr/share/:/usr/share:" QS_APPIMAGE_UNRELATED=kept \
+    "$HOME/.local/bin/quickshell-browser" https://appimage.test/
+jq -se '.[-1]==["--original","--profile=Personal Profile","https://appimage.test/"]' "$fixture/actions" >/dev/null
+for side in qs browser; do
+    if rg -q -e '^(APPIMAGE|APPDIR|ARGV0|OWD|LD_LIBRARY_PATH|GDK_PIXBUF_MODULE_FILE)=' -e '\.mount_App' "$fixture/env.$side"; then exit 1; fi
+    rg -qx 'XDG_DATA_DIRS=/usr/share' "$fixture/env.$side"
+    rg -qx 'QS_APPIMAGE_UNRELATED=kept' "$fixture/env.$side"
+done
 printf 'PASS: interactive browser desktop discovery, literal profile arguments and unavailable-application fallback diagnostics\n'
-printf 'PASS: desktop installation, literal fallback argv, IPC handoff, recursion guard and generic redirect/query actions\n'
+printf 'PASS: desktop installation, literal fallback argv, AppImage environment cleanup, IPC handoff, recursion guard and generic redirect/query actions\n'
 printf 'PASS: configurable application dispatch, literal process matching, browser fallback and workspace autofocus toggle\n'

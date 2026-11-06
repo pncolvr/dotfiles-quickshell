@@ -34,11 +34,21 @@ WorkerScope {
         implicitHeight: 180
         Updates.UpdatesTooltip { id: panel }
     }
+    FloatingWindow {
+        visible: true
+        implicitWidth: 80
+        implicitHeight: 40
+        Updates.Updates { id: indicator }
+    }
     Timer {
         interval: 50
         running: true
         onTriggered: {
+            root.settings.updatesPulseAfterDuration = Timespan.fromMilliseconds(250)
             root.waitUntil(() => !UpdatesService.checking && UpdatesService.lastChecked.getTime() > 0, "initial empty snapshot")
+            const icon = objects.findChild(indicator, "updatesIcon") as UI.BarIcon
+            events.wait(300)
+            root.check(icon && !icon.pulsing, "updates icon is idle between checks")
             const button = objects.findChild(panel, "updatesCheckNow") as UI.ActionButton
             const notes = objects.findChild(panel, "updatesNotes") as UI.ActionButton
             const install = objects.findChild(panel, "updatesInstall") as UI.ActionButton
@@ -56,12 +66,17 @@ WorkerScope {
 
             UpdatesService.schedule()
             events.wait(100)
+            root.check(UpdatesService.scheduled && icon.pulsing, "updates icon pulses while a refresh is scheduled")
             events.mouseClick(button, button.width / 2, button.height / 2, Qt.LeftButton)
             events.wait(20)
             root.check(UpdatesService.checking && !button.enabled, "click starts a check immediately and disables its button")
+            root.check(icon.pulsing, "updates icon pulses while refresh is running")
             root.check(UpdatesService.count === 0, "current snapshot remains visible during a check")
             UpdatesService.checkNow()
             root.waitUntil(() => !UpdatesService.checking && UpdatesService.count === 1, "manual check publishes new snapshot")
+            root.check(icon.pulsing, "updates icon pulses after refresh completes")
+            events.wait(300)
+            root.check(!icon.pulsing, "updates icon stops pulsing after configured completion interval")
             events.wait(750)
             root.check(root.runCount() === 2 && button.enabled, "pending timer cancelled and repeated request reused active check; runs=" + root.runCount())
 

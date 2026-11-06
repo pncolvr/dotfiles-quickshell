@@ -51,6 +51,8 @@ Item {
     readonly property bool notificationBorderAnimationEnabled: animateIndicators
     readonly property bool micPulseEnabled: animateIndicators
     readonly property bool volumePulseEnabled: animateIndicators
+    readonly property bool updatesPulseEnabled: animateIndicators
+    readonly property int updatesPulseAfterDuration: Timespan.fromSeconds(5)
     // Media visualization is independent of decorative UI motion and sharing.
     readonly property bool mediaVisualizerEnabled: animateIndicators
     readonly property string screenShareHiddenNamespace: "quickshell-private"

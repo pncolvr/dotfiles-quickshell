@@ -104,6 +104,7 @@ import QtQml
 QtObject { property bool online: true }
 QML
 sed -i 's/readonly property string language:/property string language:/' "$updates_refresh/src/config/Config.qml"
+sed -i 's/readonly property int updatesPulseAfterDuration:/property int updatesPulseAfterDuration:/' "$updates_refresh/src/config/Config.qml"
 override_config "$updates_refresh" updatesScheduleDelay 600
 override_config "$updates_refresh" updatesCheckCommand '["cat", Quickshell.shellPath("snapshot")]'
 override_config "$updates_refresh" updatesRefreshCommand '["bash", Quickshell.shellPath("refresh.sh")]'

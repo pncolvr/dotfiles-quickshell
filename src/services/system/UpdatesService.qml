@@ -23,6 +23,7 @@ Singleton {
     readonly property date lastChecked: _internal.lastChecked
     readonly property string error: _internal.error
     readonly property bool checking: refreshScriptProcess.running
+    readonly property bool scheduled: scheduleTimer.running
 
     QtObject {
         id: _internal

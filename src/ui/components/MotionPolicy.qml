@@ -14,4 +14,5 @@ QtObject {
     readonly property bool notificationBorderEnabled: Config.notificationBorderAnimationEnabled
     readonly property bool micPulseEnabled: Config.micPulseEnabled
     readonly property bool volumePulseEnabled: Config.volumePulseEnabled
+    readonly property bool updatesPulseEnabled: Config.updatesPulseEnabled
 }
