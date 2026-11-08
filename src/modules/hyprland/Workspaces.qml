@@ -12,7 +12,7 @@ UI.Row {
     Repeater {
         model: {
             const ws = Hyprland.workspaces.values
-            return [...ws].sort((a, b) => a.id - b.id)
+            return [...ws].filter(workspace => !workspace.name.startsWith("special:")).sort((a, b) => a.id - b.id)
         }
         delegate: UI.IconButton {
             id: window
