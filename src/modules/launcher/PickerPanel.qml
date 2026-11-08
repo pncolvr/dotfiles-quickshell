@@ -8,6 +8,7 @@ import "../../config"
 Item {
     id: root
     property var picker: PickerService
+    property var clipboardSaveOwner: null
     property bool hideForCapture: panel?.hideForCapture ?? false
     property bool backgroundVisible: true
     property real availableContentWidth: Theme.pickerWidth
@@ -116,7 +117,7 @@ Item {
     }
     Component {
         id: clipboardPanel
-        ClipboardPickerPanel { picker: root.picker; backgroundVisible: root.backgroundVisible; availableContentWidth: root.availableContentWidth; availableContentHeight: root.availableContentHeight }
+        ClipboardPickerPanel { picker: root.picker; backgroundVisible: root.backgroundVisible; availableContentWidth: root.availableContentWidth; availableContentHeight: root.availableContentHeight; saveOwner: root.clipboardSaveOwner }
     }
     Component {
         id: multiSelectPanel

@@ -2,8 +2,6 @@ pragma ComponentBehavior: Bound
 
 import "../../i18n"
 import QtQuick
-import QtQuick.Dialogs as Dialogs
-import Quickshell
 import "../../theme"
 import "../../ui" as UI
 import "../../services"
@@ -11,8 +9,7 @@ import "../../config"
 
 PreviewPickerPanel {
     id: root
-    readonly property bool nativeDialogOpen: saveDialog.visible || saveDialog.settling
-    property var savingEntry: null
+    property var saveOwner: null
     searchPlaceholder: PickerPrompts.text("clipboard", "clipboard.search.placeholder")
     panelError: picker.error || ClipboardService.error
     minimumRowHeight: Theme.clipboardRowHeight
@@ -51,12 +48,7 @@ PreviewPickerPanel {
     }
     function saveCurrentEntry() {
         if (!picker.currentItem) return
-        savingEntry = picker.currentItem.result
-        const suffix = savingEntry.kind === "image" ? savingEntry.mime.split("/").pop() : "txt"
-        const home = Quickshell.env("HOME").replace(/\/+$/, "")
-        saveDialog.currentFile = "file://" + (home + "/clipboard." + suffix).split("/").map(encodeURIComponent).join("/")
-        saveDialog.open()
-        picker.close()
+        if (saveOwner) saveOwner.saveClipboardEntry(picker.currentItem.result)
     }
     function togglePinnedOnly() {
         setCriterion("pinned", pinnedOnly ? undefined : true)
@@ -125,25 +117,4 @@ PreviewPickerPanel {
         }
     }
 
-    Dialogs.FileDialog {
-        id: saveDialog
-        property bool settling: false
-        title: Translations.text("clipboard.actions.saveTitle")
-        fileMode: Dialogs.FileDialog.SaveFile
-        defaultSuffix: root.savingEntry?.kind === "image"
-            ? root.savingEntry.mime.split("/").pop() : "txt"
-        function finishSession() { if (!visible) settling = false }
-        function pathFor(url) { return decodeURIComponent(url.toString().replace(/^file:\/\/(?:localhost)?/, "")) }
-        onVisibleChanged: {
-            if (visible) settling = true
-            else Qt.callLater(finishSession)
-        }
-        onAccepted: {
-            const entry = root.savingEntry
-            root.savingEntry = null
-            if (entry) ClipboardService.saveEntry(entry, pathFor(selectedFile))
-            finishSession()
-        }
-        onRejected: { root.savingEntry = null; finishSession() }
-    }
 }

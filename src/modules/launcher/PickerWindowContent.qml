@@ -30,6 +30,7 @@ Item {
     readonly property bool secretPrompt: focusHandler.secretPrompt
     readonly property bool restoringDialogFocus: focusHandler.restoringDialogFocus
     readonly property var previewWindow: preview
+    function saveClipboardEntry(entry: var): void { host.saveClipboardEntry(entry) }
     LauncherFocusHandler {
         id: focusHandler
         host: root.host; panel: root.panel; picker: root.picker
@@ -49,6 +50,7 @@ Item {
             availableContentHeight: root.availableContentHeight
             backgroundVisible: false
             picker: root.picker
+            clipboardSaveOwner: root
         }
     }
 }
