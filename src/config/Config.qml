@@ -89,6 +89,7 @@ Item {
         },
         clipboard: {
             delete: "Delete",
+            save: "Ctrl+Shift+S",
             pin: "Ctrl+P",
             pinnedOnly: "Ctrl+Shift+P"
         },
@@ -123,6 +124,7 @@ Item {
     readonly property var panelHints: ({
         default: [],
         clipboard: [
+            "clipboard.save",
             "clipboard.pin",
             "clipboard.pinnedOnly",
             "preview"

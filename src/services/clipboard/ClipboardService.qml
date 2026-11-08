@@ -78,6 +78,13 @@ Singleton {
         if (removed.length) run(Config.clipboardCommand.concat(["delete"]).concat(removed))
         error = ""
     }
+    function saveEntry(entry, destination) {
+        if (maintenance || !entry || !/^[a-f0-9]{64}$/.test(entry.id) || !destination) return
+        error = ""
+        run(["cp", "--", Config.clipboardDirectory + "/" + entry.id, destination], "", success => {
+            if (!success) error = Translations.text("clipboard.errors.export")
+        })
+    }
     function ignoreTextOnce(text) { ignoredText = text; textIgnoreTimer.restart() }
     function clear() {
         if (maintenance) return

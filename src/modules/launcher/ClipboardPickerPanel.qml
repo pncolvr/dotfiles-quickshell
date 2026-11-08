@@ -2,6 +2,8 @@ pragma ComponentBehavior: Bound
 
 import "../../i18n"
 import QtQuick
+import QtQuick.Dialogs as Dialogs
+import Quickshell
 import "../../theme"
 import "../../ui" as UI
 import "../../services"
@@ -9,6 +11,8 @@ import "../../config"
 
 PreviewPickerPanel {
     id: root
+    readonly property bool nativeDialogOpen: saveDialog.visible || saveDialog.settling
+    property var savingEntry: null
     searchPlaceholder: PickerPrompts.text("clipboard", "clipboard.search.placeholder")
     panelError: picker.error || ClipboardService.error
     minimumRowHeight: Theme.clipboardRowHeight
@@ -30,7 +34,8 @@ PreviewPickerPanel {
     readonly property bool pinnedOnly: picker.itemCriteria.pinned === true
     hintPanel: "clipboard"
     hintOverrides: ({preview: {label: Translations.text("clipboard.filter.images")}})
-    hintActions: ["clipboard.pinnedOnly", "preview"].concat(root.picker.currentItem ? ["clipboard.pin", "copy", "clipboard.delete"] : [])
+    hintActions: ["clipboard.pinnedOnly", "preview"].concat(root.picker.currentItem
+        ? ["clipboard.save", "clipboard.pin", "copy", "clipboard.delete"] : [])
     function sizeListForOpening() {
         const entries = picker.items.slice(0, maximumListRows)
         openedListHeight = entries.length ? entries.reduce((height, entry) => height + (previewEnabled
@@ -44,6 +49,15 @@ PreviewPickerPanel {
     function toggleCurrentPin() {
         if (picker.currentItem) ClipboardService.togglePin(picker.currentItem.result)
     }
+    function saveCurrentEntry() {
+        if (!picker.currentItem) return
+        savingEntry = picker.currentItem.result
+        const suffix = savingEntry.kind === "image" ? savingEntry.mime.split("/").pop() : "txt"
+        const home = Quickshell.env("HOME").replace(/\/+$/, "")
+        saveDialog.currentFile = "file://" + (home + "/clipboard." + suffix).split("/").map(encodeURIComponent).join("/")
+        saveDialog.open()
+        picker.close()
+    }
     function togglePinnedOnly() {
         setCriterion("pinned", pinnedOnly ? undefined : true)
         picker.currentIndex = 0
@@ -53,6 +67,7 @@ PreviewPickerPanel {
     }
     Keys.onPressed: event => {
         if (UI.Keybinds.matches(event, "copy")) root.picker.accept(false, true)
+        else if (UI.Keybinds.matches(event, "clipboard.save")) root.saveCurrentEntry()
         else if (UI.Keybinds.matches(event, "clipboard.delete")) root.deleteCurrentEntry()
         else { event.accepted = false; return }
         event.accepted = true
@@ -108,5 +123,27 @@ PreviewPickerPanel {
                 }
             }
         }
+    }
+
+    Dialogs.FileDialog {
+        id: saveDialog
+        property bool settling: false
+        title: Translations.text("clipboard.actions.saveTitle")
+        fileMode: Dialogs.FileDialog.SaveFile
+        defaultSuffix: root.savingEntry?.kind === "image"
+            ? root.savingEntry.mime.split("/").pop() : "txt"
+        function finishSession() { if (!visible) settling = false }
+        function pathFor(url) { return decodeURIComponent(url.toString().replace(/^file:\/\/(?:localhost)?/, "")) }
+        onVisibleChanged: {
+            if (visible) settling = true
+            else Qt.callLater(finishSession)
+        }
+        onAccepted: {
+            const entry = root.savingEntry
+            root.savingEntry = null
+            if (entry) ClipboardService.saveEntry(entry, pathFor(selectedFile))
+            finishSession()
+        }
+        onRejected: { root.savingEntry = null; finishSession() }
     }
 }
