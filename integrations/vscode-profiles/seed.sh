@@ -10,11 +10,14 @@ source "$helpers/vscode-profiles.sh"
 
 usage() {
     cat <<'EOF'
-Usage: bash integrations/vscode-profiles/seed.sh [OPTIONS] PROFILE[=SOURCE] ...
+Usage: bash integrations/vscode-profiles/seed.sh [OPTIONS] PROFILE[=[DIR:]SOURCE] ...
 
 For each PROFILE, creates ROOT/<slug>/ (for example ROOT/work) as a separate VS Code
 data dir with a profile named PROFILE, seeded from the SOURCE profile. SOURCE
 defaults to the profile with the same name; "Default" means the default profile.
+DIR picks the data dir SOURCE is read from, for this PROFILE only: a path
+(containing "/" or starting with "~"), or the name of an account dir already
+in ROOT, such as "work". Without DIR, --source is used.
 
 Copied:     settings, keybindings, tasks, snippets, prompts, MCP and chat model
             config, extension list (extensions themselves stay shared in
@@ -40,7 +43,10 @@ Examples:
   seed.sh Work Personal
   seed.sh --workspaces ~/Projects/bizdocs Work
   seed.sh Client=Work         # new "Client" account seeded from Work's settings
+  seed.sh Client=work:Work    # same, but from the seeded ROOT/work data dir
+  seed.sh Lab=~/.config/Code\ -\ OSS:Default   # from another install's default profile
   seed.sh --update Work       # re-copy settings after changing them in ~/.config/Code
+  seed.sh --update Personal=work:Work   # refresh Personal from the seeded Work dir
 EOF
 }
 
@@ -76,10 +82,8 @@ while (($#)); do
 done
 ((${#specs[@]})) || { usage >&2; exit 2; }
 for tool in jq sqlite3 realpath; do command -v "$tool" >/dev/null || die "$tool is required"; done
-source_dir=$(realpath -m -- "$source_dir")
+default_source=$(realpath -m -- "$source_dir")
 root=$(realpath -m -- "$root")
-storage=$source_dir/User/globalStorage/storage.json
-[[ -f $storage ]] || die "no VS Code data dir at $source_dir"
 
 # Removes anything that can identify or authenticate an account, then VACUUMs so
 # deleted values do not linger in free pages.
@@ -138,7 +142,25 @@ for spec in "${specs[@]}"; do
     [[ -n $name && -n $from ]] || die "bad profile spec '$spec'"
     slug=$(vscode_profile_slug "$name") || die "profile name '$name' has no usable characters"
     target=$root/$slug
-    say "== $name -> $target (from $from)"
+
+    # Optional DIR: prefix (split at the last ":"): a path, or an account dir in ROOT.
+    source_dir=$default_source
+    if [[ $from == *:* ]]; then
+        dir=${from%:*}
+        from=${from##*:}
+        [[ -n $from ]] || from=$name
+        [[ -n $dir ]] || die "bad profile spec '$spec' (empty DIR)"
+        case $dir in
+            "~" | "~/"*) source_dir=$HOME${dir#\~} ;;
+            */*) source_dir=$dir ;;
+            *) source_dir=$root/$(vscode_profile_slug "$dir") || die "bad DIR '$dir' in '$spec'" ;;
+        esac
+        source_dir=$(realpath -m -- "$source_dir")
+    fi
+    storage=$source_dir/User/globalStorage/storage.json
+    [[ -f $storage ]] || die "no VS Code data dir at $source_dir"
+    [[ $source_dir != "$target" ]] || die "$name would be seeded from itself ($target)"
+    say "== $name -> $target (from $from in $source_dir)"
 
     if [[ -f $target/code.lock ]]; then
         pid=$(<"$target/code.lock")

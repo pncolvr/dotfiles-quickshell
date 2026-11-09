@@ -26,7 +26,10 @@ bash integrations/vscode-profiles/seed.sh --workspaces ~/Projects/personal Perso
 ```
 
 Later accounts: `seed.sh Client=Work` creates a `Client` account from Work's
-settings. `seed.sh --update Work` re-copies settings into an existing dir, keeping
+settings. To read the source profile from another data dir, prefix it with
+`DIR:`. DIR is either a path, as in `Client=~/.config/Code:Work`, or an
+existing account folder, as in `Client=work:Work` (seeded Work dir). One run can mix
+sources; `--source DIR` sets the default for profiles without a prefix. `seed.sh --update Work` re-copies settings into an existing dir, keeping
 its sign-ins, state and extension list.
 
 Copied: default and profile `settings.json`, `keybindings.json`, `tasks.json`,
@@ -39,6 +42,19 @@ Not copied: secrets, cookies, web storage, Settings Sync, machine and telemetry
 ids, caches, logs, backups and local file history. Extensions stay installed once in
 `~/.vscode/extensions`, shared by every dir, as does `~/.vscode/argv.json`
 (`password-store: basic`).
+
+Some extensions might need to be reinstalled (Extensions view: Install, or
+`code-profile.sh --profile NAME --install-extension ID --force`):
+
+- An extension marked as installed may not load, or may show an error. This can
+  happen when the source used another extensions folder (for example Code - OSS
+  uses `~/.vscode-oss/extensions`), or when an extension keeps setup data in
+  storage that was not copied.
+- Each instance only knows about its own profiles. Uninstalling or updating an
+  extension in one dir can remove files from `~/.vscode/extensions` that another
+  dir still lists. Reinstall it in that dir.
+- Extensions that sign in themselves (Copilot, GitHub Pull Requests, Azure,
+  MSSQL) start signed out and need a fresh login in each dir.
 
 ## 2. Sign in once per account
 
