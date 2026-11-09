@@ -40,13 +40,22 @@ Options:
   -h, --help            show this help
 
 Examples:
-  seed.sh Work Personal
-  seed.sh --workspaces ~/Projects/bizdocs Work
-  seed.sh Client=Work         # new "Client" account seeded from Work's settings
-  seed.sh Client=work:Work    # same, but from the seeded ROOT/work data dir
-  seed.sh Lab=~/.config/Code\ -\ OSS:Default   # from another install's default profile
-  seed.sh --update Work       # re-copy settings after changing them in ~/.config/Code
-  seed.sh --update Personal=work:Work   # refresh Personal from the seeded Work dir
+  Assume Acme exists in ~/.config/Code; `seed.sh Acme` created ROOT/acme.
+
+  Choose the source:
+    seed.sh Acme
+    seed.sh Contractor=Acme
+    seed.sh Contractor=acme:Acme
+    seed.sh Lab="$HOME/.config/Code - OSS":Default
+    seed.sh --source "$HOME/.config/Code - OSS" Acme Lab=Default
+
+  Also copy workspace UI state for folders under the given path:
+    seed.sh --workspaces ~/Projects/green-one Contractor=Acme
+    seed.sh --workspaces ~/Projects/green-one --workspaces ~/Projects/lab Lab
+
+  Refresh an existing data dir:
+    seed.sh --update Acme
+    seed.sh --update Contractor=acme:Acme
 EOF
 }
 
