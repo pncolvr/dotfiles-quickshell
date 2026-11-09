@@ -241,7 +241,9 @@ Item {
             offerFolder: true,
             useFileNames: true,
             extensions: [".code-workspace"],
-            command: ["code"],
+            // Uses ~/.local/share/vscode-profiles/<profile> (own sign-ins) when seeded;
+            // see integrations/vscode-profiles. Plain `code` otherwise.
+            command: ["bash", Quickshell.shellPath("src/services/projects/code-profile.sh")],
             profiles: {
                 work: "Work",
                 personal: "Personal"
