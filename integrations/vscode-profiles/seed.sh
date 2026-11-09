@@ -20,8 +20,9 @@ DIR picks the data dir SOURCE is read from, for this PROFILE only: a path
 in ROOT, such as "work". Without DIR, --source is used.
 
 Copied:     settings, keybindings, tasks, snippets, prompts, MCP and chat model
-            config, extension list (extensions themselves stay shared in
-            ~/.vscode/extensions), extension state with auth/session keys removed.
+            config, extension list, the listed extensions (into the data dir's own
+            extensions/ folder, hard-linked when possible), extension state with
+            auth/session keys removed.
 Not copied: secrets and sign-ins, cookies and web storage, Settings Sync, telemetry
             and machine ids, caches, logs, backups, local file history.
 
@@ -35,7 +36,8 @@ Options:
                         folders are skipped)
   --no-state            do not copy the extension state database
   --update              refresh config files of an existing data dir; its sign-ins,
-                        state and extension list are left untouched
+                        state and extension list are left untouched. Also moves a
+                        dir seeded before it had its own extensions/ folder over
   --dry-run             only print what would be done
   -h, --help            show this help
 
@@ -137,6 +139,49 @@ copy_config() { # FROM_DIR TO_DIR WITH_EXTENSION_LIST
     done
 }
 
+copy_tree() { # FROM TO: hard links when on one filesystem, else a full copy
+    if ((dry_run)); then say "  would copy $1 to $2"; return 0; fi
+    cp -al -- "$1" "$2" 2>/dev/null && return 0
+    rm -rf -- "$2"
+    cp -a -- "$1" "$2"
+}
+
+# Gives TARGET its own extensions folder. A shared one does not work: every VS Code
+# instance deletes extensions that none of the profiles in its own data dir list,
+# including ones another data dir still uses. Copies each listed extension that
+# lives elsewhere and points the lists at the copies. Safe to rerun.
+localize_extensions() { # TARGET
+    local target=$1 dir=$1/extensions list path name id copied=0 missing
+    run install -d -m700 -- "$dir"
+    if [[ ! -f $dir/extensions.json ]]; then # default profile's list
+        if ((dry_run)); then say "  would write $dir/extensions.json: []"
+        else printf '[]\n' > "$dir/extensions.json"; chmod 600 -- "$dir/extensions.json"; fi
+    fi
+    for list in "$dir/extensions.json" "$target"/User/profiles/*/extensions.json; do
+        [[ -f $list ]] || continue
+        missing=()
+        while IFS=$'\t' read -r path name id; do
+            [[ -e $dir/$name ]] && continue
+            if [[ ! -d $path ]]; then
+                say "  $id is gone from $path; dropped from the list, reinstall it"
+                missing+=("$name")
+                continue
+            fi
+            copy_tree "$path" "$dir/$name"
+            copied=$((copied + 1))
+        done < <(jq -r --arg dir "$dir" '.[]? | select(.location.path? and (.location.path | startswith($dir + "/") | not))
+            | [.location.path, (.relativeLocation // (.location.path | split("/") | last)), .identifier.id] | @tsv' "$list")
+        if ((dry_run)); then continue; fi
+        jq --arg dir "$dir" --args 'map(if .location.path? then
+                .relativeLocation //= (.location.path | split("/") | last) | .location.path = $dir + "/" + .relativeLocation
+            else . end | select(.relativeLocation as $name | $ARGS.positional | index([$name]) | not))' \
+            "${missing[@]}" < "$list" > "$list.tmp"
+        chmod 600 -- "$list.tmp"
+        mv -- "$list.tmp" "$list"
+    done
+    say "  extensions: $copied copied into $dir"
+}
+
 url_to_path() { # file:// URI -> path, empty for anything else
     local uri=$1
     [[ $uri == file://* ]] || return 0
@@ -219,6 +264,7 @@ for spec in "${specs[@]}"; do
     copy_config "$source_dir/User" "$target/User" 0
     if [[ $source_profile != "$source_dir/User" ]]; then copy_config "$source_profile" "$target_profile" 0; fi
     if ((!update)) && [[ -f $source_extensions ]]; then run install -Dm600 -- "$source_extensions" "$target_profile/extensions.json"; fi
+    localize_extensions "$target"
 
     if ((!update && copy_state)); then
         copy_sanitized_db "$source_profile/globalStorage/state.vscdb" "$target_profile/globalStorage/state.vscdb"

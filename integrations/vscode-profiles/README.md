@@ -13,7 +13,8 @@ project picker → category (work/personal)
   → profile name from Config.qml projectApps.code.profiles   ("Work")
   → code-profile.sh <path> --profile Work
   → ~/.local/share/vscode-profiles/work/User exists?
-       yes → code --user-data-dir ~/.local/share/vscode-profiles/work <path> --profile Work
+       yes → code --user-data-dir ~/.local/share/vscode-profiles/work
+                  --extensions-dir ~/.local/share/vscode-profiles/work/extensions <path> --profile Work
        no  → code <path> --profile Work        (shared ~/.config/Code, as before)
 ```
 
@@ -25,7 +26,9 @@ project picker → category (work/personal)
   with `-`: `Work` → `work`, `Client A` → `client-a`.
 - `--profile` is only added when `workModeEnabled` is on. With work mode off,
   every project opens in `~/.config/Code`.
-- An explicit `--user-data-dir` in the arguments is always respected.
+- An explicit `--user-data-dir` or `--extensions-dir` in the arguments is always
+  respected. `--extensions-dir` is only added when the dir has an `extensions/`
+  folder (seeded before that existed? see [below](#troubleshooting-extensions)).
 - **The fallback is silent.** A missing or misspelled dir opens the shared
   account without a warning. Check the Accounts menu if in doubt.
 
@@ -78,13 +81,18 @@ gets a new random one when the source is `Default`.
 |---|---|
 | Default and profile `settings.json`, `keybindings.json`, `tasks.json` | Secrets and sign-ins |
 | `mcp.json`, `chatLanguageModels.json`, snippets, prompts | Cookies and web storage |
-| The profile's extension list | Settings Sync state |
+| The profile's extension list and those extensions, into `<dir>/extensions/` | Settings Sync state |
 | Extension state DB, with auth/account/token/session/sync/telemetry keys deleted and the DB `VACUUM`ed | Machine and telemetry ids |
 | With `--workspaces PATH`: per-workspace UI state for folders under PATH | Caches, logs, backups, local file history |
 | With `--extension-storage`: extension storage folders, except auth-related ones | |
 
-Extensions are installed once in `~/.vscode/extensions` and shared by every dir,
-as is `~/.vscode/argv.json` (`password-store: basic`).
+Each data dir gets its own extensions folder, `<dir>/extensions/`. The listed
+extensions are hard-linked from the source's folder (`~/.vscode/extensions`), so
+seeding takes almost no extra space; after that each dir installs and updates on
+its own. Sharing one folder does not work: every VS Code instance deletes
+extensions that none of the profiles in *its* data dir list, including ones
+another dir still uses. `~/.vscode/argv.json` (`password-store: basic`) stays
+shared.
 
 ## Seeding options
 
@@ -164,8 +172,11 @@ Reinstall from the Extensions view, or:
 - **Marked installed but doesn't load.** The source used a different extensions
   folder (Code - OSS uses `~/.vscode-oss/extensions`), or the extension keeps
   setup data in storage that wasn't copied.
-- **Disappeared after changes in another dir.** Each instance only knows its own
-  profiles. Updating or uninstalling an extension in one dir can delete files in
-  `~/.vscode/extensions` that another dir still lists. Reinstall it there.
+- **`Unable to read file '~/.vscode/extensions/<ext>/package.json'`, or
+  extensions disappearing after using another dir.** The dir was seeded before it
+  had its own `extensions/` folder, so it shares `~/.vscode/extensions` with the
+  other dirs, and each instance deletes what its own profiles don't list. Close
+  its VS Code windows and run `seed.sh --update PROFILE`: it copies what is still
+  there and drops what is already gone from the list, printing what to reinstall.
 - **Signed out.** Extensions with their own login (Copilot, GitHub Pull Requests,
   Azure, MSSQL) need a fresh sign-in in each dir.
