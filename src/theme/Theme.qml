@@ -366,6 +366,7 @@ QtObject {
     readonly property int statsProcessRowHeight: 32
     readonly property int statsChildRowHeight: 28
     readonly property int statsProcessRowSpacing: 2
+    readonly property int statsPowerProfileButtonSize: 24
     readonly property var powerProfileIcons: ["", "", ""]
     readonly property string networkDownIcon: "" // arrow-down: download
     readonly property string networkUpIcon: upIcon // arrow-up: upload

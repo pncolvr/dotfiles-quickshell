@@ -103,12 +103,34 @@ Column {
         id: heading
         width: parent.width
         spacing: root.spacing
-        UI.TabBar {
-            id: tabs
-            objectName: "statsTabs"
+        Item {
             width: parent.width
-            labels: [Translations.text("stats.tabs.overview"), "CPU", Translations.text("stats.tabs.memory")]
-                .concat(root.networkEnabled ? [Translations.text("stats.tabs.network")] : [])
+            height: tabs.height
+            UI.TabBar {
+                id: tabs
+                objectName: "statsTabs"
+                width: parent.width - profiles.width - Theme.controlSpacing
+                centerTabs: false
+                labels: [Translations.text("stats.tabs.overview"), "CPU", Translations.text("stats.tabs.memory")]
+                    .concat(root.networkEnabled ? [Translations.text("stats.tabs.network")] : [])
+            }
+            // Continue the tab underline beneath the profile switcher.
+            Rectangle {
+                anchors.left: tabs.right
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+                anchors.bottomMargin: tabs.underlineBottomMargin
+                height: 1
+                color: Theme.empty
+            }
+            PowerProfileButtons {
+                id: profiles
+                objectName: "statsPowerProfiles"
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.verticalCenterOffset: -tabs.underlineBottomMargin / 2
+                powerService: root.powerService
+            }
         }
         Flickable {
             id: summaryView
@@ -239,7 +261,7 @@ Column {
         }
         QC.ScrollBar.vertical: UI.ScrollBar {}
     }
-    Component { id: overview; StatsOverview { width: root.width; statsService: root.statsService; networkService: root.networkService; powerService: root.powerService } }
+    Component { id: overview; StatsOverview { width: root.width; statsService: root.statsService; networkService: root.networkService } }
     Component { id: cpu; CpuTooltip { width: root.width; statsService: root.statsService } }
     Component { id: memory; MemoryTooltip { width: root.width; statsService: root.statsService } }
     Component { id: network; NetworkTooltip { width: root.width; networkService: root.networkService } }

@@ -5,13 +5,11 @@ import "../../../theme"
 import ".."
 import "../../../ui" as UI
 import "../../../services"
-import "../../../config"
 
 Column {
     id: root
     property var statsService: StatsService
     property var networkService: NetworkService
-    property var powerService: PowerProfileService
     spacing: Theme.controlSpacing
     Row {
         width: parent.width
@@ -75,28 +73,6 @@ Column {
                 text: parent.modelData.value
                 elide: Text.ElideMiddle
                 UI.HoverTooltip { text: parent.text }
-            }
-        }
-    }
-    Row {
-        id: profiles
-        width: parent.width
-        spacing: Theme.controlSpacing
-        Repeater {
-            model: Config.powerProfiles
-            UI.ActionButton {
-                required property string modelData
-                required property int index
-                objectName: "statsPowerProfile-" + modelData
-                width: (profiles.width - profiles.spacing * (Config.powerProfiles.length - 1)) / Config.powerProfiles.length
-                label: [Translations.text("stats.power.saver"), Translations.text("stats.power.balanced"), Translations.text("stats.power.performance")][index]
-                glyph: Theme.powerProfileIcons[index]
-                hint: enabled ? label : Translations.text("common.states.unavailableLabel",[label])
-                enabled: root.powerService.availableProfiles.includes(modelData)
-                checked: root.powerService.profile === modelData
-                foreground: checked ? Theme.accent : Theme.inactive
-                fillColor: checked ? Theme.selectionSelectedBackground : Theme.controlFill
-                onClicked: root.powerService.setProfile(modelData)
             }
         }
     }

@@ -58,8 +58,8 @@ WorkerScope {
                     width:360
                     statsService: ({cpu:2,memoryUsed:1024,memoryTotal:4096,temperature:42})
                     networkService: ({downloadSpeed:0,uploadSpeed:0,connectedNetworks:[],vpnConnections:[],formatSpeed:()=> '0 B'})
-                    powerService: power
                 }
+                Stats.PowerProfileButtons { id: profiles; powerService: power }
             }
             Column {
                 x:20; y:540; width:720; spacing:12
@@ -188,15 +188,15 @@ WorkerScope {
                 backdrop.color=Theme.background
                 root.park()
                 for (const name of power.availableProfiles) {
-                    const button=driver.find(overview,'statsPowerProfile-'+name) as UI.ActionButton
+                    const button=driver.find(profiles,'statsPowerProfile-'+name) as UI.ActionButton
                     driver.check(!button.hovered && root.surface(button).color.a>0,'every profile has a visible idle fill')
                     driver.check(Qt.colorEqual(button.fillColor,button.checked ? Theme.selectionSelectedBackground : Theme.controlFill),'selected and inactive profile fills remain distinct')
                     driver.check(Qt.colorEqual(button.foreground,button.checked ? Theme.accent : Theme.inactive),'profile icon colors retain their semantic role')
                 }
             })
-            driver.add('power profile hover',()=>{backdrop.color=Theme.background;root.move(driver.find(overview,'statsPowerProfile-power-saver'))})
-            driver.waitFor('inactive power profile feedback',()=>driver.find(overview,'statsPowerProfile-power-saver').hovered,()=>{
-                const button=driver.find(overview,'statsPowerProfile-power-saver') as UI.ActionButton
+            driver.add('power profile hover',()=>{backdrop.color=Theme.background;root.move(driver.find(profiles,'statsPowerProfile-power-saver'))})
+            driver.waitFor('inactive power profile feedback',()=>driver.find(profiles,'statsPowerProfile-power-saver').hovered,()=>{
+                const button=driver.find(profiles,'statsPowerProfile-power-saver') as UI.ActionButton
                 driver.check(button.fillColor.a>0 && !Qt.colorEqual(root.surface(button).color,button.fillColor),'real inactive power profile brightens its visible idle fill on hover')
                 root.checkContrast(button)
                 button.enabled=false
