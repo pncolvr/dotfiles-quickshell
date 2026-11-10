@@ -72,7 +72,7 @@ Rectangle {
             objectName: "timerDelete"
             glyph: Theme.deleteIcon
             hint: Translations.text("timers.actions.deleteHint")
-            fillColor: Theme.urgent
+            fillColor: Theme.urgentFill
             onClicked: TimersService.remove(root.entry)
         }
     }

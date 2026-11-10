@@ -73,7 +73,7 @@ PrivateTooltipWindow {
                     }
                     UI.ActionButton {
                         glyph: Theme.clearIcon
-                        fillColor: Theme.urgent
+                        fillColor: Theme.urgentFill
                         hint: Translations.text("notifications.actions.clearAllHint")
                         onClicked: NotificationService.clearAll()
                     }

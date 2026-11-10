@@ -94,7 +94,7 @@ PreviewPickerPanel {
                 }
                 UI.ActionButton {
                     glyph: Theme.deleteIcon
-                    fillColor: Theme.urgent
+                    fillColor: Theme.urgentFill
                     hint: Translations.text("clipboard.actions.deleteHint")
                     enabled: !!root.picker.currentItem
                     onClicked: root.deleteCurrentEntry()
@@ -102,14 +102,14 @@ PreviewPickerPanel {
                 UI.ActionButton {
                     objectName: "clearClipboardHistory"
                     glyph: Theme.clearIcon
-                    fillColor: Theme.urgent
+                    fillColor: Theme.urgentFill
                     hint: Translations.text("clipboard.actions.clearHint")
                     onClicked: ClipboardService.clear()
                 }
                 UI.ActionButton {
                     glyph: Theme.pasteIcon
                     enabled: !!root.picker.currentItem && root.picker.destination.length > 0
-                    fillColor: Theme.accent
+                    fillColor: Theme.accentFill
                     hint: Translations.text("clipboard.actions.pasteHint")
                     onClicked: root.picker.accept(false, false)
                 }

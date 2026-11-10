@@ -16,7 +16,7 @@ Row {
     property bool removeEnabled: true
     property string editHint: Translations.text("folders.actions.editHint")
     property string removeHint: Translations.text("folders.actions.removeHint")
-    property color removeColor: Theme.alternateBackground
+    property color removeColor: Theme.controlFill
     property alias copyObjectName: copyButton.objectName
     property alias editObjectName: editButton.objectName
     property alias refreshObjectName: refreshButton.objectName

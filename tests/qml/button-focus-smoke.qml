@@ -91,8 +91,8 @@ Scope {
             labeled.visible=false
             root.check(labeled.implicitWidth===labeledWidth,'hiding a labeled control preserves its width for the next opening')
             labeled.visible=true
-            root.checkButton(action)
-            root.checkButton(audio)
+            root.checkButton(action, true)
+            root.checkButton(audio, true)
             root.check(root.actionClicks === 1 && root.audioClicks === 1, "focus handling preserves mouse activation")
             action.forceActiveFocus(Qt.TabFocusReason)
             events.keyClick(Qt.Key_Space, Qt.NoModifier, 0)

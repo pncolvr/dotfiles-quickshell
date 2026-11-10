@@ -266,7 +266,7 @@ Item {
                     height: Theme.twitchEditorHeight
                     visible: !!root.linkEntry && !root.linkEntry.fallbackLogin
                     label: Translations.text("twitch.actions.link")
-                    fillColor: Theme.accent
+                    fillColor: Theme.accentFill
                     enabled: TwitchService.usersReady && loginField.text.trim().length > 0
                     onClicked: root.addUser(true)
                 }
@@ -298,7 +298,7 @@ Item {
                 height: Theme.twitchEditorHeight
                 label: Translations.text("twitch.actions.addAll",[root.browserSuggestions.length])
                 hint: Translations.text("twitch.actions.addAllHint",[],root.browserSuggestions.length)
-                fillColor: Theme.accent
+                fillColor: Theme.accentFill
                 enabled: TwitchService.usersReady && root.browserSuggestions.length > 0
                 onClicked: root.addAllSuggestions()
             }
@@ -334,7 +334,7 @@ Item {
                 height: Theme.twitchEditorHeight
                 label: Translations.text("twitch.actions.undoAll",[TwitchService.removedUsers.length])
                 hint: Translations.text("twitch.actions.undoAllHint")
-                fillColor: Theme.accent
+                fillColor: Theme.accentFill
                 enabled: TwitchService.usersReady
                 onClicked: TwitchService.undoAllRemovals()
             }

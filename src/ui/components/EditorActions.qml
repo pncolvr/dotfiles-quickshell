@@ -39,7 +39,7 @@ Q.Row {
         glyph: root.submitGlyph
         hint: root.submitHint
         enabled: root.submitEnabled
-        fillColor: Theme.accent
+        fillColor: Theme.accentFill
         onClicked: root.submitted()
     }
 }

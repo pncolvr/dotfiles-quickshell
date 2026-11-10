@@ -190,7 +190,7 @@ WorkerScope {
                 for (const name of power.availableProfiles) {
                     const button=driver.find(overview,'statsPowerProfile-'+name) as UI.ActionButton
                     driver.check(!button.hovered && root.surface(button).color.a>0,'every profile has a visible idle fill')
-                    driver.check(Qt.colorEqual(button.fillColor,button.checked ? Theme.selectionSelectedBackground : Theme.alternateBackground),'selected and inactive profile fills remain distinct')
+                    driver.check(Qt.colorEqual(button.fillColor,button.checked ? Theme.selectionSelectedBackground : Theme.controlFill),'selected and inactive profile fills remain distinct')
                     driver.check(Qt.colorEqual(button.foreground,button.checked ? Theme.accent : Theme.inactive),'profile icon colors retain their semantic role')
                 }
             })

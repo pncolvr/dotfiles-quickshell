@@ -9,9 +9,9 @@ import "ButtonColors.mjs" as Colors
 Rectangle {
     id: root
     required property T.AbstractButton control
-    property color fillColor: Theme.alternateBackground
+    property color fillColor: Theme.controlFill
     property color hoverColor: Theme.buttonHoverColor(fillColor)
-    property color pressedColor: Theme.buttonPressedColor(hoverColor)
+    property color pressedColor: Theme.buttonPressedColor(fillColor)
     property bool highlighted: false
     readonly property bool keyboardFocusVisible: pointerFocus.keyboardFocusVisible
     readonly property var adaptiveContrastColors: [Theme.text, Theme.inactive, Theme.accent, Theme.active, Theme.warning]
@@ -24,8 +24,10 @@ Rectangle {
         return Qt.rgba(value.r, value.g, value.b, value.a)
     }
     radius: Theme.iconButtonRadius
-    border.width: keyboardFocusVisible ? 1 : 0
-    border.color: Theme.accent
+    // Plain buttons get a thin edge like fields; the focus ring replaces it.
+    readonly property bool plainFill: Qt.colorEqual(fillColor, Theme.controlFill)
+    border.width: keyboardFocusVisible || plainFill ? 1 : 0
+    border.color: keyboardFocusVisible ? Theme.accent : Theme.controlBorder
 
     function surfaceMarker(item: var): var { return item.buttonSurfaceColor }
     function windowColor(window: var): color { return window?.buttonSurfaceColor ?? window?.color ?? Theme.background }

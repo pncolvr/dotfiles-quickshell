@@ -31,7 +31,7 @@ PickerPanelBase {
                     glyph: Theme.openLinksIcon
                     hint: root.picker.acceptLabel
                     enabled: root.picker.canAccept
-                    fillColor: Theme.accent
+                    fillColor: Theme.accentFill
                     onClicked: root.picker.accept(false, false)
                 }
             }

@@ -45,7 +45,7 @@ ManagedCollectionPanel {
                     keyAction: "remotes.shutdown"
                     glyph: Theme.powerShutdownIcon
                     visible:RemoteService.selectedEntry?.type==='vm'
-                    enabled:RemoteService.canShutdownSelected; fillColor:Theme.urgent
+                    enabled:RemoteService.canShutdownSelected; fillColor: Theme.urgentFill
                     hint:Translations.text("remotes.actions.shutdownHint"); onClicked:RemoteService.shutdownSelected()
                 }
             }

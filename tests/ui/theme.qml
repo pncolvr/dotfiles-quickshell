@@ -42,8 +42,8 @@ Scope {
                 UI.PickerRow { width: parent.width; entry: ({title:"Normal entry", subtitle:"Secondary details"}) }
                 Row {
                     spacing: Theme.controlSpacing
-                    UI.ActionButton { id: apply; glyph: Theme.checkIcon; label: "Apply"; fillColor: Theme.accent; width: 120 }
-                    UI.ActionButton { id: remove; glyph: Theme.deleteIcon; label: "Delete"; fillColor: Theme.urgent; width: 120 }
+                    UI.ActionButton { id: apply; glyph: Theme.checkIcon; label: "Apply"; fillColor: Theme.accentFill; width: 120 }
+                    UI.ActionButton { id: remove; glyph: Theme.deleteIcon; label: "Delete"; fillColor: Theme.urgentFill; width: 120 }
                     UI.ActionButton { id: disabled; glyph: Theme.cancelIcon; enabled: false }
                 }
                 UI.TextArea { id: area; width: parent.width; height: 60; text: "Notes and multiline input" }
@@ -66,25 +66,43 @@ Scope {
         root.same(input.selectedTextColor,Theme.selectionText,"input selection follows Theme")
         root.same(area.selectedTextColor,Theme.selectionText,"multiline selection follows Theme")
         root.same(selected.foreground,Theme.selectionText,"selected row foreground follows Theme")
-        root.same(selected.color,Theme.accent,"selected row background follows Theme")
+        root.same(selected.color,Theme.accentFill,"selected row background follows Theme")
         root.same(apply.foreground,Theme.foregroundOn((apply.background as Rectangle).color),"action foreground follows Theme's contrast policy")
         root.check(disabled.opacity === 0.45 && !disabled.enabled,"disabled state preserved")
         root.check(Theme === Settings.Theme,"both imports use the same Theme instance")
+        // Every button is labelled in the palette text, readable on each state,
+        // and each state is visibly apart from the idle fill.
+        for (const [fill, hover, pressed] of [[Theme.controlFill, Theme.controlFillHover, Theme.controlFillPressed],
+                [Theme.accentFill, Theme.accentFillHover, Theme.accentFillPressed], [Theme.urgentFill, Theme.urgentFillHover, Theme.urgentFillPressed]]) {
+            for (const state of [fill, hover, pressed])
+                root.check(contrast(Theme.text,state) >= 4.5,"palette text on button fill " + state)
+            root.check(contrast(hover,fill) >= 1.1 && contrast(pressed,fill) >= 1.1,"hover and pressed are visible: " + fill)
+            root.same(Theme.buttonHoverColor(fill),hover,"explicit hover token: " + fill)
+            root.same(Theme.buttonPressedColor(fill),pressed,"explicit pressed token: " + fill)
+            root.check(luminance(pressed) < luminance(fill) && (light ? luminance(hover) < luminance(fill) && luminance(pressed) < luminance(hover)
+                : luminance(hover) > luminance(fill)),"hover/pressed direction: " + fill)
+        }
+        root.check(contrast(Theme.controlBorder,Theme.background) >= 2,"control border is visible")
+        root.check(contrast(Theme.accent,Theme.background) >= 3,"accent outlines and indicators are visible")
+        const shifted = Theme.buttonHoverColor(Theme.warning)
+        root.check(contrast(shifted,Theme.warning) >= 1.1,"other fills get a visible lightness-shift hover")
+        root.check(Theme.buttonHoverColor(Qt.rgba(0,0,0,0)) === Theme.selectionHoverBackground,"transparent fills hover on the selection fill")
+        for (const action of [apply,remove]) {
+            root.same(action.foreground,Theme.text,"filled control uses the palette text")
+            root.check(contrast(action.foreground,(action.background as Rectangle).color) >= 4.5,"filled control contrast")
+            action.down = true
+            root.check(contrast(action.foreground,(action.background as Rectangle).color) >= 4.5,"pressed control contrast")
+            action.down = false
+            events.mouseMove(action,action.width / 2,action.height / 2)
+            events.wait(20)
+            root.check(contrast(action.foreground,(action.background as Rectangle).color) >= 4.5,"hovered control contrast")
+            events.mouseMove(preview,690,420)
+        }
+        root.check(contrast(Theme.selectionText,Theme.accentFill) >= 4.5,"selection contrast")
+        root.check(contrast(Theme.calendarTodayText,Theme.calendarTodayBackground) >= 4.5,"today contrast")
         if (light) {
             for (const color of [Theme.text, Theme.inactive, Theme.accent, Theme.warning, Theme.urgent])
                 root.check(contrast(color,Theme.background) >= 4.5,"light text/status color has readable contrast: " + color)
-            for (const action of [apply,remove]) {
-                root.check(contrast(action.foreground,(action.background as Rectangle).color) >= 4.5,"filled control contrast")
-                action.down = true
-                root.check(contrast(action.foreground,(action.background as Rectangle).color) >= 4.5,"pressed control contrast")
-                action.down = false
-                events.mouseMove(action,action.width / 2,action.height / 2)
-                events.wait(20)
-                root.check(contrast(action.foreground,(action.background as Rectangle).color) >= 4.5,"hovered control contrast")
-                events.mouseMove(preview,690,420)
-            }
-            root.check(contrast(Theme.selectionText,Theme.accent) >= 4.5,"selection contrast")
-            root.check(contrast(Theme.calendarTodayText,Theme.calendarTodayBackground) >= 4.5,"today contrast")
             root.check(contrast(Theme.calendarHolidayText,Theme.calendarHolidayBackground) >= 4.5,"holiday contrast")
             root.check(contrast(Theme.calendarClockChangeEveText,Theme.calendarClockChangeEveBackground) >= 4.5,"clock-change contrast")
         }

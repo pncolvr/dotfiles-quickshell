@@ -134,7 +134,7 @@ ManagedPickerFrame {
                 Row { id: detailActions; spacing: Theme.controlSpacing }
                 UI.ActionButton { glyph: Theme.editIcon; hintAction: "edit"; hint: Translations.text("collections.actions.editHint"); enabled: !root.service.busy; onClicked: root.edit(root.selectedEntry) }
                 UI.ActionButton {
-                    glyph: Theme.deleteIcon; hint: Translations.text("collections.actions.removeHint"); fillColor: Theme.urgent
+                    glyph: Theme.deleteIcon; hint: Translations.text("collections.actions.removeHint"); fillColor: Theme.urgentFill
                     enabled: !root.service.busy && !!root.selectedEntry && root.canRemoveEntry(root.selectedEntry)
                     onClicked: root.service.remove(root.selectedEntry.id)
                 }

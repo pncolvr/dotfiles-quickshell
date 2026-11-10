@@ -240,7 +240,7 @@ Item {
                         visible: !root.editing && !root.deleting
                         spacing: Theme.controlSpacing
                         UI.ActionButton { objectName: "vaultEdit"; glyph: Theme.editIcon; hintAction: "edit"; hint: Translations.text("vault.actions.editHint"); visible: root.editable; enabled: root.detailReady && root.editable && !RbwService.busy; onClicked: root.edit() }
-                        UI.ActionButton { objectName: "vaultDelete"; glyph: Theme.deleteIcon; hint: Translations.text("vault.actions.deleteHint"); fillColor: Theme.urgent; enabled: root.detailReady && !RbwService.busy; onClicked: root.deleting = true }
+                        UI.ActionButton { objectName: "vaultDelete"; glyph: Theme.deleteIcon; hint: Translations.text("vault.actions.deleteHint"); fillColor: Theme.urgentFill; enabled: root.detailReady && !RbwService.busy; onClicked: root.deleting = true }
                     }
                     UI.EditorActions {
                         objectName: "vaultEditorActions"
@@ -260,7 +260,7 @@ Item {
                         visible: root.deleting
                         submitKeyAction: ""
                         submitGlyph: Theme.deleteIcon
-                        submitColor: Theme.urgent
+                        submitColor: Theme.urgentFill
                         submitHint: Translations.text("vault.actions.deleteHint")
                         submitEnabled: !RbwService.busy
                         cancelEnabled: !RbwService.busy

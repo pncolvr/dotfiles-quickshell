@@ -14,7 +14,7 @@ QC.TextField {
     rightPadding: Theme.controlFieldPadding
     color: root.readOnly ? Theme.inactive : Theme.text
     placeholderTextColor: Theme.inactive
-    selectionColor: Theme.accent
+    selectionColor: Theme.accentFill
     selectedTextColor: Theme.selectionText
     font.family: Theme.fontFamily
     font.pixelSize: Theme.fontSize
@@ -23,9 +23,9 @@ QC.TextField {
     font.hintingPreference: Theme.fontHintingPreference
     selectByMouse: true
     background: Rectangle {
-        color: root.readOnly ? Theme.background : Theme.alternateBackground
+        color: root.readOnly ? Theme.background : Theme.controlFill
         radius: Theme.iconButtonRadius
         border.width: 1
-        border.color: root.activeFocus ? Theme.accent : root.readOnly ? Theme.selectionBorder : Theme.empty
+        border.color: root.activeFocus ? Theme.accent : root.readOnly ? Theme.selectionBorder : Theme.controlBorder
     }
 }

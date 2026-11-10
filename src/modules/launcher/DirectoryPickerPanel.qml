@@ -135,7 +135,7 @@ ManagedPickerFrame {
                 editHint: Translations.text("directories.actions.editHint")
                 editEnabled: !DirectoryService.busy
                 removeEnabled: !DirectoryService.busy
-                removeColor: Theme.urgent
+                removeColor: Theme.urgentFill
                 onEditRequested: root.edit(root.selectedEntry)
                 onRemoveRequested: DirectoryService.remove(path)
             },

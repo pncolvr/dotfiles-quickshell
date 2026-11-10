@@ -235,7 +235,7 @@ WorkerScope {
                 root.click(root.find(root.row("countdownRows"), "timerEdit"))
                 root.check(root.row("countdownRows").editing, "countdown editor opens after saving")
                 root.click(root.find(root.panel, "countdownEditCancel"))
-                root.check(root.find(root.row("countdownRows"), "timerDelete").fillColor === Theme.urgent
+                root.check(root.find(root.row("countdownRows"), "timerDelete").fillColor === Theme.urgentFill
                     && root.find(root.row("countdownRows"), "timerDelete").glyph === Theme.deleteIcon, "shared red delete style")
                 root.click(root.find(root.row("countdownRows"), "timerDelete"))
                 root.check(TimersService.countdowns.length === 0 && TimersService.barEntry === root.liveTimer, "delete removes countdown")
@@ -263,7 +263,7 @@ WorkerScope {
                 root.check(root.find(root.row("countdownRows"), "timerTitle").color === Theme.inactive
                     && root.find(root.row("countdownRows"), "timerPause").glyph === Theme.playIcon
                     && root.find(root.row("countdownRows"), "timerPause").foreground === Theme.ok
-                    && root.find(root.row("countdownRows"), "timerPause").fillColor === Theme.alternateBackground,
+                    && root.find(root.row("countdownRows"), "timerPause").fillColor === Theme.controlFill,
                     "completed countdown offers green play to start again")
                 root.click(root.find(root.row("countdownRows"), "timerPause"))
                 root.check(root.liveCountdown.running && !root.liveCountdown.finished

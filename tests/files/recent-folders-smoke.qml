@@ -106,7 +106,7 @@ WorkerScope {
                     const close = mouse.findChild(tabs.itemAt(1), "tabCloseButton") as QC.Button
                     root.check(!close.visible, "folder tab has no close button")
                     const remove = root.child("removeFolderTab") as UI.ActionButton
-                    root.check(remove.visible && remove.glyph === Theme.deleteIcon && remove.fillColor === Theme.urgent,
+                    root.check(remove.visible && remove.glyph === Theme.deleteIcon && remove.fillColor === Theme.urgentFill,
                         "folder removal uses a red trash button in the panel")
                 } else if (root.step === 4) {
                     root.check(RecentFilesService.files.every((file, index, files) => index === 0
@@ -172,7 +172,7 @@ WorkerScope {
                     const cancel = root.child("cancelFolderAlias") as UI.ActionButton
                     const save = root.child("saveFolderAlias") as UI.ActionButton
                     root.check(cancel.mapToItem(root.panel, 0, 0).x < save.mapToItem(root.panel, 0, 0).x
-                        && save.fillColor === Theme.accent && cancel.fillColor === Theme.alternateBackground,
+                        && save.fillColor === Theme.accentFill && cancel.fillColor === Theme.controlFill,
                         "editor uses neutral Cancel before accent Apply")
                     const input = root.child("folderAliasInput") as QC.TextField
                     input.text = "Cancel this draft"

@@ -46,7 +46,7 @@ Column {
                     readOnly: true
                     color: revealed ? Theme.text : "transparent"
                     rightPadding: notesEye.width + Theme.controlFieldPadding * 2
-                    selectionColor: Theme.accent
+                    selectionColor: Theme.accentFill
                     selectedTextColor: Theme.selectionText
                     inputMethodHints: Qt.ImhSensitiveData | Qt.ImhNoPredictiveText
                     focusBorder: true

@@ -22,9 +22,9 @@ QC.CheckBox {
         implicitWidth: Theme.fontSize + 4
         implicitHeight: implicitWidth
         radius: Theme.iconButtonRadius
-        color: surface.colorFor(Theme.alternateBackground)
+        color: surface.colorFor(Theme.controlFill)
         border.width: 1
-        border.color: root.keyboardFocusVisible ? Theme.accent : Theme.empty
+        border.color: root.keyboardFocusVisible ? Theme.accent : Theme.controlBorder
         UI.IconText { anchors.centerIn: parent; text: root.checked ? Theme.checkIcon : ""; color: Theme.accent }
     }
     contentItem: UI.ColumnText {

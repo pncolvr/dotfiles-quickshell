@@ -199,7 +199,7 @@ Rectangle {
                 objectName: "removeTwitchUser_" + root.mainLogin
                 glyph: Theme.deleteIcon
                 hint: Translations.text("twitch.actions.removeHint")
-                fillColor: Theme.urgent
+                fillColor: Theme.urgentFill
                 enabled: TwitchService.usersReady
                 onClicked: TwitchService.removeUser(root.mainLogin)
             }

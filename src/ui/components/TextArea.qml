@@ -17,13 +17,13 @@ QC.TextArea {
     textFormat: TextEdit.PlainText
     placeholderTextColor: Theme.inactive
     color: Theme.text
-    selectionColor: Theme.accent
+    selectionColor: Theme.accentFill
     selectedTextColor: Theme.selectionText
     wrapMode: TextEdit.Wrap
     background: Rectangle {
-        color: Theme.alternateBackground
+        color: Theme.controlFill
         radius: Theme.iconButtonRadius
         border.width: root.focusBorder || root.activeFocus ? 1 : 0
-        border.color: root.activeFocus ? Theme.accent : Theme.empty
+        border.color: root.activeFocus ? Theme.accent : Theme.controlBorder
     }
 }

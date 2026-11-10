@@ -74,9 +74,10 @@ TooltipArea {
           + Math.max(0, (Theme.calendarCellHeight - dateMetrics.height) / 2 + dateMetrics.descent)
         verticalAlignment: Text.AlignVCenter
         font.pixelSize: Theme.fontSize - 1
+        font.bold: Theme.fontBold
         horizontalAlignment: Text.AlignHCenter
         textFormat: Text.RichText
-        text: [showToday ? '<font color="' + Theme.calendarTodayBackground + '">' + Translations.text("calendar.relative.today") + '</font>' : '',
+        text: [showToday ? '<font color="' + Theme.accent + '">' + Translations.text("calendar.relative.today") + '</font>' : '',
              showHolidays ? '<font color="' + Theme.calendarHolidayBackground + '">' + Translations.text("calendar.legend.holiday") + '</font>' : '',
              showClockChangeEve ? '<font color="' + Theme.calendarClockChangeEveBackground + '">' + Translations.text("calendar.legend.changeEve") + '</font>' : '']
             .filter(hint => hint.length > 0).join(' · ')

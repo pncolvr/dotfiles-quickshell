@@ -362,7 +362,7 @@ ManagedPickerFrame {
                                     objectName: "projectWorkspace_" + workspaceRow.modelData.path
                                     glyph: workspaceRow.modelData.included ? Theme.checkIcon : Theme.addIcon
                                     hint: Translations.text(workspaceRow.modelData.included ? "projects.files.excludeHint" : "projects.files.includeHint")
-                                    fillColor: workspaceRow.modelData.included ? Theme.accent : Theme.alternateBackground
+                                    fillColor: workspaceRow.modelData.included ? Theme.accentFill : Theme.controlFill
                                     onClicked: root.setIncluded(projectDraft.modelData.path,workspaceRow.modelData.path,!workspaceRow.modelData.included)
                                 }
                                 Column {
@@ -400,7 +400,7 @@ ManagedPickerFrame {
                                     refreshObjectName: "refreshSource_" + path
                                     editHint: Translations.text("projects.actions.editSourceHint")
                                     removeHint: Translations.text("projects.actions.removeSourceHint")
-                                    removeColor: Theme.urgent
+                                    removeColor: Theme.urgentFill
                                     showRefresh: true
                                     editEnabled: !ProjectService.busy && !ProjectService.draft
                                     refreshEnabled: !ProjectService.busy && !ProjectService.draft

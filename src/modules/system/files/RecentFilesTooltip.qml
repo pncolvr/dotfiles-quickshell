@@ -289,7 +289,7 @@ Column {
                 visible: root.folderTab
                 glyph: Theme.deleteIcon
                 hint: Translations.text("files.actions.removeTabHint")
-                fillColor: Theme.urgent
+                fillColor: Theme.urgentFill
                 onClicked: root.fileService.removeFolder(root.fileService.activeFolder)
             }
         }

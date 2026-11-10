@@ -127,7 +127,7 @@ Column {
                             : Translations.text("status.actions.setMode",[Translations.text("status.modes."+modelData)])
                         foreground: root.statusService.status === modelData
                             ? (selected ? Theme.warning : Theme.accent) : Theme.text
-                        fillColor: selected ? Theme.selectionSelectedBackground : Theme.alternateBackground
+                        fillColor: selected ? Theme.selectionSelectedBackground : Theme.controlFill
                         enabled: !root.statusService.changingStatus
                         onClicked: root.statusService.toggleStatus(modelData)
                     }

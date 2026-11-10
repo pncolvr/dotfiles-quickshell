@@ -8,13 +8,22 @@ QtObject {
     readonly property bool darkMode: true
     readonly property ThemePalette palette: ThemePalette { darkMode: root.darkMode }
     function foregroundOn(surface) { return palette.foregroundOn(surface, background, text) }
+    // Hover and pressed fills for a button's idle fill: explicit tokens for the
+    // control, accent and urgent fills, the palette's lightness shift for any
+    // other fill. A transparent idle fill hovers and presses on the selection
+    // hover fill; a fill that cannot move in the palette's direction (white in
+    // dark) falls back to the selection hover and selected fills.
     function buttonHoverColor(fill) {
-        const lighter = Qt.lighter(fill, 1.4)
-        return fill.a > 0 && !Qt.colorEqual(fill, lighter) ? lighter : selectionHoverBackground
+        if (fill.a === 0) return selectionHoverBackground
+        for (const [idle, hover] of [[controlFill, controlFillHover], [accentFill, accentFillHover], [urgentFill, urgentFillHover]])
+            if (Qt.colorEqual(fill, idle)) return hover
+        return palette.visibleShift(fill, palette.hoverLightness) ?? selectionHoverBackground
     }
-    function buttonPressedColor(hover) {
-        const darker = Qt.darker(hover, 1.2)
-        return !Qt.colorEqual(hover, darker) ? darker : selectionSelectedBackground
+    function buttonPressedColor(fill) {
+        if (fill.a === 0) return palette.visibleShift(selectionHoverBackground, palette.pressedLightness) ?? selectionSelectedBackground
+        for (const [idle, pressed] of [[controlFill, controlFillPressed], [accentFill, accentFillPressed], [urgentFill, urgentFillPressed]])
+            if (Qt.colorEqual(fill, idle)) return pressed
+        return palette.visibleShift(fill, palette.pressedLightness) ?? selectionSelectedBackground
     }
 
     // Colors
@@ -29,6 +38,16 @@ QtObject {
     readonly property color warning: palette.colors.warning
     readonly property color inactive: palette.colors.inactive
     readonly property color empty: palette.colors.empty
+    readonly property color controlFill: palette.colors.controlFill
+    readonly property color controlFillHover: palette.colors.controlFillHover
+    readonly property color controlFillPressed: palette.colors.controlFillPressed
+    readonly property color controlBorder: palette.colors.controlBorder
+    readonly property color accentFill: palette.colors.accentFill
+    readonly property color accentFillHover: palette.colors.accentFillHover
+    readonly property color accentFillPressed: palette.colors.accentFillPressed
+    readonly property color urgentFill: palette.colors.urgentFill
+    readonly property color urgentFillHover: palette.colors.urgentFillHover
+    readonly property color urgentFillPressed: palette.colors.urgentFillPressed
 
     // Typography
     readonly property string fontFamily: "Noto Sans Mono"
@@ -113,7 +132,8 @@ QtObject {
     readonly property int tooltipPaddingWidth: 20
     readonly property int tooltipPaddingHeight: 10
 
-    readonly property color selectionText: foregroundOn(accent)
+    // Text on accent fills: selected rows and selected text.
+    readonly property color selectionText: foregroundOn(accentFill)
 
     // Selection and scrollbars
     readonly property color selectionBackground: palette.colors.selectionBackground
@@ -216,7 +236,7 @@ QtObject {
     readonly property int calendarCellHeight: calendarCellWidth
     readonly property int calendarCellRadius: 3
     readonly property int calendarSpacing: 2
-    readonly property color calendarTodayBackground: accent
+    readonly property color calendarTodayBackground: accentFill
     readonly property color calendarClockChangeEveBackground: warning
     readonly property color calendarHolidayBackground: active
     readonly property color calendarTodayText: foregroundOn(calendarTodayBackground)
@@ -252,7 +272,7 @@ QtObject {
     readonly property int totpCountdownStrokeWidth: 4
     readonly property int totpCountdownListMargin: 12
     readonly property int totpExpiryWarning: 5
-    readonly property color totpDeleteBackground: urgent
+    readonly property color totpDeleteBackground: urgentFill
     readonly property color totpRowHoverBackground: alternateBackground
 
     // Batteries

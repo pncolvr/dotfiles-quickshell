@@ -19,7 +19,7 @@ UI.SelectableRow {
     property bool grid: false
     padding: 0
     focusPolicy: Qt.NoFocus
-    currentBackground: Theme.accent
+    currentBackground: Theme.accentFill
     hoverBackground: Theme.alternateBackground
     currentForeground: Theme.selectionText
     activateOnClick: !clipboard

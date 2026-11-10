@@ -105,6 +105,16 @@ light.png for visual review without changing the live theme or desktop focus.
 Mode selection and color/contrast policy belong in Theme.qml/ThemePalette.qml;
 components consume Theme values rather than checking darkMode or reading palettes.
 
+Fills and foregrounds are separate tokens. `accent` and `urgent` are for text,
+icons, outlines, focus rings and indicators. Anything drawn behind a label uses
+`controlFill`, `accentFill` or `urgentFill` (with `controlBorder` as the plain
+control edge), so every button is labelled in `text` at 4.5:1 or more on its
+idle, hover and pressed fills. Those three fills have explicit hover and pressed
+tokens; `buttonHoverColor`/`buttonPressedColor` derive any other fill by moving
+only its OKLCH lightness (`ThemePalette.shiftLightness`): lighter on hover and
+darker when pressed in dark, darker for both in light. The theme check enforces
+the label contrast, a visible (1.1:1) step and the direction for each fill.
+
 ## Layout
 
 ```text

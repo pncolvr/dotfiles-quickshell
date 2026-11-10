@@ -5,9 +5,9 @@ import "../../theme"
 
 QC.Button {
     id: root
-    property color fillColor: Theme.alternateBackground
+    property color fillColor: Theme.controlFill
     property color hoverColor: Theme.buttonHoverColor(fillColor)
-    property color pressedColor: Theme.buttonPressedColor(hoverColor)
+    property color pressedColor: Theme.buttonPressedColor(fillColor)
     property color foreground: Theme.foregroundOn((background as Rectangle)?.color ?? fillColor)
     readonly property bool keyboardFocusVisible: (background as ButtonSurface)?.keyboardFocusVisible ?? false
     property real cornerRadius: Theme.iconButtonRadius
