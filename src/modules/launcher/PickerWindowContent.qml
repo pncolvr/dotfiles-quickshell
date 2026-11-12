@@ -25,14 +25,15 @@ Item {
     // host.width can be zero; correcting that anchor mid-reveal slides sideways.
     readonly property real centeredContentX: ((host.geometryScreen?.width || host.width)
         - Math.min(panel?.placementWidth ?? boundedContentWidth, availableContentWidth)) / 2
-    readonly property int keyboardFocusMode: focusHandler.keyboardFocusMode
-    readonly property bool requestingKeyboardFocus: focusHandler.requestingKeyboardFocus
-    readonly property bool secretPrompt: focusHandler.secretPrompt
-    readonly property bool restoringDialogFocus: focusHandler.restoringDialogFocus
+    readonly property int keyboardFocusMode: launcherFocus.keyboardFocusMode
+    readonly property bool requestingKeyboardFocus: launcherFocus.requestingKeyboardFocus
+    readonly property bool secretPrompt: launcherFocus.secretPrompt
+    readonly property bool restoringDialogFocus: launcherFocus.restoringDialogFocus
     readonly property var previewWindow: preview
+    readonly property alias focusHandler: launcherFocus
     function saveClipboardEntry(entry: var): void { host.saveClipboardEntry(entry) }
     LauncherFocusHandler {
-        id: focusHandler
+        id: launcherFocus
         host: root.host; panel: root.panel; picker: root.picker
     }
     PickerPreviewWindow { id: preview; host: root.host; picker: root.picker; previewPanel: root.panel; privateWindow: root.privateHost }

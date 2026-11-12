@@ -17,6 +17,7 @@ import Quickshell
 Singleton {
     property var liveEntries: ({})
     function liveFor(entry) { return entry }
+    function copyText(_entry) { return "" }
     function actions(_entry, _history) { return [] }
     function setPopupHovered(_entry, _hovered) {}
     function dismiss(_entry, _history) {}

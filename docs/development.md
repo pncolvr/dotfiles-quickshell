@@ -5,10 +5,12 @@ Run the following commands from the repository root.
 ## Run the suite
 
 ```sh
-bash tests/run.sh
+bash tests/run.sh --isolated
 ```
 
-This runs the isolated suites sequentially on a private session bus and continues
+Nothing runs without a mode flag or suite names; a bare `bash tests/run.sh`
+prints that no tests were selected and exits 2. `--isolated` runs the isolated
+suites sequentially on a private session bus and continues
 after failures. In a terminal, each suite starts with RUN and replaces that same
 line with green PASS or red FAIL; redirected output contains only the completed
 line. `NO_COLOR` disables colors. The summary gives separate suite and test totals
@@ -32,14 +34,16 @@ private bus's portal/GVfs/dconf services before the daemon exits. It checks bus
 ownership and process identity; desktop-session services are left alone.
 
 ```sh
-bash tests/run.sh --benchmarks             # include performance benchmarks
-bash tests/run.sh --native --benchmarks    # also include native desktop checks
-bash tests/run.sh --list                   # print suite names and commands
+bash tests/run.sh --native                 # only native desktop checks (after isolated pass)
+bash tests/run.sh --isolated --native      # both modes
+bash tests/run.sh --benchmarks             # only performance benchmarks
+bash tests/run.sh --list                   # print isolated suite names and commands
+bash tests/run.sh --native --list          # print native suite names and commands
 bash tests/run.sh ui/module-pins audio/controls # run only these two isolated suites
 ```
 
 Optional suite names select an exact subset, run in the normal suite order.
-With no names, the runner retains its full default selection. Use `--list` to
+Names select isolated suites without `--isolated`. Use `--list` to
 find names; qualify a name as `isolated/NAME` or `native/NAME` to select its mode.
 Native suites still require `--native`, and benchmarks require `--benchmarks`.
 Unknown or disabled suite names are rejected before any tests start.

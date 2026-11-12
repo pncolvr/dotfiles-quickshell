@@ -128,7 +128,7 @@ WorkerScope {
             waitFor(()=>!!panel.panel && PickerService.items.length===2,'bookmarks load with tabbed panel')
             check(panel.dismissOnOutside && !PickerService.privateWindow,'Bookmarks retains ordinary public picker dismissal')
             check(objects.findChild(panel,'browserRoutingDefault')===null,'Manage has no separate default-browser override')
-            const bookmarkSearch=objects.findChild(panel,'pickerSearch')
+            const bookmarkSearch=objects.findChild(panel,'pickerSearch') as UI.SearchField
             bookmarkSearch.text='plain words'
             waitFor(()=>PickerService.filteredItems.length===0 && !!objects.findChild(panel,'bookmarkSessionEngine'),'unmatched text offers a search engine')
             const sessionEngine=objects.findChild(panel,'bookmarkSessionEngine') as UI.ComboSelector

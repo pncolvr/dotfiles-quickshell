@@ -2,6 +2,7 @@
 # Run explicit suite entry points, not fixture helpers or mock executables.
 set -euo pipefail
 repo=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
+isolated=false
 native=false
 benchmarks=false
 list=false
@@ -9,12 +10,14 @@ selected_suites=()
 declare -A matched_suites=()
 for option in "$@"; do
     case "$option" in
+        --isolated) isolated=true ;;
         --native) native=true ;;
         --benchmarks) benchmarks=true ;;
         --list) list=true ;;
         --help|-h)
-            printf 'Usage: bash tests/run.sh [--native] [--benchmarks] [--list] [SUITE ...]\n'
-            printf 'Default: isolated suites. --native adds desktop checks; leave keyboard/mouse idle.\n'
+            printf 'Usage: bash tests/run.sh [--isolated] [--native] [--benchmarks] [--list] [SUITE ...]\n'
+            printf 'Nothing runs by default. --isolated runs offscreen suites; --native runs desktop checks\n'
+            printf '(leave keyboard/mouse idle); pass both for everything. --benchmarks adds benchmarks.\n'
             printf 'Optional exact suite names (e.g. ui/module-pins audio/controls) select a subset.\n'
             printf 'Use isolated/NAME or native/NAME to select a specific mode; native still requires --native.\n'
             printf 'Logs are retained under /tmp. TEST_TIMEOUT sets the per-suite limit (default 180 seconds).\n'
@@ -23,6 +26,13 @@ for option in "$@"; do
         *) selected_suites+=("$option") ;;
     esac
 done
+# Explicit suite names select isolated suites without --isolated; --list alone lists them.
+run_isolated=$isolated
+if ((${#selected_suites[@]})) || { $list && ! $native; }; then run_isolated=true; fi
+if ! $list && ! $isolated && ! $native && ! $benchmarks && ! ((${#selected_suites[@]})); then
+    printf 'No tests selected. Use --isolated, --native, --benchmarks or suite names; see --help.\n' >&2
+    exit 2
+fi
 native_checks=$native
 if ! $list && ((${#selected_suites[@]})); then
     # Validate every name before starting any suite or creating a private bus.
@@ -115,6 +125,7 @@ fi
 run() {
     local mode=$1 name=$2
     shift 2
+    if [[ $mode == isolated && $name != benchmark/* ]] && ! $run_isolated; then return 0; fi
     if ((${#selected_suites[@]})); then
         local selector selected=false
         for selector in "${selected_suites[@]}"; do
@@ -365,6 +376,7 @@ if ! $list; then
         awk -F '\t' '$1 == "FAIL" { printf "  %s/%s: %s (%s)\n", $2, $3, $4, $5 }' "$logs/tests.tsv"
     fi
     printf '\nSuite results: %s/results.tsv\nAll test results: %s/tests.tsv\nLogs: %s\n' "$logs" "$logs" "$logs"
+    $run_isolated || printf 'Isolated suites excluded; opt in with --isolated.\n'
     $native || printf 'Native desktop checks excluded; opt in with --native while idle.\n'
     $benchmarks || printf 'Benchmarks excluded; opt in with --benchmarks.\n'
     ((failed == 0))

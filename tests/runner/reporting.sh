@@ -35,7 +35,7 @@ awk '
 ' "$repo/tests/run.sh" >> "$fixture/tests/run.sh"
 
 result=0
-QS_TEST_RUNNER_BUS=1 bash "$fixture/tests/run.sh" > "$fixture/plain.log" 2>&1 || result=$?
+QS_TEST_RUNNER_BUS=1 bash "$fixture/tests/run.sh" --isolated > "$fixture/plain.log" 2>&1 || result=$?
 [[ $result == 1 ]]
 [[ $(rg -c '^(PASS|FAIL|SKIP) isolated/' "$fixture/plain.log") == 7 ]]
 ! rg -q '^RUN|\x1b\[' "$fixture/plain.log"
@@ -62,6 +62,14 @@ catalog=$(bash "$repo/tests/run.sh" --list ui/module-pins isolated/audio/control
 [[ $catalog == *$'isolated\taudio/controls\t'* && $catalog == *$'isolated\tui/module-pins\t'* ]]
 native_catalog=$(bash "$repo/tests/run.sh" --native --list native/qml/pulse)
 [[ $native_catalog == $'native\tqml/pulse\t'* && $native_catalog != *$'\n'* ]]
+native_only=$(bash "$repo/tests/run.sh" --native --list)
+[[ $native_only == native$'\t'* && $native_only != *isolated$'\t'* ]]
+both=$(bash "$repo/tests/run.sh" --isolated --native --list)
+[[ $both == *$'\nnative\t'* && $both == isolated$'\t'* ]]
+result=0
+QS_TEST_RUNNER_BUS=1 bash "$repo/tests/run.sh" > "$fixture/empty.log" 2>&1 || result=$?
+[[ $result == 2 ]] && rg -q 'No tests selected' "$fixture/empty.log"
+printf 'PASS: the runner selects nothing by default and --native alone runs only native suites\n'
 result=0
 bash "$repo/tests/run.sh" --list ui/module-pins no-such-suite > "$fixture/invalid.log" 2>&1 || result=$?
 [[ $result == 2 ]]
@@ -75,7 +83,7 @@ bash "$repo/tests/run.sh" --list native/qml/pulse > "$fixture/disabled.log" 2>&1
 [[ $result == 2 ]]
 printf 'PASS: exact suite lists, mode selection, duplicate suppression and invalid-name preflight\n'
 
-printf -v command 'env -u NO_COLOR QS_TEST_RUNNER_BUS=1 TERM=xterm bash %q' "$fixture/tests/run.sh"
+printf -v command 'env -u NO_COLOR QS_TEST_RUNNER_BUS=1 TERM=xterm bash %q --isolated' "$fixture/tests/run.sh"
 result=0
 # The parent runner uses timeout's separate process group. Reading its terminal
 # here would stop this fixture with SIGTTIN/SIGTTOU instead of exercising output.
