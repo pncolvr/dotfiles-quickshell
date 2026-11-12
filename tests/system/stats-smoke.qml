@@ -76,6 +76,8 @@ WorkerScope {
         property bool loading: false
         function formatBytes(bytes) { return DiskService.formatBytes(bytes) }
         function formatRate(bytes) { return DiskService.formatRate(bytes) }
+        property string openedMount: ""
+        function openMount(path) { openedMount = path }
     }
     QtObject {
         id: power
@@ -345,6 +347,8 @@ WorkerScope {
                     "per-disk and total read/write rates are human readable")
                 root.check(!(mouse.findChild(system, "statsDiskMount") as UI.Text).visible
                     && (mouse.findChild(archive, "statsDiskMount") as UI.Text).text === "/mnt/archive", "label rows also show the mount point")
+                mouse.mouseClick(archive, archive.width / 2, archive.height / 2)
+                root.check(disks.openedMount === "/mnt/archive", "clicking a disk opens its mount point in the file manager")
                 const efiToggle = root.find("statsDisksEfiToggle") as UI.CollapsibleSection
                 root.check(efiToggle && efiToggle.visible && !efiToggle.showingContent && !root.find("statsDisk-nvme0n1p1"),
                     "EFI partitions start in a collapsed section")

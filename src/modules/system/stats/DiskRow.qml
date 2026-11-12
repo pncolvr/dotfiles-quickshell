@@ -119,6 +119,9 @@ Item {
     }
 
     UI.HoverTooltip {
+        objectName: "statsDiskOpen"
+        cursorShape: Qt.PointingHandCursor
+        onClicked: root.diskService.openMount(root.disk.mount)
         textFormat: Text.PlainText
         text: [root.disk.device, root.disk.fstype, root.disk.model].filter(part => part).join(" · ")
             + (root.disk.mounts.length > 1 ? "\n" + root.disk.mounts.join("\n") : "")

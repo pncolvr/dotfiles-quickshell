@@ -36,6 +36,9 @@ Singleton {
         return (unit === 0 || value >= 10 ? Math.round(value) : value.toFixed(1)) + " " + units[unit]
     }
     function formatRate(bytesPerSecond) { return formatBytes(bytesPerSecond) + "/s" }
+    function openMount(path) {
+        if (path) Quickshell.execDetached(Config.directoryOpenCommand.concat([path]))
+    }
     // EFI system partitions: the ESP type GUID, or FAT mounted at a conventional ESP path.
     function isEfi(node, mounts) {
         if (String(node.parttype || "").toLowerCase() === "c12a7328-f81f-11d2-ba4b-00a0c93ec93b") return true

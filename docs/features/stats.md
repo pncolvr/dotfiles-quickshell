@@ -23,7 +23,8 @@ is limited to 60% of the screen, with longer content scrolling inside it.
   from 90%). EFI system partitions sit in a collapsed **System partitions** section below.
   Each bar shows the label (or mount point), used / total and free space, and
   its own read (R) and write (W) rates. Hover a bar for its device, filesystem,
-  model and any additional mount points.
+  model and any additional mount points; click it to open its mount point in the
+  file manager (`Config.directoryOpenCommand`).
 - **Network:** traffic history, download/upload rates, connections and VPNs, and
   processes ordered by combined download and upload rate. Network stays the last
   tab because it can be disabled.
