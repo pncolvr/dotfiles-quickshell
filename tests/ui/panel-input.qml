@@ -141,7 +141,11 @@ WorkerScope {
                 check(!field.activeFocus && host.nativeWindow.active, "Tab must reach the next timer input")
             })
             driver.add("create countdown", () => {
-                click(driver.find(panel, "countdownStart"))
+                // Countdowns start at zero and need a positive duration before Add enables.
+                driver.find(panel, "countdownMinutes").text = "5"
+                const start = driver.find(panel, "countdownStart")
+                check(start.enabled, "a named countdown with a duration must enable Add")
+                click(start)
                 check(TimersService.countdowns.length === 1 && TimersService.countdowns[0].label === "n",
                     "creating a countdown must use the typed name")
                 TimersService.remove(TimersService.countdowns[0])
