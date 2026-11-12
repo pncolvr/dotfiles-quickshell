@@ -327,6 +327,9 @@ Item {
     readonly property var browserRouterCommand: ["bash", Quickshell.shellPath("src/services/browser/browser.sh")]
     readonly property var browserOpenCommand: browserRoutingEnabled ? browserRouterCommand.concat(["open", "--fallback", JSON.stringify(defaultBrowserCommand), "--"]) : defaultBrowserCommand
 
+    // Bookmarks web searches open here, bypassing routing rules.
+    readonly property var searchOpenCommand: defaultBrowserCommand
+
     // Launcher: bookmarks
     readonly property string bookmarkFile: _internal.home + "/.config/qutebrowser/bookmarks/urls"
 

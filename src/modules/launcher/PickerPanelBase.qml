@@ -33,6 +33,10 @@ Rectangle {
     property int minimumListRows: 1
     property Component actionButtons: null
     property Component searchControls: null
+    // Replaces the "use typed input" hint and adds controls below it.
+    property string typedHint: ""
+    property Component typedControls: null
+    readonly property bool typedHintVisible: list.count === 0 && !root.inputOnly && root.picker.allowTyped && search.text.length > 0
     property real availableContentWidth: Theme.pickerWidth
     property real availableContentHeight: 800
     readonly property real columnWidth: Math.max(0, width - Theme.scrollbarGutter * 2)
@@ -183,12 +187,25 @@ Rectangle {
             implicitHeight: root.inputOnly ? 0 : root.gridMode
                 ? Theme.pickerGridHeight + list.horizontalGutter * 2 : root.openedListHeight
         }
-        UI.EmptyState {
-            objectName: "pickerEmptyHint"
+        Column {
             anchors.centerIn: list
             width: list.width
-            visible: list.count === 0 && !root.inputOnly
-            text: root.inputOnly ? "" : Translations.text(root.picker.allowTyped && search.text.length ? "picker.empty.useTyped" : "picker.empty.results")
+            spacing: Theme.controlSpacing
+            UI.EmptyState {
+                id: emptyHint
+                objectName: "pickerEmptyHint"
+                width: parent.width
+                visible: list.count === 0 && !root.inputOnly
+                text: root.inputOnly ? "" : root.typedHintVisible ? (root.typedHint || Translations.text("picker.empty.useTyped"))
+                    : Translations.text("picker.empty.results")
+            }
+            Loader {
+                objectName: "pickerTypedControls"
+                anchors.horizontalCenter: parent.horizontalCenter
+                active: root.typedHintVisible && !!root.typedControls
+                visible: active
+                sourceComponent: root.typedControls
+            }
         }
         Item {
             id: panelFooter

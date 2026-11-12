@@ -128,6 +128,20 @@ WorkerScope {
             waitFor(()=>!!panel.panel && PickerService.items.length===2,'bookmarks load with tabbed panel')
             check(panel.dismissOnOutside && !PickerService.privateWindow,'Bookmarks retains ordinary public picker dismissal')
             check(objects.findChild(panel,'browserRoutingDefault')===null,'Manage has no separate default-browser override')
+            const bookmarkSearch=objects.findChild(panel,'pickerSearch')
+            bookmarkSearch.text='plain words'
+            waitFor(()=>PickerService.filteredItems.length===0 && !!objects.findChild(panel,'bookmarkSessionEngine'),'unmatched text offers a search engine')
+            const sessionEngine=objects.findChild(panel,'bookmarkSessionEngine') as UI.ComboSelector
+            check(sessionEngine.selectedName==='duckduckgo' && sessionEngine.selectedDescription==='DuckDuckGo','search engine starts at the Manage setting')
+            sessionEngine.selected('google')
+            check(BookmarkService.activeEngine==='google' && BookmarkService.searchEngine==='duckduckgo'
+                && BookmarkService.searchTarget('plain words')==='https://www.google.com/search?q=plain%20words','search engine changes only this session')
+            bookmarkSearch.text='https://typed.test/'
+            waitFor(()=>!objects.findChild(panel,'bookmarkSessionEngine'),'typed URLs keep routing and hide the search engine')
+            bookmarkSearch.text=''
+            BookmarkService.open()
+            waitFor(()=>!!panel.panel && PickerService.items.length===2,'bookmarks reload')
+            check(BookmarkService.activeEngine==='duckduckgo','reopening restores the Manage search engine')
             events.keyClick(Qt.Key_H,Qt.ControlModifier)
             waitFor(()=>BookmarkService.tab===1,'Ctrl+H opens Bookmarks History')
             check(panel.dismissOnOutside,'History retains outside dismissal')
@@ -144,6 +158,7 @@ WorkerScope {
             const url=PickerService.currentItem.result
             BookmarkService.setTab(2); browser.ruleForUrl(url)
             check(!panel.dismissOnOutside && !PickerService.privateWindow,'routing Manage persists outside the public picker without using the private namespace')
+            check((objects.findChild(panel,'bookmarkSearchEngine') as UI.ComboSelector)?.visible===true,'Manage shows the search engine setting')
             waitFor(()=>!!browser.draft,'new rule draft from history')
             check(browser.draft.pattern===url && browser.managing,'history becomes editable routing rule')
             const containsInput=objects.findChild(panel,'browserRouteContains') as UI.TextArea

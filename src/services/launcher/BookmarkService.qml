@@ -6,12 +6,23 @@ import Quickshell
 import Quickshell.Io
 import "../"
 import "../../config"
+import "SearchEngines.mjs" as Search
 
 Singleton {
     id: root
     property var callback: null
     property int tab: 0
     property var bookmarks: []
+    // 'none' turns the fallback off; 'custom' uses searchTemplate.
+    readonly property string searchEngine: PreferencesRepository.value("bookmarks.searchEngine", Search.defaultEngine)
+    readonly property string searchTemplate: PreferencesRepository.value("bookmarks.searchTemplate", "")
+    readonly property var searchEngines: Search.engines
+    // Engine for this launcher session's searches; reset on every open, never saved.
+    property string sessionEngine: ""
+    readonly property string activeEngine: sessionEngine || searchEngine
+    // Engines offered per search: built-ins, plus Custom when its template is valid.
+    readonly property var sessionEngines: Search.engines.map(entry => ({name: entry.id, description: entry.name}))
+        .concat(Search.searchUrl("custom", searchTemplate, "x") ? [{name: "custom", description: Translations.text("bookmarks.settings.custom")}] : [])
     readonly property bool enabled: Config.bookmarksEnabled && (Config.browserRoutingEnabled || Config.bookmarkFile.trim().length > 0)
     onEnabledChanged: if (!enabled && ownsMenu()) PickerService.close()
 
@@ -24,6 +35,7 @@ Singleton {
     function open() {
         if (!enabled) return
         tab=0
+        sessionEngine=""
         BrowserRoutingService.managing=false
         BrowserRoutingService.cancel()
         callback = rows => root.launch(rows)
@@ -63,9 +75,18 @@ Singleton {
         if (!enabled) return
         for (const row of rows) {
             if (!row.result) continue
-            Quickshell.execDetached(Config.browserOpenCommand.concat([row.result]))
+            // Unmatched text that is not a URL becomes a web search. Searches skip
+            // routing so a rule like "contains microsoft" cannot claim them.
+            const search = row.id === "typed" ? searchTarget(row.result) : ""
+            Quickshell.execDetached(search ? Config.searchOpenCommand.concat([search])
+                : Config.browserOpenCommand.concat([row.result]))
         }
     }
+    function searchUrl(text, engine) { return Search.searchUrl(engine ?? searchEngine, searchTemplate, text) }
+    // The search URL typed text would open this session, or '' when it opens as a URL.
+    function searchTarget(text) { return Search.looksLikeUrl(text) ? "" : searchUrl(text, activeEngine) }
+    function setSearchEngine(engine) { return PreferencesRepository.setValue("bookmarks.searchEngine", engine) }
+    function setSearchTemplate(template) { return PreferencesRepository.setValue("bookmarks.searchTemplate", template.trim()) }
     function setTab(index) {
         BrowserRoutingService.cancel()
         tab=index

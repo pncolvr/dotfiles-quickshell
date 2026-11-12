@@ -14,6 +14,7 @@ ManagedPickerFrame {
     required property string searchPromptKey
     property Component listActionButtons: null
     property alias managementToolbarContent: manage.toolbarContent
+    property alias managementHeaderContent: manage.headerContent
     property alias detailActionContent: detailActions.data
     property string managementMessage: service.error || (showForm ? (entryForm?.parseError ?? "") : "")
     property bool refreshHintEnabled: false

@@ -141,6 +141,26 @@ Bookmarks / History / Manage tabs, ordered browser routing rules and optional
 FTS5 URL history. Its picker remains open for empty or single-entry sources so
 those tabs stay available. See [browser routing configuration](../configuration.md#browser-routing)
 and the [desktop integration](../../integrations/browser/README.md).
+
+### Web search fallback
+
+Typed text that matches no bookmark and does not look like a URL (no scheme,
+host name with a dot, `localhost` or IPv4 address) becomes a web search. The
+empty-list hint names the engine ("Enter to search DuckDuckGo with:") and shows a
+browser combo. The combo picks the browser for this launcher session only. It is
+never saved and resets to `defaultBrowserId` the next time Bookmarks opens.
+Searches skip routing rules, so a `contains microsoft` rule cannot claim
+`duckduckgo.com/?q=microsoft`. Typed URLs, bookmarks and every other opener still
+route as before.
+
+The engine is a stored preference (`bookmarks.searchEngine`, default
+`duckduckgo`), chosen in Bookmarks → Manage between the rule search and the
+filters. Built-in options: DuckDuckGo, Google, Bing, Brave Search, Startpage,
+Ecosia, Kagi and Qwant. *Custom URL* stores an http(s) template in
+`bookmarks.searchTemplate` with `{query}` replaced by the encoded text. *Off*
+restores the old behaviour of opening typed text as a URL. The engine list lives
+in `src/services/launcher/SearchEngines.mjs`.
+
 The service assumes no shell configuration directory; any additional environment
 setup belongs in the configured command. Selection closes the menu before opening
 URLs; Escape opens nothing.

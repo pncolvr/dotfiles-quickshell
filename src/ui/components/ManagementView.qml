@@ -38,6 +38,8 @@ Item {
     property alias detailContent: detailBody.data
     property alias actionContent: actions.data
     property alias toolbarContent: toolbarExtras.data
+    // Panel-wide controls between the search row and the filters.
+    property alias headerContent: headerExtras.data
     readonly property var selectedEntry: filteredEntries.find(entry => entry.id === selectedId) ?? null
     readonly property var filteredEntries: {
         const candidates = entries.filter(entry => (!showCategory || !category || entry.category === category)
@@ -132,6 +134,12 @@ Item {
                     onClicked: root.addRequested()
                 }
             }
+        }
+        Column {
+            id: headerExtras
+            width: parent.width
+            visible: children.length > 0
+            spacing: Theme.controlSpacing
         }
         Row {
             id: filters

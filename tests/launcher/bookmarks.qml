@@ -58,7 +58,7 @@ WorkerScope {
             check(PickerService.items.length === 0 && PickerService.visible, "missing source cannot reuse stale rows")
             field.text = "https://example.test/typed-after-error"
             events.keyClick(Qt.Key_Return, Qt.NoModifier, 0)
-            waitCalls(5)
+            waitCalls(8)
             console.log("PASS: native Bookmarks reports missing sources and still accepts a typed URL")
             return
         }
@@ -145,8 +145,31 @@ WorkerScope {
         openList()
         check(PickerService.items.some(item => item.title === "Updated") && PickerService.items.every(item => item.title !== "Alpha"),
             "reopening reads file changes instead of stale cached results")
+        check(BookmarkService.setSearchEngine("duckduckgo"), "search engine preference saves")
+        field.text = "microsoft word"
+        check(PickerService.filteredItems.length === 0, "search text has no bookmark match")
+        events.keyClick(Qt.Key_Return, Qt.NoModifier, 0)
+        waitCalls(5)
+        calls = browserCalls()
+        check(JSON.stringify(calls.slice(-1)[0].args) === JSON.stringify(["--search","https://duckduckgo.com/?q=microsoft%20word"]),
+            "unmatched non-URL text searches with the default browser, bypassing routing")
+        openList()
+        BookmarkService.sessionEngine = "bing"
+        field.text = "microsoft word"
+        events.keyClick(Qt.Key_Return, Qt.NoModifier, 0)
+        waitCalls(6)
+        check(browserCalls().slice(-1)[0].args[1] === "https://www.bing.com/search?q=microsoft%20word", "session engine override applies to the launch")
+        check(BookmarkService.setSearchEngine("custom") && BookmarkService.setSearchTemplate("https://s.test/?x={query}&y=1")
+            && BookmarkService.searchUrl("a&b") === "https://s.test/?x=a%26b&y=1", "custom templates encode the query")
+        check(BookmarkService.setSearchEngine("none") && BookmarkService.searchUrl("a") === "", "searching can be turned off")
+        openList()
+        field.text = "microsoft"
+        events.keyClick(Qt.Key_Return, Qt.NoModifier, 0)
+        waitCalls(7)
+        check(browserCalls().slice(-1)[0].args.slice(-1)[0] === "microsoft", "disabled search opens typed text unchanged")
+        BookmarkService.setSearchEngine("duckduckgo")
         PickerService.close()
-        console.log("PASS: native Bookmarks parsing, sorted search, multi/typed acceptance, literal argv, Escape, refresh, empty/single and stale-read cancellation")
+        console.log("PASS: native Bookmarks parsing, sorted search, multi/typed acceptance, search fallback, literal argv, Escape, refresh, empty/single and stale-read cancellation")
     }
     Timer {
         interval: 25; running: true; repeat: true

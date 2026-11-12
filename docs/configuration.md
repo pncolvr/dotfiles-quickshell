@@ -235,6 +235,11 @@ including for local HTML targets. With routing enabled, they use the shared
 router instead. The opener remains an overridable literal argv array. Bookmark contents
 stay in the local file; use encoded file URLs for paths containing spaces in
 that source, or type an absolute path into the picker. HTML is opened, not parsed.
+`searchOpenCommand` (default: `defaultBrowserCommand`) opens Bookmarks web
+searches in the default browser without routing. Other browsers chosen in the
+search hint use their `browsers[].command`. The search engine is a stored
+preference set in Bookmarks → Manage, not a Config property; see
+[web search fallback](features/launcher.md#web-search-fallback).
 
 ## Copy feedback
 
