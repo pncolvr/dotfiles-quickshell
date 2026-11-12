@@ -552,6 +552,9 @@ Item {
         resource, "--proc", statsProcRoot
     ]
     readonly property int statsInterval: Timespan.fromSeconds(1)
+    readonly property var statsDisksCommand: ["lsblk", "--json", "--bytes", "--output",
+        "NAME,KNAME,TYPE,FSTYPE,PARTTYPE,LABEL,MODEL,FSSIZE,FSUSED,FSAVAIL,MOUNTPOINTS"]
+    readonly property int statsDisksInterval: Timespan.fromSeconds(5)
     readonly property var powerProfiles: ["power-saver", "balanced", "performance"]
 
     // Batteries

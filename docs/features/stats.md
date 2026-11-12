@@ -9,16 +9,24 @@ not support it.
 The panel uses the shared tabs, search field, buttons and scrollbar. Its height
 is limited to 60% of the screen, with longer content scrolling inside it.
 
-- **Overview:** CPU, RAM used/total and temperature, download/upload rates,
-  connected networks and VPNs.
+- **Overview:** CPU, RAM used/total and temperature, a **Storage** bar with used
+  / total space across all disks (EFI partitions excluded; hover for free space),
+  total disk read/write rates, download/upload rates, connected networks and VPNs.
 - **CPU:** total and per-core usage, temperature, and processes ordered by current
   CPU usage. Process usage treats one fully occupied logical core as 100%, so a
   process can exceed 100%; the machine total is normalized across all cores.
 - **Memory:** RAM and swap used/total bars at the top, compact free, available
   and cached rows below, and
   processes ordered by memory usage.
+- **Disks:** total read/write rates, the same **Storage** bar as Overview, then one compact disk-shaped bar per mounted
+  filesystem, filled by used space (accent up to 80%, warning above 80%, urgent
+  from 90%). EFI system partitions sit in a collapsed **System partitions** section below.
+  Each bar shows the label (or mount point), used / total and free space, and
+  its own read (R) and write (W) rates. Hover a bar for its device, filesystem,
+  model and any additional mount points.
 - **Network:** traffic history, download/upload rates, connections and VPNs, and
-  processes ordered by combined download and upload rate.
+  processes ordered by combined download and upload rate. Network stays the last
+  tab because it can be disabled.
 
 Each resource tab groups processes by application parent and name, adding their
 usage before sorting. For example, qutebrowser includes its WebEngine children,
@@ -80,6 +88,15 @@ only while that tab is open. The helper resolves PIDs from connection sockets
 and file descriptors. Missing `bandwhich` or capture failures appear in the
 panel; CPU and Memory remain usable. Cancelled samples cannot restore stale
 data after disabling or switching tabs.
+
+Disks run `lsblk --json` every `Config.statsDisksInterval` (5 seconds) for
+mounted filesystems and their size/used/free space, and read `/proc/diskstats`
+every `Config.statsInterval` for read/write rates. Sizes and rates use binary
+units (KiB, MiB, GiB, TiB). A filesystem mounted in several places (such as btrfs
+subvolumes) appears once, under its shortest mount point; swap and unmounted
+partitions are skipped. EFI system partitions are detected by their GPT
+partition type, or a FAT filesystem mounted at `/boot`, `/efi` or `/boot/efi`.
+Both collectors run only while the Overview or Disks tab is open.
 
 `Config.statsInterval` controls the main polling interval;
 `Config.networkProcessesInterval` controls network process polling.

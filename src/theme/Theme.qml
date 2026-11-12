@@ -367,6 +367,16 @@ QtObject {
     readonly property int statsChildRowHeight: 28
     readonly property int statsProcessRowSpacing: 2
     readonly property int statsPowerProfileButtonSize: 24
+    readonly property int statsTabPadding: controlFieldPadding // Five tabs plus the profile buttons fit the panel width.
+    readonly property int statsDiskPadding: 5
+    readonly property int statsDiskLineSpacing: 3
+    readonly property int statsDiskRowHeight: 38 + statsDiskLineSpacing
+    readonly property int statsDiskSpacing: 6
+    readonly property real statsDiskWarningRatio: 0.8 // exclusive: exactly 80% keeps the accent
+    readonly property real statsDiskUrgentRatio: 0.9
+    readonly property int statsDiskRadius: 4
+    readonly property color statsDiskReadColor: networkDownColor
+    readonly property color statsDiskWriteColor: networkUpColor
     readonly property var powerProfileIcons: ["", "", ""]
     readonly property string networkDownIcon: "" // arrow-down: download
     readonly property string networkUpIcon: upIcon // arrow-up: upload

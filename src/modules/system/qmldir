@@ -13,6 +13,9 @@ NetworkTooltip 1.0 stats/NetworkTooltip.qml
 StatsTooltip 1.0 stats/StatsTooltip.qml
 StatsBar 1.0 stats/StatsBar.qml
 MemoryBar 1.0 stats/MemoryBar.qml
+StorageBar 1.0 stats/StorageBar.qml
 StatsOverview 1.0 stats/StatsOverview.qml
 PowerProfileButtons 1.0 stats/PowerProfileButtons.qml
+DisksTooltip 1.0 stats/DisksTooltip.qml
+DiskRow 1.0 stats/DiskRow.qml
 StatsProcessRow 1.0 stats/StatsProcessRow.qml

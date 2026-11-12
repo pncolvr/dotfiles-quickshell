@@ -59,9 +59,36 @@ WorkerScope {
                 {pid: 30, name: "QtWebEngineProc", appPid: 29, appName: "qutebrowser", down: 10, up: 10}]})
             root.check(StatsService.processes[0].value === 60 && StatsService.processes[0].down === 24
                 && StatsService.processes[0].up === 36 && StatsService.processes[0].pid === 10, "network adds app traffic before sorting")
+            // Disks: nested lsblk tree, duplicate mounts, unmounted/swap entries and diskstats deltas.
+            root.check(DiskService.applyBlockDevices({blockdevices: [
+                {name: "nvme0n1", kname: "nvme0n1", type: "disk", model: "Fast SSD  ", mountpoints: [null], children: [
+                    {name: "nvme0n1p1", kname: "nvme0n1p1", type: "part", fstype: "vfat", fssize: 314572800, fsused: 1048576, fsavail: 313524224, mountpoints: ["/boot/efi"]},
+                    {name: "nvme0n1p2", kname: "nvme0n1p2", type: "part", fstype: "btrfs", fssize: 1000, fsused: 900, fsavail: 80, mountpoints: ["/home", "/"]},
+                    {name: "nvme0n1p3", kname: "nvme0n1p3", type: "part", fstype: "swap", fssize: null, mountpoints: ["[SWAP]"]}]},
+                {name: "sda", kname: "sda", type: "disk", model: "Archive", mountpoints: [], children: [
+                    {name: "sda1", kname: "sda1", type: "part", fstype: "ext4", label: "Trantor", fssize: 2000, fsused: 500, fsavail: 1400, mountpoints: ["/mnt/Trantor"]}]}]}),
+                "lsblk report parses")
+            const mounted = DiskService.disks
+            root.check(mounted.length === 3 && mounted[0].mount === "/" && mounted[0].mounts.length === 2 && mounted[0].name === "/"
+                && mounted[0].model === "Fast SSD" && mounted[0].avail === 80, "root first, one entry per device, inherited model")
+            root.check(mounted[1].efi && !mounted[0].efi && !mounted[2].efi, "vfat at /boot/efi is flagged as EFI")
+            root.check(mounted[1].name === "efi" && mounted[2].name === "Trantor" && mounted[2].device === "/dev/sda1",
+                "label or mount basename names each filesystem")
+            root.check(DiskService.totalSize === 3000 && DiskService.totalUsed === 1400 && DiskService.totalAvail === 1480,
+                "global storage totals skip EFI partitions")
+            root.check(!DiskService.applyBlockDevices({}), "malformed lsblk report is rejected")
+            DiskService.applyDiskStats("259 2 nvme0n1p2 10 0 2048 0 20 0 4096 0 0 0 0\n8 1 sda1 1 0 0 0 1 0 0 0 0 0 0", 1000)
+            root.check(DiskService.readSpeed === 0 && DiskService.writeSpeed === 0, "first diskstats sample sets the baseline")
+            DiskService.applyDiskStats("259 2 nvme0n1p2 10 0 4096 0 20 0 8192 0 0 0 0\n8 1 sda1 1 0 0 0 1 0 2048 0 0 0 0", 3000)
+            const system = DiskService.disks.find(disk => disk.kname === "nvme0n1p2")
+            root.check(system.read === 524288 && system.write === 1048576 && DiskService.writeSpeed === 1048576 + 524288,
+                "diskstats sectors become bytes per second")
+            root.check(DiskService.formatBytes(0) === "0 B" && DiskService.formatBytes(1536) === "1.5 KiB"
+                && DiskService.formatBytes(800 * 1073741824) === "800 GiB" && DiskService.formatRate(1572864) === "1.5 MiB/s"
+                && DiskService.formatBytes(2 * 1099511627776) === "2.0 TiB", "human-readable binary units")
             StatsService.copyPid(2345, success => {
                 root.check(success, "PID clipboard write completes")
-                console.log(root.failed ? "STATS FAIL: collectors" : "PASS: Stats native file parsing, process deltas, PID reuse, resource sorting and clipboard command")
+                console.log(root.failed ? "STATS FAIL: collectors" : "PASS: Stats native file parsing, process deltas, PID reuse, resource sorting, disk parsing/rates and clipboard command")
                 Qt.quit()
             })
         }

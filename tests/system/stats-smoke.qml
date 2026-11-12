@@ -58,6 +58,26 @@ WorkerScope {
         function formatSpeed(value) { return (value / 1024).toFixed(1) + "KB" }
     }
     QtObject {
+        id: disks
+        property bool active: false
+        property var disks: [
+            {key: "nvme0n1p2", name: "/", mount: "/", mounts: ["/", "/home"], device: "/dev/nvme0n1p2", fstype: "btrfs", model: "Fast SSD",
+                size: 1000 * 1073741824, used: 800 * 1073741824, avail: 200 * 1073741824, read: 1572864, write: 512},
+            {key: "sda1", name: "Archive", mount: "/mnt/archive", mounts: ["/mnt/archive"], device: "/dev/sda1", fstype: "ext4", model: "",
+                size: 4 * 1099511627776, used: 1099511627776, avail: 3 * 1099511627776, read: 0, write: 3 * 1048576},
+            {key: "nvme0n1p1", name: "efi", mount: "/boot/efi", mounts: ["/boot/efi"], device: "/dev/nvme0n1p1", fstype: "vfat", model: "Fast SSD",
+                efi: true, size: 300 * 1048576, used: 290 * 1048576, avail: 10 * 1048576, read: 0, write: 0}]
+        property real readSpeed: 1572864
+        property real writeSpeed: 3 * 1048576 + 512
+        property real totalSize: 5000 * 1073741824
+        property real totalUsed: 1824 * 1073741824
+        property real totalAvail: 3176 * 1073741824
+        property string error: ""
+        property bool loading: false
+        function formatBytes(bytes) { return DiskService.formatBytes(bytes) }
+        function formatRate(bytes) { return DiskService.formatRate(bytes) }
+    }
+    QtObject {
         id: power
         property string profile: "balanced"
         property var availableProfiles: ["power-saver", "balanced", "performance"]
@@ -69,7 +89,7 @@ WorkerScope {
         implicitWidth: 600; implicitHeight: 800
         color: Theme.background
         Stats { id: trigger; x: 500; y: 20 }
-        Loader { id: loader; x: 20; y: 20; sourceComponent: StatsTooltip { statsService: backend; networkService: network; powerService: power } }
+        Loader { id: loader; x: 20; y: 20; sourceComponent: StatsTooltip { statsService: backend; networkService: network; powerService: power; diskService: disks } }
     }
     Timer {
         interval: 150; repeat: true; running: true
@@ -78,6 +98,11 @@ WorkerScope {
             const search = root.panel ? root.find("statsProcessSearch") as UI.SearchField : null
             if (root.step === 0) {
                 root.check(backend.active && network.active && backend.processResource === "" && !search.visible, "Overview opens without process sampling")
+                const storage = root.find("statsStorageBar") as StatsBar
+                root.check(disks.active && storage && storage.value === "1.8 TiB / 4.9 TiB" && storage.fillColor === Theme.accent
+                    && (root.find("statsOverviewDiskRead") as UI.ColumnText).text === "1.5 MiB/s"
+                    && (root.find("statsOverviewDiskWrite") as UI.ColumnText).text === "3.0 MiB/s",
+                    "Overview shows global storage and disk read/write rates")
                 const ram = root.find("statsMemoryBar") as MemoryBar
                 root.check(ram.label === "RAM" && ram.value === "8.0 GiB / 32.0 GiB"
                     && ram.ratio === 0.25, "Overview RAM bar shows app/kernel usage and total, excluding reclaimable cache")
@@ -269,7 +294,7 @@ WorkerScope {
             } else if (root.step === 20) {
                 root.check(view.count === 0, "filter can hide all rows")
                 search.text = ""
-                root.panel.currentIndex = 3
+                root.panel.currentIndex = 4
             } else if (root.step === 21) {
                 root.check(backend.processResource === "network" && view.count === 64, "Network lists all sampled processes")
                 backend.processes = [{pid: 1000, name: "Browser", count: 1, value: 22, down: 20, up: 2,
@@ -297,12 +322,45 @@ WorkerScope {
             } else if (root.step === 25) {
                 const button = mouse.findChild(view.itemAtIndex(0), "statsCopyPid") as UI.ActionButton
                 root.check(!button.enabled && button.label === "—", "ambiguous socket owner never copies a guessed PID")
-                root.panel.currentIndex = 0
+                root.panel.currentIndex = 3
             } else if (root.step === 26) {
+                const totalStorage = root.find("statsStorageBar") as StatsBar
+                root.check(totalStorage && totalStorage.visible && totalStorage.value === "1.8 TiB / 4.9 TiB", "Disks tab shows total storage")
+                root.check(root.panel.tab === "disks" && disks.active && backend.processResource === "" && view.count === 0 && !search.visible,
+                    "Disks tab activates disk collection without process sampling")
+                const system = root.find("statsDisk-nvme0n1p2") as DiskRow
+                const archive = root.find("statsDisk-sda1") as DiskRow
+                const fill = mouse.findChild(system, "statsDiskFill") as Rectangle
+                root.check(system && archive && system.height === Theme.statsDiskRowHeight && system.height < Theme.batteryRowHeight
+                    && Math.abs(fill.width - (system.width - 2) * 0.8) < 0.5 && fill.color === Theme.accent,
+                    "disk rows are compact battery-style bodies filled by used space, accent up to 80%")
+                root.check((mouse.findChild(archive, "statsDiskFill") as Rectangle).color === Theme.accent, "low usage keeps the accent fill")
+                root.check((mouse.findChild(system, "statsDiskUsage") as UI.Text).text === "800 GiB / 1000 GiB · 200 GiB free"
+                    && (mouse.findChild(archive, "statsDiskUsage") as UI.Text).text === "1.0 TiB / 4.0 TiB · 3.0 TiB free"
+                    && (mouse.findChild(system, "statsDiskPercentage") as UI.Text).text === "80%",
+                    "disk usage uses human-readable binary sizes")
+                root.check((mouse.findChild(system, "statsDiskRead") as UI.Text).text === "R 1.5 MiB/s"
+                    && (mouse.findChild(system, "statsDiskWrite") as UI.Text).text === "W 512 B/s"
+                    && (root.find("statsDisksWriteTotal") as UI.ColumnText).text === "3.0 MiB/s",
+                    "per-disk and total read/write rates are human readable")
+                root.check(!(mouse.findChild(system, "statsDiskMount") as UI.Text).visible
+                    && (mouse.findChild(archive, "statsDiskMount") as UI.Text).text === "/mnt/archive", "label rows also show the mount point")
+                const efiToggle = root.find("statsDisksEfiToggle") as UI.CollapsibleSection
+                root.check(efiToggle && efiToggle.visible && !efiToggle.showingContent && !root.find("statsDisk-nvme0n1p1"),
+                    "EFI partitions start in a collapsed section")
+                mouse.mouseClick(efiToggle, efiToggle.width / 2, efiToggle.height / 2)
+                const efi = root.find("statsDisk-nvme0n1p1") as DiskRow
+                root.check(efiToggle.showingContent && efi && (mouse.findChild(efi, "statsDiskFill") as Rectangle).color === Theme.urgent,
+                    "expanding EFI reveals its row with usage colours")
+                root.panel.currentIndex = 1
+            } else if (root.step === 27) {
+                root.check(!disks.active, "leaving Disks for CPU stops disk collection")
+                root.panel.currentIndex = 0
+            } else if (root.step === 28) {
                 root.check(backend.processResource === "" && view.count === 0, "Overview stops process sampling")
                 loader.active = false
-            } else if (root.step === 27) {
-                root.check(!backend.active && !network.active && backend.processResource === "", "closing Stats stops collectors")
+            } else if (root.step === 29) {
+                root.check(!backend.active && !network.active && !disks.active && backend.processResource === "", "closing Stats stops collectors")
                 console.log(root.failed ? "STATS FAIL: panel" : "PASS: Stats tabs, fixed bar icon, pinning, full process lists, expansion, stable hover/focus ordering, child usage, filtering, scrolling and PID copy")
                 Qt.quit(); return
             }

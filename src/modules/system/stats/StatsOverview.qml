@@ -10,6 +10,7 @@ Column {
     id: root
     property var statsService: StatsService
     property var networkService: NetworkService
+    property var diskService: DiskService
     spacing: Theme.controlSpacing
     Row {
         width: parent.width
@@ -39,6 +40,32 @@ Column {
         }
     }
     MemoryBar { width: parent.width; statsService: root.statsService }
+    StorageBar { width: parent.width; diskService: root.diskService }
+    Row {
+        width: parent.width
+        spacing: Theme.controlSpacing
+        Repeater {
+            model: ["read", "write"]
+            Column {
+                required property string modelData
+                width: (root.width - Theme.controlSpacing) / 2
+                spacing: 4
+                UI.ColumnText {
+                    width: parent.width
+                    horizontalAlignment: Text.AlignHCenter
+                    color: Theme.inactive
+                    text: Translations.text("stats.disks." + parent.modelData)
+                }
+                UI.ColumnText {
+                    objectName: parent.modelData === "read" ? "statsOverviewDiskRead" : "statsOverviewDiskWrite"
+                    width: parent.width
+                    horizontalAlignment: Text.AlignHCenter
+                    color: parent.modelData === "read" ? Theme.statsDiskReadColor : Theme.statsDiskWriteColor
+                    text: root.diskService.formatRate(parent.modelData === "read" ? root.diskService.readSpeed : root.diskService.writeSpeed)
+                }
+            }
+        }
+    }
     Row {
         width: parent.width
         spacing: Theme.controlSpacing

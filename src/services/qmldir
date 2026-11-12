@@ -13,6 +13,7 @@ singleton CalendarService 1.0 time/CalendarService.qml
 singleton TimersService 1.0 time/timers/TimersService.qml
 
 singleton StatsService 1.0 system/StatsService.qml
+singleton DiskService 1.0 system/DiskService.qml
 singleton PowerProfileService 1.0 system/PowerProfileService.qml
 singleton PowerService 1.0 system/PowerService.qml
 singleton BatteryService 1.0 system/BatteryService.qml

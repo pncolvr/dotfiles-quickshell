@@ -55,7 +55,7 @@ WorkerScope {
             const tabs = objects.findChild(panel,"statsTabs") as UI.TabBar
             switch (root.step) {
             case 0:
-                root.check(!root.settings.statsNetworkEnabled && tabs.count === 3, "disabled startup hides only Network")
+                root.check(!root.settings.statsNetworkEnabled && tabs.count === 4, "disabled startup hides only Network")
                 root.check(StatsService.active && network.active && root.requests.length === 0, "Overview retains native stats/network without any process collector")
                 // An external caller cannot bypass the backend guard.
                 StatsService.processResource = "network"
@@ -73,13 +73,13 @@ WorkerScope {
                 if (!root.requests.includes("memory") || !StatsService.processes.length) return
                 root.check(StatsService.processes[0].value === 4096, "Memory still samples with Network disabled")
                 root.settings.statsNetworkEnabled = true
-                root.check(tabs.count === 4, "enabling restores Network")
-                panel.currentIndex = 3
+                root.check(tabs.count === 5, "enabling restores Network")
+                panel.currentIndex = 4
                 root.step++; break
             case 3:
                 if (!StatsService.processesLoading || !root.requests.includes("network")) return
                 root.settings.statsNetworkEnabled = false
-                root.check(panel.currentIndex === 0 && panel.resource === "" && tabs.count === 3, "disabling selected Network returns to Overview")
+                root.check(panel.currentIndex === 0 && panel.resource === "" && tabs.count === 4, "disabling selected Network returns to Overview")
                 root.step++; break
             case 4:
                 if (StatsService.processesLoading) return
@@ -88,14 +88,14 @@ WorkerScope {
                 root.check(StatsService.processes.length === 0 && !StatsService.processError, "cancelled late report cannot populate data or errors")
                 root.check(network.active && StatsService.active && root.requests.filter(value => value === "network").length === 1, "Overview stays active and network collector does not restart")
                 root.settings.statsNetworkEnabled = true
-                panel.currentIndex = 3
+                panel.currentIndex = 4
                 root.step++; break
             case 5:
                 if (root.requests.filter(value => value === "network").length < 2 || !StatsService.processesLoading) return
                 // Toggle twice before the first generation can finish cancellation.
                 root.settings.statsNetworkEnabled = false
                 root.settings.statsNetworkEnabled = true
-                panel.currentIndex = 3
+                panel.currentIndex = 4
                 root.step++; break
             case 6:
                 if (root.requests.filter(value => value === "network").length < 3) return
@@ -104,7 +104,7 @@ WorkerScope {
                 root.step++; break
             default:
                 if (StatsService.processesLoading) return
-                root.check(tabs.count === 3 && panel.currentIndex === 0, "final disabled state is Overview")
+                root.check(tabs.count === 4 && panel.currentIndex === 0, "final disabled state is Overview")
                 if (!root.failed) console.log("PASS: optional Stats Network, independent CPU/Memory/Overview, cancellation, late replies and rapid re-enable")
                 stop(); Qt.quit()
             }

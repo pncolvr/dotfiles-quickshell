@@ -14,9 +14,13 @@ Column {
     property var statsService: StatsService
     property var networkService: NetworkService
     property var powerService: PowerProfileService
+    property var diskService: DiskService
     property alias currentIndex: tabs.currentIndex
     readonly property bool networkEnabled: Config.statsNetworkEnabled
-    onNetworkEnabledChanged: if (!networkEnabled && currentIndex >= 3) currentIndex = 0
+    onNetworkEnabledChanged: if (!networkEnabled && currentIndex >= 4) currentIndex = 0
+    // Network is optional, so it stays last and never shifts the other tabs.
+    readonly property string tab: (networkEnabled ? ["overview", "cpu", "memory", "disks", "network"] : ["overview", "cpu", "memory", "disks"])[tabs.currentIndex] || "overview"
+    onTabChanged: diskService.active = tab === "disks" || tab === "overview"
     property var expandedGroups: ({})
     property int applicationCount: 0
     property var processOrders: ({})
@@ -24,7 +28,7 @@ Column {
         || view.contentItem.children.some(item => (item as StatsProcessRow)?.pidFocused === true)
         || Object.keys(expandedGroups).some(key => key.startsWith(resource + ":") && expandedGroups[key] === true)
     onOrderingPausedChanged: if (!orderingPaused) Qt.callLater(root.updateProcesses)
-    readonly property string resource: (networkEnabled ? ["", "cpu", "memory", "network"] : ["", "cpu", "memory"])[tabs.currentIndex] || ""
+    readonly property string resource: ["cpu", "memory", "network"].includes(tab) ? tab : ""
     readonly property var monitor: TooltipService.screen ?? (root.QsWindow.window as QsWindow)?.screen
     readonly property real maxPanelHeight: Math.max(0, Math.min((monitor?.height ?? 1080) * Theme.statsTooltipMaxHeightRatio,
         (monitor?.height ?? 1080) - Theme.barHeight - Theme.tooltipPaddingHeight - Theme.tooltipPaddingWidth))
@@ -34,11 +38,13 @@ Column {
         statsService.active = true
         networkService.active = true
         statsService.processResource = resource
+        diskService.active = tab === "disks" || tab === "overview"
         updateProcesses()
     }
     Component.onDestruction: {
         statsService.processResource = ""
         statsService.active = false
+        diskService.active = false
         networkService.active = false
     }
     function toggleGroup(name) {
@@ -111,7 +117,8 @@ Column {
                 objectName: "statsTabs"
                 width: parent.width - profiles.width - Theme.controlSpacing
                 centerTabs: false
-                labels: [Translations.text("stats.tabs.overview"), "CPU", Translations.text("stats.tabs.memory")]
+                tabPadding: Theme.statsTabPadding
+                labels: [Translations.text("stats.tabs.overview"), "CPU", Translations.text("stats.tabs.memory"), Translations.text("stats.tabs.disks")]
                     .concat(root.networkEnabled ? [Translations.text("stats.tabs.network")] : [])
             }
             // Continue the tab underline beneath the profile switcher.
@@ -136,14 +143,15 @@ Column {
             id: summaryView
             property UI.ScrollBehavior scrollBehavior: UI.ScrollBehavior { viewport: summaryView }
             width: root.width + Theme.scrollbarGutter
-            height: Math.min(contentHeight, root.maxPanelHeight * 0.5)
+            // Tabs without a process list may use the whole panel height.
+            height: Math.min(contentHeight, root.resource ? root.maxPanelHeight * 0.5 : Math.max(0, root.maxPanelHeight - tabs.height - root.spacing))
             contentHeight: summary.height
             clip: true
             boundsBehavior: Flickable.StopAtBounds
             Loader {
                 id: summary
                 width: root.width
-                sourceComponent: root.resource === "cpu" ? cpu : root.resource === "memory" ? memory : root.resource === "network" ? network : overview
+                sourceComponent: root.resource === "cpu" ? cpu : root.resource === "memory" ? memory : root.resource === "network" ? network : root.tab === "disks" ? disks : overview
             }
             QC.ScrollBar.vertical: UI.ScrollBar {}
         }
@@ -261,8 +269,9 @@ Column {
         }
         QC.ScrollBar.vertical: UI.ScrollBar {}
     }
-    Component { id: overview; StatsOverview { width: root.width; statsService: root.statsService; networkService: root.networkService } }
+    Component { id: overview; StatsOverview { width: root.width; statsService: root.statsService; networkService: root.networkService; diskService: root.diskService } }
     Component { id: cpu; CpuTooltip { width: root.width; statsService: root.statsService } }
     Component { id: memory; MemoryTooltip { width: root.width; statsService: root.statsService } }
+    Component { id: disks; DisksTooltip { width: root.width; diskService: root.diskService } }
     Component { id: network; NetworkTooltip { width: root.width; networkService: root.networkService } }
 }
