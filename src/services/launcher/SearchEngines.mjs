@@ -1,6 +1,7 @@
 // Web search fallback for typed Bookmarks queries. Templates use {query} for the
 // URL-encoded text.
 export const engines = [
+    {id: 'omnisearch', name: 'Omnisearch', template: 'http://localhost:8087/search?q={query}'},
     {id: 'duckduckgo', name: 'DuckDuckGo', template: 'https://duckduckgo.com/?q={query}'},
     {id: 'google', name: 'Google', template: 'https://www.google.com/search?q={query}'},
     {id: 'bing', name: 'Bing', template: 'https://www.bing.com/search?q={query}'},
@@ -10,7 +11,7 @@ export const engines = [
     {id: 'kagi', name: 'Kagi', template: 'https://kagi.com/search?q={query}'},
     {id: 'qwant', name: 'Qwant', template: 'https://www.qwant.com/?q={query}'},
 ]
-export const defaultEngine = 'duckduckgo'
+export const defaultEngine = 'omnisearch'
 
 // Scheme URLs, host names with a dot, localhost and IPv4 addresses open as
 // typed; anything else (spaces, single words) is a search.

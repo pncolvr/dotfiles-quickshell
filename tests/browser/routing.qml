@@ -132,16 +132,16 @@ WorkerScope {
             bookmarkSearch.text='plain words'
             waitFor(()=>PickerService.filteredItems.length===0 && !!objects.findChild(panel,'bookmarkSessionEngine'),'unmatched text offers a search engine')
             const sessionEngine=objects.findChild(panel,'bookmarkSessionEngine') as UI.ComboSelector
-            check(sessionEngine.selectedName==='duckduckgo' && sessionEngine.selectedDescription==='DuckDuckGo','search engine starts at the Manage setting')
+            check(sessionEngine.selectedName==='omnisearch' && sessionEngine.selectedDescription==='Omnisearch','search engine starts at the Manage setting')
             sessionEngine.selected('google')
-            check(BookmarkService.activeEngine==='google' && BookmarkService.searchEngine==='duckduckgo'
+            check(BookmarkService.activeEngine==='google' && BookmarkService.searchEngine==='omnisearch'
                 && BookmarkService.searchTarget('plain words')==='https://www.google.com/search?q=plain%20words','search engine changes only this session')
             bookmarkSearch.text='https://typed.test/'
             waitFor(()=>!objects.findChild(panel,'bookmarkSessionEngine'),'typed URLs keep routing and hide the search engine')
             bookmarkSearch.text=''
             BookmarkService.open()
             waitFor(()=>!!panel.panel && PickerService.items.length===2,'bookmarks reload')
-            check(BookmarkService.activeEngine==='duckduckgo','reopening restores the Manage search engine')
+            check(BookmarkService.activeEngine==='omnisearch','reopening restores the Manage search engine')
             events.keyClick(Qt.Key_H,Qt.ControlModifier)
             waitFor(()=>BookmarkService.tab===1,'Ctrl+H opens Bookmarks History')
             check(panel.dismissOnOutside,'History retains outside dismissal')
